@@ -19,7 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -33,12 +32,9 @@ public class TestsScope extends NamedScope {
   public static final String NAME = IdeBundle.message("predefined.scope.tests.name");
   public TestsScope() {
     super(NAME, new AbstractPackageSet("test:*..*") {
-      public boolean contains(PsiFile file, NamedScopesHolder holder) {
+      public boolean contains(VirtualFile file, NamedScopesHolder holder) {
         final ProjectFileIndex index = ProjectRootManager.getInstance(holder.getProject()).getFileIndex();
-        final VirtualFile virtualFile = file.getVirtualFile();
-        return file.getProject() == holder.getProject()
-               && virtualFile != null
-               && index.isInTestSourceContent(virtualFile);
+        return file != null && index.isInTestSourceContent(file);
       }
     });
   }

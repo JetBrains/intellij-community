@@ -15,17 +15,18 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
 
-public class ComplementPackageSet implements PackageSet {
+public class ComplementPackageSet extends PackageSetBase {
   private final PackageSet myComplementarySet;
 
   public ComplementPackageSet(PackageSet set) {
     myComplementarySet = set;
   }
 
-  public boolean contains(PsiFile file, NamedScopesHolder holder) {
-    return !myComplementarySet.contains(file, holder);
+  public boolean contains(VirtualFile file, NamedScopesHolder holder) {
+    return myComplementarySet instanceof PackageSetBase ? !((PackageSetBase)myComplementarySet).contains(file, holder)
+                                                        : myComplementarySet.contains(getPsiFile(file, holder), holder);
   }
 
   public PackageSet createCopy() {

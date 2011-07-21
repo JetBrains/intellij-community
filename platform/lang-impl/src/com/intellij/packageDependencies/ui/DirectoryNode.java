@@ -46,6 +46,7 @@ public class DirectoryNode extends PackageDependenciesNode {
   //private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.DirectoryNode");
 
   public DirectoryNode(PsiDirectory aDirectory, boolean compactPackages, boolean showFQName) {
+    super(aDirectory.getProject());
     myDirectory = aDirectory;
     VirtualFile directory = myDirectory.getVirtualFile();
     final ProjectFileIndex index = ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex();

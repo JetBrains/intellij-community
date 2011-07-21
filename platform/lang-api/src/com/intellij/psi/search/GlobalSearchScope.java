@@ -26,10 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -599,11 +596,15 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     public boolean contains(VirtualFile file) {
-      PsiFile psiFile = myManager.findFile(file);
-      if (psiFile == null) return false;
       NamedScopesHolder holder = NamedScopeManager.getInstance(getProject());
       final PackageSet packageSet = mySet.getValue();
-      return packageSet != null && packageSet.contains(psiFile, holder);
+      if (packageSet != null) {
+        if (packageSet instanceof PackageSetBase) return ((PackageSetBase)packageSet).contains(file, holder);
+        PsiFile psiFile = myManager.findFile(file);
+        if (psiFile == null) return false;
+        return packageSet.contains(psiFile, holder);
+      }
+      return false;
     }
 
     public String getDisplayName() {

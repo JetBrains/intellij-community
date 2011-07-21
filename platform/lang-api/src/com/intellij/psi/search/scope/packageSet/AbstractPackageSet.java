@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class AbstractPackageSet implements PackageSet {
+public abstract class AbstractPackageSet extends PackageSetBase {
   private final String myText;
   private final int myPriority;
 
@@ -33,7 +33,7 @@ public abstract class AbstractPackageSet implements PackageSet {
     myPriority = priority;
   }
 
-  public PackageSet createCopy() {
+  public AbstractPackageSet createCopy() {
     return this;
   }
 

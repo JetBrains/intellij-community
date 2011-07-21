@@ -79,7 +79,7 @@ public class FileTreeModelBuilder {
     myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS && multiModuleProject;
     myMarker = marker;
     myAddUnmarkedFiles = !settings.UI_FILTER_LEGALS;
-    myRoot = new RootNode();
+    myRoot = new RootNode(myProject);
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myPsiManager = PsiManager.getInstance(project);
   }
@@ -190,28 +190,30 @@ public class FileTreeModelBuilder {
 
   private void buildFileNode(PsiFile file) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (file == null || !file.isValid()) return;
+    final VirtualFile virtualFile = file.getVirtualFile();
     if (indicator != null) {
       indicator.setIndeterminate(false);
       indicator.setText(AnalysisScopeBundle.message("package.dependencies.build.progress.text"));
-      final VirtualFile virtualFile = file.getVirtualFile();
+
       if (virtualFile != null) {
         indicator.setText2(virtualFile.getPresentableUrl());
       }
       indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
     }
 
-    if (file == null || !file.isValid()) return;
-    boolean isMarked = myMarker != null && myMarker.isMarked(file);
+
+    boolean isMarked = myMarker != null && myMarker.isMarked(virtualFile);
     if (isMarked) myMarkedFileCount++;
     if (isMarked || myAddUnmarkedFiles) {
       PackageDependenciesNode dirNode = getFileParentNode(file);
 
       if (myShowFiles) {
-        FileNode fileNode = new FileNode(file, isMarked);
+        FileNode fileNode = new FileNode(virtualFile, myProject, isMarked);
         dirNode.add(fileNode);
       }
       else {
-        dirNode.addFile(file, isMarked);
+        dirNode.addFile(virtualFile, isMarked);
       }
     }
   }
@@ -279,7 +281,7 @@ public class FileTreeModelBuilder {
 
   @Nullable
   public PackageDependenciesNode addFileNode(final PsiFile file){
-    boolean isMarked = myMarker != null && myMarker.isMarked(file);
+    boolean isMarked = myMarker != null && myMarker.isMarked(file.getVirtualFile());
     if (!isMarked) return null;
 
     final VirtualFile vFile = file.getVirtualFile();
@@ -301,7 +303,7 @@ public class FileTreeModelBuilder {
     }
 
     PackageDependenciesNode dirNode = getFileParentNode(file);
-    dirNode.add(new FileNode(file, isMarked));
+    dirNode.add(new FileNode(vFile, myProject, isMarked));
     return rootToReload;
   }
 
@@ -461,7 +463,7 @@ public class FileTreeModelBuilder {
   private PackageDependenciesNode getParentModuleGroup(String[] groupPath){
     ModuleGroupNode groupNode = myModuleGroupNodes.get(groupPath[groupPath.length - 1]);
     if (groupNode == null) {
-      groupNode = new ModuleGroupNode(new ModuleGroup(groupPath));
+      groupNode = new ModuleGroupNode(new ModuleGroup(groupPath), myProject);
       myModuleGroupNodes.put(groupPath[groupPath.length - 1], groupNode);
       myRoot.add(groupNode);
     }

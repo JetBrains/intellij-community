@@ -93,7 +93,7 @@ public class TreeModelBuilder {
     myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS && multiModuleProject;
     myMarker = marker;
     myAddUnmarkedFiles = !settings.UI_FILTER_LEGALS;
-    myRoot = new RootNode();
+    myRoot = new RootNode(project);
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myPsiManager = PsiManager.getInstance(project);
 
@@ -102,9 +102,9 @@ public class TreeModelBuilder {
     createMaps(ScopeType.TEST);
 
     if (myGroupByScopeType) {
-      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, PlatformIcons.PACKAGE_OPEN_ICON, PlatformIcons.PACKAGE_ICON);
-      myTestRoot = new GeneralGroupNode(TEST_NAME, TEST_ICON, TEST_ICON);
-      myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, LIB_ICON_OPEN, LIB_ICON_CLOSED);
+      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, PlatformIcons.PACKAGE_OPEN_ICON, PlatformIcons.PACKAGE_ICON, null);
+      myTestRoot = new GeneralGroupNode(TEST_NAME, TEST_ICON, TEST_ICON, null);
+      myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, LIB_ICON_OPEN, LIB_ICON_CLOSED, null);
       myRoot.add(mySourceRoot);
       myRoot.add(myTestRoot);
       myRoot.add(myLibsRoot);
@@ -173,10 +173,7 @@ public class TreeModelBuilder {
           PackageDependenciesNode lastParent = null;
           public boolean processFile(VirtualFile fileOrDir) {
             if (!fileOrDir.isDirectory()) {
-              final PsiFile psiFile = psiManager.findFile(fileOrDir);
-              if (psiFile != null) {
-                lastParent = buildFileNode(psiFile, lastParent);
-              }
+              lastParent = buildFileNode(fileOrDir, lastParent);
             } else {
               lastParent = null;
             }
@@ -211,10 +208,7 @@ public class TreeModelBuilder {
       }
     }
     else {
-      final PsiFile psiFile = psiManager.findFile(file);
-      if (psiFile != null) { // skip inners & anonymous
-        return buildFileNode(psiFile, parent);
-      }
+      return buildFileNode(file, parent);
     }
     return null;
   }
@@ -250,7 +244,7 @@ public class TreeModelBuilder {
       public void run() {
         for (final PsiFile file : files) {
           if (file != null) {
-            buildFileNode(file, null);
+            buildFileNode(file.getVirtualFile(), null);
           }
         }
       }
@@ -268,15 +262,12 @@ public class TreeModelBuilder {
   }
 
   @Nullable
-  private PackageDependenciesNode buildFileNode(PsiFile file, @Nullable PackageDependenciesNode parent) {
+  private PackageDependenciesNode buildFileNode(VirtualFile file, @Nullable PackageDependenciesNode parent) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setIndeterminate(false);
       indicator.setText(AnalysisScopeBundle.message("package.dependencies.build.progress.text"));
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null) {
-        indicator.setText2(virtualFile.getPresentableUrl());
-      }
+      indicator.setText2(file.getPresentableUrl());
       indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
     }
 
@@ -288,7 +279,7 @@ public class TreeModelBuilder {
       if (dirNode == null) return null;
 
       if (myShowFiles) {
-        FileNode fileNode = new FileNode(file, isMarked);
+        FileNode fileNode = new FileNode(file, myProject, isMarked);
         dirNode.add(fileNode);
       }
       else {
@@ -299,23 +290,18 @@ public class TreeModelBuilder {
     return null;
   }
 
-  public @Nullable PackageDependenciesNode getFileParentNode(PsiFile file) {
-    VirtualFile vFile = file.getVirtualFile();
+  public @Nullable PackageDependenciesNode getFileParentNode(VirtualFile vFile) {
     LOG.assertTrue(vFile != null);
     final VirtualFile containingDirectory = vFile.getParent();
     LOG.assertTrue(containingDirectory != null);
-      PsiPackage aPackage = null;
-      if (file instanceof PsiJavaFile){
-        aPackage = getFilePackage((PsiJavaFile)file);
-      } else {
-        final String packageName = myFileIndex.getPackageNameByDirectory(containingDirectory);
-        if (packageName != null) {
-          aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
-        }
-      }
-      if (aPackage != null) {
+    PsiPackage aPackage = null;
+    final String packageName = myFileIndex.getPackageNameByDirectory(containingDirectory);
+    if (packageName != null) {
+      aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
+    }
+    if (aPackage != null) {
         if (myFileIndex.isInLibrarySource(vFile) || myFileIndex.isInLibraryClasses(vFile)) {
-          return getLibraryDirNode(aPackage, getLibraryForFile(file));
+          return getLibraryDirNode(aPackage, getLibraryForFile(vFile));
         }
         else {
           return getModuleDirNode(aPackage, myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
@@ -347,8 +333,7 @@ public class TreeModelBuilder {
   }
 
   @Nullable
-  private OrderEntry getLibraryForFile(PsiFile file) {
-    final VirtualFile virtualFile = file.getVirtualFile();
+  private OrderEntry getLibraryForFile(VirtualFile virtualFile) {
     if (virtualFile == null) return null;
     List<OrderEntry> orders = myFileIndex.getOrderEntriesForFile(virtualFile);
     for (OrderEntry order : orders) {
@@ -438,7 +423,7 @@ public class TreeModelBuilder {
   private PackageDependenciesNode getParentModuleGroup(String [] groupPath, ScopeType scopeType){
     ModuleGroupNode groupNode = getMap(myModuleGroupNodes, scopeType).get(groupPath[groupPath.length - 1]);
     if (groupNode == null) {
-      groupNode = new ModuleGroupNode(new ModuleGroup(groupPath));
+      groupNode = new ModuleGroupNode(new ModuleGroup(groupPath), myProject);
       getMap(myModuleGroupNodes, scopeType).put(groupPath[groupPath.length - 1], groupNode);
       getRootNode(scopeType).add(groupNode);
     }
@@ -459,7 +444,8 @@ public class TreeModelBuilder {
     if (!myShowIndividualLibs) {
       if (myGroupByScopeType) return getRootNode(ScopeType.LIB);
       if (myAllLibsNode == null) {
-        myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"), LIB_ICON_OPEN, LIB_ICON_CLOSED);
+        myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"), LIB_ICON_OPEN, LIB_ICON_CLOSED,
+                                             null);
         getRootNode(ScopeType.LIB).add(myAllLibsNode);
       }
       return myAllLibsNode;
@@ -467,7 +453,7 @@ public class TreeModelBuilder {
 
     LibraryNode node = getMap(myLibraryNodes, ScopeType.LIB).get(libraryOrJdk);
     if (node != null) return node;
-    node = new LibraryNode(libraryOrJdk);
+    node = new LibraryNode(libraryOrJdk, null);
     getMap(myLibraryNodes, ScopeType.LIB).put(libraryOrJdk, node);
 
     getRootNode(ScopeType.LIB).add(node);

@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -28,11 +30,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.ui.*;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
@@ -89,7 +89,7 @@ public class ScopeEditorPanel {
     myHolder = holder;
     myButtonsPanel.add(createActionsPanel());
 
-    myPackageTree = new Tree(new RootNode());
+    myPackageTree = new Tree(new RootNode(project));
     myTreePanel.setLayout(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myPackageTree), BorderLayout.CENTER);
 
@@ -99,8 +99,8 @@ public class ScopeEditorPanel {
     myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree, myProject);
 
     myTreeMarker = new Marker() {
-      public boolean isMarked(PsiFile file) {
-        return myCurrentScope != null && myCurrentScope.contains(file, getHolder());
+      public boolean isMarked(VirtualFile file) {
+        return myCurrentScope != null && (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, getHolder()) : myCurrentScope.contains(PackageSetBase.getPsiFile(file, getHolder()), getHolder()));
       }
     };
 

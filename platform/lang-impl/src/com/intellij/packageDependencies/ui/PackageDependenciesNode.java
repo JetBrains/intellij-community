@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
@@ -40,12 +41,17 @@ import java.util.Set;
 public class PackageDependenciesNode extends DefaultMutableTreeNode implements Navigatable{
   private static final EmptyIcon EMPTY_ICON = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
 
-  private Set<PsiFile> myRegisteredFiles = null;
+  private Set<VirtualFile> myRegisteredFiles = null;
   private boolean myHasUnmarked = false;
   private boolean myHasMarked = false;
   private boolean myEquals;
   protected Color myColor = null;
   protected final static Color NOT_CHANGED = new Color(0, 0, 0);
+  protected Project myProject;
+
+  public PackageDependenciesNode(Project project) {
+    myProject = project;
+  }
 
   public void setEquals(final boolean equals) {
     myEquals = equals;
@@ -56,14 +62,16 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
-    for (PsiFile psiFile : getRegisteredFiles()) {
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
+    for (VirtualFile vFile : getRegisteredFiles()) {
+      final PsiFile psiFile = psiManager.findFile(vFile);
       if (psiFile != null && psiFile.isValid()) {
         set.add(psiFile);
       }
     }
   }
 
-  public void addFile(PsiFile file, boolean isMarked) {
+  public void addFile(VirtualFile file, boolean isMarked) {
     getRegisteredFiles().add(file);
     updateMarked(!isMarked, isMarked);
   }
@@ -187,9 +195,9 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return true;
   }
 
-  public Set<PsiFile> getRegisteredFiles() {
+  public Set<VirtualFile> getRegisteredFiles() {
     if (myRegisteredFiles == null) {
-      myRegisteredFiles = new HashSet<PsiFile>();
+      myRegisteredFiles = new HashSet<VirtualFile>();
     }
     return myRegisteredFiles;
   }

@@ -15,9 +15,11 @@
  */
 package com.intellij.cyclicDependencies.ui;
 
+import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.PsiFile;
-import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import java.util.Set;
@@ -27,11 +29,15 @@ import java.util.Set;
  * Date: Jan 31, 2005
  */
 public class CycleNode extends PackageDependenciesNode{
+  public CycleNode(Project project) {
+    super(project);
+  }
+
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
   }
 
-  public void addFile(PsiFile file, boolean isMarked) {
+  public void addFile(VirtualFile file, boolean isMarked) {
     super.addFile(file, isMarked);
   }
 

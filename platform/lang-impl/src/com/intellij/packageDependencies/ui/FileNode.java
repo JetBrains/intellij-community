@@ -17,12 +17,15 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,18 +33,20 @@ import java.util.Map;
 import java.util.Set;
 
 public class FileNode extends PackageDependenciesNode {
-  private final PsiFile myFile;
+  private PsiFile myFile;
+  private final VirtualFile myVFile;
   private final boolean myMarked;
   private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.FileNode");
 
-  public FileNode(PsiFile file, boolean marked) {
-    myFile = file;
-    myMarked = marked;    
+  public FileNode(VirtualFile file, Project project, boolean marked) {
+    super(project);
+    myVFile = file;
+    myMarked = marked;
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
-    set.add(myFile);
+    set.add(getFile());
   }
 
   public boolean hasUnmarked() {
@@ -53,9 +58,7 @@ public class FileNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    final VirtualFile virtualFile = myFile.getVirtualFile();
-    LOG.assertTrue(virtualFile != null);
-    return virtualFile.getName();
+    return myVFile.getName();
   }
 
   public Icon getOpenIcon() {
@@ -67,9 +70,7 @@ public class FileNode extends PackageDependenciesNode {
   }
 
   private Icon getIcon() {
-    VirtualFile vFile = myFile.getVirtualFile();
-    LOG.assertTrue(vFile != null);
-    return IconUtil.getIcon(vFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myFile.getProject());
+    return IconUtil.getIcon(myVFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myProject);
   }
 
   public int getWeight() {
@@ -81,12 +82,12 @@ public class FileNode extends PackageDependenciesNode {
   }
 
   public PsiElement getPsiElement() {
-    return myFile;
+    return getFile();
   }
 
   public Color getColor() {
     if (myColor == null) {
-      myColor = FileStatusManager.getInstance(myFile.getProject()).getStatus(myFile.getVirtualFile()).getColor();
+      myColor = FileStatusManager.getInstance(myProject).getStatus(myVFile).getColor();
       if (myColor == null) {
         myColor = NOT_CHANGED;
       }
@@ -103,22 +104,30 @@ public class FileNode extends PackageDependenciesNode {
 
     final FileNode fileNode = (FileNode)o;
 
-    if (!myFile.equals(fileNode.myFile)) return false;
+    if (!myVFile.equals(fileNode.myVFile)) return false;
 
     return true;
   }
 
   public int hashCode() {
-    return myFile.hashCode();
+    return myVFile.hashCode();
   }
 
 
   public boolean isValid() {
-    return myFile != null && myFile.isValid();
+    return myVFile != null && myVFile.isValid();
   }
 
   @Override
   public boolean canSelectInLeftTree(final Map<PsiFile, Set<PsiFile>> deps) {
-    return deps.containsKey(myFile);
+    return deps.containsKey(getFile());
+  }
+
+  @Nullable
+  private PsiFile getFile() {
+    if (myFile == null) {
+      myFile = PsiManager.getInstance(myProject).findFile(myVFile);
+    }
+    return myFile;
   }
 }

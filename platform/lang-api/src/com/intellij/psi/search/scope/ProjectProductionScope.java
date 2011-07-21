@@ -19,7 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -30,14 +29,12 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 public class ProjectProductionScope extends NamedScope {
   public ProjectProductionScope() {
     super(IdeBundle.message("predefined.scope.production.name"), new AbstractPackageSet("src:*..*") {
-      public boolean contains(PsiFile file, NamedScopesHolder holder) {
+      public boolean contains(VirtualFile file, NamedScopesHolder holder) {
         final ProjectFileIndex index = ProjectRootManager.getInstance(holder.getProject()).getFileIndex();
-        final VirtualFile virtualFile = file.getVirtualFile();
-        return file.getProject() == holder.getProject()
-               && virtualFile != null
-               && !index.isInTestSourceContent(virtualFile)
-               && !index.isInLibraryClasses(virtualFile)
-               && !index.isInLibrarySource(virtualFile);
+        return file != null
+               && !index.isInTestSourceContent(file)
+               && !index.isInLibraryClasses(file)
+               && !index.isInLibrarySource(file);
       }
     });
   }

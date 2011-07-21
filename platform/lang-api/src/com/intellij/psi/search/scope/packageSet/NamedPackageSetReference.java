@@ -15,20 +15,22 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
 
-public class NamedPackageSetReference implements PackageSet {
+public class NamedPackageSetReference extends PackageSetBase {
   private final String myName;
 
   public NamedPackageSetReference(String name) {
     myName = name.startsWith("$") ? name.substring(1) : name;
   }
 
-  public boolean contains(PsiFile file, NamedScopesHolder holder) {
+  public boolean contains(VirtualFile file, NamedScopesHolder holder) {
     final NamedScope scope = holder.getScope(myName);
     if (scope != null) {
       final PackageSet packageSet = scope.getValue();
-      return packageSet != null && packageSet.contains(file, holder);
+      if (packageSet != null) {
+        return packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(file, holder) : packageSet.contains(getPsiFile(file, holder), holder);
+      }
     }
     return false;
   }

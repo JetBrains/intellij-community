@@ -15,6 +15,7 @@
  */
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.IconLoader;
@@ -31,7 +32,8 @@ public class LibraryNode extends PackageDependenciesNode {
 
   private final OrderEntry myLibraryOrJdk;
 
-  public LibraryNode(OrderEntry libraryOrJdk) {
+  public LibraryNode(OrderEntry libraryOrJdk, Project project) {
+    super(project);
     myLibraryOrJdk = libraryOrJdk;
   }
 

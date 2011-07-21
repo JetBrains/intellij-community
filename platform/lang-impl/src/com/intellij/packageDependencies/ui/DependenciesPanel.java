@@ -150,13 +150,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     myLeftTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myLeftTree, myProject);
 
     myRightTreeMarker = new Marker() {
-      public boolean isMarked(PsiFile file) {
+      public boolean isMarked(VirtualFile file) {
         return myIllegalsInRightTree.contains(file);
       }
     };
 
     myLeftTreeMarker = new Marker() {
-      public boolean isMarked(PsiFile file) {
+      public boolean isMarked(VirtualFile file) {
         return myIllegalDependencies.containsKey(file);
       }
     };
