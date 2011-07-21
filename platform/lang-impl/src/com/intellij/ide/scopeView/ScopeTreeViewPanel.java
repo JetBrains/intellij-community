@@ -132,7 +132,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
       final PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
       if (file != null) {
-        final PackageDependenciesNode node = myBuilder.getFileParentNode(file);
+        final PackageDependenciesNode node = myBuilder.getFileParentNode(virtualFile);
         final PackageDependenciesNode[] nodes = FileTreeModelBuilder.findNodeForPsiElement(node, file);
         if (nodes != null) {
           for (PackageDependenciesNode dependenciesNode : nodes) {
@@ -517,7 +517,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         queueUpdate(new Runnable() {
           public void run() {
             if (file.isValid()) {
-              collapseExpand(myBuilder.getFileParentNode(file));
+              collapseExpand(myBuilder.getFileParentNode(file.getVirtualFile()));
             }
           }
         }, false);
@@ -580,7 +580,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final PackageSet packageSet = scope.getValue();
       if (packageSet == null) return; //invalid scope selected
       if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
-        reload(myBuilder.getFileParentNode(file));
+        reload(myBuilder.getFileParentNode(file.getVirtualFile()));
       }
       else {
         reload(myBuilder.removeNode(file, file.getParent()));
