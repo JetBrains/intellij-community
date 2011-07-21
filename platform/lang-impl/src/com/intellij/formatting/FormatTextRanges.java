@@ -62,6 +62,9 @@ public class FormatTextRanges {
      * @return               <code>true</code> if given range has no intersections with the wrapped range; <code>false</code> otherwise
      */
     public boolean isWhitespaceReadOnly(@Nullable TextRange range) {
+      if (myRange == null) {
+        return false;
+      }
       if (range == null || range.getStartOffset() >= myRange.getEndOffset()) return true;
       if (myProcessHeadingWhitespace) {
         return range.getEndOffset() < myRange.getStartOffset();
