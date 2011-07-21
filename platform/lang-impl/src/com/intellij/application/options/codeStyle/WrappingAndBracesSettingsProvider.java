@@ -54,4 +54,9 @@ public class WrappingAndBracesSettingsProvider extends CodeStyleSettingsProvider
   public boolean hasSettingsPage() {
     return LanguageCodeStyleSettingsProvider.getLanguagesWithSharedPreview().length != 0;
   }
+
+  @Override
+  public int getPriority() {
+    return COMMON_SETTINGS_PRIORITY;
+  }
 }

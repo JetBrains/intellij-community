@@ -20,6 +20,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.sun.tools.javah.Gen;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,5 +40,10 @@ public class SpacesSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   public boolean hasSettingsPage() {
     return LanguageCodeStyleSettingsProvider.getLanguagesWithSharedPreview().length != 0;
+  }
+
+  @Override
+  public int getPriority() {
+    return COMMON_SETTINGS_PRIORITY;
   }
 }

@@ -50,4 +50,9 @@ public class GeneralCodeStyleSettingsProvider extends CodeStyleSettingsProvider 
   public String getConfigurableDisplayName() {
     return ApplicationBundle.message("title.general");
   }
+
+  @Override
+  public int getPriority() {
+    return GENERAL_PRIORITY;
+  }
 }

@@ -28,14 +28,15 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
+import com.intellij.ui.ListUtil;
+import com.intellij.util.ArrayUtil;
+import org.apache.commons.collections.ListUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.Abstract implements OptionsContainingConfigurable {
 
@@ -207,7 +208,23 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   protected Configurable[] buildConfigurables() {
     myPanels = new ArrayList<CodeStyleConfigurableWrapper>();
 
-    for (final CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
+    final List<CodeStyleSettingsProvider> providers =
+      Arrays.asList(Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME));
+    Collections.sort(providers, new Comparator<CodeStyleSettingsProvider>() {
+      @Override
+      public int compare(CodeStyleSettingsProvider p1, CodeStyleSettingsProvider p2) {
+        if (p1.getPriority() != p2.getPriority()) {
+          return p1.getPriority() - p2.getPriority();
+        }
+        String name1 = p1.getConfigurableDisplayName();
+        if (name1 == null) name1 = "";
+        String name2 = p2.getConfigurableDisplayName();
+        if (name2 == null) name2 = "";
+        return name1.compareToIgnoreCase(name2);
+      }
+    });
+
+    for (final CodeStyleSettingsProvider provider : providers) {
       if (provider.hasSettingsPage()) {
         myPanels.add(new CodeStyleConfigurableWrapper(provider, new CodeStyleSettingsPanelFactory() {
           public NewCodeStyleSettingsPanel createPanel(final CodeStyleScheme scheme) {
