@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.ClassloaderUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.StartupProgress;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.idea.Main;
 import com.intellij.notification.Notification;
@@ -40,7 +41,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -119,7 +119,7 @@ public class PluginManager {
     return ourPlugins;
   }
 
-  public static void initPlugins(@Nullable Consumer<String> progress) {
+  public static void initPlugins(@Nullable StartupProgress progress) {
     long start = System.currentTimeMillis();
     try {
       initializePlugins(progress);
@@ -203,7 +203,7 @@ public class PluginManager {
     }
   }
 
-  private static void initializePlugins(Consumer<String> progress) {
+  private static void initializePlugins(StartupProgress progress) {
     configureExtensions();
     
     final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(progress);
@@ -528,22 +528,29 @@ public class PluginManager {
     return classLoaders.toArray(new ClassLoader[classLoaders.size()]);
   }
 
-  public static IdeaPluginDescriptorImpl[] loadDescriptors(@Nullable Consumer<String> progress) {
+  public static IdeaPluginDescriptorImpl[] loadDescriptors(@Nullable StartupProgress progress) {
     if (ClassloaderUtil.isLoadingOfExternalPluginsDisabled()) {
       return IdeaPluginDescriptorImpl.EMPTY_ARRAY;
     }
 
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
 
-    loadDescriptors(PathManager.getPluginsPath(), result, progress);
+    int pluginsCount = countPlugins(PathManager.getPluginsPath()) + countPlugins(PathManager.getPreinstalledPluginsPath());
+    loadDescriptors(PathManager.getPluginsPath(), result, progress, pluginsCount);
     Application application = ApplicationManager.getApplication();
+    boolean fromSources = false;
     if (application == null || !application.isUnitTestMode()) {
-      loadDescriptors(PathManager.getPreinstalledPluginsPath(), result, progress);
+      int size = result.size();
+      loadDescriptors(PathManager.getPreinstalledPluginsPath(), result, progress, pluginsCount);
+      fromSources = size == result.size();
     }
 
     loadDescriptorsFromProperty(result);
 
-    loadDescriptorsFromClassPath(result, progress);
+    if (!fromSources && progress != null) {
+      progress.showProgress("Loading core...", 0.5f);
+    }
+    loadDescriptorsFromClassPath(result, fromSources ? progress : null);
 
     IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(new IdeaPluginDescriptorImpl[result.size()]);
     try {
@@ -555,6 +562,17 @@ public class PluginManager {
       pluginDescriptors = IdeaPluginDescriptorImpl.EMPTY_ARRAY;
     }
     return pluginDescriptors;
+  }
+
+  private static int countPlugins(String pluginsPath) {
+    File configuredPluginsDir = new File(pluginsPath);
+    if (configuredPluginsDir.exists()) {
+      String[] list = configuredPluginsDir.list();
+      if (list != null) {
+        return list.length;
+      }
+    }
+    return 0;
   }
 
   public static void reportPluginError() {
@@ -598,11 +616,13 @@ public class PluginManager {
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-  private static void loadDescriptorsFromClassPath(final List<IdeaPluginDescriptorImpl> result, @Nullable Consumer<String> progress) {
+  private static void loadDescriptorsFromClassPath(final List<IdeaPluginDescriptorImpl> result, @Nullable StartupProgress progress) {
     try {
       final Collection<URL> urls = getClassLoaderUrls();
       final String platformPrefix = System.getProperty("idea.platform.prefix");
+      int i = 0;
       for (URL url : urls) {
+        i++;
         final String protocol = url.getProtocol();
         if ("file".equals(protocol)) {
           final File file = new File(URLDecoder.decode(url.getFile()));
@@ -630,7 +650,7 @@ public class PluginManager {
             }
             result.add(pluginDescriptor);
             if (progress != null) {
-              progress.consume("Plugin loaded: " + pluginDescriptor.getName());
+              progress.showProgress("Plugin loaded: " + pluginDescriptor.getName(), 0.5f * ((float)i / urls.size()));
             }
           }
         }
@@ -797,15 +817,19 @@ public class PluginManager {
   }
 
 
-  private static void loadDescriptors(String pluginsPath, List<IdeaPluginDescriptorImpl> result, @Nullable Consumer<String> progress) {
+  private static void loadDescriptors(String pluginsPath,
+                                      List<IdeaPluginDescriptorImpl> result,
+                                      @Nullable StartupProgress progress,
+                                      int pluginsCount) {
     final File pluginsHome = new File(pluginsPath);
     final File[] files = pluginsHome.listFiles();
     if (files != null) {
+      int i = result.size();
       for (File file : files) {
         final IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML);
         if (descriptor == null) continue;
         if (progress != null) {
-          progress.consume(descriptor.getName());
+          progress.showProgress(descriptor.getName(), 0.5f * ((float)++i / pluginsCount));
         }
         int oldIndex = result.indexOf(descriptor);
         if (oldIndex >= 0) {
