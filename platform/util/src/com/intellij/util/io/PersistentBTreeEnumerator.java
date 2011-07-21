@@ -23,7 +23,7 @@ import java.io.IOException;
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
-  private static final int PAGE_SIZE = IntToIntBtree.doSanityCheck ? 64:4096;
+  private static final int PAGE_SIZE = IntToIntBtree.doSanityCheck ? 64:2048;
   protected static final int RECORD_SIZE = 4;
   private final byte[] myBuffer = new byte[RECORD_SIZE];
 
