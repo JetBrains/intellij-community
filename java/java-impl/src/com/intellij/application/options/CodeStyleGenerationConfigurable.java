@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.ui.ListUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class CodeStyleGenerationConfigurable implements Configurable {
   JPanel myPanel;
@@ -46,17 +46,14 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private JCheckBox myCbLineCommentAtFirstColumn;
   private JCheckBox myCbBlockCommentAtFirstColumn;
 
-
   private final MembersOrderList myMembersOrderList;
-  private JScrollPane myMembersListScroll;
-  private JButton myMoveUpButton;
-  private JButton myMoveDownButton;
 
   private final CodeStyleSettings mySettings;
   private JCheckBox myCbGenerateFinalParameters;
   private JCheckBox myCbGenerateFinalLocals;
   private JCheckBox myCbUseExternalAnnotations;
   private JCheckBox myInsertOverrideAnnotationCheckBox;
+  private JPanel myMembersPanel;
 
   public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
@@ -64,19 +61,9 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
-    myMembersListScroll.getViewport().add(myMembersOrderList);
-
-    myMoveUpButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        ListUtil.moveSelectedItemsUp(myMembersOrderList);
-      }
-    });
-
-    myMoveDownButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        ListUtil.moveSelectedItemsDown(myMembersOrderList);
-      }
-    });
+    final JPanel panel = ToolbarDecorator.createDecorator(myMembersOrderList)
+      .disableAddAction().disableRemoveAction().createPanel();
+    myMembersPanel.add(panel, BorderLayout.CENTER);
     return myPanel;
   }
 

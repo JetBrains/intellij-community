@@ -145,12 +145,14 @@ public class ToolbarDecorator implements DataProvider {
     myAddAction = new Runnable() {
       public void run() {
         TableUtil.stopEditing(table);
+        final int rowCount = table.getRowCount();
         if (tableModel instanceof ListTableModel && producer != null) {
           //noinspection unchecked
           ((ListTableModel)tableModel).addRow(producer.createElement());
         } else {
           tableModel.addRow();
         }
+        if (rowCount == table.getRowCount()) return;
         final int index = myTableModel.getRowCount() - 1;
         table.editCellAt(index, 0);
         table.setRowSelectionInterval(index, index);
