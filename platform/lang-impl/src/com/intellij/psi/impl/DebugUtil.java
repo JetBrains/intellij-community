@@ -30,6 +30,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.IStubElementType;
@@ -37,6 +38,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
+import com.intellij.util.Processor;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,11 +80,6 @@ public class DebugUtil {
 
   public static /*final*/ boolean CHECK = false;
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = false;
-  public static final Key<Boolean> TRACK_INVALIDATION_KEY = new Key<Boolean>("TRACK_INVALIDATION_KEY");
-
-  public static boolean shouldTrackInvalidation() {
-    return false;
-  }
 
   public static String psiTreeToString(@NotNull final PsiElement element, final boolean skipWhitespaces) {
     final ASTNode node = SourceTreeToPsiMap.psiElementToTree(element);
@@ -475,14 +472,25 @@ public class DebugUtil {
     }
   }
 
-  public static void trackInvalidation(PsiElement element) {
-    if (element == null) return;
-    element.putUserData(TRACK_INVALIDATION_KEY, Boolean.TRUE);
+  private static final Key<Processor<PsiElement>> TRACK_INVALIDATION_KEY = Key.create("TRACK_INVALIDATION_KEY");
+  public static void trackInvalidation(@NotNull PsiElement element, @NotNull Processor<PsiElement> callback) {
     final ASTNode node = element.getNode();
     if (node != null) {
-      node.putUserData(TRACK_INVALIDATION_KEY, Boolean.TRUE);
+      node.putUserData(TRACK_INVALIDATION_KEY, callback);
     }
-    trackInvalidation(element.getParent());
+  }
+
+  public static void onInvalidated(@NotNull TreeElement treeElement) {
+    treeElement.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      protected void visitNode(TreeElement element) {
+        Processor<PsiElement> callback = element.getUserData(TRACK_INVALIDATION_KEY);
+        if (callback != null) {
+          PsiElement psi = element.getPsi();
+          if (psi != null) callback.process(psi);
+        }
+      }
+    });
   }
 
   public static void sleep(long millis) {

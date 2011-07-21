@@ -19,9 +19,10 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.IgnorePsiEventsMarker;
 
 
-public abstract class CommitToPsiFileAction extends DocumentRunnable {
+public abstract class CommitToPsiFileAction extends DocumentRunnable implements IgnorePsiEventsMarker {
   protected CommitToPsiFileAction(Document document, Project project) {
     super(document,project);
   }

@@ -73,7 +73,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
       }
 
       myPseudoImports.put(className, aClass);
-      myManager.nonPhysicalChange(); // to clear resolve caches!
+      myManager.beforeChange(false); // to clear resolve caches!
       return true;
     }
     else {

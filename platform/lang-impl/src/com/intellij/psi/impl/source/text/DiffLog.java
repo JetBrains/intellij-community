@@ -269,14 +269,15 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     void doActualPsiChange(@NotNull PsiFile file, @NotNull ASTDiffBuilder astDiffBuilder) {
       PsiFileImpl fileImpl = (PsiFileImpl)file;
       final int oldLength = myOldNode.getTextLength();
-      BlockSupportImpl.sendBeforeChildrenChangeEvent(fileImpl);
+      PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
+      BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, fileImpl);
       if (myOldNode.getFirstChildNode() != null) myOldNode.rawRemoveAllChildren();
       final ASTNode firstChildNode = myNewNode.getFirstChildNode();
       if (firstChildNode != null) myOldNode.rawAddChildren((TreeElement)firstChildNode);
       fileImpl.getTreeElement().setCharTable(myNewNode.getCharTable());
       ((PsiManagerEx)file.getManager()).invalidateFile(fileImpl);
       myOldNode.subtreeChanged();
-      BlockSupportImpl.sendAfterChildrenChangedEvent(fileImpl, oldLength);
+      BlockSupportImpl.sendAfterChildrenChangedEvent(manager,fileImpl, oldLength);
     }
   }
 

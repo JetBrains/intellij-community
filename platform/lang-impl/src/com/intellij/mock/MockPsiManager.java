@@ -207,12 +207,14 @@ public class MockPsiManager extends PsiManagerEx {
     return false;
   }
 
-  public void nonPhysicalChange() {
-    throw new UnsupportedOperationException("Method nonPhysicalChange is not yet implemented in " + getClass().getName());
+  @Override
+  public void beforeChange(boolean isPhysical) {
+    throw new UnsupportedOperationException();
   }
 
-  public void physicalChange() {
-    throw new UnsupportedOperationException("physicalChange is not implemented"); // TODO
+  @Override
+  public void afterChange(boolean isPhysical) {
+    throw new UnsupportedOperationException();
   }
 
   @NotNull

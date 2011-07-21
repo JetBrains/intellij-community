@@ -68,13 +68,16 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     void syncDocument(Document document, PsiTreeChangeEventImpl event);
   }
 
-  private void doSync(final PsiTreeChangeEvent event, final DocSyncAction syncAction) {
+  private void doSync(final PsiTreeChangeEvent event, boolean force, final DocSyncAction syncAction) {
     if (!toProcessPsiEvent()) return;
     PsiFile psiFile = event.getFile();
     if (psiFile == null || psiFile.getNode() == null) return;
 
     final DocumentEx document = (DocumentEx)myPsiDocumentManager.getCachedDocument(psiFile);
     if (document == null || document instanceof DocumentWindow) return;
+    if (!force && getTransaction(document) == null) {
+      return;
+    }
 
     TextBlock textBlock = PsiDocumentManagerImpl.getTextBlock(psiFile);
 
@@ -102,7 +105,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void childAdded(final PsiTreeChangeEvent event) {
-    doSync(event, new DocSyncAction() {
+    doSync(event, false, new DocSyncAction() {
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
         insertString(document, event.getOffset(), event.getChild().getText());
       }
@@ -110,7 +113,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void childRemoved(final PsiTreeChangeEvent event) {
-    doSync(event, new DocSyncAction() {
+    doSync(event, false, new DocSyncAction() {
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
         deleteString(document, event.getOffset(), event.getOffset() + event.getOldLength());
       }
@@ -118,7 +121,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void childReplaced(final PsiTreeChangeEvent event) {
-    doSync(event, new DocSyncAction() {
+    doSync(event, false, new DocSyncAction() {
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
         replaceString(document, event.getOffset(), event.getOffset() + event.getOldLength(), event.getNewChild().getText());
       }
@@ -126,7 +129,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void childrenChanged(final PsiTreeChangeEvent event) {
-    doSync(event, new DocSyncAction() {
+    doSync(event, false, new DocSyncAction() {
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
         replaceString(document, event.getOffset(), event.getOffset() + event.getOldLength(), event.getParent().getText());
       }
@@ -135,10 +138,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   private static boolean toProcessPsiEvent() {
     Application application = ApplicationManager.getApplication();
-    return !application.hasWriteAction(CommitToPsiFileAction.class)
-           && !application.hasWriteAction(ExternalChangeAction.class);
+    return !application.hasWriteAction(IgnorePsiEventsMarker.class);
   }
-
 
   public void replaceString(Document document, int startOffset, int endOffset, String s) {
     final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
@@ -175,10 +176,10 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     myTransactionsMap.put(doc, pair);
   }
 
-  public void commitTransaction(final Document document){
+  public boolean commitTransaction(final Document document){
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
-    if(documentChangeTransaction == null) return;
+    if(documentChangeTransaction == null) return false;
     final PsiElement changeScope = documentChangeTransaction.getChangeScope();
     try {
       mySyncDocument = document;
@@ -186,7 +187,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
       fakeEvent.setParent(changeScope);
       fakeEvent.setFile(changeScope.getContainingFile());
-      doSync(fakeEvent, new DocSyncAction() {
+      doSync(fakeEvent, true, new DocSyncAction() {
         public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
           doCommitTransaction(document, documentChangeTransaction);
         }
@@ -196,15 +197,16 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     finally {
       mySyncDocument = null;
     }
+    return true;
   }
   
   @TestOnly
-  public void doCommitTransaction(final Document document){
+  public void doCommitTransaction(@NotNull Document document){
     doCommitTransaction(document, getTransaction(document));
     myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, null);
   }
 
-  private static void doCommitTransaction(final Document document, final DocumentChangeTransaction documentChangeTransaction) {
+  private static void doCommitTransaction(@NotNull Document document, @NotNull DocumentChangeTransaction documentChangeTransaction) {
     DocumentEx ex = (DocumentEx) document;
     ex.suppressGuardedExceptions();
     try {
