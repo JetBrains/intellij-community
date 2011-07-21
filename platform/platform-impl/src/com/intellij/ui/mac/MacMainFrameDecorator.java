@@ -19,6 +19,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.Function;
@@ -105,21 +106,29 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     final ID pool = invoke("NSAutoreleasePool", "new");
 
     try {
-      myClassName = "IdeaToolbar" + UNIQUE_COUNTER.incrementAndGet();
+      if (SystemInfo.isMacOSLion) {
+        // fullscreen
 
-      final ID ownToolbar = Foundation.registerObjcClass(Foundation.getClass("NSToolbar"), myClassName);
-      Foundation.registerObjcClassPair(ownToolbar);
+        invoke(window, "setCollectionBehavior:", 1 << 7); // NSCollectionBehaviorFullScreenPrimary = 1 << 7, NSCollectionBehaviorFullScreenAuxiliary = 1 << 8
+      } else {
+        // toggle toolbar
 
-      ID toolbar = invoke(invoke(myClassName, "alloc"), "initWithIdentifier:", Foundation.cfString(myClassName));
-      Foundation.cfRetain(toolbar);
+        myClassName = "IdeaToolbar" + UNIQUE_COUNTER.incrementAndGet();
 
-      invoke(toolbar, "setVisible:", 0); // hide native toolbar by default
+        final ID ownToolbar = Foundation.registerObjcClass(Foundation.getClass("NSToolbar"), myClassName);
+        Foundation.registerObjcClassPair(ownToolbar);
 
-      Foundation.addMethod(ownToolbar, Foundation.createSelector("setVisible:"), SET_VISIBLE_CALLBACK, "v*");
-      Foundation.addMethod(ownToolbar, Foundation.createSelector("isVisible"), IS_VISIBLE, "B*");
+        ID toolbar = invoke(invoke(myClassName, "alloc"), "initWithIdentifier:", Foundation.cfString(myClassName));
+        Foundation.cfRetain(toolbar);
 
-      invoke(window, "setToolbar:", toolbar);
-      invoke(window, "setShowsToolbarButton:", 1);
+        invoke(toolbar, "setVisible:", 0); // hide native toolbar by default
+
+        Foundation.addMethod(ownToolbar, Foundation.createSelector("setVisible:"), SET_VISIBLE_CALLBACK, "v*");
+        Foundation.addMethod(ownToolbar, Foundation.createSelector("isVisible"), IS_VISIBLE, "B*");
+
+        invoke(window, "setToolbar:", toolbar);
+        invoke(window, "setShowsToolbarButton:", 1);
+      }
     }
     finally {
       invoke(pool, "release");
