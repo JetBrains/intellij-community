@@ -106,12 +106,12 @@ public class CompositeElement extends TreeElement {
     if (ASSERT_THREADING) {
       PsiElement wrapper = myWrapper;
       FileElement fileElement = null;
-      PsiElement psiFile = null;
+      PsiFile psiFile = null;
       boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() ||
                    Thread.holdsLock(START_OFFSET_LOCK) ||
                    wrapper != null && !wrapper.isPhysical() ||
                    (fileElement = TreeUtil.getFileElement(this)) == null ||
-                   (psiFile = fileElement.getPsi()) == null ||
+                   (psiFile = (PsiFile)fileElement.getPsi()) == null ||
                    psiFile instanceof DummyHolder ||
                    psiFile.getViewProvider() instanceof InjectedFileViewProvider ||
                    !psiFile.isPhysical();
