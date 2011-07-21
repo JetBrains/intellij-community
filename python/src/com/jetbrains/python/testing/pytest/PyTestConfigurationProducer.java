@@ -18,6 +18,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
@@ -68,11 +69,20 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
     configuration.setTestToRun(path);
 
     PyFunction pyFunction = findTestFunction(location);
+    PyClass pyClass = PsiTreeUtil.getParentOfType(location.getPsiElement(), PyClass.class, false);
     if (pyFunction != null) {
       String name = pyFunction.getName();
+      if (pyClass != null)
+        name = pyClass.getName() + "."+name;
       configuration.setKeywords(name);
       configuration.setName(name + " in " + configuration.getName());
       myPsiElement = pyFunction;
+    }
+    else if (pyClass != null) {
+      String name = pyClass.getName();
+      configuration.setKeywords(name);
+      configuration.setName(name + " in " + configuration.getName());
+      myPsiElement = pyClass;
     }
     configuration.setName(configuration.suggestedName());
     return result;
