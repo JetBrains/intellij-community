@@ -366,4 +366,20 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "foo(1,2,3);"
     );
   }
+
+  public void testBeforeAnonymousClassConstructor() throws Exception {
+    // Inspired by IDEA-72321.
+    getSettings().SPACE_BEFORE_METHOD_CALL_PARENTHESES = true;
+    
+    doMethodTest(
+      "actions.add(new Action(this) {\n" +
+      "    public void run() {\n" +
+      "    }\n" +
+      "});",
+      "actions.add (new Action (this) {\n" +
+      "    public void run() {\n" +
+      "    }\n" +
+      "});"
+    );
+  }
 }

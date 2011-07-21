@@ -241,7 +241,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (aClass instanceof PsiAnonymousClass && ElementType.JAVA_PLAIN_COMMENT_BIT_SET.contains(myChild1.getElementType())) {
       ASTNode prev = myChild1.getTreePrev();
-      if (prev.getElementType() == JavaTokenType.WHITE_SPACE && !StringUtil.containsLineBreak(prev.getChars())) {
+      if (prev.getElementType() == TokenType.WHITE_SPACE && !StringUtil.containsLineBreak(prev.getChars())) {
         prev = prev.getTreePrev();
       }
       if (prev.getElementType() == JavaTokenType.LBRACE) {
@@ -252,7 +252,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         processClassBody();
       }
     }
-    else processClassBody();
+    else if (aClass instanceof PsiAnonymousClass && myRole2 == ChildRole.ARGUMENT_LIST) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
+    }
+    else {
+      processClassBody();
+    }
   }
 
   private static boolean isTheOnlyClassMember(final ASTNode node) {
