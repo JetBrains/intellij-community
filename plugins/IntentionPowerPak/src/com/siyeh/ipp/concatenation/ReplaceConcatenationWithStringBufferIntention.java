@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
@@ -49,14 +48,14 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
     @Override
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        PsiBinaryExpression expression =
-                (PsiBinaryExpression)element;
+        PsiPolyadicExpression expression =
+                (PsiPolyadicExpression)element;
         PsiElement parent = expression.getParent();
         if (parent == null) {
             return;
         }
         while (ConcatenationUtils.isConcatenation(parent)) {
-            expression = (PsiBinaryExpression)parent;
+            expression = (PsiPolyadicExpression)parent;
             parent = expression.getParent();
             if (parent == null) {
                 return;
@@ -119,12 +118,11 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
     private static void turnExpressionIntoChainedAppends(
             PsiExpression expression, @NonNls StringBuilder result) {
         if (ConcatenationUtils.isConcatenation(expression)) {
-            final PsiBinaryExpression concatenation =
-                    (PsiBinaryExpression)expression;
-            final PsiExpression lhs = concatenation.getLOperand();
-            turnExpressionIntoChainedAppends(lhs, result);
-            final PsiExpression rhs = concatenation.getROperand();
-            turnExpressionIntoChainedAppends(rhs, result);
+            final PsiPolyadicExpression concatenation =
+                    (PsiPolyadicExpression)expression;
+          for (PsiExpression op : concatenation.getOperands()) {
+            turnExpressionIntoChainedAppends(op, result);
+          }
         } else {
             final PsiExpression strippedExpression =
                     ParenthesesUtils.stripParentheses(expression);
