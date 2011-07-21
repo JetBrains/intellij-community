@@ -44,6 +44,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
     final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
     if (docStringOwner != null && element == docStringOwner.getDocStringExpression()) {
+      // TODO: Think about swithing to the StructuredDocString parser
       final List<PsiReference> result = new ArrayList<PsiReference>();
       String docString = element.getText();
       int pos = 0;
