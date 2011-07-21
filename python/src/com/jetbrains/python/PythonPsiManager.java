@@ -31,6 +31,7 @@ public class PythonPsiManager extends AbstractProjectComponent implements PsiTre
   }
 
   public void treeChanged(PsiTreeChangeEventImpl event) {
+    if (!(event.getFile() instanceof PyFile)) return;
     boolean changedInsideCodeBlock = false;
 
     switch (event.getCode()) {
@@ -41,6 +42,7 @@ public class PythonPsiManager extends AbstractProjectComponent implements PsiTre
         }
 
       case CHILDREN_CHANGED :
+        if (event.isGenericChildrenChange()) return;
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
       break;
 
