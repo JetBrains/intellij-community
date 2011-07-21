@@ -22,7 +22,7 @@ public class PyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, "Python") {
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
-        return new PyCodeStylePanel(settings);
+        return new PyCodeStyleMainPanel(settings);
       }
 
       public String getHelpTopic() {
@@ -36,8 +36,4 @@ public class PyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
     return "Python";
   }
 
-  @Override
-  public boolean hasSettingsPage() {
-    return false;
-  }
 }
