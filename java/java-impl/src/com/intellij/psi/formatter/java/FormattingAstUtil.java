@@ -86,6 +86,28 @@ public class FormattingAstUtil {
     return result;
   }
 
+  @Nullable
+  public static ASTNode getPrev(@NotNull ASTNode node, @NotNull IElementType... typesToIgnore) {
+    ASTNode prev = node.getTreePrev();
+    ASTNode parent = node.getTreeParent();
+    while (prev == null && parent != null) {
+      prev = parent.getTreePrev();
+      parent = parent.getTreeParent();
+    }
+
+    if (prev == null) {
+      return null;
+    }
+
+    for (IElementType type : typesToIgnore) {
+      if (prev.getElementType() == type) {
+        return getPrev(prev, typesToIgnore);
+      }
+    }
+    
+    return prev;
+  }
+
   /**
    * Tries to get next non-white space <code>AST</code> node for the given one.
    *
