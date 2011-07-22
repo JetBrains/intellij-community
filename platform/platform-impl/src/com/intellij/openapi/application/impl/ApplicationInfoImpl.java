@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myBuildNumber = null;
   private String myLogoUrl = null;
   private Color myLogoTextColor = new Color(0, 35, 135);  // idea blue
+  private Color myProgressColor = null;
+  private int myProgressY = 350;
+  private int myProgressHeight = 2;
   private String myAboutLogoUrl = null;
   @NonNls private String myIconUrl = "/icon.png";
   @NonNls private String mySmallIconUrl = "/icon_small.png";
@@ -86,6 +89,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_LOGO = "logo";
   @NonNls private static final String ATTRIBUTE_URL = "url";
   @NonNls private static final String ATTRIBUTE_TEXTCOLOR = "textcolor";
+  @NonNls private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
+  @NonNls private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
+  @NonNls private static final String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
   @NonNls private static final String ELEMENT_ABOUT = "about";
   @NonNls private static final String ELEMENT_ICON = "icon";
   @NonNls private static final String ATTRIBUTE_SIZE32 = "size32";
@@ -171,6 +177,18 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public Color getLogoTextColor() {
     return myLogoTextColor;
+  }
+
+  public Color getProgressColor() {
+    return myProgressColor;
+  }
+
+  public int getProgressY() {
+    return myProgressY;
+  }
+
+  public int getProgressHeight() {
+    return myProgressHeight;
   }
 
   public String getAboutLogoUrl() {
@@ -343,7 +361,19 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (logoElement != null) {
       myLogoUrl = logoElement.getAttributeValue(ATTRIBUTE_URL);
       final int rgb = Integer.parseInt(logoElement.getAttributeValue(ATTRIBUTE_TEXTCOLOR), 16);
-      myLogoTextColor = new Color(rgb); 
+      myLogoTextColor = new Color(rgb);
+      String v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_COLOR);
+      if (v != null) {
+        myProgressColor = new Color(Integer.parseInt(v, 16));
+      }
+      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
+      if (v != null) {
+        myProgressY = Integer.parseInt(v);
+      }
+      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_HEIGHT);
+      if (v != null) {
+        myProgressHeight = Integer.parseInt(v);
+      }
     }
 
     Element aboutLogoElement = parentNode.getChild(ELEMENT_ABOUT);
