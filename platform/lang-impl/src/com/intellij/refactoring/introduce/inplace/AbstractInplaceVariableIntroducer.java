@@ -140,10 +140,7 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
     Disposer.register(myBalloon, new Disposable() {
       @Override
       public void dispose() {
-        final Boolean isRestart = myEditor.getUserData(INTRODUCE_RESTART);
-        if (isRestart == null || !isRestart.booleanValue()) {
-          releaseResources();
-        }
+        releaseIfNotRestart();
       }
     });
     int y = screenPoint.y;
@@ -152,6 +149,13 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
     }
     myTarget = new RelativePoint(new Point(screenPoint.x, y));
     myBalloon.show(myTarget, Balloon.Position.above);
+  }
+
+  protected void releaseIfNotRestart() {
+    final Boolean isRestart = myEditor.getUserData(INTRODUCE_RESTART);
+    if (isRestart == null || !isRestart.booleanValue()) {
+      releaseResources();
+    }
   }
 
   @Override

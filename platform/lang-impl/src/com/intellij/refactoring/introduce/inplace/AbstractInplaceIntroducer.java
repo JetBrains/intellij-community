@@ -288,7 +288,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
     myEditor.getDocument().removeDocumentListener(myDocumentAdapter);
     if (myBalloon == null) {
-      releaseResources();
+      releaseIfNotRestart();
     }
     super.finish();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
