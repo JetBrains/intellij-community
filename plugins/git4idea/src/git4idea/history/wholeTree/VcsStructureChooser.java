@@ -330,6 +330,7 @@ public class VcsStructureChooser extends DialogWrapper {
       mySelectionManager = selectionManager;
       myModulesSet = modulesSet;
       myRoots = roots;
+      setBackground(tree.getBackground());
       myColoredRenderer = new ColoredTreeCellRenderer() {
         @Override
         public void customizeCellRenderer(JTree tree,
@@ -355,8 +356,10 @@ public class VcsStructureChooser extends DialogWrapper {
           }
         }
       };
+      myTextRenderer.setBackground(tree.getBackground());
 
       myCheckbox = new JCheckBox();
+      myCheckbox.setBackground(tree.getBackground());
       myEmpty = new JLabel("");
 
       add(myCheckbox, BorderLayout.WEST);
