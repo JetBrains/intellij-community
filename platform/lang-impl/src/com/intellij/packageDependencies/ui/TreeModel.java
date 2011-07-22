@@ -24,13 +24,25 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 
 public class TreeModel extends DefaultTreeModel {
-  private final int myMarkedFileCount;
-  private final int myTotalFileCount;
+  private int myMarkedFileCount;
+  private int myTotalFileCount;
+
+  public TreeModel(TreeNode root) {
+    super(root);
+  }
 
   public TreeModel(TreeNode root, int total, int marked) {
     super(root);
     myMarkedFileCount = marked;
     myTotalFileCount = total;
+  }
+
+  public void setMarkedFileCount(int markedFileCount) {
+    myMarkedFileCount = markedFileCount;
+  }
+
+  public void setTotalFileCount(int totalFileCount) {
+    myTotalFileCount = totalFileCount;
   }
 
   public int getMarkedFileCount() {

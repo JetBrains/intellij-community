@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -101,7 +102,7 @@ public class FileTreeModelBuilder {
       myFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory()) {
-            counting(fileOrDir);
+            counting();
           }
           return true;
         }
@@ -117,13 +118,21 @@ public class FileTreeModelBuilder {
   }
 
   public TreeModel build(final Project project, boolean showProgress) {
-    return build(project, showProgress, false);
+    return build(project, showProgress, null);
   }
 
-  public TreeModel build(final Project project, final boolean showProgress, final boolean sortByType) {
+  public TreeModel build(final Project project, final boolean showProgress, @Nullable final Runnable successRunnable) {
     final Runnable buildingRunnable = new Runnable() {
       public void run() {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) {
+          indicator.setText(SCANNING_PACKAGES_MESSAGE);
+          indicator.setIndeterminate(true);
+        }
         countFiles(project);
+        if (indicator != null) {
+          indicator.setIndeterminate(false);
+        }
         myFileIndex.iterateContent(new ContentIterator() {
           PackageDependenciesNode lastParent = null;
           public boolean processFile(VirtualFile fileOrDir) {
@@ -137,34 +146,51 @@ public class FileTreeModelBuilder {
         });
       }
     };
-
+    final TreeModel treeModel = new TreeModel(myRoot);
     if (showProgress) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle
-        .message("package.dependencies.build.process.title"), true, project);
+      final Task.Backgroundable backgroundable =
+        new Task.Backgroundable(project, AnalysisScopeBundle.message("package.dependencies.build.process.title")) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            buildingRunnable.run();
+          }
+
+          @Override
+          public void onSuccess() {
+            myRoot.setSorted(false);
+            myRoot.sortChildren();
+            treeModel.reload(myRoot);
+            if (successRunnable != null) {
+              successRunnable.run();
+            }
+          }
+        };
+      ProgressManager.getInstance().run(backgroundable);
     }
     else {
       buildingRunnable.run();
     }
 
-    return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
+    treeModel.setTotalFileCount(myTotalFileCount);
+    treeModel.setMarkedFileCount(myMarkedFileCount);
+    return treeModel;
   }
 
-  private void counting(final VirtualFile file) {
+  private void counting() {
     myTotalFileCount++;
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      update(file, indicator, true, 0);
+      update(indicator, true, -1);
     }
   }
 
-  private static void update(VirtualFile file, ProgressIndicator indicator, boolean indeterminate, double fraction) {
+  private static void update(ProgressIndicator indicator, boolean indeterminate, double fraction) {
     if (indicator instanceof PanelProgressIndicator) {
       ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, indeterminate, fraction);
     } else {
-      indicator.setText(SCANNING_PACKAGES_MESSAGE);
-      indicator.setIndeterminate(indeterminate);
-      indicator.setText2(file.getPresentableUrl());
-      indicator.setFraction(fraction);
+      if (fraction != -1) {
+        indicator.setFraction(fraction);
+      }
     }
   }
 
@@ -199,7 +225,7 @@ public class FileTreeModelBuilder {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (file == null || !file.isValid()) return null;
     if (indicator != null) {
-      update(file, indicator, false, ((double)myScannedFileCount++) / myTotalFileCount);
+      update(indicator, false, ((double)myScannedFileCount++) / myTotalFileCount);
     }
 
 

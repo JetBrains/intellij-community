@@ -85,7 +85,9 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
             myProgressPanel.myTextLabel.setText(scanningPackagesMessage);
             int fraction = (int)(ffraction * 99 + 0.5);
             myProgressPanel.myFractionLabel.setText(fraction + "%");
-            myProgressPanel.myFractionProgress.setValue(fraction);
+            if (fraction != -1) {
+              myProgressPanel.myFractionProgress.setValue(fraction);
+            }
             myProgressPanel.myFractionProgress.setIndeterminate(indeterminate);
           }
         });

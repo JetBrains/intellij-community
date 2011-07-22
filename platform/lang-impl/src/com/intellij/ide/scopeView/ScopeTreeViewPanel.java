@@ -69,10 +69,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
@@ -272,7 +269,15 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         return packageSet != null && (packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(file, holder) : packageSet.contains(PackageSetBase.getPsiFile(file, holder), holder));
       }
     }, settings);
-    myTree.setModel(myBuilder.build(myProject, showProgress, projectView.isSortByType(ScopeViewPane.ID)));
+    myTree.setPaintBusy(true);
+    myTree.getEmptyText().setText("Loading...");
+    myTree.setModel(myBuilder.build(myProject, showProgress, new Runnable(){
+      @Override
+      public void run() {
+        myTree.setPaintBusy(false);
+        myTree.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+      }
+    }));
     ((PackageDependenciesNode)myTree.getModel().getRoot()).sortChildren();
     ((DefaultTreeModel)myTree.getModel()).reload();
     myTreeExpansionMonitor.restore();
