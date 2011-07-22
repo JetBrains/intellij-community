@@ -824,8 +824,9 @@ public class AsmCodeGenerator {
         pushBorderProperties(container, generator, borderTitle, componentLocal);
 
         Type borderFactoryType = ourBorderFactoryType;
-        if (container.getDelegeeClientProperties().get(ourBorderFactoryClientProperty) != null) {
-          borderFactoryType = typeFromClassName(((StringDescriptor)container.getDelegeeClientProperties().get(ourBorderFactoryClientProperty)).getValue());
+        StringDescriptor borderFactoryValue = (StringDescriptor)container.getDelegeeClientProperties().get(ourBorderFactoryClientProperty);
+        if (borderFactoryValue != null && borderFactoryValue.getValue().length() != 0) {
+          borderFactoryType = typeFromClassName(borderFactoryValue.getValue());
         }
 
         generator.invokeStatic(borderFactoryType, ourCreateTitledBorderMethod);
