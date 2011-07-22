@@ -86,7 +86,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
         </clientProperties>
         <border type="etched" title-resource-bundle="com/jetbrains/python/PyBundle" title-key="runcfg.unittest.dlg.tests_group_title"/>
         <children>
