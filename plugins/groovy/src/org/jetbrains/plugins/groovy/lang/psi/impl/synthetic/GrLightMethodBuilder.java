@@ -185,6 +185,11 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return myReturnType;
   }
 
+  public GrTypeElement setReturnType(String returnType) {
+    setReturnType(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeByFQClassName(returnType, getResolveScope()));
+    return null;
+  }
+
   public GrTypeElement setReturnType(PsiType returnType) {
     myReturnType = returnType;
     return null;
