@@ -372,6 +372,8 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   protected abstract int indexToAddr(int idx);
 
+  protected abstract int getRecordSize();
+
   private static class MyDataIS extends DataInputStream {
     private MyDataIS(ResizeableMappedFile raf) {
       super(new MyBufferedIS(new MappedFileInputStream(raf, 0, 0)));

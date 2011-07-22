@@ -1,6 +1,7 @@
 package com.intellij.util.io;
 
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * Created by IntelliJ IDEA.
@@ -9,8 +10,6 @@ import gnu.trove.TIntObjectHashMap;
 * Time: 1:34 PM
 */
 abstract class IntToIntBtree {
-  protected static final int NULL_ID = 0;
-
   static final boolean doSanityCheck = false;
   static final boolean doDump = false;
 
@@ -67,17 +66,16 @@ abstract class IntToIntBtree {
 
   protected abstract void doLoadPage(int address, byte[] pageBuffer);
 
-  public int get(int key) {
+  public @Nullable Integer get(int key) {
     BtreeIndexNodeView currentIndexNode = new BtreeIndexNodeView(this);
     currentIndexNode.setAddress(root.address);
     int index = currentIndexNode.locate(key, false);
 
-    if (index < 0) return NULL_ID;
+    if (index < 0) return null;
     return currentIndexNode.addressAt(index);
   }
 
   public void put(int key, int value) {
-    if (value == 0) throw new UnsupportedOperationException("Zero value is not supported");
     BtreeIndexNodeView currentIndexNode = new BtreeIndexNodeView(this);
     currentIndexNode.setAddress(root.address);
     int index = currentIndexNode.locate(key, true);
@@ -256,7 +254,7 @@ abstract class IntToIntBtree {
       return -(lo + 1);
     }
 
-    private int addressAt(int i) {
+    final int addressAt(int i) {
       if (doSanityCheck) {
         short childrenCount = getChildrenCount();
         myAssert(i < childrenCount || (!isIndexLeaf() && i == childrenCount));
@@ -279,7 +277,7 @@ abstract class IntToIntBtree {
       return address + i * INTERIOR_SIZE + META_PAGE_LEN;
     }
 
-    private int keyAt(int i) {
+    final int keyAt(int i) {
       if (doSanityCheck) myAssert(i < getChildrenCount());
       return getInt(indexToOffset(i) + 4);
     }
