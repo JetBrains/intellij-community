@@ -588,13 +588,12 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       }
     }
 
+    //expand/collapse state should be restored in actual request if needed
     private void queueUpdate(final Runnable request, boolean updateImmediately) {
       final Runnable wrapped = new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
-          myTreeExpansionMonitor.freeze();
           request.run();
-          myTreeExpansionMonitor.restore();
         }
       };
       if (updateImmediately && isTreeShowing()) {
