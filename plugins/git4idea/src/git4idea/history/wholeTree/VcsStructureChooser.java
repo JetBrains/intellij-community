@@ -146,6 +146,10 @@ public class VcsStructureChooser extends DialogWrapper {
     final Comparator<VirtualFile> comparator = new Comparator<VirtualFile>() {
       @Override
       public int compare(VirtualFile o1, VirtualFile o2) {
+        final boolean isDir1 = o1.isDirectory();
+        final boolean isDir2 = o2.isDirectory();
+        if (isDir1 != isDir2) return isDir1 ? -1 : 1;
+
         final String module1 = myModulesSet.get(o1);
         final String path1 = module1 != null ? module1 : o1.getPath();
         final String module2 = myModulesSet.get(o2);
