@@ -287,7 +287,7 @@ public class ScopeEditorPanel {
     return toolbar.getComponent();
   }
 
-  private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus){
+  private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis){
     myUpdateAlarm.cancelAllRequests();
     final Runnable request = new Runnable() {
       public void run() {
@@ -318,11 +318,11 @@ public class ScopeEditorPanel {
         });
       }
     };
-    myUpdateAlarm.addRequest(request, 1000);
+    myUpdateAlarm.addRequest(request, delayMillis);
   }
 
   private void rebuild(final boolean updateText) {
-    rebuild(updateText, null, true);
+    rebuild(updateText, null, true, 300);
   }
 
   public void setHolder(NamedScopesHolder holder) {
@@ -419,7 +419,7 @@ public class ScopeEditorPanel {
   public void reset(PackageSet packageSet, @Nullable Runnable runnable) {
     myCurrentScope = packageSet;
     myPatternField.setText(myCurrentScope == null ? "" : myCurrentScope.getText());
-    rebuild(false, runnable, false);
+    rebuild(false, runnable, false, 0);
   }
 
   private void setToComponent(final JComponent cmp, final boolean requestFocus) {
