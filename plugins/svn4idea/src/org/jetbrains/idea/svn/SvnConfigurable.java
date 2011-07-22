@@ -253,8 +253,8 @@ public class SvnConfigurable implements Configurable {
       myNumRevsInAnnotations.setValue(annotateRevisions);
     }
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
-    mySSHConnectionTimeout.setValue(configuration.mySSHConnectionTimeout / 1000);
-    mySSHReadTimeout.setValue(configuration.mySSHReadTimeout / 1000);
+    mySSHConnectionTimeout.setValue(Long.valueOf(configuration.mySSHConnectionTimeout / 1000));
+    mySSHReadTimeout.setValue(Long.valueOf(configuration.mySSHReadTimeout / 1000));
   }
 
   public void disposeUIResources() {
@@ -280,8 +280,8 @@ public class SvnConfigurable implements Configurable {
     final int maximum = 30 * 60 * 1000;
     final long connection = configuration.mySSHConnectionTimeout <= maximum ? configuration.mySSHConnectionTimeout : maximum;
     final long read = configuration.mySSHReadTimeout <= maximum ? configuration.mySSHReadTimeout : maximum;
-    mySSHConnectionTimeout = new JSpinner(new SpinnerNumberModel(connection / 1000, 0, maximum, 10));
-    mySSHReadTimeout = new JSpinner(new SpinnerNumberModel(read / 1000, 0, maximum, 10));
+    mySSHConnectionTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(connection / 1000).longValue(), 0, maximum, 10));
+    mySSHReadTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000).longValue(), 0, maximum, 10));
   }
 }
 
