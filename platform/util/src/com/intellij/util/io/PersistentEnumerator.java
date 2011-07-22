@@ -49,7 +49,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private int valuesCount; // TODO: valuesCount should be persistent
 
   public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new MappedFileEnumeratorStorage(file, initialSize), dataDescriptor, initialSize);
+    super(file, new MappedFileSimpleStorage(file, initialSize), dataDescriptor, initialSize);
   }
 
   protected  void setupEmptyFile() throws IOException {

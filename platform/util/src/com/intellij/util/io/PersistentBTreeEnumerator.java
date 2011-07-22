@@ -45,8 +45,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private final boolean myInlineKeysNoMapping;
 
   public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new MappedFileEnumeratorStorage(file, initialSize, 1024 * 1024, 10f, false), dataDescriptor, initialSize);
+    super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024, 10f, false), dataDescriptor, initialSize);
 
+    myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantInlineKeyMapping();
     myBuffer = new byte[getRecordSize()];
 
     if (btree == null) {
@@ -56,32 +57,18 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         storeBTreeVars(false);
       }
     }
-
-    myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantInlineKeyMapping();
   }
 
   protected boolean wantInlineKeyMapping() {
-    return true;
+    return false;
   }
 
   private void initBtree(boolean initial) {
-    btree = new IntToIntBtree(PAGE_SIZE, myRootNodeStart, initial) {
+    btree = new IntToIntBtree(PAGE_SIZE, myRootNodeStart, myStorage, initial) {
 
       @Override
       protected int allocEmptyPage() {
         return PersistentBTreeEnumerator.this.allocPage();
-      }
-
-      @Override
-      protected void doSavePage(int address, byte[] pageBuffer) {
-        if (doSanityCheck) myAssert(pageBuffer.length == PAGE_SIZE);
-        myStorage.put(address, pageBuffer, 0, pageBuffer.length);
-      }
-
-      @Override
-      protected void doLoadPage(int address, byte[] pageBuffer) {
-        if (doSanityCheck) myAssert(pageBuffer.length == PAGE_SIZE);
-        myStorage.get(address, pageBuffer, 0, pageBuffer.length);
       }
 
       @Override
