@@ -642,4 +642,8 @@
   <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.OptimizeOptionsCheckinHandlerFactory"/>
   <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeAnalysisCheckinHandlerFactory"/>
   <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.TodoCheckinHandlerFactory"/>
+
+  <projectService serviceInterface="com.intellij.openapi.vcs.CodeSmellDetector"
+                  serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
+
 </extensions>
