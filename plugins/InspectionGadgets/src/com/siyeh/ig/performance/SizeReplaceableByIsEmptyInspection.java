@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 Bas Leijdekkers
+ * Copyright 2006-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "size.replaceable.by.isempty.problem.descriptor", infos[0]);
+                "expression.can.be.replaced.problem.descriptor", infos[0]);
     }
 
     @Override
@@ -117,7 +117,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
 
         @NonNls private String isEmptyCall = "";
 
-        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(
+                PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiExpression rhs = expression.getROperand();
             if (rhs == null) {
@@ -128,11 +129,13 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
             }
             final PsiExpression lhs = expression.getLOperand();
             if (lhs instanceof PsiMethodCallExpression) {
-              if (canBeReplacedByIsEmpty(lhs, rhs, false, expression.getOperationTokenType())) {
+              if (canBeReplacedByIsEmpty(lhs, rhs, false,
+                      expression.getOperationTokenType())) {
                     registerError(expression, isEmptyCall);
                 }
             } else if (rhs instanceof PsiMethodCallExpression) {
-              if (canBeReplacedByIsEmpty(rhs, lhs, true, expression.getOperationTokenType())) {
+              if (canBeReplacedByIsEmpty(rhs, lhs, true,
+                      expression.getOperationTokenType())) {
                     registerError(expression, isEmptyCall);
                 }
             }
@@ -156,7 +159,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
             if (constant != 0) {
                 return false;
             }
-          if (JavaTokenType.EQEQ.equals(tokenType)) {
+            if (JavaTokenType.EQEQ.equals(tokenType)) {
                 return true;
             }
             if (ignoreNegations) {

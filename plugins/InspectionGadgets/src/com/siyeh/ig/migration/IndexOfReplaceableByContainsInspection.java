@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2010  Bas Leijdekkers
+ * Copyright 2005-2011  Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,15 +57,17 @@ public class IndexOfReplaceableByContainsInspection
         if (lhs instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression callExpression =
                     (PsiMethodCallExpression)lhs;
-            text = createContainsExpressionText(callExpression, false, expression.getOperationTokenType());
+            text = createContainsExpressionText(callExpression, false,
+                    expression.getOperationTokenType());
         } else {
             final PsiMethodCallExpression callExpression =
                     (PsiMethodCallExpression)expression.getROperand();
             assert callExpression != null;
-            text = createContainsExpressionText(callExpression, true, expression.getOperationTokenType());
+            text = createContainsExpressionText(callExpression, true,
+                    expression.getOperationTokenType());
         }
         return InspectionGadgetsBundle.message(
-                "indexof.replaceable.by.contains.problem.descriptor", text);
+                "expression.can.be.replaced.problem.descriptor", text);
     }
 
     @Override
@@ -93,13 +95,14 @@ public class IndexOfReplaceableByContainsInspection
                 final PsiMethodCallExpression callExpression =
                         (PsiMethodCallExpression)lhs;
                 newExpressionText =
-                        createContainsExpressionText(callExpression,
-                                                     false, expression.getOperationTokenType());
+                        createContainsExpressionText(callExpression, false,
+                                expression.getOperationTokenType());
             } else if (rhs instanceof PsiMethodCallExpression) {
                 final PsiMethodCallExpression callExpression =
                         (PsiMethodCallExpression)rhs;
                 newExpressionText =
-                        createContainsExpressionText(callExpression, true, expression.getOperationTokenType());
+                        createContainsExpressionText(callExpression, true,
+                                expression.getOperationTokenType());
             } else {
                 return;
             }
@@ -165,11 +168,13 @@ public class IndexOfReplaceableByContainsInspection
             }
             final PsiExpression lhs = expression.getLOperand();
             if (lhs instanceof PsiMethodCallExpression) {
-              if (canBeReplacedByContains(lhs, rhs, false, expression.getOperationTokenType())) {
+              if (canBeReplacedByContains(lhs, rhs, false,
+                      expression.getOperationTokenType())) {
                     registerError(expression, expression);
                 }
             } else if (rhs instanceof PsiMethodCallExpression) {
-              if (canBeReplacedByContains(rhs, lhs, true, expression.getOperationTokenType())) {
+              if (canBeReplacedByContains(rhs, lhs, true,
+                      expression.getOperationTokenType())) {
                     registerError(expression, expression);
                 }
             }

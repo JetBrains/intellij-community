@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 Bas Leijdekkers
+ * Copyright 2006-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class LengthOneStringInIndexOfInspection
         final String string = (String)infos[0];
         final String escapedString = StringUtil.escapeStringCharacters(string);
         return InspectionGadgetsBundle.message(
-                "length.one.strings.in.concatenation.problem.descriptor",
+                "expression.can.be.replaced.problem.descriptor",
                 escapedString);
     }
 

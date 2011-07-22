@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,30 +32,30 @@ import org.jetbrains.annotations.NotNull;
 public class LengthOneStringsInConcatenationInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "length.one.strings.in.concatenation.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "SingleCharacterStringConcatenation";
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final String string = (String)infos[0];
         final String escapedString = StringUtil.escapeStringCharacters(string);
         return InspectionGadgetsBundle.message(
-                "length.one.strings.in.concatenation.problem.descriptor",
+                "expression.can.be.replaced.problem.descriptor",
                 escapedString);
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new LengthOneStringsInConcatenationVisitor();
-    }
-
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new ReplaceStringsWithCharsFix();
     }
@@ -68,6 +69,7 @@ public class LengthOneStringsInConcatenationInspection
                     "length.one.strings.in.concatenation.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiExpression expression =
@@ -83,6 +85,11 @@ public class LengthOneStringsInConcatenationInspection
             }
             replaceExpression(expression, charLiteral);
         }
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
+        return new LengthOneStringsInConcatenationVisitor();
     }
 
     private static class LengthOneStringsInConcatenationVisitor
@@ -109,20 +116,18 @@ public class LengthOneStringsInConcatenationInspection
         private static boolean isArgumentOfConcatenation(
                 PsiExpression expression) {
             final PsiElement parent = expression.getParent();
-            if (!(parent instanceof PsiBinaryExpression)) {
+            if (!(parent instanceof PsiPolyadicExpression)) {
                 return false;
             }
-            final PsiBinaryExpression binaryExp = (PsiBinaryExpression)parent;
-          if (!JavaTokenType.PLUS.equals(binaryExp.getOperationTokenType())) {
+            final PsiPolyadicExpression polyadicExpression =
+                    (PsiPolyadicExpression)parent;
+            if (!JavaTokenType.PLUS.equals(
+                    polyadicExpression.getOperationTokenType())) {
                 return false;
             }
-            final PsiExpression lhs = binaryExp.getLOperand();
-            final PsiExpression sibling;
-            if (lhs.equals(expression)) {
-                sibling = binaryExp.getROperand();
-            } else {
-                sibling = lhs;
-            }
+            final PsiExpression sibling =
+                    ExpressionUtils.getPrevOrNextSiblingOfType(expression,
+                            PsiExpression.class);
             if (sibling == null) {
                 return false;
             }
