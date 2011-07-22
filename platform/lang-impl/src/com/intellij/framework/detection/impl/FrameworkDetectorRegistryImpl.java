@@ -165,4 +165,9 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
   public Collection<Integer> getDetectorsId(@NotNull FileType fileType) {
     return myDetectorsByFileType.get(fileType);
   }
+
+  @Override
+  public int[] getAllDetectorIds() {
+    return myDetectorIds.getValues();
+  }
 }

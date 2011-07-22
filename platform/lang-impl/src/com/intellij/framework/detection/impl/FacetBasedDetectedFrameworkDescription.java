@@ -19,12 +19,15 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Set;
 
@@ -36,14 +39,24 @@ public class FacetBasedDetectedFrameworkDescription<C extends FacetConfiguration
   private final C myConfiguration;
   private final Set<VirtualFile> myRelatedFiles;
   private final FacetType<?,C> myFacetType;
+  private FrameworkType myFrameworkType;
 
   public FacetBasedDetectedFrameworkDescription(@NotNull Module module, @NotNull C configuration, Set<VirtualFile> files, FacetType<?, C> type) {
     myModule = module;
     myConfiguration = configuration;
     myRelatedFiles = files;
     myFacetType = type;
+    final Icon icon = myFacetType.getIcon();
+    myFrameworkType = new FrameworkType(myFacetType.getPresentableName(), icon != null ? icon : EmptyIcon.ICON_16);
   }
 
+  @NotNull
+  @Override
+  public FrameworkType getFrameworkType() {
+    return myFrameworkType;
+  }
+
+  @NotNull
   @Override
   public Collection<? extends VirtualFile> getRelatedFiles() {
     return myRelatedFiles;

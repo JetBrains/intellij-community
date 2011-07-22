@@ -13,31 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework.detection;
+package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.FrameworkType;
-import com.intellij.openapi.roots.ModifiableModelsProvider;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 /**
  * @author nik
  */
-public abstract class DetectedFrameworkDescription {
-  @NotNull
-  public abstract FrameworkType getFrameworkType();
+public class FrameworkTypeNode extends DetectedFrameworkTreeNodeBase {
+  private final FrameworkType myFrameworkType;
 
-  @NotNull
-  public abstract Collection<? extends VirtualFile> getRelatedFiles();
+  public FrameworkTypeNode(@NotNull FrameworkType frameworkType) {
+    super(frameworkType);
+    myFrameworkType = frameworkType;
+  }
 
-  @NotNull
-  public abstract String getDescription();
-
-  public abstract void configureFramework(ModifiableModelsProvider modifiableModelsProvider);
-
-  public abstract boolean equals(Object obj);
-
-  public abstract int hashCode();
+  @Override
+  public void renderNode(ColoredTreeCellRenderer renderer) {
+    renderer.setIcon(myFrameworkType.getIcon());
+    renderer.append(myFrameworkType.getPresentableName());
+  }
 }

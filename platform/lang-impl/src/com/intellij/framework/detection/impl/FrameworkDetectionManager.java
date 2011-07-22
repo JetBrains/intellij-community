@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.FrameworkDetector;
+import com.intellij.framework.detection.impl.ui.SetupDetectedFrameworksDialog;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
@@ -33,6 +34,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -57,7 +59,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       runDetection();
     }
   };
-  private final MultiMap<Integer, VirtualFile> myFilesToProcess = new MultiMap<Integer, VirtualFile>();
+  private final Set<Integer> myDetectorsToProcess = new HashSet<Integer>();
   private MergingUpdateQueue myDetectionQueue;
   private final Object myLock = new Object();
   private DetectedFrameworksData myDetectedFrameworksData;
@@ -73,7 +75,8 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
   @Override
   public void initComponent() {
-    myDetectionQueue = new MergingUpdateQueue("FrameworkDetectionQueue", 300, true, null, myProject);
+    if (myProject.isDefault()) return;
+    myDetectionQueue = new MergingUpdateQueue("FrameworkDetectionQueue", 500, true, null, myProject);
     myDetectedFrameworksData = new DetectedFrameworksData(myProject);
     FrameworkDetectionIndex.getInstance().addListener(this, myProject);
     myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
@@ -87,7 +90,18 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
         myDetectionQueue.resume();
       }
     });
+  }
 
+  @Override
+  public void projectOpened() {
+    final int[] ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
+    synchronized (myLock) {
+      myDetectorsToProcess.clear();
+      for (int id : ids) {
+        myDetectorsToProcess.add(id);
+      }
+    }
+    queueDetection();
   }
 
   @Override
@@ -98,8 +112,12 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
   @Override
   public void fileUpdated(@NotNull VirtualFile file, @NotNull Integer detectorId) {
     synchronized (myLock) {
-      myFilesToProcess.putValue(detectorId, file);
+      myDetectorsToProcess.add(detectorId);
     }
+    queueDetection();
+  }
+
+  private void queueDetection() {
     myDetectionQueue.queue(myDetectionUpdate);
   }
 
@@ -115,8 +133,9 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
   private void runDetection() {
     Set<Integer> detectorsToProcess;
     synchronized (myLock) {
-      detectorsToProcess = myDetectedFrameworksData.updateNewFiles(myFilesToProcess);
-      myFilesToProcess.clear();
+      detectorsToProcess = new HashSet<Integer>(myDetectorsToProcess);
+      detectorsToProcess.addAll(myDetectorsToProcess);
+      myDetectorsToProcess.clear();
     }
 
     final FileBasedIndex index = FileBasedIndex.getInstance();
@@ -126,7 +145,13 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       final Collection<VirtualFile> newFiles = myDetectedFrameworksData.retainNewFiles(key, files);
       FrameworkDetector detector = FrameworkDetectorRegistry.getInstance().getDetectorById(key);
       if (detector != null) {
-        final List<? extends DetectedFrameworkDescription> frameworks = detector.detect(newFiles, new FrameworkDetectionContextImpl(myProject));
+        final List<? extends DetectedFrameworkDescription> frameworks;
+        if (!newFiles.isEmpty()) {
+          frameworks = detector.detect(newFiles, new FrameworkDetectionContextImpl(myProject));
+        }
+        else {
+          frameworks = Collections.emptyList();
+        }
         final List<? extends DetectedFrameworkDescription> updated = myDetectedFrameworksData.updateFrameworksList(key, frameworks);
         if (!updated.isEmpty()) {
           newDescriptions.put(key, updated);
@@ -134,31 +159,54 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       }
     }
 
+    Set<String> frameworkNames = new HashSet<String>();
     for (final Integer detectorId : newDescriptions.keySet()) {
       for (final DetectedFrameworkDescription description : newDescriptions.get(detectorId)) {
-        final String text = ProjectBundle.message("framework.detected.info.text", description.getDescription());
-        FRAMEWORK_DETECTION_NOTIFICATION.createNotification("Frameworks detected", text, NotificationType.INFORMATION, new NotificationListener() {
+        frameworkNames.add(description.getFrameworkType().getPresentableName());
+      }
+    }
+    if (!frameworkNames.isEmpty()) {
+      String names = StringUtil.join(frameworkNames, ", ");
+      final String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());
+      FRAMEWORK_DETECTION_NOTIFICATION
+        .createNotification("Frameworks detected", text, NotificationType.INFORMATION, new NotificationListener() {
           @Override
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
             if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-              setupFramework(description, detectorId, notification);
+              showSetupFrameworksDialog(notification);
             }
           }
         }).notify(myProject);
-      }
     }
   }
 
-  private void setupFramework(DetectedFrameworkDescription description, Integer detectorId, Notification notification) {
-    notification.expire();
-    AccessToken token = WriteAction.start();
-    try {
-      description.configureFramework(new PlatformModifiableModelsProvider());
-      final Collection<? extends VirtualFile> files = description.getRelatedFiles();
-      myDetectedFrameworksData.putExistentFrameworkFiles(detectorId, files);
+  private void showSetupFrameworksDialog(Notification notification) {
+    final MultiMap<Integer,DetectedFrameworkDescription> frameworks = myDetectedFrameworksData.getDetectedFrameworks();
+    IdentityHashMap<DetectedFrameworkDescription, Integer> frameworksToId = new IdentityHashMap<DetectedFrameworkDescription, Integer>();
+    List<DetectedFrameworkDescription> descriptions = new ArrayList<DetectedFrameworkDescription>();
+    for (Integer id : frameworks.keySet()) {
+      for (DetectedFrameworkDescription description : frameworks.get(id)) {
+        descriptions.add(description);
+        frameworksToId.put(description, id);
+      }
     }
-    finally {
-      token.finish();
+    final SetupDetectedFrameworksDialog dialog = new SetupDetectedFrameworksDialog(myProject, descriptions);
+    dialog.show();
+    if (dialog.isOK()) {
+      notification.expire();
+      List<DetectedFrameworkDescription> selected = dialog.getSelectedFrameworks();
+      AccessToken token = WriteAction.start();
+      try {
+        final PlatformModifiableModelsProvider provider = new PlatformModifiableModelsProvider();
+        for (DetectedFrameworkDescription description : selected) {
+          description.configureFramework(provider);
+          final Collection<? extends VirtualFile> files = description.getRelatedFiles();
+          myDetectedFrameworksData.putExistentFrameworkFiles(frameworksToId.get(description), files);
+        }
+      }
+      finally {
+        token.finish();
+      }
     }
   }
 

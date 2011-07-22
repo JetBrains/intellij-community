@@ -76,21 +76,37 @@ public class DetectedFrameworksData {
   }
 
   public Collection<VirtualFile> retainNewFiles(@NotNull Integer detectorId, @NotNull Collection<VirtualFile> files) {
-    TIntHashSet set = null;
+    TIntHashSet oldSet = myNewFiles.get(detectorId);
+    if (oldSet == null) {
+      oldSet = new TIntHashSet();
+      myNewFiles.put(detectorId, oldSet);
+    }
+
+    TIntHashSet existentFilesSet = null;
     try {
-      set = myExistentFrameworkFiles.get(detectorId);
+      existentFilesSet = myExistentFrameworkFiles.get(detectorId);
     }
     catch (IOException e) {
       LOG.info(e);
     }
     final ArrayList<VirtualFile> newFiles = new ArrayList<VirtualFile>();
+    TIntHashSet newSet = new TIntHashSet();
     for (VirtualFile file : files) {
       final int fileId = FileBasedIndex.getFileId(file);
-      if (set == null || !set.contains(fileId)) {
+      if (existentFilesSet == null || !existentFilesSet.contains(fileId)) {
         newFiles.add(file);
+        newSet.add(fileId);
       }
     }
+    if (newSet.equals(oldSet)) {
+      return Collections.emptyList();
+    }
+    myNewFiles.put(detectorId, newSet);
     return newFiles;
+  }
+
+  public MultiMap<Integer, DetectedFrameworkDescription> getDetectedFrameworks() {
+    return myDetectedFrameworks;
   }
 
   public List<? extends DetectedFrameworkDescription> updateFrameworksList(Integer detectorId,
@@ -101,25 +117,6 @@ public class DetectedFrameworksData {
       frameworks.removeAll(oldFrameworks);
     }
     return frameworks;
-  }
-
-  public Set<Integer> updateNewFiles(MultiMap<Integer, VirtualFile> files) {
-    final Set<Integer> affectedDetectors = new HashSet<Integer>();
-    for (Integer detectorId : files.keySet()) {
-      TIntHashSet oldSet = myNewFiles.get(detectorId);
-      final Collection<VirtualFile> newFiles = files.get(detectorId);
-      if (oldSet == null) {
-        if (newFiles.isEmpty()) continue;
-      }
-      TIntHashSet newSet = new TIntHashSet();
-      for (VirtualFile file : newFiles) {
-        newSet.add(FileBasedIndex.getFileId(file));
-      }
-      if (newSet.equals(oldSet)) continue;
-      myNewFiles.put(detectorId, newSet);
-      affectedDetectors.add(detectorId);
-    }
-    return affectedDetectors;
   }
 
   public void putExistentFrameworkFiles(Integer id, Collection<? extends VirtualFile> files) {

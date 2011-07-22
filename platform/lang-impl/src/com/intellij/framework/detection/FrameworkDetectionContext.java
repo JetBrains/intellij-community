@@ -15,10 +15,12 @@
  */
 package com.intellij.framework.detection;
 
+import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +38,17 @@ public interface FrameworkDetectionContext {
   FacetsProvider getFacetsProvider();
 
   @NotNull
-  <C extends FacetConfiguration>
-  List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetType<?, C> facetType, @NotNull Collection<VirtualFile> files);
+  <F extends Facet, C extends FacetConfiguration>
+  List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetType<F, C> facetType, @NotNull Collection<VirtualFile> files);
+
+  @NotNull
+  <F extends Facet, C extends FacetConfiguration>
+  List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetType<F, C> facetType, @NotNull Collection<VirtualFile> files,
+                                                                               @NotNull FacetConfigurationCreator<F, C> creator);
+
+  abstract class FacetConfigurationCreator<F extends Facet, C extends FacetConfiguration> {
+    @NotNull
+    public abstract List<Pair<C,Collection<VirtualFile>>> createConfigurations(@NotNull Collection<VirtualFile> files,
+                                                                               @NotNull Collection<F> existentFacets);
+  }
 }

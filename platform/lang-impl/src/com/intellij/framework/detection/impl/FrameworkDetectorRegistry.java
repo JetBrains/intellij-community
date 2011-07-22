@@ -40,4 +40,6 @@ public abstract class FrameworkDetectorRegistry {
 
   @NotNull
   public abstract Collection<Integer> getDetectorsId(@NotNull FileType fileType);
+
+  public abstract int[] getAllDetectorIds();
 }
