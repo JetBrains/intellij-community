@@ -413,10 +413,10 @@ public class CheckboxTreeBase extends Tree {
   }
 
   public static class CheckPolicy {
-    boolean checkChildrenWithCheckedParent;
-    boolean uncheckChildrenWithUncheckedParent;
-    boolean checkParentWithCheckedChild;
-    boolean uncheckParentWithUncheckedChild;
+    final boolean checkChildrenWithCheckedParent;
+    final boolean uncheckChildrenWithUncheckedParent;
+    final boolean checkParentWithCheckedChild;
+    final boolean uncheckParentWithUncheckedChild;
 
     public CheckPolicy(final boolean checkChildrenWithCheckedParent,
                        final boolean uncheckChildrenWithUncheckedParent,

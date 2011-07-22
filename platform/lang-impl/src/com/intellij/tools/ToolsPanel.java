@@ -77,13 +77,14 @@ class ToolsPanel extends JPanel {
 
     myTree = new CheckboxTree(
       new CheckboxTree.CheckboxTreeCellRenderer() {
-        public void customizeCellRenderer(final JTree tree,
+        public void customizeRenderer(final JTree tree,
                                           final Object value,
                                           final boolean selected,
                                           final boolean expanded,
                                           final boolean leaf,
                                           final int row,
                                           final boolean hasFocus) {
+          if (!(value instanceof CheckedTreeNode)) return;
           Object object = ((CheckedTreeNode)value).getUserObject();
           // Fix GTK background
           if (UIUtil.isUnderGTKLookAndFeel()) {

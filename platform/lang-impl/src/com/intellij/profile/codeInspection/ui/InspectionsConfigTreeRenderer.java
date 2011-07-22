@@ -36,14 +36,14 @@ import java.awt.*;
 abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
   protected abstract String getFilter();
 
-  public void customizeCellRenderer(final JTree tree,
+  public void customizeRenderer(final JTree tree,
                                     final Object value,
                                     final boolean selected,
                                     final boolean expanded,
                                     final boolean leaf,
                                     final int row,
                                     final boolean hasFocus) {
-
+    if (!(value instanceof InspectionConfigTreeNode)) return;
     InspectionConfigTreeNode node = (InspectionConfigTreeNode)value;
 
     Object object = node.getUserObject();

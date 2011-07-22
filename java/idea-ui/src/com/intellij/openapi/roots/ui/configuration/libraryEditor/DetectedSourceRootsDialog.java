@@ -128,13 +128,14 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
    */
   private CheckboxTree createCheckboxTree() {
     CheckboxTree tree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(true) {
-      public void customizeCellRenderer(JTree tree,
+      public void customizeRenderer(JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
+        if (!(value instanceof CheckedTreeNode)) return;
         CheckedTreeNode node = (CheckedTreeNode)value;
         VirtualFile file = (VirtualFile)node.getUserObject();
         String text;

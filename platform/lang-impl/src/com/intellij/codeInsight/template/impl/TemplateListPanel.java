@@ -632,14 +632,14 @@ class TemplateListPanel extends JPanel {
     myTreeRoot = new CheckedTreeNode(null);
 
     myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(){
-      public void customizeCellRenderer(final JTree tree,
+      public void customizeRenderer(final JTree tree,
                                         Object value,
                                         final boolean selected,
                                         final boolean expanded,
                                         final boolean leaf,
                                         final int row,
                                         final boolean hasFocus) {
-
+        if (!(value instanceof DefaultMutableTreeNode)) return;
         value = ((DefaultMutableTreeNode)value).getUserObject();
         // Fix GTK background
         if (UIUtil.isUnderGTKLookAndFeel()){

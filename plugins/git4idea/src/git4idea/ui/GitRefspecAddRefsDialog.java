@@ -237,13 +237,14 @@ public class GitRefspecAddRefsDialog extends DialogWrapper {
     myTreeRoot = new CheckedTreeNode("");
     myReferenceChooser = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer() {
 
-      public void customizeCellRenderer(final JTree tree,
+      public void customizeRenderer(final JTree tree,
                                         final Object value,
                                         final boolean selected,
                                         final boolean expanded,
                                         final boolean leaf,
                                         final int row,
                                         final boolean hasFocus) {
+        if (!(value instanceof CheckedTreeNode)) return;
         // Fix GTK background
         if (UIUtil.isUnderGTKLookAndFeel()) {
           final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
