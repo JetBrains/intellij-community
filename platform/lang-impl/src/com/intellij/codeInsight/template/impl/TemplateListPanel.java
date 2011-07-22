@@ -34,7 +34,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nullable;
@@ -641,11 +640,6 @@ class TemplateListPanel extends JPanel {
                                         final boolean hasFocus) {
         if (!(value instanceof DefaultMutableTreeNode)) return;
         value = ((DefaultMutableTreeNode)value).getUserObject();
-        // Fix GTK background
-        if (UIUtil.isUnderGTKLookAndFeel()){
-          final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-          UIUtil.changeBackGround(this, background);
-        }
 
         if (value instanceof TemplateImpl) {
           //getTextRenderer().setIcon(TEMPLATE_ICON);

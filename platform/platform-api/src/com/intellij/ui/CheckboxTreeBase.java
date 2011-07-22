@@ -17,6 +17,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -337,6 +338,11 @@ public class CheckboxTreeBase extends Tree {
         myCheckbox.setVisible(false);
       }
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+      // Fix GTK background
+      if (UIUtil.isUnderGTKLookAndFeel()) {
+        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        UIUtil.changeBackGround(this, background);
+      }
       customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       revalidate();
 

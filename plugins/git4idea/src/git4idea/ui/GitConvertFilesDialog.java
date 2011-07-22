@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.DialogManager;
@@ -29,7 +28,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -148,11 +146,6 @@ public class GitConvertFilesDialog extends DialogWrapper {
   static class FileTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      // Fix GTK background
-      if (UIUtil.isUnderGTKLookAndFeel()){
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-        UIUtil.changeBackGround(this, background);
-      }
       ColoredTreeCellRenderer r = getTextRenderer();
       if (!(value instanceof CheckedTreeNode)) {
         // unknown node type

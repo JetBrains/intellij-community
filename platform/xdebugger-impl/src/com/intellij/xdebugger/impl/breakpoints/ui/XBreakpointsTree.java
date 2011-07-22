@@ -22,7 +22,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -38,9 +37,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author nik
@@ -195,11 +192,6 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
   private static class BreakpointsTreeCellRenderer extends CheckboxTreeCellRenderer {
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      // Fix GTK background
-      if (UIUtil.isUnderGTKLookAndFeel()){
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-        UIUtil.changeBackGround(this, background);
-      }
       if (value instanceof BreakpointNode) {
         BreakpointNode node = (BreakpointNode)value;
         XBreakpoint breakpoint = node.getBreakpoint();

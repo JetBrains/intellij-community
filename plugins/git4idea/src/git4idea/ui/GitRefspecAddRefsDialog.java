@@ -25,7 +25,6 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
 import git4idea.GitTag;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashSet;
@@ -245,11 +243,6 @@ public class GitRefspecAddRefsDialog extends DialogWrapper {
                                         final int row,
                                         final boolean hasFocus) {
         if (!(value instanceof CheckedTreeNode)) return;
-        // Fix GTK background
-        if (UIUtil.isUnderGTKLookAndFeel()) {
-          final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-          UIUtil.changeBackGround(this, background);
-        }
         final CheckedTreeNode node = (CheckedTreeNode)value;
         final Object userObject = node.getUserObject();
         String text;
