@@ -15,34 +15,137 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.lang.*;
+import com.intellij.lang.impl.PsiBuilderFactoryImpl;
+import com.intellij.mock.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiFileFactoryImpl;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.CachedValuesManagerImpl;
+import com.intellij.util.DefaultCachedValuesFactory;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NonNls;
+import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public abstract class ParsingTestCase extends LightPlatformTestCase {
+public abstract class ParsingTestCase extends PlatformLiteFixture {
+  protected String myFilePrefix = "";
   protected String myFileExt;
   @NonNls private final String myFullDataPath;
   protected PsiFile myFile;
+  private MockPsiManager myPsiManager;
+  private PsiFileFactoryImpl myFileFactory;
+  protected Language myLanguage;
+  private ParserDefinition[] myDefinitions = new ParserDefinition[0];
 
   public ParsingTestCase(@NonNls String dataPath, String fileExt) {
     myFullDataPath = getTestDataPath() + "/psi/" + dataPath;
     myFileExt = fileExt;
   }
 
+  public ParsingTestCase(@NonNls String dataPath, String fileExt, Language language) {
+    myLanguage = language;
+    myFullDataPath = getTestDataPath() + dataPath;
+    myFileExt = fileExt;
+  }
+
+  public ParsingTestCase(@NonNls String dataPath, String fileExt, ParserDefinition... definitions) {
+    myDefinitions = definitions;
+    myFullDataPath = getTestDataPath() + "/" + dataPath;
+    myFileExt = fileExt;
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    initApplication();
+    myProject = disposeOnTearDown(new MockProject());
+    myPsiManager = new MockPsiManager(myProject);
+    myFileFactory = new PsiFileFactoryImpl(myPsiManager);
+    final MutablePicoContainer appContainer = getApplication().getPicoContainer();
+    registerComponentInstance(appContainer, MessageBus.class, MessageBusFactory.newMessageBus(getApplication()));
+    registerComponentInstance(appContainer, SchemesManagerFactory.class, new MockSchemesManagerFactory());
+    registerComponentInstance(appContainer, EditorFactory.class, new MockEditorFactory());
+    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl());
+    registerComponentInstance(appContainer, PsiDocumentManager.class, new MockPsiDocumentManager());
+    myLanguage = myLanguage == null && myDefinitions != null && myDefinitions.length > 0? myDefinitions[0].getFileNodeType().getLanguage() : myLanguage;
+    registerComponentInstance(appContainer, FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
+    registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
+    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new DefaultCachedValuesFactory(myProject)));
+    myProject.registerService(PsiManager.class, myPsiManager);
+    myProject.registerService(StartupManager.class, new StartupManagerImpl(myProject));
+    registerExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
+
+    for (ParserDefinition definition : myDefinitions) {
+      addExplicitExtension(LanguageParserDefinitions.INSTANCE, definition.getFileNodeType().getLanguage(), definition);
+    }
+  }
+
+  protected <T> void addExplicitExtension(final LanguageExtension<T> instance, final Language language, final T object) {
+    instance.addExplicitExtension(language, object);
+    Disposer.register(myProject, new Disposable() {
+      @Override
+      public void dispose() {
+        instance.removeExplicitExtension(language, object);
+      }
+    });
+  }
+
+  @Override
+  protected <T> void registerExtensionPoint(final ExtensionPointName<T> extensionPointName, Class<T> aClass) {
+    super.registerExtensionPoint(extensionPointName, aClass);
+    Disposer.register(myProject, new Disposable() {
+      @Override
+      public void dispose() {
+        Extensions.getRootArea().unregisterExtensionPoint(extensionPointName.getName());
+      }
+    });
+  }
+
+  protected <T> void registerApplicationService(final Class<T> aClass, T object) {
+    getApplication().registerService(aClass, object);
+    Disposer.register(myProject, new Disposable() {
+      @Override
+      public void dispose() {
+        getApplication().getPicoContainer().unregisterComponent(aClass.getName());
+      }
+    });
+  }
+
+  public MockProject getProject() {
+    return myProject;
+  }
+
+  public MockPsiManager getPsiManager() {
+    return myPsiManager;
+  }
+
   @Override
   protected void tearDown() throws Exception {
-    myFile = null;
     super.tearDown();
+    myFile = null;
+    myProject = null;
+    myPsiManager = null;
   }
 
   protected String getTestDataPath() {
@@ -51,6 +154,14 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
 
   protected boolean includeRanges() {
     return false;
+  }
+
+  protected boolean skipSpaces() {
+    return false;
+  }
+
+  protected boolean checkAllPsiRoots() {
+    return true;
   }
 
   protected void doTest(boolean checkResult) {
@@ -64,7 +175,7 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
         checkResult(name + ".txt", myFile);
       }
       else{
-        toParseTreeText(myFile, includeRanges());
+        toParseTreeText(myFile, skipSpaces(), includeRanges());
       }
     }
     catch (IOException e) {
@@ -81,24 +192,42 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     checkResult(name + suffix + ".txt", myFile);
   }
 
+  protected void doCodeTest(String code) throws IOException {
+    String name = getTestName(false);
+    myFile = createPsiFile("a", code);
+    myFile.accept(new PsiRecursiveElementVisitor(){});
+    assertEquals(code, myFile.getText());
+    checkResult(myFilePrefix + name + ".txt", myFile);
+  }
+
   protected PsiFile createPsiFile(String name, String text) {
     return createFile(name + "." + myFileExt, text);
   }
 
-  protected void checkResult(@NonNls @TestDataFile String targetDataName, final PsiFile file) throws IOException {
-    doCheckResult(myFullDataPath, file, targetDataName, includeRanges());
+  protected PsiFile createFile(String name, String text) {
+    LightVirtualFile virtualFile = new LightVirtualFile(name, myLanguage, text);
+    return myFileFactory.trySetupPsiForFile(virtualFile, myLanguage, true, false);
   }
 
-  public static void doCheckResult(String myFullDataPath, PsiFile file, String targetDataName, boolean printRanges) throws IOException {
-    final PsiElement[] psiRoots = file.getPsiRoots();
+  protected void checkResult(@NonNls @TestDataFile String targetDataName, final PsiFile file) throws IOException {
+    doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges());
+  }
+
+  public static void doCheckResult(String myFullDataPath,
+                                   PsiFile file,
+                                   boolean checkAllPsiRoots,
+                                   String targetDataName,
+                                   boolean skipSpaces,
+                                   boolean printRanges) throws IOException {
+    final PsiElement[] psiRoots = checkAllPsiRoots? file.getPsiRoots() : PsiElement.EMPTY_ARRAY;
     if(psiRoots.length > 1){
       for (int i = 0; i < psiRoots.length; i++) {
         final PsiElement psiRoot = psiRoots[i];
-        doCheckResult(myFullDataPath, targetDataName + "." + i, toParseTreeText(psiRoot, printRanges).trim());
+        doCheckResult(myFullDataPath, targetDataName + "." + i, toParseTreeText(psiRoot, skipSpaces, printRanges).trim());
       }
     }
     else{
-      doCheckResult(myFullDataPath, targetDataName, toParseTreeText(file, printRanges).trim());
+      doCheckResult(myFullDataPath, targetDataName, toParseTreeText(file, skipSpaces, printRanges).trim());
     }
   }
 
@@ -125,8 +254,8 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     }
   }
 
-  protected static String toParseTreeText(final PsiElement file, boolean printRanges) {
-    return DebugUtil.psiToString(file, false, printRanges);
+  protected static String toParseTreeText(final PsiElement file,  boolean skipSpaces, boolean printRanges) {
+    return DebugUtil.psiToString(file, skipSpaces, printRanges);
   }
 
   protected String loadFile(@NonNls @TestDataFile String name) throws IOException {

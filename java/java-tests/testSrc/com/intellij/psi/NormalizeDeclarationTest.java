@@ -1,18 +1,19 @@
 package com.intellij.psi;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
-import java.io.File;
-
 @PlatformTestCase.WrapInCommand
 public class NormalizeDeclarationTest extends PsiTestCase{
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/normalizeDeclaration";
+
+  @Override
+  protected String getTestDataPath() {
+    return BASE_PATH;
+  }
 
   public void test1() throws Exception { doTest(); }
   public void test2() throws Exception { doTest(); }
@@ -37,10 +38,4 @@ public class NormalizeDeclarationTest extends PsiTestCase{
     PsiTestUtil.checkFileStructure(myFile);
   }
 
-  private static String loadFile(String name) throws Exception {
-    String fullName = BASE_PATH + File.separatorChar + name;
-    String text = FileUtil.loadFile(new File(fullName));
-    text = StringUtil.convertLineSeparators(text);
-    return text;
-  }
 }

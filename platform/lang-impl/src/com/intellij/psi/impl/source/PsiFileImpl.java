@@ -229,7 +229,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     if (getViewProvider().isEventSystemEnabled()) {
-      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myManager.getProject());
+      if (documentManager instanceof PsiDocumentManagerImpl) {
+        ((PsiDocumentManagerImpl)documentManager).contentsLoaded(this);
+      }
     }
 
     return treeElement;

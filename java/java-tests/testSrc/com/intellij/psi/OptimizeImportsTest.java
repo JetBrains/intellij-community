@@ -18,18 +18,17 @@ package com.intellij.psi;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PsiTestCase;
 
-import java.io.File;
-
 public class OptimizeImportsTest extends PsiTestCase{
   private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
+
+  @Override
+  protected String getTestDataPath() {
+    return BASE_PATH;
+  }
 
   public void testSCR6138() throws Exception { doTest(); }
   public void testSCR18364() throws Exception { doTest(); }
@@ -76,12 +75,5 @@ public class OptimizeImportsTest extends PsiTestCase{
       }
     }, "", "");
 
-  }
-
-  private static String loadFile(String name) throws Exception {
-    String fullName = BASE_PATH + File.separatorChar + name;
-    String text = FileUtil.loadFile(new File(fullName));
-    text = StringUtil.convertLineSeparators(text);
-    return text;
   }
 }

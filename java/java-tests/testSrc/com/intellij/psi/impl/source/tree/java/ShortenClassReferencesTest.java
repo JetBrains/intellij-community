@@ -3,21 +3,22 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestCase;
 
-import java.io.File;
-
 /**
  * @author dsl
  */
 public class ShortenClassReferencesTest extends PsiTestCase {
   private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/shortenClassRefs";
+
+  @Override
+  protected String getTestDataPath() {
+    return BASE_PATH;
+  }
 
   public void testSCR22368() throws Exception { doTest(); }
 
@@ -70,12 +71,5 @@ public class ShortenClassReferencesTest extends PsiTestCase {
         });
       }
     }, "", "");
-  }
-
-  private String loadFile(String name) throws Exception {
-    String fullName = BASE_PATH + File.separatorChar + name;
-    String text = FileUtil.loadFile(new File(fullName));
-    text = StringUtil.convertLineSeparators(text);
-    return text;
   }
 }

@@ -18,7 +18,10 @@ package com.intellij.ide.startup.impl;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -203,6 +206,8 @@ public class StartupManagerImpl extends StartupManagerEx {
     final Runnable runnable;
 
     final Application application = ApplicationManager.getApplication();
+    if (application == null) return;
+
     if (DumbService.isDumbAware(action)) {
       runnable = new DumbAwareRunnable() {
         public void run() {

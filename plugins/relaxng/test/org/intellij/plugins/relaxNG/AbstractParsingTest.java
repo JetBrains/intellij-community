@@ -16,11 +16,9 @@
 
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.testFramework.ParsingTestCase;
+import org.intellij.plugins.relaxNG.compact.RncParserDefinition;
 
 /*
 * Created by IntelliJ IDEA.
@@ -29,21 +27,11 @@ import com.intellij.testFramework.ParsingTestCase;
 */
 public abstract class AbstractParsingTest extends ParsingTestCase {
   public AbstractParsingTest(String s) {
-    super(s, "rnc");
+    super("psi/"+s, "rnc", new RncParserDefinition());
   }
 
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("relaxng") + "/testData/parsing";
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    new WriteAction() {
-      protected void run(Result result) throws Throwable {
-        new ApplicationLoader().initComponent();
-        ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined");
-      }
-    }.execute();
-  }
 }

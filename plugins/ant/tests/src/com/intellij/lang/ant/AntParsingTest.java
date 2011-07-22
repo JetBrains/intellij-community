@@ -16,19 +16,33 @@
 
 package com.intellij.lang.ant;
 
+import com.intellij.lang.LanguageASTFactory;
+import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.lang.xml.XMLParserDefinition;
+import com.intellij.lang.xml.XmlASTFactory;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.testFramework.ParsingTestCase;
 
 public class AntParsingTest extends ParsingTestCase {
 
   public AntParsingTest() {
-    super("", "ant");
+    super("", "ant", new XMLParserDefinition());
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
+    registerExtensionPoint(new ExtensionPointName<XmlChildRole.StartTagEndTokenProvider>("com.intellij.xml.startTagEndToken"),
+                           XmlChildRole.StartTagEndTokenProvider.class);
   }
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("ant") + "/tests/data";
+    return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi";
   }
 
   public void testSingleProject() throws Exception {
