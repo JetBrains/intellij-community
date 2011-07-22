@@ -50,8 +50,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   @NonNls
   public static final String DATA_FILE_EXTENSION = ".values";
   private int myGarbageSize;
-  private static final int VALUE_REF_OFFSET = RECORD_SIZE;
-  private final byte[] myRecordBuffer = new byte[RECORD_SIZE + 8 + 4];
+  private final int myParentValueRefOffset;
+  private final byte[] myRecordBuffer;
 
   private static class AppendStream extends DataOutputStream {
     private AppendStream() {
@@ -133,6 +133,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   
   public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFiles(file), keyDescriptor, initialSize);
+    myParentValueRefOffset = getRecordSize();
+    myRecordBuffer = new byte[myParentValueRefOffset + 8 + 4];
+
     try {
       myValueExternalizer = valueExternalizer;
       myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath());
@@ -200,12 +203,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       final ByteSequence bytes = record.getInternalBuffer();
 
       HeaderRecord header = readValueId(id);
-      if (header != null) {
-        myGarbageSize += header.size;
-      }
-      else {
-        header = new HeaderRecord();
-      }
+      myGarbageSize += header.size;
 
       header.size = bytes.getLength();
       header.address = myValueStorage.appendBytes(bytes, 0);
@@ -307,9 +305,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       markDirty(true);
 
       final HeaderRecord record = readValueId(id);
-      if (record != null) {
-        myGarbageSize += record.size;
-      }
+      myGarbageSize += record.size;
 
       updateValueId(id, new HeaderRecord());
     }
@@ -388,14 +384,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   private HeaderRecord readValueId(final int keyId) {
     HeaderRecord result = new HeaderRecord();
-    result.address = myStorage.getLong(keyId + VALUE_REF_OFFSET);
-    result.size = myStorage.getInt(keyId + VALUE_REF_OFFSET + 8);
+    result.address = myStorage.getLong(keyId + myParentValueRefOffset);
+    result.size = myStorage.getInt(keyId + myParentValueRefOffset + 8);
     return result;
   }
 
   private void updateValueId(final int keyId, HeaderRecord value) {
-    myStorage.putLong(keyId + VALUE_REF_OFFSET, value.address);
-    myStorage.putInt(keyId + VALUE_REF_OFFSET + 8, value.size);
+    myStorage.putLong(keyId + myParentValueRefOffset, value.address);
+    myStorage.putInt(keyId + myParentValueRefOffset + 8, value.size);
   }
 
   @Override
@@ -406,7 +402,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   @Override
   protected void setupRecord(final int hashCode, final int dataOffset, final byte[] buf) {
     super.setupRecord(hashCode, dataOffset, buf);
-    for (int i = VALUE_REF_OFFSET; i < myRecordBuffer.length; i++) {
+    for (int i = myParentValueRefOffset; i < myRecordBuffer.length; i++) {
       buf[i] = 0;
     }
   }
