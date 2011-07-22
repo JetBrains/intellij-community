@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -367,7 +367,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     for (IdeaPluginDescriptor plugin : plugins) {
       if (PluginManager.shouldSkipPlugin(plugin)) continue;
       if (mySplash != null) {
-        mySplash.showProgress("Initializing " + plugin.getName() + "...", 0.5f + 0.5f * ((float)++i / pluginCount));
+        final float p = (float)++i / pluginCount;
+        final float progress = p + (1 - p) * PluginManager.PLUGINS_PROGRESS_MAX_VALUE;
+        mySplash.showProgress(plugin.getName(), progress);
       }
       loadComponentsConfiguration(plugin.getAppComponents(), plugin, false);
     }
