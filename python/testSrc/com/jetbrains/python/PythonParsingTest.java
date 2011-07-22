@@ -1,18 +1,20 @@
 package com.jetbrains.python;
 
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 /**
  * @author yole
  */
 @TestDataPath("$CONTENT_ROOT/../testData/psi/")
 public class PythonParsingTest extends ParsingTestCase {
+  private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
+
   public PythonParsingTest() {
-    super("", "py");
+    super("psi", "py", new PythonParserDefinition());
     PyLightFixtureTestCase.initPlatformPrefix();
   }
 
@@ -293,12 +295,20 @@ public class PythonParsingTest extends ParsingTestCase {
 
 
   public void doTest(LanguageLevel languageLevel) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(ourProject, languageLevel);
+    LanguageLevel prev = myLanguageLevel;
+    myLanguageLevel = languageLevel;
     try {
       doTest(true);
     }
     finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(ourProject, null);
+      myLanguageLevel = prev;
     }
+  }
+
+  @Override
+  protected PsiFile createFile(String name, String text) {
+    final PsiFile file = super.createFile(name, text);
+    file.getVirtualFile().putUserData(LanguageLevel.KEY, myLanguageLevel);
+    return file;
   }
 }
