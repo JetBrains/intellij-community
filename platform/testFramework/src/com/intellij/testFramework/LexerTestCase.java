@@ -68,7 +68,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
     }
   }
 
-  private String printTokens(String text, int start) {
+  protected String printTokens(String text, int start) {
     return printTokens(text, start, createLexer());
   }
 

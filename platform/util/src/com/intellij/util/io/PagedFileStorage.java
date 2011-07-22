@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +58,8 @@ public class PagedFileStorage implements Forceable {
 
   private final StorageLock myLock;
   private boolean myZeroWhenExpand;
+  private int myLastPage = -1;
+  private MappedByteBuffer myLastBuffer;
 
   public static class StorageLock {
     private final boolean checkThreadAccess;
@@ -296,6 +299,8 @@ public class PagedFileStorage implements Forceable {
         myLock.myBuffersCache.remove(entry.getKey());
       }
     }
+    myLastPage = -1;
+    myLastBuffer = null;
   }
 
   public void resize(int newSize) throws IOException {
@@ -354,8 +359,14 @@ public class PagedFileStorage implements Forceable {
   }
 
   private ByteBuffer getBuffer(int page) {
+    if (myLastPage == page) {
+      return myLastBuffer;
+    }
     try {
-      return myLock.myBuffersCache.get(new PageKey(this, page)).buf();
+      MappedByteBuffer buf = myLock.myBuffersCache.get(new PageKey(this, page)).buf();
+      myLastPage = page;
+      myLastBuffer = buf;
+      return buf;
     }
     catch (IOException e) {
       throw new MappingFailedException("Cannot map buffer", e);

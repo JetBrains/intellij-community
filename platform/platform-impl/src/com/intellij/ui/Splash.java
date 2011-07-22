@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,36 @@
 package com.intellij.ui;
 
 import com.intellij.ide.StartupProgress;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+
+/**
+ * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and find
+ * section corresponding to IDE logo. It should look like:
+ * <p>
+ *   &lt;logo url=&quot;/idea_logo.png&quot; textcolor=&quot;919191&quot; progressColor=&quot;264db5&quot; progressY=&quot;235&quot;/&gt;
+ * </p>
+ * <p>where <code>url</code> is path to your splash image
+ * <p><code>textColor</code> is HEX representation of text color for user name
+ * <p><code>progressColor</code> is progress bar color
+ * <p><code>progressY</code> is Y coordinate of the progress bar
+ *
+ * @author Konstantin Bulenkov
+ */
 public class Splash extends JDialog implements StartupProgress {
   private final Icon myImage;
   private final JLabel myLabel;
-  private final Color myTextColor;
+  private int myProgressHeight = 2;
+  private Color myProgressColor = null;
+  private int myProgressY;
 
   public Splash(String imageName, final Color textColor) {
     setUndecorated(true);
@@ -36,8 +54,7 @@ public class Splash extends JDialog implements StartupProgress {
     setFocusableWindowState(false);
 
     Icon originalImage = IconLoader.getIcon(imageName);
-    myTextColor = textColor;
-    myImage = new MyIcon(originalImage, myTextColor);
+    myImage = new SplashImage(originalImage, textColor);
     myLabel = new JLabel(myImage);
     Container contentPane = getContentPane();
     contentPane.setLayout(new BorderLayout());
@@ -48,6 +65,16 @@ public class Splash extends JDialog implements StartupProgress {
     setLocationRelativeTo(null);
   }
 
+  public Splash(ApplicationInfoEx info) {
+    this(info.getLogoUrl(), info.getLogoTextColor());
+    if (info instanceof ApplicationInfoImpl) {
+      final ApplicationInfoImpl appInfo = (ApplicationInfoImpl)info;
+      myProgressHeight = 2;
+      myProgressColor = appInfo.getProgressColor();
+      myProgressY = appInfo.getProgressY();
+    }
+  }
+
   public void show() {
     super.show();
     toFront();
@@ -56,76 +83,82 @@ public class Splash extends JDialog implements StartupProgress {
 
   @Override
   public void showProgress(String message, float progress) {
-    Graphics g = getGraphics();
-    UIUtil.applyRenderingHints(g);
-    g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.PLAIN, 10));
+    if (getProgressColor() == null) return;
 
-    int y = getHeight() - 21;
-    int brightness = 220;
-    g.setColor(new Color(brightness, brightness, brightness));
-    int x = 20;
-    int progressWidth = (int)(398 * progress);
-    g.fillRect(1, y, progressWidth, 20);
+    final Graphics g = getGraphics();
+    final GraphicsConfig config = new GraphicsConfig(g);
+    final int y = getProgressY();
+    final Color col = getProgressColor();
+    //final Color col2 = new Color(col.getRed(), col.getGreen(), col.getBlue(), 64);
+    final int progressWidth = (int)((myImage.getIconWidth() - 2) * progress);
+    g.setColor(col);
+    //for (int i = 1; i <= progressWidth; i++) {
+    //  g.setColor(col);
+    //  final int offset = i % 2 == 0 ? 1 : 0;
+    //  g.fillRect(i, y + offset, 1, 1);
+    //  g.setColor(col2);
+    //  g.fillRect(i, y + 1 - offset, 1, 1);
+    //}
+    g.fillRect(1, y, progressWidth, getProgressHeight());
+    config.restore();
+  }
 
-    brightness = 240;
-    g.setColor(new Color(brightness, brightness, brightness));
-    g.fillRect(1 + progressWidth, y, 398 - progressWidth, 20);
+  private int getProgressHeight() {
+    return myProgressHeight;
+  }
 
-    g.setColor(Color.DARK_GRAY);
-//    g.setXORMode(Color.WHITE);
-    g.drawString(message, x, getHeight() - 8);
+  private Color getProgressColor() {
+    return myProgressColor;
+  }
+
+  private int getProgressY() {
+    return myProgressY;
   }
 
   public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor) {
-    if (!ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
-      return false;
-    }
-    LicensingFacade provider = LicensingFacade.getInstance();
-    if (provider != null) {
-      UIUtil.applyRenderingHints(g);
-      g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
-      g.setColor(textColor);
-      final String licensedToMessage = provider.getLicensedToMessage();
-      final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
-      int indent = 20;
-      g.drawString(licensedToMessage, x + indent, y + height - 49);
-      if (licenseRestrictionsMessages.size() > 0) {
-        g.drawString(licenseRestrictionsMessages.get(0), x + indent, y + height - 33);
+    if (ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
+      final LicensingFacade provider = LicensingFacade.getInstance();
+      if (provider != null) {
+        UIUtil.applyRenderingHints(g);
+        g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
+        g.setColor(textColor);
+        final String licensedToMessage = provider.getLicensedToMessage();
+        final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
+        g.drawString(licensedToMessage, x + 21, y + height - 49);
+        if (licenseRestrictionsMessages.size() > 0) {
+          g.drawString(licenseRestrictionsMessages.get(0), x + 21, y + height - 33);
+        }
       }
+      return true;
     }
-    return true;
+    return false;
   }
 
-  private static final class MyIcon implements Icon {
-    private final Icon myOriginalIcon;
+  private static final class SplashImage implements Icon {
+    private final Icon myIcon;
     private final Color myTextColor;
 
-    public MyIcon(Icon originalIcon, Color textColor) {
-      myOriginalIcon = originalIcon;
+    public SplashImage(Icon originalIcon, Color textColor) {
+      myIcon = originalIcon;
       myTextColor = textColor;
     }
 
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      yield();
-      myOriginalIcon.paintIcon(c, g, x, y);
+      try {
+        Thread.sleep(10);
+      } catch (InterruptedException ignore) {}
+
+      myIcon.paintIcon(c, g, x, y);
 
       showLicenseeInfo(g, x, y, getIconHeight(), myTextColor);
     }
 
-    private static void yield() {
-      try {
-        Thread.sleep(10);
-      }
-      catch (InterruptedException ignore) {
-      }
-    }
-
     public int getIconWidth() {
-      return myOriginalIcon.getIconWidth();
+      return myIcon.getIconWidth();
     }
 
     public int getIconHeight() {
-      return myOriginalIcon.getIconHeight();
+      return myIcon.getIconHeight();
     }
   }
 }

@@ -45,11 +45,11 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int COLLISION_OFFSET = 0;
   private static final int KEY_HASHCODE_OFFSET = COLLISION_OFFSET + 4;
   private static final int KEY_REF_OFFSET = KEY_HASHCODE_OFFSET + 4;
-  protected static final int RECORD_SIZE = KEY_REF_OFFSET + 4;
+  private static final int RECORD_SIZE = KEY_REF_OFFSET + 4;
   private int valuesCount; // TODO: valuesCount should be persistent
 
   public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new MappedFileEnumeratorStorage(file, initialSize), dataDescriptor, initialSize);
+    super(file, new MappedFileSimpleStorage(file, initialSize), dataDescriptor, initialSize);
   }
 
   protected  void setupEmptyFile() throws IOException {
@@ -226,5 +226,10 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   @Override
   protected int indexToAddr(int idx) {
     return myStorage.getInt(idx + KEY_REF_OFFSET);
+  }
+
+  @Override
+  protected int getRecordSize() {
+    return RECORD_SIZE;
   }
 }

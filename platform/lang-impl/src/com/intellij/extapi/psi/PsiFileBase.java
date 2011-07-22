@@ -40,7 +40,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
     myLanguage = findLanguage(language, viewProvider);
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
     if (parserDefinition == null) {
-      throw new RuntimeException("PsiFileBase: language.getParserDefinition() returned null.");
+      throw new RuntimeException("PsiFileBase: language.getParserDefinition() returned null for: "+myLanguage);
     }
     myParserDefinition = parserDefinition;
     final IFileElementType nodeType = parserDefinition.getFileNodeType();

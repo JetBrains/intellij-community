@@ -132,7 +132,7 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
     catch (NumberFormatException e) {
       oldColor = Color.GRAY;
     }
-    Color color = ColorChooser.chooseColor(editorComponent, getText(), oldColor);
+    Color color = ColorChooser.chooseColor(editorComponent, getText(), oldColor, true);
     if (color == null) return;
     final int rgb = color.getRGB() - ((255 & 0xFF) << 24);
     if (color != null && rgb != oldColor.getRGB()) {
@@ -213,7 +213,7 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
   }
 
   private void replaceColor(JComponent editorComponent, PsiNewExpression expression, Color oldColor) {
-    final Color color = ColorChooser.chooseColor(editorComponent, getText(), oldColor);
+    final Color color = ColorChooser.chooseColor(editorComponent, getText(), oldColor, true);
     if (color != null) {
       final PsiManager manager = expression.getManager();
       final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -222,7 +222,7 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
           + color.getRed() + ", "
           + color.getGreen() + ", "
           + color.getBlue()
-          + (oldColor.getAlpha() < 255 ? ", " + oldColor.getAlpha() : "")
+          + (color.getAlpha() < 255 ? ", " + color.getAlpha() : "")
           +")", expression);
       final PsiElement insertedElement = expression.replace(newCall);
       final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();

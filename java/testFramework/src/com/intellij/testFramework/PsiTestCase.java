@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -134,6 +135,11 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath();
+  }
+
+  protected String loadFile(String name) throws Exception {
+    String result = FileUtil.loadFile(new File(getTestDataPath() + File.separatorChar + name));
+    return StringUtil.convertLineSeparators(result);
   }
 
   private PsiTestData loadData(String dataName) throws Exception {

@@ -1028,8 +1028,7 @@ public class XmlUtil {
   
   static {
     URL schemaLocationURL = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
-    VirtualFile relativeFile = schemaLocationURL != null ? VfsUtil.findFileByURL(schemaLocationURL):null;
-    HTML5_SCHEMA_LOCATION = relativeFile != null ? relativeFile.getPath():"";
+    HTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(schemaLocationURL.toExternalForm()));
   }
   
   @Nullable

@@ -1,6 +1,6 @@
 package com.intellij.util.io;
 
-import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * Created by IntelliJ IDEA.
@@ -9,8 +9,6 @@ import gnu.trove.TIntObjectHashMap;
 * Time: 1:34 PM
 */
 abstract class IntToIntBtree {
-  protected static final int NULL_ID = 0;
-
   static final boolean doSanityCheck = false;
   static final boolean doDump = false;
 
@@ -22,16 +20,16 @@ abstract class IntToIntBtree {
   private int size;
 
   private final byte[] buffer;
-  private final byte[] typedBuffer = new byte[8];
-  // TODO limit it
-  //private final TIntObjectHashMap<byte[]> pagesCache = new TIntObjectHashMap<byte[]>(100);
   private boolean isLarge = true;
+  private final ISimpleStorage storage;
 
-  public IntToIntBtree(int _pageSize, int rootAdress, boolean initial) {
+  public IntToIntBtree(int _pageSize, int rootAddress, ISimpleStorage _storage, boolean initial) {
     pageSize = _pageSize;
     buffer = new byte[_pageSize];
+    storage = _storage;
+
     root = new BtreeIndexNodeView(this);
-    root.setAddress(rootAdress);
+    root.setAddress(rootAddress);
 
     int i = (pageSize - BtreePage.META_PAGE_LEN) / BtreeIndexNodeView.INTERIOR_SIZE - 1;
     assert i < Short.MAX_VALUE && i % 2 == 0;
@@ -53,31 +51,16 @@ abstract class IntToIntBtree {
     return address;
   }
 
-  protected void savePage(int address, byte[] pageBuffer) {
-    doSavePage(address, pageBuffer);
-  }
-
-  protected abstract void doSavePage(int address, byte[] pageBuffer);
-
-  protected byte[] loadPage(int address) {
-    byte[] bytes = new byte[pageSize];
-    doLoadPage(address, bytes);
-    return bytes;
-  }
-
-  protected abstract void doLoadPage(int address, byte[] pageBuffer);
-
-  public int get(int key) {
+  public @Nullable Integer get(int key) {
     BtreeIndexNodeView currentIndexNode = new BtreeIndexNodeView(this);
     currentIndexNode.setAddress(root.address);
     int index = currentIndexNode.locate(key, false);
 
-    if (index < 0) return NULL_ID;
+    if (index < 0) return null;
     return currentIndexNode.addressAt(index);
   }
 
   public void put(int key, int value) {
-    if (value == 0) throw new UnsupportedOperationException("Zero value is not supported");
     BtreeIndexNodeView currentIndexNode = new BtreeIndexNodeView(this);
     currentIndexNode.setAddress(root.address);
     int index = currentIndexNode.locate(key, true);
@@ -163,53 +146,59 @@ abstract class IntToIntBtree {
     }
 
     protected final int getInt(int address) {
-      getBytes(address, btree.typedBuffer, 0, 4);
-      return Bits.getInt(btree.typedBuffer, 0);
+      //getBytes(address, btree.typedBuffer, 0, 4);
+      //return Bits.getInt(btree.typedBuffer, 0);
+      return btree.storage.getInt(address);
     }
 
     protected final void putInt(int offset, int value) {
-      Bits.putInt(btree.typedBuffer, 0, value);
-      putBytes(offset, btree.typedBuffer, 0, 4);
+      //Bits.putInt(btree.typedBuffer, 0, value);
+      //putBytes(offset, btree.typedBuffer, 0, 4);
+      btree.storage.putInt(offset, value);
     }
 
     protected final byte getByte(int address) {
-      getBytes(address, btree.typedBuffer, 0, 1);
-      return btree.typedBuffer[0];
+      return btree.storage.get(address);
+      //getBytes(address, btree.typedBuffer, 0, 1);
+      //return btree.typedBuffer[0];
     }
 
     protected final void putByte(int address, byte b) {
-      btree.typedBuffer[0] = b;
-      putBytes(address, btree.typedBuffer, 0, 1);
+      btree.storage.put(address, b);
+      //btree.typedBuffer[0] = b;
+      //putBytes(address, btree.typedBuffer, 0, 1);
     }
 
     protected final void getBytes(int address, byte[] dst, int offset, int length) {
-      if (buffer == null) load();
-
-      int base = address - this.address;
-      for(int i = 0; i < length; ++i) {
-        dst[offset + i] = buffer[base + i];
-      }
+      btree.storage.get(address, dst, offset, length);
+      //if (buffer == null) load();
+      //
+      //int base = address - this.address;
+      //for(int i = 0; i < length; ++i) {
+      //  dst[offset + i] = buffer[base + i];
+      //}
     }
 
     private void load() {
-      if (address == btree.root.address && btree.root != this) {
-        buffer = ((BtreePage)btree.root).buffer;
-      } else {
-        buffer = btree.loadPage(address);
-      }
+      //if (address == btree.root.address && btree.root != this) {
+      //  buffer = ((BtreePage)btree.root).buffer;
+      //} else {
+      //  buffer = btree.loadPage(address);
+      //}
     }
 
     protected final void putBytes(int address, byte[] src, int offset, int length) {
-      if (buffer == null) load();
-      int base = address - this.address;
-      for(int i = 0; i < length; ++i) {
-        buffer[base + i] = src[offset + i];
-      }
+      btree.storage.put(address, src, offset, length);
+      //if (buffer == null) load();
+      //int base = address - this.address;
+      //for(int i = 0; i < length; ++i) {
+      //  buffer[base + i] = src[offset + i];
+      //}
     }
 
     void sync() {
       if (buffer != null) {
-        btree.savePage(address, buffer);
+        //btree.savePage(address, buffer);
       }
     }
 
@@ -256,7 +245,7 @@ abstract class IntToIntBtree {
       return -(lo + 1);
     }
 
-    private int addressAt(int i) {
+    final int addressAt(int i) {
       if (doSanityCheck) {
         short childrenCount = getChildrenCount();
         myAssert(i < childrenCount || (!isIndexLeaf() && i == childrenCount));
@@ -279,7 +268,7 @@ abstract class IntToIntBtree {
       return address + i * INTERIOR_SIZE + META_PAGE_LEN;
     }
 
-    private int keyAt(int i) {
+    final int keyAt(int i) {
       if (doSanityCheck) myAssert(i < getChildrenCount());
       return getInt(indexToOffset(i) + 4);
     }

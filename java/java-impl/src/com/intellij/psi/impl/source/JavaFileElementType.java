@@ -18,7 +18,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.FileParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +44,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   public static final int STUB_VERSION = 9;
 
   public JavaFileElementType() {
-    super("java.FILE", StdLanguages.JAVA);
+    super("java.FILE", JavaLanguage.INSTANCE);
   }
 
   @Override

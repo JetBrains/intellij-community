@@ -15,6 +15,9 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.lang.LanguageASTFactory;
+import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
+import com.intellij.lang.properties.psi.impl.PropertiesASTFactory;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestCase;
@@ -25,13 +28,19 @@ import com.intellij.testFramework.PlatformTestCase;
 public class PropertiesParsingTest extends ParsingTestCase {
 
   public PropertiesParsingTest() {
-    super("", "properties");
+    super("", "properties", new PropertiesParserDefinition());
     PlatformTestCase.initPlatformLangPrefix();
   }
 
   @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    addExplicitExtension(LanguageASTFactory.INSTANCE, PropertiesLanguage.INSTANCE, new PropertiesASTFactory());
+  }
+
+  @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData/propertiesFile";
+    return PluginPathManager.getPluginHomePath("properties") + "/testData/propertiesFile/psi";
   }
 
   public void testProp1() throws Exception { doTest(true); }

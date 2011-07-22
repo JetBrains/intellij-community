@@ -599,7 +599,9 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final Runnable wrapped = new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
+          myTreeExpansionMonitor.freeze();
           request.run();
+          myTreeExpansionMonitor.restore();
         }
       };
       if (updateImmediately && isTreeShowing()) {

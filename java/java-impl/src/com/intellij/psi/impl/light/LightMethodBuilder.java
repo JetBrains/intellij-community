@@ -168,6 +168,16 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return setReturnType(new Computable.PredefinedValueComputable<PsiType>(returnType));
   }
 
+  public LightMethodBuilder setReturnType(@NotNull final String returnType) {
+    return setReturnType(new Computable.NotNullCachedComputable<PsiType>() {
+      @NotNull
+      @Override
+      protected PsiType internalCompute() {
+        return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeByFQClassName(returnType, getResolveScope());
+      }
+    });
+  }
+
   public PsiTypeElement getReturnTypeElement() {
     return null;
   }

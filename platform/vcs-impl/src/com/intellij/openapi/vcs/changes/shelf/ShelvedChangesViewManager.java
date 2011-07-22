@@ -24,6 +24,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
@@ -43,8 +44,10 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -117,6 +120,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     final AnAction showDiffAction = ActionManager.getInstance().getAction("ShelvedChanges.Diff");
     showDiffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
+    final EditSourceAction editSourceAction = new EditSourceAction();
+    editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree);
 
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", ActionPlaces.UNKNOWN);
 
@@ -304,6 +309,29 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
         sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+      } else if (PlatformDataKeys.NAVIGATABLE_ARRAY.equals(key)) {
+        List<ShelvedChange> shelvedChanges = new ArrayList<ShelvedChange>(TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class));
+        final ArrayDeque<Navigatable> navigatables = new ArrayDeque<Navigatable>();
+        final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
+        for (ShelvedChangeList changeList : changeLists) {
+          shelvedChanges.addAll(changeList.getChanges());
+        }
+        for (final ShelvedChange shelvedChange : shelvedChanges) {
+          if (shelvedChange.getBeforePath() != null && ! FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {
+            final Navigatable.Adapter navigatable = new Navigatable.Adapter() {
+              @Override
+              public void navigate(boolean requestFocus) {
+                final VirtualFile vf = shelvedChange.getBeforeVFUnderProject(myProject);
+                if (vf != null) {
+                  navigate(myProject, vf, true);
+                }
+              }
+            };
+            navigatables.add(navigatable);
+          }
+        }
+
+        sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[navigatables.size()]));
       }
     }
 

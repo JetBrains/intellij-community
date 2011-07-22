@@ -31,7 +31,7 @@ public class JavaFileType extends LanguageFileType {
   public static final JavaFileType INSTANCE = new JavaFileType();
 
   private JavaFileType() {
-    super(new JavaLanguage());
+    super(JavaLanguage.INSTANCE);
   }
 
   @NotNull

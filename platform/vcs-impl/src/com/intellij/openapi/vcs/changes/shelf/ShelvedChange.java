@@ -36,6 +36,8 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +63,14 @@ public class ShelvedChange {
 
   public String getBeforePath() {
     return myBeforePath;
+  }
+
+  @Nullable
+  public VirtualFile getBeforeVFUnderProject(final Project project) {
+    if (myBeforePath == null || project.getBaseDir() == null) return null;
+    final File baseDir = new File(project.getBaseDir().getPath());
+    final File file = new File(baseDir, myBeforePath);
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
   public String getAfterPath() {
