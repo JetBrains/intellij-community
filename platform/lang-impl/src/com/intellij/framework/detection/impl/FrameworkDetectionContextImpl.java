@@ -24,6 +24,8 @@ import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,7 +64,7 @@ public class FrameworkDetectionContextImpl implements FrameworkDetectionContext 
       @NotNull
       @Override
       public List<Pair<C,Collection<VirtualFile>>> createConfigurations(@NotNull Collection<VirtualFile> files,
-                                                                        @NotNull Collection<F> existentFacets) {
+                                                                        @NotNull ModuleRootModel rootModel, @NotNull Collection<F> existentFacets) {
         return Collections.singletonList(Pair.create(facetType.createDefaultConfiguration(), files));
       }
     });
@@ -87,7 +89,7 @@ public class FrameworkDetectionContextImpl implements FrameworkDetectionContext 
       if (facetType.isOnlyOneFacetAllowed() && !facets.isEmpty()) {
         continue;
       }
-      final List<Pair<C, Collection<VirtualFile>>> pairs = creator.createConfigurations(files, facets);
+      final List<Pair<C, Collection<VirtualFile>>> pairs = creator.createConfigurations(files, ModuleRootManager.getInstance(module), facets);
       for (Pair<C, Collection<VirtualFile>> pair : pairs) {
         result.add(new FacetBasedDetectedFrameworkDescription<C>(module, pair.getFirst(), new HashSet<VirtualFile>(pair.getSecond()), facetType));
       }

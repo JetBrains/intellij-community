@@ -19,6 +19,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,6 +50,7 @@ public interface FrameworkDetectionContext {
   abstract class FacetConfigurationCreator<F extends Facet, C extends FacetConfiguration> {
     @NotNull
     public abstract List<Pair<C,Collection<VirtualFile>>> createConfigurations(@NotNull Collection<VirtualFile> files,
+                                                                               @NotNull ModuleRootModel rootModel,
                                                                                @NotNull Collection<F> existentFacets);
   }
 }
