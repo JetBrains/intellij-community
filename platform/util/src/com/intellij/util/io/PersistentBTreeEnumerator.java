@@ -221,7 +221,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         return NULL_ID;
       }
 
-      int indexNodeValueAddress = 0;
+      int indexNodeValueAddress = keyValue != null ? keyValue:0;
       int collisionAddress = NULL_ID;
 
       if (!myInlineKeysNoMapping) {
@@ -256,6 +256,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         }
 
         if (!saveNewValue) return NULL_ID;
+      } else {
+        if (keyValue != null) return indexNodeValueAddress;
       }
 
       int newValueId = writeData(value, valueHC);  // TODO: we can store at Btree leaf index
