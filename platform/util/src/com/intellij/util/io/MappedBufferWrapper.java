@@ -108,6 +108,7 @@ public abstract class MappedBufferWrapper {
         return true;
       }
       catch (Throwable e) {
+        LOG.info(e);
         try {
           Thread.sleep(10);
         }
