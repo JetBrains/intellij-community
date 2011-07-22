@@ -15,15 +15,12 @@
  */
 package com.intellij.lang.java.parser;
 
-import com.intellij.jsp.impl.JspSpiUtilImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.jsp.JavaInJspProvider;
 import com.intellij.mock.MockModule;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -36,8 +33,6 @@ import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.JavaASTFactory;
-import com.intellij.psi.jsp.JspSpiUtil;
-import com.intellij.psi.jsp.MockJavaInJspHandler;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.IdeaTestCase;
@@ -77,10 +72,6 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     myLanguageLevel = LanguageLevel.JDK_1_6;
     getProject().registerService(LanguageLevelProjectExtension.class, new LanguageLevelProjectExtensionImpl(getProject()));
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
-    final ExtensionPointName<JavaInJspProvider> javaInJspEP = ExtensionPointName.create("com.intellij.jsp.javaInJspProvider");
-    registerExtensionPoint(javaInJspEP, JavaInJspProvider.class);
-    registerExtension(javaInJspEP, new MockJavaInJspHandler());
-    registerApplicationService(JspSpiUtil.class, new JspSpiUtilImpl());
   }
 
   @Override

@@ -58,17 +58,6 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   protected Language myLanguage;
   private ParserDefinition[] myDefinitions = new ParserDefinition[0];
 
-  public ParsingTestCase(@NonNls String dataPath, String fileExt) {
-    myFullDataPath = getTestDataPath() + "/psi/" + dataPath;
-    myFileExt = fileExt;
-  }
-
-  public ParsingTestCase(@NonNls String dataPath, String fileExt, Language language) {
-    myLanguage = language;
-    myFullDataPath = getTestDataPath() + dataPath;
-    myFileExt = fileExt;
-  }
-
   public ParsingTestCase(@NonNls String dataPath, String fileExt, ParserDefinition... definitions) {
     myDefinitions = definitions;
     myFullDataPath = getTestDataPath() + "/" + dataPath;
