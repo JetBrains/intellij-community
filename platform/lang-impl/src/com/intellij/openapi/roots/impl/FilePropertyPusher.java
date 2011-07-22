@@ -38,6 +38,7 @@ public interface FilePropertyPusher<T> {
   Key<T> getFileDataKey();
   boolean pushDirectoriesOnly();
 
+  @NotNull
   T getDefaultValue();
 
   @Nullable
@@ -48,7 +49,7 @@ public interface FilePropertyPusher<T> {
 
   boolean acceptsFile(VirtualFile file);
 
-  void persistAttribute(VirtualFile fileOrDir, T value) throws IOException;
+  void persistAttribute(VirtualFile fileOrDir, @NotNull T value) throws IOException;
 
   public interface Engine {
     void pushAll();
