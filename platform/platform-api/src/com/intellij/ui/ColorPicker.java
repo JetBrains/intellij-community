@@ -59,41 +59,24 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
   private boolean myAutoUpdate = false;
 
   private RecentColorsComponent myRecentColorsComponent;
-
+                                            
   public ColorPicker() {
-    this(null);
+    this(null, false);
   }
 
-  public ColorPicker(@Nullable Color color) {
-    this(color, true);
+
+  public ColorPicker(@Nullable Color color, boolean enableOpacity) {
+    this(color, true, enableOpacity);
   }
   
-  public JComponent getPreferredFocusedComponent() {
-    final JComponent[] toFocus = new JComponent[] {null};
-    forEveryKey(new PairFunction<JTextField, Pair<String, String>, Boolean>() {
-      @Override
-      public Boolean fun(JTextField textField, Pair<String, String> pair) {
-        toFocus[0] = textField;
-        return true;
-      }
-    }, this, new Function<String, Boolean>() {
-      @Override
-      public Boolean fun(String s) {
-        return "hex".equals(s);
-      }
-    });
-    
-    return toFocus[0];
-  }
-
-  public ColorPicker(@Nullable Color color, boolean restoreColors) {
+  public ColorPicker(@Nullable Color color, boolean restoreColors, boolean enableOpacity) {
     setLayout(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 
-    myColorWheelPanel = new ColorWheelPanel(this);
+    myColorWheelPanel = new ColorWheelPanel(this, enableOpacity);
 
     try {
-      add(buildTopPanel(this), BorderLayout.NORTH);
+      add(buildTopPanel(this, restoreColors), BorderLayout.NORTH);
       add(myColorWheelPanel, BorderLayout.CENTER);
 
       myRecentColorsComponent = new RecentColorsComponent(new Consumer<Color>() {
@@ -114,6 +97,24 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     _setColor(_color);
     
     setSize(300, 350);
+  }
+  
+  public JComponent getPreferredFocusedComponent() {
+    final JComponent[] toFocus = new JComponent[] {null};
+    forEveryKey(new PairFunction<JTextField, Pair<String, String>, Boolean>() {
+      @Override
+      public Boolean fun(JTextField textField, Pair<String, String> pair) {
+        toFocus[0] = textField;
+        return true;
+      }
+    }, this, new Function<String, Boolean>() {
+      @Override
+      public Boolean fun(String s) {
+        return "hex".equals(s);
+      }
+    });
+    
+    return toFocus[0];
   }
 
   private void _setColor(Color _color) {
@@ -310,8 +311,8 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     }
   }
 
-  public static Color showDialog(Component parent, String caption, Color preselectedColor) {
-    final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor);
+  public static Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity) {
+    final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor, enableOpacity);
     dialog.show();
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       return dialog.getColor();
@@ -371,11 +372,11 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     return false;
   }
 
-  private JComponent buildTopPanel(DocumentListener l) throws ParseException {
+  private JComponent buildTopPanel(DocumentListener l, boolean enablePipette) throws ParseException {
     final JPanel result = new JPanel(new BorderLayout());
 
     final JPanel previewPanel = new JPanel(new BorderLayout());
-    if (ColorPipette.isAvailable()) {
+    if (enablePipette && ColorPipette.isAvailable()) {
       final JButton pipette = new JButton(PICK);
       pipette.addActionListener(new ActionListener() {
         @Override
@@ -459,6 +460,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
 
   public static void main(String[] args) {
     final JFrame frame = new JFrame();
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
     frame.getContentPane().add(new ColorPicker(null, false));
 
@@ -468,10 +470,11 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
 
   private static class ColorWheelPanel extends JPanel {
 
-    private final ColorWheel myColorWheel;
-    private final BrightnessComponent myBrightnessComponent;
+    private ColorWheel myColorWheel;
+    private SlideComponent myBrightnessComponent;
+    private SlideComponent myOpacityComponent = null;
 
-    private ColorWheelPanel(Consumer<Color> listener) {
+    private ColorWheelPanel(Consumer<Color> listener, boolean enableOpacity) {
       setLayout(new BorderLayout());
       setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
@@ -480,8 +483,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
 
       myColorWheel.addListener(listener);
 
-      myBrightnessComponent = new BrightnessComponent();
-
+      myBrightnessComponent = new SlideComponent(true);
       myBrightnessComponent.addListener(new Consumer<Integer>() {
         @Override
         public void consume(Integer value) {
@@ -491,6 +493,19 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       });
 
       add(myBrightnessComponent, BorderLayout.EAST);
+
+      if (enableOpacity) {
+        myOpacityComponent = new SlideComponent(false);
+        myOpacityComponent.addListener(new Consumer<Integer>() {
+          @Override
+          public void consume(Integer integer) {
+            myColorWheel.setOpacity((integer / 100f));
+            myColorWheel.repaint();
+          }
+        });
+
+        add(myOpacityComponent, BorderLayout.SOUTH);
+      }
     }
 
     public void setColor(Color color) {
@@ -500,18 +515,29 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       myBrightnessComponent.setValue(100 - (int)(hsb[2] * 100));
       myBrightnessComponent.repaint();
 
-      myColorWheel.updateHSBValue(hsb[0], hsb[1], hsb[2]);
+      myColorWheel.dropImage();
+      if (myOpacityComponent != null) {
+        myOpacityComponent.setValue((int)((color.getAlpha() / 255.0) * 100));
+        myOpacityComponent.repaint();
+
+        myColorWheel.setColor(color);
+      } else {
+        myColorWheel.setColor(color);
+      }
     }
   }
 
-  private static class BrightnessComponent extends JComponent {
+  private static class SlideComponent extends JComponent {
     private static final int OFFSET = 11;
-    private int myYValue = 0;
+    private int myPointerValue = 0;
     private int myValue = 0;
+    private final boolean myVertical;
 
     private CopyOnWriteArrayList<Consumer<Integer>> myListeners = new CopyOnWriteArrayList<Consumer<Integer>>();
 
-    private BrightnessComponent() {
+    private SlideComponent(boolean vertical) {
+      myVertical = vertical;
+
       addMouseMotionListener(new MouseAdapter() {
         @Override
         public void mouseDragged(MouseEvent e) {
@@ -531,12 +557,13 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
         public void mouseWheelMoved(MouseWheelEvent e) {
           final int amount = e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getUnitsToScroll() * e.getScrollAmount() :
                              e.getWheelRotation() < 0 ? -e.getScrollAmount() : e.getScrollAmount();
-          int y = myYValue + amount;
-          y = y < OFFSET ? OFFSET : y;
-          y = y > (getHeight() - 12) ? getHeight() - 12 : y;
+          int pointerValue = myPointerValue + amount;
+          pointerValue = pointerValue < OFFSET ? OFFSET : pointerValue;
+          int size = myVertical ? getHeight() : getWidth();
+          pointerValue = pointerValue > (size - 12) ? size - 12 : pointerValue;
 
-          myYValue = y;
-          myValue = yToValue(myYValue);
+          myPointerValue = pointerValue;
+          myValue = pointerValueToValue(myPointerValue);
 
           repaint();
           fireValueChanged();
@@ -554,13 +581,14 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     }
 
     private void processMouse(MouseEvent e) {
-      int y = e.getY();
-      y = y < OFFSET ? OFFSET : y;
-      y = y > (getHeight() - 12) ? getHeight() - 12 : y;
+      int pointerValue = myVertical ? e.getY() : e.getX();
+      pointerValue = pointerValue < OFFSET ? OFFSET : pointerValue;
+      int size = myVertical ? getHeight() : getWidth();
+      pointerValue = pointerValue > (size - 12) ? size - 12 : pointerValue;
 
-      myYValue = y;
+      myPointerValue = pointerValue;
 
-      myValue = yToValue(myYValue);
+      myValue = pointerValueToValue(myPointerValue);
 
       repaint();
       fireValueChanged();
@@ -578,7 +606,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
 
     // 0 - 100
     public void setValue(int value) {
-      myYValue = valueToY(value);
+      myPointerValue = valueToPointerValue(value);
       myValue = value;
     }
 
@@ -586,64 +614,97 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       return myValue;
     }
 
-    private int yToValue(int y) {
-      y -= OFFSET;
-      final int height = getHeight();
-      float proportion = (height - 23) / 100f;
-      return (int)(y / proportion);
+    private int pointerValueToValue(int pointerValue) {
+      pointerValue -= OFFSET;
+      final int size = myVertical ? getHeight() : getWidth();
+      float proportion = (size - 23) / 100f;
+      return (int)(pointerValue / proportion);
     }
 
-    private int valueToY(int value) {
-      final int height = getHeight();
-      float proportion = (height - 23) / 100f;
+    private int valueToPointerValue(int value) {
+      final int size = myVertical ? getHeight() : getWidth();
+      float proportion = (size - 23) / 100f;
       return OFFSET + (int)(value * proportion);
     }
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(22, 100);
+      return myVertical ? new Dimension(22, 100) : new Dimension(100, 22);
     }
 
     @Override
     public Dimension getMinimumSize() {
-      return new Dimension(22, 50);
+      return myVertical ? new Dimension(22, 50) : new Dimension(50, 22);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
       final Graphics2D g2d = (Graphics2D)g;
-      g2d.setPaint(new GradientPaint(0f, 0f, Color.WHITE, 0f, getHeight(), Color.BLACK));
-      g.fillRect(7, 10, 12, getHeight() - 20);
+      
+      if (myVertical) {
+        g2d.setPaint(new GradientPaint(0f, 0f, Color.WHITE, 0f, getHeight(), Color.BLACK));
+        g.fillRect(7, 10, 12, getHeight() - 20);
+  
+        g.setColor(new Color(150, 150, 150));
+        g.drawRect(7, 10, 12, getHeight() - 20);
+  
+        g.setColor(new Color(250, 250, 250));
+        g.drawRect(8, 11, 10, getHeight() - 22);
+      } else {
+        g2d.setPaint(new GradientPaint(0f, 0f, Color.WHITE, getWidth(), 0f, Color.BLACK));
+        g.fillRect(10, 7, getWidth() - 20 , 12);
+  
+        g.setColor(new Color(150, 150, 150));
+        g.drawRect(10, 7, getWidth() - 20, 12);
+  
+        g.setColor(new Color(250, 250, 250));
+        g.drawRect(11, 8, getWidth() - 22, 10);
+      }
 
-      g.setColor(new Color(150, 150, 150));
-      g.drawRect(7, 10, 12, getHeight() - 20);
-
-      g.setColor(new Color(250, 250, 250));
-      g.drawRect(8, 11, 10, getHeight() - 22);
-
-      drawKnob(g2d, 7, myYValue);
+      drawKnob(g2d, myVertical ? 7 : myPointerValue, myVertical ? myPointerValue : 7, myVertical);
     }
 
-    private static void drawKnob(Graphics2D g2d, int x, int y) {
+    private static void drawKnob(Graphics2D g2d, int x, int y, boolean vertical) {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-      y -= 6;
+      if (vertical) {
+        y -= 6;
 
-      Polygon arrowShadow = new Polygon();
-      arrowShadow.addPoint(x - 5, y + 1);
-      arrowShadow.addPoint(x + 7, y + 7);
-      arrowShadow.addPoint(x - 5, y + 13);
+        Polygon arrowShadow = new Polygon();
+        arrowShadow.addPoint(x - 5, y + 1);
+        arrowShadow.addPoint(x + 7, y + 7);
+        arrowShadow.addPoint(x - 5, y + 13);
 
-      g2d.setColor(new Color(0, 0, 0, 70));
-      g2d.fill(arrowShadow);
+        g2d.setColor(new Color(0, 0, 0, 70));
+        g2d.fill(arrowShadow);
 
-      Polygon arrowHead = new Polygon();
-      arrowHead.addPoint(x - 6, y);
-      arrowHead.addPoint(x + 6, y + 6);
-      arrowHead.addPoint(x - 6, y + 12);
+        Polygon arrowHead = new Polygon();
+        arrowHead.addPoint(x - 6, y);
+        arrowHead.addPoint(x + 6, y + 6);
+        arrowHead.addPoint(x - 6, y + 12);
 
-      g2d.setColor(new Color(153, 51, 0));
-      g2d.fill(arrowHead);
+        g2d.setColor(new Color(153, 51, 0));
+        g2d.fill(arrowHead);
+      }
+      else {
+        x -= 6;
+        
+        Polygon arrowShadow = new Polygon();
+        arrowShadow.addPoint(x + 1, y - 5);
+        arrowShadow.addPoint(x + 13, y - 5);
+        arrowShadow.addPoint(x + 7, y + 7);
+
+        g2d.setColor(new Color(0, 0, 0, 70));
+        g2d.fill(arrowShadow);
+
+        Polygon arrowHead = new Polygon();
+        arrowHead.addPoint(x, y - 6);
+        arrowHead.addPoint(x + 12, y - 6);
+        arrowHead.addPoint(x + 6, y + 6);
+
+        g2d.setColor(new Color(153, 51, 0));
+        g2d.fill(arrowHead);
+      }
     }
   }
 
@@ -661,6 +722,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     private Color myColor;
 
     private CopyOnWriteArrayList<Consumer<Color>> myListeners = new CopyOnWriteArrayList<Consumer<Color>>();
+    private float myOpacity;
 
     private ColorWheel() {
       setOpaque(true);
@@ -684,7 +746,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
           if (h < 0) h += 1.0;
           if (s > 1) s = 1.0;
 
-          setHSBValue((float)h, (float)s, myBrightness);
+          setHSBValue((float)h, (float)s, myBrightness, myOpacity);
         }
       });
 
@@ -700,29 +762,30 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
           h = -Math.atan2((double)(y - midy), (double)(x - midx)) / (2 * Math.PI);
           if (h < 0) h += 1.0;
           if (s <= 1) {
-            setHSBValue((float)h, (float)s, myBrightness);
+            setHSBValue((float)h, (float)s, myBrightness, myOpacity);
           }
         }
       });
     }
 
-    private void setHSBValue(float h, float s, float b) {
-      myHue = h;
-      mySaturation = s;
-
-      myColor = new Color(Color.HSBtoRGB(h, s, b));
-
-      fireColorChanged();
-
-      repaint();
+    private void setHSBValue(float h, float s, float b, float opacity) {
+      Color rgb = new Color(Color.HSBtoRGB(h, s, b));
+      setColor(new Color(rgb.getRed(), rgb.getGreen(), rgb.getBlue(), (int) (255 * opacity)));
     }
+    
+    private void setColor(Color color) {
+      float[] hsb = new float[3];
+      Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), hsb);
 
-    public void updateHSBValue(float h, float s, float b) {
-      myHue = h;
-      mySaturation = s;
-      myBrightness = b;
-      myImage = null;
-
+      myColor = color;
+      
+      myHue = hsb[0];
+      mySaturation = hsb[1];
+      myBrightness = hsb[2];
+      myOpacity = (float) (color.getAlpha() / 255.0);
+      
+      fireColorChanged();
+      
       repaint();
     }
 
@@ -738,11 +801,18 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
 
     public void setBrightness(float brightness) {
       if (brightness != myBrightness) {
-        myBrightness = brightness;
         myImage = null;
-        setHSBValue(myHue, mySaturation, brightness);
+        setHSBValue(myHue, mySaturation, brightness, myOpacity);
       }
     }
+    
+    
+    public void setOpacity(float opacity) {
+      if(opacity != myOpacity) {
+        setHSBValue(myHue, mySaturation, myBrightness, opacity);
+      }
+    }
+    
 
     @Override
     public Dimension getPreferredSize() {
@@ -755,7 +825,9 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     }
 
     @Override
-    protected void paintComponent(Graphics _g) {
+    protected void paintComponent(Graphics g) {
+      Graphics2D g2d = (Graphics2D)g;
+
       final Dimension size = getSize();
       int _size = Math.min(size.width, size.height);
       _size = Math.min(_size, 600);
@@ -773,22 +845,29 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
         myWheel = new Rectangle(BORDER_SIZE, BORDER_SIZE, _size - BORDER_SIZE * 2, _size - BORDER_SIZE * 2);
       }
 
-      _g.setColor(UIManager.getColor("Panel.background"));
-      _g.fillRect(0, 0, getWidth(), getHeight());
+      g.setColor(UIManager.getColor("Panel.background"));
+      g.fillRect(0, 0, getWidth(), getHeight());
 
-      _g.drawImage(myImage, myWheel.x, myWheel.y, null);
+      g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myOpacity));
+      g.drawImage(myImage, myWheel.x, myWheel.y, null);
 
+      g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 1.0f));
+      
       int midx = myWheel.x + myWheel.width / 2;
       int midy = myWheel.y + myWheel.height / 2;
-      _g.setColor(Color.white);
+      g.setColor(Color.white);
       int arcw = (int)(myWheel.width * mySaturation / 2);
       int arch = (int)(myWheel.height * mySaturation / 2);
       double th = myHue * 2 * Math.PI;
       final int x = (int)(midx + arcw * Math.cos(th));
       final int y = (int)(midy - arch * Math.sin(th));
-      _g.fillRect(x - 2, y - 2, 4, 4);
-      _g.setColor(Color.BLACK);
-      _g.drawRect(x - 2, y - 2, 4, 4);
+      g.fillRect(x - 2, y - 2, 4, 4);
+      g.setColor(Color.BLACK);
+      g.drawRect(x - 2, y - 2, 4, 4);
+    }
+
+    public void dropImage() {
+      myImage = null;
     }
   }
 
@@ -817,6 +896,9 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       final int width = r.width - i.left - i.right;
       final int height = r.height - i.top - i.bottom;
 
+      g.setColor(Color.WHITE);
+      g.fillRect(i.left, i.top, width, height);
+      
       g.setColor(myColor);
       g.fillRect(i.left, i.top, width, height);
 
@@ -889,7 +971,17 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       if (value != null) {
         final List<String> colors = StringUtil.split(value, ",,,");
         for (String color : colors) {
-          myRecentColors.add(new Color(Integer.parseInt(color)));
+          if (color.contains("-")) {
+            List<String> components = StringUtil.split(color, "-");
+            if (components.size() == 4) {
+              myRecentColors.add(new Color(Integer.parseInt(components.get(0)),
+                                           Integer.parseInt(components.get(1)),
+                                           Integer.parseInt(components.get(2)),
+                                           Integer.parseInt(components.get(3))));
+            }
+          } else {
+            myRecentColors.add(new Color(Integer.parseInt(color)));
+          }
         }
       }
     }
@@ -898,7 +990,8 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     public String getToolTipText(MouseEvent event) {
       Color color = getColor(event);
       if (color != null) {
-        return String.format("R: %d G: %d B: %d", color.getRed(), color.getGreen(), color.getBlue());
+        return String.format("R: %d G: %d B: %d A: %s", color.getRed(), color.getGreen(), color.getBlue(), 
+                             String.format("%.2f", (float) (color.getAlpha() / 255.0)));
       }
 
       return super.getToolTipText(event);
@@ -921,7 +1014,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       final List<String> values = new ArrayList<String>();
       for (Color recentColor : myRecentColors) {
         if (recentColor == null) break;
-        values.add(Integer.toString(recentColor.getRGB()));
+        values.add(String.format("%d-%d-%d-%d", recentColor.getRed(), recentColor.getGreen(), recentColor.getBlue(), recentColor.getAlpha()));
       }
 
       PropertiesComponent.getInstance().setValue(COLOR_CHOOSER_COLORS_KEY, StringUtil.join(values, ",,,"));
@@ -1000,11 +1093,13 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
 
     private final Color myPreselectedColor;
     private ColorPicker myColorPicker;
+    private final boolean myEnableOpacity;
 
-    public ColorPickerDialog(Component parent, String caption, Color preselectedColor) {
+    public ColorPickerDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity) {
       super(parent, true);
       setTitle(caption);
       myPreselectedColor = preselectedColor;
+      myEnableOpacity = enableOpacity;
       setResizable(false);
       setOKButtonText("Choose");
       init();
@@ -1013,7 +1108,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     @Override
     protected JComponent createCenterPanel() {
       if (myColorPicker == null) {
-        myColorPicker = new ColorPicker(myPreselectedColor);
+        myColorPicker = new ColorPicker(myPreselectedColor, myEnableOpacity);
       }
 
       return myColorPicker;
@@ -1037,13 +1132,6 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     }
   }
 
-  /**
-   * Produces the image of a ColorWheel.
-   *
-   * @author Werner Randelshofer
-   * @version 1.0 August 27, 2005 Created.
-   * @see ColorWheel
-   */
   public static class ColorWheelImageProducer extends MemoryImageSource {
     private int[] myPixels;
     private int myWidth, myHeight;

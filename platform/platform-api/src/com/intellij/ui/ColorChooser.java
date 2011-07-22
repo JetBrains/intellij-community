@@ -28,6 +28,11 @@ public class ColorChooser {
   private ColorChooser() {}
 
   public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor) {
-    return ColorPicker.showDialog(parent, caption, preselectedColor);
+    return ColorPicker.showDialog(parent, caption, preselectedColor, false);
   }
+
+  public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity) {
+    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity);
+  }
+
 }
