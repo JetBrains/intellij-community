@@ -63,7 +63,8 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications")));
+    _panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+      DebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications")));
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {

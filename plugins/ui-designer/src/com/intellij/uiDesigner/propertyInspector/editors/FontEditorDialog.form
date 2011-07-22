@@ -162,7 +162,7 @@
         <properties/>
         <border type="none" title-resource-bundle="messages/UIDesignerBundle" title-key="font.chooser.preview.text"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
         <children>
           <component id="4b9a" class="javax.swing.JLabel" binding="myPreviewTextLabel">

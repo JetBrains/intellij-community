@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myContentPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="326" height="120"/>
+      <xy x="20" y="20" width="326" height="126"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -15,9 +15,9 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
-        <border type="none" title="Default HTML language level:"/>
+        <border type="none" title="Default HTML language level"/>
         <children>
           <component id="aad8c" class="javax.swing.JRadioButton" binding="myHtml4RadioButton">
             <constraints>

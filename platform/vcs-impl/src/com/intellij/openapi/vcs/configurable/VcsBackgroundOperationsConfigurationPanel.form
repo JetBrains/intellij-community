@@ -31,7 +31,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
                 </clientProperties>
                 <border type="none" title-resource-bundle="messages/VcsBundle" title-key="background.operations.title">
                   <font/>
@@ -94,7 +94,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
                 </clientProperties>
                 <border type="none" title-resource-bundle="messages/VcsBundle" title-key="options.background.processes.title"/>
                 <children>
@@ -113,7 +113,7 @@
                     </constraints>
                     <properties/>
                     <clientProperties>
-                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
                     </clientProperties>
                     <border type="none" title-resource-bundle="messages/VcsBundle" title-key="cache.settings.dialog.title"/>
                     <children>
@@ -136,7 +136,7 @@
                     </constraints>
                     <properties/>
                     <clientProperties>
-                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
                     </clientProperties>
                     <border type="none" title-resource-bundle="messages/VcsBundle" title-key="options.check.changed.on.server.title"/>
                     <children>

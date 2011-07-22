@@ -317,7 +317,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         if (options != null) {
           JPanel vcsOptions = new JPanel(new BorderLayout());
           vcsOptions.add(options.getComponent(), BorderLayout.CENTER);
-          vcsOptions.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName()));
+          vcsOptions.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(vcs.getDisplayName()));
           vcsCommitOptions.add(vcsOptions);
           myPerVcsOptionsPanels.put(vcs, vcsOptions);
           myAdditionalComponents.add(options);
@@ -365,7 +365,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       beforeBox.add(Box.createVerticalGlue());
       JPanel beforePanel = new JPanel(new BorderLayout());
       beforePanel.add(beforeBox);
-      beforePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.standard.checkin.options.group", borderTitleName)));
+      beforePanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+        VcsBundle.message("border.standard.checkin.options.group", borderTitleName)));
       optionsBox.add(beforePanel);
     }
 
@@ -373,7 +374,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       afterBox.add(Box.createVerticalGlue());
       JPanel afterPanel = new JPanel(new BorderLayout());
       afterPanel.add(afterBox);
-      afterPanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.standard.after.checkin.options.group", borderTitleName)));
+      afterPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+        VcsBundle.message("border.standard.after.checkin.options.group", borderTitleName)));
       optionsBox.add(afterPanel);
     }
 

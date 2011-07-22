@@ -23,7 +23,6 @@ import com.michaelbaranov.microba.calendar.DatePicker;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
@@ -40,7 +39,7 @@ public class DateFilterComponent {
   private JPanel myRootPanel;
 
   public DateFilterComponent() {
-    myDatePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter")));
+    myDatePanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(VcsBundle.message("border.changes.filter.date.filter")));
     myDateAfter.setDateFormat(DateFormatUtil.getDateTimeFormat().getDelegate());
     myDateBefore.setDateFormat(DateFormatUtil.getDateTimeFormat().getDelegate());
     ActionListener listener = new ActionListener() {

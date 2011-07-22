@@ -16,7 +16,7 @@
         <properties/>
         <border type="etched" title-resource-bundle="messages/CodeInsightBundle" title-key="i18n.quickfix.property.panel.title"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
         <children>
           <component id="34a90" class="javax.swing.JLabel">

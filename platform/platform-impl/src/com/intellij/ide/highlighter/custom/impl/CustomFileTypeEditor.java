@@ -144,11 +144,11 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     fileTypePanel.add(_panel0, BorderLayout.NORTH);
 
     JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("group.customfiletype.syntax.highlighting")));
+    panel1.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(IdeBundle.message("group.customfiletype.syntax.highlighting")));
     JPanel highlighterPanel = panel1;
     highlighterPanel.setLayout(new BorderLayout());
     JPanel panel2 = new JPanel();
-    panel2.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("group.customfiletype.options")));
+    panel2.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(IdeBundle.message("group.customfiletype.options")));
     JPanel commentsAndNumbersPanel = panel2;
     commentsAndNumbersPanel.setLayout(new GridBagLayout());
 
@@ -231,7 +231,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
 
   private JPanel createKeywordsPanel(final int index) {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("listbox.customfiletype.keywords")));
+    panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(IdeBundle.message("listbox.customfiletype.keywords")));
     JPanel keywordsPanel = panel;
     keywordsPanel.setLayout(new BorderLayout());
 

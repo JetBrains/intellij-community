@@ -8,7 +8,7 @@
     <properties/>
     <border type="etched" title-resource-bundle="messages/FileTypesBundle" title-key="filetypes.recognized.group"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
     <children>
       <scrollpane class="com.intellij.ui.components.JBScrollPane" id="de9d1">

@@ -319,7 +319,8 @@ public String getAccessorsVisibility() {
     leftBox.add(Box.createVerticalStrut(10));
     leftBox.add(myCbUseAccessorsWhenAccessible);
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("encapsulate.fields.encapsulate.border.title")));
+    leftPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+      RefactoringBundle.message("encapsulate.fields.encapsulate.border.title")));
     leftPanel.add(leftBox, BorderLayout.CENTER);
     leftPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -342,7 +343,8 @@ public String getAccessorsVisibility() {
     fieldsBox.add(myRbFieldProtected);
     fieldsBox.add(myRbFieldAsIs);
     JPanel fieldsVisibilityPanel = new JPanel(new BorderLayout());
-    fieldsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("encapsulate.fields..encapsulated.fields.visibility.border.title")));
+    fieldsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+      RefactoringBundle.message("encapsulate.fields..encapsulated.fields.visibility.border.title")));
     fieldsVisibilityPanel.add(fieldsBox, BorderLayout.CENTER);
     fieldsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -352,7 +354,8 @@ public String getAccessorsVisibility() {
     methodsBox.add(myRbAccessorPackageLocal);
     methodsBox.add(myRbAccessorPrivate);
     JPanel methodsVisibilityPanel = new JPanel(new BorderLayout());
-    methodsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("encapsulate.fields.accessors.visibility.border.title")));
+    methodsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+      RefactoringBundle.message("encapsulate.fields.accessors.visibility.border.title")));
     methodsVisibilityPanel.add(methodsBox, BorderLayout.CENTER);
     methodsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -392,7 +395,8 @@ public String getAccessorsVisibility() {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 //    JLabel label = new JLabel("Fields to Encapsulate");
 //    CompTitledBorder titledBorder = new CompTitledBorder(label);
-    Border titledBorder = IdeBorderFactory.createTitledBorder(RefactoringBundle.message("encapsulate.fields.fields.to.encapsulate.border.title"));
+    Border titledBorder = IdeBorderFactory.createTitledBorderBoldWithIndent(
+      RefactoringBundle.message("encapsulate.fields.fields.to.encapsulate.border.title"));
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
     scrollPane.setBorder(border);

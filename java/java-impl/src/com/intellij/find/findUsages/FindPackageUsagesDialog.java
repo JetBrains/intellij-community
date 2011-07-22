@@ -52,7 +52,7 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog<JavaPackageFin
 
   protected JPanel createFindWhatPanel() {
     JPanel findWhatPanel = new JPanel();
-    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group")));
+    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(FindBundle.message("find.what.group")));
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
     myCbUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.checkbox"), getFindUsagesOptions().isUsages, findWhatPanel, true);

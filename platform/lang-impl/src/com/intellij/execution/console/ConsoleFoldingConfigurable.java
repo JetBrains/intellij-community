@@ -26,8 +26,8 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable {
   public JComponent createComponent() {
     if (myMainComponent == null) {
       myMainComponent = new JPanel(new VerticalFlowLayout());
-      myPositivePanel = new MyAddDeleteListPanel("Fold console lines that contain:", "Enter a substring of a console line you'd like to see folded:");
-      myNegativePanel = new MyAddDeleteListPanel("Exceptions:", "Enter a substring of a console line you don't want to fold:");
+      myPositivePanel = new MyAddDeleteListPanel("Fold console lines that contain", "Enter a substring of a console line you'd like to see folded:");
+      myNegativePanel = new MyAddDeleteListPanel("Exceptions", "Enter a substring of a console line you don't want to fold:");
       myMainComponent.add(myPositivePanel);
       myMainComponent.add(myNegativePanel);
 

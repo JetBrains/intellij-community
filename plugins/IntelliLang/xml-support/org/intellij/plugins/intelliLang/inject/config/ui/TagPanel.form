@@ -15,7 +15,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
         <border type="none" title="XML Tag"/>
         <children>
@@ -43,6 +43,7 @@
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
+            <properties/>
           </component>
           <component id="eeee3" class="com.intellij.openapi.ui.ComboBox" binding="myNamespace" custom-create="true">
             <constraints>

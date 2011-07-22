@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myRoot" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="531" height="81"/>
+      <xy x="20" y="20" width="531" height="97"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -15,7 +15,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
         <border type="none" title="Advanced"/>
         <children>
@@ -35,6 +35,7 @@
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
+            <properties/>
           </component>
           <component id="aef90" class="javax.swing.JLabel" binding="myXPathConditionLabel">
             <constraints>
@@ -52,6 +53,7 @@
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
+            <properties/>
           </component>
           <component id="ba9f0" class="javax.swing.JCheckBox" binding="mySingleFileCheckBox" default-binding="true">
             <constraints>

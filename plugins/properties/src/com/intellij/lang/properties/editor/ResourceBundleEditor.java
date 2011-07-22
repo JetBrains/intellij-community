@@ -215,7 +215,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         }
       };
       comp.add(editor.getComponent(), BorderLayout.CENTER);
-      comp.setBorder(IdeBorderFactory.createTitledBorder(title));
+      comp.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(title));
       myTitledPanels.put(propertiesFile, (JPanel)comp);
 
       valuesPanelComponent.add(comp, gc);

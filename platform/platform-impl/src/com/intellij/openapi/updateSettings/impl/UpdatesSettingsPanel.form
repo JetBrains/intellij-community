@@ -142,7 +142,7 @@
             <properties/>
             <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="update.plugin.hosts.title"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
             <children>
               <scrollpane id="af53b" class="com.intellij.ui.components.JBScrollPane">
