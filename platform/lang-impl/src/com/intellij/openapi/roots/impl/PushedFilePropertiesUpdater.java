@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -101,7 +100,7 @@ public class PushedFilePropertiesUpdater {
             }
 
             public void pushRecursively(VirtualFile file, Project project) {
-              PushedFilePropertiesUpdater.pushRecursively(file, project, pusher);
+              PushedFilePropertiesUpdater.this.pushRecursively(file, project, pusher);
             }
           });
         }
@@ -109,12 +108,12 @@ public class PushedFilePropertiesUpdater {
     });
   }
 
-  private static void pushRecursively(final VirtualFile dir, final Project project, final FilePropertyPusher... pushers) {
+  public void pushRecursively(final VirtualFile dir, final Project project, final FilePropertyPusher... pushers) {
     if (pushers.length == 0) return;
     ProjectRootManager.getInstance(project).getFileIndex().iterateContentUnderDirectory(dir, new ContentIterator() {
       public boolean processFile(final VirtualFile fileOrDir) {
         final boolean isDir = fileOrDir.isDirectory();
-        for (FilePropertyPusher<?> pusher : pushers) {
+        for (FilePropertyPusher<Object> pusher : pushers) {
           if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
           findAndUpdateValue(project, fileOrDir, pusher, null);
         }
@@ -123,14 +122,30 @@ public class PushedFilePropertiesUpdater {
     });
   }
 
+  private static <T> T findPusherValuesUpwards(final Project project, final VirtualFile dir, FilePropertyPusher<T> pusher, T moduleValue) {
+    final T value = pusher.getImmediateValue(project, dir);
+    if (value != null) return value;
+    if (moduleValue != null) return moduleValue;
+    final VirtualFile parent = dir.getParent();
+    if (parent != null) return findPusherValuesUpwards(project, parent, pusher);
+    return pusher.getDefaultValue();
+  }
+
+  private static <T> T findPusherValuesUpwards(final Project project, final VirtualFile dir, FilePropertyPusher<T> pusher) {
+    final T userValue = dir.getUserData(pusher.getFileDataKey());
+    if (userValue != null) return userValue;
+    final T value = pusher.getImmediateValue(project, dir);
+    if (value != null) return value;
+    final VirtualFile parent = dir.getParent();
+    if (parent != null) return findPusherValuesUpwards(project, parent, pusher);
+    return pusher.getDefaultValue();
+  }
+
   public void pushAll(final FilePropertyPusher... pushers) {
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      final Object[] values = new Object[pushers.length];
-      for (int i = 0; i < values.length; i++) {
-        values[i] = pushers[i].getImmediateValue(module);
-        if (values[i] == null) {
-          values[i] = pushers[i].getDefaultValue();
-        }
+      final Object[] moduleValues = new Object[pushers.length];
+      for (int i = 0; i < moduleValues.length; i++) {
+        moduleValues[i] = pushers[i].getImmediateValue(module);
       }
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
       final ModuleFileIndex index = rootManager.getFileIndex();
@@ -141,7 +156,7 @@ public class PushedFilePropertiesUpdater {
             for (int i = 0, pushersLength = pushers.length; i < pushersLength; i++) {
               final FilePropertyPusher<Object> pusher = pushers[i];
               if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
-              values[i] = findAndUpdateValue(myProject, fileOrDir, pusher, values[i]);
+              findAndUpdateValue(myProject, fileOrDir, pusher, moduleValues[i]);
             }
             return true;
           }
@@ -150,15 +165,9 @@ public class PushedFilePropertiesUpdater {
     }
   }
 
-  @Nullable
-  public static <T> T findAndUpdateValue(final Project project,
-                                         final VirtualFile fileOrDir,
-                                         final FilePropertyPusher<T> pusher,
-                                         @Nullable final T parentValue) {
-    final T immediateValue = pusher.getImmediateValue(project, fileOrDir);
-    final T value = immediateValue != null ? immediateValue : parentValue;
+  public static <T> void findAndUpdateValue(final Project project, final VirtualFile fileOrDir, final FilePropertyPusher<T> pusher, final T moduleValue) {
+    final T value = findPusherValuesUpwards(project, fileOrDir, pusher, moduleValue);
     updateValue(fileOrDir, value, pusher);
-    return value;
   }
 
   private static <T> void updateValue(final VirtualFile fileOrDir, final T value, final FilePropertyPusher<T> pusher) {
