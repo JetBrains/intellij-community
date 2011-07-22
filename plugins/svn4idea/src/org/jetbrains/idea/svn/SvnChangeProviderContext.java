@@ -211,8 +211,7 @@ class SvnChangeProviderContext implements StatusReceiver {
                statusType == SVNStatusType.STATUS_REPLACED ||
                propStatus == SVNStatusType.STATUS_MODIFIED ||
                propStatus == SVNStatusType.STATUS_CONFLICTED) {
-        myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath,
-                                                                                                   status.getCommittedRevision()),
+        myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision()),
                                                  CurrentContentRevision.create(filePath), fStatus, status), changeListNameFromStatus(status),
                                                 SvnVcs.getKey());
         checkSwitched(filePath, myChangelistBuilder, status, fStatus);
@@ -222,8 +221,7 @@ class SvnChangeProviderContext implements StatusReceiver {
                                                 SvnVcs.getKey());
       }
       else if (statusType == SVNStatusType.STATUS_DELETED) {
-        myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath,
-                                                                                                   status.getCommittedRevision()), null, fStatus, status),
+        myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision()), null, fStatus, status),
                                     changeListNameFromStatus(status), SvnVcs.getKey());
       }
       else if (statusType == SVNStatusType.STATUS_MISSING) {
@@ -238,13 +236,11 @@ class SvnChangeProviderContext implements StatusReceiver {
       else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != SVNStatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();
         if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
-          myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath,
-                                                                                                     status.getCommittedRevision()),
+          myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision()),
                                                    CurrentContentRevision.create(filePath), FileStatus.MODIFIED, status), changeListNameFromStatus(status),
                                                   SvnVcs.getKey());
         } else if (status.getTreeConflict() != null) {
-          myChangelistBuilder.processChange(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath,
-                                                                                               status.getCommittedRevision()),
+          myChangelistBuilder.processChange(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision()),
                                                    CurrentContentRevision.create(filePath), FileStatus.MODIFIED, status), SvnVcs.getKey());
         }
         checkSwitched(filePath, myChangelistBuilder, status, fStatus);
