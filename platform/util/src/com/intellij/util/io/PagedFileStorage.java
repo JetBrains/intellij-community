@@ -44,6 +44,7 @@ public class PagedFileStorage implements Forceable {
   private final static int UPPER_LIMIT;
   public static final int LOWER_LIMIT_IN_MEGABYTES = 100;
   private final static int LOWER_LIMIT = LOWER_LIMIT_IN_MEGABYTES * MEGABYTE;
+  public static final int UNKNOWN_PAGE = -1;
 
   static {
     String maxPagedStorageCacheProperty = System.getProperty("idea.max.paged.storage.cache");
@@ -58,8 +59,10 @@ public class PagedFileStorage implements Forceable {
 
   private final StorageLock myLock;
   private boolean myZeroWhenExpand;
-  private int myLastPage = -1;
-  private MappedByteBuffer myLastBuffer;
+  private int myLastPage = UNKNOWN_PAGE;
+  private int myLastPage2 = UNKNOWN_PAGE;
+  private MappedBufferWrapper myLastBuffer;
+  private MappedBufferWrapper myLastBuffer2;
 
   public static class StorageLock {
     private final boolean checkThreadAccess;
@@ -299,8 +302,10 @@ public class PagedFileStorage implements Forceable {
         myLock.myBuffersCache.remove(entry.getKey());
       }
     }
-    myLastPage = -1;
+    myLastPage = UNKNOWN_PAGE;
+    myLastPage2 = UNKNOWN_PAGE;
     myLastBuffer = null;
+    myLastBuffer2 = null;
   }
 
   public void resize(int newSize) throws IOException {
@@ -360,12 +365,28 @@ public class PagedFileStorage implements Forceable {
 
   private ByteBuffer getBuffer(int page) {
     if (myLastPage == page) {
-      return myLastBuffer;
+      MappedByteBuffer buf = myLastBuffer.getIfCached();
+      if (buf != null) return buf;
     }
+
+    if (myLastPage2 == page) {
+      MappedByteBuffer buf = myLastBuffer2.getIfCached();
+      if (buf != null) return buf;
+    }
+
     try {
-      MappedByteBuffer buf = myLock.myBuffersCache.get(new PageKey(this, page)).buf();
-      myLastPage = page;
-      myLastBuffer = buf;
+      MappedBufferWrapper mappedBufferWrapper = myLock.myBuffersCache.get(new PageKey(this, page));
+      MappedByteBuffer buf = mappedBufferWrapper.buf();
+
+      if (myLastPage != page) {
+        myLastPage2 = myLastPage;
+        myLastBuffer2 = myLastBuffer;
+        myLastBuffer = mappedBufferWrapper;
+        myLastPage = page;
+      } else {
+        myLastBuffer = mappedBufferWrapper;
+      }
+
       return buf;
     }
     catch (IOException e) {
