@@ -440,6 +440,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   protected final void markDirty(boolean dirty) throws IOException {
+    if (dirty && isDirty()) return;
     synchronized (ourLock) {
       if (myDirty) {
         if (!dirty) {
