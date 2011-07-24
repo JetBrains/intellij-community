@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.Patches;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
@@ -193,7 +194,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       @Override
       public void appClosing() {
         // save fullscreen window states
-        if (SystemInfo.isMacOSLion) {
+        if (SystemInfo.isMacOSLion && GeneralSettings.getInstance().isReopenLastProject()) {
           Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
           
           if (openProjects.length > 0) {
