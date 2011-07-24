@@ -54,7 +54,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
 
     if (!(focusedComponent instanceof JComponent)) return;
 
-    final CopyPasteManagerEx copyPasteManager = (CopyPasteManagerEx)CopyPasteManager.getInstance();
+    final CopyPasteManagerEx copyPasteManager = CopyPasteManagerEx.getInstanceEx();
     final ContentChooser<Transferable> chooser = new ContentChooser<Transferable>(project, UIBundle.message(
       "choose.content.to.paste.dialog.title"), true, true){
       protected String getStringRepresentationFor(final Transferable content) {

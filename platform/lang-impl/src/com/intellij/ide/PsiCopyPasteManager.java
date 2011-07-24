@@ -55,20 +55,26 @@ public class PsiCopyPasteManager {
   @Nullable
   public PsiElement[] getElements(boolean[] isCopied) {
     try {
-      Transferable content = myCopyPasteManager.getSystemClipboardContents();
+      Transferable content = myCopyPasteManager.getContents();
+      if (content == null) {
+        return null;
+      }
+
       Object transferData;
       try {
         transferData = content.getTransferData(ourDataFlavor);
-      } catch (UnsupportedFlavorException e) {
+      }
+      catch (UnsupportedFlavorException e) {
         return null;
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         return null;
       }
 
       if (!(transferData instanceof MyData)) {
         return null;
       }
-      MyData dataProxy = (MyData) transferData;
+      MyData dataProxy = (MyData)transferData;
       if (!Comparing.equal(dataProxy, myRecentData)) {
         return null;
       }
@@ -76,7 +82,8 @@ public class PsiCopyPasteManager {
         isCopied[0] = myRecentData.isCopied();
       }
       return myRecentData.getElements();
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug(e);
       }
@@ -199,6 +206,7 @@ public class PsiCopyPasteManager {
       myDataProxy = data;
     }
 
+    @Nullable
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
       if (ourDataFlavor.equals(flavor)) {
         return myDataProxy;

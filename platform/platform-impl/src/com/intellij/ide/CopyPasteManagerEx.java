@@ -30,9 +30,10 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
-  private final ArrayList<Transferable> myDatas;
+  private final List<Transferable> myData = new ArrayList<Transferable>();
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
   private final ClipboardSynchronizer myClipboardSynchronizer;
 
@@ -42,14 +43,10 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   public CopyPasteManagerEx(ClipboardSynchronizer clipboardSynchronizer) {
     myClipboardSynchronizer = clipboardSynchronizer;
-    myDatas = new ArrayList<Transferable>();
-  }
-
-  public Transferable getSystemClipboardContents() {
-    return myClipboardSynchronizer.getContents();
   }
 
   public void lostOwnership(Clipboard clipboard, Transferable contents) {
+    myClipboardSynchronizer.resetContent();
     fireContentChanged(null);
   }
 
@@ -69,6 +66,11 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     myDispatcher.removeListener(listener);
   }
 
+  @Override
+  public boolean isDataFlavorAvailable(@NotNull DataFlavor flavor) {
+    return myClipboardSynchronizer.isDataFlavorAvailable(flavor);
+  }
+
   public void setContents(@NotNull final Transferable content) {
     Transferable old = getContents();
     Transferable contentToUse = addNewContentToStack(content);
@@ -76,10 +78,6 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     setSystemClipboardContent(contentToUse);
 
     fireContentChanged(old);
-  }
-
-  public boolean isDataFlavorAvailable(DataFlavor dataFlavor) {
-    return myClipboardSynchronizer.isDataFlavorAvailable(dataFlavor);
   }
 
   public boolean isCutElement(@Nullable final Object element) {
@@ -91,7 +89,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   @Override
   public void stopKillRings() {
-    for (Transferable data : myDatas) {
+    for (Transferable data : myData) {
       if (data instanceof KillRingTransferable) {
         ((KillRingTransferable)data).setReadyToCombine(false);
       }
@@ -119,12 +117,12 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       
       if (content instanceof KillRingTransferable) {
         KillRingTransferable killRingContent = (KillRingTransferable)content;
-        if (killRingContent.isReadyToCombine() && !myDatas.isEmpty()) {
-          Transferable prev = myDatas.get(0);
+        if (killRingContent.isReadyToCombine() && !myData.isEmpty()) {
+          Transferable prev = myData.get(0);
           if (prev instanceof KillRingTransferable) {
             Transferable merged = merge(killRingContent, (KillRingTransferable)prev);
             if (merged != null) {
-              myDatas.set(0, merged);
+              myData.set(0, merged);
               return merged;
             }
           }
@@ -136,7 +134,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       }
       
       Transferable same = null;
-      for (Transferable old : myDatas) {
+      for (Transferable old : myData) {
         if (clipString.equals(getStringContent(old))) {
           same = old;
           break;
@@ -149,14 +147,14 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       else {
         moveContentTopStackTop(same);
       }
-    } catch (UnsupportedFlavorException e) {
-    } catch (IOException e) {
     }
+    catch (UnsupportedFlavorException ignore) { }
+    catch (IOException ignore) { }
     return content;
   }
 
   private void addToTheTopOfTheStack(@NotNull Transferable content) {
-    myDatas.add(0, content);
+    myData.add(0, content);
     deleteAfterAllowedMaximum();
   }
   
@@ -217,46 +215,47 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   private void deleteAfterAllowedMaximum() {
     int max = UISettings.getInstance().MAX_CLIPBOARD_CONTENTS;
-    for (int i = myDatas.size() - 1; i >= max; i--) {
-      myDatas.remove(i);
+    for (int i = myData.size() - 1; i >= max; i--) {
+      myData.remove(i);
     }
   }
 
+  @Nullable
   public Transferable getContents() {
-    return getSystemClipboardContents();
+    return myClipboardSynchronizer.getContents();
   }
 
   public Transferable[] getAllContents() {
     deleteAfterAllowedMaximum();
 
-    Transferable content = getSystemClipboardContents();
+    Transferable content = getContents();
     if (content != null) {
       try {
         String clipString = getStringContent(content);
-        String datasString = null;
+        String dataString = null;
 
-        if (!myDatas.isEmpty()) {
-          datasString = getStringContent(myDatas.get(0));
+        if (!myData.isEmpty()) {
+          dataString = getStringContent(myData.get(0));
         }
 
-        if (clipString != null && clipString.length() > 0 && !Comparing.equal(clipString, datasString)) {
-          myDatas.add(0, content);
+        if (clipString != null && clipString.length() > 0 && !Comparing.equal(clipString, dataString)) {
+          myData.add(0, content);
         }
-      } catch (UnsupportedFlavorException e) {
-      } catch (IOException e) {
       }
+      catch (UnsupportedFlavorException ignore) { }
+      catch (IOException ignore) { }
     }
 
-    return myDatas.toArray(new Transferable[myDatas.size()]);
+    return myData.toArray(new Transferable[myData.size()]);
   }
 
   public void removeContent(Transferable t) {
     Transferable old = getContents();
-    boolean isCurrentClipboardContent = myDatas.indexOf(t) == 0;
-    myDatas.remove(t);
+    boolean isCurrentClipboardContent = myData.indexOf(t) == 0;
+    myData.remove(t);
     if (isCurrentClipboardContent) {
-      if (!myDatas.isEmpty()) {
-        setSystemClipboardContent(myDatas.get(0));
+      if (!myData.isEmpty()) {
+        setSystemClipboardContent(myData.get(0));
       }
       else {
         setSystemClipboardContent(new StringSelection(""));
@@ -267,7 +266,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   public void moveContentTopStackTop(Transferable t) {
     setSystemClipboardContent(t);
-    myDatas.remove(t);
-    myDatas.add(0, t);
+    myData.remove(t);
+    myData.add(0, t);
   }
 }
