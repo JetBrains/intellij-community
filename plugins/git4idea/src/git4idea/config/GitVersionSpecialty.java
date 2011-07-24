@@ -15,6 +15,8 @@
  */
 package git4idea.config;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * <p>
  * This enum stores the collection of bugs and features of different versions of Git.
@@ -38,35 +40,32 @@ public enum GitVersionSpecialty {
    */
   ABLE_TO_USE_PROGRESS {
     @Override
-    public boolean existsIn(GitVersion version) {
-      return generallyValid(version) && version.isLaterOrEqual(new GitVersion(1, 7, 1, 1));
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 1, 1));
     }
   },
 
   DOESNT_GET_PARAMETERS_FROM_RUNNERW {
     @Override
-    public boolean existsIn(GitVersion version) {
-      return generallyValid(version) && version.getType().equals(GitVersion.Type.CYGWIN);
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.getType().equals(GitVersion.Type.CYGWIN);
     }
   },
 
   NEEDS_QUOTES_IN_STASH_NAME {
     @Override
-    public boolean existsIn(GitVersion version) {
-      return generallyValid(version) && version.getType().equals(GitVersion.Type.CYGWIN);
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.getType().equals(GitVersion.Type.CYGWIN);
     }
   },
 
   STARTED_USING_RAW_BODY_IN_FORMAT {
     @Override
-    public boolean existsIn(GitVersion version) {
-      return generallyValid(version) && version.isLaterOrEqual(new GitVersion(1, 7, 2, 0));
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 2, 0));
     }
   };
 
-  public abstract boolean existsIn(GitVersion version);
+  public abstract boolean existsIn(@NotNull GitVersion version);
 
-  private static boolean generallyValid(GitVersion version) {
-    return version != null;
-  }
 }
