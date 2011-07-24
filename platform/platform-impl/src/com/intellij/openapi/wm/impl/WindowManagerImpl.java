@@ -16,7 +16,9 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.Patches;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
@@ -43,6 +45,7 @@ import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
 import org.jdom.Element;
@@ -134,7 +137,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   public WindowManagerImpl(DataManager dataManager,
                            ApplicationInfoEx applicationInfoEx,
                            ActionManagerEx actionManager,
-                           UISettings uiSettings) {
+                           UISettings uiSettings,
+                           MessageBus bus) {
     myApplicationInfoEx = applicationInfoEx;
     myDataManager = dataManager;
     myActionManager = actionManager;
@@ -185,6 +189,26 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         }
       }
     };
+    
+    bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      @Override
+      public void appClosing() {
+        // save fullscreen window states
+        if (SystemInfo.isMacOSLion && GeneralSettings.getInstance().isReopenLastProject()) {
+          Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+          
+          if (openProjects.length > 0) {
+            WindowManagerEx wm = WindowManagerEx.getInstanceEx();
+            for (Project project : openProjects) {
+              IdeFrameImpl frame  = wm.getFrame(project);
+              if (frame != null) {
+                frame.storeFullScreenStateIfNeeded();
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   public void showFrame(final String[] args) {
@@ -672,7 +696,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
     final IdeFrameImpl frame = getFrame(project);
     if (frame != null) {
-      final Rectangle rectangle = frame.getBounds();
+      boolean usePreviousBounds = SystemInfo.isMacOSLion && WindowManagerEx.getInstanceEx().isFullScreen(frame);
+      final Rectangle rectangle = usePreviousBounds ? myFrameBounds : frame.getBounds();
       frameElement.setAttribute(X_ATTR, Integer.toString(rectangle.x));
       frameElement.setAttribute(Y_ATTR, Integer.toString(rectangle.y));
       frameElement.setAttribute(WIDTH_ATTR, Integer.toString(rectangle.width));
