@@ -17,30 +17,35 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public abstract class Timer implements Disposable, Runnable  {
   private final int mySpan;
 
-  private volatile boolean myRunning;
-  private volatile boolean myDisposed;
-  private volatile boolean myRestartRequest;
-
   private final String myName;
 
   private volatile boolean myTakeInitialDelay = true;
-  private volatile boolean myInitiallySlept = false;
 
-  private ThreadRunner myRunner;
   private Exception myInterruptedException;
 
   private final Object LOCK = new Object();
 
+  private SharedThread mySharedThread;
+
+  enum TimerState {startup, intialSleep, running, suspended, restarting, pausing, disposed}
+
+  private TimerState myState = TimerState.startup;
+
+  private int myPauseTime;
+
   public Timer(@NonNls String name, int span) {
     myName = name;
     mySpan = span;
+    mySharedThread = SharedThread.getInstance();
   }
 
   public void setTakeInitialDelay(final boolean take) {
@@ -53,101 +58,110 @@ public abstract class Timer implements Disposable, Runnable  {
 
   public final void start() {
     synchronized (LOCK) {
-      myRunning = true;
+      if (isRunning() || isDisposed()) return;
 
-      if (myRunner != null) return;
-
-      Application app = ApplicationManager.getApplication();
-      myRunner = app != null ? new AppPool() : new PlainThread();
-      myRunner.run(this);
+      myState = TimerState.startup;
+      mySharedThread.queue(this, 0);
     }
   }
 
-  public final void run() {
-    try {
-      while(true) {
-        synchronized (LOCK) {
-          if (!myRunning || myDisposed) {
-            myRunner = null;
-            resetToStart();
-            break;
-          }
-        }
-
-        if (myTakeInitialDelay || myInitiallySlept) {
-          Thread.sleep(mySpan);
-        }
-        myInitiallySlept = true;
-
-        if (myRestartRequest) {
-          myRestartRequest = false;
-          continue;
-        }
-
-        onTimer();
+  public void run() {
+    synchronized (LOCK) {
+      switch (myState) {
+        case startup:
+          startup();
+          break;
+        case restarting:
+          startup();
+          break;
+        case intialSleep:
+          myState = TimerState.running;
+          fireAndReschedule();
+          break;
+        case running:
+          fireAndReschedule();
+          break;
+        case suspended:
+          break;
+        case pausing:
+          myState = TimerState.running;
+          mySharedThread.queue(this, myPauseTime);
+          break;
+        case disposed:
+          break;
       }
+    }
+  }
+
+  private void startup() {
+    myState = TimerState.intialSleep;
+    if (myTakeInitialDelay) {
+      mySharedThread.queue(this, mySpan);
+    } else {
+      fireAndReschedule();
+    }
+  }
+
+  private void fireAndReschedule() {
+    try {
+      onTimer();
     }
     catch (InterruptedException e) {
       myInterruptedException = e;
-      resetToStart();
+      suspend();
+      return;
     }
-  }
-
-  private void resetToStart() {
-    myRestartRequest = false;
-    myInitiallySlept = false;
+    mySharedThread.queue(this, getSpan());
   }
 
   protected abstract void onTimer() throws InterruptedException;
 
   public final void suspend() {
     synchronized (LOCK) {
-      if (myDisposed) return;
+      if (isDisposed() || !isRunning()) return;
+      myState = TimerState.suspended;
+    }
+  }
 
-      if (myRunning) {
-        myRunning = false;
-      } else {
-        resetToStart();
-      }
+  public final void delay(int length) {
+    synchronized (LOCK) {
+      if (isDisposed() || !isRunning()) return;
+      myState = TimerState.pausing;
+      mySharedThread.queue(this, length);
     }
   }
 
   public final void resume() {
     synchronized (LOCK) {
-      if (myDisposed) return;
-
-      start();
+      if (isDisposed() || isRunning()) return;
+      myState = TimerState.running;
+      mySharedThread.queue(this, 0);
     }
   }
 
   public final void dispose() {
     synchronized (LOCK) {
-      myDisposed = true;
-      suspend();
+      myState = TimerState.disposed;
     }
   }
 
   public void restart() {
     synchronized (LOCK) {
-      start();
-      myRestartRequest = true;
+      myState = TimerState.restarting;
+      mySharedThread.queue(this, 0);
     }
   }
 
   public boolean isRunning() {
     synchronized (LOCK) {
-      return myRunning;
+      return myState == TimerState.running || myState == TimerState.intialSleep || myState == TimerState.restarting;
     }
   }
 
   public boolean isDisposed() {
     synchronized (LOCK) {
-      return myDisposed;
+      return myState == TimerState.disposed;
     }
-  }
-
-  interface ThreadRunner{
-    void run(Runnable runnable);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -155,19 +169,63 @@ public abstract class Timer implements Disposable, Runnable  {
     return "Timer=" + myName;
   }
 
-  static class AppPool implements ThreadRunner {
-    public void run(Runnable runnable) {
-      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+  private static class SharedThread {
+
+    private final ScheduledThreadPoolExecutor myExecutor;
+    private static SharedThread ourInstance;
+
+    private SharedThread() {
+      myExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("AnimatorThread");
+    }
+
+    public static SharedThread getInstance() {
+      if (ourInstance == null) {
+        ourInstance = new SharedThread();
+      }
+      return ourInstance;
+    }
+
+    public void queue(Timer timer, int span) {
+      myExecutor.remove(timer);
+      myExecutor.schedule(timer, span, TimeUnit.MILLISECONDS);
     }
   }
 
-  static class PlainThread implements ThreadRunner {
+  public static void main(String[] args) {
+    final Timer timer = new MyTimer();
 
-    private Thread myThread;
+    timer.setTakeInitialDelay(false);
+    timer.start();
+  }
 
-    public void run(Runnable runnable) {
-      myThread = new Thread(runnable, "timer thread");
-      myThread.start();
+  private static class MyTimer extends Timer {
+    private final int[] myCount;
+
+    public MyTimer() {
+      super("", 500);
+      myCount = new int[] {3};
+    }
+
+    @Override
+    protected void onTimer() throws InterruptedException {
+      System.out.println("Timer.onTimer");
+      myCount[0]--;
+      if (myCount[0] == 0) {
+        suspend();
+        new Thread() {
+          @Override
+          public void run() {
+            try {
+              Thread.currentThread().sleep(2000);
+            }
+            catch (InterruptedException e) {
+              e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            myCount[0] = 3;
+            MyTimer.this.restart();
+          }
+        }.start();
+      }
     }
   }
 }
