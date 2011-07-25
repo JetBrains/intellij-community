@@ -249,6 +249,7 @@ public class GitChangeProviderTest extends GitTest {
         String newName = filename + "_" + branchName.replaceAll("\\s", "_") + "_new";
         dirty(file);
         myRepo.mv(filename, newName);
+        myRootDir.refresh(false, true);
         dirty(myRootDir.findChild(newName));
         break;
       default:
