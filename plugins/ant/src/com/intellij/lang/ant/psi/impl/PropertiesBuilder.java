@@ -118,7 +118,7 @@ public class PropertiesBuilder extends AntElementVisitor {
   @Override public void visitAntProperty(final AntProperty antProperty) {
     final PropertiesFile propertiesFile = antProperty.getPropertiesFile();
     if (propertiesFile != null) {
-      myDependentFiles.add(propertiesFile);
+      myDependentFiles.add(propertiesFile.getContainingFile());
     }
 
     final String environment = antProperty.getEnvironment();

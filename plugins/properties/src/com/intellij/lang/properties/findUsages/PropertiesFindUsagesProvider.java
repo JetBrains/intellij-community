@@ -16,7 +16,7 @@
 package com.intellij.lang.properties.findUsages;
 
 import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.parsing.PropertiesWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.LangBundle;
@@ -39,7 +39,7 @@ public class PropertiesFindUsagesProvider implements FindUsagesProvider {
 
   @NotNull
   public String getType(@NotNull PsiElement element) {
-    if (element instanceof Property) return LangBundle.message("terms.property");
+    if (element instanceof IProperty) return LangBundle.message("terms.property");
     return "";
   }
 

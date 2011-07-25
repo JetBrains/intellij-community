@@ -16,7 +16,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -48,8 +47,8 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static List<Property> findPropertiesByKey(Project project, final String key) {
-    return new ArrayList<Property>(PropertyKeyIndex.getInstance().get(key, project, GlobalSearchScope.allScope(project)));
+  public static List<IProperty> findPropertiesByKey(Project project, final String key) {
+    return new ArrayList<IProperty>(PropertyKeyIndex.getInstance().get(key, project, GlobalSearchScope.allScope(project)));
   }
 
   public static boolean isPropertyComplete(final Project project, ResourceBundle resourceBundle, String propertyName) {
@@ -144,8 +143,8 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static List<Property> findAllProperties(Project project, @NotNull ResourceBundle resourceBundle, String key) {
-    List<Property> result = new SmartList<Property>();
+  public static List<IProperty> findAllProperties(Project project, @NotNull ResourceBundle resourceBundle, String key) {
+    List<IProperty> result = new SmartList<IProperty>();
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(project);
     for (PropertiesFile propertiesFile : propertiesFiles) {
       result.addAll(propertiesFile.findPropertiesByKey(key));

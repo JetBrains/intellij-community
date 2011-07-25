@@ -16,9 +16,9 @@
 
 package com.intellij.uiDesigner;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.util.Pair;
@@ -77,7 +77,7 @@ public class StringDescriptorManager {
       return descriptor.getValue();
     }
 
-    Property prop = resolveToProperty(descriptor, locale);
+    IProperty prop = resolveToProperty(descriptor, locale);
     if (prop != null) {
       final String value = prop.getUnescapedValue();
       if (value != null) {
@@ -88,7 +88,7 @@ public class StringDescriptorManager {
     return "[" + descriptor.getKey() + " / " + descriptor.getBundleName() + "]";
   }
 
-  public Property resolveToProperty(@NotNull StringDescriptor descriptor, @Nullable Locale locale) {
+  public IProperty resolveToProperty(@NotNull StringDescriptor descriptor, @Nullable Locale locale) {
     String propFileName = descriptor.getDottedBundleName();
     Pair<Locale, String> cacheKey = new Pair<Locale, String>(locale, propFileName);
     SoftReference<PropertiesFile> propertiesFileRef;
@@ -96,7 +96,7 @@ public class StringDescriptorManager {
       propertiesFileRef = myPropertiesFileCache.get(cacheKey);
     }
     PropertiesFile propertiesFile = (propertiesFileRef == null) ? null : propertiesFileRef.get();
-    if (propertiesFile == null || !propertiesFile.isValid()) {
+    if (propertiesFile == null || !propertiesFile.getContainingFile().isValid()) {
       propertiesFile = PropertiesUtil.getPropertiesFile(propFileName, myModule, locale);
       synchronized (myPropertiesFileCache) {
         myPropertiesFileCache.put(cacheKey, new SoftReference<PropertiesFile>(propertiesFile));
@@ -104,7 +104,7 @@ public class StringDescriptorManager {
     }
 
     if (propertiesFile != null) {
-      final Property propertyByKey = propertiesFile.findPropertyByKey(descriptor.getKey());
+      final IProperty propertyByKey = propertiesFile.findPropertyByKey(descriptor.getKey());
       if (propertyByKey != null) {
         return propertyByKey;
       }

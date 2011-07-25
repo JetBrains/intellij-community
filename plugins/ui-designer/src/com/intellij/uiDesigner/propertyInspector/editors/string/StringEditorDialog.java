@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.propertyInspector.editors.string;
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
@@ -142,9 +143,9 @@ public final class StringEditorDialog extends DialogWrapper{
     final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
     final PropertiesFile propFile = manager.findPropertiesFile(module, descriptor.getDottedBundleName(), locale);
     if (propFile != null) {
-      final Property propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
-      if (propertyByKey != null && !editedValue.equals(propertyByKey.getValue())) {
-        final Collection<PsiReference> references = findPropertyReferences(propertyByKey, module);
+      final IProperty propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
+      if (propertyByKey instanceof Property && !editedValue.equals(propertyByKey.getValue())) {
+        final Collection<PsiReference> references = findPropertyReferences((Property)propertyByKey, module);
 
         String newKeyName = null;
         if (references.size() > 1) {
@@ -185,7 +186,7 @@ public final class StringEditorDialog extends DialogWrapper{
                       propFile.addProperty(PropertiesElementFactory.createProperty(module.getProject(), newKeyName1, editedValue));
                     }
                     else {
-                      final Property propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
+                      final IProperty propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
                       if (propertyByKey != null) {
                         propertyByKey.setValue(editedValue);
                       }
@@ -248,7 +249,7 @@ public final class StringEditorDialog extends DialogWrapper{
 
   public static boolean saveCreatedProperty(final PropertiesFile bundle, final String name, final String value,
                                             final PsiFile formFile) {
-    final Property property = PropertiesElementFactory.createProperty(bundle.getProject(), name, value);
+    final IProperty property = PropertiesElementFactory.createProperty(bundle.getProject(), name, value);
     final ReadonlyStatusHandler.OperationStatus operationStatus =
       ReadonlyStatusHandler.getInstance(bundle.getProject()).ensureFilesWritable(bundle.getVirtualFile());
     if (operationStatus.hasReadonlyFiles()) {
@@ -379,7 +380,8 @@ public final class StringEditorDialog extends DialogWrapper{
           public void actionPerformed(final ActionEvent e) {
             Project project = myEditor.getProject();
             final String bundleNameText = myTfBundleName.getText().replace('/', '.');
-            PsiFile initialPropertiesFile = PropertiesUtil.getPropertiesFile(bundleNameText, myEditor.getModule(), myLocale);
+            PropertiesFile file = PropertiesUtil.getPropertiesFile(bundleNameText, myEditor.getModule(), myLocale);
+            PsiFile initialPropertiesFile = file == null ? null : file.getContainingFile();
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myEditor.getModule());
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
                                                                                                          StdFileTypes.PROPERTIES, new TreeFileChooser.PsiFileFilter() {

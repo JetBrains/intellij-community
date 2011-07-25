@@ -97,7 +97,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
     private boolean doRename(final String inputString) {
       final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
       for (PropertiesFile propertiesFile : propertiesFiles) {
-        if (!CodeInsightUtilBase.prepareFileForWrite(propertiesFile)) return false;
+        if (!CodeInsightUtilBase.prepareFileForWrite(propertiesFile.getContainingFile())) return false;
       }
 
       RenameProcessor renameProcessor = null;
@@ -110,10 +110,10 @@ public class ResourceBundleRenameHandler implements RenameHandler {
         final String newName = inputString + virtualFile.getNameWithoutExtension().substring(baseName.length()) + "."
                                + virtualFile.getExtension();
         if (renameProcessor == null) {
-          renameProcessor = new RenameProcessor(myProject, propertiesFile, newName, false, false);
+          renameProcessor = new RenameProcessor(myProject, propertiesFile.getContainingFile(), newName, false, false);
           continue;
         }
-        renameProcessor.addElement(propertiesFile, newName);
+        renameProcessor.addElement(propertiesFile.getContainingFile(), newName);
       }
       if (renameProcessor == null) {
         LOG.assertTrue(false);

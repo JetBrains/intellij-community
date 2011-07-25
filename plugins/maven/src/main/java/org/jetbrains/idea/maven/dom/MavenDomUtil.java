@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -285,21 +285,21 @@ public class MavenDomUtil {
   }
 
   @Nullable
-  public static Property findProperty(@NotNull Project project, @NotNull String fileName, @NotNull String propName) {
+  public static IProperty findProperty(@NotNull Project project, @NotNull String fileName, @NotNull String propName) {
     PropertiesFile propertiesFile = getPropertiesFile(project, fileName);
     return propertiesFile == null ? null : propertiesFile.findPropertyByKey(propName);
   }
 
   @Nullable
-  public static Property findProperty(@NotNull Project project, @NotNull VirtualFile file, @NotNull String propName) {
+  public static IProperty findProperty(@NotNull Project project, @NotNull VirtualFile file, @NotNull String propName) {
     PropertiesFile propertiesFile = getPropertiesFile(project, file);
     return propertiesFile == null ? null : propertiesFile.findPropertyByKey(propName);
   }
 
   @Nullable
   public static PsiElement findPropertyValue(@NotNull Project project, @NotNull VirtualFile file, @NotNull String propName) {
-    Property prop = findProperty(project, file, propName);
-    return prop == null ? null : prop.getFirstChild().getNextSibling().getNextSibling();
+    IProperty prop = findProperty(project, file, propName);
+    return prop == null ? null : prop.getPsiElement().getFirstChild().getNextSibling().getNextSibling();
   }
 
   public static boolean isFilteredResourceFile(PsiElement element) {

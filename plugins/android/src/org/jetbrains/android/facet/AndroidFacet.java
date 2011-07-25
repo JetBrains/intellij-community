@@ -33,9 +33,9 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetTypeRegistry;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -412,10 +412,10 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        for (Property property : propertiesFile.getProperties()) {
+        for (IProperty property : propertiesFile.getProperties()) {
           final String name = property.getName();
           if (name != null && name.startsWith(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX)) {
-            property.delete();
+            property.getPsiElement().delete();
           }
         }
 
@@ -469,13 +469,13 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     final IAndroidTarget androidTarget = getConfiguration().getAndroidTarget();
     if (androidTarget != null) {
       final String targetPropertyValue = androidTarget.hashString();
-      final Property property = propertiesFile.findPropertyByKey(AndroidUtils.ANDROID_TARGET_PROPERTY);
+      final IProperty property = propertiesFile.findPropertyByKey(AndroidUtils.ANDROID_TARGET_PROPERTY);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
           if (property == null) {
-            final Property newProperty = PropertiesElementFactory.createProperty(propertiesFile.getProject(),
-                                                                                 AndroidUtils.ANDROID_TARGET_PROPERTY, targetPropertyValue);
+            final IProperty newProperty = PropertiesElementFactory.createProperty(propertiesFile.getProject(),
+                                                                                  AndroidUtils.ANDROID_TARGET_PROPERTY, targetPropertyValue);
             propertiesFile.addProperty(newProperty);
           }
           else {
@@ -487,7 +487,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   }
 
   public void updateLibraryProperty(@NotNull final PropertiesFile propertiesFile) {
-    final Property property = propertiesFile.findPropertyByKey(AndroidUtils.ANDROID_LIBRARY_PROPERTY);
+    final IProperty property = propertiesFile.findPropertyByKey(AndroidUtils.ANDROID_LIBRARY_PROPERTY);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -496,9 +496,9 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
           property.setValue(Boolean.toString(getConfiguration().LIBRARY_PROJECT));
         }
         else if (getConfiguration().LIBRARY_PROJECT) {
-          final Property newProperty = PropertiesElementFactory.createProperty(propertiesFile.getProject(),
-                                                                               AndroidUtils.ANDROID_LIBRARY_PROPERTY,
-                                                                               Boolean.TRUE.toString());
+          final IProperty newProperty = PropertiesElementFactory.createProperty(propertiesFile.getProject(),
+                                                                                AndroidUtils.ANDROID_LIBRARY_PROPERTY,
+                                                                                Boolean.TRUE.toString());
           propertiesFile.addProperty(newProperty);
         }
       }

@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.ivy;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +32,7 @@ public class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
   private static String extractUrl(PropertiesFile properties, String artifactName) {
     String prefix = "artifact:" + artifactName + "#source#jar#";
 
-    for (Property property : properties.getProperties()) {
+    for (IProperty property : properties.getProperties()) {
       String key = property.getUnescapedKey();
       if (key != null && key.startsWith(prefix) && key.endsWith(".location")) {
         return property.getUnescapedValue();

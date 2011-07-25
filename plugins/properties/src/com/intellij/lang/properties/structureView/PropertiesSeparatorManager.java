@@ -19,13 +19,13 @@
  */
 package com.intellij.lang.properties.structureView;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -92,8 +92,8 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Elem
     final TIntLongHashMap charCounts = new TIntLongHashMap();
     for (PropertiesFile propertiesFile : files) {
       if (propertiesFile == null) continue;
-      List<Property> properties = propertiesFile.getProperties();
-      for (Property property : properties) {
+      List<IProperty> properties = propertiesFile.getProperties();
+      for (IProperty property : properties) {
         String key = property.getUnescapedKey();
         if (key == null) continue;
         for (int i =0; i<key.length(); i++) {

@@ -15,8 +15,8 @@
  */
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
@@ -132,8 +132,8 @@ public final class KeyChooserDialog extends DialogWrapper{
   private void fillPropertyList() {
     myPairs = new ArrayList<Pair<String, String>>();
 
-    final List<Property> properties = myBundle.getProperties();
-    for (Property property : properties) {
+    final List<IProperty> properties = myBundle.getProperties();
+    for (IProperty property : properties) {
       final String key = property.getUnescapedKey();
       final String value = property.getValue();
       if (key != null) {

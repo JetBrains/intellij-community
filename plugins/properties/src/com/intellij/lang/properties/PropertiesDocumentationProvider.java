@@ -20,7 +20,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,8 +34,8 @@ import java.awt.*;
 public class PropertiesDocumentationProvider extends AbstractDocumentationProvider {
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    if (element instanceof Property) {
-      @NonNls String info = "\n\"" + ((Property)element).getValue() + "\"";
+    if (element instanceof IProperty) {
+      @NonNls String info = "\n\"" + ((IProperty)element).getValue() + "\"";
       PsiFile file = element.getContainingFile();
       if (file != null) {
         info += " [" + file.getName() + "]";
@@ -47,8 +46,8 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
   }
 
   public String generateDoc(final PsiElement element, final PsiElement originalElement) {
-    if (element instanceof Property) {
-      Property property = (Property)element;
+    if (element instanceof IProperty) {
+      IProperty property = (IProperty)element;
       String text = property.getDocCommentText();
 
       @NonNls String info = "";
@@ -64,7 +63,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
           info += "</div>";
         }
       }
-      info += "\n<b>" + property.getName() + "</b>=\"" + ((Property)element).getValue() + "\"";
+      info += "\n<b>" + property.getName() + "</b>=\"" + ((IProperty)element).getValue() + "\"";
       PsiFile file = element.getContainingFile();
       if (file != null) {
         info += " [" + file.getName() + "]";

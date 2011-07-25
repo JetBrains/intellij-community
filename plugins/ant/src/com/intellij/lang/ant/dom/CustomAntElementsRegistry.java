@@ -19,8 +19,8 @@ import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.impl.AntResourcesClassLoader;
 import com.intellij.lang.ant.psi.AntFilesProvider;
 import com.intellij.lang.ant.psi.impl.ReflectedProject;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -602,7 +602,7 @@ public class CustomAntElementsRegistry {
             if (loader == null) { // if not initialized yet
               loader = getClassLoader(typedef, antProject);
             }
-            for (final Property property : propFile.getProperties()) {
+            for (final IProperty property : propFile.getProperties()) {
               registerElement(typedef, property.getUnescapedKey(), uri, property.getValue(), loader);
             }
           }

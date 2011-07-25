@@ -16,6 +16,7 @@
 
 package com.intellij.lang.properties.psi;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataCache;
@@ -40,7 +41,7 @@ public class PropertiesElementFactory {
   };
 
   @NotNull
-  public static Property createProperty(@NotNull Project project, @NonNls @NotNull String name, @NonNls @NotNull String value) {
+  public static IProperty createProperty(@NotNull Project project, @NonNls @NotNull String name, @NonNls @NotNull String value) {
     String text = escape(name) + "=" + escapeValue(value);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
     return dummyFile.getProperties().get(0);

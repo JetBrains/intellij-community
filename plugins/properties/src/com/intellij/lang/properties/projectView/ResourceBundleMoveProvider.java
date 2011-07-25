@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -49,7 +50,10 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
     final ResourceBundle[] bundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);
     LOG.assertTrue(bundles != null);
     for (ResourceBundle bundle : bundles) {
-      filesOrDirs.addAll(bundle.getPropertiesFiles(PlatformDataKeys.PROJECT.getData(dataContext)));
+      List<PropertiesFile> propertiesFiles = bundle.getPropertiesFiles(PlatformDataKeys.PROJECT.getData(dataContext));
+      for (PropertiesFile propertiesFile : propertiesFiles) {
+        filesOrDirs.add(propertiesFile.getContainingFile());
+      }
     }
   }
 

@@ -16,13 +16,11 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
@@ -59,9 +57,9 @@ public class UnusedMessageFormatParameterInspection extends BaseLocalInspectionT
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
     PropertiesFile propertiesFile = (PropertiesFile)file;
-    final List<Property> properties = propertiesFile.getProperties();
+    final List<IProperty> properties = propertiesFile.getProperties();
     List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
-    for (Property property : properties) {
+    for (IProperty property : properties) {
       @NonNls String name = property.getName();
       if (name != null && name.startsWith("log4j")) continue;
       String value = property.getValue();
@@ -90,8 +88,8 @@ public class UnusedMessageFormatParameterInspection extends BaseLocalInspectionT
         for (Integer integer : parameters) {
           for (int i = 0; i < integer.intValue(); i++) {
             if (!parameters.contains(new Integer(i))) {
-              ASTNode[] nodes = property.getNode().getChildren(null);
-              PsiElement valElement = nodes.length < 3 ? property : nodes[2].getPsi();
+              ASTNode[] nodes = property.getPsiElement().getNode().getChildren(null);
+              PsiElement valElement = nodes.length < 3 ? property.getPsiElement() : nodes[2].getPsi();
               problemDescriptors.add(manager.createProblemDescriptor(valElement, PropertiesBundle.message(
                 "unused.message.format.parameter.problem.descriptor", integer.toString(), Integer.toString(i)), isOnTheFly, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
               break;

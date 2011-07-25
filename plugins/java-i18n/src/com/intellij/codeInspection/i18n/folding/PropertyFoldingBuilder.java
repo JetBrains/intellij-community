@@ -22,6 +22,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
@@ -45,8 +46,8 @@ import java.util.*;
  */
 public class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static final int FOLD_MAX_LENGTH = 50;
-  private static final Key<Property> CACHE = Key.create("i18n.property.cache");
-  public static final Property NULL = new PropertyImpl(new PropertyStubImpl(null, null), PropertiesElementTypes.PROPERTY);
+  private static final Key<IProperty> CACHE = Key.create("i18n.property.cache");
+  public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(null, null), PropertiesElementTypes.PROPERTY);
 
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
@@ -79,7 +80,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
   private static void checkLiteral(Project project, PsiLiteralExpression expression, List<FoldingDescriptor> result) {
     if (isI18nProperty(project, expression)) {
-      final Property property = getI18nProperty(project, expression);
+      final IProperty property = getI18nProperty(project, expression);
       final HashSet<Object> set = new HashSet<Object>();
       set.add(property);
       final String msg = formatI18nProperty(expression, property);
@@ -158,13 +159,13 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   }
 
   private static String getI18nMessage(@NotNull Project project, PsiLiteralExpression literal) {
-    final Property property = getI18nProperty(project, literal);
+    final IProperty property = getI18nProperty(project, literal);
     return property == null ? literal.getText() : formatI18nProperty(literal, property);
   }
 
   @Nullable
-  private static Property getI18nProperty(Project project, PsiLiteralExpression literal) {
-    final Property property = literal.getUserData(CACHE);
+  private static IProperty getI18nProperty(Project project, PsiLiteralExpression literal) {
+    final Property property = (Property)literal.getUserData(CACHE);
     if (property == NULL) return null;
     if (property != null && isValid(property, literal)) return property;
     if (isI18nProperty(project, literal)) {
@@ -174,16 +175,16 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
           final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
           for (ResolveResult result : results) {
             final PsiElement element = result.getElement();
-            if (element instanceof Property) {
-              Property p = (Property)element;
+            if (element instanceof IProperty) {
+              IProperty p = (IProperty)element;
               literal.putUserData(CACHE, p);
               return p;
             }
           }
         } else {
           final PsiElement element = reference.resolve();
-          if (element instanceof Property) {
-            Property p = (Property)element;
+          if (element instanceof IProperty) {
+            IProperty p = (IProperty)element;
             literal.putUserData(CACHE, p);
             return p;
           }
@@ -198,7 +199,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     return StringUtil.unquoteString(literal.getText()).equals(property.getKey());    
   }
 
-  private static String formatI18nProperty(PsiLiteralExpression literal, Property property) {
+  private static String formatI18nProperty(PsiLiteralExpression literal, IProperty property) {
     return property == null ?
            literal.getText() : "\"" + property.getValue() + "\"";
   }
@@ -210,7 +211,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
   public static boolean isI18nProperty(@NotNull Project project, @NotNull PsiLiteralExpression expr) {
     if (! isStringLiteral(expr)) return false;
-    final Property property = expr.getUserData(CACHE);
+    final IProperty property = expr.getUserData(CACHE);
     if (property == NULL) return false;
     if (property != null) return true;
 

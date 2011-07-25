@@ -17,8 +17,8 @@ package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -138,16 +138,18 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   @Nullable
   private PsiElement resolveSystemPropety() {
-    return MavenDomUtil.findProperty(myProject,
-                                     MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE,
-                                     myText);
+    IProperty property = MavenDomUtil.findProperty(myProject,
+                                                   MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE,
+                                                   myText);
+    return property == null ? null : property.getPsiElement();
   }
 
   @Nullable
   private PsiElement resolveEnvPropety() {
-    return MavenDomUtil.findProperty(myProject,
-                                     MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE,
-                                     myText.substring("env.".length()));
+    IProperty property = MavenDomUtil.findProperty(myProject,
+                                                   MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE,
+                                                   myText.substring("env.".length()));
+    return property == null ? null : property.getPsiElement();
   }
 
   @Nullable
@@ -276,7 +278,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   protected void collectPropertiesFileVariants(@Nullable PropertiesFile file, String prefix, List<Object> result) {
     if (file == null) return;
 
-    for (Property each : file.getProperties()) {
+    for (IProperty each : file.getProperties()) {
       String name = each.getKey();
       if (prefix != null) name = prefix + name;
       result.add(createLookupElement(each, name));

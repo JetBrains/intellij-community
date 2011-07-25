@@ -17,9 +17,9 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.template.macro.MacroUtil;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.editor.Editor;
@@ -309,8 +309,8 @@ public class JavaI18nUtil extends I18nUtil {
     for (PsiReference reference : expression.getReferences()) {
       if (reference instanceof PsiPolyVariantReference) {
         for (ResolveResult result : ((PsiPolyVariantReference)reference).multiResolve(false)) {
-          if (result.isValidResult() && result.getElement() instanceof Property) {
-            String value = ((Property)result.getElement()).getValue();
+          if (result.isValidResult() && result.getElement() instanceof IProperty) {
+            String value = ((IProperty)result.getElement()).getValue();
             MessageFormat format;
             try {
               format = new MessageFormat(value);

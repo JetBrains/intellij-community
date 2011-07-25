@@ -17,7 +17,6 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.editor.ResourceBundleEditor;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -92,7 +91,7 @@ public class ResourceBundleKeyRenameHandler implements RenameHandler {
       myEditor = editor;
       myOldPropertyName = oldPropertyName;
       for (PropertiesFile file : bundle.getPropertiesFiles(project)) {
-        for (Property property : file.getProperties()) {
+        for (IProperty property : file.getProperties()) {
           myExistingProperties.add(property.getKey());
         }
       }

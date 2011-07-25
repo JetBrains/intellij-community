@@ -455,6 +455,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return getManager().findDirectory(parentFile);
   }
 
+  @NotNull
   public PsiFile getContainingFile() {
     return this;
   }

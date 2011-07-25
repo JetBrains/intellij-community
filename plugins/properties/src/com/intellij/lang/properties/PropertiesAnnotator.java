@@ -47,10 +47,10 @@ import java.util.Collection;
 public class PropertiesAnnotator implements Annotator {
 
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (!(element instanceof Property)) return;
+    if (!(element instanceof IProperty)) return;
     final Property property = (Property)element;
-    PropertiesFile propertiesFile = property.getContainingFile();
-    Collection<Property> others = propertiesFile.findPropertiesByKey(property.getUnescapedKey());
+    PropertiesFile propertiesFile = property.getPropertiesFile();
+    Collection<IProperty> others = propertiesFile.findPropertiesByKey(property.getUnescapedKey());
     ASTNode keyNode = ((PropertyImpl)property).getKeyNode();
     if (others.size() != 1) {
       Annotation annotation = holder.createErrorAnnotation(keyNode, PropertiesBundle.message("duplicate.property.key.error.message"));
@@ -107,7 +107,7 @@ public class PropertiesAnnotator implements Annotator {
               public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
                 if (!property.isValid() || !property.getManager().isInProject(property)) return false;
 
-                String text = property.getContainingFile().getText();
+                String text = property.getPropertiesFile().getContainingFile().getText();
                 int startOffset = annotation.getStartOffset();
                 return text.length() > startOffset && text.charAt(startOffset) == '\\';
               }
@@ -115,7 +115,7 @@ public class PropertiesAnnotator implements Annotator {
               public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
                 if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
                 int offset = annotation.getStartOffset();
-                if (property.getContainingFile().getText().charAt(offset) == '\\') {
+                if (property.getPropertiesFile().getContainingFile().getText().charAt(offset) == '\\') {
                   editor.getDocument().deleteString(offset, offset+1);
                 }
               }

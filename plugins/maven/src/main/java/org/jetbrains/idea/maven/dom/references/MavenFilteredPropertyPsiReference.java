@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.references;
 
-import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,8 +41,8 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
     for (String each : myMavenProject.getFilters()) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each);
       if (file == null) continue;
-      Property property = MavenDomUtil.findProperty(myProject, file, myText);
-      if (property != null) return property;
+      IProperty property = MavenDomUtil.findProperty(myProject, file, myText);
+      if (property != null) return property.getPsiElement();
     }
 
     return null;

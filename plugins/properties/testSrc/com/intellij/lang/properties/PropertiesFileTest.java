@@ -39,7 +39,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myPropertyToAdd = PropertiesElementFactory.createProperty(getProject(), "kkk", "vvv");
+    myPropertyToAdd = (Property)PropertiesElementFactory.createProperty(getProject(), "kkk", "vvv");
   }
 
   public void testAddPropertyAfterComment() throws Exception {
@@ -51,12 +51,12 @@ public class PropertiesFileTest extends LightPlatformTestCase {
     });
 
 
-    List<Property> properties = propertiesFile.getProperties();
-    Property added = properties.get(0);
+    List<IProperty> properties = propertiesFile.getProperties();
+    IProperty added = properties.get(0);
     assertPropertyEquals(added, myPropertyToAdd.getName(), myPropertyToAdd.getValue());
   }
 
-  private static void assertPropertyEquals(final Property property, @NonNls String name, @NonNls String value) {
+  private static void assertPropertyEquals(final IProperty property, @NonNls String name, @NonNls String value) {
     assertEquals(name, property.getName());
     assertEquals(value, property.getValue());
   }
@@ -70,7 +70,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
     });
 
 
-    List<Property> properties = propertiesFile.getProperties();
+    List<IProperty> properties = propertiesFile.getProperties();
     assertEquals(2, properties.size());
     assertPropertyEquals(properties.get(0), "xxx", "yyy");
     assertPropertyEquals(properties.get(1), myPropertyToAdd.getName(), myPropertyToAdd.getValue());
@@ -78,18 +78,18 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   public void testDeleteProperty() throws Exception {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\n#s\nzzz=ttt\n\n");
 
-    final List<Property> properties = propertiesFile.getProperties();
+    final List<IProperty> properties = propertiesFile.getProperties();
     assertEquals(2, properties.size());
     assertPropertyEquals(properties.get(0), "xxx", "yyy");
     assertPropertyEquals(properties.get(1), "zzz", "ttt");
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        properties.get(1).delete();
+        properties.get(1).getPsiElement().delete();
       }
     });
 
-    List<Property> propertiesAfter = propertiesFile.getProperties();
+    List<IProperty> propertiesAfter = propertiesFile.getProperties();
     assertEquals(1, propertiesAfter.size());
     assertPropertyEquals(propertiesAfter.get(0), "xxx", "yyy");
   }
@@ -97,7 +97,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   public void testDeletePropertyWhitespaceAround() throws Exception {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
-    final Property property = propertiesFile.findPropertyByKey("xxx2");
+    final Property property = (Property)propertiesFile.findPropertyByKey("xxx2");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         property.delete();
@@ -105,12 +105,12 @@ public class PropertiesFileTest extends LightPlatformTestCase {
     });
 
 
-    assertEquals("xxx=yyy\nxxx3=ttt\n\n", propertiesFile.getText());
+    assertEquals("xxx=yyy\nxxx3=ttt\n\n", propertiesFile.getContainingFile().getText());
   }
   public void testDeletePropertyWhitespaceAhead() throws Exception {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
-    final Property property = propertiesFile.findPropertyByKey("xxx");
+    final Property property = (Property)propertiesFile.findPropertyByKey("xxx");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         property.delete();
@@ -145,7 +145,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
 
   public void testAddPropertyAfter() throws IncorrectOperationException {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
-    final Property c = propertiesFile.findPropertyByKey("c");
+    final Property c = (Property)propertiesFile.findPropertyByKey("c");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         propertiesFile.addPropertyAfter(myPropertyToAdd, c);
@@ -156,7 +156,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   }
   public void testAddPropertyAfterLast() throws IncorrectOperationException {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
-    final Property p = propertiesFile.findPropertyByKey("e");
+    final Property p = (Property)propertiesFile.findPropertyByKey("e");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         propertiesFile.addPropertyAfter(myPropertyToAdd, p);
@@ -177,7 +177,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   }
   public void testUnescapedKey() throws IncorrectOperationException {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a\\:b=xxx\nc\\ d=xxx\n\\ e\\=f=xxx\n\\u1234\\uxyzt=xxxx");
-    List<Property> properties = propertiesFile.getProperties();
+    List<IProperty> properties = propertiesFile.getProperties();
     assertEquals("a:b", properties.get(0).getUnescapedKey());
     assertEquals("c d", properties.get(1).getUnescapedKey());
     assertEquals(" e=f", properties.get(2).getUnescapedKey());

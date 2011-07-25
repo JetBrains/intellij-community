@@ -30,14 +30,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -125,7 +121,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
 
     if (!CodeInsightUtilBase.preparePsiElementForWrite(literalExpression)) return;
     for (PropertiesFile file : propertiesFiles) {
-      if (file.findPropertyByKey(dialog.getKey()) == null && !CodeInsightUtilBase.prepareFileForWrite(file)) return;
+      if (file.findPropertyByKey(dialog.getKey()) == null && !CodeInsightUtilBase.prepareFileForWrite(file.getContainingFile())) return;
     }
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable(){

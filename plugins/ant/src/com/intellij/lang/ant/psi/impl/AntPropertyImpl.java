@@ -18,8 +18,8 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
@@ -123,7 +123,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
         if (value == null && propName != null) {
           final PropertiesFile propertiesFile = getPropertiesFile();
           if (propertiesFile != null) {
-            final Property fileProperty = propertiesFile.findPropertyByKey(cutPrefix(propName));
+            final IProperty fileProperty = propertiesFile.findPropertyByKey(cutPrefix(propName));
             if (fileProperty != null) {
               value = fileProperty.getValue();
             }
@@ -188,11 +188,11 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     }
     final PropertiesFile propertiesFile = getPropertiesFile();
     if (propertiesFile != null) {
-      final List<Property> propList = propertiesFile.getProperties();
+      final List<IProperty> propList = propertiesFile.getProperties();
       final String prefix = getPrefix();
       final String[] names = ArrayUtil.newStringArray(propList.size());
       int idx = 0;
-      for (final Property importedProp : propList) {
+      for (final IProperty importedProp : propList) {
         names[idx++] = prefix != null? prefix + "." + importedProp.getName() : importedProp.getName();
       }
       return names;

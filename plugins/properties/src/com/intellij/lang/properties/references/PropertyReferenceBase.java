@@ -15,14 +15,12 @@
  */
 package com.intellij.lang.properties.references;
 
-import com.intellij.codeInsight.completion.CompletionProcess;
-import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.PropertiesFilesManager;
+import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -31,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,13 +38,22 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
  */
 public abstract class PropertyReferenceBase implements PsiPolyVariantReference, EmptyResolveMessageProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.references.PropertyReferenceBase");
+  private static final Function<IProperty,PsiElement> MAPPER = new Function<IProperty, PsiElement>() {
+    @Override
+    public PsiElement fun(IProperty iProperty) {
+      return iProperty.getPsiElement();
+    }
+  };
   protected final String myKey;
   protected final PsiElement myElement;
   protected boolean mySoft;
@@ -119,7 +127,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    if(!(element instanceof Property)) return false;
+    if(!(element instanceof IProperty)) return false;
     for (ResolveResult result : multiResolve(false)) {
       final PsiElement el = result.getElement();
       if (el != null && el.isEquivalentTo(element)) return true;
@@ -133,8 +141,8 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
 
   protected void addVariantsFromFile(final PropertiesFile propertiesFile, final Set<Object> variants) {
     if (propertiesFile == null) return;
-    List<Property> properties = propertiesFile.getProperties();
-    for (Property property : properties) {
+    List<? extends IProperty> properties = propertiesFile.getProperties();
+    for (IProperty property : properties) {
       addKey(property, variants);
     }
   }
@@ -155,26 +163,26 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final String key = getKeyText();
 
-    List<Property> properties;
+    List<IProperty> properties;
     final List<PropertiesFile> propertiesFiles = getPropertiesFiles();
     if (propertiesFiles == null) {
       properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), key);
     }
     else {
-      properties = new ArrayList<Property>();
+      properties = new ArrayList<IProperty>();
       for (PropertiesFile propertiesFile : propertiesFiles) {
         properties.addAll(propertiesFile.findPropertiesByKey(key));
       }
     }
     // put default properties file first
-    ContainerUtil.quickSort(properties, new Comparator<Property>() {
-      public int compare(final Property o1, final Property o2) {
-        String name1 = o1.getContainingFile().getName();
-        String name2 = o2.getContainingFile().getName();
+    ContainerUtil.quickSort(properties, new Comparator<IProperty>() {
+      public int compare(final IProperty o1, final IProperty o2) {
+        String name1 = o1.getPropertiesFile().getName();
+        String name2 = o2.getPropertiesFile().getName();
         return Comparing.compare(name1, name2);
       }
     });
-    return PsiElementResolveResult.createResults(properties);
+    return PsiElementResolveResult.createResults(ContainerUtil.map2Array(properties, PsiElement.class, MAPPER));
   }
 
   @Nullable
@@ -184,8 +192,8 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   public Object[] getVariants() {
     final Set<Object> variants = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
       public int computeHashCode(final Object object) {
-        if (object instanceof Property) {
-          final String key = ((Property)object).getKey();
+        if (object instanceof IProperty) {
+          final String key = ((IProperty)object).getKey();
           return key == null ? 0 : key.hashCode();
         }
         else {
@@ -194,8 +202,8 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
       }
 
       public boolean equals(final Object o1, final Object o2) {
-        return o1 instanceof Property && o2 instanceof Property &&
-               Comparing.equal(((Property)o1).getKey(), ((Property)o2).getKey(), true);
+        return o1 instanceof IProperty && o2 instanceof IProperty &&
+               Comparing.equal(((IProperty)o1).getKey(), ((IProperty)o2).getKey(), true);
       }
     });
     List<PropertiesFile> propertiesFileList = getPropertiesFiles();

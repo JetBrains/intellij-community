@@ -22,46 +22,14 @@
  */
 package com.intellij.lang.properties.psi;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.psi.NavigatablePsiElement;
-import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @see com.intellij.lang.properties.psi.PropertiesElementFactory
  */
-public interface Property extends PsiNamedElement, StubBasedPsiElement<PropertyStub>, NavigatablePsiElement {
-  @Nullable String getKey();
-  @Nullable String getValue();
+public interface Property extends PsiNamedElement, StubBasedPsiElement<PropertyStub>, NavigatablePsiElement, IProperty {
 
-  /**
-   * Returns the value with \n, \r, \t, \f and Unicode escape characters converted to their
-   * character equivalents.
-   *
-   * @return unescaped value, or null if no value is specified for this property.
-   */
-  @Nullable String getUnescapedValue();
-
-  /**
-   * Returns the key with \n, \r, \t, \f and Unicode escape characters converted to their
-   * character equivalents.
-   *
-   * @return unescaped key, or null if no key is specified for this property.
-   */
-  @Nullable String getUnescapedKey();
-
-  @Nullable String getKeyValueSeparator();
-
-  void setValue(@NonNls @NotNull String value) throws IncorrectOperationException;
-
-  PropertiesFile getContainingFile() throws PsiInvalidElementAccessException;
-
-  /**
-   * @return text of comment preceding this property. Comment-start characters ('#' and '!') are stripped from the text.
-   */
-  @Nullable String getDocCommentText();
 }

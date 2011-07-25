@@ -19,7 +19,6 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.PlatformIcons;
@@ -27,22 +26,22 @@ import com.intellij.util.PlatformIcons;
 /**
  * @author yole
  */
-public class PropertyLookupRenderer implements ElementLookupRenderer<Property> {
+public class PropertyLookupRenderer implements ElementLookupRenderer<IProperty> {
   public boolean handlesItem(final Object element) {
-    return element instanceof Property;
+    return element instanceof IProperty;
   }
 
-  public void renderElement(final LookupItem item, final Property property, final LookupElementPresentation presentation) {
+  public void renderElement(final LookupItem item, final IProperty property, final LookupElementPresentation presentation) {
     presentation.setIcon(PlatformIcons.PROPERTY_ICON);
     presentation.setItemText(property.getUnescapedKey());
 
-    PropertiesFile propertiesFile = property.getContainingFile();
+    PropertiesFile propertiesFile = property.getPropertiesFile();
     ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     String value = property.getValue();
     boolean hasBundle = resourceBundle != ResourceBundleImpl.NULL;
     if (hasBundle) {
       PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile(propertiesFile.getProject());
-      Property defaultProperty = defaultPropertiesFile.findPropertyByKey(property.getUnescapedKey());
+      IProperty defaultProperty = defaultPropertiesFile.findPropertyByKey(property.getUnescapedKey());
       if (defaultProperty != null) {
         value = defaultProperty.getValue();
       }

@@ -17,7 +17,6 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlTagBase;
@@ -51,7 +50,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
 
   @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {
-    return target instanceof Property;
+    return target instanceof IProperty;
   }
 
   @NotNull

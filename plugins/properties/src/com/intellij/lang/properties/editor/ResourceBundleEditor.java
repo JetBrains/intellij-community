@@ -27,12 +27,12 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -315,7 +315,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
             if (editor == null) continue;
             reinitSettings(editor);
-            Property property = propertiesFile.findPropertyByKey(propertyName);
+            IProperty property = propertiesFile.findPropertyByKey(propertyName);
             final String value = property == null ? "" : property.getValue();
             final Document document = editor.getDocument();
             CommandProcessor.getInstance().executeCommand(null, new Runnable() {
@@ -361,7 +361,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       myBackSlashPressed.remove(propertiesFile);
     }
     String value = getPropertyValueFromText(text);
-    Property property = propertiesFile.findPropertyByKey(propertyName);
+    IProperty property = propertiesFile.findPropertyByKey(propertyName);
     try {
       if (property == null) {
         property = PropertiesElementFactory.createProperty(project, propertyName, value);
@@ -440,7 +440,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
                 Project project = propertiesFile.getProject();
                 PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
                 documentManager.commitDocument(document);
-                Document propertiesFileDocument = documentManager.getDocument(propertiesFile);
+                Document propertiesFileDocument = documentManager.getDocument(propertiesFile.getContainingFile());
                 documentManager.commitDocument(propertiesFileDocument);
 
                 if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
@@ -640,7 +640,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
    */
   public void renameProperty(@NotNull String oldName, @NotNull String newName) {
     for (PropertiesFile properties : myResourceBundle.getPropertiesFiles(myProject)) {
-      Property property = properties.findPropertyByKey(oldName);
+      IProperty property = properties.findPropertyByKey(oldName);
       if (property != null) {
         property.setName(newName);
       }

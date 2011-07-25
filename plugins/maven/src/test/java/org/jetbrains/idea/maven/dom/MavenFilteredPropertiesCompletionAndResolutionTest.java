@@ -201,7 +201,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc${xx<caret>x}abc");
-    assertResolved(f, MavenDomUtil.findProperty(myProject, filter, "xxx"));
+    assertResolved(f, MavenDomUtil.findProperty(myProject, filter, "xxx").getPsiElement());
   }
 
   public void testCompletionFromFilters() throws Exception {
@@ -415,7 +415,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc${x<caret>xx}abc");
-    assertResolved(f, MavenDomUtil.findProperty(myProject, filter, "xxx"));
+    assertResolved(f, MavenDomUtil.findProperty(myProject, filter, "xxx").getPsiElement());
 
     doRename(f, "bar");
 
