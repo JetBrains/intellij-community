@@ -140,8 +140,8 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       myToolWindowForm = null;
       myToolWindow = null;
       myToolWindowDisposed = true;
-      LocalFileSystem.getInstance().removeVirtualFileListener(myListener);
     }
+    LocalFileSystem.getInstance().removeVirtualFileListener(myListener);
   }
 
   @NotNull
