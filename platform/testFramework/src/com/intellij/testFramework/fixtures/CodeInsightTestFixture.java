@@ -313,8 +313,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   Document getDocument(PsiFile file);
 
-  void setFileContext(@Nullable PsiElement context);
-
   @NotNull
   Collection<GutterIconRenderer> findAllGutters(String filePath);
 

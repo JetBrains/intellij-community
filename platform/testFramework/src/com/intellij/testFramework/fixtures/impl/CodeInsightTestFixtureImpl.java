@@ -94,7 +94,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
@@ -151,7 +150,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
   @NonNls private static final String XXX = "XXX";
-  private PsiElement myFileContext;
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
   private boolean myAllowDirt;
   private boolean toInitializeDaemon;
@@ -901,19 +899,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           @Override
           public void run() {
             final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
-              @Override
-              protected PsiFile createFileCopy(final PsiFile file) {
-                final PsiFile copy = super.createFileCopy(file);
-                if (myFileContext != null) {
-                  final PsiElement contextCopy = myFileContext.copy();
-                  final PsiFile containingFile = contextCopy.getContainingFile();
-                  if (containingFile instanceof PsiFileImpl) {
-                    ((PsiFileImpl)containingFile).setOriginalFile(myFileContext.getContainingFile());
-                  }
-                  setContext(copy, contextCopy);
-                }
-                return copy;
-              }
 
               @Override
               protected void completionFinished(int offset1,
@@ -1064,7 +1049,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myInspections = null;
     myAvailableLocalTools.clear();
     myAvailableTools.clear();
-    myFileContext = null;
 
     myProjectFixture.tearDown();
     myTempDirFixture.tearDown();
@@ -1221,12 +1205,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
-  @Override
-  public void setFileContext(@Nullable final PsiElement context) {
-    myFileContext = context;
-    setContext(myFile, context);
-  }
-
   /**
    * @param filePath
    * @throws IOException
@@ -1266,7 +1244,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           throw new RuntimeException(e);
         }
         myFile = myPsiManager.findFile(copy);
-        setContext(myFile, myFileContext);
         myEditor = createEditor(copy);
         assert myEditor != null : "Editor couldn't be created for file: " +
                                   copy.getPath() +
@@ -1290,12 +1267,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
 
     return myFile;
-  }
-
-  private static void setContext(final PsiFile file, final PsiElement context) {
-    if (file != null && context != null) {
-      file.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, new IdentitySmartPointer<PsiElement>(context));
-    }
   }
 
   @Override
