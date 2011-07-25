@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2011 JetBrains s.r.o.
  *
@@ -35,10 +34,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExternalizable, ApplicationComponent {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.ApplicationInfoImpl");
 
-  @NonNls private static final String BUILD_STUB = "__BUILD_NUMBER__";
   private String myCodeName = null;
   private String myMajorVersion = null;
   private String myMinorVersion = null;
@@ -47,7 +44,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private Color myLogoTextColor = new Color(0, 35, 135);  // idea blue
   private Color myProgressColor = null;
   private int myProgressY = 350;
-  private int myProgressHeight = 2;
   private String myAboutLogoUrl = null;
   @NonNls private String myIconUrl = "/icon.png";
   @NonNls private String mySmallIconUrl = "/icon_small.png";
@@ -91,7 +87,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_TEXTCOLOR = "textcolor";
   @NonNls private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
   @NonNls private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
-  @NonNls private static final String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
   @NonNls private static final String ELEMENT_ABOUT = "about";
   @NonNls private static final String ELEMENT_ICON = "icon";
   @NonNls private static final String ATTRIBUTE_SIZE32 = "size32";
@@ -125,12 +120,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_KEYMAP = "keymap";
   @NonNls private static final String ATTRIBUTE_WINDOWS_URL = "win";
   @NonNls private static final String ATTRIBUTE_MAC_URL = "mac";
-  private static final String DEFAULT_PLUGINS_HOST = "http://plugins.intellij.net";
+  @NonNls private static final String DEFAULT_PLUGINS_HOST = "http://plugins.intellij.net";
 
   public void initComponent() { }
 
-  public void disposeComponent() {
-  }
+  public void disposeComponent() { }
 
   public Calendar getBuildDate() {
     return myBuildDate;
@@ -185,10 +179,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public int getProgressY() {
     return myProgressY;
-  }
-
-  public int getProgressHeight() {
-    return myProgressHeight;
   }
 
   public String getAboutLogoUrl() {
@@ -336,14 +326,17 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
       if (dateString.equals("__BUILD_DATE__")) {
         myBuildDate = new GregorianCalendar();
-        final JarFile bootJar;
         try {
-          bootJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "boot.jar");
-          final JarEntry jarEntry = bootJar.entries().nextElement(); // /META-INF is always updated on build
-          myBuildDate.setTime(new Date(jarEntry.getTime()));
-          bootJar.close();
-        } catch (Exception e) {//
+          final JarFile bootJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "boot.jar");
+          try {
+            final JarEntry jarEntry = bootJar.entries().nextElement(); // /META-INF is always updated on build
+            myBuildDate.setTime(new Date(jarEntry.getTime()));
+          }
+          finally {
+            bootJar.close();
+          }
         }
+        catch (Exception ignore) { }
       }
       else {
         myBuildDate = parseDate(dateString);
@@ -369,10 +362,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
       if (v != null) {
         myProgressY = Integer.parseInt(v);
-      }
-      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_HEIGHT);
-      if (v != null) {
-        myProgressHeight = Integer.parseInt(v);
       }
     }
 
@@ -498,14 +487,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return new GregorianCalendar(year, month, day);
   }
 
-  public List<PluginChooserPage> getPluginChooserPages() {
-    return myPluginChooserPages;
-  }
-
   public void writeExternal(Element element) throws WriteExternalException {
     throw new WriteExternalException();
   }
 
+  public List<PluginChooserPage> getPluginChooserPages() {
+    return myPluginChooserPages;
+  }
 
   @NotNull
   public String getComponentName() {

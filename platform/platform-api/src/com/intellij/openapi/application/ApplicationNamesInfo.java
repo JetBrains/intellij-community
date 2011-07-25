@@ -25,17 +25,18 @@ import org.jetbrains.annotations.NonNls;
  * @author nik
  */
 public class ApplicationNamesInfo {
-  @NonNls
-  private static final String COMPONENT_NAME = "ApplicationInfo";
+  @NonNls private static final String COMPONENT_NAME = "ApplicationInfo";
+  @NonNls private static final String ELEMENT_NAMES = "names";
+  @NonNls private static final String ATTRIBUTE_PRODUCT = "product";
+  @NonNls private static final String ATTRIBUTE_FULL_NAME = "fullname";
+
   private String myProductName;
   private String myFullProductName;
   private String myLowercaseProductName;
-  @NonNls private static final String ELEMENT_NAMES = "names";
-  @NonNls private static final String ATTRIBUTE_PRODUCT = "product";
-  @NonNls private static final String ATTRIBUTE_FULLNAME = "fullname";
 
   private static class ApplicationNamesInfoHolder {
     private static final ApplicationNamesInfo ourInstance = new ApplicationNamesInfo();
+    private ApplicationNamesInfoHolder() { }
   }
 
   public static ApplicationNamesInfo getInstance() {
@@ -45,10 +46,11 @@ public class ApplicationNamesInfo {
   private ApplicationNamesInfo() {
     try {
       //noinspection HardCodedStringLiteral
-      Document doc = JDOMUtil.loadDocument(ApplicationNamesInfo.class.getResourceAsStream("/idea/" + getComponentName() + ".xml"));
+      final Document doc = JDOMUtil.loadDocument(ApplicationNamesInfo.class.getResourceAsStream("/idea/" + getComponentName() + ".xml"));
       readInfo(doc.getRootElement());
     }
     catch (Exception e) {
+      //noinspection CallToPrintStackTrace
       e.printStackTrace();
     }
   }
@@ -56,7 +58,7 @@ public class ApplicationNamesInfo {
   private void readInfo(final Element rootElement) {
     final Element names = rootElement.getChild(ELEMENT_NAMES);
     myProductName = names.getAttributeValue(ATTRIBUTE_PRODUCT);
-    myFullProductName = names.getAttributeValue(ATTRIBUTE_FULLNAME);
+    myFullProductName = names.getAttributeValue(ATTRIBUTE_FULL_NAME);
     myLowercaseProductName = StringUtil.capitalize(myProductName.toLowerCase());
   }
 

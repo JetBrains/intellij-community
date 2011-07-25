@@ -37,18 +37,20 @@ public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
   private static final Color ourTransparentColor = new Color(0, 0, 0, 0);
 
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final ConcurrentHashMap<URL, Icon> ourIconsCache = new ConcurrentHashMap<URL, Icon>(100, 0.9f,2);
-
 
   /**
    * This cache contains mapping between icons and disabled icons.
    */
   private static final Map<Icon, Icon> ourIcon2DisabledIcon = new WeakHashMap<Icon, Icon>(200);
+
   /**
-   * To get disabled icon with paint it into the imag. Some icons require
+   * To get disabled icon with paint it into the image. Some icons require
    * not null component to paint.
    */
   private static final JComponent ourFakeComponent = new JLabel();
+
   private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
     @NonNls
     public String toString() {
@@ -58,8 +60,7 @@ public final class IconLoader {
 
   private static boolean ourIsActivated = false;
 
-  private IconLoader() {
-  }
+  private IconLoader() { }
 
   @Deprecated
   public static Icon getIcon(@NotNull final Image image) {
@@ -78,7 +79,6 @@ public final class IconLoader {
     }
     return getIcon(path, callerClass);
   }
-
 
   @Nullable
   /**
@@ -114,11 +114,11 @@ public final class IconLoader {
     return !ourIsActivated;
   }
 
-  @Nullable
   /**
    * Might return null if icon was not found.
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(java.lang.String, java.lang.Class)}
    */
+  @Nullable
   public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass) {
     return findIcon(path, aClass, false);
   }
@@ -131,7 +131,6 @@ public final class IconLoader {
     }
 
     return icon;
-
   }
 
   @Nullable
@@ -160,11 +159,15 @@ public final class IconLoader {
     }
 
     final Icon icon = getIcon(image);
-    if (icon != null && !ImageLoader.isGoodSize(icon)) {
+    if (icon != null && !isGoodSize(icon)) {
       LOG.error("Invalid icon: " + url); // # 22481
       return EMPTY_ICON;
     }
     return icon;
+  }
+
+  public static boolean isGoodSize(@NotNull final Icon icon) {
+    return icon.getIconWidth() > 0 && icon.getIconHeight() > 0;
   }
 
   /**
@@ -180,7 +183,7 @@ public final class IconLoader {
     }
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
-      if (!ImageLoader.isGoodSize(icon)) {
+      if (!isGoodSize(icon)) {
         LOG.error(icon); // # 22481
         return EMPTY_ICON;
       }
@@ -256,7 +259,6 @@ public final class IconLoader {
       return icon != null ? icon : EMPTY_ICON;
     }
 
-
     public void paintIcon(Component c, Graphics g, int x, int y) {
       getRealIcon().paintIcon(c, g, x, y);
     }
@@ -281,7 +283,6 @@ public final class IconLoader {
   }
 
   public abstract static class LazyIcon implements Icon {
-
     private boolean myWasComputed;
     private Icon myIcon;
 
@@ -305,7 +306,6 @@ public final class IconLoader {
       return icon != null ? icon.getIconHeight() : 0;
     }
 
-
     protected synchronized final Icon getOrComputeIcon() {
       if (!myWasComputed) {
         myWasComputed = true;
@@ -320,7 +320,6 @@ public final class IconLoader {
     }
 
     protected abstract Icon compute();
-
   }
 
   private static class ByClass extends LazyIcon {

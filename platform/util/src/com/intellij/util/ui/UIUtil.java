@@ -1626,16 +1626,14 @@ public class UIUtil {
     }
   }
 
-  public static void initDefaultLAF(String productName) {
+  public static void initDefaultLAF(final String productName) {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     }
-    catch (Exception ignored) {
-    }
+    catch (Exception ignored) { }
   }
 
-  public static void addKeyboardShortcut(final JComponent target,
-                                         final AbstractButton button, final KeyStroke keyStroke) {
+  public static void addKeyboardShortcut(final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {
     target.registerKeyboardAction(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
