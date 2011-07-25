@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="xdebugger-api" exported="" />
     <orderEntry type="library" exported="" name="Guava" level="project" />
     <orderEntry type="module" module-name="smRunner" exported="" />
+    <orderEntry type="module" module-name="xml" />
   </component>
 </module>
 
