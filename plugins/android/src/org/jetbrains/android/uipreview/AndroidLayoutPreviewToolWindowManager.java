@@ -128,7 +128,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
   }
 
   private void initToolWindow() {
-    myToolWindowForm = new AndroidLayoutPreviewToolWindowForm(this);
+    myToolWindowForm = new AndroidLayoutPreviewToolWindowForm(myProject, this);
     myToolWindow = ToolWindowManager.getInstance(myProject)
       .registerToolWindow(AndroidBundle.message("android.layout.preview.tool.window.title"), false, ToolWindowAnchor.RIGHT, myProject,
                           true);

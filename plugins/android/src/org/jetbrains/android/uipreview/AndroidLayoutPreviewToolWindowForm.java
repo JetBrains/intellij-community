@@ -17,9 +17,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -62,14 +64,27 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   private JPanel myContentPanel;
   private AndroidLayoutPreviewPanel myPreviewPanel;
-  private ComboBox myDevicesCombo;
-  private ComboBox myDeviceConfigurationsCombo;
+
   private JBScrollPane myScrollPane;
+
+  private ComboBox myDevicesCombo;
+  private List<LayoutDevice> myDevices = Collections.emptyList();
+
+  private ComboBox myDeviceConfigurationsCombo;
+  private List<LayoutDeviceConfiguration> myDeviceConfigurations = Collections.emptyList();
+
+  private ComboBox myTargetCombo;
+  private List<IAndroidTarget> myTargets = Collections.emptyList();
+
+  private ComboBox myLocaleCombo;
+  private List<LocaleData> myLocales = Collections.emptyList();
+
+  private boolean myResetFlag;
+  private boolean myThemesResetFlag;
+
+  private ComboBox myThemeCombo;
   private ComboBox myDockModeCombo;
   private ComboBox myNightCombo;
-  private ComboBox myTargetCombo;
-  private ComboBox myLocaleCombo;
-  private ComboBox myThemeCombo;
   private JPanel myComboPanel;
 
   private PsiFile myFile;
@@ -79,8 +94,11 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
   private final AndroidLayoutPreviewToolWindowManager myToolWindowManager;
   private final ActionToolbar myActionToolBar;
 
-  public AndroidLayoutPreviewToolWindowForm(AndroidLayoutPreviewToolWindowManager toolWindowManager) {
+  private final AndroidLayoutPreviewToolWindowSettings mySettings;
+
+  public AndroidLayoutPreviewToolWindowForm(Project project, AndroidLayoutPreviewToolWindowManager toolWindowManager) {
     myToolWindowManager = toolWindowManager;
+    mySettings = AndroidLayoutPreviewToolWindowSettings.getInstance(project);
 
     final GridBagConstraints gb = new GridBagConstraints();
 
@@ -273,6 +291,110 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
         updateLocales();
         updateDevicesAndTargets(newPlatform);
         updateThemes();
+        if (!myResetFlag) {
+          myResetFlag = true;
+          reset();
+        }
+      }
+    }
+  }
+
+  private void reset() {
+    final AndroidLayoutPreviewToolWindowSettings.State state = mySettings.getState();
+
+    final String savedDeviceName = state.getDevice();
+    if (savedDeviceName != null) {
+      LayoutDevice savedDevice = null;
+      for (LayoutDevice device : myDevices) {
+        if (savedDeviceName.equals(device.getName())) {
+          savedDevice = device;
+          break;
+        }
+      }
+      if (savedDevice != null) {
+        myDevicesCombo.setSelectedItem(savedDevice);
+      }
+    }
+
+    final String savedDeviceConfigName = state.getDeviceConfiguration();
+    if (savedDeviceConfigName != null) {
+      LayoutDeviceConfiguration savedDeviceConfig = null;
+      for (LayoutDeviceConfiguration config : myDeviceConfigurations) {
+        if (savedDeviceConfigName.equals(config.getName())) {
+          savedDeviceConfig = config;
+          break;
+        }
+      }
+      if (savedDeviceConfig != null) {
+        myDeviceConfigurationsCombo.setSelectedItem(savedDeviceConfig);
+      }
+    }
+
+    final String savedTargetHashString = state.getTargetHashString();
+    if (savedTargetHashString != null) {
+      IAndroidTarget savedTarget = null;
+      for (IAndroidTarget target : myTargets) {
+        if (savedTargetHashString.equals(target.hashString())) {
+          savedTarget = target;
+          break;
+        }
+      }
+      if (savedTarget != null) {
+        myTargetCombo.setSelectedItem(savedTarget);
+      }
+    }
+
+    final String savedLocaleLanguage = state.getLocaleLanguage();
+    final String savedLocaleRegion = state.getLocaleRegion();
+    if (savedLocaleLanguage != null || savedLocaleRegion != null) {
+      LocaleData savedLocale = null;
+      LocaleData savedLocaleCandidate = null;
+      for (LocaleData locale : myLocales) {
+        if (Comparing.equal(locale.getLanguage(), savedLocaleLanguage)) {
+          if (Comparing.equal(locale.getRegion(), savedLocaleRegion)) {
+            savedLocale = locale;
+            break;
+          }
+          else if (savedLocaleCandidate == null) {
+            savedLocaleCandidate = locale;
+          }
+        }
+      }
+      if (savedLocale == null) {
+        savedLocale = savedLocaleCandidate;
+      }
+      if (savedLocale != null) {
+        myLocaleCombo.setSelectedItem(savedLocale);
+      }
+    }
+
+    if (state.getDockMode() != null) {
+      final DockMode savedDockMode = DockMode.getEnum(state.getDockMode());
+      if (savedDockMode != null) {
+        myDockModeCombo.setSelectedItem(savedDockMode);
+      }
+    }
+
+    if (state.getNightMode() != null) {
+      final NightMode savedNightMode = NightMode.getEnum(state.getNightMode());
+      if (savedNightMode != null) {
+        myNightCombo.setSelectedItem(savedNightMode);
+      }
+    }
+  }
+
+  private void resetThemes(Collection<ThemeData> themes) {
+    final String savedThemeName = mySettings.getState().getTheme();
+    if (savedThemeName != null) {
+      ThemeData savedTheme = null;
+      for (ThemeData theme : themes) {
+        if (savedThemeName.equals(theme.getName())) {
+          savedTheme = theme;
+          break;
+        }
+      }
+      if (savedTheme != null) {
+        myThemeCombo.setSelectedItem(savedTheme);
       }
     }
   }
@@ -339,6 +461,7 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     if (newSelectedDevice == null && devices.size() > 0) {
       newSelectedDevice = devices.get(0);
     }
+    myDevices = devices;
     myDevicesCombo.setModel(new CollectionComboBoxModel(devices, newSelectedDevice));
 
     if (newSelectedDevice != null) {
@@ -368,6 +491,7 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     if (newSelectedTarget == null && targets.size() > 0) {
       newSelectedTarget = targets.get(0);
     }
+    myTargets = targets;
     myTargetCombo.setModel(new CollectionComboBoxModel(targets, newSelectedTarget));
   }
 
@@ -393,6 +517,8 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     if (newSelectedConfiguration == null) {
       newSelectedConfiguration = configurations.get(0);
     }
+
+    myDeviceConfigurations = configurations;
     myDeviceConfigurationsCombo.setModel(new CollectionComboBoxModel(configurations, newSelectedConfiguration));
   }
 
@@ -402,6 +528,7 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     }
 
     final LocaleData oldSelectedLocale = (LocaleData)myLocaleCombo.getSelectedItem();
+    myLocales = new ArrayList<LocaleData>();
     myLocaleCombo.setModel(new DefaultComboBoxModel());
 
     final AndroidFacet facet = AndroidFacet.getInstance(myFile);
@@ -489,6 +616,8 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     if (newSelectedLocale == null && locales.size() > 0) {
       newSelectedLocale = locales.get(0);
     }
+
+    myLocales = locales;
     myLocaleCombo.setModel(new CollectionComboBoxModel(locales, newSelectedLocale));
   }
 
@@ -552,6 +681,11 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
       selection = themes.get(0);
     }
     myThemeCombo.setModel(new CollectionComboBoxModel(themes, selection));
+
+    if (myFile != null && !myThemesResetFlag) {
+      myThemesResetFlag = true;
+      resetThemes(themes);
+    }
   }
 
   private static void collectFrameworkThemes(Module module, AndroidTargetData targetData, List<ThemeData> themes) {
@@ -725,32 +859,68 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     return new ThemeData(themeRef, isProjectTheme);
   }
 
+  @Nullable
   public LayoutDeviceConfiguration getSelectedDeviceConfiguration() {
-    return (LayoutDeviceConfiguration)myDeviceConfigurationsCombo.getSelectedItem();
+    final LayoutDeviceConfiguration selectedDeviceConfig = (LayoutDeviceConfiguration)myDeviceConfigurationsCombo.getSelectedItem();
+    if (selectedDeviceConfig != null) {
+      mySettings.getState().setDeviceConfiguration(selectedDeviceConfig.getName());
+    }
+    return selectedDeviceConfig;
   }
 
+  @Nullable
   public LayoutDevice getSelectedDevice() {
-    return (LayoutDevice)myDevicesCombo.getSelectedItem();
+    final LayoutDevice selectedDevice = (LayoutDevice)myDevicesCombo.getSelectedItem();
+    if (selectedDevice != null) {
+      mySettings.getState().setDevice(selectedDevice.getName());
+    }
+    return selectedDevice;
   }
 
+  @Nullable
   public DockMode getSelectedDockMode() {
-    return (DockMode)myDockModeCombo.getSelectedItem();
+    final DockMode selectedDockMode = (DockMode)myDockModeCombo.getSelectedItem();
+    if (selectedDockMode != null) {
+      mySettings.getState().setDockMode(selectedDockMode.getResourceValue());
+    }
+    return selectedDockMode;
   }
 
+  @Nullable
   public NightMode getSelectedNightMode() {
-    return (NightMode)myNightCombo.getSelectedItem();
+    final NightMode selectedNightMode = (NightMode)myNightCombo.getSelectedItem();
+    if (selectedNightMode != null) {
+      mySettings.getState().setNightMode(selectedNightMode.getResourceValue());
+    }
+    return selectedNightMode;
   }
 
+  @Nullable
   public IAndroidTarget getSelectedTarget() {
-    return (IAndroidTarget)myTargetCombo.getSelectedItem();
+    final IAndroidTarget selectedTarget = (IAndroidTarget)myTargetCombo.getSelectedItem();
+    if (selectedTarget != null) {
+      mySettings.getState().setTargetHashString(selectedTarget.hashString());
+    }
+    return selectedTarget;
   }
 
+  @Nullable
   public LocaleData getSelectedLocaleData() {
-    return (LocaleData)myLocaleCombo.getSelectedItem();
+    final LocaleData selectedLocale = (LocaleData)myLocaleCombo.getSelectedItem();
+    if (selectedLocale != null) {
+      mySettings.getState().setLocaleLanguage(selectedLocale.getLanguage());
+      mySettings.getState().setLocaleRegion(selectedLocale.getRegion());
+    }
+    return selectedLocale;
   }
 
+  @Nullable
   public ThemeData getSelectedTheme() {
-    return (ThemeData)myThemeCombo.getSelectedItem();
+    final ThemeData selectedTheme = (ThemeData)myThemeCombo.getSelectedItem();
+    if (selectedTheme != null) {
+      mySettings.getState().setTheme(selectedTheme.getName());
+    }
+    return selectedTheme;
   }
 
   private class MyZoomInAction extends AnAction {

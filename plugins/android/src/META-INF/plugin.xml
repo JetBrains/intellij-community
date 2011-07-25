@@ -139,6 +139,8 @@
                       factoryClass="org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory"/>
     <projectService serviceInterface="org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences"
                     serviceImplementation="org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences"/>
+    <projectService serviceInterface="org.jetbrains.android.uipreview.AndroidLayoutPreviewToolWindowSettings"
+                    serviceImplementation="org.jetbrains.android.uipreview.AndroidLayoutPreviewToolWindowSettings"/>
     <xml.xmlExtension implementation="org.jetbrains.android.dom.AndroidXmlExtension" order="first"/>
     <fileBasedIndex implementation="org.jetbrains.android.AndroidIdIndex"/>
     <referencesSearch implementation="org.jetbrains.android.AndroidReferenceSearchExecutor"/>
