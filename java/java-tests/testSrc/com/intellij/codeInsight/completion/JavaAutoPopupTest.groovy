@@ -25,15 +25,19 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.impl.CurrentEditorProvider
+import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
@@ -216,26 +220,6 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """
   }
 
-  public void _testHideAutopopupIfItContainsExactMatch() {
-    myFixture.configureByText("a.java", """
-      class Foo {
-        String foo() {
-          int abcd;
-          int abcde;
-          int abcdefg;
-          ab<caret>
-        }
-      }
-    """)
-    type 'c'
-    assert lookup
-    type 'd'
-    assert !lookup
-    type 'e'
-    assert !lookup
-    type 'f'
-    assert lookup
-  }
 
   public void testFocusInJavadoc() {
     myFixture.configureByText("a.java", """
@@ -844,10 +828,24 @@ class LiveComplete {
     assert myFixture.file.text.contains("innerThing();")
   }
 
-  public void _testCharSelectionUndo() {
-    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
-    def editor;
+  private FileEditor openEditorForUndo() {
+    FileEditor editor;
     edt { editor = FileEditorManager.getInstance(project).openFile(myFixture.file.virtualFile, false)[0] }
+    def manager = (UndoManagerImpl) UndoManager.getInstance(project)
+    def old = manager.editorProvider
+    manager.editorProvider = new CurrentEditorProvider() {
+      @Override
+      public FileEditor getCurrentEditor() {
+        return editor;
+      }
+    };
+    disposeOnTearDown ({ manager.editorProvider = old } as Disposable)
+    return editor
+  }
+
+  public void testCharSelectionUndo() {
+    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
+    def editor = openEditorForUndo();
     type('ArrStoExce.')
     edt { UndoManager.getInstance(project).undo(editor) }
     assert myFixture.editor.document.text.contains('ArrStoExce.')
@@ -855,8 +853,7 @@ class LiveComplete {
 
   public void testAutopopupTypingUndo() {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
-    def editor;
-    edt { editor = FileEditorManager.getInstance(project).openFile(myFixture.file.virtualFile, false)[0] }
+    def editor = openEditorForUndo();
     type 'aioobeeee'
     edt { UndoManager.getInstance(project).undo(editor) }
     assert !myFixture.editor.document.text.contains('aioo')

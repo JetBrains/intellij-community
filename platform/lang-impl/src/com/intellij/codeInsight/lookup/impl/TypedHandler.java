@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -28,6 +29,8 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -46,6 +49,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     super(originalHandler);
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext){
     assert !inside;
     inside = true;
@@ -57,7 +61,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       }
 
       if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
-         return;
+        return;
       }
 
       final CharFilter.Result result = getLookupAction(charTyped, lookup);
@@ -92,9 +96,13 @@ public class TypedHandler extends TypedActionHandlerBase {
       if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
         LookupElement item = lookup.getCurrentItem();
         if (item != null){
-          inside = false;
-          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
-          lookup.finishLookup(charTyped);
+          ((CommandProcessorEx)CommandProcessor.getInstance()).enterModal();
+          try {
+            finishLookup(editor, charTyped, lookup);
+          }
+          finally {
+            ((CommandProcessorEx)CommandProcessor.getInstance()).leaveModal();
+          }
           return;
         }
       }
@@ -105,6 +113,35 @@ public class TypedHandler extends TypedActionHandlerBase {
     finally {
       inside = false;
     }
+  }
+
+  private static void finishLookup(final Editor editor, final char charTyped, final LookupImpl lookup) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
+    final boolean charInserted = !editor.getSelectionModel().hasSelection() && !editor.getSelectionModel().hasBlockSelection();
+    final Runnable restore = CodeCompletionHandlerBase.rememberDocumentState(editor);
+    if (charInserted) {
+      CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
+        @Override
+        public void run() {
+          lookup.performGuardedChange(new Runnable() {
+            public void run() {
+              EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
+            }
+          });
+        }
+      }, null, "Just insert the completion char");
+    }
+
+    inside = false;
+    CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
+      @Override
+      public void run() {
+        if (charInserted) {
+          lookup.performGuardedChange(restore);
+        }
+        lookup.finishLookup(charTyped);
+      }
+    }, null, "Undo inserting the completion char and select the item");
   }
 
   static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
