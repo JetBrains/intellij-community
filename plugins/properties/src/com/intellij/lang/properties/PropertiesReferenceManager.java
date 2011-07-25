@@ -115,7 +115,7 @@ public class PropertiesReferenceManager {
                                       @NotNull final PropertiesFileProcessor processor,
                                       @NotNull final BundleNameEvaluator evaluator) {
 
-    return FileBasedIndex.getInstance().processValues(FileTypeIndex.NAME, PropertiesFileType.FILE_TYPE, null, new FileBasedIndex.ValueProcessor<Void>() {
+    return FileBasedIndex.getInstance().processValues(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, null, new FileBasedIndex.ValueProcessor<Void>() {
       public boolean process(VirtualFile file, Void value) {
 
         final PsiFile psiFile = myPsiManager.findFile(file);

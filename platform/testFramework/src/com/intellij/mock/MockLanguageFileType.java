@@ -43,7 +43,7 @@ public class MockLanguageFileType extends LanguageFileType{
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof MockLanguageFileType)) return false;
-    return getLanguage().equals(((MockLanguageFileType)obj).getLanguage());
+    if (!(obj instanceof LanguageFileType)) return false;
+    return getLanguage().equals(((LanguageFileType)obj).getLanguage());
   }
 }

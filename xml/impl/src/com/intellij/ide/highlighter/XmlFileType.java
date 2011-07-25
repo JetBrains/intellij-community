@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.IconLoader;
@@ -32,7 +31,6 @@ public class XmlFileType extends XmlLikeFileType implements DomSupportEnabled {
 
   private XmlFileType() {
     super(XMLLanguage.INSTANCE);
-    TypedHandler.registerBaseLanguageQuoteHandler(XMLLanguage.class, TypedHandler.getQuoteHandlerForType(this));
   }
 
   @NotNull

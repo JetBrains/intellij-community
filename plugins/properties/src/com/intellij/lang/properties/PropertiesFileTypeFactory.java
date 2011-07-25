@@ -24,6 +24,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PropertiesFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    consumer.consume(PropertiesFileType.FILE_TYPE, PropertiesFileType.DEFAULT_EXTENSION);
+    consumer.consume(PropertiesFileType.INSTANCE, PropertiesFileType.DEFAULT_EXTENSION);
   }
 }
