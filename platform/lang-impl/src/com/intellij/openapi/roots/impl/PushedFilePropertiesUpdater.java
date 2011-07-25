@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -116,7 +117,7 @@ public class PushedFilePropertiesUpdater {
         final boolean isDir = fileOrDir.isDirectory();
         for (FilePropertyPusher<Object> pusher : pushers) {
           if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
-          findAndUpdateValue(project, fileOrDir, pusher, pusher.getDefaultValue());
+          findAndUpdateValue(project, fileOrDir, pusher, null);
         }
         return true;
       }
@@ -154,14 +155,16 @@ public class PushedFilePropertiesUpdater {
   public static <T> T findAndUpdateValue(final Project project,
                                          final VirtualFile fileOrDir,
                                          final FilePropertyPusher<T> pusher,
-                                         final T parentValue) {
+                                         @Nullable final T parentValue) {
     final T immediateValue = pusher.getImmediateValue(project, fileOrDir);
     final T value = immediateValue != null ? immediateValue : parentValue;
-    updateValue(fileOrDir, value, pusher);
+    if (value != null) {
+      updateValue(fileOrDir, value, pusher);
+    }
     return value;
   }
 
-  private static <T> void updateValue(final VirtualFile fileOrDir, final T value, final FilePropertyPusher<T> pusher) {
+  private static <T> void updateValue(final VirtualFile fileOrDir, final @NotNull T value, final FilePropertyPusher<T> pusher) {
     final T oldValue = fileOrDir.getUserData(pusher.getFileDataKey());
     if (value != oldValue) {
       fileOrDir.putUserData(pusher.getFileDataKey(), value);
