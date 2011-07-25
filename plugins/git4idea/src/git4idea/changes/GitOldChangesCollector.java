@@ -187,7 +187,7 @@ class GitOldChangesCollector extends GitChangesCollector {
         StringTokenizer tokenizer = new StringTokenizer(output, "\n\r");
         while (tokenizer.hasMoreTokens()) {
           final String s = tokenizer.nextToken();
-          Change ch = new Change(null, GitContentRevision.createRevision(myVcsRoot, s, null, myProject, false, false), FileStatus.ADDED);
+          Change ch = new Change(null, GitContentRevision.createRevision(myVcsRoot, s, null, myProject, false, false, true), FileStatus.ADDED);
           myChanges.add(ch);
         }
       }
@@ -258,8 +258,9 @@ class GitOldChangesCollector extends GitChangesCollector {
             continue;
           }
           // assume modify-modify conflict
-          ContentRevision before = GitContentRevision.createRevision(myVcsRoot, file, new GitRevisionNumber("orig_head"), myProject, false, true);
-          ContentRevision after = GitContentRevision.createRevision(myVcsRoot, file, null, myProject, false, false);
+          ContentRevision before = GitContentRevision.createRevision(myVcsRoot, file, new GitRevisionNumber("orig_head"), myProject, false, true,
+                                                                     true);
+          ContentRevision after = GitContentRevision.createRevision(myVcsRoot, file, null, myProject, false, false, true);
           myChanges.add(new Change(before, after, FileStatus.MERGED_WITH_CONFLICTS));
         }
         else {
