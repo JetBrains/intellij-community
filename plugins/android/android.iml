@@ -34,6 +34,7 @@
           <root url="jar://$MODULE_DIR$/lib/ide_common.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/ninepatch.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/layoutlib_api.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/kxml2-2.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
@@ -52,7 +53,6 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
-    <orderEntry type="library" name="intermediate-java" level="project" />
   </component>
 </module>
 
