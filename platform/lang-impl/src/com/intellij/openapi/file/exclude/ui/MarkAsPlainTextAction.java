@@ -18,9 +18,6 @@ package com.intellij.openapi.file.exclude.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,30 +28,37 @@ public class MarkAsPlainTextAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (file == null || file.isDirectory()) return;
-    markAsPlainText(file);
+    final VirtualFile[] selectedFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (selectedFiles == null || selectedFiles.length == 0) return;
+    for (VirtualFile file : selectedFiles) {
+      if (file != null && !file.isDirectory()) {
+        markAsPlainText(file);
+      }
+    }
   }
 
   private static void markAsPlainText(@NotNull VirtualFile file) {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
-    if (typeManager != null) typeManager.markAsPlainText(file);
+    if (typeManager != null && !typeManager.isMarkedAsPlainText(file)) typeManager.markAsPlainText(file);
   }
 
   @Override
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile[] selectedFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     final Presentation presentation = e.getPresentation();
     final EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     presentation.setVisible(false);
-    if (typeManager == null || file == null) {
+    if (typeManager == null || selectedFiles == null || selectedFiles.length == 0) {
       return;
     }
-    if (EnforcedPlainTextFileTypeManager.isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file)) {
-      presentation.setVisible(true);
-      presentation.setIcon(EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT_ICON);
+    for (VirtualFile file : selectedFiles) {
+      if (!EnforcedPlainTextFileTypeManager.isApplicableFor(file) || typeManager.isMarkedAsPlainText(file)) {
+        return;
+      }
     }
+    presentation.setVisible(true);
+    presentation.setIcon(EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT_ICON);
   }
     
 }

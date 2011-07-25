@@ -1,0 +1,17 @@
+<html>
+<body>
+This inspection reports comparisons to null which are followed by an 'equals()' call
+with a constant argument.
+<p>
+For example the following will be reported by this inspection:
+<code><pre>
+    <b>if</b> (s != <b>null</b> && s.equals("literal")) {}
+</pre></code>
+And the quickfix will replace that with:
+<code><pre>
+    <b>if</b> ("literal".equals(s)) {}
+</pre></code>
+<p>
+<small>New in 11, Powered by InspectionGadgets </small>
+</body>
+</html>

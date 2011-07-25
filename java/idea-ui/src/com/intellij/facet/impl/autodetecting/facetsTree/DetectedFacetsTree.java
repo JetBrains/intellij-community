@@ -58,7 +58,7 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
   }
 
   private static class FacetsCheckboxTreeCellRenderer extends CheckboxTreeCellRendererBase {
-    public void customizeCellRenderer(final JTree tree,
+    public void customizeRenderer(final JTree tree,
                                         final Object value,
                                         final boolean selected,
                                         final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {

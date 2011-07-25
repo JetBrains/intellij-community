@@ -25,22 +25,20 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 
 import java.io.File;
 import java.io.IOException;
 
-public class CustomTypesTest extends ParsingTestCase {
+public class CustomTypesTest extends LightCodeInsightFixtureTestCase {
 
   private static final String myCustomTaskClass = "com.intellij.lang.ant.typedefs.AntCustomTask";
 
   public CustomTypesTest() {
-    super("", "ant");
   }
 
-  @Override
-  protected String getTestDataPath() {
+  protected String getMyTestDataPath() {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/customTypes";
   }
 
@@ -50,8 +48,8 @@ public class CustomTypesTest extends ParsingTestCase {
 
   protected void doTest() throws Exception {
     String name = getTestName(false);
-    String text = loadFile(name + "." + myFileExt);
-    PsiFile file = createFile(name + "." + myFileExt, text);
+    String text = loadFile(name + ".ant");
+    PsiFile file = myFixture.addFileToProject(name + ".ant", text);
     final AntDomProject antProject = AntSupport.getAntDomProject(file);
     final Ref<Boolean> found = new Ref<Boolean>(false); 
     antProject.accept(new AntDomRecursiveVisitor() {
@@ -77,9 +75,8 @@ public class CustomTypesTest extends ParsingTestCase {
     assertTrue(found.get());
   }
 
-  @Override
   protected String loadFile(String name) throws IOException {
-    String fullName = getTestDataPath() + File.separatorChar + name;
+    String fullName = getMyTestDataPath() + File.separatorChar + name;
     String text = FileUtil.loadFile(new File(fullName)).trim();
     text = StringUtil.convertLineSeparators(text);
     final String root = PathUtil.getJarPathForClass(this.getClass());

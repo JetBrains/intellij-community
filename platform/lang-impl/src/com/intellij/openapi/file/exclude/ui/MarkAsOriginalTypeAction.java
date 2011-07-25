@@ -30,9 +30,13 @@ public class MarkAsOriginalTypeAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (file == null || file.isDirectory()) return;
-    unmarkPlainText(file);
+    final VirtualFile[] selectedFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (selectedFiles == null || selectedFiles.length == 0) return;
+    for (VirtualFile file : selectedFiles) {
+      if (file != null && !file.isDirectory()) {
+        unmarkPlainText(file);
+      }
+    }
   }
 
   private static void unmarkPlainText(@NotNull VirtualFile file) {
@@ -43,22 +47,32 @@ public class MarkAsOriginalTypeAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile[] selectedFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     final Presentation presentation = e.getPresentation();
     final EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
-    if (typeManager == null || file == null || file.isDirectory()) {
-      presentation.setVisible(false);
+    presentation.setVisible(false);
+    if (typeManager == null || selectedFiles == null || selectedFiles.length == 0) {
       return;
     }
-    if (typeManager.isMarkedAsPlainText(file)) {
-      presentation.setVisible(true);
-      FileType originalType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
-      presentation.setText(ActionsBundle.actionText("MarkAsOriginalTypeAction") + " " + originalType.getName());
-      presentation.setIcon(originalType.getIcon());
+    FileType originalType = null;
+    for (VirtualFile file : selectedFiles) {
+      if (typeManager.isMarkedAsPlainText(file)) {
+        FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+        if (originalType == null) {
+          originalType = fileType;
+        }
+        else if (fileType != originalType) {
+          return;
+        }
+      }
+      else {
+        return;
+      }
     }
-    else {
-      presentation.setVisible(false);
-    }
+    if (originalType == null) return;
+    presentation.setVisible(true);
+    presentation.setText(ActionsBundle.actionText("MarkAsOriginalTypeAction") + " " + originalType.getName());
+    presentation.setIcon(originalType.getIcon());
   }
     
 }

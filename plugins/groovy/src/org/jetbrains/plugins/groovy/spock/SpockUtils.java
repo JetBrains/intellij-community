@@ -53,7 +53,7 @@ public class SpockUtils {
     if (cachedValue == null) {
       cachedValue = createVariableMap(originalMethod);
 
-      KEY.putCachedValue(originalMethod, cachedValue);
+      cachedValue = KEY.putCachedValue(originalMethod, cachedValue);
     }
 
     return cachedValue;

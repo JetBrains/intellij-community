@@ -50,10 +50,11 @@ public abstract class MappedBufferWrapper {
 
   public final void unmap() {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
-    if (!unmapMappedByteBuffer142b19(this)) {
+    MappedByteBuffer buffer = getIfCached();
+    myBuffer = null;
+    if (!unmapMappedByteBuffer142b19(buffer)) {
       LOG.error("Unmapping failed for: " + myFile);
     }
-    myBuffer = null;
 
     if (IOStatistics.DEBUG) {
       long finished = System.currentTimeMillis();
@@ -76,8 +77,8 @@ public abstract class MappedBufferWrapper {
   }
 
 
-  private static boolean unmapMappedByteBuffer142b19(MappedBufferWrapper holder) {
-    return clean(holder.getIfCached());
+  private static boolean unmapMappedByteBuffer142b19(MappedByteBuffer buffer) {
+    return clean(buffer);
   }
 
   private static boolean clean(final MappedByteBuffer buffer) {
@@ -108,6 +109,7 @@ public abstract class MappedBufferWrapper {
         return true;
       }
       catch (Throwable e) {
+        LOG.info(e);
         try {
           Thread.sleep(10);
         }

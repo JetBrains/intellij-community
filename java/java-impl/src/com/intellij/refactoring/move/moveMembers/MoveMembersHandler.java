@@ -22,7 +22,7 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesHandlerBase;
+import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveMembersHandler extends MoveHandlerDelegate {
@@ -35,7 +35,7 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
 
   public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
     for (PsiElement source : sources) {
-      if (MoveClassesOrPackagesHandlerBase.invalid4Move(source)) return false;
+      if (JavaMoveClassesOrPackagesHandler.invalid4Move(source)) return false;
     }
     return psiElement instanceof PsiClass && !(psiElement instanceof PsiAnonymousClass);
   }

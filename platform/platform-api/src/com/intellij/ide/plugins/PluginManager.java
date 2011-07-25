@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,7 @@ public class PluginManager {
 
 
   public static long startupStart;
+  public static final float PLUGINS_PROGRESS_MAX_VALUE = 0.8f;
 
   public static class Facade extends PluginsFacade {
     public IdeaPluginDescriptor getPlugin(PluginId id) {
@@ -548,7 +549,7 @@ public class PluginManager {
     loadDescriptorsFromProperty(result);
 
     if (!fromSources && progress != null) {
-      progress.showProgress("Loading core...", 0.5f);
+      progress.showProgress("Loading core...", PLUGINS_PROGRESS_MAX_VALUE);
     }
     loadDescriptorsFromClassPath(result, fromSources ? progress : null);
 
@@ -650,7 +651,7 @@ public class PluginManager {
             }
             result.add(pluginDescriptor);
             if (progress != null) {
-              progress.showProgress("Plugin loaded: " + pluginDescriptor.getName(), 0.5f * ((float)i / urls.size()));
+              progress.showProgress("Plugin loaded: " + pluginDescriptor.getName(), PLUGINS_PROGRESS_MAX_VALUE * ((float)i / urls.size()));
             }
           }
         }
@@ -829,7 +830,7 @@ public class PluginManager {
         final IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML);
         if (descriptor == null) continue;
         if (progress != null) {
-          progress.showProgress(descriptor.getName(), 0.5f * ((float)++i / pluginsCount));
+          progress.showProgress(descriptor.getName(), PLUGINS_PROGRESS_MAX_VALUE * ((float)++i / pluginsCount));
         }
         int oldIndex = result.indexOf(descriptor);
         if (oldIndex >= 0) {

@@ -381,7 +381,7 @@ public abstract class DialogWrapper {
           if (!hasFocusedAction(actions)) {
             int ndx = ArrayUtil.find(actions, getCancelAction());
             if (ndx >= 0) {
-              actions[ndx].putValue(FOCUSED_ACTION, Boolean.TRUE);
+              //actions[ndx].putValue(FOCUSED_ACTION, Boolean.TRUE);
             }
           }
         }

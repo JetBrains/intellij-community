@@ -29,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class JavaLanguage extends Language {
+
+  public static JavaLanguage INSTANCE = new JavaLanguage();
+
   public JavaLanguage() {
     super("JAVA", "text/java", "application/x-java", "text/x-java");
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SyntaxHighlighterFactory() {

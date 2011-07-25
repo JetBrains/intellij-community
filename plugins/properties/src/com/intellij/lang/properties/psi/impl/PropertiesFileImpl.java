@@ -18,6 +18,7 @@ package com.intellij.lang.properties.psi.impl;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
@@ -48,7 +49,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private List<Property> myProperties;
 
   public PropertiesFileImpl(FileViewProvider viewProvider) {
-    super(viewProvider, StdFileTypes.PROPERTIES.getLanguage());
+    super(viewProvider, PropertiesLanguage.INSTANCE);
   }
 
   @NotNull

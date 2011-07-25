@@ -430,18 +430,49 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
       }
 
-      for (KeyEvent each : events) {
+      for (int eachIndex = 0; eachIndex < events.length; eachIndex++) {
         if (!isFocusTransferReady()) break;
+
+        KeyEvent each = events[eachIndex];
+        boolean toDispatch = false;
 
         Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (owner == null) {
           owner = JOptionPane.getRootFrame();
         }
 
+        boolean metaKey =
+          each.getKeyCode() == KeyEvent.VK_ALT ||
+          each.getKeyCode() == KeyEvent.VK_CONTROL ||
+          each.getKeyCode() == KeyEvent.VK_SHIFT ||
+          each.getKeyCode() == KeyEvent.VK_META;
+
+        if (!metaKey && (each.getID() == KeyEvent.KEY_RELEASED || each.getID() == KeyEvent.KEY_TYPED)) {
+          for (int i = 0; i < eachIndex; i++) {
+            final KeyEvent prev = events[i];
+            if (prev == null) continue;
+
+            if (prev.getID() == KeyEvent.KEY_PRESSED) {
+              if (prev.getKeyCode() == each.getKeyCode()) {
+                toDispatch = true;
+                events[i] = null;
+                break;
+              }
+            }
+          }
+        } else {
+          toDispatch = true;
+        }
+
+        myToDispatchOnDone.remove(each);
+        if (!toDispatch) {
+          continue;
+        }
+
+
         KeyEvent keyEvent = new KeyEvent(owner, each.getID(), each.getWhen(), each.getModifiersEx(), each.getKeyCode(), each.getKeyChar(),
                                          each.getKeyLocation());
 
-        myToDispatchOnDone.remove(each);
 
         if (owner != null && SwingUtilities.getWindowAncestor(owner) != null) {
           IdeEventQueue.getInstance().dispatchEvent(keyEvent);

@@ -16,7 +16,6 @@
 package com.intellij.ide.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.StartupUtil;
 import com.intellij.notification.Notification;
@@ -428,7 +427,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
 
     initInputMapDefaults(uiDefaults);
-    initActionMapDefaults(uiDefaults);
 
     UIManager.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
 
@@ -647,10 +645,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if(tableInputMap!=null){ // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
       installCutCopyPasteShortcuts(tableInputMap, true);
     }
-  }
-
-  private static void initActionMapDefaults(UIDefaults defaults) {
-    ClipboardSynchronizer.getInstance().replaceDefaultCopyPasteActions(defaults);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

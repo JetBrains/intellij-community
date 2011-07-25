@@ -19,6 +19,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -69,6 +70,7 @@ import java.io.File;
 
 // Made non-final for Fabrique
 public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
+  private static final String FULL_SCREEN = "FullScreen";
   private String myTitle;
 
   private String myFileTitle;
@@ -81,6 +83,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private final BalloonLayout myBalloonLayout;
   private static boolean myUpdatingTitle;
   private MacMainFrameDecorator myFrameDecorator;
+  
+  private boolean myRestoreFullscreen;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
                       final Application application, final String[] commandLineArgs) {
@@ -275,6 +279,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   public void setProject(final Project project) {
+    if (SystemInfo.isMacOSLion && myProject != project && project != null) {
+      myRestoreFullscreen = myProject == null && shouldRestoreFullScreen(project);
+      
+      if (myProject != null) {
+        storeFullScreenStateIfNeeded(false); // disable for old project
+      }
+    }
+    
     myProject = project;
     if (project != null) {
       if (myRootPane != null) {
@@ -292,6 +304,28 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
     if (project == null) {
       FocusTrackback.release(this);
+    }
+    
+    if (isVisible() && myRestoreFullscreen) {
+      MacMainFrameDecorator.toggleFullScreen(this);
+      myRestoreFullscreen = false;
+      storeFullScreenStateIfNeeded(false); // reset
+    }
+  }
+
+  @Override
+  public void setVisible(boolean b) {
+    super.setVisible(b);
+    
+    if (b && myRestoreFullscreen) {
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          MacMainFrameDecorator.toggleFullScreen(IdeFrameImpl.this);
+          myRestoreFullscreen = false;
+          storeFullScreenStateIfNeeded(false); // reset
+        }
+      });
     }
   }
 
@@ -350,6 +384,30 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     FocusTrackback.release(this);
 
     super.dispose();
+  }
+
+  public void storeFullScreenStateIfNeeded() {
+    storeFullScreenStateIfNeeded(MacMainFrameDecorator.isFullScreenMode(this));
+  }
+
+  public void storeFullScreenStateIfNeeded(boolean state) {
+    if (!SystemInfo.isMacOSLion) return;
+    
+    if (myProject != null) {
+      PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, Boolean.valueOf(state).toString());
+    } else {
+      //PropertiesComponent.getInstance().setValue(FULL_SCREEN, Boolean.valueOf(state).toString());
+    }
+  }
+
+  public static boolean shouldRestoreFullScreen(Project project) {
+    if (!SystemInfo.isMacOSLion) return false;
+    
+    if (project != null) {
+      return PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN, false);
+    } else {
+      return false; // PropertiesComponent.getInstance().getBoolean(FULL_SCREEN, false);
+    }
   }
 
   @Override

@@ -56,7 +56,9 @@ import git4idea.stash.GitChangesSaver;
 import git4idea.stash.GitShelveChangesSaver;
 import git4idea.stash.GitStashChangesSaver;
 import git4idea.ui.GitUIUtil;
-import git4idea.update.*;
+import git4idea.update.GitUpdateLikeProcess;
+import git4idea.update.GitUpdateProcess;
+import git4idea.update.UpdatePolicyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,11 +70,9 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static git4idea.ui.GitUIUtil.notifyError;
@@ -882,11 +882,6 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     myCommitTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer() {
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        // Fix GTK background
-        if (UIUtil.isUnderGTKLookAndFeel()) {
-          final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-          UIUtil.changeBackGround(this, background);
-        }
         ColoredTreeCellRenderer r = getTextRenderer();
         if (!(value instanceof DefaultMutableTreeNode)) {
           // unknown node type

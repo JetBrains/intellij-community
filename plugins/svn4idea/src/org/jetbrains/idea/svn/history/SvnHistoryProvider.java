@@ -475,7 +475,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       SVNWCClient wcClient = myVcs.createWCClient();
       SVNInfo info = wcClient.doInfo(new File(file.getPath()).getAbsoluteFile(), SVNRevision.WORKING);
       if (info != null) {
-        return new SvnRevisionNumber(info.getCommittedRevision());
+        return new SvnRevisionNumber(info.getRevision());
       } else {
         return null;
       }

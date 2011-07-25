@@ -53,6 +53,7 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     return true;
   }
 
+  @NotNull
   public LanguageLevel getDefaultValue() {
     return LanguageLevel.HIGHEST;
   }
@@ -71,7 +72,7 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
 
   private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 1, true);
 
-  public void persistAttribute(VirtualFile fileOrDir, LanguageLevel level) throws IOException {
+  public void persistAttribute(VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
     final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
     if (iStream != null) {
       try {

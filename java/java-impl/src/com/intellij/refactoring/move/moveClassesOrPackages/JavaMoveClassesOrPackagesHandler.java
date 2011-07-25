@@ -49,8 +49,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
-public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
-  private static final Logger LOG = Logger.getInstance("#" + MoveClassesOrPackagesHandlerBase.class.getName());
+public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
+  private static final Logger LOG = Logger.getInstance("#" + JavaMoveClassesOrPackagesHandler.class.getName());
   public static boolean isPackageOrDirectory(final PsiElement element) {
     if (element instanceof PsiPackage) return true;
     return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackage((PsiDirectory)element) != null;

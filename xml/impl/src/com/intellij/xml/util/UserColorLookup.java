@@ -53,7 +53,7 @@ public class UserColorLookup implements DeferredUserLookupValue, LookupValueWith
 
     Color color = ColorChooser
       .chooseColor(WindowManager.getInstance().suggestParentWindow(project), XmlBundle.message("choose.color.dialog.title"),
-                   myColorAtCaret);
+                   myColorAtCaret, true);
 
     if (color != null) {
       String s = Integer.toHexString(color.getRGB() & 0xFFFFFF);

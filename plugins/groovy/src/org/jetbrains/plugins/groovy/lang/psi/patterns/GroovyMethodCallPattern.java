@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +53,10 @@ public class GroovyMethodCallPattern extends GroovyExpressionPattern<GrCallExpre
         return true;
       }
     });
+  }
+
+  public GroovyMethodCallPattern withMethodName(@NotNull String methodName) {
+    return withMethodName(StandardPatterns.string().equalTo(methodName));
   }
 
   public GroovyMethodCallPattern withMethodName(final ElementPattern<? extends String> methodName) {

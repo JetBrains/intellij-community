@@ -24,7 +24,6 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,19 +76,15 @@ class ToolsPanel extends JPanel {
 
     myTree = new CheckboxTree(
       new CheckboxTree.CheckboxTreeCellRenderer() {
-        public void customizeCellRenderer(final JTree tree,
+        public void customizeRenderer(final JTree tree,
                                           final Object value,
                                           final boolean selected,
                                           final boolean expanded,
                                           final boolean leaf,
                                           final int row,
                                           final boolean hasFocus) {
+          if (!(value instanceof CheckedTreeNode)) return;
           Object object = ((CheckedTreeNode)value).getUserObject();
-          // Fix GTK background
-          if (UIUtil.isUnderGTKLookAndFeel()) {
-            final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-            UIUtil.changeBackGround(this, background);
-          }
 
           if (object instanceof ToolsGroup) {
             final String groupName = ((ToolsGroup)object).getName();

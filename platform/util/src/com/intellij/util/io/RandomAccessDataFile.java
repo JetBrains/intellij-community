@@ -213,7 +213,9 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   }
 
   private void assertNotDisposed() {
-    LOG.assertTrue(!myIsDisposed, "storage file is disposed: " + myFile);
+    if (myIsDisposed) {
+      LOG.assertTrue(false, "storage file is disposed: " + myFile);
+    }
   }
 
   public static int totalReads = 0;

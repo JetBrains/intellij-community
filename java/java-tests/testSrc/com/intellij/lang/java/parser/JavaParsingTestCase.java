@@ -16,9 +16,15 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.mock.MockModule;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -26,31 +32,74 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.JavaASTFactory;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.testFramework.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.ParsingTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
 
 public abstract class JavaParsingTestCase extends ParsingTestCase {
+
+  private Module myModule;
+  private LanguageLevel myLanguageLevel;
+
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
   public JavaParsingTestCase(@NonNls final String dataPath) {
-    super(dataPath, "java");
+    super("psi/"+dataPath, "java", new JavaParserDefinition());
     IdeaTestCase.initPlatformPrefix();
   }
 
-  protected static void withLevel(final LanguageLevel level, final Runnable r) {
-    IdeaTestUtil.withLevel(getModule(), level, r);
+  protected void withLevel(final LanguageLevel level, final Runnable r) {
+    LanguageLevel prev = myLanguageLevel;
+    myLanguageLevel = level;
+    try {
+      r.run();
+    }
+    finally {
+      myLanguageLevel = prev;
+    }
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myModule = disposeOnTearDown(new MockModule(getProject()));
+    myLanguageLevel = LanguageLevel.JDK_1_6;
+    getProject().registerService(LanguageLevelProjectExtension.class, new LanguageLevelProjectExtensionImpl(getProject()));
+    addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
+  }
+
+  @Override
+  protected PsiFile createFile(String name, String text) {
+    final PsiFile file = super.createFile(name, text);
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, myLanguageLevel);
+    return file;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    myModule = null;
   }
 
   protected interface TestParser {
     void parse(PsiBuilder builder);
   }
 
+  public Module getModule() {
+    return myModule;
+  }
+
+
   protected void doParserTest(final String text, final TestParser parser) {
     final String name = getTestName(false);
     myFile = createPsiFile(name, text, parser);
+    myFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, myLanguageLevel);
     try {
       checkResult(name + ".txt", myFile);
     }
@@ -64,7 +113,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
 
   private PsiFile createPsiFile(final String name, final String text, final TestParser parser) {
     if (TEST_FILE_ELEMENT_TYPE == null) {
-      TEST_FILE_ELEMENT_TYPE = new IFileElementType("test.java.file", StdLanguages.JAVA) {
+      TEST_FILE_ELEMENT_TYPE = new IFileElementType("test.java.file", JavaLanguage.INSTANCE) {
         @Override
         public ASTNode parseContents(final ASTNode chameleon) {
           final PsiBuilder builder = createBuilder(chameleon);

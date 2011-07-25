@@ -20,7 +20,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.Function;
@@ -90,7 +90,9 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
 
   private static Runnable CURRENT_SETTER = null;
   private static Function<Object, Boolean> CURRENT_GETTER = null;
-  private String myClassName;
+  
+  private Callback myDidExit;
+  private Callback myDidEnter;
 
   public MacMainFrameDecorator(@NotNull final Frame frame, final boolean navBar) {
     final ID window = findWindowForTitle(frame.getTitle());
@@ -106,20 +108,75 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
 
     final ID pool = invoke("NSAutoreleasePool", "new");
 
+    int v = UNIQUE_COUNTER.incrementAndGet();
+
     try {
       if (SystemInfo.isMacOSLion) {
-        // fullscreen
+        // fullscreen support
+        
+        final ID delegateClass = Foundation.registerObjcClass(Foundation.getClass("NSObject"), "IdeaNSWindowDelegate" + v);
+        Foundation.registerObjcClassPair(delegateClass);
 
+        myDidExit = new Callback() {
+          public void callback(ID caller, ID notification) {
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (frame instanceof IdeFrameImpl) {
+                  ((IdeFrameImpl)frame).storeFullScreenStateIfNeeded(false);
+                }
+              }
+            });
+          }
+        };
+        Foundation.addMethod(delegateClass, Foundation.createSelector("windowDidExitFullScreen:"), myDidExit, "v*");
+
+        myDidEnter = new Callback() {
+          public void callback(ID caller, ID notification) {
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (frame instanceof IdeFrameImpl) {
+                  //((IdeFrameImpl)frame).storeFullScreenStateIfNeeded(true);
+                  
+                  // fix problem with bottom empty bar
+                  // it seems like the title is still visible in fullscreen but the window itself shifted up for titlebar height
+                  // and the size of the frame is still calculated to be the height of the screen which is wrong
+                  // so just add these titlebar height to the frame height once again
+                  SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                      frame.setSize(frame.getWidth(), frame.getHeight() + frame.getInsets().top);
+                    }
+                  });
+                }
+              }
+            });
+          }
+        };
+
+        Foundation.addMethod(delegateClass, Foundation.createSelector("windowDidEnterFullScreen:"), myDidEnter, "v*");
+
+        // enable fullscreen titlebar button
         invoke(window, "setCollectionBehavior:", 1 << 7); // NSCollectionBehaviorFullScreenPrimary = 1 << 7, NSCollectionBehaviorFullScreenAuxiliary = 1 << 8
+
+        ID notificationCenter = invoke("NSNotificationCenter", "defaultCenter");
+
+        ID delegate = invoke(invoke("IdeaNSWindowDelegate" + v, "alloc"), "init");
+        invoke(notificationCenter, "addObserver:selector:name:object:", delegate, 
+               Foundation.createSelector("windowDidEnterFullScreen:"), 
+               Foundation.cfString("NSWindowDidEnterFullScreenNotification"), window);
+
+        //invoke(notificationCenter, "addObserver:selector:name:object:", delegate, 
+        //       Foundation.createSelector("windowDidExitFullScreen:"), 
+        //       Foundation.cfString("NSWindowDidExitFullScreenNotification"), window);
       } else {
         // toggle toolbar
-
-        myClassName = "IdeaToolbar" + UNIQUE_COUNTER.incrementAndGet();
-
-        final ID ownToolbar = Foundation.registerObjcClass(Foundation.getClass("NSToolbar"), myClassName);
+        String className = "IdeaToolbar" + v;
+        final ID ownToolbar = Foundation.registerObjcClass(Foundation.getClass("NSToolbar"), className);
         Foundation.registerObjcClassPair(ownToolbar);
 
-        ID toolbar = invoke(invoke(myClassName, "alloc"), "initWithIdentifier:", Foundation.cfString(myClassName));
+        ID toolbar = invoke(invoke(className, "alloc"), "initWithIdentifier:", Foundation.cfString(className));
         Foundation.cfRetain(toolbar);
 
         invoke(toolbar, "setVisible:", 0); // hide native toolbar by default
@@ -150,6 +207,15 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  public static void toggleFullScreen(Frame frame) {
+    if (!SystemInfo.isMacOSLion) return;
+    
+    final ID window = findWindowForTitle(frame.getTitle());
+    if (window == null) return;
+
+    invoke(window, "toggleFullScreen:", window);
   }
 
   public static boolean isFullScreenMode(@NotNull Frame frame) {

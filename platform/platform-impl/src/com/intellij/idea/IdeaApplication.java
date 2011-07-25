@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,7 +164,7 @@ public class IdeaApplication {
         final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
         final SplashScreen splashScreen = getSplashScreen();
         if (splashScreen == null) {
-          mySplash = new Splash(appInfo.getLogoUrl(), appInfo.getLogoTextColor());
+          mySplash = new Splash(appInfo);
           mySplash.show();
           return mySplash;
         }

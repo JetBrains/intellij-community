@@ -127,6 +127,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
 
     @Override
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
+      if (!virtualFile.isValid()) return;
       final PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
       if (file != null) {
         final PackageDependenciesNode node = myBuilder.getFileParentNode(virtualFile);
@@ -598,7 +599,9 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final Runnable wrapped = new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
+          myTreeExpansionMonitor.freeze();
           request.run();
+          myTreeExpansionMonitor.restore();
         }
       };
       if (updateImmediately && isTreeShowing()) {

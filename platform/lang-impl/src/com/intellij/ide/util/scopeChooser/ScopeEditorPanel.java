@@ -82,9 +82,11 @@ public class ScopeEditorPanel {
   public ScopeEditorPanel(Project project, final NamedScopesHolder holder) {
     myProject = project;
     myHolder = holder;
-    myButtonsPanel.add(createActionsPanel());
 
     myPackageTree = new Tree(new RootNode(project));
+
+    myButtonsPanel.add(createActionsPanel());
+
     myTreePanel.setLayout(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myPackageTree), BorderLayout.CENTER);
 
@@ -177,10 +179,24 @@ public class ScopeEditorPanel {
   }
 
   private JComponent createActionsPanel() {
-    JButton include = new JButton(IdeBundle.message("button.include"));
-    JButton includeRec = new JButton(IdeBundle.message("button.include.recursively"));
-    JButton exclude = new JButton(IdeBundle.message("button.exclude"));
-    JButton excludeRec = new JButton(IdeBundle.message("button.exclude.recursively"));
+    final JButton include = new JButton(IdeBundle.message("button.include"));
+    final JButton includeRec = new JButton(IdeBundle.message("button.include.recursively"));
+    final JButton exclude = new JButton(IdeBundle.message("button.exclude"));
+    final JButton excludeRec = new JButton(IdeBundle.message("button.exclude.recursively"));
+    myPackageTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        final ArrayList<PackageSet> selectedRecSets = getSelectedSets(true);
+        final boolean noRecursiveSet = selectedRecSets == null || selectedRecSets.isEmpty();
+        includeRec.setEnabled(!noRecursiveSet);
+        excludeRec.setEnabled(!noRecursiveSet);
+
+        final ArrayList<PackageSet> selectedSets = getSelectedSets(false);
+        final boolean noSet = selectedSets == null || selectedSets.isEmpty();
+        include.setEnabled(!noSet);
+        exclude.setEnabled(!noSet);
+      }
+    });
 
     JPanel buttonsPanel = new JPanel(new VerticalFlowLayout());
     buttonsPanel.add(include);

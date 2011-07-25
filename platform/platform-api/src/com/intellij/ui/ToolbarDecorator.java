@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
@@ -381,7 +382,9 @@ public class ToolbarDecorator implements DataProvider {
     if (myTableModel instanceof EditableModel && buttons.length > 0) {
       updateTableButtons(myTable, (EditableModel)myTableModel, myPanel);
 
-      if (myUpAction != null && myUpActionEnabled && myDownAction != null && myDownActionEnabled) {
+      if (myUpAction != null && myUpActionEnabled
+          && myDownAction != null && myDownActionEnabled
+          && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
         TableRowsDnDSupport.install(myTable, (EditableModel)myTableModel);
       }
       myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {

@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.properties.parsing;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IFileElementType;
@@ -26,7 +25,7 @@ import com.intellij.psi.tree.TokenSet;
  * @author max
  */
 public interface PropertiesElementTypes {
-  PropertiesLanguage LANG = Language.findInstance(PropertiesLanguage.class);
+  PropertiesLanguage LANG = PropertiesLanguage.INSTANCE;
 
   IFileElementType FILE = new IStubFileElementType(LANG);
   IStubElementType PROPERTY = new PropertyStubElementType();

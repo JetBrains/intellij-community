@@ -114,9 +114,9 @@ public class PushedFilePropertiesUpdater {
     ProjectRootManager.getInstance(project).getFileIndex().iterateContentUnderDirectory(dir, new ContentIterator() {
       public boolean processFile(final VirtualFile fileOrDir) {
         final boolean isDir = fileOrDir.isDirectory();
-        for (FilePropertyPusher<?> pusher : pushers) {
+        for (FilePropertyPusher<Object> pusher : pushers) {
           if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
-          findAndUpdateValue(project, fileOrDir, pusher, null);
+          findAndUpdateValue(project, fileOrDir, pusher, pusher.getDefaultValue());
         }
         return true;
       }
@@ -154,7 +154,7 @@ public class PushedFilePropertiesUpdater {
   public static <T> T findAndUpdateValue(final Project project,
                                          final VirtualFile fileOrDir,
                                          final FilePropertyPusher<T> pusher,
-                                         @Nullable final T parentValue) {
+                                         final T parentValue) {
     final T immediateValue = pusher.getImmediateValue(project, fileOrDir);
     final T value = immediateValue != null ? immediateValue : parentValue;
     updateValue(fileOrDir, value, pusher);

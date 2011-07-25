@@ -29,7 +29,6 @@ import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -1114,19 +1113,25 @@ public class CompileDriver {
               indicator.popState();
             }
           }
+
+          if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+            throw new ExitException(ExitStatus.ERRORS);
+          }
+
         }
         catch (CacheCorruptedException e) {
           LOG.info(e);
           context.requestRebuildNextTime(e.getMessage());
         }
         finally {
-          if (context.getMessageCount(CompilerMessageCategory.ERROR) != 0) {
+          final int errorCount = context.getMessageCount(CompilerMessageCategory.ERROR);
+          if (errorCount != 0) {
             filesToRecompile.addAll(allDependent);
           }
           if (filesToRecompile.size() > 0) {
             sink.add(null, Collections.<TranslatingCompiler.OutputItem>emptyList(), VfsUtil.toVirtualFileArray(filesToRecompile));
           }
-          if (context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
+          if (errorCount == 0) {
             // perform update only if there were no errors, so it is guaranteed that the file was processd by all neccesary compilers
             sink.flushPostponedItems();
           }
