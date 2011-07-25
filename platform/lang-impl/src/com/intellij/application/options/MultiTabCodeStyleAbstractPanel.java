@@ -179,11 +179,6 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
     }
 
     @Override
-    protected String getTabTitle() {
-      return "Spaces";
-    }
-
-    @Override
     protected void installPreviewPanel(JPanel previewPanel) {
       previewPanel.setLayout(new BorderLayout());
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
@@ -213,11 +208,6 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
     }
 
     @Override
-    protected String getTabTitle() {
-      return "Blank Lines";
-    }
-
-    @Override
     protected void installPreviewPanel(JPanel previewPanel) {
       previewPanel.setLayout(new BorderLayout());
       previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
@@ -235,11 +225,6 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
     @Override
     protected void customizeSettings() {
       customizePanel(this);
-    }
-
-    @Override
-    protected String getTabTitle() {
-      return "Wrapping and Braces";
     }
 
     @Override

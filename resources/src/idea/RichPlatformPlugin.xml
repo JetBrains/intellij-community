@@ -276,9 +276,7 @@
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
     <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.NewProjectCheckoutListener"/>
 
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.WrappingAndBracesSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.BlankLinesSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.SpacesSettingsProvider"/>
+    <codeStyleSettingsProvider implementation="com.intellij.application.options.CommonCodeStyleSettingsProvider"/>
 
     <!-- new project wizard -->
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode"/>
