@@ -64,6 +64,18 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 7, 2, 0));
     }
+  },
+
+  /**
+   * Git understands <code>'git status --porcelain'</code>.
+   * Since 1.7.0.
+   */
+  KNOWS_STATUS_PORCELAIN {
+    @Override
+    public boolean existsIn(@NotNull GitVersion
+    version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

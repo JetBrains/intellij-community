@@ -33,6 +33,7 @@ import git4idea.changes.GitChangeProvider;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -70,6 +71,19 @@ public class GitChangeProviderTest extends GitTest {
     myRootDir = myRepo.getVFRootDir();
 
     myDirtyScope = new MockDirtyScope(myProject, GitVcs.getInstance(myProject));
+  }
+
+  @Test
+  public void testUnversionedFile() throws IOException, VcsException {
+    setStandardConfirmation(GitVcs.NAME, VcsConfiguration.StandardConfirmation.ADD, VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
+    VirtualFile file = create(myRootDir, "new.txt");
+
+    MockChangelistBuilder builder = new MockChangelistBuilder();
+    myChangeProvider.getChanges(myDirtyScope, builder, new EmptyProgressIndicator(),
+                                new MockChangeListManagerGate(ChangeListManager.getInstance(myProject)));
+    List<VirtualFile> unversionedFiles = builder.getUnversionedFiles();
+    assertEquals(unversionedFiles.size(), 1, "Incorrect number of unversioned files.");
+    assertEquals(unversionedFiles.get(0), file, "Unversioned file doesn't match.");
   }
 
   @Test

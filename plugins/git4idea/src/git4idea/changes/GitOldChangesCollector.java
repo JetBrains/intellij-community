@@ -16,9 +16,7 @@
 package git4idea.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -32,67 +30,103 @@ import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.*;
 
 /**
- * A collector for changes in the Git. It is introduced because changes are not
- * cannot be got as a sum of stateless operations.
+ * <p>
+ *   Collects changes from the Git repository in the specified {@link com.intellij.openapi.vcs.changes.VcsDirtyScope}
+ *   using the older technique that is replaced by {@link GitNewChangesCollector} for Git later than 1.7.0 inclusive.
+ *   This class is used for Git older than 1.7.0 not inclusive, that don't have <code>'git status --porcelain'</code>.
+ * </p>
+ * <p>
+ *   The method used by this class is less efficient and more error-prone than {@link GitNewChangesCollector} method.
+ *   Thus this class is considered as a legacy code for Git 1.6.*. Read further for the implementation details and the ground for
+ *   transferring to use {@code 'git status --porcelain'}.
+ * </p>
+ * <p>
+ *   The following Git commands are called to get the changes, i.e. the state of the working tree combined with the state of index.
+ *   <ul>
+ *     <li>
+ *       <b><code>'git update-index --refresh'</code></b> (called on the whole repository) - probably unnecessary (especially before 'git diff'),
+ *       but is left not to break some older Gits occasionally. See the following links for some details:
+ *       <a href="http://us.generation-nt.com/answer/bug-596126-git-status-does-not-refresh-index-fixed-since-1-7-1-1-please-consider-upgrading-1-7-1-2-squeeze-help-200234171.html">
+ *       gitk doesn't refresh the index statinfo</a>;
+ *       <a href="http://thread.gmane.org/gmane.comp.version-control.git/144176/focus">
+ *       "Most git porcelain silently refreshes stat-dirty index entries"</a>;
+ *       <a href="https://git.wiki.kernel.org/index.php/GitFaq#Can_I_import_from_tar_files_.28archives.29.3">update-index to import from tar files</a>.
+ *     </li>
+ *     <li>
+ *       <b><code>'git ls-files --unmerged'</code></b> (called on the whole repository) - to get the list of unmerged files.
+ *       It is not clear why it should be called on the whole repository. The decision to call it on the whole repository was made in
+ *       <code>45687fe "<a href="http://youtrack.jetbrains.net/issue/IDEA-50573">IDEADEV-40577</a>: The ignored unmerged files are now reported"</code>,
+ *       but neither the rollback & test, nor the analysis didn't recover the need for that. It is left however, since it is a legacy code.
+ *     </li>
+ *     <li>
+ *       <b><code>'git ls-files --others --exclude-standard'</code></b> (called on the dirty scope) - to get the list of unversioned files.
+ *       Note that this command is the only way to get the list of unversioned files, besides <code>'git status'</code>.
+ *     </li>
+ *     <li>
+ *       <b><code>'git diff --name-status -M HEAD -- </code></b> (called on the dirty scope) - to get all other changes (except unversioned and
+ *       unmerged).
+ *       Note that there is also no way to get all tracked changes by a single command (except <code>'git status'</code>), since
+ *       <code>'git diff'</code> returns either only not-staged changes, either (<code>'git diff HEAD'</code>) treats unmerged as modified.
+ *     </li>
+ *   </ul>
+ * </p>
+ * <p>
+ *   <b>Performance measurement</b>
+ *   was performed on a large repository (like IntelliJ IDEA), on a single machine, after several "warm-ups" when <code>'git status'</code> duration
+ *   stabilizes.
+ *   For the whole repository:
+ *   <code>'git status'</code> takes ~ 1300 ms while these 4 commands take ~ 1870 ms
+ *   ('update-index' ~ 270 ms, 'ls-files --unmerged' ~ 46 ms, 'ls files --others' ~ 820 ms, 'diff' ~ 650 ms)
+ *   ; for a single file:
+ *   <code>'git status'</code> takes ~ 375 ms, these 4 commands take ~ 750 ms.
+ * </p>
+ * <p>
+ * The class is immutable: collect changes and get the instance from where they can be retrieved by {@link #collect}.
+ * </p>
+ *
+ * @author Constantine Plotnikov
+ * @author Kirill Likhodedov
  */
-class ChangeCollector {
-  private final Project myProject;
-  private final ChangeListManager myChangeListManager;
-  private final VcsDirtyScope myDirtyScope;
-  private final VirtualFile myVcsRoot;
+class GitOldChangesCollector extends GitChangesCollector {
 
   private final List<VirtualFile> myUnversioned = new ArrayList<VirtualFile>(); // Unversioned files
   private final Set<String> myUnmergedNames = new HashSet<String>(); // Names of unmerged files
   private final List<Change> myChanges = new ArrayList<Change>(); // all changes
-  private boolean myIsCollected = false; // indicates that collecting changes has been started
-  private boolean myIsFailed = true; // indicates that collecting changes has been failed.
-
-  public ChangeCollector(final Project project, ChangeListManager changeListManager, VcsDirtyScope dirtyScope, final VirtualFile vcsRoot) {
-    myChangeListManager = changeListManager;
-    myDirtyScope = dirtyScope;
-    myVcsRoot = vcsRoot;
-    myProject = project;
-  }
 
   /**
-   * Get unversioned files
+   * Collects the changes from git command line and returns the instance of GitNewChangesCollector from which these changes can be retrieved.
+   * This may be lengthy.
    */
-  public Collection<VirtualFile> unversioned() throws VcsException {
-    ensureCollected();
+  @NotNull
+  static GitOldChangesCollector collect(final Project project, ChangeListManager changeListManager, VcsDirtyScope dirtyScope, final VirtualFile vcsRoot) throws VcsException {
+    return new GitOldChangesCollector(project, changeListManager, dirtyScope, vcsRoot);
+  }
+
+  @NotNull
+  @Override
+  Collection<VirtualFile> getUnversionedFiles() {
     return myUnversioned;
   }
 
-  /**
-   * Get changes
-   */
-  public Collection<Change> changes() throws VcsException {
-    ensureCollected();
+  @NotNull
+  @Override
+  Collection<Change> getChanges(){
     return myChanges;
   }
 
-
-  /**
-   * Ensure that changes has been collected.
-   */
-  private void ensureCollected() throws VcsException {
-    if (myIsCollected) {
-      if (myIsFailed) {
-        throw new IllegalStateException("The method should not be called after after exception has been thrown.");
-      }
-      else {
-        return;
-      }
-    }
-    myIsCollected = true;
+  private GitOldChangesCollector(final Project project,
+                                ChangeListManager changeListManager,
+                                VcsDirtyScope dirtyScope,
+                                final VirtualFile vcsRoot) throws VcsException {
+    super(project, changeListManager, dirtyScope, vcsRoot);
     updateIndex();
     collectUnmergedAndUnversioned();
     collectDiffChanges();
-    myIsFailed = false;
   }
 
   private void updateIndex() throws VcsException {
@@ -103,79 +137,6 @@ class ChangeCollector {
     handler.setStdoutSuppressed(true);
     handler.ignoreErrorCode(1);
     handler.run();
-  }
-
-  /**
-   * Collect dirty file paths
-   *
-   * @param includeChanges if true, previous changes are included in collection
-   * @return the set of dirty paths to check, the paths are automatically collapsed if the summary length more than limit
-   */
-  private Collection<FilePath> dirtyPaths(boolean includeChanges) {
-    final List<String> allPaths = new ArrayList<String>();
-
-    for (FilePath p : myDirtyScope.getRecursivelyDirtyDirectories()) {
-      addToPaths(p, allPaths);
-    }
-    for (FilePath p : myDirtyScope.getDirtyFilesNoExpand()) {
-      addToPaths(p, allPaths);
-    }
-
-    if (includeChanges) {
-      try {
-        for (Change c : myChangeListManager.getChangesIn(myVcsRoot)) {
-          switch (c.getType()) {
-            case NEW:
-            case DELETED:
-            case MOVED:
-              if (c.getAfterRevision() != null) {
-                addToPaths(c.getAfterRevision().getFile(), allPaths);
-              }
-              if (c.getBeforeRevision() != null) {
-                addToPaths(c.getBeforeRevision().getFile(), allPaths);
-              }
-            case MODIFICATION:
-            default:
-              // do nothing
-          }
-        }
-      }
-      catch (Exception t) {
-        // ignore exceptions
-      }
-    }
-
-    removeCommonParents(allPaths);
-
-    final List<FilePath> paths = new ArrayList<FilePath>(allPaths.size());
-    for (String p : allPaths) {
-      final File file = new File(p);
-      paths.add(new FilePathImpl(file, file.isDirectory()));
-    }
-    return paths;
-  }
-
-  private void addToPaths(FilePath pathToAdd, List<String> paths) {
-    File file = pathToAdd.getIOFile();
-    if (myVcsRoot.equals(GitUtil.getGitRootOrNull(file))) {
-      paths.add(file.getPath());
-    }
-  }
-
-  private static void removeCommonParents(List<String> allPaths) {
-    Collections.sort(allPaths);
-
-    String prevPath = null;
-    Iterator<String> it = allPaths.iterator();
-    while (it.hasNext()) {
-      String path = it.next();
-      if (prevPath != null && FileUtil.startsWith(path, prevPath)) {      // the file is under previous file, so enough to check the parent
-        it.remove();
-      }
-      else {
-        prevPath = path;
-      }
-    }
   }
 
   /**
@@ -296,10 +257,6 @@ class ChangeCollector {
           if (!myUnmergedNames.add(file)) {
             continue;
           }
-          // TODO handle conflict rename-modify
-          // TODO handle conflict copy-modify
-          // TODO handle conflict delete-modify
-          // TODO handle conflict rename-delete
           // assume modify-modify conflict
           ContentRevision before = GitContentRevision.createRevision(myVcsRoot, file, new GitRevisionNumber("orig_head"), myProject, false, true);
           ContentRevision after = GitContentRevision.createRevision(myVcsRoot, file, null, myProject, false, false);

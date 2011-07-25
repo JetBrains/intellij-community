@@ -51,6 +51,7 @@ public class GitCommand {
   public static final GitCommand RM = write("rm");
   public static final GitCommand SHOW = write("show");
   public static final GitCommand STASH = write("stash");
+  public static final GitCommand STATUS = read("status");
   public static final GitCommand TAG = meta("tag");
   public static final GitCommand UPDATE_INDEX = write("update-index");
   public static final GitCommand VERSION = meta("version");
