@@ -18,6 +18,7 @@ package com.intellij.lang.properties.structureView;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -44,7 +45,7 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
 
     Collection<StructureViewTreeElement> elements = new ArrayList<StructureViewTreeElement>(properties.size());
     for (IProperty property : properties) {
-      elements.add(new PropertiesStructureViewElement(property));
+      elements.add(new PropertiesStructureViewElement((Property)property));
     }
     return elements;
   }

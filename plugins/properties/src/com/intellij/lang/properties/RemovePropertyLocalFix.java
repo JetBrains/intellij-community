@@ -42,7 +42,7 @@ public class RemovePropertyLocalFix implements LocalQuickFix {
     Property property = PsiTreeUtil.getParentOfType(element, Property.class, false);
     if (property == null) return;
     try {
-      new RemovePropertyFix(property).invoke(project, null, property.getPropertiesFile());
+      new RemovePropertyFix(property).invoke(project, null, property.getPropertiesFile().getContainingFile());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
