@@ -129,9 +129,6 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   }
 
   public final boolean isNamespaceAllowed(String namespace, final XmlFile file, boolean qualified) {
-    if (myEqualToParent && qualified) {
-      System.out.println();
-    }
     return myNamespaceKey == null || myEqualToParent && !qualified || isNamespaceAllowed(namespace, getNamespaceList(file));
   }
 

@@ -20,8 +20,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.nio.charset.Charset;
@@ -31,7 +31,7 @@ import java.nio.charset.Charset;
  */
 public class PropertiesFileType extends LanguageFileType {
   public static final Icon FILE_ICON = IconLoader.getIcon("/fileTypes/properties.png");
-  public static final LanguageFileType FILE_TYPE = new PropertiesFileType();
+  public static final LanguageFileType INSTANCE = new PropertiesFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "properties";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
 

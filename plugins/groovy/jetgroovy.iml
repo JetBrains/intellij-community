@@ -20,7 +20,7 @@
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" exported="" name="Groovy" level="project" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="copyright" />
     <orderEntry type="module" module-name="IntelliLang" />

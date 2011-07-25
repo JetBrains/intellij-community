@@ -51,7 +51,7 @@ import java.io.IOException;
 public abstract class ParsingTestCase extends PlatformLiteFixture {
   protected String myFilePrefix = "";
   protected String myFileExt;
-  @NonNls private final String myFullDataPath;
+  @NonNls protected final String myFullDataPath;
   protected PsiFile myFile;
   private MockPsiManager myPsiManager;
   private PsiFileFactoryImpl myFileFactory;

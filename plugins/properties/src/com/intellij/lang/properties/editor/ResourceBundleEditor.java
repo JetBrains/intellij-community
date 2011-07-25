@@ -236,21 +236,21 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       @Override
       public void fileCreated(VirtualFileEvent event) {
-        if (event.getFile().getFileType() == PropertiesFileType.FILE_TYPE) {
+        if (event.getFile().getFileType() == PropertiesFileType.INSTANCE) {
           recreateEditorsPanel();
         }
       }
 
       @Override
       public void fileDeleted(VirtualFileEvent event) {
-        if (event.getFile().getFileType() == PropertiesFileType.FILE_TYPE) {
+        if (event.getFile().getFileType() == PropertiesFileType.INSTANCE) {
           recreateEditorsPanel();
         }
       }
 
       @Override
       public void propertyChanged(VirtualFilePropertyEvent event) {
-        if (event.getFile().getFileType() == PropertiesFileType.FILE_TYPE) {
+        if (event.getFile().getFileType() == PropertiesFileType.INSTANCE) {
           if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
             recreateEditorsPanel();
           }

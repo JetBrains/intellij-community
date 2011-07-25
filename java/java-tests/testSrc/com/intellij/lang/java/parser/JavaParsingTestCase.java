@@ -72,6 +72,13 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     myLanguageLevel = LanguageLevel.JDK_1_6;
     getProject().registerService(LanguageLevelProjectExtension.class, new LanguageLevelProjectExtensionImpl(getProject()));
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
+    try {
+      registerApplicationService((Class<Object>)Class.forName("com.intellij.psi.jsp.JspSpiUtil"),
+                                 Class.forName("com.intellij.jsp.impl.JspSpiUtilImpl").newInstance());
+    }
+    catch (Exception ex) {
+      // jsp not available
+    }
   }
 
   @Override
