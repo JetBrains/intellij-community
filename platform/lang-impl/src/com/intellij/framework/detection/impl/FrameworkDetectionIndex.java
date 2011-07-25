@@ -17,6 +17,7 @@ package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +34,7 @@ import java.util.*;
  * @author nik
  */
 public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.FrameworkDetectionIndex");
   public static final ID<Integer,Void> NAME = ID.create("FrameworkDetectionIndex");
   private FileTypesInputFilter myInputFilter;
   private final FrameworkDetectorRegistry myRegistry;
@@ -68,6 +70,9 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
         Map<Integer, Void> result = null;
         for (Pair<ElementPattern<FileContent>, Integer> pair : detectors) {
           if (pair.getFirst().accepts(inputData)) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(inputData.getFile() + " accepted by detector " + pair.getSecond());
+            }
             if (result == null) {
               result = new HashMap<Integer, Void>();
             }

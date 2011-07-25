@@ -109,6 +109,7 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
       final int id = myDetectorIds.get(detector.getDetectorId());
       myDetectorsByFileType.putValue(detector.getFileType(), id);
       myDetectorById.put(id, detector);
+      LOG.debug("'" + detector.getDetectorId() + "' framework detector: id = " + id);
     }
   }
 
@@ -162,7 +163,7 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
 
   @NotNull
   @Override
-  public Collection<Integer> getDetectorsId(@NotNull FileType fileType) {
+  public Collection<Integer> getDetectorIds(@NotNull FileType fileType) {
     return myDetectorsByFileType.get(fileType);
   }
 

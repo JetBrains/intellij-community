@@ -28,6 +28,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
@@ -52,6 +53,7 @@ import java.util.*;
  */
 public class FrameworkDetectionManager extends AbstractProjectComponent implements FrameworkDetectionIndexListener,
                                                                                    TextEditorHighlightingPassFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.FrameworkDetectionManager");
   private static final NotificationGroup FRAMEWORK_DETECTION_NOTIFICATION = NotificationGroup.balloonGroup("Framework Detection");
   private final Update myDetectionUpdate = new Update("detection") {
     @Override
@@ -123,7 +125,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    final Collection<Integer> detectors = FrameworkDetectorRegistry.getInstance().getDetectorsId(file.getFileType());
+    final Collection<Integer> detectors = FrameworkDetectorRegistry.getInstance().getDetectorIds(file.getFileType());
     if (!detectors.isEmpty()) {
       return new FrameworkDetectionHighlightingPass(editor, detectors);
     }
@@ -138,12 +140,18 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       myDetectorsToProcess.clear();
     }
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Starting framework detectors: " + detectorsToProcess);
+    }
     final FileBasedIndex index = FileBasedIndex.getInstance();
     Map<Integer, List<? extends DetectedFrameworkDescription>> newDescriptions = new HashMap<Integer, List<? extends DetectedFrameworkDescription>>();
-    for (Integer key : detectorsToProcess) {
-      Collection<VirtualFile> files = index.getContainingFiles(FrameworkDetectionIndex.NAME, key, GlobalSearchScope.projectScope(myProject));
-      final Collection<VirtualFile> newFiles = myDetectedFrameworksData.retainNewFiles(key, files);
-      FrameworkDetector detector = FrameworkDetectorRegistry.getInstance().getDetectorById(key);
+    for (Integer id : detectorsToProcess) {
+      Collection<VirtualFile> files = index.getContainingFiles(FrameworkDetectionIndex.NAME, id, GlobalSearchScope.projectScope(myProject));
+      final Collection<VirtualFile> newFiles = myDetectedFrameworksData.retainNewFiles(id, files);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Detector " + id + ": " + files.size() + " accepted files, " + newFiles.size() + " files to process");
+      }
+      FrameworkDetector detector = FrameworkDetectorRegistry.getInstance().getDetectorById(id);
       if (detector != null) {
         final List<? extends DetectedFrameworkDescription> frameworks;
         if (!newFiles.isEmpty()) {
@@ -152,10 +160,16 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
         else {
           frameworks = Collections.emptyList();
         }
-        final List<? extends DetectedFrameworkDescription> updated = myDetectedFrameworksData.updateFrameworksList(key, frameworks);
-        if (!updated.isEmpty()) {
-          newDescriptions.put(key, updated);
+        final List<? extends DetectedFrameworkDescription> updated = myDetectedFrameworksData.updateFrameworksList(id, frameworks);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(frameworks.size() + " frameworks detected, " + updated.size() + " changed");
         }
+        if (!updated.isEmpty()) {
+          newDescriptions.put(id, updated);
+        }
+      }
+      else {
+        LOG.info("Framework detector not found by id " + id);
       }
     }
 
