@@ -17,20 +17,18 @@ package org.jetbrains.android.resourceManagers;
 
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.android.AndroidIdIndex;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidTargetData;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,15 +39,13 @@ import java.util.*;
  * @author coyote
  */
 public class SystemResourceManager extends ResourceManager {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.resourceManagers.SystemResourceManager");
-  private volatile AttributeDefinitions definitions;
   private volatile Map<String, List<PsiElement>> myIdMap;
 
-  private final IAndroidTarget myTarget;
+  private final AndroidPlatform myPlatform;
 
-  public SystemResourceManager(@NotNull Module module, @NotNull IAndroidTarget target) {
+  public SystemResourceManager(@NotNull Module module, @NotNull AndroidPlatform androidPlatform) {
     super(module);
-    myTarget = target;
+    myPlatform = androidPlatform;
   }
 
   @NotNull
@@ -60,7 +56,7 @@ public class SystemResourceManager extends ResourceManager {
 
   @Nullable
   public VirtualFile getResourceDir() {
-    String resPath = myTarget.getPath(IAndroidTarget.RESOURCES);
+    String resPath = myPlatform.getTarget().getPath(IAndroidTarget.RESOURCES);
     return LocalFileSystem.getInstance().findFileByPath(resPath);
   }
 
@@ -72,15 +68,8 @@ public class SystemResourceManager extends ResourceManager {
 
   @Nullable
   public synchronized AttributeDefinitions getAttributeDefinitions() {
-    if (definitions == null) {
-      String attrsPath = myTarget.getPath(IAndroidTarget.ATTRIBUTES);
-      String attrsManifestPath = myTarget.getPath(IAndroidTarget.MANIFEST_ATTRIBUTES);
-      XmlFile[] files = findFiles(attrsPath, attrsManifestPath);
-      if (files != null) {
-        definitions = new AttributeDefinitions(files);
-      }
-    }
-    return definitions;
+    final AndroidTargetData targetData = myPlatform.getSdk().getTargetData(myPlatform.getTarget());
+    return targetData.getAttrDefs(myModule.getProject());
   }
 
   @Nullable
@@ -97,31 +86,6 @@ public class SystemResourceManager extends ResourceManager {
       myIdMap = createIdMap();
     }
     return myIdMap.keySet();
-  }
-
-  @Nullable
-  private XmlFile[] findFiles(final String... paths) {
-    XmlFile[] xmlFiles = new XmlFile[paths.length];
-    for (int i = 0; i < paths.length; i++) {
-      String path = paths[i];
-      final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
-      PsiFile psiFile = file != null ? ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-        @Nullable
-        public PsiFile compute() {
-          return PsiManager.getInstance(myModule.getProject()).findFile(file);
-        }
-      }) : null;
-      if (psiFile == null) {
-        LOG.info("File " + path + " is not found");
-        return null;
-      }
-      if (!(psiFile instanceof XmlFile)) {
-        LOG.info("File " + path + "  is not an xml psiFile");
-        return null;
-      }
-      xmlFiles[i] = (XmlFile)psiFile;
-    }
-    return xmlFiles;
   }
 
   @NotNull

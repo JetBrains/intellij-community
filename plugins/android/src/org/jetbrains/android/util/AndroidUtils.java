@@ -838,4 +838,43 @@ public class AndroidUtils {
     }
     return null;
   }
+
+  public static int getIntAttrValue(@NotNull final XmlTag tag, @NotNull final String attrName) {
+    String value = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return tag.getAttributeValue(attrName, SdkConstants.NS_RESOURCES);
+      }
+    });
+    try {
+      return Integer.parseInt(value);
+    }
+    catch (NumberFormatException e) {
+      return -1;
+    }
+  }
+
+  @Nullable
+  public static XmlFile[] findXmlFiles(final Project project, final String... paths) {
+    XmlFile[] xmlFiles = new XmlFile[paths.length];
+    for (int i = 0; i < paths.length; i++) {
+      String path = paths[i];
+      final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+      PsiFile psiFile = file != null ? ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+        @Nullable
+        public PsiFile compute() {
+          return PsiManager.getInstance(project).findFile(file);
+        }
+      }) : null;
+      if (psiFile == null) {
+        LOG.info("File " + path + " is not found");
+        return null;
+      }
+      if (!(psiFile instanceof XmlFile)) {
+        LOG.info("File " + path + "  is not an xml psiFile");
+        return null;
+      }
+      xmlFiles[i] = (XmlFile)psiFile;
+    }
+    return xmlFiles;
+  }
 }

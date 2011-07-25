@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ public class AttributeDefinitions {
   private Map<String, StyleableDefinition> myStyleables = new HashMap<String, StyleableDefinition>();
 
   private final List<StyleableDefinition> myStateStyleables = new ArrayList<StyleableDefinition>();
+  private final Map<String, Map<String, Integer>> myEnumMap = new HashMap<String, Map<String, Integer>>();
 
   public AttributeDefinitions() {
   }
@@ -127,7 +129,7 @@ public class AttributeDefinitions {
     return result;
   }
 
-  private static void parseAndAddValues(AttributeDefinition def, XmlTag[] values) {
+  private void parseAndAddValues(AttributeDefinition def, XmlTag[] values) {
     for (XmlTag value : values) {
       final String valueName = value.getAttributeValue("name");
       if (valueName == null) {
@@ -135,6 +137,23 @@ public class AttributeDefinitions {
       }
       else {
         def.addValue(valueName);
+
+        final String strIntValue = value.getAttributeValue("value");
+        if (strIntValue != null) {
+          try {
+            int intValue = strIntValue.startsWith("0x")
+                           ? Integer.parseInt(strIntValue.substring(2), 16)
+                           : Integer.parseInt(strIntValue);
+            Map<String, Integer> value2Int = myEnumMap.get(def.getName());
+            if (value2Int == null) {
+              value2Int = new HashMap<String, Integer>();
+              myEnumMap.put(def.getName(), value2Int);
+            }
+            value2Int.put(valueName, intValue);
+          }
+          catch (NumberFormatException ignored) {
+          }
+        }
       }
     }
   }
@@ -206,5 +225,10 @@ public class AttributeDefinitions {
 
   public StyleableDefinition[] getStateStyleables() {
     return myStateStyleables.toArray(new StyleableDefinition[myStateStyleables.size()]);
+  }
+
+  @NotNull
+  public Map<String, Map<String, Integer>> getEnumMap() {
+    return myEnumMap;
   }
 }

@@ -21,6 +21,7 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -54,6 +55,8 @@ import static com.android.prefs.AndroidLocation.FOLDER_AVD;
  * Date: May 9, 2009
  */
 public class CreateAvdDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.CreateAvdDialog");
+
   private JTextField myNameField;
   private JComboBox myTargetBox;
   private JComboBox mySkinField;
@@ -65,6 +68,7 @@ public class CreateAvdDialog extends DialogWrapper {
   private JSpinner mySdCardSizeSpinner;
   private JComboBox mySdCardSizeUnitCombo;
   private TextFieldWithBrowseButton mySdCardFileTextField;
+  private JComboBox myAbiCombo;
   private final AvdManager myAvdManager;
   private AvdManager.AvdInfo myCreatedAvd;
 
@@ -177,6 +181,8 @@ public class CreateAvdDialog extends DialogWrapper {
             skinsToAdd.add(skin);
           }
           mySkinField.setModel(new CollectionComboBoxModel(skinsToAdd, null));
+
+          reloadAbiCombo();
         }
       }
     });
@@ -251,6 +257,18 @@ public class CreateAvdDialog extends DialogWrapper {
     mySdCardFileTextField
       .addBrowseFolderListener(AndroidBundle.message("android.create.avd.dialog.sdcard.file.browser.title"), null, project,
                                new FileChooserDescriptor(true, false, false, false, false, false));
+    reloadAbiCombo();
+  }
+
+  private void reloadAbiCombo() {
+    final IAndroidTarget selectedTarget = (IAndroidTarget)myTargetBox.getSelectedItem();
+    if (selectedTarget != null) {
+      final String[] abis = selectedTarget.getAbiList();
+      myAbiCombo.setModel(new DefaultComboBoxModel(abis));
+      if (abis.length == 0) {
+        LOG.error("Abis not found for target " + selectedTarget.hashString());
+      }
+    }
   }
 
   private void updateSpinner() {
@@ -317,9 +335,10 @@ public class CreateAvdDialog extends DialogWrapper {
     super.doOKAction();
     IAndroidTarget selectedTarget = (IAndroidTarget)myTargetBox.getSelectedItem();
     String skin = (String)mySkinField.getSelectedItem();
+    String abi = (String)myAbiCombo.getSelectedItem();
     String sdCard = getSdCardParameter();
     MessageBuildingSdkLog log = new MessageBuildingSdkLog();
-    myCreatedAvd = myAvdManager.createAvd(avdFolder, avdName, selectedTarget, skin, sdCard, null, true, log);
+    myCreatedAvd = myAvdManager.createAvd(avdFolder, avdName, selectedTarget, abi, skin, sdCard, null, true, false, false, log);
     if (log.getErrorMessage().length() > 0) {
       Messages.showErrorDialog(myProject, log.getErrorMessage(), AndroidBundle.message("android.avd.error.title"));
     }

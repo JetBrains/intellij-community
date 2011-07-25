@@ -252,11 +252,16 @@ public abstract class ResourceManager {
   }
 
   @NotNull
-  public List<ResourceElement> getValueResources(@NotNull String resourceType) {
-    List<ResourceElement> result = new ArrayList<ResourceElement>();
+  public List<ResourceElement> getValueResources(@NotNull final String resourceType) {
+    final List<ResourceElement> result = new ArrayList<ResourceElement>();
     Collection<Resources> resourceFiles = getResourceElements();
-    for (Resources resources : resourceFiles) {
-      result.addAll(getValueResources(resourceType, resources));
+    for (final Resources resources : resourceFiles) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          result.addAll(getValueResources(resourceType, resources));
+        }
+      });
     }
     return result;
   }
