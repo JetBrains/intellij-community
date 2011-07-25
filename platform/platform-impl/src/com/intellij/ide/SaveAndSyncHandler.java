@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -141,16 +142,22 @@ public class SaveAndSyncHandler implements ApplicationComponent {
       LOG.debug("enter: synchronize()");
     }
 
-    if (canSyncOrSave()) {
-      refreshOpenFiles();
-    }
 
-    if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("refresh VFS");
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (canSyncOrSave()) {
+          refreshOpenFiles();
+        }
+
+        if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("refresh VFS");
+          }
+          VirtualFileManager.getInstance().refresh(true);
+        }
       }
-      VirtualFileManager.getInstance().refresh(true);
-    }
+    }, ModalityState.NON_MODAL);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("exit: synchronize()");
