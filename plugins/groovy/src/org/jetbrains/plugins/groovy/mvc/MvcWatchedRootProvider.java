@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.WatchedRootsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,6 +27,10 @@ public class MvcWatchedRootProvider implements WatchedRootsProvider {
 
   @NotNull
   public Set<String> getRootsToWatch() {
+    if (!myProject.isInitialized()) {
+      return Collections.emptySet();
+    }
+
     final Set<String> result = new HashSet<String>();
 
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
