@@ -64,8 +64,8 @@ public class FacetBasedDetectedFrameworkDescription<C extends FacetConfiguration
 
   @NotNull
   @Override
-  public String getDescription() {
-    return myFacetType.getPresentableName() + " framework detected in module '" + myModule.getName() + "'";
+  public String getSetupDescription() {
+    return "'" + myFacetType.getPresentableName() + "' facet will be added to '" + myModule.getName() + "' module";
   }
 
   @Override

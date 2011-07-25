@@ -31,7 +31,7 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
+class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.ui.DetectedFrameworkNode");
   private final DetectedFrameworkDescription myDescription;
   private final FrameworkDetectionContext myContext;
@@ -72,6 +72,14 @@ public class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
         appendDirectoryPath(renderer, commonParent);
       }
     }
+  }
+
+  @Override
+  public String getActionDescription() {
+    if (isChecked()) {
+      return myDescription.getSetupDescription();
+    }
+    return null;
   }
 
   private void appendDirectoryPath(ColoredTreeCellRenderer renderer, final VirtualFile dir) {

@@ -33,7 +33,7 @@ public abstract class DetectedFrameworkDescription {
   public abstract Collection<? extends VirtualFile> getRelatedFiles();
 
   @NotNull
-  public abstract String getDescription();
+  public abstract String getSetupDescription();
 
   public abstract void configureFramework(ModifiableModelsProvider modifiableModelsProvider);
 

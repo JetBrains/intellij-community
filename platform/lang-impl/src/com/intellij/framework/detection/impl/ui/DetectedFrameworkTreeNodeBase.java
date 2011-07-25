@@ -17,15 +17,19 @@ package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public abstract class DetectedFrameworkTreeNodeBase extends CheckedTreeNode {
+abstract class DetectedFrameworkTreeNodeBase extends CheckedTreeNode {
   public DetectedFrameworkTreeNodeBase(Object userObject) {
     super(userObject);
     setChecked(true);
   }
 
   public abstract void renderNode(ColoredTreeCellRenderer renderer);
+
+  @Nullable
+  public abstract String getActionDescription();
 }

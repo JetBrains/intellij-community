@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class FrameworkTypeNode extends DetectedFrameworkTreeNodeBase {
+class FrameworkTypeNode extends DetectedFrameworkTreeNodeBase {
   private final FrameworkType myFrameworkType;
 
   public FrameworkTypeNode(@NotNull FrameworkType frameworkType) {
@@ -34,5 +34,10 @@ public class FrameworkTypeNode extends DetectedFrameworkTreeNodeBase {
   public void renderNode(ColoredTreeCellRenderer renderer) {
     renderer.setIcon(myFrameworkType.getIcon());
     renderer.append(myFrameworkType.getPresentableName());
+  }
+
+  @Override
+  public String getActionDescription() {
+    return null;
   }
 }

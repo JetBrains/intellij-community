@@ -18,11 +18,17 @@ package com.intellij.framework.detection.impl.ui;
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.FrameworkDetectionContext;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,18 +37,99 @@ import java.util.Map;
  * @author nik
  */
 public class DetectedFrameworksTree extends CheckboxTree {
-  public DetectedFrameworksTree(List<DetectedFrameworkDescription> detectedFrameworks, final FrameworkDetectionContext context) {
-    super(new DetectedFrameworksTreeRenderer(), new CheckedTreeNode(null), new CheckPolicy(false, true, true, false));
+  private final List<DetectedFrameworkDescription> myDetectedFrameworks;
+  private final FrameworkDetectionContext myContext;
+  private SetupDetectedFrameworksDialog.GroupByOption myGroupByOption;
+
+  public DetectedFrameworksTree(List<DetectedFrameworkDescription> detectedFrameworks,
+                                final FrameworkDetectionContext context,
+                                SetupDetectedFrameworksDialog.GroupByOption groupByOption) {
+    super(new DetectedFrameworksTreeRenderer(), new CheckedTreeNode(null), new CheckPolicy(true, true, true, false));
+    myDetectedFrameworks = detectedFrameworks;
+    myContext = context;
+    myGroupByOption = groupByOption;
     setShowsRootHandles(false);
     setRootVisible(false);
-    createNodes(detectedFrameworks, context);
+    createNodes();
     TreeUtil.expandAll(this);
   }
 
-  private void createNodes(List<DetectedFrameworkDescription> frameworks, FrameworkDetectionContext context) {
-    CheckedTreeNode root = ((CheckedTreeNode)getModel().getRoot());
+  private void createNodes() {
+    CheckedTreeNode root = getRoot();
+    if (myGroupByOption == SetupDetectedFrameworksDialog.GroupByOption.TYPE) {
+      createNodesGroupedByType(root);
+    }
+    else {
+      createNodesGroupedByDirectory(root);
+    }
+  }
+
+  private void createNodesGroupedByDirectory(CheckedTreeNode root) {
+    Map<VirtualFile, FrameworkDirectoryNode> nodes = new HashMap<VirtualFile, FrameworkDirectoryNode>();
+    List<DetectedFrameworkNode> externalNodes = new ArrayList<DetectedFrameworkNode>();
+    for (DetectedFrameworkDescription framework : myDetectedFrameworks) {
+      VirtualFile parent = VfsUtil.getCommonAncestor(framework.getRelatedFiles());
+      if (parent != null && !parent.isDirectory()) {
+        parent = parent.getParent();
+      }
+
+      final DetectedFrameworkNode frameworkNode = new DetectedFrameworkNode(framework, myContext);
+      if (parent != null) {
+        createDirectoryNodes(parent, nodes).add(frameworkNode);
+      }
+      else {
+        externalNodes.add(frameworkNode);
+      }
+    }
+    for (FrameworkDirectoryNode directoryNode : nodes.values()) {
+      if (directoryNode.getParent() == null) {
+        root.add(collapseDirectoryNode(directoryNode));
+      }
+    }
+    for (DetectedFrameworkNode node : externalNodes) {
+      root.add(node);
+    }
+  }
+
+  private static FrameworkDirectoryNode collapseDirectoryNode(FrameworkDirectoryNode node) {
+    if (node.getChildCount() == 1) {
+      final TreeNode child = node.getChildAt(0);
+      if (child instanceof FrameworkDirectoryNode) {
+        return collapseDirectoryNode((FrameworkDirectoryNode)child);
+      }
+    }
+    for (int i = 0; i < node.getChildCount(); i++) {
+      TreeNode child = node.getChildAt(i);
+      if (child instanceof FrameworkDirectoryNode) {
+        final FrameworkDirectoryNode collapsed = collapseDirectoryNode((FrameworkDirectoryNode)child);
+        if (collapsed != child) {
+          node.remove(i);
+          node.insert(collapsed, i);
+        }
+      }
+    }
+    return node;
+  }
+
+  @NotNull
+  private static FrameworkDirectoryNode createDirectoryNodes(@NotNull VirtualFile dir, @NotNull Map<VirtualFile, FrameworkDirectoryNode> nodes) {
+    final FrameworkDirectoryNode node = nodes.get(dir);
+    if (node != null) {
+      return node;
+    }
+
+    final FrameworkDirectoryNode newNode = new FrameworkDirectoryNode(dir);
+    nodes.put(dir, newNode);
+    final VirtualFile parent = dir.getParent();
+    if (parent != null) {
+      createDirectoryNodes(parent, nodes).add(newNode);
+    }
+    return newNode;
+  }
+
+  private void createNodesGroupedByType(CheckedTreeNode root) {
     Map<FrameworkType, FrameworkTypeNode> groupNodes = new HashMap<FrameworkType, FrameworkTypeNode>();
-    for (DetectedFrameworkDescription framework : frameworks) {
+    for (DetectedFrameworkDescription framework : myDetectedFrameworks) {
       final FrameworkType type = framework.getFrameworkType();
       FrameworkTypeNode group = groupNodes.get(type);
       if (group == null) {
@@ -50,11 +137,28 @@ public class DetectedFrameworksTree extends CheckboxTree {
         groupNodes.put(type, group);
         root.add(group);
       }
-      group.add(new DetectedFrameworkNode(framework, context));
+      group.add(new DetectedFrameworkNode(framework, myContext));
     }
   }
 
+  private CheckedTreeNode getRoot() {
+    return ((CheckedTreeNode)getModel().getRoot());
+  }
+
+  public void changeGroupBy(SetupDetectedFrameworksDialog.GroupByOption option) {
+    if (myGroupByOption.equals(option)) return;
+    myGroupByOption = option;
+    getRoot().removeAllChildren();
+    createNodes();
+    ((DefaultTreeModel)getModel()).nodeStructureChanged(getRoot());
+    TreeUtil.expandAll(this);
+  }
+
   private static class DetectedFrameworksTreeRenderer extends CheckboxTreeCellRenderer {
+    private DetectedFrameworksTreeRenderer() {
+      super(true, false);
+    }
+
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof DetectedFrameworkTreeNodeBase) {

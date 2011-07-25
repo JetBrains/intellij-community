@@ -17,12 +17,21 @@ package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.impl.FrameworkDetectionContextImpl;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,17 +39,53 @@ import java.util.List;
  * @author nik
  */
 public class SetupDetectedFrameworksDialog extends DialogWrapper {
-  private final JPanel myMainPanel;
+  private JPanel myMainPanel;
   private final DetectedFrameworksTree myTree;
+  private JPanel myTreePanel;
+  private JPanel myOptionsPanel;
+  private Splitter mySplitter;
+  private JComboBox myGroupByComboBox;
+  private JLabel myDescriptionLabel;
 
   public SetupDetectedFrameworksDialog(Project project, List<DetectedFrameworkDescription> descriptions) {
     super(project, true);
     setTitle("Setup Frameworks");
-    myMainPanel = new JPanel(new BorderLayout());
     final FrameworkDetectionContextImpl context = new FrameworkDetectionContextImpl(project);
-    myTree = new DetectedFrameworksTree(descriptions, context);
-    myMainPanel.add(ScrollPaneFactory.createScrollPane(myTree));
+    myTree = new DetectedFrameworksTree(descriptions, context, GroupByOption.TYPE) {
+      @Override
+      protected void onNodeStateChanged(CheckedTreeNode node) {
+        updateOptionsPanel();
+      }
+    };
+    myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+    myGroupByComboBox.setModel(new EnumComboBoxModel<GroupByOption>(GroupByOption.class));
+    myGroupByComboBox.setRenderer(new GroupByListCellRenderer());
+    myGroupByComboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myTree.changeGroupBy((GroupByOption)myGroupByComboBox.getSelectedItem());
+      }
+    });
+    myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        updateOptionsPanel();
+      }
+    });
     init();
+    updateOptionsPanel();
+  }
+
+  private void updateOptionsPanel() {
+    final DetectedFrameworkTreeNodeBase[] nodes = myTree.getSelectedNodes(DetectedFrameworkTreeNodeBase.class, null);
+    if (nodes.length == 1) {
+      String description = nodes[0].getActionDescription();
+      if (description != null) {
+        myDescriptionLabel.setText(UIUtil.toHtml(description));
+        return;
+      }
+    }
+    myDescriptionLabel.setText("");
   }
 
   @Override
@@ -50,5 +95,24 @@ public class SetupDetectedFrameworksDialog extends DialogWrapper {
 
   public List<DetectedFrameworkDescription> getSelectedFrameworks() {
     return Arrays.asList(myTree.getCheckedNodes(DetectedFrameworkDescription.class, null));
+  }
+
+  public static enum GroupByOption { TYPE, DIRECTORY }
+
+  private class GroupByListCellRenderer extends ListCellRendererWrapper<GroupByOption> {
+    public GroupByListCellRenderer() {
+      super(SetupDetectedFrameworksDialog.this.myGroupByComboBox);
+    }
+
+    @Override
+    public void customize(JList list,
+                          GroupByOption value,
+                          int index,
+                          boolean selected,
+                          boolean hasFocus) {
+      if (value != null) {
+        setText(value.name().toLowerCase());
+      }
+    }
   }
 }
