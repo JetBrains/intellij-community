@@ -29,7 +29,9 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -41,10 +43,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.GeneralCodeStylePanel");
@@ -74,7 +74,23 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
     super(settings);
 
-    final FileTypeIndentOptionsProvider[] indentOptionsProviders = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
+    final List<FileTypeIndentOptionsProvider> indentOptionsProviders =
+      Arrays.asList(Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME));
+    Collections.sort(indentOptionsProviders, new Comparator<FileTypeIndentOptionsProvider>() {
+      @Override
+      public int compare(FileTypeIndentOptionsProvider p1, FileTypeIndentOptionsProvider p2) {
+        Language lang1 = getLanguage(p1.getFileType());
+        if (lang1 == null) return -1;
+        Language lang2 = getLanguage(p2.getFileType());
+        if (lang2 == null) return 1;
+        DisplayPriority priority1 = LanguageCodeStyleSettingsProvider.getDisplayPriority(lang1);
+        DisplayPriority priority2 = LanguageCodeStyleSettingsProvider.getDisplayPriority(lang2);
+        if (priority1.equals(priority2)) {
+          return lang1.getDisplayName().compareTo(lang2.getDisplayName());
+        }
+        return priority1.compareTo(priority2);
+      }
+    });
     for (FileTypeIndentOptionsProvider indentOptionsProvider : indentOptionsProviders) {
       myIndentOptionsProviders.add(indentOptionsProvider);
       if (myAdditionalIndentOptions.containsKey(indentOptionsProvider.getFileType())) {
@@ -105,6 +121,12 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       }
     });
   }
+
+  @Nullable
+  private static Language getLanguage(FileType fileType) {
+    return (fileType instanceof LanguageFileType) ? ((LanguageFileType)fileType).getLanguage() : null;
+  }
+
 
   protected void somethingChanged() {
     super.somethingChanged();

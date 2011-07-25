@@ -28,10 +28,6 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
-import com.intellij.ui.ListUtil;
-import com.intellij.util.ArrayUtil;
-import org.apache.commons.collections.ListUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -213,8 +209,8 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     Collections.sort(providers, new Comparator<CodeStyleSettingsProvider>() {
       @Override
       public int compare(CodeStyleSettingsProvider p1, CodeStyleSettingsProvider p2) {
-        if (p1.getPriority() != p2.getPriority()) {
-          return p1.getPriority() - p2.getPriority();
+        if (!p1.getPriority().equals(p2.getPriority())) {
+          return p1.getPriority().compareTo(p2.getPriority());
         }
         String name1 = p1.getConfigurableDisplayName();
         if (name1 == null) name1 = "";
