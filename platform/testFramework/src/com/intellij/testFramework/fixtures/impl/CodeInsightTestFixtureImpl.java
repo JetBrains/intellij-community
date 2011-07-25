@@ -61,7 +61,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -650,33 +649,32 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        final EditorActionManager actionManager = EditorActionManager.getInstance();
+        if (c == '\b') {
+          performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+          return;
+        }
+        if (c == '\n') {
+          if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)) {
+            return;
+          }
+
+          performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
+          return;
+        }
+        if (c == '\t') {
+          if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
+            return;
+          }
+          if (_performEditorAction(IdeActions.ACTION_EDITOR_TAB)) {
+            return;
+          }
+        }
+
         CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
           @Override
           public void run() {
-            EditorActionManager actionManager = EditorActionManager.getInstance();
-            if (c == '\b') {
-              performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
-              return;
-            }
-            if (c == '\n') {
-              if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)) {
-                return;
-              }
-
-              performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
-              return;
-            }
-            if (c == '\t') {
-              if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
-                return;
-              }
-              if (_performEditorAction(IdeActions.ACTION_EDITOR_TAB)) {
-                return;
-              }
-            }
-
             CommandProcessor.getInstance().setCurrentCommandGroupId(myEditor.getDocument());
-
             actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
           }
         }, null, DocCommandGroupId.noneGroupId(myEditor.getDocument()));
@@ -703,18 +701,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private boolean _performEditorAction(String actionId) {
     final DataContext dataContext = getEditorDataContext();
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler handler = actionManager.getActionHandler(actionId);
-    if (!handler.isEnabled(myEditor, dataContext)) {
-      return false;
-    }
 
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     AnAction action = managerEx.getAction(actionId);
     AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
+
+    action.update(event);
+
+    if (!event.getPresentation().isEnabled()) {
+      return false;
+    }
+
     managerEx.fireBeforeActionPerformed(action, dataContext, event);
 
-    handler.execute(getEditor(), dataContext);
+    action.actionPerformed(event);
 
     managerEx.fireAfterActionPerformed(action, dataContext, event);
     return true;

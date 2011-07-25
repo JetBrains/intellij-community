@@ -16,10 +16,7 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
@@ -29,11 +26,14 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -96,9 +96,14 @@ public class TypedHandler extends TypedActionHandlerBase {
       if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
         LookupElement item = lookup.getCurrentItem();
         if (item != null){
+          inside = false;
           ((CommandProcessorEx)CommandProcessor.getInstance()).enterModal();
           try {
-            finishLookup(editor, charTyped, lookup);
+            finishLookup(charTyped, lookup, new Runnable() {
+              public void run() {
+                EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
+              }
+            });
           }
           finally {
             ((CommandProcessorEx)CommandProcessor.getInstance()).leaveModal();
@@ -115,29 +120,33 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
   }
 
-  private static void finishLookup(final Editor editor, final char charTyped, final LookupImpl lookup) {
+  public static void finishLookup(final char charTyped, @NotNull final LookupImpl lookup, final Runnable baseChange) {
+    Editor editor = lookup.getEditor();
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
-    final boolean charInserted = !editor.getSelectionModel().hasSelection() && !editor.getSelectionModel().hasBlockSelection();
+    CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
+    SelectionModel sm = editor.getSelectionModel();
+    final boolean smartUndo = !sm.hasSelection() && !sm.hasBlockSelection() && process != null && process.isAutopopupCompletion();
     final Runnable restore = CodeCompletionHandlerBase.rememberDocumentState(editor);
-    if (charInserted) {
+    if (smartUndo) {
       CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
         @Override
         public void run() {
-          lookup.performGuardedChange(new Runnable() {
-            public void run() {
-              EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
-            }
-          });
+          lookup.performGuardedChange(baseChange);
         }
       }, null, "Just insert the completion char");
     }
 
-    inside = false;
     CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
       @Override
       public void run() {
-        if (charInserted) {
-          lookup.performGuardedChange(restore);
+        if (smartUndo) {
+          AccessToken token = WriteAction.start();
+          try {
+            lookup.performGuardedChange(restore);
+          }
+          finally {
+            token.finish();
+          }
         }
         lookup.finishLookup(charTyped);
       }
