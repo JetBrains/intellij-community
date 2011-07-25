@@ -4,9 +4,11 @@ import com.android.AndroidConstants;
 import com.android.ide.common.resources.ResourceResolver;
 import com.android.ide.common.resources.configuration.LanguageQualifier;
 import com.android.ide.common.resources.configuration.RegionQualifier;
+import com.android.ide.common.resources.configuration.ScreenSizeQualifier;
 import com.android.resources.DockMode;
 import com.android.resources.NightMode;
 import com.android.resources.ResourceType;
+import com.android.resources.ScreenSize;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.ide.ui.ListCellRendererWrapper;
@@ -560,7 +562,7 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     }
   }
 
-  private static void collectThemesFromManifest(AndroidFacet facet, List<ThemeData> resultList, Set<ThemeData> addedThemes) {
+  private void collectThemesFromManifest(AndroidFacet facet, List<ThemeData> resultList, Set<ThemeData> addedThemes) {
     final Manifest manifest = facet.getManifest();
     if (manifest == null) {
       return;
@@ -574,12 +576,29 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     final List<ThemeData> activityThemesList = new ArrayList<ThemeData>();
 
     final XmlTag applicationTag = application.getXmlTag();
-    ThemeData applicationTheme = null;
+    ThemeData preferredTheme = null;
     if (applicationTag != null) {
       final String applicationThemeRef = applicationTag.getAttributeValue("theme", SdkConstants.NS_RESOURCES);
       if (applicationThemeRef != null) {
-        applicationTheme = getThemeByRef(applicationThemeRef);
+        preferredTheme = getThemeByRef(applicationThemeRef);
       }
+    }
+
+    if (preferredTheme == null) {
+      final AndroidPlatform platform = AndroidPlatform.getInstance(facet.getModule());
+      final IAndroidTarget target = platform != null ? platform.getTarget() : null;
+      final IAndroidTarget renderingTarget = getSelectedTarget();
+      final LayoutDeviceConfiguration configuration = getSelectedDeviceConfiguration();
+
+      final ScreenSizeQualifier screenSizeQualifier = configuration != null
+                                                      ? configuration.getConfiguration().getScreenSizeQualifier()
+                                                      : null;
+      final ScreenSize screenSize = screenSizeQualifier != null ? screenSizeQualifier.getValue() : null;
+      preferredTheme = getThemeByRef(getDefaultTheme(target, renderingTarget, screenSize));
+    }
+
+    if (addedThemes.add(preferredTheme)) {
+      resultList.add(preferredTheme);
     }
 
     for (Activity activity : application.getActivities()) {
@@ -595,13 +614,23 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
       }
     }
 
-    if (applicationTheme != null) {
-      if (addedThemes.add(applicationTheme)) {
-        resultList.add(applicationTheme);
-      }
-    }
     Collections.sort(activityThemesList);
     resultList.addAll(activityThemesList);
+  }
+
+  @NotNull
+  private static String getDefaultTheme(IAndroidTarget target,
+                                        IAndroidTarget renderingTarget,
+                                        ScreenSize screenSize) {
+    final int targetApiLevel = target != null ? target.getVersion().getApiLevel() : 0;
+
+    final int renderingTargetApiLevel = renderingTarget != null
+                                        ? renderingTarget.getVersion().getApiLevel()
+                                        : targetApiLevel;
+
+    return targetApiLevel >= 11 && renderingTargetApiLevel >= 11 && screenSize == ScreenSize.XLARGE
+           ? ResourceResolver.PREFIX_ANDROID_STYLE + "Theme.Holo"
+           : ResourceResolver.PREFIX_ANDROID_STYLE + "Theme";
   }
 
   private static void collectProjectThemes(AndroidFacet facet, Collection<ThemeData> resultList, Set<ThemeData> addedThemes) {
