@@ -188,7 +188,6 @@ public class AbstractPopup implements JBPopup {
                      @Nullable final Processor<JBPopup> pinCallback,
                      boolean mayBeParent,
                      boolean showShadow) {
-
     if (requestFocus && !focusable) {
       assert false : "Incorrect argument combination: requestFocus=" + requestFocus + " focusable=" + focusable;
     }
@@ -743,24 +742,40 @@ public class AbstractPopup implements JBPopup {
       }
     }
 
-    getFocusManager().requestFocus(new FocusCommand() {
-      @Override
-      public ActionCallback run() {
-        if (isDisposed()) return new ActionCallback.Done();
 
-        if (myRequestFocus) {
-          _requestFocus();
-        }
-
-        if (myPreferredFocusedComponent != null && myInStack) {
+    final Runnable afterShow = new Runnable() {
+      public void run() {
+        if (myPreferredFocusedComponent != null && myInStack && myFocusable) {
           myFocusTrackback.registerFocusComponent(myPreferredFocusedComponent);
         }
 
         afterShow();
-
-        return new ActionCallback.Done();
       }
-    }, true);
+    };
+
+    if (myRequestFocus) {
+      getFocusManager().requestFocus(new FocusCommand() {
+        @Override
+        public ActionCallback run() {
+          if (isDisposed()) return new ActionCallback.Done();
+
+          _requestFocus();
+
+          afterShow.run();
+
+          return new ActionCallback.Done();
+        }
+      }, true);
+    } else {
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (isDisposed()) return;
+
+          afterShow.run();
+        }
+      });
+    }
   }
 
   private void prepareToShow() {
@@ -868,9 +883,6 @@ public class AbstractPopup implements JBPopup {
 
   protected final boolean requestFocus() {
     if (!myFocusable) return false;
-
-    _requestFocus();
-
 
     getFocusManager().requestFocus(new FocusCommand() {
       @Override
