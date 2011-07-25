@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.newProject;
 
+import com.android.AndroidConstants;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.CommonBundle;
@@ -442,12 +443,12 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
           createChildDirectoryIfNotExist(project, rootDir, SdkConstants.FD_ASSETS);
           createChildDirectoryIfNotExist(project, rootDir, SdkConstants.FD_NATIVE_LIBS);
           VirtualFile resDir = createChildDirectoryIfNotExist(project, rootDir, SdkConstants.FD_RES);
-          VirtualFile drawableDir = createChildDirectoryIfNotExist(project, resDir, SdkConstants.FD_DRAWABLE);
+          VirtualFile drawableDir = createChildDirectoryIfNotExist(project, resDir, AndroidConstants.FD_RES_DRAWABLE);
           createFileFromResource(project, drawableDir, "icon.png", "/icons/androidLarge.png");
           if (isHelloAndroid()) {
-            VirtualFile valuesDir = createChildDirectoryIfNotExist(project, resDir, SdkConstants.FD_VALUES);
+            VirtualFile valuesDir = createChildDirectoryIfNotExist(project, resDir, AndroidConstants.FD_RES_VALUES);
             createFileFromResource(project, valuesDir, "strings.xml", "res/values/strings.xml");
-            VirtualFile layoutDir = AndroidUtils.createChildDirectoryIfNotExist(project, resDir, SdkConstants.FD_LAYOUT);
+            VirtualFile layoutDir = AndroidUtils.createChildDirectoryIfNotExist(project, resDir, AndroidConstants.FD_RES_LAYOUT);
             createFileFromResource(project, layoutDir, "main.xml", "res/layout/main.xml");
           }
         }

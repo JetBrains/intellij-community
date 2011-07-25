@@ -33,6 +33,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.reference.SoftReference;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.util.Map;
 
 import static org.jetbrains.android.util.AndroidUtils.ADB;
 
@@ -58,6 +61,9 @@ public abstract class AndroidSdk {
   private static volatile boolean myAdbCrashed = false;
 
   private static final Object myDdmsLock = new Object();
+
+  private final Map<IAndroidTarget, SoftReference<AndroidTargetData>> myTargetDatas =
+    new HashMap<IAndroidTarget, SoftReference<AndroidTargetData>>();
 
   @NotNull
   public abstract String getLocation();
@@ -137,6 +143,7 @@ public abstract class AndroidSdk {
 
   @Override
   public boolean equals(Object obj) {
+    if (obj == null) return false;
     if (obj.getClass() != getClass()) return false;
     AndroidSdk sdk = (AndroidSdk)obj;
     return FileUtil.pathsEqual(getLocation(), sdk.getLocation());
@@ -272,6 +279,17 @@ public abstract class AndroidSdk {
       }
     }
     return result;
+  }
+
+  @Nullable
+  public AndroidTargetData getTargetData(@NotNull IAndroidTarget target) {
+    final SoftReference<AndroidTargetData> targetDataRef = myTargetDatas.get(target);
+    AndroidTargetData targetData = targetDataRef != null ? targetDataRef.get() : null;
+    if (targetData == null) {
+      targetData = new AndroidTargetData(this, target);
+      myTargetDatas.put(target, new SoftReference<AndroidTargetData>(targetData));
+    }
+    return targetData;
   }
 
   private static class MyInitializeDdmlibTask extends Task.Modal {

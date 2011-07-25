@@ -17,11 +17,13 @@ abstract class IntToIntBtree {
   final BtreeIndexNodeView root;
   private int maxStepsSearched;
   private int pagesCount;
-  private int size;
+  private int count;
+  private int movedMembersCount;
 
   private final byte[] buffer;
   private boolean isLarge = true;
   private final ISimpleStorage storage;
+  private boolean offloadToSiblingsBeforeSplit = false; // TODO till effective insertion to page
 
   public IntToIntBtree(int _pageSize, int rootAddress, ISimpleStorage _storage, boolean initial) {
     pageSize = _pageSize;
@@ -66,7 +68,7 @@ abstract class IntToIntBtree {
     int index = currentIndexNode.locate(key, true);
 
     if (index < 0) {
-      ++size;
+      ++count;
       currentIndexNode.insert(key, value, -index - 1);
     } else {
       currentIndexNode.setAddressAt(index, value);
@@ -99,6 +101,18 @@ abstract class IntToIntBtree {
 
   public void setPagesCount(int pagesCount) {
     this.pagesCount = pagesCount;
+  }
+
+  public int getMovedMembersCount() {
+    return movedMembersCount;
+  }
+
+  public void setMovedMembersCount(int movedMembersCount) {
+    this.movedMembersCount = movedMembersCount;
+  }
+
+  void dumpStatistics() {
+    IOStatistics.dump("pagecount:" + pagesCount + ", height:" + maxStepsSearched + ", movedMembers:"+movedMembersCount);
   }
 
   void doFlush() {
@@ -212,6 +226,7 @@ abstract class IntToIntBtree {
   static class BtreeIndexNodeView extends BtreePage {
     private boolean isIndexLeaf;
     private boolean isIndexLeafSet;
+    private static final int LARGE_MOVE_THRESHOLD = 5;
 
     BtreeIndexNodeView(IntToIntBtree btree) {
       super(btree);
@@ -325,63 +340,8 @@ abstract class IntToIntBtree {
       if (parentAddress != 0) {
         parent = new BtreeIndexNodeView(btree);
         parent.setAddress(parentAddress);
-        int indexInParent = isIndexLeaf() ? parent.search(keyAt(0)) : -1;
-        BtreeIndexNodeView sibling = new BtreeIndexNodeView(btree);
-
-        if (indexInParent > 0) {
-          if (doSanityCheck) {
-            myAssert(parent.keyAt(indexInParent) == keyAt(0));
-            myAssert(parent.addressAt(indexInParent + 1) == -address);
-          }
-
-          int siblingAddress = parent.addressAt(indexInParent);
-          sibling.setAddress(-siblingAddress);
-
-          if (!sibling.isFull() && sibling.getChildrenCount() + 1 != sibling.getMaxChildrenCount()) {
-            if (doSanityCheck) {
-              sibling.dump("Offloading to left sibling");
-              parent.dump("parent before");
-            }
-
-            sibling.insert(keyAt(0), addressAt(0), sibling.getChildrenCount());
-            if (doSanityCheck) {
-              sibling.dump("Left sibling after");
-            }
-
-            parent.setKeyAt(indexInParent, keyAt(1));
-
-            int indexOflastChildToMove = getChildrenCount() - 1;
-            if (btree.isLarge) {
-              final int bytesToMove = indexOflastChildToMove * INTERIOR_SIZE;
-              getBytes(indexToOffset(1), btree.buffer, 0, bytesToMove);
-              putBytes(indexToOffset(0), btree.buffer, 0, bytesToMove);
-            } else {
-              for(int i = 0; i < indexOflastChildToMove; ++i) {
-                setAddressAt(i, addressAt(i + 1));
-                setKeyAt(i, keyAt(i + 1));
-              }
-            }
-
-            setChildrenCount((short)indexOflastChildToMove);
-          } else if (indexInParent + 1 < parent.getChildrenCount()) {
-            insertToRightSibling(parent, indexInParent + 1, sibling);
-          }
-          // TODO: move members in non leaf level + handle cases below
-        } /*else if (indexInParent == -1) {
-          insertToRightSibling(parent, 0, sibling);
-        } else {
-          int a = 1;
-        }*/
-
-        if (!isFull()) {
-          sync();
-          parent.sync();
-
-          if (doSanityCheck) {
-            dump("old node after split:");
-            parent.dump("Parent node after split");
-          }
-          return parentAddress;
+        if (btree.offloadToSiblingsBeforeSplit) {
+          if (doOffloadToSiblings(parent)) return parentAddress;
         }
       }
 
@@ -448,7 +408,7 @@ abstract class IntToIntBtree {
         }
         int newRootAddress = btree.nextPage();
         if (doSanityCheck) {
-          System.out.println("Pages:"+btree.pagesCount+", elements:"+btree.size + ", average:" + (btree.maxStepsSearched + 1));
+          System.out.println("Pages:"+btree.pagesCount+", elements:"+btree.count + ", average:" + (btree.maxStepsSearched + 1));
         }
         btree.setRootAddress(newRootAddress);
         parentAddress = newRootAddress;
@@ -470,6 +430,70 @@ abstract class IntToIntBtree {
       newIndexNode.sync();
 
       return parentAddress;
+    }
+
+    private boolean doOffloadToSiblings(BtreeIndexNodeView parent) {
+      int indexInParent = isIndexLeaf() ? parent.search(keyAt(0)) : -1;
+      BtreeIndexNodeView sibling = new BtreeIndexNodeView(btree);
+
+      if (indexInParent > 0) {
+        if (doSanityCheck) {
+          myAssert(parent.keyAt(indexInParent) == keyAt(0));
+          myAssert(parent.addressAt(indexInParent + 1) == -address);
+        }
+
+        int siblingAddress = parent.addressAt(indexInParent);
+        sibling.setAddress(-siblingAddress);
+
+        if (!sibling.isFull() && sibling.getChildrenCount() + 1 != sibling.getMaxChildrenCount()) {
+          if (doSanityCheck) {
+            sibling.dump("Offloading to left sibling");
+            parent.dump("parent before");
+          }
+
+          sibling.insert(keyAt(0), addressAt(0), sibling.getChildrenCount());
+          if (doSanityCheck) {
+            sibling.dump("Left sibling after");
+          }
+
+          parent.setKeyAt(indexInParent, keyAt(1));
+
+          int indexOflastChildToMove = getChildrenCount() - 1;
+          if (btree.isLarge) {
+            final int bytesToMove = indexOflastChildToMove * INTERIOR_SIZE;
+            getBytes(indexToOffset(1), btree.buffer, 0, bytesToMove);
+            putBytes(indexToOffset(0), btree.buffer, 0, bytesToMove);
+          }
+          else {
+            for (int i = 0; i < indexOflastChildToMove; ++i) {
+              setAddressAt(i, addressAt(i + 1));
+              setKeyAt(i, keyAt(i + 1));
+            }
+          }
+
+          setChildrenCount((short)indexOflastChildToMove);
+        }
+        else if (indexInParent + 1 < parent.getChildrenCount()) {
+          insertToRightSibling(parent, indexInParent + 1, sibling);
+        }
+        // TODO: move members in non leaf level + handle cases below
+      } /*else if (indexInParent == -1) {
+          insertToRightSibling(parent, 0, sibling);
+        } else {
+          int a = 1;
+        }*/
+
+      if (!isFull()) {
+        sync();
+        parent.sync();
+
+        if (doSanityCheck) {
+          dump("old node after split:");
+          parent.dump("Parent node after split");
+        }
+        return true;
+      }
+      return false;
     }
 
     private void insertToRightSibling(BtreeIndexNodeView parent, int indexInParent, BtreeIndexNodeView sibling) {
@@ -553,10 +577,13 @@ abstract class IntToIntBtree {
       if (doSanityCheck) myAssert(recordCount < getMaxChildrenCount());
       setChildrenCount((short)(recordCount + 1));
 
+      final int itemsToMove = recordCount - index;
+      btree.movedMembersCount += itemsToMove;
+
       // TODO Clever books tell us to use Btree for cheaper elements shifting within page
       if (isIndexLeaf()) {
-        if (btree.isLarge) {
-          final int bytesToMove = (recordCount - index) * INTERIOR_SIZE;
+        if (btree.isLarge && itemsToMove > LARGE_MOVE_THRESHOLD) {
+          final int bytesToMove = itemsToMove * INTERIOR_SIZE;
           getBytes(indexToOffset(index), btree.buffer, 0, bytesToMove);
           putBytes(indexToOffset(index + 1), btree.buffer, 0, bytesToMove);
         } else {
@@ -571,7 +598,7 @@ abstract class IntToIntBtree {
         // <address> (<key><address>) {record_count - 1}
         //
         setAddressAt(recordCount + 1, addressAt(recordCount));
-        if (btree.isLarge) {
+        if (btree.isLarge && itemsToMove > LARGE_MOVE_THRESHOLD) {
           int elementsAfterIndex = recordCount - index - 1;
           if (elementsAfterIndex > 0) {
             int bytesToMove = elementsAfterIndex * INTERIOR_SIZE;

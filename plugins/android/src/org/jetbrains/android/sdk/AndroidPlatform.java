@@ -18,7 +18,9 @@ package org.jetbrains.android.sdk;
 
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -45,6 +47,20 @@ public class AndroidPlatform {
   public AndroidPlatform(@NotNull AndroidSdk sdk, @NotNull IAndroidTarget target) {
     mySdk = sdk;
     myTarget = target;
+  }
+
+  @Nullable
+  public static AndroidPlatform getInstance(@NotNull Module module) {
+    final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
+      return null;
+    }
+
+    final AndroidSdkAdditionalData sdkAdditionalData = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
+    if (sdkAdditionalData == null) {
+      return null;
+    }
+    return sdkAdditionalData.getAndroidPlatform();
   }
 
   @NotNull

@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.resourceManagers;
 
-import com.android.sdklib.SdkConstants;
+import com.android.AndroidConstants;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -126,13 +126,18 @@ public class LocalResourceManager extends ResourceManager {
   @NotNull
   public AttributeDefinitions getAttributeDefinitions() {
     if (myAttrDefs == null) {
-      List<XmlFile> xmlResFiles = new ArrayList<XmlFile>();
-      for (PsiFile file : findResourceFiles("values")) {
-        if (file instanceof XmlFile) {
-          xmlResFiles.add((XmlFile)file);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          List<XmlFile> xmlResFiles = new ArrayList<XmlFile>();
+          for (PsiFile file : findResourceFiles("values")) {
+            if (file instanceof XmlFile) {
+              xmlResFiles.add((XmlFile)file);
+            }
+          }
+          myAttrDefs = new AttributeDefinitions(xmlResFiles.toArray(new XmlFile[xmlResFiles.size()]));
         }
-      }
-      myAttrDefs = new AttributeDefinitions(xmlResFiles.toArray(new XmlFile[xmlResFiles.size()]));
+      });
     }
     return myAttrDefs;
   }
@@ -202,9 +207,9 @@ public class LocalResourceManager extends ResourceManager {
       Messages.showErrorDialog(myModule.getProject(), AndroidBundle.message("check.resource.dir.error"), CommonBundle.getErrorTitle());
       return null;
     }
-    final VirtualFile valuesDir = findOrCreateChildDir(dir, SdkConstants.FD_VALUES);
+    final VirtualFile valuesDir = findOrCreateChildDir(dir, AndroidConstants.FD_RES_VALUES);
     if (valuesDir == null) {
-      String errorMessage = AndroidBundle.message("android.directory.cannot.be.found.error", SdkConstants.FD_VALUES);
+      String errorMessage = AndroidBundle.message("android.directory.cannot.be.found.error", AndroidConstants.FD_RES_VALUES);
       Messages.showErrorDialog(myModule.getProject(), errorMessage, CommonBundle.getErrorTitle());
       return null;
     }
