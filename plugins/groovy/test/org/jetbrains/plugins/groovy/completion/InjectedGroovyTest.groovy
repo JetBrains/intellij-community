@@ -15,6 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.completion
 
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlText
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -41,6 +44,16 @@ s.codePo<caret>charAt(0)
 String s = "foo"
 s.codePointAt(<caret>0)
 </groovy>""")
+  }
+
+  public void testIntelliLangInjections() throws Exception {
+    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
+    final PsiFile psiFile = myFixture.configureByText("script.groovy", 'new groovy.lang.GroovyShell().evaluate("s = new String()")');
+    assertNotNull(psiFile);
+    def offset = psiFile.getText().indexOf('"') + 1
+    final PsiElement elementAt = psiFile.findElementAt(offset);
+    assertNotNull(elementAt);
+    assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, offset)
   }
 
 }
