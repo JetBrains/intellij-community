@@ -27,15 +27,15 @@ public class MvcWatchedRootProvider implements WatchedRootsProvider {
 
   @NotNull
   public Set<String> getRootsToWatch() {
-    if (!myProject.isInitialized()) {
-      return Collections.emptySet();
-    }
+    if (!myProject.isInitialized()) return Collections.emptySet();
 
-    final Set<String> result = new HashSet<String>();
+    Set<String> result = null;
 
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       final MvcFramework framework = MvcModuleStructureSynchronizer.getFramework(module);
       if (framework == null) continue;
+
+      if (result == null) result = new HashSet<String>();
 
       final File sdkWorkDir = framework.getCommonPluginsDir(module);
       if (sdkWorkDir != null) {
@@ -48,7 +48,7 @@ public class MvcWatchedRootProvider implements WatchedRootsProvider {
       }
     }
 
-    return result;
+    return result == null ? Collections.<String>emptySet() : result;
   }
 
 }
