@@ -23,11 +23,8 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -107,18 +104,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   @NotNull
   public ResourceBundle getResourceBundle() {
-    VirtualFile virtualFile = getVirtualFile();
-    if (!isValid() || virtualFile == null) {
-      return ResourceBundleImpl.NULL;
-    }
-    String baseName = PropertiesUtil.getBaseName(virtualFile);
-    PsiDirectory directory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
-      @Nullable
-      public PsiDirectory compute() {
-        return getContainingFile().getContainingDirectory();
-    }});
-    if (directory == null) return ResourceBundleImpl.NULL;
-    return new ResourceBundleImpl(directory.getVirtualFile(), baseName);
+    return PropertiesUtil.getResourceBundle(getContainingFile());
   }
 
   @NotNull

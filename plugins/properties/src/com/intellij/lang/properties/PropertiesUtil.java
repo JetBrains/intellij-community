@@ -193,4 +193,18 @@ public class PropertiesUtil {
     return ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
   }
 
+  public static ResourceBundle getResourceBundle(final PsiFile containingFile) {
+    VirtualFile virtualFile = containingFile.getVirtualFile();
+    if (!containingFile.isValid() || virtualFile == null) {
+      return ResourceBundleImpl.NULL;
+    }
+    String baseName = getBaseName(virtualFile);
+    PsiDirectory directory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
+      @Nullable
+      public PsiDirectory compute() {
+        return containingFile.getContainingDirectory();
+    }});
+    if (directory == null) return ResourceBundleImpl.NULL;
+    return new ResourceBundleImpl(directory.getVirtualFile(), baseName);
+  }
 }
