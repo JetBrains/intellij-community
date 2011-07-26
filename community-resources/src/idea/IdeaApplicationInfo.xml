@@ -7,7 +7,7 @@
   <about url="/idea_community_about.png"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/general/toolWindowProject.png"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="IDEA" fullname="IntelliJ IDEA"/>
+  <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
 
   <welcome-screen caption-url="/welcomeCaption_community.png" slogan-url="/developSlogan_community.png"/>
 

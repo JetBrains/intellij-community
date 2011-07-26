@@ -29,10 +29,12 @@ public class ApplicationNamesInfo {
   @NonNls private static final String ELEMENT_NAMES = "names";
   @NonNls private static final String ATTRIBUTE_PRODUCT = "product";
   @NonNls private static final String ATTRIBUTE_FULL_NAME = "fullname";
+  @NonNls private static final String ATTRIBUTE_SCRIPT = "script";
 
   private String myProductName;
   private String myFullProductName;
   private String myLowercaseProductName;
+  private String myScriptName;
 
   private static class ApplicationNamesInfoHolder {
     private static final ApplicationNamesInfo ourInstance = new ApplicationNamesInfo();
@@ -60,6 +62,7 @@ public class ApplicationNamesInfo {
     myProductName = names.getAttributeValue(ATTRIBUTE_PRODUCT);
     myFullProductName = names.getAttributeValue(ATTRIBUTE_FULL_NAME);
     myLowercaseProductName = StringUtil.capitalize(myProductName.toLowerCase());
+    myScriptName = names.getAttributeValue(ATTRIBUTE_SCRIPT);
   }
 
   /**
@@ -81,6 +84,13 @@ public class ApplicationNamesInfo {
    */
   public String getLowercaseProductName() {
     return myLowercaseProductName;
+  }
+
+  /**
+   * @return "idea"
+   */
+  public String getScriptName() {
+    return myScriptName;
   }
 
   public static String getComponentName() {
