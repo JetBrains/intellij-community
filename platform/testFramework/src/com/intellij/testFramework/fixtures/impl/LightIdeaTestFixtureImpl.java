@@ -17,11 +17,8 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.idea.IdeaTestApplication;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -29,9 +26,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.TestDataProvider;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
@@ -47,10 +43,11 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
   public void setUp() throws Exception {
     super.setUp();
 
-    LightPlatformTestCase.initApplication(new MyDataProvider());
+    IdeaTestApplication application = LightPlatformTestCase.initApplication();
     LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, null);
     ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
     storeSettings();
+    application.setDataProvider(new TestDataProvider(getProject()));
   }
 
   @Override
@@ -62,22 +59,6 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
     ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
   }
 
-
-  private class MyDataProvider implements DataProvider {
-    @Override
-    @Nullable
-    public Object getData(@NonNls String dataId) {
-      if (PlatformDataKeys.PROJECT.is(dataId)) {
-        return getProject();
-      }
-      else if (PlatformDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-        return FileEditorManager.getInstance(getProject()).getSelectedTextEditor();
-      }
-      else {
-        return null;
-      }
-    }
-  }
 
   @Override
   public Project getProject() {
