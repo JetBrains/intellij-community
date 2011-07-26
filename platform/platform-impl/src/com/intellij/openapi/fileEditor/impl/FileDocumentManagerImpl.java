@@ -285,7 +285,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         return;
       }
 
-      myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).beforeDocumentSaving(document);
+      try {
+        myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).beforeDocumentSaving(document);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
 
       // Allows pre-save document modification, e.g. stripping trailing spaces.
       for (FileDocumentManagerListener listener : FileDocumentManagerListener.EP_NAME.getExtensions()) {
