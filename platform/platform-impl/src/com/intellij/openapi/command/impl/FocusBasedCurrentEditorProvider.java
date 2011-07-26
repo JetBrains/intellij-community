@@ -19,11 +19,16 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 
+import java.awt.*;
+
 /**
  * @author max
  */
 class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
   public FileEditor getCurrentEditor() {
-    return PlatformDataKeys.FILE_EDITOR.getData(DataManager.getInstance().getDataContext());
+    // [kirillk] this is a hack, since much of editor-related code was written long before
+    // own focus managenent in the platform, so this method should be strictly synchronous
+    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    return PlatformDataKeys.FILE_EDITOR.getData(DataManager.getInstance().getDataContext(owner));
   }
 }
