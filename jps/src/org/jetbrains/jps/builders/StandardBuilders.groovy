@@ -4,13 +4,13 @@ import com.intellij.ant.InstrumentationUtil
 import com.intellij.ant.InstrumentationUtil.FormInstrumenter
 import com.intellij.ant.PrefixedPath
 import org.apache.tools.ant.BuildListener
+import org.jetbrains.ether.MockFS
 import org.jetbrains.ether.ProjectWrapper
 import org.jetbrains.ether.dependencyView.AntListener
 import org.jetbrains.ether.dependencyView.StringCache
 import org.jetbrains.ether.dependencyView.StringCache.S
 import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
 import org.jetbrains.jps.*
-import org.jetbrains.ether.MockFS
 
 /**
  * @author max
@@ -305,7 +305,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
 
     def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
         if (state.loader == null) {
-            final StringBuffer cp = new StringBuffer()
+            final StringBuilder cp = new StringBuilder()
 
             cp.append(state.targetFolder)
             cp.append(File.pathSeparator)

@@ -1,9 +1,10 @@
 package org.jetbrains.ether;
 
-import javax.xml.transform.Result;
 import java.io.File;
 import java.io.FileFilter;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -104,10 +105,10 @@ public class DirectoryScanner {
             return myTrueFilter;
         }
 
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         for (String exclude : excludes) {
-            StringBuffer alternative = new StringBuffer();
+            StringBuilder alternative = new StringBuilder();
 
             if (exclude != null) {
                 for (int i = 0; i < exclude.length(); i++) {

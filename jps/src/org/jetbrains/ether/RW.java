@@ -3,7 +3,7 @@ package org.jetbrains.ether;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
 
 /**
  * Created by IntelliJ IDEA.
@@ -158,7 +158,7 @@ public class RW {
     }
 
     public static String readEncodedString(final BufferedReader r) {
-        final StringBuffer b = new StringBuffer();
+        final StringBuilder b = new StringBuilder();
 
         final int size = readInt(r);
 

@@ -1,14 +1,9 @@
 package org.jetbrains.ether.dependencyView;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -172,7 +167,7 @@ public class PackageNameSelector {
     }
 
     private String parse() {
-        final StringBuffer b = new StringBuffer();
+        final StringBuilder b = new StringBuilder();
         int state = 0;
 
         while (true) {

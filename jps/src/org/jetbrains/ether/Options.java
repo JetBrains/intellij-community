@@ -106,7 +106,7 @@ public class Options {
         }
 
         public String memo () {
-            final StringBuffer buf = new StringBuffer();
+            final StringBuilder buf = new StringBuilder();
             String longArg = "", shortArg = "";
 
             switch (myArgumentSpecifier) {

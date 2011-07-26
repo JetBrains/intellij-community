@@ -70,7 +70,7 @@ class Java16ApiCompiler {
             fileManager.setLocation(StandardLocation.CLASS_OUTPUT, [new File(state.targetFolder)])
             List<File> classpath = []
             List<File> bootclasspath = []
-            StringBuffer cp = new StringBuffer()
+            StringBuilder cp = new StringBuilder()
 
             Sdk sdk = chunk.getSdk()
 

@@ -13,7 +13,7 @@ public class DotPrinter {
     static PrintStream deafultStream;
 
     private static String escape(final String s) {
-        final StringBuffer b = new StringBuffer();
+        final StringBuilder b = new StringBuilder();
 
         for (int i = 0; i < s.length(); i++) {
             final char c = s.charAt(i);

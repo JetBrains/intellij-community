@@ -100,7 +100,7 @@ public class MethodRepr extends ProtoMember {
     }
 
     public UsageRepr.Usage createUsage (final StringCache.S owner) {
-        final StringBuffer buf = new StringBuffer ();
+        final StringBuilder buf = new StringBuilder();
 
         buf.append("(");
 
