@@ -16,6 +16,8 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -27,9 +29,16 @@ public class TitledSeparator extends JPanel {
 
   public TitledSeparator() {
     setLayout(new GridBagLayout());
-    add(myLabel, new GridBagConstraints(0,0,1,0,0,0,GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,8), 0,0));
+    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
+
+    Color oldColor = UIManager.getColor("Separator.foreground");
+    UIManager.put("Separator.foreground", UIUtil.getBorderColor());
     JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
-    add(separator, new GridBagConstraints(1,0,GridBagConstraints.REMAINDER,0,1,0,GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(3,0,0,5), 0,0));
+    UIManager.put("Separator.foreground", oldColor);
+
+    add(separator,
+        new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+                               new Insets(3, 0, 0, 2), 0, 0));
   }
 
   public TitledSeparator(String text) {

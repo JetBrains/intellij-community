@@ -27,7 +27,6 @@ import java.awt.*;
  */
 
 public class TitledSeparatorWithMnemonic extends TitledSeparator {
-  private JComponent labelFor;
   private String originalText;
 
   public TitledSeparatorWithMnemonic() {
@@ -46,21 +45,14 @@ public class TitledSeparatorWithMnemonic extends TitledSeparator {
 
   public void setText(String text) {
     originalText = text;
-    String textWithoutMnemonic = UIUtil.removeMnemonic(originalText);
-    myLabel.setText(textWithoutMnemonic);
-    final int index = originalText.indexOf('&');
-    if (index != -1 && index != originalText.length() - 1 && index == originalText.lastIndexOf('&')) {
-      char m = textWithoutMnemonic.charAt(index);
-      myLabel.setDisplayedMnemonic(m);
-    }
+    myLabel.setText(UIUtil.replaceMnemonicAmpersand(originalText));
   }
 
-  public JComponent getLabelFor() {
-    return labelFor;
+  public Component getLabelFor() {
+    return myLabel.getLabelFor();
   }
 
-  public void setLabelFor(JComponent labelFor) {
-    this.labelFor = labelFor;
+  public void setLabelFor(Component labelFor) {
     myLabel.setLabelFor(labelFor);
   }
 }
