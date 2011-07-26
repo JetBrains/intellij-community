@@ -95,14 +95,14 @@ interface I<T> {
 }
 
 class FI1 {
-  I<? extends String> i1 = new I<>() {
+  I<? extends String> i1 = new I<<error descr="Cannot use ''<>'' with anonymous inner classes"></error>>() {
     @Override
     public String m() {
       return null;
     }
   };
 
-  I<?> i2 = new I<>() {
+  I<?> i2 = new I<<error descr="Cannot use ''<>'' with anonymous inner classes"></error>>() {
     @Override
     public Object m() {
       return null;
