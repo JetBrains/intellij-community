@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 
 import javax.script.ScriptEngine;
@@ -60,10 +61,11 @@ public class CreateLauncherScriptAction extends AnAction {
     createLauncherScript(project, new File(dialog.myPathField.getText(), dialog.myNameField.getText()).getPath());
   }
 
-  public static void createLauncherScript(Project project, String pathname) {
+  public static void createLauncherScript(Project project, String pathName) {
+    if (!SystemInfo.isUnix) return;
     try {
       final File scriptFile = createLauncherScriptFile();
-      File scriptTarget = new File(pathname);
+      final File scriptTarget = new File(pathName);
       if (scriptTarget.exists()) {
         int rc = Messages.showOkCancelDialog(project, "The file " + scriptTarget + " already exists. Would you like to overwrite it?",
                                              "Create Launcher Script", Messages.getQuestionIcon());
@@ -72,22 +74,22 @@ public class CreateLauncherScriptAction extends AnAction {
         }
       }
 
-      if (!scriptFile.renameTo(scriptTarget)) {
-        if (SystemInfo.isUnix) {
-          final String launcherScriptContainingDirPath = scriptTarget.getParent();
-          final String installationScriptSrc =
-            // create all intermediate folders
-            "mkdir -p " + launcherScriptContainingDirPath + "\n" +
-            // Copy file & change owner to root
-            // uid 0 = root
-            // gid 0 = root || wheel (MacOS)
-            "install -g 0 -o 0 " + scriptFile.getCanonicalPath() + " " + pathname;
-          final File installationScript = createTempExecutableScript("launcher_installer", installationScriptSrc);
+      final File launcherScriptContainingDir = scriptTarget.getParentFile();
+      if (!(launcherScriptContainingDir.exists() || launcherScriptContainingDir.mkdirs()) ||
+          !scriptFile.renameTo(scriptTarget)) {
+        final String launcherScriptContainingDirPath = launcherScriptContainingDir.getCanonicalPath();
+        final String installationScriptSrc =
+          // create all intermediate folders
+          "mkdir -p " + launcherScriptContainingDirPath + "\n" +
+          // Copy file & change owner to root
+          // uid 0 = root
+          // gid 0 = root || wheel (MacOS)
+          "install -g 0 -o 0 " + scriptFile.getCanonicalPath() + " " + pathName;
+        final File installationScript = createTempExecutableScript("launcher_installer", installationScriptSrc);
 
-          sudo(installationScript.getCanonicalPath(),
-               installationScriptSrc,
-               "In order to create a launcher script in " + launcherScriptContainingDirPath + ", please enter your administrator password:");
-        }
+        sudo(installationScript.getCanonicalPath(),
+             installationScriptSrc,
+             "Please enter your password to create a launcher script in a " + launcherScriptContainingDirPath);
       }
     }
     catch (Exception e) {
@@ -96,8 +98,8 @@ public class CreateLauncherScriptAction extends AnAction {
     }
   }
 
-  private static boolean sudo(String installationScriptPath,
-                              String installScriptSrc,
+  private static boolean sudo(final String installationScriptPath,
+                              final String installScriptSrc,
                               final String prompt) throws IOException, ScriptException, ExecutionException {
     if (SystemInfo.isMac) {
       final ScriptEngine engine = new ScriptEngineManager(null).getEngineByName("AppleScript");
@@ -106,7 +108,7 @@ public class CreateLauncherScriptAction extends AnAction {
       }
       engine.eval("do shell script \"" + installationScriptPath + "\" with administrator privileges");
     }
-    else if (SystemInfo.isUnix) {
+    else {
       GeneralCommandLine cmdLine = new GeneralCommandLine();
       if (SystemInfo.isGnome) {
         cmdLine.setExePath("gksudo");
@@ -131,18 +133,20 @@ public class CreateLauncherScriptAction extends AnAction {
     final File tempFile = FileUtil.createTempFile("launcher", "");
 
     final InputStream stream = CreateLauncherScriptAction.class.getClassLoader().getResourceAsStream("launcher.py");
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     String launcherContents = FileUtil.loadTextAndClose(new InputStreamReader(stream));
     launcherContents = launcherContents.replace("$CONFIG_PATH$", PathManager.getConfigPath());
 
     String homePath = PathManager.getHomePath();
-    String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
     if (SystemInfo.isMac) {
       // Just use "*.app"
       launcherContents = launcherContents.replace("$RUN_PATH$", homePath);
     }
     else {
+      String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
       launcherContents = launcherContents.replace("$RUN_PATH$", homePath + "/bin/" + productName + ".sh");
     }
+
     FileUtil.writeToFile(tempFile, launcherContents.getBytes(CharsetToolkit.UTF8_CHARSET));
     if (!tempFile.setExecutable(true)) {
       throw new IOException("Failed to mark the launcher script as executable");
@@ -161,19 +165,13 @@ public class CreateLauncherScriptAction extends AnAction {
   }
 
   public static String defaultScriptName() {
-    String productName = ApplicationNamesInfo.getInstance().getProductName();
-    if (productName.equalsIgnoreCase("RubyMine")) {
-      return "mine";
-    }
-    else if (productName.equalsIgnoreCase("PyCharm")) {
-      return "charm";
-    }
-    return "idea";
+    final String productName = ApplicationNamesInfo.getInstance().getScriptName();
+    return StringUtil.isEmptyOrSpaces(productName) ? "idea" : productName;
   }
 
   @Override
   public void update(AnActionEvent e) {
-    boolean canCreateScript = SystemInfo.isUnix || SystemInfo.isMac;
+    final boolean canCreateScript = SystemInfo.isUnix;
     e.getPresentation().setVisible(canCreateScript);
   }
 
