@@ -35,5 +35,5 @@ public interface Style extends ResourceElement {
 
   @Attribute("parent")
   @Convert(ParentStyleConverter.class)
-  GenericAttributeValue<String> getParentStyle();
+  GenericAttributeValue<ResourceValue> getParentStyle();
 }

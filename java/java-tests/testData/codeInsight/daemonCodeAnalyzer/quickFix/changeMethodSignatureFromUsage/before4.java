@@ -1,4 +1,4 @@
-// "Change signature of 'f(int, String)' to 'f(int, char, int, String, int, Object)'" "true"
+// "<html> Change signature of f(int, <b>char</b>, <b>int</b>, String, <b>int</b>, <b>Object</b>)</html>" "true"
 class A {
     void f(int i,String s) {}
     public void foo() {

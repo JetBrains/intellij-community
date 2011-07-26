@@ -483,6 +483,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
+  /**
+   * @return the version number of Git, which is used by IDEA. <code>null</code> can be returned if the GitVcs hasn't yet activated.
+   */
+  @Nullable
   public GitVersion getVersion() {
     return myVersion;
   }

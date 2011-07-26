@@ -109,4 +109,9 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_AFTER_TYPE_CAST", ApplicationBundle.message("checkbox.spaces.after.type.cast"), SPACES_OTHER);
     initCustomOptions(SPACES_OTHER);
   }
+
+  @Override
+  protected String getTabTitle() {
+    return ApplicationBundle.message("title.spaces");
+  }
 }

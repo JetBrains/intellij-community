@@ -45,7 +45,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private final boolean myInlineKeysNoMapping;
 
   public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024, 10f, false), dataDescriptor, initialSize);
+    super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024, false), dataDescriptor, initialSize);
 
     myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantInlineKeyMapping();
     myBuffer = new byte[getRecordSize()];
@@ -96,6 +96,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     if (btree != null) {
       btree.setMaxStepsSearched(store(DATA_START + 36, btree.getMaxStepsSearched(), toDisk));
       btree.setPagesCount(store(DATA_START + 40, btree.getPageCount(), toDisk));
+      btree.setMovedMembersCount(store(DATA_START + 44, btree.getMovedMembersCount(), toDisk));
     }
   }
 
@@ -256,11 +257,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
                           ", values " +
                           valuesCount +
                           ", storage size:" +
-                          myStorage.length() +
-                          ", pagecount:" +
-                          btree.getPageCount() +
-                          ", height:" +
-                          btree.getMaxStepsSearched());
+                          myStorage.length());
+        btree.dumpStatistics();
       }
 
       if (collisionAddress != NULL_ID) {

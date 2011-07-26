@@ -82,11 +82,11 @@ public class PropertiesFilesManager extends AbstractProjectComponent {
   }
 
   public Collection<VirtualFile> getAllPropertiesFiles() {
-    return FileBasedIndex.getInstance().getContainingFiles(FileTypeIndex.NAME, PropertiesFileType.FILE_TYPE, GlobalSearchScope.allScope(myProject));
+    return FileBasedIndex.getInstance().getContainingFiles(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, GlobalSearchScope.allScope(myProject));
   }
 
   public boolean processAllPropertiesFiles(final Processor<VirtualFile> processor) {
-    return FileBasedIndex.getInstance().processValues(FileTypeIndex.NAME, PropertiesFileType.FILE_TYPE, null, new FileBasedIndex.ValueProcessor<Void>() {
+    return FileBasedIndex.getInstance().processValues(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, null, new FileBasedIndex.ValueProcessor<Void>() {
       public boolean process(VirtualFile file, Void value) {
         return processor.process(file);
       }

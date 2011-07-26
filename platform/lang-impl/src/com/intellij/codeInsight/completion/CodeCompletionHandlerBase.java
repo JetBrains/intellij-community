@@ -672,7 +672,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  private static Runnable rememberDocumentState(final Editor editor) {
+  public static Runnable rememberDocumentState(final Editor editor) {
     final String documentText = editor.getDocument().getText();
     final int caret = editor.getCaretModel().getOffset();
     final int selStart = editor.getSelectionModel().getSelectionStart();

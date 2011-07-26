@@ -61,7 +61,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -94,7 +93,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
@@ -151,7 +149,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
   @NonNls private static final String XXX = "XXX";
-  private PsiElement myFileContext;
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
   private boolean myAllowDirt;
   private boolean toInitializeDaemon;
@@ -652,33 +649,32 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        final EditorActionManager actionManager = EditorActionManager.getInstance();
+        if (c == '\b') {
+          performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+          return;
+        }
+        if (c == '\n') {
+          if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)) {
+            return;
+          }
+
+          performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
+          return;
+        }
+        if (c == '\t') {
+          if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
+            return;
+          }
+          if (_performEditorAction(IdeActions.ACTION_EDITOR_TAB)) {
+            return;
+          }
+        }
+
         CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
           @Override
           public void run() {
-            EditorActionManager actionManager = EditorActionManager.getInstance();
-            if (c == '\b') {
-              performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
-              return;
-            }
-            if (c == '\n') {
-              if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)) {
-                return;
-              }
-
-              performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
-              return;
-            }
-            if (c == '\t') {
-              if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
-                return;
-              }
-              if (_performEditorAction(IdeActions.ACTION_EDITOR_TAB)) {
-                return;
-              }
-            }
-
             CommandProcessor.getInstance().setCurrentCommandGroupId(myEditor.getDocument());
-
             actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
           }
         }, null, DocCommandGroupId.noneGroupId(myEditor.getDocument()));
@@ -705,18 +701,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private boolean _performEditorAction(String actionId) {
     final DataContext dataContext = getEditorDataContext();
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler handler = actionManager.getActionHandler(actionId);
-    if (!handler.isEnabled(myEditor, dataContext)) {
-      return false;
-    }
 
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     AnAction action = managerEx.getAction(actionId);
     AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
+
+    action.update(event);
+
+    if (!event.getPresentation().isEnabled()) {
+      return false;
+    }
+
     managerEx.fireBeforeActionPerformed(action, dataContext, event);
 
-    handler.execute(getEditor(), dataContext);
+    action.actionPerformed(event);
 
     managerEx.fireAfterActionPerformed(action, dataContext, event);
     return true;
@@ -901,19 +899,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           @Override
           public void run() {
             final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
-              @Override
-              protected PsiFile createFileCopy(final PsiFile file) {
-                final PsiFile copy = super.createFileCopy(file);
-                if (myFileContext != null) {
-                  final PsiElement contextCopy = myFileContext.copy();
-                  final PsiFile containingFile = contextCopy.getContainingFile();
-                  if (containingFile instanceof PsiFileImpl) {
-                    ((PsiFileImpl)containingFile).setOriginalFile(myFileContext.getContainingFile());
-                  }
-                  setContext(copy, contextCopy);
-                }
-                return copy;
-              }
 
               @Override
               protected void completionFinished(int offset1,
@@ -1064,7 +1049,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myInspections = null;
     myAvailableLocalTools.clear();
     myAvailableTools.clear();
-    myFileContext = null;
 
     myProjectFixture.tearDown();
     myTempDirFixture.tearDown();
@@ -1221,12 +1205,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
-  @Override
-  public void setFileContext(@Nullable final PsiElement context) {
-    myFileContext = context;
-    setContext(myFile, context);
-  }
-
   /**
    * @param filePath
    * @throws IOException
@@ -1266,7 +1244,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           throw new RuntimeException(e);
         }
         myFile = myPsiManager.findFile(copy);
-        setContext(myFile, myFileContext);
         myEditor = createEditor(copy);
         assert myEditor != null : "Editor couldn't be created for file: " +
                                   copy.getPath() +
@@ -1290,12 +1267,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
 
     return myFile;
-  }
-
-  private static void setContext(final PsiFile file, final PsiElement context) {
-    if (file != null && context != null) {
-      file.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, new IdentitySmartPointer<PsiElement>(context));
-    }
   }
 
   @Override

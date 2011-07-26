@@ -74,8 +74,6 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     return myNameField.getEnteredName();
   }
 
-  protected boolean hasHelpAction() { return false; }
-
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
   }

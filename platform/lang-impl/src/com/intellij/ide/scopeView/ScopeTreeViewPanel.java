@@ -53,7 +53,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.*;
@@ -79,7 +79,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +94,7 @@ import java.util.List;
  * User: anna
  * Date: 25-Jan-2006
  */
-public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Disposable {
+public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
   private final IdeView myIdeView = new MyIdeView();
   private final MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
@@ -104,8 +103,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   private final Project myProject;
   private FileTreeModelBuilder myBuilder;
 
-  @SuppressWarnings({"WeakerAccess"})
-  public String CURRENT_SCOPE_NAME;
+  private String CURRENT_SCOPE_NAME;
 
   private TreeExpansionMonitor myTreeExpansionMonitor;
   private CopyPasteDelegator myCopyPasteDelegator;
@@ -182,6 +180,10 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     myUpdateQueue.queue(new Update("Select") {
       public void run() {
         if (myProject.isDisposed()) return;
+        if (myUpdateQueue.isSuspended()) {
+          myUpdateQueue.queue(this);
+          return;
+        }
         PackageDependenciesNode node = myBuilder.findNode(file, element);
         if (node != null && node.getPsiElement() != element) {
           final TreePath path = new TreePath(node.getPath());
@@ -271,26 +273,23 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       }
     }, settings);
     myTree.setPaintBusy(true);
+    myBuilder.setTree(myTree);
     myTree.getEmptyText().setText("Loading...");
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      myUpdateQueue.suspend();
+    }
     myTree.setModel(myBuilder.build(myProject, showProgress, new Runnable(){
       @Override
       public void run() {
         myTree.setPaintBusy(false);
         myTree.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+        myUpdateQueue.resume();
       }
     }));
     ((PackageDependenciesNode)myTree.getModel().getRoot()).sortChildren();
     ((DefaultTreeModel)myTree.getModel()).reload();
     myTreeExpansionMonitor.restore();
     FileTreeModelBuilder.clearCaches(myProject);
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
   private NamedScope getCurrentScope() {
@@ -387,11 +386,19 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     return null;
   }
 
-  private void reload(final DefaultMutableTreeNode rootToReload) {
+  private void reload(@Nullable final DefaultMutableTreeNode rootToReload) {
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
     if (rootToReload != null) {
+      final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myTree, new TreePath(rootToReload.getPath()));
+      ((DefaultTreeModel)myTree.getModel()).reload(rootToReload);
+      TreePath path = new TreePath(rootToReload.getPath());
+      if (!myTree.isCollapsed(path)) {
+        myTree.collapsePath(path);
+        for (TreePath treePath : treePaths) {
+          myTree.expandPath(treePath);
+        }
+      }
       TreeUtil.sort(rootToReload, getNodeComparator());
-      collapseExpand(rootToReload);
     }
     else {
       TreeUtil.sort(treeModel, getNodeComparator());
@@ -486,7 +493,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       if (parent instanceof PsiDirectory && (child instanceof PsiFile && !isInjected((PsiFile)child) || child instanceof PsiDirectory)) {
         queueUpdate(new Runnable() {
           public void run() {
-            collapseExpand(myBuilder.removeNode(child, (PsiDirectory)parent));
+            reload(myBuilder.removeNode(child, (PsiDirectory)parent));
           }
         }, true);
       }
@@ -501,12 +508,12 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
           final PsiFile file = (PsiFile)child;
           queueUpdate(new Runnable() {
             public void run() {
-              collapseExpand(myBuilder.removeNode(child, (PsiDirectory)oldParent));
+              reload(myBuilder.removeNode(child, (PsiDirectory)oldParent));
               final VirtualFile virtualFile = file.getVirtualFile();
               if (virtualFile != null) {
                 final PsiFile newFile = file.isValid() ? file : PsiManager.getInstance(myProject).findFile(virtualFile);
                 if (newFile != null) {
-                  collapseExpand(myBuilder.addFileNode(newFile));
+                  reload(myBuilder.addFileNode(newFile));
                 }
               }
             }
@@ -524,7 +531,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         queueUpdate(new Runnable() {
           public void run() {
             if (file.isValid()) {
-              collapseExpand(myBuilder.getFileParentNode(file.getVirtualFile()));
+              reload(myBuilder.getFileParentNode(file.getVirtualFile()));
             }
           }
         }, false);
@@ -587,7 +594,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final PackageSet packageSet = scope.getValue();
       if (packageSet == null) return; //invalid scope selected
       if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
-        reload(myBuilder.getFileParentNode(file.getVirtualFile()));
+        reload(myBuilder.findNode(file, file));
       }
       else {
         reload(myBuilder.removeNode(file, file.getParent()));
@@ -599,9 +606,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final Runnable wrapped = new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
-          myTreeExpansionMonitor.freeze();
           request.run();
-          myTreeExpansionMonitor.restore();
         }
       };
       if (updateImmediately && isTreeShowing()) {
@@ -622,17 +627,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
           }
         });
       }
-    }
-  }
-
-  private void collapseExpand(DefaultMutableTreeNode node) {
-    if (node == null) return;
-    ((DefaultTreeModel)myTree.getModel()).reload(node);
-    TreePath path = new TreePath(node.getPath());
-    if (!myTree.isCollapsed(path)) {
-      myTree.collapsePath(path);
-      myTree.expandPath(path);
-      TreeUtil.sort(node, getNodeComparator());
     }
   }
 
@@ -789,12 +783,10 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     myUpdateQueue.queue(new Update(fileToRefresh) {
       public void run() {
         if (myProject.isDisposed() || !fileToRefresh.isValid()) return;
-        myTreeExpansionMonitor.freeze();
         final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileToRefresh);
         if (psiFile != null) {
           reload(rootToReloadGetter.fun(psiFile));
         }
-        myTreeExpansionMonitor.restore();
       }
 
       public boolean isExpired() {

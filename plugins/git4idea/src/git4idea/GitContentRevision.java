@@ -132,11 +132,13 @@ public class GitContentRevision implements ContentRevision {
   /**
    * Create revision
    *
+   *
    * @param vcsRoot        a vcs root for the repository
    * @param path           an path inside with possibly escape sequences
    * @param revisionNumber a revision number, if null the current revision will be created
    * @param project        the context project
    * @param isDeleted      if true, the file is deleted
+   * @param unescapePath
    * @return a created revision
    * @throws com.intellij.openapi.vcs.VcsException
    *          if there is a problem with creating revision
@@ -145,8 +147,8 @@ public class GitContentRevision implements ContentRevision {
                                                String path,
                                                VcsRevisionNumber revisionNumber,
                                                Project project,
-                                               boolean isDeleted, final boolean canBeDeleted) throws VcsException {
-    final FilePath file = createPath(vcsRoot, path, isDeleted, canBeDeleted);
+                                               boolean isDeleted, final boolean canBeDeleted, boolean unescapePath) throws VcsException {
+    final FilePath file = createPath(vcsRoot, path, isDeleted, canBeDeleted, unescapePath);
     if (revisionNumber != null) {
       return createRevisionImpl(file, (GitRevisionNumber)revisionNumber, project, null);
     }
@@ -155,8 +157,9 @@ public class GitContentRevision implements ContentRevision {
     }
   }
 
-  public static FilePath createPath(VirtualFile vcsRoot, String path, boolean isDeleted, boolean canBeDeleted) throws VcsException {
-    final String absolutePath = vcsRoot.getPath() + "/" + GitUtil.unescapePath(path);
+  public static FilePath createPath(VirtualFile vcsRoot, String path, boolean isDeleted, boolean canBeDeleted, boolean unescapePath) throws VcsException {
+    final String unescapedPath = unescapePath ? GitUtil.unescapePath(path) : path;
+    final String absolutePath = vcsRoot.getPath() + "/" + unescapedPath;
     FilePath file = isDeleted ? VcsUtil.getFilePathForDeletedFile(absolutePath, false) : VcsUtil.getFilePath(absolutePath, false);
     if (canBeDeleted && (! SystemInfo.isFileSystemCaseSensitive) && VcsUtil.caseDiffers(file.getPath(), absolutePath)) {
       // as for deleted file

@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.psi.codeStyle.DisplayPriority;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,7 +53,7 @@ public class GeneralCodeStyleSettingsProvider extends CodeStyleSettingsProvider 
   }
 
   @Override
-  public int getPriority() {
-    return GENERAL_PRIORITY;
+  public DisplayPriority getPriority() {
+    return DisplayPriority.GENERAL_SETTINGS;
   }
 }

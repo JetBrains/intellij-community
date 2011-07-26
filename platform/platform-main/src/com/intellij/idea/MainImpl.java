@@ -15,6 +15,7 @@
  */
 package com.intellij.idea;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,23 +25,32 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
-@SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr"})
+@SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "UnusedDeclaration"})
 public class MainImpl {
   private static final String LOG_CATEGORY = "#com.intellij.idea.Main";
 
-  private MainImpl() {
-  }
+  private MainImpl() { }
 
   /**
-   * Is called from PluginManager
+   * Is called from PluginManager via reflection.
    */
+  @SuppressWarnings("UnusedDeclaration")
   protected static void start(final String[] args) {
     System.setProperty("idea.platform.prefix", "Idea");
+
     StartupUtil.isHeadless = Main.isHeadless(args);
-    boolean isNewConfigFolder = PathManager.ensureConfigFolderExists(true);
-    if (!StartupUtil.isHeadless && isNewConfigFolder) {
-      UIUtil.initDefaultLAF("Idea");
-      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
+    if (!StartupUtil.isHeadless) {
+      String name = ApplicationNamesInfo.getInstance().getFullProductName();
+      if (name.toUpperCase().contains("IDEA")) name += " CE";
+      AppUIUtil.updateFrameClass(name);
+
+      AppUIUtil.updateFrameIcon(JOptionPane.getRootFrame());
+
+      final boolean isNewConfigFolder = PathManager.ensureConfigFolderExists(true);
+      if (isNewConfigFolder) {
+        UIUtil.initDefaultLAF(ApplicationNamesInfo.getInstance().getLowercaseProductName());
+        ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
+      }
     }
 
     if (!StartupUtil.checkStartupPossible(args)) {   // It uses config folder!
@@ -66,10 +76,6 @@ public class MainImpl {
     // http://weblogs.java.net/blog/shan_man/archive/2005/06/improved_drag_g.html
     System.setProperty("sun.swing.enableImprovedDragGesture", "");
 
-    if (!StartupUtil.isHeadless()) {
-      AppUIUtil.updateFrameIcon(JOptionPane.getRootFrame());
-    }
-
     if (SystemInfo.isWindows && !SystemInfo.isWindows9x) {
       final Logger LOG = Logger.getInstance(LOG_CATEGORY);
       try {
@@ -91,7 +97,8 @@ public class MainImpl {
 
   private static void startApplication(final String[] args) {
     final IdeaApplication app = new IdeaApplication(args);
-     SwingUtilities.invokeLater(new Runnable() {
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         app.run();
       }

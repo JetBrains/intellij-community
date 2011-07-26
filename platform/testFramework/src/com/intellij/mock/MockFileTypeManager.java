@@ -1,6 +1,5 @@
 package com.intellij.mock;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
@@ -138,25 +137,21 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   public FileType getStdFileType(@NotNull @NonNls final String fileTypeName) {
     if ("ARCHIVE".equals(fileTypeName) || "CLASS".equals(fileTypeName)) return UnknownFileType.INSTANCE;
     if ("PLAIN_TEXT".equals(fileTypeName)) return PlainTextFileType.INSTANCE;
-    Language language = Language.findLanguageByID(fileTypeName);
-    if (language == null) {
-      // StdFileTypes initialization..
-      if ("JAVA".equals(fileTypeName)) language = loadLanguageSafe("com.intellij.lang.java.JavaLanguage");
-      if ("XML".equals(fileTypeName)) language = loadLanguageSafe("com.intellij.lang.xml.XMLLanguage");
-      if ("DTD".equals(fileTypeName)) language = loadLanguageSafe("com.intellij.lang.dtd.DTDLanguage");
-      if ("JSP".equals(fileTypeName)) language = loadLanguageSafe("com.intellij.lang.jsp.NewJspLanguage");
-      if ("JSPX".equals(fileTypeName)) language = loadLanguageSafe("com.intellij.lang.jspx.JSPXLanguage");
-      if ("HTML".equals(fileTypeName)) language = loadLanguageSafe("com.intellij.lang.html.HTMLLanguage");
-      if ("XHTML".equals(fileTypeName)) language = loadLanguageSafe("com.intellij.lang.xhtml.XHTMLLanguage");
-      if ("JavaScript".equals(fileTypeName)) language = loadLanguageSafe("com.intellij.lang.javascript.JavascriptLanguage");
-      if ("Properties".equals(fileTypeName)) language = loadLanguageSafe("com.intellij.lang.properties.PropertiesLanguage");
-    }
-    return new MockLanguageFileType(language == null? PlainTextLanguage.INSTANCE : language, fileTypeName.toLowerCase());
+    if ("JAVA".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.JavaFileType");
+    if ("XML".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.XmlFileType");
+    if ("DTD".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.DTDFileType");
+    if ("JSP".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.NewJspFileType");
+    if ("JSPX".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.JspxFileType");
+    if ("HTML".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.HtmlFileType");
+    if ("XHTML".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.XHtmlFileType");
+    if ("JavaScript".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.lang.javascript.JavaScriptFileType");
+    if ("Properties".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.lang.properties.PropertiesFileType");
+    return new MockLanguageFileType(PlainTextLanguage.INSTANCE, fileTypeName.toLowerCase());
   }
 
-  private static Language loadLanguageSafe(final String className) {
+  private static FileType loadFileTypeSafe(final String className) {
     try {
-      return (Language)Class.forName(className).getField("INSTANCE").get(null);
+      return (FileType)Class.forName(className).getField("INSTANCE").get(null);
     }
     catch (Exception e) {
       return null;

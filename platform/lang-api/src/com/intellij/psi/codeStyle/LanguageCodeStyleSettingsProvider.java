@@ -108,6 +108,10 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return PredefinedCodeStyle.EMPTY_ARRAY;
   }
 
+  public DisplayPriority getDisplayPriority() {
+    return DisplayPriority.LANGUAGE_SETTINGS;
+  }
+
   @NotNull
   public static Language[] getLanguagesWithCodeStyleSettings() {
     final ArrayList<Language> languages = new ArrayList<Language>();
@@ -138,6 +142,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     return provider != null ? provider.getRightMargin(settingsType) : -1;
   }
+
 
   @Nullable
   public static Language getLanguage(String langName) {
@@ -184,4 +189,11 @@ public abstract class LanguageCodeStyleSettingsProvider {
     }
     return null;
   }
+
+  public static DisplayPriority getDisplayPriority(Language language) {
+    LanguageCodeStyleSettingsProvider langProvider = forLanguage(language);
+    if (langProvider == null) return DisplayPriority.LANGUAGE_SETTINGS;
+    return langProvider.getDisplayPriority();
+  }
+
 }

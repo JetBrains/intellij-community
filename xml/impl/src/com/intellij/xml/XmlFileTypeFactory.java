@@ -15,10 +15,12 @@
  */
 package com.intellij.xml;
 
+import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.ide.highlighter.DTDFileType;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +32,9 @@ public class XmlFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
     consumer.consume(HtmlFileType.INSTANCE, "html;htm;sht;shtm;shtml");
     consumer.consume(XHtmlFileType.INSTANCE, "xhtml");
-    consumer.consume(new DTDFileType(), "dtd;ent;mod");
+    consumer.consume(DTDFileType.INSTANCE, "dtd;ent;mod");
 
     consumer.consume(XmlFileType.INSTANCE, "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant;xul;xslt");
+    TypedHandler.registerBaseLanguageQuoteHandler(XMLLanguage.class, TypedHandler.getQuoteHandlerForType(XmlFileType.INSTANCE));
   }
 }

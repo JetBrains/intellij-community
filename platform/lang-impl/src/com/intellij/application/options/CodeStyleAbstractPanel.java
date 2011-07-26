@@ -600,5 +600,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   protected String getTabTitle() {
     return "Other";
   }
+
+  public boolean setPanelLanguage(Language language) {
+    return false;
+  }
   
 }

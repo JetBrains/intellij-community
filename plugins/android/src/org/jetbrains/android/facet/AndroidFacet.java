@@ -42,6 +42,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -75,10 +76,7 @@ import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.resourceManagers.SystemResourceManager;
-import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdk;
-import org.jetbrains.android.sdk.AndroidSdkImpl;
-import org.jetbrains.android.sdk.MessageBuildingSdkLog;
+import org.jetbrains.android.sdk.*;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -227,20 +225,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return null;
   }
 
-  private static int getIntAttrValue(@NotNull final XmlTag tag, @NotNull final String attrName) {
-    String value = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        return tag.getAttributeValue(attrName, SdkConstants.NS_RESOURCES);
-      }
-    });
-    try {
-      return Integer.parseInt(value);
-    }
-    catch (NumberFormatException e) {
-      return -1;
-    }
-  }
-
   // if baseTarget is null, then function return if application can be deployed on any target
 
   public boolean isCompatibleBaseTarget(@Nullable IAndroidTarget baseTarget) {
@@ -272,9 +256,9 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       if (manifestTag != null) {
         XmlTag[] tags = manifestTag.findSubTags("uses-sdk");
         for (XmlTag tag : tags) {
-          int candidate = getIntAttrValue(tag, "minSdkVersion");
+          int candidate = AndroidUtils.getIntAttrValue(tag, "minSdkVersion");
           if (candidate >= 0) minSdkVersion = candidate;
-          candidate = getIntAttrValue(tag, "maxSdkVersion");
+          candidate = AndroidUtils.getIntAttrValue(tag, "maxSdkVersion");
           if (candidate >= 0) maxSdkVersion = candidate;
         }
       }
@@ -378,7 +362,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     });
 
     getModule().getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-
+      private Sdk myPrevSdk;
       private String[] myDependencies;
 
       public void beforeRootsChange(final ModuleRootEvent event) {
@@ -388,22 +372,30 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (!isDisposed()) {
-              PsiDocumentManager.getInstance(getModule().getProject()).commitAllDocuments();
+            if (isDisposed()) {
+              return;
+            }
 
-              final PropertiesFile propertiesFile = AndroidUtils.findPropertyFile(getModule(), SdkConstants.FN_DEFAULT_PROPERTIES);
-              if (propertiesFile == null) {
-                return;
-              }
+            final Sdk newSdk = ModuleRootManager.getInstance(getModule()).getSdk();
+            if (newSdk != null && newSdk.getSdkType() instanceof AndroidSdkType && !newSdk.equals(myPrevSdk)) {
+              myPrevSdk = newSdk;
+              androidPlatformChanged();
+            }
 
-              updateTargetProperty(propertiesFile);
-              updateLibraryProperty(propertiesFile);
+            PsiDocumentManager.getInstance(getModule().getProject()).commitAllDocuments();
 
-              final String[] dependencies = collectDependencies();
-              if (myDependencies == null || !Comparing.equal(myDependencies, dependencies)) {
-                updateDependenciesInPropertyFile(propertiesFile, dependencies);
-                myDependencies = dependencies;
-              }
+            final PropertiesFile propertiesFile = AndroidUtils.findPropertyFile(getModule(), SdkConstants.FN_DEFAULT_PROPERTIES);
+            if (propertiesFile == null) {
+              return;
+            }
+
+            updateTargetProperty(propertiesFile);
+            updateLibraryProperty(propertiesFile);
+
+            final String[] dependencies = collectDependencies();
+            if (myDependencies == null || !Comparing.equal(myDependencies, dependencies)) {
+              updateDependenciesInPropertyFile(propertiesFile, dependencies);
+              myDependencies = dependencies;
             }
           }
         });
@@ -567,9 +559,9 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   @Nullable
   public SystemResourceManager getSystemResourceManager() {
     if (mySystemResourceManager == null) {
-      IAndroidTarget target = getConfiguration().getAndroidTarget();
-      if (target != null) {
-        mySystemResourceManager = new SystemResourceManager(getModule(), target);
+      AndroidPlatform platform = getConfiguration().getAndroidPlatform();
+      if (platform != null) {
+        mySystemResourceManager = new SystemResourceManager(getModule(), platform);
       }
     }
     return mySystemResourceManager;

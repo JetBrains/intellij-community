@@ -164,7 +164,7 @@ public class HighlightInfo implements Segment {
                                                   boolean isEndOfLine,
                                                   TextAttributes forcedAttributes) {
     LOG.assertTrue(ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, type.getSeverity(element)) != -1 || element != null, "Custom type demands element to detect text attributes");
-    HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, type, start, end, description, toolTip, type.getSeverity(null), isEndOfLine, null, false);
+    HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, type, start, end, description, toolTip, type.getSeverity(element), isEndOfLine, null, false);
     PsiFile file = element == null ? null : element.getContainingFile();
     for (HighlightInfoFilter filter : getFilters()) {
       if (!filter.accept(highlightInfo, file)) {

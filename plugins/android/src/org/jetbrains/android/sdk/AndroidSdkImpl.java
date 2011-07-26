@@ -232,6 +232,16 @@ public class AndroidSdkImpl extends AndroidSdk {
     }
 
     @Override
+    public String[] getAbiList() {
+      return myWrapee.getAbiList();
+    }
+
+    @Override
+    public String getImagePath(String abiType) {
+      return myWrapee.getImagePath(abiType);
+    }
+
+    @Override
     public boolean canRunOn(IAndroidTarget target) {
       return myWrapee.canRunOn(target);
     }

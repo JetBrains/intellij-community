@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
 import java.util.concurrent.TimeoutException;
@@ -82,6 +83,7 @@ public final class GitVersion implements Comparable<GitVersion> {
   /**
    * Parses output of "git version" command.
    */
+  @NotNull
   public static GitVersion parse(String output) throws ParseException {
     if (StringUtil.isEmptyOrSpaces(output)) {
       throw new ParseException("Empty git --version output: " + output, 0);
@@ -117,6 +119,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     return Integer.parseInt(match);
   }
 
+  @NotNull
   public static GitVersion identifyVersion(String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(gitExecutable);

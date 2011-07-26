@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.psi.codeStyle.DisplayPriority;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,7 +37,7 @@ public class ImportsSettingsProvider extends CodeStyleSettingsProvider {
   }
 
   @Override
-  public int getPriority() {
-    return CODE_PRIORITY;
+  public DisplayPriority getPriority() {
+    return DisplayPriority.CODE_SETTINGS;
   }
 }

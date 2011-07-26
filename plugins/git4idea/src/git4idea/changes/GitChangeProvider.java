@@ -38,6 +38,8 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.config.GitVersion;
+import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -62,15 +64,12 @@ public class GitChangeProvider implements ChangeProvider {
     myVcsManager = vcsManager;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void getChanges(final VcsDirtyScope dirtyScope,
                          final ChangelistBuilder builder,
                          final ProgressIndicator progress,
                          final ChangeListManagerGate addGate) throws VcsException {
-    
+
     final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRootsWithCheck();
     if (dirtyScope.getAffectedContentRoots().size() != affected.size()) {
       final Set<VirtualFile> set = new HashSet<VirtualFile>(affected);
@@ -85,13 +84,14 @@ public class GitChangeProvider implements ChangeProvider {
       final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand(), addGate,
                                                                myFileDocumentManager, myVcsManager);
       for (VirtualFile root : roots) {
-        ChangeCollector c = new ChangeCollector(myProject, myChangeListManager, dirtyScope, root);
-        final Collection<Change> changes = c.changes();
-        holder.changed(changes);
-        for (Change file : changes) {
+        GitChangesCollector collector = isNewGitChangeProviderAvailable()
+                                        ? GitNewChangesCollector.collect(myProject, myChangeListManager, dirtyScope, root)
+                                        : GitOldChangesCollector.collect(myProject, myChangeListManager, dirtyScope, root);
+        holder.changed(collector.getChanges());
+        for (Change file : collector.getChanges()) {
           builder.processChange(file, GitVcs.getKey());
         }
-        for (VirtualFile f : c.unversioned()) {
+        for (VirtualFile f : collector.getUnversionedFiles()) {
           builder.processUnversionedFile(f);
           holder.unversioned(f);
         }
@@ -103,6 +103,18 @@ public class GitChangeProvider implements ChangeProvider {
         vcs.getExecutableValidator().showNotificationOrThrow(e);
       }
     }
+  }
+
+  private boolean isNewGitChangeProviderAvailable() {
+    GitVcs vcs = GitVcs.getInstance(myProject);
+    if (vcs == null) {
+      return false;
+    }
+    final GitVersion version = vcs.getVersion();
+    if (version == null) {
+      return false;
+    }
+    return GitVersionSpecialty.KNOWS_STATUS_PORCELAIN.existsIn(version);
   }
 
   private static class MyNonChangedHolder {
@@ -163,16 +175,10 @@ public class GitChangeProvider implements ChangeProvider {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public boolean isModifiedDocumentTrackingRequired() {
     return true;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void doCleanup(final List<VirtualFile> files) {
   }
 }

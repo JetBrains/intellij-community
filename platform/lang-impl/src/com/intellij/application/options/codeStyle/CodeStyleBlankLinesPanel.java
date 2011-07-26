@@ -301,4 +301,9 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
       }
     }
   }
+
+  @Override
+  protected String getTabTitle() {
+    return ApplicationBundle.message("title.blank.lines");
+  }
 }

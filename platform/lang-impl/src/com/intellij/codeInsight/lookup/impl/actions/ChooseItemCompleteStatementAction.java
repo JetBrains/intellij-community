@@ -20,11 +20,14 @@ import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.lookup.impl.TypedHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 
 public class ChooseItemCompleteStatementAction extends EditorAction {
   public ChooseItemCompleteStatementAction(){
@@ -32,10 +35,20 @@ public class ChooseItemCompleteStatementAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public boolean executeInCommand(Editor editor, DataContext dataContext) {
+      return false;
+    }
+
+    @Override
+    public void execute(final Editor editor, final DataContext dataContext) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER);
-      ChooseItemAction.getLookup(editor).finishLookup(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
+      TypedHandler.finishLookup(Lookup.COMPLETE_STATEMENT_SELECT_CHAR, ChooseItemAction.getLookup(editor), new Runnable() {
+        public void run() {
+          EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_TAB).execute(editor, dataContext);
+        }
+      });
     }
 
     @Override
@@ -43,6 +56,8 @@ public class ChooseItemCompleteStatementAction extends EditorAction {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       return lookup != null && lookup.isFocused();
     }
+
+
   }
 
 }

@@ -23,7 +23,6 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -31,7 +30,6 @@ import java.awt.*;
 import java.awt.image.VolatileImage;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -52,13 +50,14 @@ public class IdeRepaintManager extends RepaintManager {
     return buffer;
   }
 
-  @SuppressWarnings({"unchecked"})
-  private void clearLeakyImages() {
+  // sync here is to avoid data race when two(!) AWT threads on startup try to compete for the single myImagesMap
+  private synchronized void clearLeakyImages() {
     if (myImagesMap == null) {
       try {
         Field volMapField = RepaintManager.class.getDeclaredField(FAULTY_FIELD_NAME);
         volMapField.setAccessible(true);
         myImagesMap = new WeakHashMap<GraphicsConfiguration, VolatileImage>();
+        @SuppressWarnings("unchecked")
         Map<GraphicsConfiguration, VolatileImage> map =
           (Map<GraphicsConfiguration, VolatileImage>)volMapField.get(this);
         if (map != null) {

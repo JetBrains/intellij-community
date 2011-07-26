@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +57,7 @@ public class WrappingAndBracesSettingsProvider extends CodeStyleSettingsProvider
   }
 
   @Override
-  public int getPriority() {
-    return COMMON_SETTINGS_PRIORITY;
+  public DisplayPriority getPriority() {
+    return DisplayPriority.COMMON_SETTINGS;
   }
 }

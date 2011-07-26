@@ -29,7 +29,7 @@ import java.util.List;
  * User: anna
  * Date: May 11, 2005
  */
-public final class EmptyIntentionAction implements IntentionAction{
+public final class EmptyIntentionAction implements IntentionAction, LowPriorityAction{
   private final String myName;
 
   public EmptyIntentionAction(@NotNull String name) {

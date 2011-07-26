@@ -208,7 +208,7 @@ class GitLogRecord {
       case 'A':
         before = null;
         status = FileStatus.ADDED;
-        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false);
+        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
         break;
       case 'U':
         status = FileStatus.MERGED_WITH_CONFLICTS;
@@ -216,21 +216,21 @@ class GitLogRecord {
         if (status == null) {
           status = FileStatus.MODIFIED;
         }
-        final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, false, true);
+        final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, false, true, true);
         before = GitContentRevision.createMultipleParentsRevision(project, filePath, parentRevisions);
-        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false);
+        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
         break;
       case 'D':
         status = FileStatus.DELETED;
-        final FilePath filePathDeleted = GitContentRevision.createPath(vcsRoot, path, true, true);
+        final FilePath filePathDeleted = GitContentRevision.createPath(vcsRoot, path, true, true, true);
         before = GitContentRevision.createMultipleParentsRevision(project, filePathDeleted, parentRevisions);
         after = null;
         break;
       case 'R':
         status = FileStatus.MODIFIED;
-        final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, parts.get(2), false, false);
+        final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, parts.get(2), false, false, true);
         after = GitContentRevision.createMultipleParentsRevision(project, filePathAfterRename, parentRevisions);
-        before = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true, true);
+        before = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true, true, true);
         break;
       default:
         throw new VcsException("Unknown file status: " + Arrays.asList(parts));

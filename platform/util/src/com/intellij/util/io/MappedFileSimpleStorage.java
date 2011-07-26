@@ -13,9 +13,9 @@ final class MappedFileSimpleStorage implements ISimpleStorage {
     storage = new ResizeableMappedFile(file, initialSize, PersistentEnumeratorBase.ourLock);
   }
 
-  public MappedFileSimpleStorage(File file, int initialSize, int pageSize, float growFactor, boolean zeroPagesWhenExpand) throws IOException {
+  public MappedFileSimpleStorage(File file, int initialSize, int pageSize, boolean zeroPagesWhenExpand) throws IOException {
     FileUtil.createIfDoesntExist(file);
-    storage = new ResizeableMappedFile(file, initialSize, PersistentEnumeratorBase.ourLock, pageSize, growFactor, zeroPagesWhenExpand);
+    storage = new ResizeableMappedFile(file, initialSize, PersistentEnumeratorBase.ourLock, pageSize, zeroPagesWhenExpand);
   }
 
   @Override

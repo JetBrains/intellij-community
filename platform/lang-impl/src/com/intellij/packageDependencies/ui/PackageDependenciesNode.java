@@ -185,7 +185,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     if (psiElement == null) return null;
     final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return null;
-    return new OpenFileDescriptor(getProject(), virtualFile);
+    return new OpenFileDescriptor(getProject(), virtualFile, psiElement.getTextOffset());
   }
 
   public Object getUserObject() {

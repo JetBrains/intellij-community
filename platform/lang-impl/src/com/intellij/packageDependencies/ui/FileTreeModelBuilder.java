@@ -17,6 +17,7 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.scopeView.nodes.BasePsiNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,14 +35,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -69,6 +73,8 @@ public class FileTreeModelBuilder {
   private int myTotalFileCount = 0;
   private int myMarkedFileCount = 0;
 
+  private JTree myTree;
+
   public FileTreeModelBuilder(Project project, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
     final boolean multiModuleProject = ModuleManager.getInstance(myProject).getModules().length > 1;
@@ -83,6 +89,9 @@ public class FileTreeModelBuilder {
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
+  public void setTree(DnDAwareTree tree) {
+    myTree = tree;
+  }
 
   public static synchronized TreeModel createTreeModel(Project project, boolean showProgress, Set<PsiFile> files, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     return new FileTreeModelBuilder(project, marker, settings).build(files, showProgress);
@@ -335,7 +344,10 @@ public class FileTreeModelBuilder {
   }
 
   @Nullable
-  public PackageDependenciesNode findNode(PsiFile file, final PsiElement psiElement) {
+  public PackageDependenciesNode findNode(PsiFileSystemItem file, final PsiElement psiElement) {
+    if (file instanceof PsiDirectory) {
+      return getModuleDirNode(file.getVirtualFile(), myFileIndex.getModuleForFile(file.getVirtualFile()), null);
+    }
     PackageDependenciesNode parent = getFileParentNode(file.getVirtualFile());
     PackageDependenciesNode[] nodes = findNodeForPsiElement(parent, file);
     if (nodes == null || nodes.length == 0) {
@@ -386,6 +398,10 @@ public class FileTreeModelBuilder {
       if (myCompactEmptyMiddlePackages) {
         DirectoryNode nestedNode = ((DirectoryNode)directoryNode).getCompactedDirNode();
         if (nestedNode != null) { //decompact
+          boolean expand = false;
+          if (myTree != null){
+            expand = !myTree.isCollapsed(new TreePath(directoryNode.getPath()));
+          }
           DirectoryNode parentWrapper = nestedNode.getWrapper();
           while (parentWrapper.getWrapper() != null) {
             parentWrapper = parentWrapper.getWrapper();
@@ -396,6 +412,9 @@ public class FileTreeModelBuilder {
           ((DirectoryNode)directoryNode).setCompactedDirNode(null);
           parentWrapper.add(nestedNode);
           nestedNode.removeUpReference();
+          if (myTree != null && expand) {
+            myTree.expandPath(new TreePath(nestedNode.getPath()));
+          }
           return parentWrapper;
         }
         if (directoryNode.getParent() == null) {    //find first node in tree

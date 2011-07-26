@@ -24,6 +24,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -35,10 +36,12 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EditorPopupHandler;
 
 import java.awt.*;
@@ -101,6 +104,8 @@ public class EditorActionUtil {
     Document document = editor.getDocument();
     int spacesEnd = 0;
     int lineStart = 0;
+    int tabsEnd = 0;
+    boolean inTabs = true;
     if (lineNumber < document.getLineCount()) {
       lineStart = document.getLineStartOffset(lineNumber);
       int lineEnd = document.getLineEndOffset(lineNumber);
@@ -111,21 +116,29 @@ public class EditorActionUtil {
           break;
         }
         char c = text.charAt(spacesEnd);
-        if (c != '\t' && c != ' ') {
-          break;
+        if (c != '\t') {
+          if (inTabs) {
+            inTabs = false;
+            tabsEnd = spacesEnd;
+          }
+          if (c != ' ') break;
         }
       }
     }
     int oldLength = editor.offsetToLogicalPosition(spacesEnd).column;
+    tabsEnd = editor.offsetToLogicalPosition(tabsEnd).column;
 
     int newLength = oldLength + indent;
     if (newLength < 0) {
       newLength = 0;
     }
+    tabsEnd += indent;
+    if (tabsEnd < 0) tabsEnd = 0;
+    if (!shouldUseSmartTabs(project, editor)) tabsEnd = newLength;
     StringBuilder buf = new StringBuilder(newLength);
     int tabSize = editorSettings.getTabSize(project);
     for (int i = 0; i < newLength;) {
-      if (tabSize > 0 && editorSettings.isUseTabCharacter(project) && i + tabSize <= newLength) {
+      if (tabSize > 0 && editorSettings.isUseTabCharacter(project) && i + tabSize <= tabsEnd) {
         buf.append('\t');
         i += tabSize;
       }
@@ -155,6 +168,14 @@ public class EditorActionUtil {
     }
 
     editor.getCaretModel().moveToOffset(newCaretOffset);
+  }
+
+  private static boolean shouldUseSmartTabs(Project project, Editor editor) {
+    if (!(editor instanceof EditorEx)) return false;
+    VirtualFile file = ((EditorEx)editor).getVirtualFile();
+    FileType fileType = file == null ? null : file.getFileType();
+    if (fileType == null) return false;
+    return CodeStyleFacade.getInstance(project).isSmartTabs(fileType);
   }
 
   public static boolean isWordStart(CharSequence text, int offset, boolean isCamel) {

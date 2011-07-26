@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,15 +34,14 @@ import java.util.List;
  * @author yole
  */
 public class AppUIUtil {
-  private AppUIUtil() {
-  }
+  private AppUIUtil() { }
 
   public static void updateFrameIcon(final Frame frame) {
     frame.setIconImages(getAppIconImages());
   }
 
   public static List<Image> getAppIconImages() {
-    List<Image> images = new ArrayList<Image>();
+    final List<Image> images = new ArrayList<Image>();
     images.add(ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getIconUrl()));
     images.add(ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getSmallIconUrl()));
     return images;
@@ -55,13 +55,27 @@ public class AppUIUtil {
     final Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       runnable.run();
-    } else {
+    }
+    else {
       application.invokeLater(runnable, new Condition() {
         @Override
         public boolean value(Object o) {
-          return (! project.isOpen()) || project.isDisposed();
+          return (!project.isOpen()) || project.isDisposed();
         }
       });
     }
+  }
+
+  public static void updateFrameClass(final String productName) {
+    try {
+      final Toolkit toolkit = Toolkit.getDefaultToolkit();
+      final Class<? extends Toolkit> aClass = toolkit.getClass();
+      if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
+        final Field awtAppClassName = aClass.getDeclaredField("awtAppClassName");
+        awtAppClassName.setAccessible(true);
+        awtAppClassName.set(toolkit, productName);
+      }
+    }
+    catch (Exception ignore) { }
   }
 }

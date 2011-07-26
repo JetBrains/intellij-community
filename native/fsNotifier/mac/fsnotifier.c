@@ -109,7 +109,8 @@ void callback(ConstFSEventStreamRef streamRef,
  
     int i;
     for (i=0; i<numEvents; i++) {
-      FSEventStreamEventFlags flags = eventFlags[i];
+      // TODO Lion has much more detailed flags we need accurately process. For now just reduce to SL events range
+      FSEventStreamEventFlags flags = eventFlags[i] & 0xFF; 
       if (flags == kFSEventStreamEventFlagMount || flags == kFSEventStreamEventFlagUnmount) {
         ReportMountedFileSystems();
       }
@@ -117,7 +118,7 @@ void callback(ConstFSEventStreamRef streamRef,
         printf("RECDIRTY\n");
         printf("%s\n", paths[i]);
       }
-      else if (eventFlags[i] != kFSEventStreamEventFlagNone) {
+      else if (flags != kFSEventStreamEventFlagNone) {
         printf("RESET\n");
       }
       else {

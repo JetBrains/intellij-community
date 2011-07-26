@@ -16,9 +16,7 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
-import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
@@ -28,9 +26,14 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -46,6 +49,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     super(originalHandler);
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext){
     assert !inside;
     inside = true;
@@ -57,7 +61,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       }
 
       if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
-         return;
+        return;
       }
 
       final CharFilter.Result result = getLookupAction(charTyped, lookup);
@@ -93,8 +97,17 @@ public class TypedHandler extends TypedActionHandlerBase {
         LookupElement item = lookup.getCurrentItem();
         if (item != null){
           inside = false;
-          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
-          lookup.finishLookup(charTyped);
+          ((CommandProcessorEx)CommandProcessor.getInstance()).enterModal();
+          try {
+            finishLookup(charTyped, lookup, new Runnable() {
+              public void run() {
+                EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
+              }
+            });
+          }
+          finally {
+            ((CommandProcessorEx)CommandProcessor.getInstance()).leaveModal();
+          }
           return;
         }
       }
@@ -105,6 +118,39 @@ public class TypedHandler extends TypedActionHandlerBase {
     finally {
       inside = false;
     }
+  }
+
+  public static void finishLookup(final char charTyped, @NotNull final LookupImpl lookup, final Runnable baseChange) {
+    Editor editor = lookup.getEditor();
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
+    CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
+    SelectionModel sm = editor.getSelectionModel();
+    final boolean smartUndo = !sm.hasSelection() && !sm.hasBlockSelection() && process != null && process.isAutopopupCompletion();
+    final Runnable restore = CodeCompletionHandlerBase.rememberDocumentState(editor);
+    if (smartUndo) {
+      CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
+        @Override
+        public void run() {
+          lookup.performGuardedChange(baseChange);
+        }
+      }, null, "Just insert the completion char");
+    }
+
+    CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
+      @Override
+      public void run() {
+        if (smartUndo) {
+          AccessToken token = WriteAction.start();
+          try {
+            lookup.performGuardedChange(restore);
+          }
+          finally {
+            token.finish();
+          }
+        }
+        lookup.finishLookup(charTyped);
+      }
+    }, null, "Undo inserting the completion char and select the item");
   }
 
   static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {

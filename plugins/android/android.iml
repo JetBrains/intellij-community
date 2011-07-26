@@ -31,20 +31,28 @@
           <root url="jar://$MODULE_DIR$/lib/androidprefs.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/jarutils.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/common.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/ide_common.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/ninepatch.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/layoutlib_api.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/kxml2-2.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MODULE_DIR$/lib/src/ddmlib_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/sdklib_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/androidprefs_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/jarutils.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/ide_common_src.zip!/src" />
           <root url="jar://$MODULE_DIR$/lib/src/common_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/jarutils.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/layoutlib_api_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/androidprefs_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/sdklib_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/ninepatch_src.zip!/src" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="maven" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="properties" />
+    <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
   </component>
 </module>
 
