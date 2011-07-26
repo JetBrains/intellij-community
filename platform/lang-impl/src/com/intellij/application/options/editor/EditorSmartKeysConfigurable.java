@@ -113,7 +113,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   public JComponent createComponent() {
     for (UnnamedConfigurable provider : getConfigurables()) {
       myAddonPanel.add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                                            GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
+                                                                            GridBagConstraints.NONE, new Insets(3,0,5,0), 0,0));
     }
     return myRootPanel;
   }

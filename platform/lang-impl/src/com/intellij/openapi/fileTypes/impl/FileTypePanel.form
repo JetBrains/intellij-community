@@ -3,7 +3,7 @@
   <grid id="975b3" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="40" y="17" width="426" height="402"/>
+      <xy x="40" y="17" width="426" height="416"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -27,7 +27,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
         <border type="none" title-resource-bundle="messages/IdeBundle" title-key="editbox.ignore.files.and.folders"/>
         <children>
