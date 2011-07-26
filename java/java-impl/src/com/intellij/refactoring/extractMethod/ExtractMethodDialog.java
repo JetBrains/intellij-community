@@ -185,11 +185,9 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   }
 
   protected JComponent createNorthPanel() {
-    JPanel main = new JPanel(new BorderLayout());
-    main.add(SeparatorFactory.createSeparator(RefactoringBundle.message("extract.method.method.panel.border"), null), BorderLayout.NORTH);
-    JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 2, true, false));
-
-    JLabel nameLabel = new JLabel();
+    final JPanel main = new JPanel(new BorderLayout());
+    final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 2, true, false));
+    final JLabel nameLabel = new JLabel();
     nameLabel.setText(RefactoringBundle.message("name.prompt"));
     namePanel.add(nameLabel);
     namePanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 0));
