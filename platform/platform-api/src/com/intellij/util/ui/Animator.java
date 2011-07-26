@@ -62,8 +62,7 @@ public abstract class Animator implements Disposable {
     myCurrentFrame = forward ? 0 : totalFrames;
 
     Application application = ApplicationManager.getApplication();
-    myTimer = application == null || application.isUnitTestMode() ? null :
-              new Timer(name, myCycleLength / myTotalFrames) {
+    myTimer = new Timer(name, myCycleLength / myTotalFrames) {
       protected void onTimer() throws InterruptedException {
         boolean repaint = true;
         if (!isAnimated()) {
