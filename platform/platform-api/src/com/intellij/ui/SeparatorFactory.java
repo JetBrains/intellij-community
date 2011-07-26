@@ -31,7 +31,10 @@ public class SeparatorFactory {
   }
 
   public static JComponent createSeparator(String textWithMnemonic, @Nullable JComponent labelFor) {
+    Color oldColor = UIManager.getColor("Separator.foreground");
+    UIManager.put("Separator.foreground", UIUtil.getBorderColor());
     final JComponent separator = DefaultComponentFactory.getInstance().createSeparator(textWithMnemonic);
+    UIManager.put("Separator.foreground", oldColor);
     if (labelFor != null) {
       ((JLabel) separator.getComponent(0)).setLabelFor(labelFor);
     }
