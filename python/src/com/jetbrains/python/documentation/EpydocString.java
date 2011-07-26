@@ -4,9 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -14,6 +12,7 @@ import java.util.Map;
 public class EpydocString extends StructuredDocString {
   public static String[] RAISES_TAGS = new String[] { "raises", "raise", "except", "exception" };
   public static String[] PARAM_TAGS = new String[] { "param", "parameter", "arg", "argument" };
+  public static String[] PARAM_TYPE_TAGS = new String[] { "type" };
   public static String[] RETURN_TAGS = new String[] { "return", "returns" };
   public static String[] RTYPE_TAGS = new String[] { "rtype", "returntype" };
   public static String[] KEYWORD_ARGUMENT_TAGS = new String[] { "keyword", "kwarg", "kwparam" };
@@ -45,19 +44,18 @@ public class EpydocString extends StructuredDocString {
 
   @Override
   public List<String> getParameters() {
-    return getTagArguments(PARAM_TAGS);
+    return toUniqueStrings(getParameterSubstrings());
   }
 
   @Override
   public List<String> getKeywordArguments() {
-    return getTagArguments(KEYWORD_ARGUMENT_TAGS);
+    return toUniqueStrings(getKeywordArgumentSubstrings());
   }
 
   @Override
   @Nullable
   public String getReturnType() {
-    String value = getTagValue(RTYPE_TAGS);
-    return removeInlineMarkup(value);
+    return removeInlineMarkup(getReturnTypeSubstring());
   }
 
   @Override
@@ -68,14 +66,13 @@ public class EpydocString extends StructuredDocString {
   @Override
   @Nullable
   public String getParamType(@Nullable String paramName) {
-    String value = paramName == null ? getTagValue("type") : getTagValue("type", paramName);
-    return removeInlineMarkup(value);
+    return removeInlineMarkup(getParamTypeSubstring(paramName));
   }
 
   @Override
   @Nullable
   public String getParamDescription(String paramName) {
-    String value = getTagValue(PARAM_TAGS, paramName);
+    Substring value = getTagValue(PARAM_TAGS, paramName);
     if (value == null) {
       value = getTagValue(PARAM_TAGS, "*" + paramName);
     }
@@ -92,7 +89,7 @@ public class EpydocString extends StructuredDocString {
 
   @Override
   public List<String> getRaisedExceptions() {
-    return getTagArguments(RAISES_TAGS);
+    return toUniqueStrings(getTagArguments(RAISES_TAGS));
   }
 
   @Override
@@ -102,16 +99,22 @@ public class EpydocString extends StructuredDocString {
 
   @Override
   public String getAttributeDescription() {
-    return convertInlineMarkup(getTagValue(VARIABLE_TAGS), true);
+    final Substring value = getTagValue(VARIABLE_TAGS);
+    return convertInlineMarkup(value != null ? value.toString() : null, true);
   }
 
   @Nullable
-  public static String removeInlineMarkup(String s) {
+  public static String removeInlineMarkup(@Nullable String s) {
     return convertInlineMarkup(s, false);
   }
 
   @Nullable
-  private static String convertInlineMarkup(String s, boolean toHTML) {
+  private static String removeInlineMarkup(@Nullable Substring s) {
+    return convertInlineMarkup(s != null ? s.concatTrimmedLines(" ") : null, false);
+  }
+
+  @Nullable
+  private static String convertInlineMarkup(@Nullable String s, boolean toHTML) {
     if (s == null) return null;
     MarkupConverter converter = toHTML ? new HTMLConverter() : new MarkupConverter();
     converter.appendWithMarkup(s);
@@ -245,14 +248,19 @@ public class EpydocString extends StructuredDocString {
   }
 
   @Nullable
-  public static String inlineMarkupToHTML(String s) {
+  public static String inlineMarkupToHTML(@Nullable String s) {
     return convertInlineMarkup(s, true);
+  }
+
+  @Nullable
+  private static String inlineMarkupToHTML(@Nullable Substring s) {
+    return inlineMarkupToHTML(s != null ? s.concatTrimmedLines(" ") : null);
   }
 
   public List<String> getAdditionalTags() {
     List<String> list = new ArrayList<String>();
     for (String tagName : ADDITIONAL) {
-      final Map<String, String> map = myArgTagValues.get(tagName);
+      final Map<Substring, Substring> map = myArgTagValues.get(tagName);
       if (map != null) {
         list.add(tagName);
       }
@@ -260,4 +268,26 @@ public class EpydocString extends StructuredDocString {
     return list;
   }
 
+  @Override
+  public List<Substring> getParameterSubstrings() {
+    final List<Substring> results = new ArrayList<Substring>();
+    results.addAll(getTagArguments(PARAM_TAGS));
+    results.addAll(getTagArguments(PARAM_TYPE_TAGS));
+    return results;
+  }
+
+  @Override
+  public List<Substring> getKeywordArgumentSubstrings() {
+    return getTagArguments(KEYWORD_ARGUMENT_TAGS);
+  }
+
+  @Override
+  public Substring getReturnTypeSubstring() {
+    return getTagValue(RTYPE_TAGS);
+  }
+
+  @Override
+  Substring getParamTypeSubstring(@Nullable String paramName) {
+    return paramName == null ? getTagValue("type") : getTagValue("type", paramName);
+  }
 }

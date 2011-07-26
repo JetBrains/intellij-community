@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.documentation.EpydocString;
+import com.jetbrains.python.documentation.Substring;
 
 import java.util.List;
 
@@ -11,19 +12,25 @@ import java.util.List;
 public class EpydocStringTest extends UsefulTestCase {
   public void testTagValue() {
     EpydocString docString = new EpydocString("@rtype: C{str}");
-    assertEquals("C{str}", docString.getTagValue("rtype"));
+    Substring s = docString.getTagValue("rtype");
+    assertNotNull(s);
+    assertEquals("C{str}", s.toString());
   }
 
   public void testTagWithParamValue() {
     EpydocString docString = new EpydocString("@type m: number");
-    assertEquals("number", docString.getTagValue("type", "m"));
+    final Substring s = docString.getTagValue("type", "m");
+    assertNotNull(s);
+    assertEquals("number", s.toString());
   }
 
   public void testMultilineTag() {
     EpydocString docString = new EpydocString("    @param b: The y intercept of the line.  The X{y intercept} of a\n" +
                                               "              line is the point at which it crosses the y axis (M{x=0}).");
+    final Substring s = docString.getTagValue("param", "b");
+    assertNotNull(s);
     assertEquals("The y intercept of the line.  The X{y intercept} of a line is the point at which it crosses the y axis (M{x=0}).",
-                 docString.getTagValue("param", "b"));
+                 s.concatTrimmedLines(" "));
 
   }
 

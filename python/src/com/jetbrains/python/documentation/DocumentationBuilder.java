@@ -457,11 +457,12 @@ class DocumentationBuilder {
       result.append("<br/><br/><b>Additional:</b><br/>");
       result.append("<table>");
       for (String tagName : additionalTags) {
-        final List<String> args = docString.getTagArguments(tagName);
-        for(String arg : args) {
+        final List<Substring> args = docString.getTagArguments(tagName);
+        for(Substring arg : args) {
+          final String s = arg.toString();
           result.append("<tr><td align=\"right\"><b>").append(tagName);
-          result.append(" ").append(arg).append(":</b>");
-          result.append("</td><td>").append(docString.getTagValue(tagName, arg)).append("</td></tr>");
+          result.append(" ").append(s).append(":</b>");
+          result.append("</td><td>").append(docString.getTagValue(tagName, s)).append("</td></tr>");
         }
         result.append("</table>");
       }
