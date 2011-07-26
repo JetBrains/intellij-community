@@ -262,8 +262,16 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     return values;
   }
 
-  public interface RecordsProcessor {
-    boolean process(int record) throws IOException;
+  public static abstract class RecordsProcessor {
+    private int myKey;
+
+    public abstract boolean process(int record) throws IOException;
+    void setCurrentKey(int key) {
+      myKey = key;
+    }
+    int getCurrentKey() {
+      return myKey;
+    }
   }
 
   public abstract boolean traverseAllRecords(RecordsProcessor p) throws IOException;

@@ -16,6 +16,8 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -140,6 +142,21 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return allocEmptyPage(myLogicalFileLength);
   }
 
+  public boolean processAllDataObject(final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
+    if(myInlineKeysNoMapping) {
+      return traverseAllRecords(new RecordsProcessor() {
+        public boolean process(final int record) throws IOException {
+          if (filter == null || filter.accept(record)) {
+            Data data = ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(getCurrentKey());
+            return processor.process(data);
+          }
+          return true;
+        }
+      });
+    }
+    return super.processAllDataObject(processor, filter);
+  }
+
   @Override
   public boolean traverseAllRecords(RecordsProcessor p) throws IOException {
     synchronized (ourLock) {
@@ -150,7 +167,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         out:
         for(IntToIntBtree.BtreeIndexNodeView value:leafPages) {
           for(int i = 0; i < value.getChildrenCount(); ++i) {
-            if (!p.process(value.keyAt(i))) break out;
+            int key = value.keyAt(i);
+            Integer record = btree.get(key);
+            p.setCurrentKey(key);
+            assert record != null;
+            if (!p.process(record)) break out;
           }
         }
         return true;
@@ -248,7 +269,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         if (keyValue != null) return indexNodeValueAddress;
       }
 
-      int newValueId = writeData(value, valueHC);  // TODO: we can store at Btree leaf index
+      int newValueId = writeData(value, valueHC);
       ++valuesCount;
 
       if (valuesCount % 10000 == 0 && IOStatistics.DEBUG) {
