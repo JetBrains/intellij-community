@@ -297,13 +297,13 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       VirtualFile parent = file.getParent();
       if (parent == null) return;
 
-      IndexState newState = myState.copy();
-      updateStateWithNewFile(file, parent, newState);
-      myState = newState;
+      myState = updateStateWithNewFile(file, parent);
     }
 
-    private void updateStateWithNewFile(VirtualFile file, VirtualFile parent, IndexState state) {
-      DirectoryInfo parentInfo = state.myDirToInfoMap.get(parent);
+    private IndexState updateStateWithNewFile(VirtualFile file, VirtualFile parent) {
+      final IndexState originalState = myState;
+      IndexState state = originalState;
+      DirectoryInfo parentInfo = originalState.myDirToInfoMap.get(parent);
 
       // fill info for all nested roots
       for (Module eachModule : ModuleManager.getInstance(myProject).getModules()) {
@@ -315,6 +315,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
             if (rel != null) {
               VirtualFile f = file.findFileByRelativePath(rel);
               if (f != null) {
+                if (state == originalState) state = state.copy();
                 state.fillMapWithModuleContent(f, eachModule, f);
               }
             }
@@ -322,14 +323,15 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         }
       }
 
-      if (parentInfo == null) return;
+      if (parentInfo == null) return state;
 
       Module module = parentInfo.module;
 
       for (DirectoryIndexExcludePolicy policy : myExcludePolicies) {
-        if (policy.isExcludeRoot(file)) return;
+        if (policy.isExcludeRoot(file)) return state;
       }
 
+      if (state == originalState) state = state.copy();
       state.fillMapWithModuleContent(file, module, parentInfo.contentRoot);
 
       String parentPackage = state.myDirToPackageName.get(parent);
@@ -354,6 +356,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (!parentInfo.getOrderEntries().isEmpty()) {
         state.fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, parentInfo, null);
       }
+      return state;
     }
 
     public void beforeFileDeletion(VirtualFileEvent event) {
