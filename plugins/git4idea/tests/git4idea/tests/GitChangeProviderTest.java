@@ -29,7 +29,7 @@ import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.MockDirtyScope;
 import com.intellij.ui.GuiUtils;
 import git4idea.GitVcs;
-import git4idea.changes.GitChangeProvider;
+import git4idea.status.GitChangeProvider;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

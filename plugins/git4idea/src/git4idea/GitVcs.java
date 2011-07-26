@@ -52,7 +52,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.branch.GitBranchWidget;
-import git4idea.changes.GitChangeProvider;
+import git4idea.status.GitChangeProvider;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;

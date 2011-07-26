@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.changes;
+package git4idea.status;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -38,6 +38,7 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.changes.GitChangeUtils;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ import java.util.Set;
  * Git repository change provider
  */
 public class GitChangeProvider implements ChangeProvider {
-  private static final Logger LOG = Logger.getInstance("#git4idea.changes.GitChangeProvider");
+  private static final Logger LOG = Logger.getInstance(GitChangeProvider.class);
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
   private FileDocumentManager myFileDocumentManager;
