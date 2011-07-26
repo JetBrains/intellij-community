@@ -37,7 +37,9 @@ public class GenerateComponentExternalizationAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction");
 
   @NonNls private final static String BASE_COMPONENT = "com.intellij.openapi.components.BaseComponent";
-  @NonNls private final static String JDOM_EXTERN = "com.intellij.openapi.util.JDOMExternalizable";
+  @NonNls private final static String PERSISTENCE_STATE_COMPONENT = "com.intellij.openapi.components.PersistentStateComponent";
+  @NonNls private final static String STATE = "com.intellij.openapi.components.State";
+  @NonNls private final static String STORAGE = "com.intellij.openapi.components.Storage";
 
   public void actionPerformed(AnActionEvent e) {
     final PsiClass target = getComponentInContext(e.getDataContext());
@@ -45,8 +47,8 @@ public class GenerateComponentExternalizationAction extends AnAction {
 
     final PsiElementFactory factory = JavaPsiFacade.getInstance(target.getProject()).getElementFactory();
     final CodeStyleManager formatter = target.getManager().getCodeStyleManager();
-
-
+    final JavaCodeStyleManager styler = JavaCodeStyleManager.getInstance(target.getProject());
+    final String qualifiedName = target.getQualifiedName();
     Runnable runnable = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -54,25 +56,35 @@ public class GenerateComponentExternalizationAction extends AnAction {
             try {
               final PsiReferenceList implList = target.getImplementsList();
               assert implList != null;
-
-              implList.add(factory.createReferenceElementByFQClassName(JDOM_EXTERN, target.getResolveScope()));
+              final PsiJavaCodeReferenceElement referenceElement =
+                factory.createReferenceFromText(PERSISTENCE_STATE_COMPONENT + "<" + qualifiedName + ">", target);
+              implList.add(styler.shortenClassReferences(referenceElement.copy()));
               PsiMethod read = factory.createMethodFromText(
-                "public void readExternal(org.jdom.Element element) throws com.intellij.openapi.util.InvalidDataException { com.intellij.openapi.util.DefaultJDOMExternalizer.readExternal(this, element); }",
+                "public void loadState(" + qualifiedName + " state) {\n" +
+                "    com.intellij.util.xmlb.XmlSerializerUtil.copyBean(state, this);\n" +
+                "}",
                 target
               );
 
               read = (PsiMethod)formatter.reformat(target.add(read));
-
-              final JavaCodeStyleManager styler = JavaCodeStyleManager.getInstance(target.getProject());
               styler.shortenClassReferences(read);
 
               PsiMethod write = factory.createMethodFromText(
-                "public void writeExternal(org.jdom.Element element) throws com.intellij.openapi.util.WriteExternalException { com.intellij.openapi.util.DefaultJDOMExternalizer.writeExternal(this, element); }",
+                "public " + qualifiedName + " getState() {\n" +
+                "    return this;\n" +
+                "}\n",
                 target
               );
-
               write = (PsiMethod)formatter.reformat(target.add(write));
               styler.shortenClassReferences(write);
+
+              PsiAnnotation annotation = target.getModifierList().addAnnotation(STATE);
+
+              annotation = (PsiAnnotation)formatter.reformat(annotation.replace(
+                factory.createAnnotationFromText("@" + STATE +
+                                                 "(name = \"" + qualifiedName + "\", " +
+                                                 "storages = {@" + STORAGE + "(file = \"$WORKSPACE_FILE$\"\n )})", target)));
+              styler.shortenClassReferences(annotation);
             }
             catch (IncorrectOperationException e1) {
               LOG.error(e1);
@@ -105,7 +117,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
     PsiClass componentClass = JavaPsiFacade.getInstance(file.getProject()).findClass(BASE_COMPONENT, file.getResolveScope());
     if (componentClass == null || !contextClass.isInheritor(componentClass, true)) return null;
 
-    PsiClass externClass = JavaPsiFacade.getInstance(file.getProject()).findClass(JDOM_EXTERN, file.getResolveScope());
+    PsiClass externClass = JavaPsiFacade.getInstance(file.getProject()).findClass(PERSISTENCE_STATE_COMPONENT, file.getResolveScope());
     if (externClass == null || contextClass.isInheritor(externClass, true)) return null;
 
 
