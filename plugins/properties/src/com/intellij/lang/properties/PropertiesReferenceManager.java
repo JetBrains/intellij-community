@@ -16,6 +16,8 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.xml.XmlPropertiesFile;
+import com.intellij.lang.properties.xml.XmlPropertiesIndex;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -24,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -115,18 +118,35 @@ public class PropertiesReferenceManager {
                                       @NotNull final PropertiesFileProcessor processor,
                                       @NotNull final BundleNameEvaluator evaluator) {
 
-    return FileBasedIndex.getInstance().processValues(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, null, new FileBasedIndex.ValueProcessor<Void>() {
-      public boolean process(VirtualFile file, Void value) {
+    boolean result = FileBasedIndex.getInstance()
+      .processValues(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, null, new FileBasedIndex.ValueProcessor<Void>() {
+          public boolean process(VirtualFile file, Void value) {
 
-        final PsiFile psiFile = myPsiManager.findFile(file);
-        if (psiFile instanceof PropertiesFile){
-          final String qName = evaluator.evaluateBundleName(psiFile);
-          if (qName != null) {
-            if (!processor.process(qName, (PropertiesFile) psiFile)) return false;
+            final PsiFile psiFile = myPsiManager.findFile(file);
+            if (psiFile instanceof PropertiesFile) {
+              final String qName = evaluator.evaluateBundleName(psiFile);
+              if (qName != null) {
+                if (!processor.process(qName, (PropertiesFile)psiFile)) return false;
+              }
+            }
+            return true;
           }
-        }
-        return true;
-      }
-    }, searchScope);
+        },
+                     searchScope);
+    if (!result) return false;
+    return FileBasedIndex.getInstance().processValues(XmlPropertiesIndex.NAME, XmlPropertiesIndex.MARKER_KEY, null,
+                                                      new FileBasedIndex.ValueProcessor<String>() {
+                                                        public boolean process(VirtualFile file, String value) {
+
+                                                          final PsiFile psiFile = myPsiManager.findFile(file);
+                                                          if (psiFile instanceof XmlFile) {
+                                                            final String qName = evaluator.evaluateBundleName(psiFile);
+                                                            if (qName != null) {
+                                                              if (!processor.process(qName, new XmlPropertiesFile((XmlFile)psiFile))) return false;
+                                                            }
+                                                          }
+                                                          return true;
+                                                        }
+                                                      }, searchScope);
   }
 }

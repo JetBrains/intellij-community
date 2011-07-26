@@ -52,7 +52,7 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
     if (module == null) {
       return null;
     }
-    final PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(myBundleName, module);
+    final PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(myBundleName, module, null);
     if (propertiesFile == null) {
       return null;
     }

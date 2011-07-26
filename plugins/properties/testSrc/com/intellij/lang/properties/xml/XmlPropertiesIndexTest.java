@@ -12,27 +12,28 @@ import java.util.Map;
 public class XmlPropertiesIndexTest extends TestCase {
 
   public void testIndex() throws Exception {
-    Map<String,String> map = new XmlPropertiesIndex().map(new FileContent(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                                           "<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n" +
-                                                                           "<properties>\n" +
-                                                                           "<comment>Hi</comment>\n" +
-                                                                           "<entry key=\"foo\">bar</entry>\n" +
-                                                                           "<entry key=\"fu\">baz</entry>\n" +
-                                                                           "</properties>").getBytes()));
+    Map<XmlPropertiesIndex.Key, String> map = new XmlPropertiesIndex().map(new FileContent(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                                                                            "<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n" +
+                                                                                            "<properties>\n" +
+                                                                                            "<comment>Hi</comment>\n" +
+                                                                                            "<entry key=\"foo\">bar</entry>\n" +
+                                                                                            "<entry key=\"fu\">baz</entry>\n" +
+                                                                                            "</properties>").getBytes()));
 
-    assertEquals(2, map.size());
-    assertEquals("bar", map.get("foo"));
-    assertEquals("baz", map.get("fu"));
+    assertEquals(3, map.size());
+    assertEquals("bar", map.get(new XmlPropertiesIndex.Key("foo")));
+    assertEquals("baz", map.get(new XmlPropertiesIndex.Key("fu")));
+    assertTrue(map.containsKey(XmlPropertiesIndex.MARKER_KEY));
   }
 
   public void testSystemId() throws Exception {
-    Map<String,String> map = new XmlPropertiesIndex().map(new FileContent(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                                           "<!DOCTYPE properties SYSTEM \"unknown\">\n" +
-                                                                           "<properties>\n" +
-                                                                           "<comment>Hi</comment>\n" +
-                                                                           "<entry key=\"foo\">bar</entry>\n" +
-                                                                           "<entry key=\"fu\">baz</entry>\n" +
-                                                                           "</properties>").getBytes()));
+    Map<XmlPropertiesIndex.Key, String> map = new XmlPropertiesIndex().map(new FileContent(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                                                                            "<!DOCTYPE properties SYSTEM \"unknown\">\n" +
+                                                                                            "<properties>\n" +
+                                                                                            "<comment>Hi</comment>\n" +
+                                                                                            "<entry key=\"foo\">bar</entry>\n" +
+                                                                                            "<entry key=\"fu\">baz</entry>\n" +
+                                                                                            "</properties>").getBytes()));
 
     assertEquals(0, map.size());
   }

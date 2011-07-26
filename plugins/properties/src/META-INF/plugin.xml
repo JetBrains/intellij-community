@@ -55,6 +55,8 @@
 
     <fileEditorProvider implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider"/>
     <spellchecker.support implementation="com.intellij.lang.properties.spellchecker.PropertiesSpellcheckingStrategy"/>
+
+    <fileBasedIndex implementation="com.intellij.lang.properties.xml.XmlPropertiesIndex"/>
   </extensions>
 
   <project-components>

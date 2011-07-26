@@ -114,16 +114,16 @@ public class XmlPropertiesFile implements PropertiesFile {
 
   @Override
   public PsiDirectory getParent() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return getContainingFile().getParent();
   }
 
   @Override
   public Project getProject() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return getContainingFile().getProject();
   }
 
   @Override
   public String getText() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return getContainingFile().getText();
   }
 }

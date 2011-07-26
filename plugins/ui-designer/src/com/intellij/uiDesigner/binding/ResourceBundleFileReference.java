@@ -53,7 +53,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
     if (module == null) {
       return null;
     }
-    PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(getRangeText(), module);
+    PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(getRangeText(), module, null);
     return propertiesFile == null ? null : propertiesFile.getContainingFile();
   }
 
