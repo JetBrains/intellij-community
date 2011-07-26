@@ -297,17 +297,17 @@ public class DocumentCommitThread implements Runnable, Disposable {
             log("Invoked later", document, false, success, finishRunnable, indicator);
           }
         }
-        catch (ProcessCanceledException ignored) {
+        catch (ProcessCanceledException e) {
           int i = 0; // leave queue unchanged
-          cancel(ignored);
-          log("PCE", document, false, ignored);
+          cancel(e);
+          log("PCE", document, false, e);
           success = false;
         }
-        catch (InterruptedException ignored) {
+        catch (InterruptedException e) {
           // app must be closing
           int i = 0;
-          log("IE", document, false, ignored);
-          cancel(ignored);
+          log("IE", document, false, e);
+          cancel(e);
         }
         catch (Throwable e) {
           LOG.error(e);
