@@ -112,9 +112,16 @@ public class RecursionManager {
         }
         finally {
           Integer value = progressMap.remove(realKey);
+          if (value == null) {
+            throw new AssertionError(key + " has changed its equals/hashCode");
+          }
           ourStamp.set(value);
           if (value == 0) {
             ourIntermediateCache.get().clear();
+          }
+          else if (progressMap.isEmpty()) {
+            ourIntermediateCache.get().clear();
+            throw new AssertionError("Non-zero stamp for empty progress map: " + key + ", " + value);
           }
         }
       }
@@ -135,7 +142,7 @@ public class RecursionManager {
         ArrayList<Object> result = new ArrayList<Object>();
         LinkedHashMap<MyKey, Integer> map = ourProgress.get();
         for (MyKey pair : map.keySet()) {
-          if (pair.first == id) {
+          if (pair.first.equals(id)) {
             result.add(pair.second);
           }
         }
