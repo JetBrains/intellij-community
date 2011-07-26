@@ -46,8 +46,13 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private IntToIntBtree btree;
   private final boolean myInlineKeysNoMapping;
 
+  private static final int DIRTY_MAGIC = 0xbabe1977;
+  private static final int VERSION = 6;
+  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafc + VERSION;
+  private static Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
+
   public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024, false), dataDescriptor, initialSize);
+    super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024, false), dataDescriptor, initialSize, ourVersion);
 
     myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantInlineKeyMapping();
     myBuffer = new byte[getRecordSize()];

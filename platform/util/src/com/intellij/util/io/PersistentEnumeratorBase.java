@@ -39,10 +39,6 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
 
-  private static final int DIRTY_MAGIC = 0xbabe0589;
-  private static final int VERSION = 5;
-  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac + VERSION;
-
   private static final int META_DATA_OFFSET = 4;
   protected static final int DATA_START = META_DATA_OFFSET + 4;
 
@@ -56,9 +52,19 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   private static final CacheKey ourFlyweight = new FlyweightKey();
 
   protected final File myFile;
-
   private boolean myCorrupted = false;
   private final MyDataIS myKeyReadStream;
+  private final Version myVersion;
+
+  public static class Version {
+    private final int correctlyClosedMagic;
+    private final int dirtyMagic;
+
+    public Version(int _correctlyClosedMagic, int _dirtyMagic) {
+      correctlyClosedMagic = _correctlyClosedMagic;
+      dirtyMagic = _dirtyMagic;
+    }
+  }
 
   private static class CacheKey implements ShareableKey {
     public PersistentEnumeratorBase owner;
@@ -118,9 +124,11 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  public PersistentEnumeratorBase(File file, ISimpleStorage storage, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
+  public PersistentEnumeratorBase(File file, ISimpleStorage storage, KeyDescriptor<Data> dataDescriptor, int initialSize, Version version) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
+    myVersion = version;
+
     if (!file.exists()) {
       FileUtil.delete(keystreamFile());
       if (!FileUtil.createIfDoesntExist(file)) {
@@ -163,9 +171,9 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
         }
         catch(Exception e) {
           LOG.info(e);
-          sign = DIRTY_MAGIC;
+          sign = myVersion.dirtyMagic;
         }
-        if (sign != CORRECTLY_CLOSED_MAGIC) {
+        if (sign != myVersion.correctlyClosedMagic) {
           myStorage.close();
           throw new CorruptedException(file);
         }
@@ -458,7 +466,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       }
       else {
         if (dirty) {
-          myStorage.putInt(0, DIRTY_MAGIC);
+          myStorage.putInt(0, myVersion.dirtyMagic);
           myDirty = true;
         }
       }
@@ -480,7 +488,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   protected void markClean() throws IOException {
     if (!myCorrupted) {
-      myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
+      myStorage.putInt(0, myVersion.correctlyClosedMagic);
       myDirty = false;
     }
   }
