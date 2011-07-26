@@ -23,6 +23,7 @@ import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.commands.GitTask;
 import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitFetchDialog;
 import git4idea.ui.GitUIUtil;
@@ -58,13 +59,13 @@ public class GitFetch extends GitRepositoryAction {
       @Override
       protected void onSuccess() {
         GitUIUtil.notifySuccess(project, "Fetched successfully", "Fetched " + d.getRemote());
-        GitRepositoryManager.getInstance(project).refreshRepository(d.getGitRoot());
+        GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot(), GitRepository.TrackedTopic.ALL);
       }
 
       @Override
       protected void onFailure() {
         GitUIUtil.notifyGitErrors(project, "Error fetching " + d.getRemote(), "", h.errors());
-        GitRepositoryManager.getInstance(project).refreshRepository(d.getGitRoot());
+        GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot(), GitRepository.TrackedTopic.ALL);
       }
     });
   }

@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitResetDialog;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,6 @@ public class GitResetHead extends GitRepositoryAction {
     GitLineHandler h = d.handler();
     affectedRoots.add(d.getGitRoot());
     GitHandlerUtil.doSynchronously(h, GitBundle.getString("resetting.title"), h.printableCommandLine());
-    GitRepositoryManager.getInstance(project).refreshRepository(d.getGitRoot());
+    GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot(), GitRepository.TrackedTopic.ALL_CURRENT);
   }
 }

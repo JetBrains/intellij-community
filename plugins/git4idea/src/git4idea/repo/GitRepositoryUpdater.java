@@ -29,7 +29,7 @@ import java.util.List;
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
  * @author Kirill Likhodedov
  */
-public class GitRepositoryUpdater implements Disposable, BulkFileListener {
+final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
   private final GitRepository myRepository;
   private MessageBusConnection myMessageBusConnection;
@@ -41,7 +41,7 @@ public class GitRepositoryUpdater implements Disposable, BulkFileListener {
   private final String myPackedRefsPath;
   private final String myRefsHeadsDirPath;
 
-  public GitRepositoryUpdater(GitRepository repository) {
+  GitRepositoryUpdater(GitRepository repository) {
     myRepository = repository;
 
     // add .git/ and .git/refs/heads to the VFS
@@ -130,21 +130,21 @@ public class GitRepositoryUpdater implements Disposable, BulkFileListener {
     if (updateCurrentBranch) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          myRepository.updateCurrentBranch();
+          myRepository.update(GitRepository.TrackedTopic.CURRENT_BRANCH);
         }
       });
     }
     if (updateCurrentRevision) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          myRepository.updateCurrentRevision();
+          myRepository.update(GitRepository.TrackedTopic.CURRENT_REVISION);
         }
       });
     }
     if (updateState) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          myRepository.updateState();
+          myRepository.update(GitRepository.TrackedTopic.STATE);
         }
       });
     }

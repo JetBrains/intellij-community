@@ -36,8 +36,8 @@ import java.util.*;
  */
 public class GitRepositoryManager extends AbstractProjectComponent implements Disposable, GitRootsListener {
 
-  private GitVcs myVcs;
-  private ProjectLevelVcsManager myVcsManager;
+  private final GitVcs myVcs;
+  private final ProjectLevelVcsManager myVcsManager;
   private final Map<VirtualFile, GitRepository> myRepositories = new HashMap<VirtualFile, GitRepository>();
   private final Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
 
@@ -84,6 +84,14 @@ public class GitRepositoryManager extends AbstractProjectComponent implements Di
   }
 
   /**
+   * @return all repositories tracked by the manager.
+   */
+  @NotNull
+  public Set<GitRepository> getRepositories() {
+    return new HashSet<GitRepository>(myRepositories.values());
+  }
+
+  /**
    * Adds the listener to all existing repositories AND all future repositories.
    * I.e. if a new GitRepository is be created via this GitRepositoryManager, the listener will be added to the repository.
    */
@@ -95,44 +103,24 @@ public class GitRepositoryManager extends AbstractProjectComponent implements Di
   }
 
   /**
-   * Asynchronously refreshes the {@link GitRepository} related for the given root.
-   * @param root Git repository root directory.
-   */
-  public void refreshRepository(@NotNull VirtualFile root) {
-    GitRepository repo = getRepositoryForRoot(root);
-    if (repo != null) {
-      repo.refresh();
-    }
-  }
-
-  /**
    * Asynchronously refreshes all {@link GitRepository GitRepositories}.
    */
   public void refreshAllRepositories() {
-    refreshRepositories(myRepositories.values());
-  }
-
-  /**
-   * Asynchronously refreshes the given {@link GitRepository GitRepositories}.
-   */
-  public static void refreshRepositories(Collection<GitRepository> repositories) {
-    for (GitRepository repository : repositories) {
+    for (GitRepository repository : myRepositories.values()) {
       repository.refresh();
     }
   }
 
   /**
-   * Finds all {@link GitRepository GitRepositories} for the given files, and refreshes them.
+   * Synchronously updates the specified information about Git repository under the given root.
+   * @param root   root directory of the Git repository.
+   * @param topics TrackedTopics that are to be updated.
    */
-  public void refreshRepositoriesForFiles(@NotNull VirtualFile... files) {
-    Set<GitRepository> repositories = new HashSet<GitRepository>();
-    for (VirtualFile file : files) {
-      final GitRepository repo = getRepositoryForFile(file);
-      if (repo != null) {
-        repositories.add(repo);
-      }
+  public void updateRepository(VirtualFile root, GitRepository.TrackedTopic... topics) {
+    GitRepository repo = getRepositoryForRoot(root);
+    if (repo != null) {
+      repo.update(topics);
     }
-    refreshRepositories(repositories);
   }
 
   // note: we are not calling this method during the project startup - it is called anyway by the GitRootTracker

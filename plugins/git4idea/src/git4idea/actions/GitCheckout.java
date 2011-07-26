@@ -23,6 +23,7 @@ import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +68,7 @@ public class GitCheckout extends GitRepositoryAction {
     }
     finally {
       exceptions.addAll(checkout.errors());
-      GitRepositoryManager.getInstance(project).refreshRepository(dialog.gitRoot());
+      GitRepositoryManager.getInstance(project).updateRepository(dialog.gitRoot(), GitRepository.TrackedTopic.ALL_CURRENT);
     }
   }
 }

@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitStashDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +51,6 @@ public class GitStash extends GitRepositoryAction {
     affectedRoots.add(d.getGitRoot());
     final GitLineHandler h = d.handler();
     GitHandlerUtil.doSynchronously(h, GitBundle.getString("stashing.title"), h.printableCommandLine());
-    GitRepositoryManager.getInstance(project).refreshRepository(d.getGitRoot());
   }
 
   /**

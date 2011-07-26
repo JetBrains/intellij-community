@@ -48,6 +48,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.convert.GitFileSeparatorConverter;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -319,7 +320,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       handler.endOptions();
       handler.run();
-      GitRepositoryManager.getInstance(project).refreshRepository(root);
+      GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.CURRENT_REVISION,
+                                                                 GitRepository.TrackedTopic.STATE);
     }
     catch (VcsException ex) {
       exceptions.add(ex);
@@ -462,7 +464,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters(paths);
       handler.run();
     }
-    GitRepositoryManager.getInstance(project).refreshRepository(root);
+    GitRepositoryManager.getInstance(project).updateRepository(root,
+                                                               GitRepository.TrackedTopic.CURRENT_REVISION,
+                                                               GitRepository.TrackedTopic.STATE);
   }
 
 

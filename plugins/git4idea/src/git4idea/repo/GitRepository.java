@@ -26,6 +26,9 @@ import git4idea.GitBranch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 /**
  * <p>
  *   GitRepository is a representation of the Git repository stored under the specified directory.
@@ -43,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Kirill Likhodedov
  */
-public class GitRepository implements Disposable {
+public final class GitRepository implements Disposable {
 
   public static final Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change", GitRepositoryChangeListener.class);
 
@@ -51,11 +54,14 @@ public class GitRepository implements Disposable {
   private final GitRepositoryReader myReader;
   private final VirtualFile myGitDir;
   private final MessageBus myMessageBus;
-  private final GitRepositoryUpdater myUpdater;
 
-  private State myState;
-  private String myCurrentRevision;
-  private GitBranch myCurrentBranch;
+  private volatile State myState;
+  private volatile String myCurrentRevision;
+  private volatile GitBranch myCurrentBranch;
+
+  private final ReadWriteLock STATE_LOCK = new ReentrantReadWriteLock();
+  private final ReadWriteLock CUR_REV_LOCK = new ReentrantReadWriteLock();
+  private final ReadWriteLock CUR_BRANCH_LOCK = new ReentrantReadWriteLock();
 
   /**
    * Current state of the repository.
@@ -80,20 +86,56 @@ public class GitRepository implements Disposable {
   }
 
   /**
+   * GitRepository tracks the updates of some information about Git repository, caches this information and provides methods to access to
+   * it. The pieces of this information are called Topics. They can be used to update the repository.
+   */
+  public enum TrackedTopic {
+    STATE {
+      @Override void update(GitRepository repository) {
+        repository.updateState();
+      }
+    },
+    CURRENT_REVISION {
+      @Override void update(GitRepository repository) {
+        repository.updateCurrentRevision();
+      }
+    },
+    CURRENT_BRANCH {
+      @Override void update(GitRepository repository) {
+        repository.updateCurrentBranch();
+      }
+    },
+    ALL_CURRENT {
+      @Override void update(GitRepository repository) {
+        STATE.update(repository);
+        CURRENT_REVISION.update(repository);
+        CURRENT_BRANCH.update(repository);
+      }
+    },
+    ALL {
+      @Override void update(GitRepository repository) {
+        ALL_CURRENT.update(repository);
+      }
+    };
+
+    abstract void update(GitRepository repository);
+  }
+
+  /**
    * Don't use this constructor - get the GitRepository instance from the {@link GitRepositoryManager}.
    */
   GitRepository(@NotNull VirtualFile rootDir, Project project) {
     myRootDir = rootDir;
     myReader = new GitRepositoryReader(this);
-    myUpdater = new GitRepositoryUpdater(this);
-    Disposer.register(this, myUpdater);
+    GitRepositoryUpdater updater = new GitRepositoryUpdater(this);
+    Disposer.register(this, updater);
 
     myGitDir = myRootDir.findChild(".git");
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
 
     myMessageBus = project.getMessageBus();
 
-    fullReRead();
+    update(TrackedTopic.ALL);
   }
 
   @Override
@@ -107,7 +149,13 @@ public class GitRepository implements Disposable {
 
   @NotNull
   public State getState() {
-    return myState;
+    try {
+      STATE_LOCK.readLock().lock();
+      return myState;
+    }
+    finally {
+      STATE_LOCK.readLock().unlock();
+    }
   }
 
   /**
@@ -116,7 +164,13 @@ public class GitRepository implements Disposable {
    */
   @Nullable
   public String getCurrentRevision() {
-    return myCurrentRevision;
+    try {
+      CUR_REV_LOCK.readLock().lock();
+      return myCurrentRevision;
+    }
+    finally {
+      CUR_REV_LOCK.readLock().unlock();
+    }
   }
 
   /**
@@ -127,7 +181,13 @@ public class GitRepository implements Disposable {
    */
   @Nullable
   public GitBranch getCurrentBranch() {
-    return myCurrentBranch;
+    try {
+      CUR_BRANCH_LOCK.readLock().lock();
+      return myCurrentBranch;
+    }
+    finally {
+      CUR_BRANCH_LOCK.readLock().unlock();
+    }
   }
 
   public boolean isMergeInProgress() {
@@ -157,35 +217,56 @@ public class GitRepository implements Disposable {
   }
 
   /**
-   * Re-reads all the information from .git
+   * Synchronously updates the GitRepository by reading information from the specified topics.
    */
-  private void fullReRead() {
-    updateState();
-    updateCurrentBranch();
-    updateCurrentRevision();
+  public void update(TrackedTopic... topics) {
+    for (TrackedTopic topic : topics) {
+      topic.update(this);
+    }
   }
 
   /**
    * Reads current state and notifies listeners about the change.
    */
-  void updateState() {
-    myState = myReader.readState();
+  private void updateState() {
+    try {
+      STATE_LOCK.writeLock().lock();
+      myState = myReader.readState();
+    }
+    finally {
+      STATE_LOCK.writeLock().unlock();
+    }
+
     notifyListeners();
   }
 
   /**
    * Reads current revision and notifies listeners about the change.
    */
-  void updateCurrentRevision() {
-    myCurrentRevision = myReader.readCurrentRevision();
+  private void updateCurrentRevision() {
+    try {
+      CUR_REV_LOCK.writeLock().lock();
+      myCurrentRevision = myReader.readCurrentRevision();
+    }
+    finally {
+      CUR_REV_LOCK.writeLock().unlock();
+    }
+
     notifyListeners();
   }
 
   /**
    * Reads current branch and notifies listeners about the change.
    */
-  void updateCurrentBranch() {
-    myCurrentBranch = myReader.readCurrentBranch();
+  private void updateCurrentBranch() {
+    try {
+      CUR_BRANCH_LOCK.writeLock().lock();
+      myCurrentBranch = myReader.readCurrentBranch();
+    }
+    finally {
+      CUR_BRANCH_LOCK.writeLock().unlock();
+    }
+
     notifyListeners();
   }
 
