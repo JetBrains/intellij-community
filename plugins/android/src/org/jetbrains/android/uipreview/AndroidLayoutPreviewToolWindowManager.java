@@ -3,6 +3,7 @@ package org.jetbrains.android.uipreview;
 import com.android.ide.common.resources.configuration.*;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +35,10 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.ResourceManager;
-import org.jetbrains.android.sdk.*;
+import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidSdkType;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NonNls;
@@ -81,6 +85,11 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyAndroidPlatformListener());
 
     LocalFileSystem.getInstance().addVirtualFileListener(myListener);
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        LocalFileSystem.getInstance().removeVirtualFileListener(myListener);
+      }
+    });
 
     PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       public void childrenChanged(PsiTreeChangeEvent event) {
@@ -141,7 +150,6 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       myToolWindow = null;
       myToolWindowDisposed = true;
     }
-    LocalFileSystem.getInstance().removeVirtualFileListener(myListener);
   }
 
   @NotNull
