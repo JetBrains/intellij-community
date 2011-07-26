@@ -81,7 +81,7 @@ public class PushedFilePropertiesUpdater {
           public void fileCreated(final VirtualFileEvent event) {
             final VirtualFile file = event.getFile();
             final FilePropertyPusher[] pushers = file.isDirectory() ? myPushers : myFilePushers;
-            pushRecursively(file, project, pushers);
+            pushRecursively(file, pushers);
           }
 
           @Override
@@ -91,7 +91,7 @@ public class PushedFilePropertiesUpdater {
             for (FilePropertyPusher pusher : pushers) {
               file.putUserData(pusher.getFileDataKey(), null);
             }
-            pushRecursively(file, project, pushers);
+            pushRecursively(file, pushers);
           }
         }));
         for (final FilePropertyPusher pusher : myPushers) {
@@ -101,7 +101,7 @@ public class PushedFilePropertiesUpdater {
             }
 
             public void pushRecursively(VirtualFile file, Project project) {
-              PushedFilePropertiesUpdater.this.pushRecursively(file, project, pusher);
+              PushedFilePropertiesUpdater.this.pushRecursively(file, pusher);
             }
           });
         }
@@ -109,7 +109,7 @@ public class PushedFilePropertiesUpdater {
     });
   }
 
-  private void pushRecursively(final VirtualFile dir, final Project project, final FilePropertyPusher... pushers) {
+  private void pushRecursively(final VirtualFile dir, final FilePropertyPusher... pushers) {
 
     final Object[] values = new Object[pushers.length];
     VirtualFile parent = dir.getParent();
