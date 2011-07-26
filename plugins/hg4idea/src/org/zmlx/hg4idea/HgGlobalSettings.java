@@ -20,11 +20,11 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Map;
 
 @State(
   name = "HgGlobalSettings",
-  storages = @Storage(id = "HgGlobalSettings", file = "$APP_CONFIG$/vcs.xml")
+  storages = @Storage( file = "$APP_CONFIG$/vcs.xml")
 )
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings.State> {
 

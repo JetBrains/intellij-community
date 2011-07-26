@@ -27,7 +27,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name = "ErrorTreeViewConfiguration",
   storages = {
     @Storage(
-      id ="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

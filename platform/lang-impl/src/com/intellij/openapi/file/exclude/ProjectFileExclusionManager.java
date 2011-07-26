@@ -26,12 +26,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
 
 /**
  * @author Rustam Vishnyakov
  */
-@State(name = "ProjectFileExclusionManager", storages = {@Storage(id = "default", file = "$PROJECT_FILE$")})
+@State(name = "ProjectFileExclusionManager", storages = {@Storage( file = "$PROJECT_FILE$")})
 public class ProjectFileExclusionManager extends PersistentFileSetManager {
 
   

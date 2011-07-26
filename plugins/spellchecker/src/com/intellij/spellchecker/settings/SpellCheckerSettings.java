@@ -28,7 +28,6 @@ import java.util.*;
 @State(
   name = "SpellCheckerSettings",
   storages = {@Storage(
-    id = "other",
     file = "$WORKSPACE_FILE$")})
 public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   // For xml serialization

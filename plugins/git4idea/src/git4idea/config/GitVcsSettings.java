@@ -34,7 +34,6 @@ import java.util.List;
 @State(
   name = "Git.Settings",
   storages = {@Storage(
-    id = "ws",
     file = "$WORKSPACE_FILE$")})
 public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State> {
 

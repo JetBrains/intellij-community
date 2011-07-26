@@ -29,7 +29,6 @@ import java.io.File;
   name = "UsageViewSettings",
   storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

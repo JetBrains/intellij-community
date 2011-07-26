@@ -24,13 +24,13 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.psi.statistics.StatisticsManager;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -47,7 +47,6 @@ import java.util.Map;
   name = "LastSelectedPropertiesFileStore",
   storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

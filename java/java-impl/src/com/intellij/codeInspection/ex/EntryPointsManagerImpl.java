@@ -53,7 +53,7 @@ import java.util.*;
 
 @State(
     name = "EntryPointsManager",
-    storages = {@Storage(id = "default", file = "$PROJECT_FILE$")}
+    storages = {@Storage( file = "$PROJECT_FILE$")}
 )
 public class EntryPointsManagerImpl implements PersistentStateComponent<Element>, EntryPointsManager {
   @NonNls private static final String[] STANDARD_ANNOS = {

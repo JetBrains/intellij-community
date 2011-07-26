@@ -28,7 +28,6 @@ import org.jetbrains.generate.tostring.config.Config;
   name = "ToStringSettings",
   storages = {
     @Storage(
-      id ="ToStringSettings",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

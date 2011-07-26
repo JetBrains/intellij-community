@@ -35,10 +35,9 @@ import java.util.Set;
   name = "GitLogSettings",
   storages = {
     @Storage(
-      id ="other",
       file = "$PROJECT_FILE$"
     )
-    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    ,@Storage( file = "$PROJECT_CONFIG_DIR$/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class GitLogSettings implements PersistentStateComponent<GitLogSettings.MyState> {

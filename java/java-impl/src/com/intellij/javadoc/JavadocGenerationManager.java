@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 @State(name = "JavadocGenerationManager",
        storages = {
          @Storage(
-           id="other",
            file = "$PROJECT_FILE$"
          )
        }

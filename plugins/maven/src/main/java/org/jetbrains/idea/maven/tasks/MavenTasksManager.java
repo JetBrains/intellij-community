@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@State(name = "MavenCompilerTasksManager", storages = {@Storage(id = "default", file = "$PROJECT_FILE$")})
+@State(name = "MavenCompilerTasksManager", storages = {@Storage( file = "$PROJECT_FILE$")})
 public class MavenTasksManager extends SimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState> {
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 

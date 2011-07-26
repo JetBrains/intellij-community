@@ -28,8 +28,8 @@ import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
 @State(
     name = "GantSettings",
     storages = {
-      @Storage(id = "default", file = "$PROJECT_FILE$"),
-      @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/gant_config.xml", scheme = StorageScheme.DIRECTORY_BASED)
+      @Storage( file = "$PROJECT_FILE$"),
+      @Storage( file = "$PROJECT_CONFIG_DIR$/gant_config.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class GantSettings extends SdkHomeSettings {

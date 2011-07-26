@@ -37,7 +37,7 @@ import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 
 import java.util.List;
 
-@State(name = "MavenRunner", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
+@State(name = "MavenRunner", storages = {@Storage( file = "$WORKSPACE_FILE$")})
 public class MavenRunner extends SimpleProjectComponent implements PersistentStateComponent<MavenRunnerSettings> {
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();
 

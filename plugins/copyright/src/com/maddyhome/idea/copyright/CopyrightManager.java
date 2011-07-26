@@ -52,8 +52,7 @@ import java.util.*;
 @State(
   name = "CopyrightManager",
   storages = {@Storage(
-    id = "default",
-    file = "$PROJECT_FILE$"), @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/copyright/", scheme = StorageScheme.DIRECTORY_BASED,
+    file = "$PROJECT_FILE$"), @Storage( file = "$PROJECT_CONFIG_DIR$/copyright/", scheme = StorageScheme.DIRECTORY_BASED,
                                        stateSplitter = CopyrightManager.CopyrightStateSplitter.class)})
 public class CopyrightManager extends AbstractProjectComponent implements JDOMExternalizable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#" + CopyrightManager.class.getName());

@@ -22,13 +22,13 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.JDOMExternalizableAdapter;
 import org.jdom.Element;
 
-import java.util.Map;
 import java.util.Collections;
+import java.util.Map;
 
 /**
 * @author Dmitry Avdeev
 */
-@State(name = "ProjectResources", storages = {@Storage(id = "default", file = "$PROJECT_FILE$")})
+@State(name = "ProjectResources", storages = {@Storage( file = "$PROJECT_FILE$")})
 public class ProjectResources extends ExternalResourceManagerImpl implements PersistentStateComponent<Element> {
 
   private final JDOMExternalizableAdapter myAdapter;

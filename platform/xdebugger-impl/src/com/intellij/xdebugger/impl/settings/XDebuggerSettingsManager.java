@@ -40,7 +40,6 @@ import java.util.*;
     name = XDebuggerSettingsManager.COMPONENT_NAME,
     storages = {
       @Storage(
-          id ="other",
           file = "$APP_CONFIG$/other.xml"
       )
     }

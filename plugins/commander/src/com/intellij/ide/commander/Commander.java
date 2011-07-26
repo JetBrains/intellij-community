@@ -66,7 +66,6 @@ import java.util.List;
   name="Commander",
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

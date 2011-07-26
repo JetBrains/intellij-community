@@ -48,7 +48,6 @@ import java.util.*;
   name="TemplateSettings",
   storages= {
     @Storage(
-      id="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

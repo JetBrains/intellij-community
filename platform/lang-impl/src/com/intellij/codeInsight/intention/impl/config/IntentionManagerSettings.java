@@ -47,7 +47,6 @@ import java.util.regex.Pattern;
   name = "IntentionManagerSettings",
   storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/intentionSettings.xml"
     )}
 )

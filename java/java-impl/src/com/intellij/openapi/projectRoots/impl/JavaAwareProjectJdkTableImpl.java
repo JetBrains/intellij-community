@@ -37,7 +37,6 @@ import org.jdom.Element;
   roamingType = RoamingType.DISABLED,
   storages= {
     @Storage(
-      id="other",
       file = "$APP_CONFIG$/jdk.table.xml"
     )}
 )

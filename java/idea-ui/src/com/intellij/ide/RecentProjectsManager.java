@@ -30,7 +30,6 @@ import java.io.File;
   roamingType = RoamingType.DISABLED,
   storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

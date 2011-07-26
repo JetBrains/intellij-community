@@ -41,7 +41,7 @@ import java.util.List;
 @State(
   name = "BookmarkManager",
   storages = {
-    @Storage(id = "default", file = "$WORKSPACE_FILE$")
+    @Storage( file = "$WORKSPACE_FILE$")
   }
 )
 public class BookmarkManager implements PersistentStateComponent<Element> {

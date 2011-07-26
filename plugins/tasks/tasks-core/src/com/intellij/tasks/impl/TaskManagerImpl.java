@@ -54,7 +54,7 @@ import java.util.concurrent.TimeoutException;
 @State(
   name = "TaskManager",
   storages = {
-    @Storage(id = "other", file = "$WORKSPACE_FILE$")
+    @Storage( file = "$WORKSPACE_FILE$")
   }
 )
 public class TaskManagerImpl extends TaskManager implements ProjectComponent, PersistentStateComponent<TaskManagerImpl.Config>,

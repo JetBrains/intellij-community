@@ -48,7 +48,7 @@ import java.util.Map;
 /**
  * @author spleaner
  */
-@State(name = "WebBrowsersConfiguration", storages = {@Storage(id = "other", file = "$APP_CONFIG$/browsers.xml")})
+@State(name = "WebBrowsersConfiguration", storages = {@Storage( file = "$APP_CONFIG$/browsers.xml")})
 public class BrowsersConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.BrowsersConfiguration");
 

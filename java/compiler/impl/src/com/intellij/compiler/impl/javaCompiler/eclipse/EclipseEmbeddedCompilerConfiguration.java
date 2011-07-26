@@ -16,13 +16,15 @@
 package com.intellij.compiler.impl.javaCompiler.eclipse;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 
 @State(
   name = "EclipseEmbeddedCompilerSettings",
   storages = {
-    @Storage(id = "default", file = "$PROJECT_FILE$")
-   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage( file = "$PROJECT_FILE$")
+   ,@Storage( file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class EclipseEmbeddedCompilerConfiguration extends JavacConfiguration {

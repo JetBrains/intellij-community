@@ -24,7 +24,6 @@ import com.intellij.openapi.components.Storage;
   name = "CodeStyleSettingsManager",
     storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

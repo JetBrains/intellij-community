@@ -20,11 +20,8 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
-import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.ProjectDictionary;
-import com.intellij.spellchecker.state.ProjectDictionarySplitter;
-import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -36,12 +33,8 @@ import java.util.Set;
 
 @State(
   name = "ProjectDictionaryState",
-  storages = {@Storage(
-    id = "other",
-    file = "$PROJECT_FILE$"),
-    @Storage(
-    id = "dir",
-    file = "$PROJECT_CONFIG_DIR$/dictionaries/",
+  storages = {@Storage(file = "$PROJECT_FILE$"),
+    @Storage(file = "$PROJECT_CONFIG_DIR$/dictionaries/",
     scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectDictionarySplitter.class)})
 
 public class ProjectDictionaryState implements PersistentStateComponent<ProjectDictionaryState>{

@@ -77,7 +77,6 @@ import java.util.HashMap;
   name = "LafManager",
   roamingType = RoamingType.PER_PLATFORM,
   storages = {@Storage(
-    id = "other",
     file = "$APP_CONFIG$/options.xml")})
 public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");

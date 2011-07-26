@@ -26,7 +26,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
  */
 @State(
   name = "PsiViewerSettings",
-  storages = {@Storage(id = "other",file = "$APP_CONFIG$/other.xml")})
+  storages = {@Storage(file = "$APP_CONFIG$/other.xml")})
 public class PsiViewerSettings implements PersistentStateComponent<PsiViewerSettings> {
   public boolean showWhiteSpaces = true;
   public boolean showTreeNodes = true;

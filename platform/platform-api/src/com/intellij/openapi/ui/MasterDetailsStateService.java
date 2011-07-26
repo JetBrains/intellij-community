@@ -41,7 +41,6 @@ import java.util.*;
   name="masterDetails",
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

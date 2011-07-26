@@ -35,7 +35,6 @@ import java.util.TreeMap;
 @State(
   name = "PasswordDatabase",
   storages = {@Storage(
-    id = "PasswordDatabase",
     file = "$APP_CONFIG$/security.xml")})
 public class PasswordDatabase implements PersistentStateComponent<PasswordDatabase.State> {
   /**

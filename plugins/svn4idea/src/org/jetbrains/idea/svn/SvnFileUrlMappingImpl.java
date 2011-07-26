@@ -58,7 +58,6 @@ import java.util.*;
   name = "SvnFileUrlMappingImpl",
   storages = {
     @Storage(
-      id ="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

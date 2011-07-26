@@ -49,7 +49,6 @@ import java.util.HashSet;
   name="StructureViewFactory",
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

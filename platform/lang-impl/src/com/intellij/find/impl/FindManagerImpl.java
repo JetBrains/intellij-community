@@ -79,7 +79,6 @@ import java.util.regex.PatternSyntaxException;
   name = "FindManager",
   storages = {
     @Storage(
-      id ="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

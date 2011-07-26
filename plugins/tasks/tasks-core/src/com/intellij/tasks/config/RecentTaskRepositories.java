@@ -26,7 +26,6 @@ import java.util.Set;
   name = "RecentTaskRepositories",
   storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

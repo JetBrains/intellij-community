@@ -54,7 +54,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@State(name = "MavenProjectsManager", storages = {@Storage(id = "default", file = "$PROJECT_FILE$")})
+@State(name = "MavenProjectsManager", storages = {@Storage( file = "$PROJECT_FILE$")})
 public class MavenProjectsManager extends SimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent {
   private static final int IMPORT_DELAY = 1000;

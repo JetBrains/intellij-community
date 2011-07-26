@@ -52,7 +52,6 @@ import java.util.Map;
   name="PropertiesSeparatorManager",
   storages= {
     @Storage(
-      id="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

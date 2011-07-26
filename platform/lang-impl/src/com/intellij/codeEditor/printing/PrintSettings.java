@@ -31,7 +31,6 @@ import java.io.File;
   name="PrintSettings",
   storages= {
     @Storage(
-      id="other",
       file = "$APP_CONFIG$/print.xml"
     )}
 )

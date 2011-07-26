@@ -55,7 +55,6 @@ import java.util.List;
   name="NodeRendererSettings",
   storages= {
     @Storage(
-      id="other",
       file = "$APP_CONFIG$/debugger.renderers.xml"
     )}
 )

@@ -44,7 +44,6 @@ import java.util.*;
   roamingType = RoamingType.PER_PLATFORM,
   storages = {
     @Storage(
-        id="keymap",
         file = "$APP_CONFIG$/keymap.xml"
     )}
 )

@@ -43,7 +43,6 @@ import java.util.Map;
   name = "UISettings",
   storages = {
     @Storage(
-      id ="uilnf",
       file = "$APP_CONFIG$/ui.lnf.xml"
     )}
 )

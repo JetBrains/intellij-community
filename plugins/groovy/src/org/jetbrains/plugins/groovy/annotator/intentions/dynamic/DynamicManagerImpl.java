@@ -26,11 +26,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.*;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
@@ -48,8 +48,8 @@ import java.util.*;
 @State(
     name = "DynamicElementsStorage",
     storages = {
-        @Storage(id = "default", file = "$PROJECT_FILE$"),
-        @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/dynamic.xml", scheme = StorageScheme.DIRECTORY_BASED)
+        @Storage( file = "$PROJECT_FILE$"),
+        @Storage( file = "$PROJECT_CONFIG_DIR$/dynamic.xml", scheme = StorageScheme.DIRECTORY_BASED)
 })
 
 public class DynamicManagerImpl extends DynamicManager {

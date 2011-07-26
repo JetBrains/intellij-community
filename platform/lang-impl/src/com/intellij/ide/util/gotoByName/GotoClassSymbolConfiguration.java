@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 @State(
     name = "GotoClassSymbolConfiguration",
     storages = {@Storage(
-        id = "other",
         file = "$WORKSPACE_FILE$")})
 public class GotoClassSymbolConfiguration extends ChooseByNameFilterConfiguration<Language> {
   public static GotoClassSymbolConfiguration getInstance(Project project) {

@@ -26,7 +26,6 @@ import com.intellij.openapi.components.Storage;
   name = "AppInspectionProfilesVisibleTreeState",
   storages = {
     @Storage(
-        id="other",
         file = "$OPTIONS$/other.xml"
     )}
 )

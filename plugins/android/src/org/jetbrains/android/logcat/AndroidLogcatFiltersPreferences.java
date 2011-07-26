@@ -29,7 +29,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 @State(
   name = "AndroidLogFilters",
   storages = {@Storage(
-    id = "AndroidLogFilters",
     file = "$WORKSPACE_FILE$")})
 public class AndroidLogcatFiltersPreferences implements PersistentStateComponent<AndroidLogcatFiltersPreferences> {
   public String TAB_CUSTOM_FILTER = "";

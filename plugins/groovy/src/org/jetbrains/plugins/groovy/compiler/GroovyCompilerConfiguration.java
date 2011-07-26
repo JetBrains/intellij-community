@@ -30,8 +30,8 @@ import org.jdom.Element;
 @State(
   name = "GroovyCompilerConfiguration",
   storages = {
-    @Storage(id = "default", file = "$WORKSPACE_FILE$"),
-    @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/groovyc.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage( file = "$WORKSPACE_FILE$"),
+    @Storage( file = "$PROJECT_CONFIG_DIR$/groovyc.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public class GroovyCompilerConfiguration implements PersistentStateComponent<GroovyCompilerConfiguration.MyStateBean>, Disposable {

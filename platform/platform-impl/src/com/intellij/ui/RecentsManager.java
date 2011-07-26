@@ -34,7 +34,6 @@ import java.util.*;
   name="RecentsManager",
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

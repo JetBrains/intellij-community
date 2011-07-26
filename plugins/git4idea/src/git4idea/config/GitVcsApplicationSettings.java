@@ -29,9 +29,7 @@ import java.io.File;
  */
 @State(
   name = "Git.Application.Settings",
-  storages = {@Storage(
-    id = "Git.Application.Settings",
-    file = "$APP_CONFIG$/vcs.xml")})
+  storages = {@Storage(file = "$APP_CONFIG$/vcs.xml")})
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   /**
    * the default executable

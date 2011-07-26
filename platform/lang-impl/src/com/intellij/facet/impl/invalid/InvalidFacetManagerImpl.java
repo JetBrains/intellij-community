@@ -25,7 +25,9 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -34,7 +36,6 @@ import java.util.*;
     name = "InvalidFacetManager",
     storages = {
         @Storage(
-            id = "other",
             file = "$WORKSPACE_FILE$"
         )
     }

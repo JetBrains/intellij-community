@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
   name = ProjectFileVersionImpl.COMPONENT_NAME,
   storages = {
     @Storage(
-      id="other",
       file = "$PROJECT_FILE$"
     )
   }

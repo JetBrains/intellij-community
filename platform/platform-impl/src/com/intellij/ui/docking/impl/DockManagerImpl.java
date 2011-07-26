@@ -63,7 +63,6 @@ import java.util.List;
 @State(
   name = "DockManager",
   storages = {@Storage(
-    id = "other",
     file = "$WORKSPACE_FILE$")})
 
 public class DockManagerImpl extends DockManager implements PersistentStateComponent<Element>{

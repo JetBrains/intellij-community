@@ -33,9 +33,7 @@ import org.jdom.Element;
 @State(
     name = "Images.OptionsManager",
     storages = {
-        @Storage(
-            id = "other",
-            file = "$APP_CONFIG$/images.support.xml")
+        @Storage(file = "$APP_CONFIG$/images.support.xml")
     }
 )
 final class OptionsManagerImpl extends OptionsManager implements PersistentStateComponent<Element>, RoamingTypeDisabled {

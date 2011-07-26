@@ -63,7 +63,6 @@ import java.util.concurrent.TimeUnit;
   roamingType = RoamingType.DISABLED,
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

@@ -45,7 +45,6 @@ import java.util.List;
   name = "VcsManagerConfiguration",
   storages = {
     @Storage(
-      id ="other",
       file = "$WORKSPACE_FILE$"
     )
     }

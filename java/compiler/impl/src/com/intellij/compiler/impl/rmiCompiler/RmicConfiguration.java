@@ -15,27 +15,15 @@
  */
 package com.intellij.compiler.impl.rmiCompiler;
 
-import com.intellij.compiler.impl.javaCompiler.jikes.JikesSettings;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
 
 @State(
   name = "RmicSettings",
   storages = {
-    @Storage(id = "default", file = "$PROJECT_FILE$")
-   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage( file = "$PROJECT_FILE$")
+   ,@Storage( file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class RmicConfiguration implements PersistentStateComponent<RmicSettings> {

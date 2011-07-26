@@ -31,7 +31,6 @@ import java.io.File;
   name="XmlSettings",
   storages= {
     @Storage(
-      id="other",
       file = "$APP_CONFIG$/editor.codeinsight.xml"
     )}
 )

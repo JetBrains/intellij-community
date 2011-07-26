@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
   name = "ProjectInspectionProfilesVisibleTreeState",
   storages = {
     @Storage(
-        id="other",
         file = "$WORKSPACE_FILE$"
     )}
 )

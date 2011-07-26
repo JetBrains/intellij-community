@@ -25,7 +25,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 @State(
   name = "ExportTestResults",
   storages = {@Storage(
-    id = "other",
     file = "$WORKSPACE_FILE$")})
 public class ExportTestResultsConfiguration implements PersistentStateComponent<ExportTestResultsConfiguration.State> {
 

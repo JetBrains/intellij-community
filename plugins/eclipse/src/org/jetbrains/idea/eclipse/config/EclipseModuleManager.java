@@ -23,7 +23,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -36,7 +35,6 @@ import java.util.Set;
   name = "EclipseModuleManager",
   storages = {
     @Storage(
-      id = "default",
       file = "$MODULE_FILE$"
     )
   }

@@ -28,7 +28,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name = "DependencyUISettings",
   storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

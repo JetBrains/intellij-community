@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 @State(
   name = "AnalyzeDependenciesSettings",
   storages = {@Storage(
-    id = "ws",
     file = "$WORKSPACE_FILE$")})
 public class AnalyzeDependenciesSettings implements PersistentStateComponent<AnalyzeDependenciesSettings.State> {
   /**

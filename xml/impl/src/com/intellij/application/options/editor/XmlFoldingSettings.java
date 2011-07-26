@@ -29,7 +29,6 @@ import java.io.File;
   name="XmlFoldingSettings",
   storages= {
     @Storage(
-      id="other",
       file = "$APP_CONFIG$/editor.codeinsight.xml"
     )}
 )

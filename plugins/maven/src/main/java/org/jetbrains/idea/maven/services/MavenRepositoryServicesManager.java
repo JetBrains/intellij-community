@@ -40,7 +40,6 @@ import java.util.List;
 @State(
   name = "MavenServices",
   storages = {@Storage(
-    id = "other",
     file = "$APP_CONFIG$/mavenServices.xml")})
 public class MavenRepositoryServicesManager implements PersistentStateComponent<Element> {
   private final List<String> myUrls = new ArrayList<String>();

@@ -56,7 +56,6 @@ import java.util.*;
   name = FacetAutodetectingManagerImpl.COMPONENT_NAME,
   storages = {
     @Storage(
-      id="other",
       file = "$PROJECT_FILE$"
     )
   }

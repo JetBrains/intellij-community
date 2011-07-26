@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
   roamingType = RoamingType.DISABLED,
   storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

@@ -18,7 +18,7 @@ import com.intellij.openapi.components.Storage;
 
 @State(
   name = "hg4idea.settings",
-  storages = @Storage(id = "hg4idea.settings", file = "$WORKSPACE_FILE$")
+  storages = @Storage(file = "$WORKSPACE_FILE$")
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State> {
 
