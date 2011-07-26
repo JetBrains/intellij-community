@@ -19,7 +19,6 @@
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
     <inspectionToolProvider implementation="org.jetbrains.idea.devkit.DevKitInspectionToolProvider"/>
-    <iconProvider implementation="org.jetbrains.idea.devkit.DevKitIconProvider"/>
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitEntryPoints"/>
   </extensions>
