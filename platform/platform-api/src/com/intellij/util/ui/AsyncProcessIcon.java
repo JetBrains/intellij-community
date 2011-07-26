@@ -27,7 +27,7 @@ import java.awt.event.ActionListener;
 
 public class AsyncProcessIcon extends AnimatedIcon {
   public static final int COUNT = 12;
-  public static final int CYCLE_LENGTH = 800;
+  public static final int CYCLE_LENGTH = 1300;
 
   private static final Icon[] SMALL_ICONS = findIcons("/process/step_", "/process/step_mask.png");
   private static final Icon SMALL_PASSIVE_ICON = IconLoader.getIcon("/process/step_passive.png");

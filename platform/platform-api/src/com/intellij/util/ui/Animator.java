@@ -79,7 +79,9 @@ public abstract class Animator implements Disposable {
         else {
           myLastAnimated = true;
 
-          if (myQueuedFrames > myTotalFrames) return;
+          if (myQueuedFrames > myTotalFrames) {
+            return;
+          }
 
           boolean toNextFrame = myForward ? myCurrentFrame + 1 < myTotalFrames : myCurrentFrame - 1 >= 0;
 
@@ -93,7 +95,7 @@ public abstract class Animator implements Disposable {
                 myRepeatCount++;
                 myCurrentFrame = 0;
                 if (interCycleGap > 0) {
-                  Thread.sleep(interCycleGap - getSpan());
+                  delay(interCycleGap - getSpan());
                 }
               }
               else {
@@ -115,11 +117,12 @@ public abstract class Animator implements Disposable {
           myQueuedFrames++;
           // paint to EDT
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
+          SwingUtilities.invokeLater(new FramePainter(myCurrentFrame, myTotalFrames, myCycleLength) {
+            @Override
+            protected void paint(int frame, int totalFrames, int cycleLength) {
               if (isDisposed()) return;
               myQueuedFrames--;
-              paintNow(myCurrentFrame, (float)myTotalFrames, (float)myCycleLength);
+              paintNow(frame, (float)totalFrames, (float)cycleLength);
             }
           });
         }
@@ -133,6 +136,25 @@ public abstract class Animator implements Disposable {
       catch (InterruptedException ignored) {
       }
     }
+  }
+
+  private static abstract class FramePainter implements Runnable {
+    private int myFrameToPaint;
+    private int myFrame;
+    private int myCycle;
+
+    private FramePainter(int frameToPaint, int totalFrames, int cycleLength) {
+      myFrameToPaint = frameToPaint;
+      myFrame = totalFrames;
+      myCycle = cycleLength;
+    }
+
+    @Override
+    public final void run() {
+      paint(myFrameToPaint, myFrame, myCycle);
+    }
+
+    protected abstract void paint(int frame, int totalFrames, int cycleLength);
   }
 
   @SuppressWarnings({"SSBasedInspection"})
