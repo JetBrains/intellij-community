@@ -803,4 +803,17 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
       }
     });
   }
+
+  // IDEA-72420
+  public void testT132() throws Exception {
+    doTestFirstParamType("h", "Test",
+                         myJavaFacade.getElementFactory().createTypeFromText("J", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("I", null));
+  }
+
+  public void testT133() throws Exception {
+    doTestFirstParamType("h", "Test",
+                         myJavaFacade.getElementFactory().createTypeFromText("J", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("I", null));
+  }
 }
