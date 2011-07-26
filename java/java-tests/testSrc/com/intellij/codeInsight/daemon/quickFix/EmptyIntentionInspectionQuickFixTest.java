@@ -4,6 +4,7 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLiteralExpression;
@@ -26,7 +27,7 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase{
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new LocalInspectionTool() {
+    return new LocalInspectionTool[]{new DefUseInspection(), new LocalInspectionTool() {
       @Override
       @Nls
       @NotNull
@@ -73,5 +74,27 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase{
       if (!(action instanceof EmptyIntentionAction)) emptyActions.remove(i);
     }
     assertEquals(1, emptyActions.size());
+  }
+
+  public void testLowPriority() throws Exception {
+    configureByFile(getBasePath() + "/LowPriority.java");
+    List<IntentionAction> emptyActions = getAvailableActions();
+    int i = 0;
+    for(;i < emptyActions.size(); i++) {
+      final IntentionAction intentionAction = emptyActions.get(i);
+      if ("Make 'i' not final".equals(intentionAction.getText())) {
+        break;
+      }
+      if (intentionAction instanceof EmptyIntentionAction) {
+        fail("Low priority action prior to quick fix");
+      }
+    }
+    assertTrue(i < emptyActions.size());
+    for (; i < emptyActions.size(); i++) {
+      if (emptyActions.get(i) instanceof EmptyIntentionAction) {
+        return;
+      }
+    }
+    fail("Missed inspection setting action");
   }
 }
