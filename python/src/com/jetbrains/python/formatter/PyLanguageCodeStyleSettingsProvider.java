@@ -3,7 +3,9 @@ package com.jetbrains.python.formatter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,6 +72,11 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   @Override
   public boolean usesSharedPreview() {
     return false;
+  }
+
+  @Override
+  public DisplayPriority getDisplayPriority() {
+    return PlatformUtils.isPyCharm() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   private static String SPACING_SETTINGS_PREVIEW = "def settings_preview(argument, key=value):\n" +

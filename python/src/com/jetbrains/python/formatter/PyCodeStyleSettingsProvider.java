@@ -6,6 +6,8 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.DisplayPriority;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,4 +38,8 @@ public class PyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
     return "Python";
   }
 
+  @Override
+  public DisplayPriority getPriority() {
+    return PlatformUtils.isPyCharm() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
+  }
 }
