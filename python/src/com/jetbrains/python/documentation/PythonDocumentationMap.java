@@ -26,7 +26,6 @@ import java.util.Map;
   name = "PythonDocumentationMap",
   storages = {
   @Storage(
-    id = "other",
     file = "$APP_CONFIG$/other.xml")
     }
 )
