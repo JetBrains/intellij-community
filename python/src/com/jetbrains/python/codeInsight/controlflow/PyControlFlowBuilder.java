@@ -490,6 +490,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       finallyFailInstruction = myBuilder.startNode(finallyPart);
       finallyPart.accept(this);
       myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
+      myBuilder.flowAbrupted();
     } else {
       finallyFailInstruction = null;
     }

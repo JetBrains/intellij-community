@@ -41,4 +41,9 @@
     <line>69</line>
     <description>This code is unreachable</description>
   </problem>
+  <problem>
+    <file>unreachable.py</file>
+    <line>86</line>
+    <description>This code is unreachable</description>
+  </problem>
 </problems>
