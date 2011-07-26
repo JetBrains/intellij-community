@@ -104,7 +104,7 @@ public class PsiDiamondType extends PsiType {
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
     if (anonymousClass != null) {
       final PsiElement resolve = anonymousClass.getBaseClassReference().resolve();
-      if (resolve instanceof PsiClass && ((PsiClass)resolve).getContainingClass() != null) {
+      if (resolve instanceof PsiClass) {
         return PsiDiamondType.DiamondInferenceResult.ANONYMOUS_INNER_RESULT;
       }
     }
