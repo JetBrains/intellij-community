@@ -54,25 +54,25 @@ public class IdeBorderFactory {
   }
 
   public static TitledBorder createTitledBorderBoldWithIndent(String title) {
-    return new IdeaTitledBorder(title, UIUtil.getBorderFont().deriveFont(Font.BOLD), UIUtil.getBorderColor(), 12, 1, 15);
+    return new IdeaTitledBorder(title, UIUtil.getBorderFont().deriveFont(Font.BOLD), UIUtil.getBorderColor(), 15, 1, new Insets(3,0,10,0));
   }
 
   public static TitledBorder createTitledBorderBoldWithoutIndent(String title) {
-    return new IdeaTitledBorder(title, UIUtil.getBorderFont().deriveFont(Font.BOLD), UIUtil.getBorderColor(), 0, 1, 15);
+    return new IdeaTitledBorder(title, UIUtil.getBorderFont().deriveFont(Font.BOLD), UIUtil.getBorderColor(), 0, 1, new Insets(3,0,10,0));
   }
 
   public static TitledBorder createTitledBorderSimpleWithIndent(String title) {
-    return new IdeaTitledBorder(title, UIUtil.getBorderFont(), UIUtil.getBorderColor(), 10, 1, 7);
+    return new IdeaTitledBorder(title, UIUtil.getBorderFont(), UIUtil.getBorderColor(), 12, 1, new Insets(3,0,6,0));
   }
 
   public static TitledBorder createTitledBorderSimpleWithoutIndent(String title) {
-    return new IdeaTitledBorder(title, UIUtil.getBorderFont(), UIUtil.getBorderColor(), 0, 1, 7);
+    return new IdeaTitledBorder(title, UIUtil.getBorderFont(), UIUtil.getBorderColor(), 0, 1, new Insets(3,0,6,0));
   }
 
   @Deprecated
   // Don't remove, used in TeamCity plugin.
   public static TitledBorder createTitledHeaderBorder(String title) {
-    return new IdeaTitledBorder(title, UIUtil.getBorderFont().deriveFont(Font.BOLD), UIUtil.getBorderColor(), 10, 1, 15);
+    return new IdeaTitledBorder(title, UIUtil.getBorderFont().deriveFont(Font.BOLD), UIUtil.getBorderColor(), 10, 1, new Insets(5,0,10,0));
   }
 
   private static Color getBorderColor() {
