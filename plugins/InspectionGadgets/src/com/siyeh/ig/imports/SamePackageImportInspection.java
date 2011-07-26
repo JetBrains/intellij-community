@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,73 +25,70 @@ import org.jetbrains.annotations.NotNull;
 
 public class SamePackageImportInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "import.from.same.package.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "import.from.same.package.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos){
         return new DeleteImportFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new SamePackageImportVisitor();
     }
 
-    private static class SamePackageImportVisitor extends BaseInspectionVisitor{
+    private static class SamePackageImportVisitor
+            extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass){
-            // no call to super, so it doesn't drill down
-            if(!(aClass.getParent() instanceof PsiJavaFile)){
+        @Override
+        public void visitImportList(PsiImportList importList) {
+            final PsiElement parent = importList.getParent();
+            if (!(parent instanceof PsiJavaFile)) {
                 return;
             }
-            if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
+            if (JspPsiUtil.isInJspFile(importList)) {
                 return;
             }
-            final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
-            if(file == null){
-                return;
-            }
-            if(!file.getClasses()[0].equals(aClass)){
-                return;
-            }
-            final String packageName = file.getPackageName();
-            final PsiImportList importList = file.getImportList();
-            if(importList == null){
-                return;
-            }
+            final PsiJavaFile javaFile = (PsiJavaFile) parent;
+            final String packageName = javaFile.getPackageName();
             final PsiImportStatement[] importStatements =
                     importList.getImportStatements();
             for(final PsiImportStatement importStatement : importStatements){
                 final PsiJavaCodeReferenceElement reference =
                         importStatement.getImportReference();
-                if(reference != null){
-                    final String text = importStatement.getQualifiedName();
-                    if(importStatement.isOnDemand()){
-                        if(packageName.equals(text)){
-                            registerError(importStatement);
-                        }
+                if (reference == null) {
+                    continue;
+                }
+                final String text = importStatement.getQualifiedName();
+                if(importStatement.isOnDemand()){
+                    if(packageName.equals(text)){
+                        registerError(importStatement);
+                    }
+                } else {
+                    if (text == null) {
+                        return;
+                    }
+                    final int classNameIndex = text.lastIndexOf((int)'.');
+                    final String parentName;
+                    if (classNameIndex < 0) {
+                        parentName = "";
                     } else {
-                        if (text == null) {
-                            return;
-                        }
-                        final int classNameIndex = text.lastIndexOf((int)'.');
-                        final String parentName;
-                        if (classNameIndex < 0) {
-                            parentName = "";
-                        } else {
-                            parentName = text.substring(0, classNameIndex);
-                        }
-                        if (packageName.equals(parentName)) {
-                            registerError(importStatement);
-                        }
+                        parentName = text.substring(0, classNameIndex);
+                    }
+                    if (packageName.equals(parentName)) {
+                        registerError(importStatement);
                     }
                 }
             }
