@@ -180,6 +180,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myUpdateQueue.queue(new Update("Select") {
       public void run() {
         if (myProject.isDisposed()) return;
+        if (myUpdateQueue.isSuspended()) {
+          myUpdateQueue.queue(this);
+          return;
+        }
         PackageDependenciesNode node = myBuilder.findNode(file, element);
         if (node != null && node.getPsiElement() != element) {
           final TreePath path = new TreePath(node.getPath());
@@ -271,11 +275,15 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myTree.setPaintBusy(true);
     myBuilder.setTree(myTree);
     myTree.getEmptyText().setText("Loading...");
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      myUpdateQueue.suspend();
+    }
     myTree.setModel(myBuilder.build(myProject, showProgress, new Runnable(){
       @Override
       public void run() {
         myTree.setPaintBusy(false);
         myTree.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+        myUpdateQueue.resume();
       }
     }));
     ((PackageDependenciesNode)myTree.getModel().getRoot()).sortChildren();

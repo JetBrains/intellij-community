@@ -257,6 +257,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return !current.dominates(modalityState);
   }
 
+  public boolean isSuspended() {
+    return mySuspended;
+  }
+
   private static boolean isExpired(Update each) {
     return each.isDisposed() || each.isExpired();
   }
