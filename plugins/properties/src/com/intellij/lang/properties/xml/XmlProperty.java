@@ -6,8 +6,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
@@ -16,9 +19,11 @@ import org.jetbrains.annotations.NotNull;
 public class XmlProperty implements IProperty {
 
   private final XmlTag myTag;
+  private final XmlPropertiesFile myPropertiesFile;
 
-  public XmlProperty(XmlTag tag) {
+  public XmlProperty(XmlTag tag, XmlPropertiesFile xmlPropertiesFile) {
     myTag = tag;
+    myPropertiesFile = xmlPropertiesFile;
   }
 
   @Override
@@ -63,7 +68,7 @@ public class XmlProperty implements IProperty {
 
   @Override
   public PropertiesFile getPropertiesFile() throws PsiInvalidElementAccessException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return myPropertiesFile;
   }
 
   @Override
@@ -73,21 +78,26 @@ public class XmlProperty implements IProperty {
 
   @Override
   public PsiElement getPsiElement() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return myTag;
   }
 
   @Override
   public void navigate(boolean requestFocus) {
-    //To change body of implemented methods use File | Settings | File Templates.
+
   }
 
   @Override
   public boolean canNavigate() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return true;
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return true;
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    return PlatformIcons.PROPERTY_ICON;
   }
 }

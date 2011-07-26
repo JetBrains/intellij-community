@@ -1,6 +1,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  *         Date: 7/25/11
  */
-public interface IProperty extends Navigatable {
+public interface IProperty extends Navigatable, Iconable {
 
   String getName();
 

@@ -37,7 +37,7 @@ public class XmlPropertiesFile implements PropertiesFile {
     if (rootTag != null) {
       XmlTag[] entries = rootTag.findSubTags("entry");
       for (XmlTag entry : entries) {
-        XmlProperty property = new XmlProperty(entry);
+        XmlProperty property = new XmlProperty(entry, this);
         myProperties.add(property);
         myPropertiesMap.putValue(property.getKey(), property);
       }

@@ -16,22 +16,15 @@
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertiesFilesManager;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -208,15 +201,9 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     });
     List<PropertiesFile> propertiesFileList = getPropertiesFiles();
     if (propertiesFileList == null) {
-      final PsiManager psiManager = myElement.getManager();
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiManager.getProject()).getFileIndex();
-      PropertiesFilesManager.getInstance(myElement.getProject()).processAllPropertiesFiles(new Processor<VirtualFile>() {
-        public boolean process(VirtualFile file) {
-          if (!file.isValid()) return true;
-          if (!fileIndex.isInContent(file)) return true; //multiple opened projects
-          PsiFile psiFile = psiManager.findFile(file);
-          if (!(psiFile instanceof PropertiesFile)) return true;
-          PropertiesFile propertiesFile = (PropertiesFile)psiFile;
+      PropertiesReferenceManager.getInstance(myElement.getProject()).processAllPropertiesFiles(new PropertiesFileProcessor() {
+        @Override
+        public boolean process(String baseName, PropertiesFile propertiesFile) {
           addVariantsFromFile(propertiesFile, variants);
           return true;
         }
@@ -227,6 +214,13 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
         addVariantsFromFile(propFile, variants);
       }
     }
-    return ArrayUtil.toObjectArray(variants);
+    return ContainerUtil.map2Array(variants, new Function<Object, Object>() {
+      @Override
+      public Object fun(Object o) {
+        if (o instanceof String) return o;
+        IProperty property = (IProperty)o;
+        return LookupElementBuilder.create(property.getKey()).setIcon(property.getIcon(0));
+      }
+    });
   }
 }
