@@ -1,15 +1,9 @@
 package org.jetbrains.ether;
 
-import com.sun.jdi.Value;
-import groovy.lang.StringWriterIOException;
-import org.apache.tools.ant.types.Description;
-import org.omg.CORBA.*;
-
-import javax.swing.*;
-import java.awt.*;
-import java.lang.Object;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -255,13 +249,13 @@ public class Options {
         return myFree;
     }
 
-    public String memo () {
-        StringBuffer buf = new StringBuffer ();
+  public String memo () {
+    final StringBuilder buf = new StringBuilder();
 
-        for (int i = 0; i<myDescriptors.length; i++) {
-            buf.append(myDescriptors[i].memo() + "\n");
-        }
-
-        return buf.toString();
+    for (final Descriptor descriptor : myDescriptors) {
+      buf.append(descriptor.memo()).append("\n");
     }
+
+    return buf.toString();
+  }
 }
