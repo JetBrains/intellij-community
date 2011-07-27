@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * Describes a set of files with name and version. Use {@link DownloadableFileService} to create instances of this interface
+ *
  * @author nik
  */
 public interface DownloadableFileSetDescription {

@@ -20,9 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * Use {@link DownloadableFileService} to create instances of this interface
+ *
  * @author nik
  */
 public interface DownloadableFileSetVersions<F extends DownloadableFileSetDescription> {
+  /**
+   * Fetches available versions of file sets and calls {@code callback.onSuccess} when finished
+   * @param callback callback to receive the result
+   */
   void fetchVersions(@NotNull FileSetVersionsCallback<F> callback);
 
   abstract class FileSetVersionsCallback<F extends DownloadableFileSetDescription> {

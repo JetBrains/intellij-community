@@ -19,6 +19,10 @@ import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Describes file which can be downloaded from the net
+ *
+ * Use {@link DownloadableFileService#createFileDescription(String, String)} to create instances of this interface
+ *
  * @author nik
  */
 public interface DownloadableFileDescription {

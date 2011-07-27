@@ -20,12 +20,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Use {@link DownloadableFileService} to create instances of this interface
+ *
  * @author nik
  */
 public interface FileDownloader {
+  /**
+   * Specifies target directory for downloaded files. If target directory is not specified a file chooser will be shown from {@link #download()} method
+   * @param directoryForDownloadedFilesPath target directory path
+   * @return the same instance
+   */
   @NotNull
   FileDownloader toDirectory(@NotNull String directoryForDownloadedFilesPath);
 
+  /**
+   * Download files with modal progress dialog.
+   * @return downloaded files
+   */
   @Nullable
   VirtualFile[] download();
 }
