@@ -20,19 +20,17 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -73,14 +71,13 @@ public class ResourceBundleImpl implements ResourceBundle {
   public List<PropertiesFile> getPropertiesFiles(final Project project) {
     VirtualFile[] children = myBaseDirectory.getChildren();
     List<PropertiesFile> result = new SmartList<PropertiesFile>();
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile file : children) {
-      if (!file.isValid() || !fileTypeManager.isFileOfType(file, StdFileTypes.PROPERTIES)) continue;
+      if (!file.isValid()) continue;
       if (Comparing.strEqual(PropertiesUtil.getBaseName(file), myBaseName)) {
-        PsiFile psiFile = psiManager.findFile(file);
-        if (psiFile instanceof PropertiesFile) {
-          result.add((PropertiesFile)psiFile);
+        PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(psiManager.findFile(file));
+        if (propertiesFile != null) {
+          result.add(propertiesFile);
         }
       }
     }

@@ -337,15 +337,6 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return unescape(getKey());
   }
 
-  @Nullable
-  public String getKeyValueSeparator() {
-    final ASTNode node = getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
-    if (node == null) {
-      return null;
-    }
-    return node.getText();
-  }
-
   public Icon getIcon(int flags) {
     return PlatformIcons.PROPERTY_ICON;
   }

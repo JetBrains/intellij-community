@@ -43,27 +43,22 @@ public class XmlProperty implements IProperty {
 
   @Override
   public String getValue() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return myTag.getValue().getText();
   }
 
   @Override
   public String getUnescapedValue() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return getValue();
   }
 
   @Override
   public String getUnescapedKey() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public String getKeyValueSeparator() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return getKey();
   }
 
   @Override
   public void setValue(@NonNls @NotNull String value) throws IncorrectOperationException {
-    //To change body of implemented methods use File | Settings | File Templates.
+    myTag.getValue().setText(value);
   }
 
   @Override
@@ -73,7 +68,7 @@ public class XmlProperty implements IProperty {
 
   @Override
   public String getDocCommentText() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override

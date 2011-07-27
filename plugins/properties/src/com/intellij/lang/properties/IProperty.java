@@ -44,9 +44,6 @@ public interface IProperty extends Navigatable, Iconable {
   @Nullable
   String getUnescapedKey();
 
-  @Nullable
-  String getKeyValueSeparator();
-
   void setValue(@NonNls @NotNull String value) throws IncorrectOperationException;
 
   PropertiesFile getPropertiesFile() throws PsiInvalidElementAccessException;

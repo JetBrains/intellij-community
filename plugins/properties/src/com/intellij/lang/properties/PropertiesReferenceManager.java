@@ -146,7 +146,10 @@ public class PropertiesReferenceManager {
                                                           if (psiFile instanceof XmlFile) {
                                                             final String qName = evaluator.evaluateBundleName(psiFile);
                                                             if (qName != null) {
-                                                              if (!processor.process(qName, new XmlPropertiesFile((XmlFile)psiFile))) return false;
+                                                              PropertiesFile propertiesFile = XmlPropertiesFile.getPropertiesFile(psiFile);
+                                                              if (propertiesFile != null) {
+                                                                if (!processor.process(qName, propertiesFile)) return false;
+                                                              }
                                                             }
                                                           }
                                                           return true;

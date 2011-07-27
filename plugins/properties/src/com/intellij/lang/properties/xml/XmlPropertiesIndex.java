@@ -12,6 +12,7 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.xml.NanoXmlUtil;
 import net.n3.nanoxml.StdXMLReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Collections;
@@ -74,26 +75,33 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   @NotNull
   @Override
   public Map<Key, String> map(FileContent inputData) {
-    final HashMap<Key, String> map = new HashMap<Key, String>();
-    StdXMLReader reader;
-    try {
-      reader = new StdXMLReader(new ByteArrayInputStream(inputData.getContent())) {
-        @Override
-        public Reader openStream(String publicID, String systemID) throws IOException {
-          if (!"http://java.sun.com/dtd/properties.dtd".equals(systemID)) throw new IOException();
-          return super.openStream(publicID, systemID);
-        }
-      };
-    }
-    catch (IOException ignore) {
-      return Collections.emptyMap();
-    }
+    StdXMLReader reader = getReader(inputData.getContent());
+    if (reader == null) return Collections.emptyMap();
+    HashMap<Key, String> map = new HashMap<Key, String>();
     MyIXMLBuilderAdapter builder = new MyIXMLBuilderAdapter(map);
     NanoXmlUtil.parse(reader, builder);
     if (builder.accepted) map.put(MARKER_KEY, "");
     return map;
   }
 
+  @Nullable
+  static StdXMLReader getReader(byte[] bytes) {
+    StdXMLReader reader;
+    try {
+      reader = new StdXMLReader(new ByteArrayInputStream(bytes)) {
+        @Override
+        public Reader openStream(String publicID, String systemID) throws IOException {
+          if (!"http://java.sun.com/dtd/properties.dtd".equals(systemID)) throw new IOException();
+          return super.openStream(publicID, systemID);
+        }
+      };
+      return reader;
+    }
+    catch (IOException ignore) {
+      return null;
+    }
+
+  }
   private final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
 
   @Override

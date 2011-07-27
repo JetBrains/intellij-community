@@ -6,15 +6,20 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
+import net.n3.nanoxml.StdXMLReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +36,25 @@ public class XmlPropertiesFile implements PropertiesFile {
   private final List<IProperty> myProperties = new ArrayList<IProperty>();
   private final MultiMap<String, IProperty> myPropertiesMap = new MultiMap<String, IProperty>();
 
-  public XmlPropertiesFile(XmlFile file) {
+  @Nullable
+  public static PropertiesFile getPropertiesFile(final PsiFile file) {
+    return file instanceof XmlFile ? getPropertiesFile((XmlFile)file) : null;
+  }
+
+  public static PropertiesFile getPropertiesFile(final XmlFile file) {
+    CachedValuesManager manager = CachedValuesManager.getManager(file.getProject());
+    return manager.getCachedValue(file, Key.<CachedValue<PropertiesFile>>create(""),
+                                  new CachedValueProvider<PropertiesFile>() {
+                                    @Override
+                                    public Result<PropertiesFile> compute() {
+                                      StdXMLReader reader = XmlPropertiesIndex.getReader(file.getText().getBytes());
+                                      PropertiesFile value = reader == null ? null : new XmlPropertiesFile(file);
+                                      return Result.create(value, file);
+                                    }
+                                  }, false);
+  }
+
+  private XmlPropertiesFile(XmlFile file) {
     myFile = file;
     XmlTag rootTag = file.getRootTag();
     if (rootTag != null) {

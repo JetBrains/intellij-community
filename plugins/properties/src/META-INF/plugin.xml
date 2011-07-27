@@ -34,7 +34,6 @@
     <stubElementTypeHolder class="com.intellij.lang.properties.parsing.PropertiesElementTypes"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePropertyProcessor"/>
     <lang.commenter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCommenter"/>
-    <elementLookupRenderer implementation="com.intellij.lang.properties.PropertyLookupRenderer"/>
     <stubIndex implementation="com.intellij.lang.properties.psi.PropertyKeyIndex"/>
     <lang.namesValidator language="Properties" implementationClass="com.intellij.lang.properties.PropertiesNamesValidator"/>
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.PropertiesSafeDeleteProcessor"/>

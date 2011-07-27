@@ -30,7 +30,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +44,12 @@ public class PropertiesUtil {
   private PropertiesUtil() {
   }
 
+  @Nullable
+  public static PropertiesFile getPropertiesFile(@Nullable PsiFile file) {
+    if (file == null) return null;
+    return file instanceof PropertiesFile ? (PropertiesFile)file : XmlPropertiesFile.getPropertiesFile(file);
+  }
+
   @NotNull
   public static List<IProperty> findPropertiesByKey(final Project project, final String key) {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -56,8 +61,9 @@ public class PropertiesUtil {
       public boolean process(VirtualFile file, String value) {
         if (files.add(file)) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-          if (psiFile instanceof XmlFile) {
-            properties.addAll(new XmlPropertiesFile((XmlFile)psiFile).findPropertiesByKey(key));
+          PropertiesFile propertiesFile = XmlPropertiesFile.getPropertiesFile(psiFile);
+          if (propertiesFile != null) {
+            properties.addAll(propertiesFile.findPropertiesByKey(key));
           }
         }
         return false;
@@ -188,6 +194,7 @@ public class PropertiesUtil {
     return manager.findPropertiesFile(searchFromModule, bundleName, locale);
   }
 
+  @Nullable
   public static String getPackageQualifiedName(PsiDirectory directory) {
     return ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
   }
