@@ -159,8 +159,11 @@ class GitNewChangesCollector extends GitChangesCollector {
           }
           break;
 
-        case 'A':
         case 'C':
+          pos += 1;  // read the "from" filepath which is separated also by NUL character.
+          // NB: no "break" here!
+          // we treat "Copy" as "Added", but we still have to read the old path not to break the format parsing.
+        case 'A':
           if (yStatus == 'M' || yStatus == ' ') {
             reportAdded(filepath);
           } else if (yStatus == 'D') {
@@ -198,6 +201,7 @@ class GitNewChangesCollector extends GitChangesCollector {
         case 'R':
           pos += 1;  // read the "from" filepath which is separated also by NUL character.
           String oldFilename = split[pos];
+
           if (yStatus == 'D') {
             reportDeleted(filepath, head);
           } else if (yStatus == ' ' || yStatus == 'M') {
