@@ -29,6 +29,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +37,7 @@ public class TreeState implements JDOMExternalizable {
   @NonNls private static final String PATH = "PATH";
   @NonNls private static final String PATH_ELEMENT = "PATH_ELEMENT";
   @NonNls private static final String USER_OBJECT = "USER_OBJECT";
+  public static final String CALLBACK = "Callback";
 
   static class PathElement implements JDOMExternalizable {
     public String myItemId;
@@ -396,7 +398,7 @@ public class TreeState implements JDOMExternalizable {
     return builder != null ? new BuilderFacade(builder) : new JTreeFacade(tree);
   }
 
-  static class JTreeFacade implements TreeFacade {
+  public static class JTreeFacade implements TreeFacade {
 
     private final JTree myTree;
 
@@ -410,6 +412,11 @@ public class TreeState implements JDOMExternalizable {
     }
 
     public ActionCallback getIntialized() {
+      final WeakReference<ActionCallback> ref = (WeakReference<ActionCallback>)myTree.getClientProperty(CALLBACK);
+      if (ref != null) {
+        final ActionCallback callback = ref.get();
+        if (callback != null) return callback;
+      }
       return new ActionCallback.Done();
     }
 

@@ -183,6 +183,8 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     return false;
   }
 
+
+
   public int getWeight() {
     return 3;
   }
