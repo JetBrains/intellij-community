@@ -235,7 +235,7 @@ class GitNewChangesCollector extends GitChangesCollector {
     }
 
     final GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myVcsRoot);
-    assert repository != null;
+    assert repository != null : "Repository can't be null for root " + myVcsRoot;
     final String rev = repository.getCurrentRevision();
     final VcsRevisionNumber cachedHead = rev != null ? new GitRevisionNumber(rev) : VcsRevisionNumber.NULL;
 
