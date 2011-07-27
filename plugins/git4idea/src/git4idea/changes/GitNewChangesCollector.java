@@ -232,7 +232,7 @@ class GitNewChangesCollector extends GitChangesCollector {
   private static void throwGFE(String message, GitHandler handler, String output, String line, char xStatus, char yStatus) {
     throw new GitFormatException(String.format("%s\n xStatus=[%s], yStatus=[%s], line=[%s], \n" +
                                                "handler:\n%s\n output: \n%s",
-                                               message, xStatus, yStatus, line, handler, output));
+                                               message, xStatus, yStatus, line.replace('\u0000', '!'), handler, output));
   }
 
   private void reportUnversioned(String filepath) throws VcsException {
