@@ -15,6 +15,7 @@
  */
 package com.intellij.framework.detection.impl.ui;
 
+import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,6 +40,10 @@ class FrameworkDirectoryNode extends DetectedFrameworkTreeNodeBase {
   @Override
   public void renderNode(ColoredTreeCellRenderer renderer) {
     renderer.setIcon(PlatformIcons.FOLDER_ICON);
+    renderer.append(getRelativePath());
+  }
+
+  private String getRelativePath() {
     final TreeNode parent = getParent();
     String path;
     if (parent instanceof FrameworkDirectoryNode) {
@@ -49,11 +54,21 @@ class FrameworkDirectoryNode extends DetectedFrameworkTreeNodeBase {
     else {
       path = myDirectory.getPresentableUrl();
     }
-    renderer.append(path);
+    return path;
   }
 
   @Override
-  public String getActionDescription() {
+  public String getCheckedDescription() {
     return null;
+  }
+
+  @Override
+  public String getUncheckedDescription() {
+    return "'" + getRelativePath() + "' directory will be excluded from framework detection";
+  }
+
+  @Override
+  public void disableDetection(DetectionExcludesConfiguration configuration) {
+    configuration.addExcludedFile(myDirectory, null);
   }
 }

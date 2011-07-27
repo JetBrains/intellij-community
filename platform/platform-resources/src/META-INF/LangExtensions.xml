@@ -203,6 +203,8 @@
   <applicationService serviceInterface="com.intellij.framework.detection.impl.FrameworkDetectorRegistry"
                       serviceImplementation="com.intellij.framework.detection.impl.FrameworkDetectorRegistryImpl"/>
   <fileBasedIndex implementation="com.intellij.framework.detection.impl.FrameworkDetectionIndex"/>
+  <projectService serviceInterface="com.intellij.framework.detection.DetectionExcludesConfiguration"
+                  serviceImplementation="com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl"/>
 
   <projectService serviceInterface="com.intellij.codeInsight.AutoPopupController"
                   serviceImplementation="com.intellij.codeInsight.AutoPopupController"/>

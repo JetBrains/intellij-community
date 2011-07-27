@@ -47,7 +47,7 @@ public class FacetBasedDetectedFrameworkDescription<C extends FacetConfiguration
     myRelatedFiles = files;
     myFacetType = type;
     final Icon icon = myFacetType.getIcon();
-    myFrameworkType = new FrameworkType(myFacetType.getPresentableName(), icon != null ? icon : EmptyIcon.ICON_16);
+    myFrameworkType = new FrameworkType(myFacetType.getStringId(), myFacetType.getPresentableName(), icon != null ? icon : EmptyIcon.ICON_16);
   }
 
   @NotNull

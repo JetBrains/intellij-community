@@ -16,6 +16,7 @@
 package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.FrameworkType;
+import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +38,17 @@ class FrameworkTypeNode extends DetectedFrameworkTreeNodeBase {
   }
 
   @Override
-  public String getActionDescription() {
+  public String getCheckedDescription() {
     return null;
+  }
+
+  @Override
+  public String getUncheckedDescription() {
+    return "'" + myFrameworkType.getPresentableName() + "' framework detection will be disabled.";
+  }
+
+  @Override
+  public void disableDetection(DetectionExcludesConfiguration configuration) {
+    configuration.addExcludedFramework(myFrameworkType);
   }
 }

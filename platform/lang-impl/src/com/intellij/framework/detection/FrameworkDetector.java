@@ -30,15 +30,15 @@ import java.util.List;
  */
 public abstract class FrameworkDetector {
   public static final ExtensionPointName<FrameworkDetector> EP_NAME = ExtensionPointName.create("com.intellij.framework.detector");
-  private final String myDetectorId;
+  private final String myFrameworkTypeId;
   private final int myDetectorVersion;
 
-  protected FrameworkDetector(String detectorId) {
-    this(detectorId, 0);
+  protected FrameworkDetector(String frameworkTypeId) {
+    this(frameworkTypeId, 0);
   }
 
-  protected FrameworkDetector(@NotNull String detectorId, int detectorVersion) {
-    myDetectorId = detectorId;
+  protected FrameworkDetector(@NotNull String frameworkTypeId, int detectorVersion) {
+    myFrameworkTypeId = frameworkTypeId;
     myDetectorVersion = detectorVersion;
   }
 
@@ -52,8 +52,8 @@ public abstract class FrameworkDetector {
                                                                       @NotNull FrameworkDetectionContext context);
 
   @NotNull
-  public final String getDetectorId() {
-    return myDetectorId;
+  public final String getFrameworkTypeId() {
+    return myFrameworkTypeId;
   }
 
   public final int getDetectorVersion() {

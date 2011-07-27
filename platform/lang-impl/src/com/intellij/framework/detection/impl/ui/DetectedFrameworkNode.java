@@ -16,6 +16,7 @@
 package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.detection.DetectedFrameworkDescription;
+import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -75,11 +76,20 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
   }
 
   @Override
-  public String getActionDescription() {
-    if (isChecked()) {
-      return myDescription.getSetupDescription();
-    }
+  public String getCheckedDescription() {
+    return myDescription.getSetupDescription();
+  }
+
+  @Override
+  public String getUncheckedDescription() {
     return null;
+  }
+
+  @Override
+  public void disableDetection(DetectionExcludesConfiguration configuration) {
+    for (VirtualFile file : myDescription.getRelatedFiles()) {
+      configuration.addExcludedFile(file, myDescription.getFrameworkType());
+    }
   }
 
   private void appendDirectoryPath(ColoredTreeCellRenderer renderer, final VirtualFile dir) {

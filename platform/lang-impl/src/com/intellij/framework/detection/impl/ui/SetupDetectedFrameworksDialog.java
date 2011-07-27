@@ -16,6 +16,7 @@
 package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.detection.DetectedFrameworkDescription;
+import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.impl.FrameworkDetectionContextImpl;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,9 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -46,9 +49,11 @@ public class SetupDetectedFrameworksDialog extends DialogWrapper {
   private Splitter mySplitter;
   private JComboBox myGroupByComboBox;
   private JLabel myDescriptionLabel;
+  private final Project myProject;
 
-  public SetupDetectedFrameworksDialog(Project project, List<DetectedFrameworkDescription> descriptions) {
+  public SetupDetectedFrameworksDialog(@NotNull Project project, @NotNull List<DetectedFrameworkDescription> descriptions) {
     super(project, true);
+    myProject = project;
     setTitle("Setup Frameworks");
     final FrameworkDetectionContextImpl context = new FrameworkDetectionContextImpl(project);
     myTree = new DetectedFrameworksTree(descriptions, context, GroupByOption.TYPE) {
@@ -79,7 +84,8 @@ public class SetupDetectedFrameworksDialog extends DialogWrapper {
   private void updateOptionsPanel() {
     final DetectedFrameworkTreeNodeBase[] nodes = myTree.getSelectedNodes(DetectedFrameworkTreeNodeBase.class, null);
     if (nodes.length == 1) {
-      String description = nodes[0].getActionDescription();
+      final DetectedFrameworkTreeNodeBase node = nodes[0];
+      String description = node.isChecked() ? node.getCheckedDescription() : node.getUncheckedDescription();
       if (description != null) {
         myDescriptionLabel.setText(UIUtil.toHtml(description));
         return;
@@ -91,6 +97,17 @@ public class SetupDetectedFrameworksDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myMainPanel;
+  }
+
+  @Override
+  protected void doOKAction() {
+    myTree.processUncheckedNodes(new Consumer<DetectedFrameworkTreeNodeBase>() {
+      @Override
+      public void consume(DetectedFrameworkTreeNodeBase node) {
+        node.disableDetection(DetectionExcludesConfiguration.getInstance(myProject));
+      }
+    });
+    super.doOKAction();
   }
 
   public List<DetectedFrameworkDescription> getSelectedFrameworks() {

@@ -168,4 +168,9 @@ public class Comparing {
     if (o2 == null) return 1;
     return o1.compareTo(o2);
   }
+
+  public static <F extends Comparable<F>, S extends Comparable<S>> int comparePairs(F aFirst, S aSecond, F bFirst, S bSecond) {
+    final int compare = compare(aFirst, bFirst);
+    return compare != 0 ? compare : compare(aSecond, bSecond);
+  }
 }

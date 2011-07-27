@@ -15,6 +15,7 @@
  */
 package com.intellij.framework.detection.impl.ui;
 
+import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.Nullable;
@@ -31,5 +32,10 @@ abstract class DetectedFrameworkTreeNodeBase extends CheckedTreeNode {
   public abstract void renderNode(ColoredTreeCellRenderer renderer);
 
   @Nullable
-  public abstract String getActionDescription();
+  public abstract String getCheckedDescription();
+
+  @Nullable
+  public abstract String getUncheckedDescription();
+
+  public abstract void disableDetection(DetectionExcludesConfiguration configuration);
 }

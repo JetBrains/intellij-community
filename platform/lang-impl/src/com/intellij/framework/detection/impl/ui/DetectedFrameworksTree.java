@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,6 +90,18 @@ public class DetectedFrameworksTree extends CheckboxTree {
     for (DetectedFrameworkNode node : externalNodes) {
       root.add(node);
     }
+  }
+
+  public void processUncheckedNodes(@NotNull final Consumer<DetectedFrameworkTreeNodeBase> consumer) {
+    TreeUtil.traverse(getRoot(), new TreeUtil.Traverse() {
+      @Override
+      public boolean accept(Object node) {
+        if (node instanceof DetectedFrameworkTreeNodeBase) {
+          consumer.consume((DetectedFrameworkTreeNodeBase)node);
+        }
+        return true;
+      }
+    });
   }
 
   private static FrameworkDirectoryNode collapseDirectoryNode(FrameworkDirectoryNode node) {

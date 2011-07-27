@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
+import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.framework.detection.impl.ui.SetupDetectedFrameworksDialog;
 import com.intellij.notification.Notification;
@@ -108,7 +109,9 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
   @Override
   public void disposeComponent() {
-    myDetectedFrameworksData.saveDetected();
+    if (myDetectedFrameworksData != null) {
+      myDetectedFrameworksData.saveDetected();
+    }
   }
 
   @Override
@@ -139,20 +142,23 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       detectorsToProcess.addAll(myDetectorsToProcess);
       myDetectorsToProcess.clear();
     }
+    if (detectorsToProcess.isEmpty()) return;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Starting framework detectors: " + detectorsToProcess);
     }
     final FileBasedIndex index = FileBasedIndex.getInstance();
     Map<Integer, List<? extends DetectedFrameworkDescription>> newDescriptions = new HashMap<Integer, List<? extends DetectedFrameworkDescription>>();
+    final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(myProject);
     for (Integer id : detectorsToProcess) {
       Collection<VirtualFile> files = index.getContainingFiles(FrameworkDetectionIndex.NAME, id, GlobalSearchScope.projectScope(myProject));
       final Collection<VirtualFile> newFiles = myDetectedFrameworksData.retainNewFiles(id, files);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Detector " + id + ": " + files.size() + " accepted files, " + newFiles.size() + " files to process");
-      }
       FrameworkDetector detector = FrameworkDetectorRegistry.getInstance().getDetectorById(id);
       if (detector != null) {
+        excludesConfiguration.removeExcluded(newFiles, detector);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Detector '" + detector.getFrameworkTypeId() + "': " + files.size() + " accepted files, " + newFiles.size() + " files to process");
+        }
         final List<? extends DetectedFrameworkDescription> frameworks;
         if (!newFiles.isEmpty()) {
           frameworks = detector.detect(newFiles, new FrameworkDetectionContextImpl(myProject));

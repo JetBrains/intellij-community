@@ -23,10 +23,12 @@ import javax.swing.*;
  * @author nik
  */
 public class FrameworkType {
+  private final String myId;
   private final String myPresentableName;
   private final Icon myIcon;
 
-  public FrameworkType(@NotNull String presentableName, @NotNull Icon icon) {
+  public FrameworkType(@NotNull String id, @NotNull String presentableName, @NotNull Icon icon) {
+    myId = id;
     myPresentableName = presentableName;
     myIcon = icon;
   }
@@ -34,6 +36,11 @@ public class FrameworkType {
   @NotNull
   public String getPresentableName() {
     return myPresentableName;
+  }
+
+  @NotNull
+  public String getId() {
+    return myId;
   }
 
   @NotNull
@@ -46,11 +53,11 @@ public class FrameworkType {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    return myPresentableName.equals(((FrameworkType)o).myPresentableName);
+    return myId.equals(((FrameworkType)o).myId);
   }
 
   @Override
   public int hashCode() {
-    return myPresentableName.hashCode();
+    return myId.hashCode();
   }
 }
