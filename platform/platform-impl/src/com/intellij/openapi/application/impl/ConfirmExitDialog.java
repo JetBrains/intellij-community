@@ -41,9 +41,7 @@ public class ConfirmExitDialog extends OptionsDialog {
 
   protected Action[] createActions() {
     setOKButtonText(ApplicationBundle.message("command.exit"));
-    final Action cancelAction = getCancelAction();
-    cancelAction.putValue(FOCUSED_ACTION, Boolean.TRUE);
-    return new Action[] {getOKAction(), cancelAction};
+    return new Action[] {getOKAction(), getCancelAction()};
   }
 
   protected boolean isToBeShown() {
