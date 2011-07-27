@@ -56,7 +56,8 @@ public class PropertiesFilesManager extends AbstractProjectComponent {
               ApplicationManager.getApplication().runWriteAction(new Runnable(){
                 public void run() {
                   if (myProject.isDisposed()) return;
-                  Collection<VirtualFile> filesToRefresh = getAllPropertiesFiles();
+                  Collection<VirtualFile> filesToRefresh = FileBasedIndex.getInstance()
+                    .getContainingFiles(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, GlobalSearchScope.allScope(myProject));
                   VirtualFile[] virtualFiles = VfsUtil.toVirtualFileArray(filesToRefresh);
                   FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -78,10 +79,6 @@ public class PropertiesFilesManager extends AbstractProjectComponent {
   @NotNull
   public String getComponentName() {
     return "PropertiesFileManager";
-  }
-
-  private Collection<VirtualFile> getAllPropertiesFiles() {
-    return FileBasedIndex.getInstance().getContainingFiles(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, GlobalSearchScope.allScope(myProject));
   }
 
   public boolean processAllPropertiesFiles(final PropertiesFileProcessor processor) {
