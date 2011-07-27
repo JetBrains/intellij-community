@@ -22,13 +22,13 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class LibraryKind<P extends LibraryProperties> {
-  private String myKindId;
+  private final String myKindId;
 
   public LibraryKind(@NotNull @NonNls String kindId) {
     myKindId = kindId;
   }
 
-  public String getKindId() {
+  public final String getKindId() {
     return myKindId;
   }
 

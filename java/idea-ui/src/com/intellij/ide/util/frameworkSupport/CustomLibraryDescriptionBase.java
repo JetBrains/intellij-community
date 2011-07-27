@@ -32,9 +32,9 @@ import javax.swing.*;
  * @author nik
  */
 public abstract class CustomLibraryDescriptionBase extends CustomLibraryDescription {
-  protected String myDefaultLibraryName;
+  private final String myDefaultLibraryName;
 
-  public CustomLibraryDescriptionBase(@NotNull String defaultLibraryName) {
+  protected CustomLibraryDescriptionBase(@NotNull String defaultLibraryName) {
     myDefaultLibraryName = defaultLibraryName;
   }
 
