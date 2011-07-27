@@ -33,11 +33,9 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -146,7 +144,8 @@ public class ScopeViewPane extends AbstractProjectViewPane {
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {
     if (file == null) return;
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    PsiFileSystemItem psiFile = file.isDirectory() ? PsiManager.getInstance(myProject).findDirectory(file)
+                                                   : PsiManager.getInstance(myProject).findFile(file);
     if (psiFile == null) return;
     if (!(element instanceof PsiElement)) return;
 
@@ -171,13 +170,14 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     }
   }
 
-  private boolean changeView(final PackageSet packageSet, final PsiElement element, final PsiFile psiFile, final String name, final NamedScopesHolder holder,
+  private boolean changeView(final PackageSet packageSet, final PsiElement element, final PsiFileSystemItem psiFileSystemItem, final String name, final NamedScopesHolder holder,
                              boolean requestFocus) {
-    if (packageSet.contains(psiFile, holder)) {
+    if ((packageSet instanceof PackageSetBase && ((PackageSetBase)packageSet).contains(psiFileSystemItem.getVirtualFile(), holder)) ||
+        (psiFileSystemItem instanceof PsiFile && packageSet.contains((PsiFile)psiFileSystemItem, holder))) {
       if (!name.equals(getSubId())) {
         myProjectView.changeView(getId(), name);
       }
-      myViewPanel.selectNode(element, psiFile, requestFocus);
+      myViewPanel.selectNode(element, psiFileSystemItem, requestFocus);
       return true;
     }
     return false;

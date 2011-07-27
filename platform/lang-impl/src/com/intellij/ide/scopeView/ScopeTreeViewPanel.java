@@ -176,7 +176,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     ChangeListManager.getInstance(myProject).removeChangeListListener(myChangesListListener);
   }
 
-  public void selectNode(final PsiElement element, final PsiFile file, final boolean requestFocus) {
+  public void selectNode(final PsiElement element, final PsiFileSystemItem file, final boolean requestFocus) {
     myUpdateQueue.queue(new Update("Select") {
       public void run() {
         if (myProject.isDisposed()) return;
@@ -481,8 +481,12 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       }
       else if (psiElement instanceof PsiDirectory) {
         final PsiElement[] children = psiElement.getChildren();
-        for (PsiElement child : children) {
-          processNodeCreation(child);
+        if (children.length > 0) {
+          for (PsiElement child : children) {
+            processNodeCreation(child);
+          }
+        } else {
+          reload((DefaultMutableTreeNode)myBuilder.addDirNode((PsiDirectory)psiElement).getParent());
         }
       }
     }
@@ -651,25 +655,23 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private class MyIdeView implements IdeView {
     public void selectElement(final PsiElement element) {
       if (element != null) {
-        final boolean isDirectory = element instanceof PsiDirectory;
-        if (!isDirectory) {
-          final PsiFile psiFile = element.getContainingFile();
-          final PackageSet packageSet = getCurrentScope().getValue();
-          if (packageSet == null) return;
-          if (psiFile != null) {
-            final ProjectView projectView = ProjectView.getInstance(myProject);
-            if (!packageSet.contains(psiFile, NamedScopesHolder.getHolder(myProject, CURRENT_SCOPE_NAME, myDependencyValidationManager))) {
-              projectView.changeView(ProjectViewPane.ID);
-            }
-            projectView.select(psiFile, psiFile.getVirtualFile(), false);
+        final PackageSet packageSet = getCurrentScope().getValue();
+        final PsiFile psiFile = element.getContainingFile();
+        if (packageSet == null) return;
+        final VirtualFile virtualFile = psiFile != null ? psiFile.getVirtualFile() :
+                                        (element instanceof PsiDirectory ? ((PsiDirectory)element).getVirtualFile() : null);
+        if (virtualFile != null) {
+          final ProjectView projectView = ProjectView.getInstance(myProject);
+          final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, CURRENT_SCOPE_NAME, myDependencyValidationManager);
+          if (packageSet instanceof PackageSetBase && !((PackageSetBase)packageSet).contains(virtualFile, holder) ||
+              psiFile != null && !packageSet.contains(psiFile, holder)) {
+            projectView.changeView(ProjectViewPane.ID);
           }
-          Editor editor = EditorHelper.openInEditor(element);
-          if (editor != null) {
-            ToolWindowManager.getInstance(myProject).activateEditorComponent();
-          }
+          projectView.select(element, virtualFile, false);
         }
-        else {
-          ((PsiDirectory)element).navigate(true);
+        Editor editor = EditorHelper.openInEditor(element);
+        if (editor != null) {
+          ToolWindowManager.getInstance(myProject).activateEditorComponent();
         }
       }
     }
