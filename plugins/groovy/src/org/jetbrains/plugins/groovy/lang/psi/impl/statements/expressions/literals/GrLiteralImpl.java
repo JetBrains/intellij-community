@@ -128,7 +128,7 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, GrLiteral.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
   }
 
   @Nullable

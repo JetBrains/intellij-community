@@ -93,7 +93,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
   @NotNull
   private PsiPolyVariantReference getRealReference() {
-    PsiReference[] otherReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, GrArgumentLabel.class);
+    PsiReference[] otherReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
     PsiPolyVariantReference reference = getReferenceFromNamedArgumentProviders();
 
     if (otherReferences.length == 0) {
