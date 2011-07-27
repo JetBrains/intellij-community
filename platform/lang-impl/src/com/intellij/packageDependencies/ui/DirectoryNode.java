@@ -61,7 +61,7 @@ public class DirectoryNode extends PackageDependenciesNode {
         else {
           final VirtualFile sourceRoot = index.getSourceRootForFile(myVDirectory);
           if (myVDirectory == sourceRoot) {
-            myFQName = dirName;
+            myFQName = VfsUtil.getRelativePath(myVDirectory, contentRoot, '/');
           }
           else if (sourceRoot != null) {
             myFQName = VfsUtil.getRelativePath(myVDirectory, sourceRoot, '/');
