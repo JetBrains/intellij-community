@@ -38,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Arrays;
 
@@ -132,12 +131,9 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
           parent.getParent() instanceof GrNewExpression &&
           (offset == text.length() || !text.substring(offset).trim().startsWith("("))) {
         document.insertString(offset, "()");
-        final PsiMethod[] methods = ResolveUtil.getAllClassConstructors(clazz, (GroovyPsiElement)parent, PsiSubstitutor.EMPTY);
-        for (PsiMethod method : methods) {
-          if (method.getParameterList().getParameters().length > 0) {
-            caretModel.moveToOffset(offset + 1);
-            return;
-          }
+        if (GroovyCompletionUtil.hasConstructorParameters(clazz, (GroovyPsiElement)parent)) {
+          caretModel.moveToOffset(offset + 1);
+          return;
         }
         caretModel.moveToOffset(offset + 2);
         return;

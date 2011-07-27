@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
@@ -79,7 +80,8 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
     if (parens && context.getCompletionChar() != '[') {
       int identifierEnd = context.getTailOffset();
 
-      JavaCompletionUtil.insertParentheses(context, item, false, GroovyCompletionUtil.hasConstructorParameters(psiClass));
+      GroovyPsiElement place = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GroovyPsiElement.class, false);
+      JavaCompletionUtil.insertParentheses(context, item, false, place != null && GroovyCompletionUtil.hasConstructorParameters(psiClass, place));
 
       if (context.getCompletionChar() == '<') {
         context.getDocument().insertString(identifierEnd, "<>");

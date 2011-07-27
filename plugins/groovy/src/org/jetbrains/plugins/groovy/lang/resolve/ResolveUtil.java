@@ -27,10 +27,10 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -38,7 +38,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -169,10 +172,6 @@ public class ResolveUtil {
       type = ((PsiEllipsisType)type).toArrayType();
     }
     if (!NonCodeMembersContributor.runContributors(type, processor, place, state)) {
-      return false;
-    }
-
-    if (!GroovyDslFileIndex.processExecutors(type, place, processor, state)) {
       return false;
     }
 
@@ -546,27 +545,20 @@ public class ResolveUtil {
     return variants;
   }
 
-  public static GroovyResolveResult[] getNonCodeConstructors(PsiClass psiClass, GroovyPsiElement place, PsiSubstitutor substitutor) {
+  public static List<GroovyResolveResult> getAllClassConstructors(PsiClass psiClass, GroovyPsiElement place, PsiSubstitutor substitutor) {
+    final List<GroovyResolveResult> result = CollectionFactory.arrayList();
+
+    final PsiResolveHelper helper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
+    for (PsiMethod constructor : psiClass.getConstructors()) {
+      result.add(new GroovyResolveResultImpl(constructor, null, substitutor, helper.isAccessible(constructor, place, null), true));
+    }
+
     final PsiClassType qualifierType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
     final MethodResolverProcessor processor = new MethodResolverProcessor(psiClass.getName(), place, true, null, null, PsiType.EMPTY_ARRAY);
-    NonCodeMembersContributor
-      .runContributors(qualifierType, processor, place, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor));
-    return processor.getCandidates();
-  }
-
-  public static PsiMethod[] getAllClassConstructors(PsiClass psiClass, GroovyPsiElement place, PsiSubstitutor substitutor) {
-    final PsiMethod[] realConstructors = psiClass.getConstructors();
-    final GroovyResolveResult[] nonCodeConstructors = getNonCodeConstructors(psiClass, place, substitutor);
-    PsiMethod[] constructors = new PsiMethod[realConstructors.length + nonCodeConstructors.length];
-    System.arraycopy(realConstructors, 0, constructors, 0, realConstructors.length);
-    for (int i = 0; i < nonCodeConstructors.length; i++) {
-      GroovyResolveResult nonCodeConstructor = nonCodeConstructors[i];
-      final PsiElement element = nonCodeConstructor.getElement();
-      if (element instanceof PsiMethod) {
-        constructors[i + realConstructors.length] = (PsiMethod)element;
-      }
-    }
-    return constructors;
+    ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
+    NonCodeMembersContributor.runContributors(qualifierType, processor, place, state);
+    Collections.addAll(result, processor.getCandidates());
+    return result;
   }
 
   public static boolean isInUseScope(GroovyResolveResult resolveResult) {

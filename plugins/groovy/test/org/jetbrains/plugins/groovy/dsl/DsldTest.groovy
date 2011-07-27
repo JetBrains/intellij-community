@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.groovy.dsl
 
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 
 /**
  * @author peter
@@ -154,13 +156,25 @@ contribute(currentType("java.lang.String")) { property name:"foo" }
                       'println "".<warning>foo</warning>'
   }
 
+  public void testAddConstructor() {
+    addDsld 'contribute(currentType("java.lang.String")) { constructor params:[foo:Integer, bar:Integer, goo:Integer] }'
 
+    myFixture.configureByText('a.groovy', 'new Stri<caret>ng(2,3,9)')
+    def newExpr = PsiTreeUtil.findElementOfClassAtOffset(myFixture.file, myFixture.editor.caretModel.offset, GrNewExpression, false)
+    def method = newExpr.resolveMethod()
+    assert method.constructor
+    assert method.parameterList.parameters.length == 3
+  }
 
   private def checkHighlighting(String dsl, String code) {
-    def file = myFixture.addFileToProject('a.gdsl', dsl)
-    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    addDsld(dsl)
 
     checkHighlighting(code)
+  }
+
+  private def addDsld(String dsl) {
+    def file = myFixture.addFileToProject('a.gdsl', dsl)
+    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
   }
 
   private def checkHighlighting(String text) {

@@ -23,6 +23,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
@@ -49,7 +50,7 @@ public abstract class NonCodeMembersContributor {
         return false;
       }
     }
-    return true;
+    return GroovyDslFileIndex.processExecutors(qualifierType, place, processor, state);
   }
 
   private static class MyDelegatingScopeProcessor extends DelegatingScopeProcessor {
