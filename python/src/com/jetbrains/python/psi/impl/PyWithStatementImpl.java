@@ -31,7 +31,7 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
     List<PyElement> result = new ArrayList<PyElement>();
     if (items != null) {
       for (PyWithItem item : items) {
-        PyExpression targetExpression = item.getTargetExpression();
+        PyExpression targetExpression = item.getTarget();
         result.addAll(PyUtil.flattenedParensAndTuples(targetExpression));
       }
     }

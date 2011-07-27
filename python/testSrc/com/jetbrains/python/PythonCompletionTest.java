@@ -177,7 +177,12 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
-  public void testReturnType() {  
+  public void testReturnType() {
+    doTest();
+  }
+
+  public void testWithType() { // PY-4198
+    setLanguageLevel(LanguageLevel.PYTHON26);
     doTest();
   }
 
