@@ -610,10 +610,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     LOG.assertTrue(this == current, current + "!=" + this);
 
-    if (isAutopopupCompletion()) {
-      myLookup.setFocused(false);
-    }
-
     final CompletionPhase phase = new CompletionPhase.Restarted(this);
     CompletionServiceImpl.setCompletionPhase(phase);
 
