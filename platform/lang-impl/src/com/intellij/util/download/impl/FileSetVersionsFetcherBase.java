@@ -25,6 +25,7 @@ import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.DownloadableFileSetDescription;
 import com.intellij.util.download.DownloadableFileSetVersions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public abstract class FileSetVersionsFetcherBase<F extends DownloadableFileSetDe
   protected final String myGroupId;
   private final URL[] myLocalUrls;
 
-  public FileSetVersionsFetcherBase(@NotNull String groupId, @NotNull URL[] localUrls) {
+  public FileSetVersionsFetcherBase(@Nullable String groupId, @NotNull URL[] localUrls) {
     myLocalUrls = localUrls;
     myGroupId = groupId;
   }
@@ -55,7 +56,13 @@ public abstract class FileSetVersionsFetcherBase<F extends DownloadableFileSetDe
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        final Artifact[] versions = LibrariesDownloadAssistant.getVersions(myGroupId, myLocalUrls);
+        final Artifact[] versions;
+        if (myGroupId != null) {
+          versions = LibrariesDownloadAssistant.getVersions(myGroupId, myLocalUrls);
+        }
+        else {
+          versions = LibrariesDownloadAssistant.getVersions(myLocalUrls);
+        }
         final List<F> result = new ArrayList<F>();
         for (Artifact version : versions) {
           final ArtifactItem[] items = version.getItems();
