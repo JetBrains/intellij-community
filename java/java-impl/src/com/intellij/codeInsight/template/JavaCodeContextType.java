@@ -38,7 +38,7 @@ public class JavaCodeContextType extends TemplateContextType {
       if (element instanceof PsiWhiteSpace && offset > 0) {
         element = file.findElementAt(offset - 1);
       }
-      if (element instanceof PsiIdentifier &&
+      if (element != null &&
           element.getParent() instanceof PsiReferenceExpression &&
           ((PsiReferenceExpression)element.getParent()).isQualified()) {
         return false;
