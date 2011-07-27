@@ -117,7 +117,7 @@ class GitNewChangesCollector extends GitChangesCollector {
    */
   // handler is here for debugging purposes in the case of parse error
   private void parseOutput(@NotNull String output, @NotNull GitHandler handler) throws VcsException {
-    VcsRevisionNumber head = getHEAD();
+    VcsRevisionNumber head = getHead();
 
     final String[] split = output.split("\u0000");
 
@@ -224,7 +224,28 @@ class GitNewChangesCollector extends GitChangesCollector {
   }
 
   @NotNull
-  private VcsRevisionNumber getHEAD() throws VcsException {
+  private VcsRevisionNumber getHead() throws VcsException {
+    VcsRevisionNumber nativeHead = getHeadFromGit();
+
+    final GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myVcsRoot);
+
+    if (repository != null) {
+      final String rev = repository.getCurrentRevision();
+      final VcsRevisionNumber cachedHead = rev != null ? new GitRevisionNumber(rev) : VcsRevisionNumber.NULL;
+
+      if (!cachedHead.equals(nativeHead)) {
+        LOG.error(String.format("GitRepository#getCurrentRevision() returned incorrect value. \nActual: %s\nReturned: %s",
+                                nativeHead, cachedHead));
+      }
+    } else {
+      // this may happen on the project startup, when GitChangeProvider may be queried before GitRepository has been initialized.
+      LOG.info("GitRepository is null for root " + myVcsRoot);
+    }
+    return nativeHead;
+  }
+
+  @NotNull
+  private VcsRevisionNumber getHeadFromGit() throws VcsException {
     VcsRevisionNumber nativeHead = VcsRevisionNumber.NULL;
     try {
       nativeHead = GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD"); // TODO substitute with a call to GitRepository#getCurrentRevision()
@@ -233,16 +254,6 @@ class GitNewChangesCollector extends GitChangesCollector {
       if (!GitChangeUtils.isHeadMissing(e)) { // fresh repository
         throw e;
       }
-    }
-
-    final GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myVcsRoot);
-    assert repository != null : "Repository can't be null for root " + myVcsRoot;
-    final String rev = repository.getCurrentRevision();
-    final VcsRevisionNumber cachedHead = rev != null ? new GitRevisionNumber(rev) : VcsRevisionNumber.NULL;
-
-    if (!cachedHead.equals(nativeHead)) {
-      LOG.error(String.format("GitRepository#getCurrentRevision() returned incorrect value. \nActual: %s\nReturned: %s",
-                              nativeHead, cachedHead));
     }
     return nativeHead;
   }
