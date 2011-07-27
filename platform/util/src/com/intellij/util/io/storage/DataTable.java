@@ -21,6 +21,7 @@ package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RandomAccessDataFile;
@@ -29,6 +30,8 @@ import java.io.File;
 import java.io.IOException;
 
 class DataTable implements Disposable, Forceable {
+  private static final Logger LOG = Logger.getInstance("com.intellij.util.io.storage.DataTable");
+
   private static final int HEADER_SIZE = 32;
   private static final int DIRTY_MAGIC = 0x12ad34e4;
   private static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f;
@@ -63,11 +66,6 @@ class DataTable implements Disposable, Forceable {
     myWasteSize = myFile.getInt(HEADER_WASTE_SIZE_OFFSET);
   }
 
-  private void fillInHeader(int magic, int wasteSize) {
-    myFile.putInt(HEADER_MAGIC_OFFSET, magic);
-    myFile.putInt(HEADER_WASTE_SIZE_OFFSET, wasteSize);
-  }
-
   public void readBytes(long address, byte[] bytes) {
     myFile.get(address, bytes, 0, bytes.length);
   }
@@ -85,13 +83,19 @@ class DataTable implements Disposable, Forceable {
     final long result = Math.max(myFile.length(), HEADER_SIZE);
 
     // Fill them in so we won't give out wrong address from allocateSpace() next time if they still not finished writing to allocated page
-    writeBytes(result + len - 1, new byte[]{0});
+    long newLenght = result + len;
+    writeBytes(newLenght - 1, new byte[]{0});
+    long actualLenght = myFile.length();
+    LOG.assertTrue(actualLenght == newLenght,
+                   "Failed to resize the storage at: " + myFile.getFile() + ". Required: " + newLenght + ", actual: " + actualLenght);
     return result;
   }
 
   public void reclaimSpace(int len) {
-    markDirty();
-    myWasteSize += len;
+    if (len > 0) {
+      markDirty();
+      myWasteSize += len;
+    }
   }
 
   public void dispose() {
@@ -131,6 +135,11 @@ class DataTable implements Disposable, Forceable {
       myIsDirty = true;
       fillInHeader(DIRTY_MAGIC, 0);
     }
+  }
+
+  private void fillInHeader(int magic, int wasteSize) {
+    myFile.putInt(HEADER_MAGIC_OFFSET, magic);
+    myFile.putInt(HEADER_WASTE_SIZE_OFFSET, wasteSize);
   }
 
   public int getWaste() {

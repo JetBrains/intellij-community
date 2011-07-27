@@ -216,7 +216,10 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   }
 
   public StorageDataOutput writeStream(final int record) {
-    return new StorageDataOutput(this, record);
+    return writeStream(record, false);
+  }
+  public StorageDataOutput writeStream(final int record, boolean fixedSize) {
+    return new StorageDataOutput(this, record, fixedSize);
   }
 
   public AppenderStream appendStream(int record) {
@@ -284,9 +287,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         address = myRecordsTable.getAddress(record);
       }
       else {
-        if (currentCapacity > 0) {
-          myDataTable.reclaimSpace(currentCapacity);
-        }
+        myDataTable.reclaimSpace(currentCapacity);
 
         final int newCapacity = fixedSize ? requiredLength : calcCapacity(requiredLength);
         address = myDataTable.allocateSpace(newCapacity);
@@ -300,7 +301,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   }
 
   protected void doDeleteRecord(int record) throws IOException {
-    myDataTable.reclaimSpace(myRecordsTable.getSize(record));
+    myDataTable.reclaimSpace(myRecordsTable.getCapacity(record));
     myRecordsTable.deleteRecord(record);
   }
 
@@ -324,21 +325,19 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   public static class StorageDataOutput extends DataOutputStream implements RecordDataOutput {
     private final AbstractStorage myStorage;
     private final int myRecordId;
+    private final boolean myFixedSize;
 
-    public StorageDataOutput(AbstractStorage storage, int recordId) {
-      this(storage, recordId, new BufferExposingByteArrayOutputStream());
-    }
-
-    protected StorageDataOutput(AbstractStorage storage, int recordId, OutputStream stream) {
-      super(stream);
+    private StorageDataOutput(AbstractStorage storage, int recordId, boolean fixedSize) {
+      super(new BufferExposingByteArrayOutputStream());
       myStorage = storage;
       myRecordId = recordId;
+      myFixedSize = fixedSize;
     }
 
     public void close() throws IOException {
       super.close();
       final BufferExposingByteArrayOutputStream byteStream = getByteStream();
-      myStorage.writeBytes(myRecordId, new ByteSequence(byteStream.getInternalBuffer(), 0, byteStream.size()), false);
+      myStorage.writeBytes(myRecordId, new ByteSequence(byteStream.getInternalBuffer(), 0, byteStream.size()), myFixedSize);
     }
 
     protected BufferExposingByteArrayOutputStream getByteStream() {
@@ -353,7 +352,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   public class AppenderStream extends DataOutputStream {
     private final int myRecordId;
 
-    public AppenderStream(int recordId) {
+    private AppenderStream(int recordId) {
       super(new BufferExposingByteArrayOutputStream());
       myRecordId = recordId;
     }

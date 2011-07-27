@@ -24,8 +24,8 @@ import java.io.IOException;
 public class LocalHistoryRecordsTable extends AbstractRecordsTable {
   private static final int VERSION = 4;
 
-  private static final int ID_COUNTER_OFFSET = DEFAULT_HEADER_SIZE;
-  private static final int FIRST_RECORD_OFFSET = ID_COUNTER_OFFSET + 8;
+  private static final int LAST_ID_OFFSET = DEFAULT_HEADER_SIZE;
+  private static final int FIRST_RECORD_OFFSET = LAST_ID_OFFSET + 8;
   private static final int LAST_RECORD_OFFSET = FIRST_RECORD_OFFSET + 4;
   private static final int FS_TIMESTAMP_OFFSET = LAST_RECORD_OFFSET + 4;
   private static final int HEADER_SIZE = FS_TIMESTAMP_OFFSET + 8;
@@ -33,8 +33,8 @@ public class LocalHistoryRecordsTable extends AbstractRecordsTable {
   private static final int PREV_RECORD_OFFSET = DEFAULT_RECORD_SIZE;
   private static final int NEXT_RECORD_OFFSET = PREV_RECORD_OFFSET + 4;
   private static final int TIMESTAMP_OFFSET = NEXT_RECORD_OFFSET + 4;
-
   private static final int RECORD_SIZE = TIMESTAMP_OFFSET + 8;
+
   private static final byte[] ZEROS = new byte[RECORD_SIZE];
 
   public LocalHistoryRecordsTable(final File storageFilePath, final PagePool pool) throws IOException {
@@ -61,20 +61,13 @@ public class LocalHistoryRecordsTable extends AbstractRecordsTable {
     return ZEROS;
   }
 
-  public long nextId() {
-    markDirty();
-    long result = myStorage.getLong(ID_COUNTER_OFFSET);
-    myStorage.putLong(ID_COUNTER_OFFSET, result + 1);
-    return result;
+  public long getLastId() {
+    return myStorage.getLong(LAST_ID_OFFSET);
   }
 
-  public void setFSTimestamp(long timestamp) {
+  public void setLastId(long lastId) {
     markDirty();
-    myStorage.putLong(FS_TIMESTAMP_OFFSET, timestamp);
-  }
-
-  public long getFSTimestamp() {
-    return myStorage.getLong(FS_TIMESTAMP_OFFSET);
+    myStorage.putLong(LAST_ID_OFFSET, lastId);
   }
 
   public void setFirstRecord(int record) {
@@ -93,6 +86,15 @@ public class LocalHistoryRecordsTable extends AbstractRecordsTable {
 
   public int getLastRecord() {
     return myStorage.getInt(LAST_RECORD_OFFSET);
+  }
+
+  public void setFSTimestamp(long timestamp) {
+    markDirty();
+    myStorage.putLong(FS_TIMESTAMP_OFFSET, timestamp);
+  }
+
+  public long getFSTimestamp() {
+    return myStorage.getLong(FS_TIMESTAMP_OFFSET);
   }
 
   public void setPrevRecord(int record, int prevRecord) {

@@ -49,9 +49,15 @@ public class LocalHistoryStorage extends AbstractStorage {
     }
   }
 
-  public long nextId() {
+  public long getLastId() {
     synchronized (myLock) {
-      return ((LocalHistoryRecordsTable)myRecordsTable).nextId();
+      return ((LocalHistoryRecordsTable)myRecordsTable).getLastId();
+    }
+  }
+
+  public void setLastId(long lastId) {
+    synchronized (myLock) {
+      ((LocalHistoryRecordsTable)myRecordsTable).setLastId(lastId);
     }
   }
 
@@ -106,28 +112,26 @@ public class LocalHistoryStorage extends AbstractStorage {
     }
   }
 
-  public void deleteRecord(int id) throws IOException {
+  public void deleteRecordsUpTo(int idInclusively) throws IOException {
     synchronized (myLock) {
       LocalHistoryRecordsTable table = (LocalHistoryRecordsTable)myRecordsTable;
 
-      int prev = table.getPrevRecord(id);
-      int next = table.getNextRecord(id);
-
-      if (prev == 0) {
-        table.setFirstRecord(next);
-      }
-      else {
-        table.setNextRecord(prev, next);
-      }
-
+      int next = table.getNextRecord(idInclusively);
       if (next == 0) {
-        table.setLastRecord(prev);
+        table.setFirstRecord(0);
+        table.setLastRecord(0);
       }
       else {
-        table.setPrevRecord(next, prev);
+        table.setFirstRecord(next);
+        table.setPrevRecord(next, 0);
       }
 
-      doDeleteRecord(id);
+      int eachId = idInclusively;
+      while (eachId != 0) {
+        int prevId = table.getPrevRecord(eachId);
+        doDeleteRecord(eachId);
+        eachId = prevId;
+      }
     }
   }
 }

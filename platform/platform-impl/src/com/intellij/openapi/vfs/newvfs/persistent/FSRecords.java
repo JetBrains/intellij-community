@@ -1081,7 +1081,7 @@ public class FSRecords implements Forceable {
   public static int storeUnlinkedContent(byte[] bytes) {
     try {
       int recordId = getContentStorage().acquireNewRecord();
-      AbstractStorage.StorageDataOutput output = getContentStorage().writeStream(recordId);
+      AbstractStorage.StorageDataOutput output = getContentStorage().writeStream(recordId, true);
       output.write(bytes);
       output.close();
       return recordId;
