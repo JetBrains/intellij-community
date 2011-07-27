@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
+import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.FileType;
@@ -148,6 +149,11 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       insertLinebreakBefore(anchorBefore);
     }
     return copy.getPsi();
+  }
+
+  @Override
+  public IProperty addProperty(String key, String value) {
+    return (IProperty)addProperty(PropertiesElementFactory.createProperty(getProject(), key, value));
   }
 
   private void insertLinebreakBefore(final ASTNode anchorBefore) {

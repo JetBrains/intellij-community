@@ -427,8 +427,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
         for (String dependency : dependencies) {
           final String relPath = FileUtil.getRelativePath(baseDirPath, dependency, '/');
           final String value = relPath != null ? relPath : dependency;
-          propertiesFile.addProperty(
-            PropertiesElementFactory.createProperty(project, AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX + index, value));
+          propertiesFile.addProperty(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX + index, value);
           index++;
         }
       }
@@ -474,9 +473,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
         @Override
         public void run() {
           if (property == null) {
-            final IProperty newProperty = PropertiesElementFactory.createProperty(propertiesFile.getProject(),
-                                                                                  AndroidUtils.ANDROID_TARGET_PROPERTY, targetPropertyValue);
-            propertiesFile.addProperty(newProperty);
+            propertiesFile.addProperty(AndroidUtils.ANDROID_TARGET_PROPERTY, targetPropertyValue);
           }
           else {
             property.setValue(targetPropertyValue);
@@ -496,10 +493,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
           property.setValue(Boolean.toString(getConfiguration().LIBRARY_PROJECT));
         }
         else if (getConfiguration().LIBRARY_PROJECT) {
-          final IProperty newProperty = PropertiesElementFactory.createProperty(propertiesFile.getProject(),
-                                                                                AndroidUtils.ANDROID_LIBRARY_PROPERTY,
-                                                                                Boolean.TRUE.toString());
-          propertiesFile.addProperty(newProperty);
+          propertiesFile.addProperty(AndroidUtils.ANDROID_LIBRARY_PROPERTY, Boolean.TRUE.toString());
         }
       }
     });

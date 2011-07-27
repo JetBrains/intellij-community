@@ -21,7 +21,6 @@ import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
@@ -183,7 +182,7 @@ public final class StringEditorDialog extends DialogWrapper{
                   PsiDocumentManager.getInstance(module.getProject()).commitAllDocuments();
                   try {
                     if (newKeyName1 != null) {
-                      propFile.addProperty(PropertiesElementFactory.createProperty(module.getProject(), newKeyName1, editedValue));
+                      propFile.addProperty(newKeyName1, editedValue);
                     }
                     else {
                       final IProperty propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
@@ -249,7 +248,6 @@ public final class StringEditorDialog extends DialogWrapper{
 
   public static boolean saveCreatedProperty(final PropertiesFile bundle, final String name, final String value,
                                             final PsiFile formFile) {
-    final IProperty property = PropertiesElementFactory.createProperty(bundle.getProject(), name, value);
     final ReadonlyStatusHandler.OperationStatus operationStatus =
       ReadonlyStatusHandler.getInstance(bundle.getProject()).ensureFilesWritable(bundle.getVirtualFile());
     if (operationStatus.hasReadonlyFiles()) {
@@ -263,7 +261,7 @@ public final class StringEditorDialog extends DialogWrapper{
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
-                bundle.addProperty(property);
+                bundle.addProperty(name, value);
               }
               catch (IncorrectOperationException e1) {
                 LOG.error(e1);

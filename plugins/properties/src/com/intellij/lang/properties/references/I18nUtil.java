@@ -18,7 +18,6 @@ package com.intellij.lang.properties.references;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileProcessor;
 import com.intellij.lang.properties.PropertiesReferenceManager;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -63,14 +62,13 @@ public class I18nUtil {
                                     final Collection<PropertiesFile> propertiesFiles,
                                     final String key,
                                     final String value) throws IncorrectOperationException {
-    IProperty property = PropertiesElementFactory.createProperty(project, key, value);
     for (PropertiesFile file : propertiesFiles) {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       documentManager.commitDocument(documentManager.getDocument(file.getContainingFile()));
 
-      IProperty existingProperty = file.findPropertyByKey(property.getUnescapedKey());
+      IProperty existingProperty = file.findPropertyByKey(key);
       if (existingProperty == null) {
-        file.addProperty(property);
+        file.addProperty(key, value);
       }
     }
   }

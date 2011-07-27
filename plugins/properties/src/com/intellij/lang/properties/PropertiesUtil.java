@@ -44,6 +44,10 @@ public class PropertiesUtil {
   private PropertiesUtil() {
   }
 
+  public static boolean isPropertiesFile(VirtualFile file, Project project) {
+    return getPropertiesFile(PsiManager.getInstance(project).findFile(file)) != null;
+  }
+
   @Nullable
   public static PropertiesFile getPropertiesFile(@Nullable PsiFile file) {
     if (file == null) return null;

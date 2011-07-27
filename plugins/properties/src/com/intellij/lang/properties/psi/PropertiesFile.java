@@ -73,6 +73,8 @@ public interface PropertiesFile {
    * @return newly added property.
    * It is this value you use to do actual PSI work, e.g. call {@link com.intellij.psi.PsiElement#delete()} to remove this property from the file.
    * @throws IncorrectOperationException
+   * @deprecated
+   * @see #addProperty(String, String)
    */
   @NotNull PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException;
 
@@ -86,6 +88,8 @@ public interface PropertiesFile {
    * @throws IncorrectOperationException
    */
   @NotNull PsiElement addPropertyAfter(@NotNull Property property, @Nullable Property anchor) throws IncorrectOperationException;
+
+  IProperty addProperty(String key, String value);
 
   /**
    * @return Property key to the property value map.

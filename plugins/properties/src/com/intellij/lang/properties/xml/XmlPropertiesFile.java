@@ -115,6 +115,14 @@ public class XmlPropertiesFile implements PropertiesFile {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  @Override
+  public IProperty addProperty(String key, String value) {
+    XmlTag rootTag = myFile.getRootTag();
+    XmlTag entry = rootTag.createChildTag("entry", "", value, false);
+    entry.setAttribute("key", key);
+    return new XmlProperty(entry, this);
+  }
+
   @NotNull
   @Override
   public Map<String, String> getNamesMap() {
@@ -148,5 +156,22 @@ public class XmlPropertiesFile implements PropertiesFile {
   @Override
   public String getText() {
     return getContainingFile().getText();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    XmlPropertiesFile that = (XmlPropertiesFile)o;
+
+    if (!myFile.equals(that.myFile)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myFile.hashCode();
   }
 }
