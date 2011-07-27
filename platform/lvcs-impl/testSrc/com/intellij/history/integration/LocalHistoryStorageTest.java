@@ -20,6 +20,8 @@ import com.intellij.util.io.storage.AbstractStorage;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LocalHistoryStorageTest extends IntegrationTestCase {
   private LocalHistoryStorage myStorage;
@@ -60,39 +62,25 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
     fail("should have thrown exception");
   }
 
-  public void testDeletion() throws Exception {
+  public void testTrimming() throws Exception {
     int r1 = createRecord();
     int r2 = createRecord();
     int r3 = createRecord();
-
-    assertFirstAndLast(r1, r3);
-    assertRecord(r3, r2, 0);
-    assertRecord(r2, r1, r3);
-    assertRecord(r1, 0, r2);
-
-    myStorage.deleteRecord(r2);
-
-    assertFirstAndLast(r1, r3);
-    assertRecord(r3, r1, 0);
-    assertRecord(r1, 0, r3);
-
-    myStorage.deleteRecord(r3);
-
-    assertFirstAndLast(r1, r1);
-    assertRecord(r1, 0, 0);
-
     int r4 = createRecord();
 
     assertFirstAndLast(r1, r4);
-    assertRecord(r4, r1, 0);
-    assertRecord(r1, 0, r4);
+    assertRecord(r1, 0, r2);
+    assertRecord(r2, r1, r3);
+    assertRecord(r3, r2, r4);
+    assertRecord(r4, r3, 0);
 
-    myStorage.deleteRecord(r1);
+    myStorage.deleteRecordsUpTo(r2);
 
-    assertFirstAndLast(r4, r4);
-    assertRecord(r4, 0, 0);
+    assertFirstAndLast(r3, r4);
+    assertRecord(r3, 0, r4);
+    assertRecord(r4, r3, 0);
 
-    myStorage.deleteRecord(r4);
+    myStorage.deleteRecordsUpTo(r4);
 
     assertFirstAndLast(0, 0);
   }
@@ -101,38 +89,56 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
     int r1 = createRecord();
     int r2 = createRecord();
     int r3 = createRecord();
-
-    myStorage.deleteRecord(r2);
-
-    myStorage.dispose();
-    myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
-
-    assertFirstAndLast(r1, r3);
-    assertRecord(r3, r1, 0);
-    assertRecord(r1, 0, r3);
-
-    myStorage.deleteRecord(r1);
-
-    myStorage.dispose();
-    myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
-
-    assertFirstAndLast(r3, r3);
-    assertRecord(r3, 0, 0);
-
     int r4 = createRecord();
+
+    myStorage.deleteRecordsUpTo(r2);
 
     myStorage.dispose();
     myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
 
     assertFirstAndLast(r3, r4);
-    assertRecord(r4, r3, 0);
     assertRecord(r3, 0, r4);
+    assertRecord(r4, r3, 0);
+
+    myStorage.deleteRecordsUpTo(r3);
+
+    myStorage.dispose();
+    myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
+
+    assertFirstAndLast(r4, r4);
+    assertRecord(r4, 0, 0);
+
+    int r5 = createRecord();
+
+    myStorage.dispose();
+    myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
+
+    assertFirstAndLast(r4, r5);
+    assertRecord(r4, 0, r5);
+    assertRecord(r5, r4, 0);
+  }
+
+  public void testWritingChangesOfDifferentSize() throws Exception {
+    final int MAX = 100;
+    List<Integer> records = new ArrayList<Integer>(MAX);
+    for (int i = 0; i < MAX; i++) {
+      if (i > MAX / 2) {
+        myStorage.deleteRecordsUpTo(records.get(records.size() - MAX / 2));
+      }
+      records.add(createRecord(i*50));
+    }
+    
+    assertFirstAndLast(records.get(records.size() - MAX / 2), records.get(records.size() - 1));
   }
 
   private int createRecord() throws IOException {
+    return createRecord(1000);
+  }
+
+  private int createRecord(int size) throws IOException {
     int r = myStorage.createNextRecord();
-    AbstractStorage.StorageDataOutput s = myStorage.writeStream(r);
-    for (int i = 0; i < 1000; i++) {
+    AbstractStorage.StorageDataOutput s = myStorage.writeStream(r, true);
+    for (int i = 0; i < size; i++) {
       s.writeInt(r);
     }
     s.close();
