@@ -206,10 +206,11 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         });
       }
     };
-    if (myActionCallback != null) {
-      myActionCallback.doWhenDone(runnable);
-    } else {
+    if (myActionCallback == null || ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
+    }
+    else {
+      myActionCallback.doWhenDone(runnable);
     }
   }
 
