@@ -851,15 +851,6 @@ class LiveComplete {
     assert myFixture.editor.document.text.contains('ArrStoExce.')
   }
 
-  public void testEnterSelectionUndo() {
-    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
-    def editor = openEditorForUndo();
-    type('ArrStoExce\n')
-
-    edt { UndoManager.getInstance(project).undo(editor) }
-    assert myFixture.editor.document.text.contains('ArrStoExce\n')
-  }
-
   public void testTabSelectionUndo() {
     myFixture.configureByText "a.java", "class Foo {{ <caret>x }}"
     def editor = openEditorForUndo();
