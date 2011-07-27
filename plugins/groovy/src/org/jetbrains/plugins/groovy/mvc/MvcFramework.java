@@ -299,6 +299,7 @@ public abstract class MvcFramework {
                                                       boolean forCreation,
                                                       boolean forTests,
                                                       boolean classpathFromDependencies,
+                                                      @Nullable String jvmParams,
                                                       @NotNull String command,
                                                       @NotNull String... args) throws ExecutionException;
 
@@ -354,15 +355,11 @@ public abstract class MvcFramework {
   }
 
   @NotNull
-  public ProcessBuilder createCommand(@NotNull Module module, @Nullable String vmOptions, final boolean forCreation, @NotNull String command, @NotNull String... args)
+  public ProcessBuilder createCommand(@NotNull Module module, @Nullable String jvmParams, final boolean forCreation, @NotNull String command, @NotNull String... args)
     throws ExecutionException {
-    final JavaParameters params = createJavaParameters(module, forCreation, false, true, command, args);
+    final JavaParameters params = createJavaParameters(module, forCreation, false, true, jvmParams, command, args);
 
     addJavaHome(params, module);
-
-    if (!StringUtil.isEmpty(vmOptions)) {
-      params.getVMParametersList().addParametersString(vmOptions);
-    }
 
     final ProcessBuilder builder = createProcessBuilder(params);
     final VirtualFile griffonHome = getSdkRoot(module);

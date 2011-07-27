@@ -143,8 +143,10 @@ public class GriffonFramework extends MvcFramework {
 
   @Override
   public JavaParameters createJavaParameters(@NotNull Module module, boolean forCreation, boolean forTests,
-                                             boolean classpathFromDependencies, @NotNull String command, @NotNull String... args)
-    throws ExecutionException {
+                                             boolean classpathFromDependencies,
+                                             @Nullable String jvmParams,
+                                             @NotNull String command,
+                                             @NotNull String... args) throws ExecutionException {
     JavaParameters params = new JavaParameters();
 
     Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
@@ -207,6 +209,10 @@ public class GriffonFramework extends MvcFramework {
     }
 
     String workDir = VfsUtil.virtualToIoFile(rootFile).getAbsolutePath();
+
+    if (jvmParams != null) {
+      params.getVMParametersList().addParametersString(jvmParams);
+    }
 
     if (!params.getVMParametersList().getParametersString().contains(XMX_JVM_PARAMETER)) {
       params.getVMParametersList().add("-Xmx256M");
