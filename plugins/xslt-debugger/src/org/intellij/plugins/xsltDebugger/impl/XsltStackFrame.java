@@ -8,6 +8,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
+import org.intellij.plugins.xsltDebugger.VMPausedException;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.DebuggerStoppedException;
@@ -50,6 +51,7 @@ public class XsltStackFrame extends XStackFrame {
     if (myDebuggerSession.getCurrentState() == Debugger.State.SUSPENDED) {
       try {
         _customizePresentation(component);
+      } catch (VMPausedException ignore) {
       } catch (DebuggerStoppedException ignore) {
       }
     }
@@ -83,15 +85,19 @@ public class XsltStackFrame extends XStackFrame {
 
   @Override
   public void computeChildren(@NotNull XCompositeNode node) {
-    if (myFrame instanceof Debugger.StyleFrame) {
-      final List<Debugger.Variable> variables = ((Debugger.StyleFrame)myFrame).getVariables();
-      final XValueChildrenList list = new XValueChildrenList();
-      for (final Debugger.Variable variable : variables) {
-        list.add(variable.getName(), new MyValue(variable));
+    try {
+      if (myFrame instanceof Debugger.StyleFrame) {
+        final List<Debugger.Variable> variables = ((Debugger.StyleFrame)myFrame).getVariables();
+        final XValueChildrenList list = new XValueChildrenList();
+        for (final Debugger.Variable variable : variables) {
+          list.add(variable.getName(), new MyValue(variable));
+        }
+        node.addChildren(list, true);
+      } else {
+        super.computeChildren(node);
       }
-      node.addChildren(list, true);
-    } else {
-      super.computeChildren(node);
+    } catch (VMPausedException e) {
+      node.setErrorMessage("VM is paused");
     }
   }
 
@@ -107,7 +113,7 @@ public class XsltStackFrame extends XStackFrame {
     }
 
     @Override
-    public void computePresentation(@NotNull XValueNode node) {
+    public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
       final Debugger.Variable.Kind kind = myVariable.getKind();
       Icon icon = null;
       if (myVariable.isGlobal()) {
@@ -171,7 +177,7 @@ public class XsltStackFrame extends XStackFrame {
       }
 
       @Override
-      public void computePresentation(@NotNull XValueNode node) {
+      public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
         node.setPresentation(null, "node", myNode.myStringValue, false);
       }
     }
@@ -195,7 +201,7 @@ public class XsltStackFrame extends XStackFrame {
         final Value eval = myFrame.eval(expression);
         callback.evaluated(new MyValue(new ExpressionResult(eval)));
       } catch (Debugger.EvaluationException e) {
-        callback.errorOccurred(e.getMessage());
+        callback.errorOccurred(e.getMessage() != null ? e.getMessage() : e.toString());
       }
     }
 
