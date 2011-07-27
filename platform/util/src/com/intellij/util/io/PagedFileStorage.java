@@ -63,6 +63,8 @@ public class PagedFileStorage implements Forceable {
   private int myLastPage2 = UNKNOWN_PAGE;
   private MappedBufferWrapper myLastBuffer;
   private MappedBufferWrapper myLastBuffer2;
+  private int myLastChangeCount;
+  private int myLastChangeCount2;
 
   public static class StorageLock {
     private final boolean checkThreadAccess;
@@ -78,6 +80,7 @@ public class PagedFileStorage implements Forceable {
     final BuffersCache myBuffersCache = new BuffersCache();
 
     private class BuffersCache extends MyCache {
+      private int changeCount;
 
       public BuffersCache() {
         super(UPPER_LIMIT);
@@ -93,6 +96,7 @@ public class PagedFileStorage implements Forceable {
         if (off > key.owner.length()) {
           throw new IndexOutOfBoundsException("off=" + off + " key.owner.length()=" + key.owner.length());
         }
+        ++changeCount;
         ReadWriteMappedBufferWrapper wrapper =
           new ReadWriteMappedBufferWrapper(key.owner.myFile, off, Math.min((int)(key.owner.length() - off), key.owner.myPageSize));
         IOException oome = null;
@@ -366,12 +370,12 @@ public class PagedFileStorage implements Forceable {
   private ByteBuffer getBuffer(int page) {
     if (myLastPage == page) {
       MappedByteBuffer buf = myLastBuffer.getIfCached();
-      if (buf != null) return buf;
+      if (buf != null && myLastChangeCount == myLock.myBuffersCache.changeCount) return buf;
     }
 
     if (myLastPage2 == page) {
       MappedByteBuffer buf = myLastBuffer2.getIfCached();
-      if (buf != null) return buf;
+      if (buf != null && myLastChangeCount2 == myLock.myBuffersCache.changeCount) return buf;
     }
 
     try {
@@ -381,11 +385,14 @@ public class PagedFileStorage implements Forceable {
       if (myLastPage != page) {
         myLastPage2 = myLastPage;
         myLastBuffer2 = myLastBuffer;
+        myLastChangeCount2 = myLastChangeCount;
         myLastBuffer = mappedBufferWrapper;
         myLastPage = page;
       } else {
         myLastBuffer = mappedBufferWrapper;
       }
+
+      myLastChangeCount = myLock.myBuffersCache.changeCount;
 
       return buf;
     }
