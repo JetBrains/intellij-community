@@ -36,6 +36,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -160,7 +161,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @NotNull
-  public synchronized VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent,VirtualFilePointerListener listener) {
+  public synchronized VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     return create(null, url, parent, listener);
   }
 
@@ -173,12 +174,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @NotNull
-  public synchronized VirtualFilePointer create(@NotNull VirtualFile file, @NotNull Disposable parent, VirtualFilePointerListener listener) {
+  public synchronized VirtualFilePointer create(@NotNull VirtualFile file, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     return create(file, file.getUrl(), parent,listener);
   }
 
   @NotNull
-  private VirtualFilePointer create(VirtualFile file, @NotNull String url, @NotNull final Disposable parentDisposable, VirtualFilePointerListener listener) {
+  private VirtualFilePointer create(@Nullable VirtualFile file, @NotNull String url, @NotNull final Disposable parentDisposable, @Nullable VirtualFilePointerListener listener) {
     String protocol;
     VirtualFileSystem fileSystem;
     if (file == null) {
@@ -269,7 +270,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return path;
   }
 
-  private synchronized VirtualFilePointerImpl getOrCreate(VirtualFile file, @NotNull String url, Disposable parentDisposable, VirtualFilePointerListener listener, String path) {
+  private synchronized VirtualFilePointerImpl getOrCreate(VirtualFile file, @NotNull String url, Disposable parentDisposable, @Nullable VirtualFilePointerListener listener, String path) {
     TreeMap<String, VirtualFilePointerImpl> urlToPointer = myUrlToPointerMaps.get(listener);
     if (urlToPointer == null) {
       urlToPointer = new TreeMap<String, VirtualFilePointerImpl>(COMPARATOR);
@@ -301,7 +302,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @NotNull
   public synchronized VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer, @NotNull Disposable parent,
-                                                   VirtualFilePointerListener listener) {
+                                                   @Nullable VirtualFilePointerListener listener) {
     VirtualFile file = pointer.getFile();
     return file == null ? create(pointer.getUrl(), parent, listener) : create(file, parent, listener);
   }
