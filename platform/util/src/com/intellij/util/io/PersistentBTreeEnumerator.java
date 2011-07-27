@@ -27,7 +27,7 @@ import java.util.List;
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
-  private static final int PAGE_SIZE = IntToIntBtree.doSanityCheck ? 64:2048;
+  private static final int PAGE_SIZE = /*IntToIntBtree.doSanityCheck ? 64:*/2048;
   private static final int RECORD_SIZE = 4;
   private final byte[] myBuffer;
 
@@ -101,13 +101,19 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private void storeBTreeVars(boolean toDisk) {
     if (btree != null) {
-      btree.setMaxStepsSearched(store(DATA_START + 36, btree.getMaxStepsSearched(), toDisk));
-      btree.setPagesCount(store(DATA_START + 40, btree.getPageCount(), toDisk));
-      btree.setMovedMembersCount(store(DATA_START + 44, btree.getMovedMembersCount(), toDisk));
+      final int BTREE_DATA_START = DATA_START + 36;
+      btree.persistVars(new IntToIntBtree.BtreeDataStorage() {
+        @Override
+        public int persistInt(int offset, int value, boolean toDisk) {
+          return store(BTREE_DATA_START + offset, value, toDisk);
+        }
+      }, toDisk);
     }
   }
 
   private int store(int offset, int value, boolean toDisk) {
+    assert offset + 4 < PAGE_SIZE;
+
     if (toDisk) {
       myStorage.putInt(offset, value);
     } else {
@@ -170,9 +176,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         collectLeafPages(btree.root, leafPages);
 
         out:
-        for(IntToIntBtree.BtreeIndexNodeView value:leafPages) {
-          for(int i = 0; i < value.getChildrenCount(); ++i) {
-            int key = value.keyAt(i);
+        for(IntToIntBtree.BtreeIndexNodeView page:leafPages) {
+          for(int key:page.exportKeys()) {
             Integer record = btree.get(key);
             p.setCurrentKey(key);
             assert record != null;
@@ -277,7 +282,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       int newValueId = writeData(value, valueHC);
       ++valuesCount;
 
-      if (valuesCount % 10000 == 0 && IOStatistics.DEBUG) {
+      if (valuesCount % 20000 == 0 && IOStatistics.DEBUG) {
         IOStatistics.dump("Index " +
                           myFile +
                           ", values " +
