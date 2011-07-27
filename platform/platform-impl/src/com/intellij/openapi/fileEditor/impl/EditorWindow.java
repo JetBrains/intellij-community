@@ -31,7 +31,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
@@ -343,7 +342,9 @@ public class EditorWindow {
   }
 
   public void setPaintBlocked(boolean blocked) {
-    myTabbedPane.setPaintBlocked(blocked);
+    if (myTabbedPane != null) {
+      myTabbedPane.setPaintBlocked(blocked);
+    }
   }
 
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
