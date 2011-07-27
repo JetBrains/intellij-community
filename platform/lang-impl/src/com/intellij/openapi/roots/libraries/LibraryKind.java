@@ -24,6 +24,9 @@ import org.jetbrains.annotations.NotNull;
 public class LibraryKind<P extends LibraryProperties> {
   private final String myKindId;
 
+  /**
+   * @param kindId must be unique among all {@link LibraryType} and {@link LibraryPresentationProvider} implementations
+   */
   public LibraryKind(@NotNull @NonNls String kindId) {
     myKindId = kindId;
   }
@@ -37,6 +40,10 @@ public class LibraryKind<P extends LibraryProperties> {
     return "LibraryKind:" + myKindId;
   }
 
+  /**
+   * @param kindId must be unique among all {@link LibraryType} and {@link LibraryPresentationProvider} implementations
+   * @return new {@link LibraryKind} instance
+   */
   public static <P extends LibraryProperties> LibraryKind<P> create(@NotNull @NonNls String kindId) {
     return new LibraryKind<P>(kindId);
   }
