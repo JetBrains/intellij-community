@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.ScrollPaneFactory;
 import org.intellij.plugins.xsltDebugger.ui.actions.HideWhitespaceAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,22 +16,24 @@ public class StructureTabComponent extends AbstractTabComponent {
   private static final Key<StructureTabComponent> KEY = Key.create("STRUCTURE");
 
   private final DefaultActionGroup myToolbarActions;
-  private final Tree myStructureTree;
+  private final JComponent myComponent;
   private final GeneratedStructureModel myEventModel;
 
   private StructureTabComponent(Disposable disposable) {
     super("Structure");
 
     myEventModel = new GeneratedStructureModel();
-    myStructureTree = new StructureTree(myEventModel);
-    myEventModel.addTreeModelListener(new SmartStructureTracker(myStructureTree, disposable));
+
+    final StructureTree tree = new StructureTree(myEventModel);
+    myComponent = ScrollPaneFactory.createScrollPane(tree);
+    myEventModel.addTreeModelListener(new SmartStructureTracker(tree, disposable));
 
     final DefaultActionGroup structureActions = new DefaultActionGroup();
-    final StructureTreeExpander expander = new StructureTreeExpander(myStructureTree);
+    final StructureTreeExpander expander = new StructureTreeExpander(tree);
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    structureActions.add(new HideWhitespaceAction(myStructureTree, myEventModel));
-    structureActions.add(actionsManager.createExpandAllAction(expander, myStructureTree));
-    structureActions.add(actionsManager.createCollapseAllAction(expander, myStructureTree));
+    structureActions.add(new HideWhitespaceAction(tree, myEventModel));
+    structureActions.add(actionsManager.createExpandAllAction(expander, tree));
+    structureActions.add(actionsManager.createCollapseAllAction(expander, tree));
 
     myToolbarActions = structureActions;
   }
@@ -53,7 +55,7 @@ public class StructureTabComponent extends AbstractTabComponent {
   @NotNull
   @Override
   public JComponent getComponent() {
-    return myStructureTree;
+    return myComponent;
   }
 
   @Override
