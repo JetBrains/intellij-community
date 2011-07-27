@@ -57,14 +57,6 @@ public class GitCommand {
   public static final GitCommand VERSION = meta("version");
   public static final GitCommand GC = write("gc");
 
-  // these commands modify .git/index
-  private static final GitCommand[] INDEX_MODIFIERS = {ADD, BRANCH, CHECKOUT, COMMIT, MERGE, RESET, RM, STASH};
-  static {
-    for (GitCommand command : INDEX_MODIFIERS) {
-      command.myModifiesIndex = true;
-    }
-  }
-
   /**
    * Name of environment variable that specifies editor for the git
    */
@@ -73,7 +65,6 @@ public class GitCommand {
   @NotNull @NonNls private final String myName; // command name passed to git
   @NotNull private final LockingPolicy myLocking; // Locking policy for the command
   @NotNull private final ThreadPolicy myThreading; // Thread policy for the command
-  private boolean myModifiesIndex; // true if the command modifies .git/index
 
   /**
    * The constructor
@@ -150,13 +141,6 @@ public class GitCommand {
   @NotNull
   public ThreadPolicy threadingPolicy() {
     return myThreading;
-  }
-
-  /**
-   * @return true if this command modifies .git/index file
-   */
-  public boolean modifiesIndex() {
-    return myModifiesIndex;
   }
 
   /**
