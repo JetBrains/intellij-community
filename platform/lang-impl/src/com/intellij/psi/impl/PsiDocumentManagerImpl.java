@@ -347,7 +347,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     if (success) {
       runAfterCommitActions(document);
-      if (LOG.isDebugEnabled()) {
+      if (DebugUtil.DO_EXPENSIVE_CHECKS) {
         checkAllElementsValid(document, reason, event);
       }
     }
