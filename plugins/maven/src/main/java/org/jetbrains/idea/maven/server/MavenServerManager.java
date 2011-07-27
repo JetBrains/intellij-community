@@ -160,17 +160,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
     myShutdownAlarm.cancelAllRequests();
   }
 
-  @Override
-  protected void onWrappeeAccessed() {
-    myShutdownAlarm.cancelAllRequests();
-    myShutdownAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          shutdown(true);
-        }
-      }, 5 * 60 * 1000);
-  }
-
   private RunProfileState createRunProfileState() {
     return new CommandLineState(null) {
       private SimpleJavaParameters createJavaParameters() throws ExecutionException {
