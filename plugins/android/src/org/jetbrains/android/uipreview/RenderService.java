@@ -23,9 +23,10 @@ import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.SessionParams;
 import com.android.ide.common.rendering.api.SessionParams.RenderingMode;
 import com.android.ide.common.resources.ResourceResolver;
-import com.android.ide.common.resources.configuration.FolderConfiguration;
+import com.android.ide.common.resources.configuration.*;
 import com.android.resources.Density;
 import com.android.resources.ScreenOrientation;
+import com.android.resources.ScreenSize;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,10 +76,16 @@ class RenderService {
       return null;
     }
 
-    final int minSdkVersion = myMinSdkVersion >= 0 ? myMinSdkVersion : myConfig.getVersionQualifier().getVersion();
-    final int targetSdkVersion = myConfig.getVersionQualifier().getVersion();
+    final VersionQualifier versionQualifier = myConfig.getVersionQualifier();
+    if (versionQualifier == null) {
+      return null;
+    }
 
-    final Density density = myConfig.getPixelDensityQualifier().getValue();
+    final int targetSdkVersion = versionQualifier.getVersion();
+    final int minSdkVersion = myMinSdkVersion >= 0 ? myMinSdkVersion : targetSdkVersion;
+
+    final PixelDensityQualifier densityQualifier = myConfig.getPixelDensityQualifier();
+    final Density density = densityQualifier != null ? densityQualifier.getValue() : Density.MEDIUM;
     final int xdpi = density.getDpiValue();
     final int ydpi = density.getDpiValue();
 
@@ -88,15 +95,24 @@ class RenderService {
 
     params.setExtendedViewInfoMode(false);
     params.setAppLabel(appLabel);
-    params.setConfigScreenSize(myConfig.getScreenSizeQualifier().getValue());
 
+    final ScreenSizeQualifier screenSizeQualifier = myConfig.getScreenSizeQualifier();
+    params.setConfigScreenSize(screenSizeQualifier != null ? screenSizeQualifier.getValue() : ScreenSize.NORMAL);
     return myLayoutLib.createSession(params);
   }
 
+  @Nullable
   private Dimension getDimension() {
-    final int size1 = myConfig.getScreenDimensionQualifier().getValue1();
-    final int size2 = myConfig.getScreenDimensionQualifier().getValue2();
-    final ScreenOrientation orientation = myConfig.getScreenOrientationQualifier().getValue();
+    final ScreenDimensionQualifier dimensionQualifier = myConfig.getScreenDimensionQualifier();
+
+    final int size1 = dimensionQualifier != null ? dimensionQualifier.getValue1() : 320;
+    final int size2 = dimensionQualifier != null ? dimensionQualifier.getValue2() : 240;
+
+    final ScreenOrientationQualifier orientationQualifier = myConfig.getScreenOrientationQualifier();
+
+    final ScreenOrientation orientation = orientationQualifier != null
+                                          ? orientationQualifier.getValue()
+                                          : ScreenOrientation.PORTRAIT;
 
     switch (orientation) {
       case LANDSCAPE:
