@@ -26,6 +26,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -143,18 +144,19 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
           for (ActionListener listener : myListeners) {
             listener.actionPerformed(event);
           }
-          //myValue = myList.getSelectedValue();
-          //myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.
-          //myTable.tableChanged(new TableModelEvent(myTable.getModel(), myRow));  // force repaint
+          myValue = myList.getSelectedValue();
           TableUtil.stopEditing(myTable);
+
+          myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.
+          myTable.tableChanged(new TableModelEvent(myTable.getModel(), myRow));  // force repaint
         }
-      })
+      })      
       .createPopup()
       .show(new RelativePoint(myTable, point));
   }
 
   public Object getEditorValue() {
-    return myList.getSelectedValue();
+    return myValue;
   }
 
   public void setRenderer(ListCellRenderer renderer) {
