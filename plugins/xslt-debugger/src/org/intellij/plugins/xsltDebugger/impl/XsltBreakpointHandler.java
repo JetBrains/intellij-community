@@ -37,10 +37,11 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
   @Override
   public void registerBreakpoint(@NotNull XLineBreakpoint<XBreakpointProperties> breakpoint) {
     final XSourcePosition sourcePosition = breakpoint.getSourcePosition();
-    if (sourcePosition == null) {
+    if (sourcePosition == null || !sourcePosition.getFile().exists() || !sourcePosition.getFile().isValid()) {
       // ???
       return;
     }
+
     final VirtualFile file = sourcePosition.getFile();
     final Project project = myXsltDebugProcess.getSession().getProject();
     final String fileURL = getFileURL(file);
@@ -75,7 +76,7 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
   @Override
   public void unregisterBreakpoint(@NotNull XLineBreakpoint<XBreakpointProperties> breakpoint, final boolean temporary) {
     final XSourcePosition sourcePosition = breakpoint.getSourcePosition();
-    if (sourcePosition == null) {
+    if (sourcePosition == null || !sourcePosition.getFile().exists() || !sourcePosition.getFile().isValid()) {
       // ???
       return;
     }
