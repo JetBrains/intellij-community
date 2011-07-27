@@ -43,10 +43,10 @@ abstract class GitChangesCollector {
   private final VcsDirtyScope myDirtyScope;
 
 
-  GitChangesCollector(final Project project,
-                                ChangeListManager changeListManager,
-                                VcsDirtyScope dirtyScope,
-                                final VirtualFile vcsRoot) {
+  GitChangesCollector(@NotNull Project project,
+                      @NotNull ChangeListManager changeListManager,
+                      @NotNull VcsDirtyScope dirtyScope,
+                      @NotNull VirtualFile vcsRoot) {
     myProject = project;
     myChangeListManager = changeListManager;
     myDirtyScope = dirtyScope;

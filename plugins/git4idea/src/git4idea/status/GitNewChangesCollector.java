@@ -65,7 +65,7 @@ class GitNewChangesCollector extends GitChangesCollector {
    * This may be lengthy.
    */
   @NotNull
-  static GitNewChangesCollector collect(final Project project, ChangeListManager changeListManager, VcsDirtyScope dirtyScope, final VirtualFile vcsRoot) throws VcsException {
+  static GitNewChangesCollector collect(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull VcsDirtyScope dirtyScope, @NotNull  VirtualFile vcsRoot) throws VcsException {
     return new GitNewChangesCollector(project, changeListManager, dirtyScope, vcsRoot);
   }
 
@@ -81,7 +81,7 @@ class GitNewChangesCollector extends GitChangesCollector {
     return myChanges;
   }
 
-  private GitNewChangesCollector(Project project, ChangeListManager changeListManager, VcsDirtyScope dirtyScope, VirtualFile vcsRoot)
+  private GitNewChangesCollector(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot)
     throws VcsException
   {
     super(project, changeListManager, dirtyScope, vcsRoot);
@@ -116,7 +116,7 @@ class GitNewChangesCollector extends GitChangesCollector {
    * See <a href=http://www.kernel.org/pub/software/scm/git/docs/git-status.html#_output">Git man</a> for details.
    */
   // handler is here for debugging purposes in the case of parse error
-  private void parseOutput(String output, GitHandler handler) throws VcsException {
+  private void parseOutput(@NotNull String output, @NotNull GitHandler handler) throws VcsException {
     VcsRevisionNumber head = getHEAD();
 
     final String[] split = output.split("\u0000");
@@ -223,6 +223,7 @@ class GitNewChangesCollector extends GitChangesCollector {
     }
   }
 
+  @NotNull
   private VcsRevisionNumber getHEAD() throws VcsException {
     VcsRevisionNumber nativeHead = VcsRevisionNumber.NULL;
     try {

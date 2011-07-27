@@ -104,7 +104,10 @@ class GitOldChangesCollector extends GitChangesCollector {
    * This may be lengthy.
    */
   @NotNull
-  static GitOldChangesCollector collect(final Project project, ChangeListManager changeListManager, VcsDirtyScope dirtyScope, final VirtualFile vcsRoot) throws VcsException {
+  static GitOldChangesCollector collect(@NotNull Project project,
+                                        @NotNull ChangeListManager changeListManager,
+                                        @NotNull VcsDirtyScope dirtyScope,
+                                        @NotNull VirtualFile vcsRoot) throws VcsException {
     return new GitOldChangesCollector(project, changeListManager, dirtyScope, vcsRoot);
   }
 
@@ -120,10 +123,10 @@ class GitOldChangesCollector extends GitChangesCollector {
     return myChanges;
   }
 
-  private GitOldChangesCollector(final Project project,
-                                ChangeListManager changeListManager,
-                                VcsDirtyScope dirtyScope,
-                                final VirtualFile vcsRoot) throws VcsException {
+  private GitOldChangesCollector(@NotNull Project project,
+                                 @NotNull ChangeListManager changeListManager,
+                                 @NotNull VcsDirtyScope dirtyScope,
+                                 @NotNull VirtualFile vcsRoot) throws VcsException {
     super(project, changeListManager, dirtyScope, vcsRoot);
     updateIndex();
     collectUnmergedAndUnversioned();
