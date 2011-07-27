@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -23,32 +22,27 @@ import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Set;
 
-public final class TrailingSpacesStripper {
+public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
   private final Set<DocumentEx> myDocumentsToStripLater = new THashSet<DocumentEx>();
 
-  public TrailingSpacesStripper(MessageBus bus) {
-    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
-      @Override
-      public void beforeAllDocumentsSaving() {
-        Set<DocumentEx> documentsToStrip = new THashSet<DocumentEx>(myDocumentsToStripLater);
-        myDocumentsToStripLater.clear();
-        for (DocumentEx documentEx : documentsToStrip) {
-          strip(documentEx);
-        }
-      }
+  @Override
+  public void beforeAllDocumentsSaving() {
+    Set<DocumentEx> documentsToStrip = new THashSet<DocumentEx>(myDocumentsToStripLater);
+    myDocumentsToStripLater.clear();
+    for (DocumentEx documentEx : documentsToStrip) {
+      strip(documentEx);
+    }
+  }
 
-      @Override
-      public void beforeDocumentSaving(Document document) {
-        strip(document);
-      }
-    });
+  @Override
+  public void beforeDocumentSaving(Document document) {
+    strip(document);
   }
 
   private void strip(final Document document) {
@@ -94,8 +88,8 @@ public final class TrailingSpacesStripper {
     }
   }
 
-  @TestOnly
-  public void dropAll() {
+  @Override
+  public void unsavedDocumentsDropped() {
     myDocumentsToStripLater.clear();
   }
 }

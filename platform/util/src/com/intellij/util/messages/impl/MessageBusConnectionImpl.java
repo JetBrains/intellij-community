@@ -46,16 +46,24 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     myBus = bus;
   }
 
-  public <L> void subscribe(Topic<L> topic, L handler) {
+  public <L> void subscribe(Topic<L> topic, L handler) throws IllegalStateException {
     if (mySubscriptions.put(topic, handler) != null) {
       throw new IllegalStateException("Subscription to " + topic + " already exists");
     }
     myBus.notifyOnSubscription(this, topic);
   }
 
-  public <L> void subscribe(Topic<L> topic) {
+  @SuppressWarnings("unchecked")
+  public <L> void subscribe(Topic<L> topic) throws IllegalStateException {
     if (myDefaultHandler == null) {
-      throw new IllegalStateException("Connection must have default handler installed prior to any anonymous subscriptions.");
+      throw new IllegalStateException("Connection must have default handler installed prior to any anonymous subscriptions. "
+                                      + "Target topic: " + topic);
+    }
+    if (topic.getListenerClass().isInstance(myDefaultHandler)) {
+      throw new IllegalStateException(String.format(
+        "Can't subscribe to the topic '%s'. Reason: default handler has incompatible type - expected: '%s', actual: '%s'",
+        topic, topic.getListenerClass(), myDefaultHandler.getClass()
+      ));
     }
 
     subscribe(topic, (L)myDefaultHandler);

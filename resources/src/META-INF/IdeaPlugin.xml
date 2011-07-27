@@ -915,6 +915,7 @@
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
+    <fileDocumentManagerListener implementation="com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper"/>
   </extensions>
 
 </idea-plugin>

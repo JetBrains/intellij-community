@@ -73,6 +73,11 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
+  @Override
+  public MessageBus getParent() {
+    return myParentBus;
+  }
+
   private void notifyChildBusCreated(final MessageBusImpl childBus) {
     myChildBuses.add(childBus);
     LOG.assertTrue(childBus.myParentBus == this);

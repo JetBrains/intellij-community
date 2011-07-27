@@ -82,17 +82,18 @@ public class Extensions {
     return getExtensions(extensionPointName, null);
   }
 
+  @NotNull
   @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(ExtensionPointName<T> extensionPointName) {
     return (T[])getExtensions(extensionPointName.getName(), null);
   }
-
 
   @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
     return Extensions.<T>getExtensions(extensionPointName.getName(), areaInstance);
   }
 
+  @NotNull
   public static <T> T[] getExtensions(String extensionPointName, AreaInstance areaInstance) {
     ExtensionsArea area = getArea(areaInstance);
     ExtensionPoint<T> extensionPoint = area.getExtensionPoint(extensionPointName);

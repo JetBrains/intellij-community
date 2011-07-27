@@ -86,7 +86,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private final MessageBus myBus;
 
   private static final Object lock = new Object();
-  private final TrailingSpacesStripper myTrailingSpacesStripper;
 
   public FileDocumentManagerImpl(VirtualFileManager virtualFileManager) {
     myVirtualFileManager = virtualFileManager;
@@ -94,7 +93,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myVirtualFileManager.addVirtualFileListener(this);
 
     myBus = ApplicationManager.getApplication().getMessageBus();
-    myTrailingSpacesStripper = new TrailingSpacesStripper(myBus);
   }
 
   @NotNull
@@ -207,7 +205,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       myUnsavedDocuments.clear();
       fireUnsavedDocumentsDropped();
     }
-    myTrailingSpacesStripper.dropAll();
   }
 
   private void saveAllDocumentsLater() {
@@ -226,6 +223,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).beforeAllDocumentsSaving();
+    for (FileDocumentManagerListener listener : FileDocumentManagerListener.EP_NAME.getExtensions()) {
+      listener.beforeAllDocumentsSaving();
+    }
 
     if (myUnsavedDocuments.isEmpty()) return;
 
@@ -286,6 +286,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       }
 
       myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).beforeDocumentSaving(document);
+
+      // Allows pre-save document modification, e.g. stripping trailing spaces.
+      for (FileDocumentManagerListener listener : FileDocumentManagerListener.EP_NAME.getExtensions()) {
+        listener.beforeDocumentSaving(document);
+      }
 
       LOG.assertTrue(file.isValid());
 
@@ -480,6 +485,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private void fireFileWithNoDocumentChanged(final VirtualFile file) {
     myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileWithNoDocumentChanged(file);
+    for (FileDocumentManagerListener listener : FileDocumentManagerListener.EP_NAME.getExtensions()) {
+      listener.fileWithNoDocumentChanged(file);
+    }
   }
 
   public void reloadFromDisk(@NotNull final Document document) {
@@ -613,10 +621,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private void fireFileContentReloaded(final VirtualFile file, final Document document) {
     myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentReloaded(file, document);
+    for (FileDocumentManagerListener listener : FileDocumentManagerListener.EP_NAME.getExtensions()) {
+      listener.fileContentReloaded(file, document);
+    }
   }
 
   private void fireUnsavedDocumentsDropped() {
     myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).unsavedDocumentsDropped();
+    for (FileDocumentManagerListener listener : FileDocumentManagerListener.EP_NAME.getExtensions()) {
+      listener.unsavedDocumentsDropped();
+    }
   }
 
   private void fireBeforeFileContentReload(final VirtualFile file, final Document document) throws VetoDocumentReloadException {
@@ -631,9 +645,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
 
     myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).beforeFileContentReload(file, document);
+    for (FileDocumentManagerListener listener : FileDocumentManagerListener.EP_NAME.getExtensions()) {
+      listener.beforeFileContentReload(file, document);
+    }
   }
 
   private void fireFileContentLoaded(final VirtualFile file, final DocumentEx document) {
     myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentLoaded(file, document);
+    for (FileDocumentManagerListener listener : FileDocumentManagerListener.EP_NAME.getExtensions()) {
+      listener.fileContentLoaded(file, document);
+    }
   }
 }

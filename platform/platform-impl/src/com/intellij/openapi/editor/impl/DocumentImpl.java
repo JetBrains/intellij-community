@@ -84,6 +84,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private volatile boolean myDoingBulkUpdate = false;
   private static final Key<WeakReference<EditorHighlighter>> ourSomeEditorSyntaxHighlighter = Key.create("some editor highlighter");
   private boolean myAcceptSlashR = false;
+  private boolean myChangeInProgress;
 
   public DocumentImpl(String text) {
     this((CharSequence)text);
@@ -329,6 +330,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     assertWriteAccess();
     assertValidSeparators(s);
+    assertNotNestedModification();
 
     if (!isWritable()) throw new ReadOnlyModificationException(this);
     if (s.length() == 0) return;
@@ -347,6 +349,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     assertWriteAccess();
     if (!isWritable()) throw new ReadOnlyModificationException(this);
     if (startOffset == endOffset) return;
+    assertNotNestedModification();
+
     CharSequence sToDelete = myText.substring(startOffset, endOffset);
 
     RangeMarker marker = getRangeGuard(startOffset, endOffset);
@@ -370,6 +374,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (!isWritable()) {
       throw new ReadOnlyModificationException(this);
     }
+    assertNotNestedModification();
+
     final int newStringLength = s.length();
     final CharSequence chars = getCharsSequence();
     int newStartInString = 0;
@@ -381,15 +387,15 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       newStartInString++;
     }
 
-    while(endOffset > startOffset &&
-          newEndInString > newStartInString &&
-          s.charAt(newEndInString - 1) == chars.charAt(endOffset - 1)){
+    while (endOffset > startOffset &&
+           newEndInString > newStartInString &&
+           s.charAt(newEndInString - 1) == chars.charAt(endOffset - 1)) {
       newEndInString--;
       endOffset--;
     }
     //if (newEndInString - newStartInString == 0 && startOffset == endOffset) {
-      //setModificationStamp(newModificationStamp);
-      //return;
+    //setModificationStamp(newModificationStamp);
+    //return;
     //}
 
     s = s.subSequence(newStartInString, newEndInString);
@@ -399,7 +405,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(guard, startOffset, sToDelete.toString(), s.toString());
     }
 
-    myText.replace(this, startOffset, endOffset, sToDelete, s,newModificationStamp, wholeTextReplaced);
+    myText.replace(this, startOffset, endOffset, sToDelete, s, newModificationStamp, wholeTextReplaced);
   }
 
   private void assertBounds(final int startOffset, final int endOffset) {
@@ -428,6 +434,37 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     StringUtil.assertValidSeparators(s);
   }
 
+  /**
+   * All document change actions follows the algorithm below:
+   * <pre>
+   * <ol>
+   *   <li>
+   *     All {@link #addDocumentListener(DocumentListener) registered listeners} are notified
+   *     {@link DocumentListener#beforeDocumentChange(DocumentEvent) before the change};
+   *   </li>
+   *   <li>The change is performed </li>
+   *   <li>
+   *     All {@link #addDocumentListener(DocumentListener) registered listeners} are notified
+   *     {@link DocumentListener#documentChanged(DocumentEvent) after the change};
+   *   </li>
+   * </ol>
+   * </pre>
+   * <p/>
+   * There is a possible case that <code>'before change'</code> notification produces new change. We have a problem then - imagine
+   * that initial change was <code>'replace particular range at document end'</code> and <code>'nested change'</code> was to
+   * <code>'remove text at document end'</code>. That means that when initial change will be actually performed, the document may be
+   * not long enough to contain target range.
+   * <p/>
+   * Current method allows to check if document change is a <code>'nested call'</code>.
+   *
+   * @throws IllegalStateException  if this method is called during a <code>'nested document modification'</code>
+   */
+  private void assertNotNestedModification() throws IllegalStateException {
+    if (myChangeInProgress) {
+      throw new IllegalStateException("Detected nested request for document modification from 'before change' callback!");
+    }
+  }
+
   private void throwGuardedFragment(RangeMarker guard, int offset, String oldString, String newString) {
     if (myCheckGuardedBlocks > 0 && !myGuardsSuppressed) {
       DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false);
@@ -452,6 +489,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
+    myChangeInProgress = true;
+    try {
+      return doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
+    }
+    finally {
+      myChangeInProgress = false;
+    }
+  }
+
+  private DocumentEvent doBeforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
     if (ShutDownTracker.isShutdownHookRunning()) {
       return null; // suppress events in shutdown hook
     }
@@ -637,7 +684,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @NotNull
-  public MarkupModel getMarkupModel(Project project) {
+  public MarkupModel getMarkupModel(@Nullable Project project) {
     return getMarkupModel(project, true);
   }
 
