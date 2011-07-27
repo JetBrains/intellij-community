@@ -22,10 +22,12 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.expr.instruct.GlobalVariable;
 import net.sf.saxon.expr.instruct.SlotManager;
 import net.sf.saxon.om.Item;
+import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.om.ValueRepresentation;
 import net.sf.saxon.style.StyleElement;
 import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.type.ItemType;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.VariableImpl;
@@ -61,7 +63,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       return new Value() {
         @Override
         public Object getValue() {
-          return evaluate.getStringValue();
+          return evaluate != null ? evaluate.getStringValue() : null;
         }
 
         @Override
@@ -91,7 +93,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
           public Object getValue() {
             try {
               final ValueRepresentation valueRepresentation = globalVariable.evaluateVariable(myXPathContext);
-              return valueRepresentation.getStringValue();
+              return valueRepresentation != null ? valueRepresentation.getStringValue() : null;
             } catch (XPathException e) {
               return " - error: " + e.getMessage() + " - ";
             }
@@ -121,20 +123,28 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
 
       for (int i = 0, valuesLength = values.length; i < valuesLength; i++) {
         final ValueRepresentation value = values[i];
-
-        variables.add(new VariableImpl(map.getVariableMap().get(i).getDisplayName(), new Value() {
-          public Object getValue() {
-            try {
-              return value.getStringValue();
-            } catch (XPathException e) {
-              return " - error: " + e.getMessage() + " - ";
+        if (value != null) {
+          variables.add(new VariableImpl(map.getVariableMap().get(i).getDisplayName(), new Value() {
+            public Object getValue() {
+              try {
+                return value.getStringValue();
+              } catch (XPathException e) {
+                return " - error: " + e.getMessage() + " - ";
+              }
             }
-          }
 
-          public Type getType() {
-            return XPathType.UNKNOWN;
-          }
-        }, false, Debugger.Variable.Kind.VARIABLE, "", -1));
+            public Type getType() {
+              if (value instanceof net.sf.saxon.value.Value) {
+                final ItemType type =
+                  ((net.sf.saxon.value.Value)value).getItemType(myXPathContext.getConfiguration().getTypeHierarchy());
+                return new ObjectType(type.toString());
+              } else if (value instanceof NodeInfo) {
+                return XPathType.NODESET;
+              }
+              return XPathType.UNKNOWN;
+            }
+          }, false, Debugger.Variable.Kind.VARIABLE, "", -1));
+        }
       }
 
       context = context.getCaller();
