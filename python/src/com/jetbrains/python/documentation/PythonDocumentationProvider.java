@@ -68,6 +68,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       PyClass cls = (PyClass)element;
       return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString();
     }
+    else if (element instanceof PyTargetExpression || element instanceof PyNamedParameter) {
+      return describeExpression((PyExpression)element);
+    }
     return null;
   }
 
@@ -96,6 +99,20 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return cat;
   }
 
+  @Nullable
+  private static String describeExpression(PyExpression expr) {
+    final String name = expr.getName();
+    if (name != null) {
+      final TypeEvalContext context = TypeEvalContext.slow();
+      final String kind = (expr instanceof PyNamedParameter) ? "parameter" : "variable";
+      return String.format("%s \"%s\"\nInferred type: %s",
+                           kind,
+                           name,
+                           getTypeName(expr.getType(context), context));
+    }
+    return null;
+  }
+
   public static String getTypeDescription(@NotNull PyFunction fun) {
     final TypeEvalContext context = TypeEvalContext.slow();
     final PyType returnType = fun.getReturnType(context, null);
@@ -119,9 +136,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                          returnType != null ? getTypeName(returnType, context) : UNKNOWN);
   }
 
-  public static String getTypeName(@NotNull PyType type, @NotNull final TypeEvalContext context) {
+  public static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context) {
+    if (type == null) {
+      return UNKNOWN;
+    }
     if (type instanceof PyTypeReference) {
-    final PyType resolved = ((PyTypeReference)type).resolve(null, context);
+      final PyType resolved = ((PyTypeReference)type).resolve(null, context);
       if (resolved != null) {
         return getTypeName(resolved, context);
       }
