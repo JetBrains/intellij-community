@@ -33,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -227,8 +228,7 @@ abstract class SelectInContextImpl implements SelectInContext {
           if (file == null) {
             return null;
           }
-          final FileEditor[] fileEditors = FileEditorManager.getInstance(getProject()).openFile(file, false);
-          return fileEditors.length > 0 ? fileEditors[0] : null;
+          return ArrayUtil.getFirstElement(FileEditorManager.getInstance(getProject()).openFile(file, false));
         }
       };
     }

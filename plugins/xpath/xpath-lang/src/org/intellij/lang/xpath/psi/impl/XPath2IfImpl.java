@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.ArrayUtil;
 import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
 import org.intellij.lang.xpath.psi.XPath2If;
 import org.intellij.lang.xpath.psi.XPathExpression;
@@ -36,8 +37,7 @@ public class XPath2IfImpl extends XPath2ElementImpl implements XPath2If {
 
   @Override
   public XPathExpression getCondition() {
-    final XPathExpression[] expressions = findChildrenByClass(XPathExpression.class);
-    return expressions.length > 0 ? expressions[0] : null;
+    return ArrayUtil.getFirstElement(findChildrenByClass(XPathExpression.class));
   }
 
   @Override

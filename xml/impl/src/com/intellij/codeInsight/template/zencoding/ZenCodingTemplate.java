@@ -42,6 +42,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xml.XmlBundle;
 import org.apache.xerces.util.XML11Char;
@@ -103,10 +104,8 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     addAttributesBefore(tag, attr2value);
   }
 
-  @SuppressWarnings({"deprecation"})
   private static void addAttributesBefore(XmlTag tag, List<Pair<String, String>> attr2value) {
-    XmlAttribute[] attributes = tag.getAttributes();
-    XmlAttribute firstAttribute = attributes.length > 0 ? attributes[0] : null;
+    XmlAttribute firstAttribute = ArrayUtil.getFirstElement(tag.getAttributes());
     XmlElementFactory factory = XmlElementFactory.getInstance(tag.getProject());
     for (Pair<String, String> pair : attr2value) {
       XmlAttribute xmlAttribute = factory.createXmlAttribute(pair.first, "");

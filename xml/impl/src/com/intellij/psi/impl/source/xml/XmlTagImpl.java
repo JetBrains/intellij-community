@@ -395,8 +395,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   public PsiReference getReference() {
-    final PsiReference[] references = getReferences();
-    return references.length > 0 ? references[0] : null;
+    return ArrayUtil.getFirstElement(getReferences());
   }
 
   public XmlElementDescriptor getDescriptor() {
