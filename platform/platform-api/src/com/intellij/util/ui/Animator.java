@@ -17,198 +17,155 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class Animator implements Disposable {
-  private int myTotalFrames;
-  private int myCycleLength;
-  private Timer myTimer;
+  private final static ScheduledExecutorService scheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor("Animations");
 
-  private int myCurrentFrame;
-  private int myQueuedFrames = 0;
-
+  private final int myTotalFrames;
+  private final int myCycleDuration;
+  private final boolean myForward;
   private final boolean myRepeatable;
 
-  private int myRepeatCount;
+  private ScheduledFuture<?> myTicker;
 
-  private boolean myLastAnimated;
-
-  private boolean myForward = true;
+  private int myCurrentFrame;
+  private long myStartTime;
+  private long myStopTime;
+  private boolean myDisposed = false;
 
   public Animator(@NonNls final String name,
                   final int totalFrames,
-                  final int cycleLength,
-                  boolean repeatable,
-                  final int interCycleGap,
-                  final int maxRepeatCount) {
+                  final int cycleDuration,
+                  boolean repeatable) {
 
-    this(name, totalFrames, cycleLength, repeatable, interCycleGap, maxRepeatCount, true);
+    this(name, totalFrames, cycleDuration, repeatable, true);
   }
 
   public Animator(@NonNls final String name,
                   final int totalFrames,
-                  final int cycleLength,
+                  final int cycleDuration,
                   boolean repeatable,
-                  final int interCycleGap,
-                  final int maxRepeatCount, boolean forward) {
+                  boolean forward) {
     myTotalFrames = totalFrames;
-    myCycleLength = cycleLength;
+    myCycleDuration = cycleDuration;
     myRepeatable = repeatable;
     myForward = forward;
     myCurrentFrame = forward ? 0 : totalFrames;
 
-    Application application = ApplicationManager.getApplication();
-
-    if (application == null || !application.isUnitTestMode()) {
-      myTimer = new Timer(name, myCycleLength / myTotalFrames) {
-      protected void onTimer() throws InterruptedException {
-        boolean repaint = true;
-        if (!isAnimated()) {
-          if (myLastAnimated) {
-            myCurrentFrame = myForward ? 0 : myTotalFrames;
-            myQueuedFrames = 0;
-            myLastAnimated = false;
-          }
-          else {
-            repaint = false;
-          }
-        }
-        else {
-          myLastAnimated = true;
-
-          if (myQueuedFrames > myTotalFrames) {
-            return;
-          }
-
-          boolean toNextFrame = myForward ? myCurrentFrame + 1 < myTotalFrames : myCurrentFrame - 1 >= 0;
-
-          if (toNextFrame && myForward) {
-            myCurrentFrame++;
-          } else if (toNextFrame && !myForward) {
-            myCurrentFrame--;
-          } else {
-            if (myRepeatable) {
-              if (maxRepeatCount == -1 || myRepeatCount < maxRepeatCount) {
-                myRepeatCount++;
-                myCurrentFrame = 0;
-                if (interCycleGap > 0) {
-                  delay(interCycleGap - getSpan());
-                }
-              }
-              else {
-                repaint = false;
-                suspend();
-                myRepeatCount = 0;
-                cycleEnd();
-              }
-            }
-            else {
-              repaint = false;
-              suspend();
-              cycleEnd();
-            }
-          }
-        }
-
-        if (repaint) {
-          myQueuedFrames++;
-          // paint to EDT
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new FramePainter(myCurrentFrame, myTotalFrames, myCycleLength) {
-            @Override
-            protected void paint(int frame, int totalFrames, int cycleLength) {
-              if (isDisposed()) return;
-              myQueuedFrames--;
-              paintNow(frame, (float)totalFrames, (float)cycleLength);
-            }
-          });
-        }
-      }
-    };
+    if (ApplicationManager.getApplication() == null) {
+      animationDone();
     }
-
-    if (application == null) {
-      try {
-        cycleEnd();
-      }
-      catch (InterruptedException ignored) {
-      }
+    else {
+      reset();
     }
   }
-
-  private static abstract class FramePainter implements Runnable {
-    private int myFrameToPaint;
-    private int myFrame;
-    private int myCycle;
-
-    private FramePainter(int frameToPaint, int totalFrames, int cycleLength) {
-      myFrameToPaint = frameToPaint;
-      myFrame = totalFrames;
-      myCycle = cycleLength;
+  
+  private void onTick() {
+    if (isDisposed()) return;
+    
+    if (myStartTime == -1) {
+      myStartTime = System.currentTimeMillis();
+      myStopTime = myStartTime + myCycleDuration * (myTotalFrames - myCurrentFrame) / myTotalFrames;
     }
 
-    @Override
-    public final void run() {
-      paint(myFrameToPaint, myFrame, myCycle);
+    final double passedTime = System.currentTimeMillis() - myStartTime;
+    final double totalTime = myStopTime - myStartTime;
+    
+    final int newFrame = (int)(passedTime * myTotalFrames / totalTime);
+    if (myCurrentFrame > 0 && newFrame == myCurrentFrame) return;
+    myCurrentFrame = newFrame;
+
+    if (myCurrentFrame >= myTotalFrames) {
+      if (myRepeatable) {
+        reset();
+      }
+      else {
+        animationDone();
+        return;
+      }
     }
 
-    protected abstract void paint(int frame, int totalFrames, int cycleLength);
+    paint();
   }
 
-  @SuppressWarnings({"SSBasedInspection"})
-  // paint to EDT
-  private void cycleEnd() throws InterruptedException {
+  private void paint() {
+    paintNow(myForward ? myCurrentFrame : myTotalFrames - myCurrentFrame - 1, myTotalFrames, myCycleDuration);
+  }
+
+  private void animationDone() {
+    stopTicker();
+
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         paintCycleEnd();
       }
     });
-    onAnimationMaxCycleReached();
+  }
+
+  private void stopTicker() {
+    if (myTicker != null) {
+      myTicker.cancel(false);
+      myTicker = null;
+    }
   }
 
   protected void paintCycleEnd() {
 
   }
 
-  protected void onAnimationMaxCycleReached() throws InterruptedException {
-
-  }
-
   public void suspend() {
-    if (myTimer != null) {
-      myTimer.suspend();
-    }
+    stopTicker();
   }
 
   public void resume() {
-    if (myTimer != null) { myTimer.resume();}
-  }
+    if (myCycleDuration == 0) {
+      myCurrentFrame = myTotalFrames - 1;
+      paint();
+      animationDone();
+    }
+    else if (myTicker == null) {
+      myTicker = scheduler.scheduleAtFixedRate(new Runnable() {
+        AtomicBoolean scheduled = new AtomicBoolean(false);
 
-  public void setTakInitialDelay(boolean take) {
-    if (myTimer != null) {myTimer.setTakeInitialDelay(take);}
+        @Override
+        public void run() {
+          if (scheduled.compareAndSet(false, true)) {
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                scheduled.set(false);
+                onTick();
+              }
+            });
+          }
+        }
+      }, 0, myCycleDuration * 1000 / myTotalFrames, TimeUnit.NANOSECONDS);
+    }
   }
 
   public abstract void paintNow(float frame, final float totalFrames, final float cycle);
 
   public void dispose() {
-    if (myTimer != null) {myTimer.dispose();}
+    myDisposed = true;
+    stopTicker();
   }
 
   public boolean isRunning() {
-    return myTimer != null && myTimer.isRunning() && myLastAnimated;
-  }
-
-  public boolean isAnimated() {
-    return true;
+    return myTicker != null;
   }
 
   public void reset() {
     myCurrentFrame = 0;
-    myRepeatCount = 0;
+    myStartTime = -1;
   }
 
   public final boolean isForward() {
@@ -216,6 +173,6 @@ public abstract class Animator implements Disposable {
   }
 
   public boolean isDisposed() {
-    return myTimer == null || myTimer.isDisposed();
+    return myDisposed;
   }
 }

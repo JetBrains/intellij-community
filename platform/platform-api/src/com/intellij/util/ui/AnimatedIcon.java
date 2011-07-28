@@ -46,7 +46,7 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
     myName = name;
   }
 
-  protected final void init(Icon[] icons, Icon passiveIcon, int cycleLength, final int interCycleGap, final int maxRepeatCount) {
+  protected final void init(Icon[] icons, Icon passiveIcon, int cycleLength) {
     myIcons = icons;
     myPassiveIcon = passiveIcon;
 
@@ -61,18 +61,10 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
 
     UIUtil.removeQuaquaVisualMarginsIn(this);
 
-    myAnimator = new Animator(myName, icons.length, cycleLength, true, interCycleGap, maxRepeatCount) {
+    myAnimator = new Animator(myName, icons.length, cycleLength, true) {
       public void paintNow(final float frame, final float totalFrames, final float cycle) {
         myCurrentIconIndex = (int)frame;
         paintImmediately(0, 0, getWidth(), getHeight());
-      }
-
-      protected void onAnimationMaxCycleReached() throws InterruptedException {
-        AnimatedIcon.this.onAnimationMaxCycleReached();
-      }
-
-      public boolean isAnimated() {
-        return AnimatedIcon.this.isAnimated();
       }
     };
 
@@ -87,10 +79,6 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
 
   public void setPaintPassiveIcon(boolean paintPassive) {
     myPaintPassive = paintPassive;
-  }
-
-  protected void onAnimationMaxCycleReached() throws InterruptedException {
-
   }
 
   private boolean ensureAnimation(boolean running) {
@@ -187,10 +175,6 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
 
   public boolean isRunning() {
     return myAnimator.isRunning();
-  }
-
-  public boolean isAnimated() {
-    return true;
   }
 
   @Override

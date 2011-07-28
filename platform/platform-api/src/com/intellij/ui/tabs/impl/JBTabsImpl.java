@@ -226,12 +226,11 @@ public class JBTabsImpl extends JComponent
       }
     });
 
-    myAnimator = new Animator("JBTabs Attractions", 2, 500, true, 0, -1) {
+    myAnimator = new Animator("JBTabs Attractions", 2, 500, true) {
       public void paintNow(final float frame, final float totalFrames, final float cycle) {
         repaintAttractions();
       }
     };
-    myAnimator.setTakInitialDelay(false);
 
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {

@@ -50,15 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.event.*;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
@@ -556,7 +548,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     if (myAnimator != null) {
       Disposer.dispose(myAnimator);
     }
-    myAnimator = new Animator("Balloon", 10, myAnimationEnabled ? myAnimationCycle : 0, false, 0, 1, forward) {
+    myAnimator = new Animator("Balloon", 8, myAnimationEnabled ? myAnimationCycle : 0, false, forward) {
       public void paintNow(final float frame, final float totalFrames, final float cycle) {
         if (myComp == null || myComp.getParent() == null) return;
         myComp.setAlpha(frame / totalFrames);
@@ -592,7 +584,6 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       }
     };
 
-    myAnimator.setTakInitialDelay(false);
     myAnimator.resume();
   }
 

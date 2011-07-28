@@ -21,10 +21,7 @@ import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class AsyncProcessIcon extends AnimatedIcon {
   public static final int COUNT = 12;
@@ -41,7 +38,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
   private AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
     super(name);
 
-    init(icons, passive, CYCLE_LENGTH, 0, -1);
+    init(icons, passive, CYCLE_LENGTH);
 
     setUseMask(false);
   }

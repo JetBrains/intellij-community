@@ -379,7 +379,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   private class AnimatedScrollingRunnable {
-    private static final int SCROLL_DURATION = 150;
+    private static final int SCROLL_DURATION = 100;
     private static final int SCROLL_INTERVAL = 10;
 
     private final int myStartHOffset;
@@ -431,7 +431,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
       myStartCommand = CommandProcessor.getInstance().getCurrentCommand();
 
-      myAnimator = new Animator("Animated scroller", myStepCount, SCROLL_INTERVAL, false, 0, 0, true) {
+      myAnimator = new Animator("Animated scroller", myStepCount, SCROLL_DURATION, false, true) {
         @Override
         public void paintNow(float frame, float totalFrames, float cycle) {
           double time = (frame + 1) / (double)totalFrames;
