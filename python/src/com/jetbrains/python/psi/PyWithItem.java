@@ -9,5 +9,8 @@ public interface PyWithItem extends PyElement {
   PyWithItem[] EMPTY_ARRAY = new PyWithItem[0];
 
   @Nullable
-  PyExpression getTargetExpression();
+  PyExpression getExpression();
+
+  @Nullable
+  PyExpression getTarget();
 }

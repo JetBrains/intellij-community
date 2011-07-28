@@ -482,6 +482,10 @@ class NetCommandFactory:
            """
         try:
             cmdTextList = ["<xml>"]
+
+            if message:
+                message = pydevd_vars.makeValidXmlValue(str(message))
+
             cmdTextList.append('<thread id="%s" stop_reason="%s" message="%s">' % (thread_id, stop_reason, message))
 
             curFrame = frame

@@ -56,4 +56,17 @@ public class PyTypeParserTest extends PyLightFixtureTestCase {
     PyTypeParser.ParseResult result = PyTypeParser.parse(myFixture.getFile(), s);
     assertEquals(7, result.getTypes().values().size());
   }
+
+  // PY-4223
+  public void testSphinxFormattedType() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final String s = "(MyObject, :class:`MyObject`, :py:class:`MyObject`, :class:`!MyObject`, :py:class:`~MyObject`)";
+    final PyTupleType type = (PyTupleType)PyTypeParser.getTypeByName(myFixture.getFile(), s);
+    assertNotNull(type);
+    final int n = type.getElementCount();
+    assertEquals(5, n);
+    for (int i = 0; i < n; i++) {
+      assertClassType(type.getElementType(i), "MyObject");
+    }
+  }
 }

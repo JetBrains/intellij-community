@@ -78,6 +78,7 @@ public class PyNames {
   public static final String GETITEM = "__getitem__";
 
   public static final String NAME = "__name__";
+  public static final String ENTER = "__enter__";
 
   /**
    * Contains all known predefined names of "__foo__" form.

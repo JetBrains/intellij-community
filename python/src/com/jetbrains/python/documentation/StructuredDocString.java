@@ -1,22 +1,29 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Maps;
-import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public abstract class StructuredDocString {
   protected final String myDescription;
-  protected final Map<String, String> mySimpleTagValues = Maps.newHashMap();
-  protected final Map<String, Map<String, String>> myArgTagValues = Maps.newHashMap();
+
+  protected final Map<String, Substring> mySimpleTagValues = Maps.newHashMap();
+  protected final Map<String, Map<Substring, Substring>> myArgTagValues = Maps.newHashMap();
+
+  private static final Pattern RE_STRICT_TAG_LINE = Pattern.compile("([a-z]+)(.*): (.*)");
+  private static final Pattern RE_LOOSE_TAG_LINE = Pattern.compile("([a-z]+) ([a-zA-Z_0-9]*):?([^:]*)");
+  private static final Pattern RE_ARG_TYPE = Pattern.compile("(.*) ([a-zA-Z_0-9]+)");
 
   @Nullable
   public static StructuredDocString parse(String text) {
@@ -29,59 +36,110 @@ public abstract class StructuredDocString {
     return new EpydocString(text);
   }
 
-  protected StructuredDocString(String docstringText, String tagPrefix) {
-    final String[] lines = LineTokenizer.tokenize(docstringText, false);
-    int i = 0;
-    StringBuilder descBuilder = new StringBuilder();
-    while (i < lines.length) {
-      String line = lines[i].trim();
+  protected StructuredDocString(String docStringText, String tagPrefix) {
+    final Substring docString = new Substring(docStringText);
+    final List<Substring> lines = docString.splitLines();
+    final int nlines = lines.size();
+    final StringBuilder builder = new StringBuilder();
+    int lineno = 0;
+    while (lineno < nlines) {
+      Substring line = lines.get(lineno).trim();
       if (line.startsWith(tagPrefix)) {
-        i = parseTag(lines, i, tagPrefix);
+        lineno = parseTag(lines, lineno, tagPrefix);
       }
       else {
-        descBuilder.append(line).append("\n");
+        builder.append(line.toString()).append("\n");
       }
-      i++;
+      lineno++;
     }
-    myDescription = descBuilder.toString();
+    myDescription = builder.toString();
   }
 
   public String getDescription() {
     return myDescription;
   }
 
-  protected int parseTag(String[] lines, int index, String tagPrefix) {
-    String line = lines[index].trim();
-    int tagEnd = StringUtil.indexOfAny(line, " \t:", 1, line.length());
-    if (tagEnd < 0) return index;
-    String tagName = line.substring(1, tagEnd);
-    String tagValue = line.substring(tagEnd).trim();
-    int pos = tagValue.indexOf(':');
-    if (pos < 0) return index;
-    String value = tagValue.substring(pos+1).trim();
-    while(index+1 < lines.length && !lines[index+1].trim().startsWith(tagPrefix)) {
-      index++;
-      value += " " + lines[index].trim();
+  @NotNull
+  private Map<Substring, Substring> getTagValuesMap(String key) {
+    Map<Substring, Substring> map = myArgTagValues.get(key);
+    if (map == null) {
+      map = Maps.newLinkedHashMap();
+      myArgTagValues.put(key, map);
     }
-    if (pos == 0) {
-      mySimpleTagValues.put(tagName, value);
-    }
-    else {
-      String arg = tagValue.substring(0, pos).trim();
-      Map<String, String> argValues = myArgTagValues.get(tagName);
-      if (argValues == null) {
-        argValues = Maps.newLinkedHashMap();
-        myArgTagValues.put(tagName, argValues);
+    return map;
+  }
+
+  protected int parseTag(List<Substring> lines, int lineno, String tagPrefix) {
+    final Substring lineWithPrefix = lines.get(lineno).trim();
+    if (lineWithPrefix.startsWith(tagPrefix)) {
+      final Substring line = lineWithPrefix.substring(tagPrefix.length());
+      final Matcher strictTagMatcher = RE_STRICT_TAG_LINE.matcher(line);
+      final Matcher looseTagMatcher = RE_LOOSE_TAG_LINE.matcher(line);
+      Matcher tagMatcher = null;
+      if (strictTagMatcher.matches()) {
+        tagMatcher = strictTagMatcher;
       }
-      argValues.put(arg, value);
+      else if (looseTagMatcher.matches()) {
+        tagMatcher = looseTagMatcher;
+      }
+      if (tagMatcher != null) {
+        final Substring tagName = line.getMatcherGroup(tagMatcher, 1);
+        final Substring argName = line.getMatcherGroup(tagMatcher, 2).trim();
+        final TextRange firstArgLineRange = line.getMatcherGroup(tagMatcher, 3).trim().getTextRange();
+        final int linesCount = lines.size();
+        final int argStart = firstArgLineRange.getStartOffset();
+        int argEnd = firstArgLineRange.getEndOffset();
+        while (lineno + 1 < linesCount) {
+          final Substring nextLine = lines.get(lineno + 1).trim();
+          if (nextLine.length() == 0 || nextLine.startsWith(tagPrefix)) {
+            break;
+          }
+          argEnd = nextLine.getTextRange().getEndOffset();
+          lineno++;
+        }
+        final Substring argValue = new Substring(argName.getSuperString(), argStart, argEnd);
+        final String tagNameString = tagName.toString();
+        if (argName.length() == 0) {
+          mySimpleTagValues.put(tagNameString, argValue);
+        }
+        else {
+          if ("param".equals(tagNameString) || "parameter".equals(tagNameString) ||
+              "arg".equals(tagNameString) || "argument".equals(tagNameString)) {
+            final Matcher argTypeMatcher = RE_ARG_TYPE.matcher(argName);
+            if (argTypeMatcher.matches()) {
+              final Substring type = argName.getMatcherGroup(argTypeMatcher, 1).trim();
+              final Substring arg = argName.getMatcherGroup(argTypeMatcher, 2);
+              getTagValuesMap("type").put(arg, type);
+              getTagValuesMap(tagNameString).put(arg, argValue);
+            }
+            else {
+              getTagValuesMap(tagNameString).put(argName, argValue);
+            }
+          }
+          else {
+            getTagValuesMap(tagNameString).put(argName, argValue);
+          }
+        }
+      }
     }
-    return index;
+    return lineno;
+  }
+
+  protected static List<String> toUniqueStrings(List<?> objects) {
+    final List<String> result = new ArrayList<String>(objects.size());
+    for (Object o : objects) {
+      final String s = o.toString();
+      if (!result.contains(s)) {
+        result.add(s);
+      }
+    }
+    return result;
   }
 
   @Nullable
-  public String getTagValue(String... tagNames) {
+  public Substring getTagValue(String... tagNames) {
     for (String tagName : tagNames) {
-      final String value = mySimpleTagValues.get(tagName);
+      final Substring value = mySimpleTagValues.get(tagName);
       if (value != null) {
         return value;
       }
@@ -90,27 +148,27 @@ public abstract class StructuredDocString {
   }
 
   @Nullable
-  public String getTagValue(String tagName, String argName) {
-    Map<String, String> argValues = myArgTagValues.get(tagName);
-    return argValues == null ? null : argValues.get(argName);
+  public Substring getTagValue(String tagName, String argName) {
+    final Map<Substring, Substring> argValues = myArgTagValues.get(tagName);
+    return argValues != null ? argValues.get(new Substring(argName)) : null;
   }
 
   @Nullable
-  public String getTagValue(String[] tagNames, String argName) {
+  public Substring getTagValue(String[] tagNames, String argName) {
     for (String tagName : tagNames) {
-      Map<String, String> argValues = myArgTagValues.get(tagName);
+      Map<Substring, Substring> argValues = myArgTagValues.get(tagName);
       if (argValues != null) {
-        return argValues.get(argName);
+        return argValues.get(new Substring(argName));
       }
     }
     return null;
   }
 
-  public List<String> getTagArguments(String... tagNames) {
+  public List<Substring> getTagArguments(String... tagNames) {
     for (String tagName : tagNames) {
-      final Map<String, String> map = myArgTagValues.get(tagName);
+      final Map<Substring, Substring> map = myArgTagValues.get(tagName);
       if (map != null) {
-        return new ArrayList<String>(map.keySet());
+        return new ArrayList<Substring>(map.keySet());
       }
     }
     return Collections.emptyList();
@@ -139,4 +197,13 @@ public abstract class StructuredDocString {
   @Nullable
   public abstract String getAttributeDescription();
   public abstract List<String> getAdditionalTags();
+
+  public abstract List<Substring> getParameterSubstrings();
+  public abstract List<Substring> getKeywordArgumentSubstrings();
+
+  @Nullable
+  public abstract Substring getReturnTypeSubstring();
+
+  @Nullable
+  abstract Substring getParamTypeSubstring(@Nullable String paramName);
 }

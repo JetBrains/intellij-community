@@ -24,9 +24,10 @@ import java.util.regex.Pattern;
 /**
  * A more flexible cousin of SdkVersionUtil.
  * Needs not to be instantiated and only holds static methods.
+ *
  * @author dcheryasov
- * Date: Apr 24, 2008
- * Time: 1:19:47 PM
+ *         Date: Apr 24, 2008
+ *         Time: 1:19:47 PM
  */
 public class SdkUtil {
   protected static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.SdkVersionUtil");
@@ -37,8 +38,9 @@ public class SdkUtil {
 
   /**
    * Executes a process and returns its stdout and stderr outputs as lists of lines.
+   *
    * @param homePath process run directory
-   * @param command command to execute and its arguments
+   * @param command  command to execute and its arguments
    * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
   @NotNull
@@ -49,9 +51,10 @@ public class SdkUtil {
   /**
    * Executes a process and returns its stdout and stderr outputs as lists of lines.
    * Waits for process for possibly limited duration.
+   *
    * @param homePath process run directory
-   * @param command command to execute and its arguments
-   * @param timeout how many milliseconds to wait until the process terminates; non-positive means inifinity.
+   * @param command  command to execute and its arguments
+   * @param timeout  how many milliseconds to wait until the process terminates; non-positive means inifinity.
    * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
   @NotNull
@@ -62,14 +65,18 @@ public class SdkUtil {
   /**
    * Executes a process and returns its stdout and stderr outputs as lists of lines.
    * Waits for process for possibly limited duration.
+   *
    * @param homePath process run directory
-   * @param command command to execute and its arguments
-   * @param addEnv items are prepended to same-named values of inherited process environment.
-   * @param timeout how many milliseconds to wait until the process terminates; non-positive means inifinity.
+   * @param command  command to execute and its arguments
+   * @param addEnv   items are prepended to same-named values of inherited process environment.
+   * @param timeout  how many milliseconds to wait until the process terminates; non-positive means inifinity.
    * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
   @NotNull
-  public static ProcessOutput getProcessOutput(String homePath, @NonNls String[] command, @Nullable @NonNls String[] addEnv, final int timeout) {
+  public static ProcessOutput getProcessOutput(String homePath,
+                                               @NonNls String[] command,
+                                               @Nullable @NonNls String[] addEnv,
+                                               final int timeout) {
     return getProcessOutput(homePath, command, addEnv, timeout, null);
   }
 
@@ -78,10 +85,10 @@ public class SdkUtil {
    * Waits for process for possibly limited duration.
    *
    * @param homePath process run directory
-   * @param command command to execute and its arguments
-   * @param addEnv items are prepended to same-named values of inherited process environment.
-   * @param timeout how many milliseconds to wait until the process terminates; non-positive means infinity.
-   * @param stdin the data to write to the process standard input stream
+   * @param command  command to execute and its arguments
+   * @param addEnv   items are prepended to same-named values of inherited process environment.
+   * @param timeout  how many milliseconds to wait until the process terminates; non-positive means infinity.
+   * @param stdin    the data to write to the process standard input stream
    * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
   @NotNull
@@ -96,7 +103,7 @@ public class SdkUtil {
     }
     try {
       List<String> commands = new ArrayList<String>();
-      if (SystemInfo.isWindows && StringUtil.endsWithIgnoreCase(command [0], ".bat")) {
+      if (SystemInfo.isWindows && StringUtil.endsWithIgnoreCase(command[0], ".bat")) {
         commands.add("cmd");
         commands.add("/c");
       }
@@ -110,18 +117,24 @@ public class SdkUtil {
           int pos = env_item.indexOf('=');
           if (pos > 0) {
             String key = env_item.substring(0, pos);
-            String value = env_item.substring(pos+1, env_item.length());
+            String value = env_item.substring(pos + 1, env_item.length());
             add_map.put(key, value);
           }
-          else LOG.warn(String.format("Invalid env value: '%s'", env_item));
+          else {
+            LOG.warn(String.format("Invalid env value: '%s'", env_item));
+          }
         }
         // fuse old and new
         for (Map.Entry<String, String> entry : add_map.entrySet()) {
           final String key = entry.getKey();
           final String value = entry.getValue();
           final String old_value = env_map.get(key);
-          if (old_value != null) env_map.put(key, value + old_value);
-          else env_map.put(key, value);
+          if (old_value != null) {
+            env_map.put(key, value + old_value);
+          }
+          else {
+            env_map.put(key, value);
+          }
         }
         new_env = new String[env_map.size()];
         int i = 0;
@@ -148,23 +161,28 @@ public class SdkUtil {
   }
 
   /**
-  * Finds the first match in a list os Strings.
-  * @param lines list of lines, may be null.
-  * @param regex pattern to match to.
-  * @return pattern's first matched group, or entire matched string if pattern has no groups, or null.
-  */
+   * Finds the first match in a list os Strings.
+   *
+   * @param lines list of lines, may be null.
+   * @param regex pattern to match to.
+   * @return pattern's first matched group, or entire matched string if pattern has no groups, or null.
+   */
   @Nullable
   public static String getFirstMatch(List<String> lines, Pattern regex) {
     if (lines == null) return null;
-    for (String s: lines) {
+    for (String s : lines) {
       Matcher m = regex.matcher(s);
-      if (m.matches()) {
-        if (m.groupCount() > 0)
+       if (m.matches()) {
+        if (m.groupCount() > 0) {
           return m.group(1);
+        }
       }
-      else return s;
     }
-    return null;
+    if (lines.size() > 0) {
+      return lines.get(0);
+    }
+    else {
+      return null;
+    }
   }
-
 }

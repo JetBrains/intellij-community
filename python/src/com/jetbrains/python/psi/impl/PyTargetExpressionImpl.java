@@ -136,8 +136,9 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       if (type != null) {
         return type;
       }
-      if (getParent() instanceof PyAssignmentStatement) {
-        final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)getParent();
+      final PsiElement parent = getParent();
+      if (parent instanceof PyAssignmentStatement) {
+        final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)parent;
         final PyExpression assignedValue = assignmentStatement.getAssignedValue();
         if (assignedValue != null) {
           if (assignedValue instanceof PyReferenceExpressionImpl) {
@@ -166,11 +167,25 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
           return context.getType(assignedValue);
         }
       }
-      if (getParent() instanceof PyTupleExpression) {
+      if (parent instanceof PyTupleExpression) {
         final PyType typeFromTupleAssignment = getTypeFromTupleAssignment(context);
         if (typeFromTupleAssignment != null) {
           return typeFromTupleAssignment;
         }
+      }
+      if (parent instanceof PyWithItem) {
+        final PyWithItem item = (PyWithItem)parent;
+        final PyType exprType = item.getExpression().getType(context);
+        if (exprType instanceof PyClassType) {
+          final PyClass cls = ((PyClassType)exprType).getPyClass();
+          if (cls != null) {
+            final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true);
+            if (enter != null) {
+              return enter.getReturnType(context, null);
+            }
+          }
+        }
+        return null;
       }
       PyType iterType = getTypeFromIteration(context);
       if (iterType != null) {
