@@ -492,6 +492,4 @@
   <extensionPoint name="patternProvider"
                   interface="com.intellij.codeInsight.generation.PatternProvider"/>
 
-  <extensionPoint name="fileDocumentManagerListener" interface="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
-
 </extensionPoints>
