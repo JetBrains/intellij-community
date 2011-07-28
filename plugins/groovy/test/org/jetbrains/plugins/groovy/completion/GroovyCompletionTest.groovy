@@ -694,6 +694,26 @@ return foo()"""
     doBasicTest();
   }
 
+  public void testSuperClassProperty() throws Exception {
+    checkSingleItemCompletion """
+class A { def foooooooooooo }
+
+class B extends A {
+  def bar() {
+    foooo<caret>
+  }
+}
+""", """
+class A { def foooooooooooo }
+
+class B extends A {
+  def bar() {
+    foooooooooooo<caret>
+  }
+}
+"""
+  }
+
   public void testDoubleSpace() {
     checkCompletion "asse<caret>x", ' ', 'assert <caret>x'
   }

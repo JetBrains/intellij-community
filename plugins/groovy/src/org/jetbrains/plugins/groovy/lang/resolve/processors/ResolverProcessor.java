@@ -25,7 +25,9 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -114,8 +116,27 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   protected boolean isAccessible(PsiNamedElement namedElement) {
+    if (namedElement instanceof GrField) {
+      final GrField field = (GrField)namedElement;
+      if (PsiUtil.isAccessible(myPlace, field)) {
+        return true;
+      }
+
+      for (GrAccessorMethod method : field.getGetters()) {
+        if (PsiUtil.isAccessible(myPlace, method)) {
+          return true;
+        }
+      }
+      final GrAccessorMethod setter = field.getSetter();
+      if (setter != null && PsiUtil.isAccessible(myPlace, setter)) {
+        return true;
+      }
+
+      return false;
+    }
+
     return !(namedElement instanceof PsiMember) ||
-        PsiUtil.isAccessible(myPlace, ((PsiMember) namedElement));
+           PsiUtil.isAccessible(myPlace, ((PsiMember)namedElement));
   }
 
   protected boolean isStaticsOK(PsiNamedElement element, GroovyPsiElement resolveContext) {

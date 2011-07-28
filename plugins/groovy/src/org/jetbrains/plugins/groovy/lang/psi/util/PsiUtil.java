@@ -381,7 +381,7 @@ public class PsiUtil {
     }
   }
 
-  public static boolean isAccessible(PsiElement place, PsiMember member) {
+  public static boolean isAccessible(@NotNull PsiElement place, @NotNull PsiMember member) {
 
     if (PsiTreeUtil.getParentOfType(place, GrDocComment.class) != null) return true;
     if (member instanceof LightElement) {
