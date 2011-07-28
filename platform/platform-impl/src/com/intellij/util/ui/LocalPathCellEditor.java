@@ -50,10 +50,10 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
         final FileChooserDescriptor d = getFileChooserDescriptor();
         String initial = (String)getCellEditorValue();
         VirtualFile initialFile = StringUtil.isNotEmpty(initial) ? LocalFileSystem.getInstance().findFileByPath(initial) : null;
-        VirtualFile[] files =
-          myProject != null ? FileChooser.chooseFiles(myProject, d, initialFile) : FileChooser.chooseFiles(table, d, initialFile);
-        if (files.length == 1 && files[0] != null) {
-          String path = files[0].getPresentableUrl();
+        VirtualFile file =
+          myProject != null ? FileChooser.chooseFile(myProject, d, initialFile) : FileChooser.chooseFile(table, d, initialFile);
+        if (file != null) {
+          String path = file.getPresentableUrl();
           if (SystemInfo.isWindows && path.length() == 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':') {
             path += "\\"; // make path absolute
           }

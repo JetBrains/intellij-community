@@ -16,7 +16,7 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Factory;
@@ -90,7 +90,7 @@ public class AllJarsUnderDirEntry implements AntClasspathEntry {
     }
 
     public List<AntClasspathEntry> create() {
-      VirtualFile[] files = FileChooser.chooseFiles(myParentComponent, new FileChooserDescriptor(false, true, false, false, false, true));
+      VirtualFile[] files = FileChooser.chooseFiles(myParentComponent, FileChooserDescriptorFactory.createMultipleFoldersDescriptor());
       if (files.length == 0) return null;
       return ContainerUtil.map(files, CREATE_FROM_VIRTUAL_FILE);
     }

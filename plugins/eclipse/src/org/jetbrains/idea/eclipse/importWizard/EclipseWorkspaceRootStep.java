@@ -17,7 +17,7 @@ package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -53,10 +53,10 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
   public EclipseWorkspaceRootStep(final WizardContext context) {
     super(context);
     myWorkspaceRootComponent.addBrowseFolderListener(EclipseBundle.message("eclipse.import.title.select.workspace"), "", null,
-                                                     new FileChooserDescriptor(false, true, false, false, false, false));
+                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myDirComponent.addBrowseFolderListener(EclipseBundle.message("eclipse.import.title.module.dir"), "", null,
-                                           new FileChooserDescriptor(false, true, false, false, false, false));
+                                           FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {

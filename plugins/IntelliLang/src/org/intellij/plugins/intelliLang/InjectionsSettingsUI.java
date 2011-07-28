@@ -20,8 +20,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -742,15 +742,13 @@ public class InjectionsSettingsUI implements Configurable {
 
     descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, LangDataKeys.MODULE.getData(dataContext));
 
-    final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, myProject);
-
     final SplitterProportionsData splitterData = new SplitterProportionsDataImpl();
     splitterData.externalizeFromDimensionService("IntelliLang.ImportSettingsKey.SplitterProportions");
 
-    final VirtualFile[] files = chooser.choose(null, myProject);
-    if (files.length != 1) return;
+    final VirtualFile file = FileChooser.chooseFile(myProject, descriptor);
+    if (file == null) return;
     try {
-      final Configuration cfg = Configuration.load(files[0].getInputStream());
+      final Configuration cfg = Configuration.load(file.getInputStream());
       if (cfg == null) {
         Messages.showWarningDialog(myProject, "The selected file does not contain any importable configuration.", "Nothing to Import");
         return;

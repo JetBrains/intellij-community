@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.fileChooser;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class FileChooser {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.FileChooser");
 
   private FileChooser() {}
 
@@ -37,6 +40,28 @@ public class FileChooser {
   @NotNull
   public static VirtualFile[] chooseFiles(Component parent, FileChooserDescriptor descriptor) {
     return chooseFiles(parent, descriptor, null);
+  }
+
+  @Nullable
+  public static VirtualFile chooseFile(Project project, FileChooserDescriptor descriptor) {
+    return chooseFile(project, descriptor, null);
+  }
+
+  @Nullable
+  public static VirtualFile chooseFile(Project project, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
+    LOG.assertTrue(!descriptor.isChooseMultiple());
+    return ArrayUtil.getFirstElement(chooseFiles(project, descriptor, toSelect));
+  }
+
+  @Nullable
+  public static VirtualFile chooseFile(Component parent, FileChooserDescriptor descriptor) {
+    return chooseFile(parent, descriptor, null);
+  }
+
+  @Nullable
+  public static VirtualFile chooseFile(Component parent, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
+    LOG.assertTrue(!descriptor.isChooseMultiple());
+    return ArrayUtil.getFirstElement(chooseFiles(parent, descriptor, toSelect));
   }
 
   @NotNull

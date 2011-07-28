@@ -16,6 +16,7 @@
 package git4idea.checkout;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -96,7 +97,7 @@ public class GitCloneDialog extends DialogWrapper {
    * Init components
    */
   private void initListeners() {
-    FileChooserDescriptor fcd = new FileChooserDescriptor(false, true, false, false, false, false);
+    FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
     fcd.setTitle(GitBundle.getString("clone.destination.directory.title"));
     fcd.setDescription(GitBundle.getString("clone.destination.directory.description"));

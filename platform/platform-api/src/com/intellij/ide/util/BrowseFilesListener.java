@@ -17,6 +17,7 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,8 +38,8 @@ public class BrowseFilesListener implements ActionListener {
   private final String myTitle;
   private final String myDescription;
   private final FileChooserDescriptor myChooserDescriptor;
-  public static final FileChooserDescriptor SINGLE_DIRECTORY_DESCRIPTOR = new FileChooserDescriptor(false, true, false, false, false, false);
-  public static final FileChooserDescriptor SINGLE_FILE_DESCRIPTOR = new FileChooserDescriptor(true, false, false, false, false, false);
+  public static final FileChooserDescriptor SINGLE_DIRECTORY_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+  public static final FileChooserDescriptor SINGLE_FILE_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
 
   public BrowseFilesListener(JTextField textField, final String title, final String description, final FileChooserDescriptor chooserDescriptor) {
     myTextField = textField;

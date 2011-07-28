@@ -176,12 +176,12 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     public void actionPerformed(AnActionEvent e) {
       if (pathToFile() == null) {
-        VirtualFile[] files = FileChooser.chooseFiles(myComponent, FILE_DESCRIPTOR);
-        if (files.length > 0) {
-          VirtualFile selectedFile = files[0];
+        VirtualFile selectedFile = FileChooser.chooseFile(myComponent, FILE_DESCRIPTOR, null);
+        if (selectedFile != null) {
           myState.currentScript = selectedFile.getPresentableUrl();
           myCurrentScript.setText(myState.currentScript);
-        } else {
+        }
+        else {
           Messages.showErrorDialog("File to save is not selected.", "Cannot save script");
           return;
         }
@@ -217,9 +217,8 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      VirtualFile[] files = FileChooser.chooseFiles(myComponent, FILE_DESCRIPTOR, pathToFile());
-      if (files.length > 0) {
-        VirtualFile selectedFile = files[0];
+      VirtualFile selectedFile = FileChooser.chooseFile(myComponent, FILE_DESCRIPTOR, pathToFile());
+      if (selectedFile != null) {
         myState.currentScript = selectedFile.getPresentableUrl();
         loadFrom(selectedFile);
         myCurrentScript.setText(myState.currentScript);

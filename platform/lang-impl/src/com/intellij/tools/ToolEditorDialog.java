@@ -229,9 +229,8 @@ public class ToolEditorDialog extends DialogWrapper {
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-          VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor);
-          if (files.length != 0) {
-            VirtualFile file = files[0];
+          VirtualFile file = FileChooser.chooseFile(myProject, descriptor, null);
+          if (file != null) {
             myTfCommand.setText(file.getPresentableUrl());
             String workingDirectory = myTfCommandWorkingDirectory.getText();
             if (workingDirectory == null || workingDirectory.length() == 0){
@@ -309,9 +308,9 @@ public class ToolEditorDialog extends DialogWrapper {
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-          VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor);
-          if (files.length != 0) {
-            myTfCommandWorkingDirectory.setText(files[0].getPresentableUrl());
+          VirtualFile file = FileChooser.chooseFile(myProject, descriptor);
+          if (file != null) {
+            myTfCommandWorkingDirectory.setText(file.getPresentableUrl());
           }
         }
       }

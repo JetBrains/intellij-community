@@ -15,6 +15,7 @@ package com.intellij.openapi.roots.libraries.ui;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
@@ -33,7 +34,7 @@ public abstract class ChooserBasedAttachRootButtonDescriptor extends AttachRootB
   }
 
   public FileChooserDescriptor createChooserDescriptor() {
-    return new FileChooserDescriptor(false, true, true, false, true, true);
+    return FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
   }
 
   public abstract String getChooserTitle(final @Nullable String libraryName);

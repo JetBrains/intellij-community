@@ -16,6 +16,7 @@
 package git4idea.history.browser;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
 import com.intellij.openapi.project.Project;
@@ -54,7 +55,7 @@ public class GitLogTreeFileSelector extends DialogWrapper {
   }
 
   private void initUi() {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true);
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
     descriptor.setRoot(myRoot);
     myFileSystemTree = FileSystemTreeFactory.SERVICE.getInstance().createFileSystemTree(myProject, descriptor);
     final JTree tree = myFileSystemTree.getTree();

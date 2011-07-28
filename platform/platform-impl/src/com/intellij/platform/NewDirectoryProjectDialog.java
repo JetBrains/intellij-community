@@ -23,6 +23,7 @@ import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -68,7 +69,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     myLocationField.setText(projectName.toString());
     myProjectNameTextField.setText(projectName.getName());
 
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
       new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Location for Project Directory", "", myLocationField,
                                                                            project,

@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -25,8 +26,8 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.command.HgIdentifyCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -118,7 +119,7 @@ public class HgCloneDialog extends DialogWrapper {
    * Init components
    */
   private void initListeners() {
-    FileChooserDescriptor fcd = new FileChooserDescriptor(false, true, false, false, false, false);
+    FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
     fcd.setTitle(HgVcsMessages.message("hg4idea.clone.parent.directory.title"));
     fcd.setDescription(HgVcsMessages.message("hg4idea.clone.parent.directory.description"));

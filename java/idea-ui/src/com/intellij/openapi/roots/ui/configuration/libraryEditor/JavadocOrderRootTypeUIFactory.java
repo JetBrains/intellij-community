@@ -21,6 +21,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -57,7 +58,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     public JavadocPathsEditor(Sdk sdk) {
       super(ProjectBundle.message("sdk.configure.javadoc.tab"),
             JavadocOrderRootType.getInstance(),
-            new FileChooserDescriptor(false, true, true, false, true, true));
+            FileChooserDescriptorFactory.createMultipleJavaPathDescriptor());
       mySdk = sdk;
     }
 

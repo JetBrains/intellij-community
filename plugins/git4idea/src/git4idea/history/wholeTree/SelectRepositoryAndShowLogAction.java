@@ -39,7 +39,7 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, new FileChooserDescriptor(false, true, false, true, false, false));
-    if (virtualFiles == null || virtualFiles.length == 0) return;
+    if (virtualFiles.length == 0) return;
 
     new MyDialog(project, virtualFiles).show();
   }

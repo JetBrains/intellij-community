@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.UrlConnectionUtil;
@@ -178,15 +177,15 @@ public class FileDownloaderImpl implements FileDownloader {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(IdeBundle.message("dialog.directory.for.downloaded.files.title"));
 
-    final VirtualFile[] files;
+    final VirtualFile file;
     if (myProject != null) {
-      files = FileChooser.chooseFiles(myProject, descriptor, myProject.getBaseDir());
+      file = FileChooser.chooseFile(myProject, descriptor, myProject.getBaseDir());
     }
     else {
-      files = FileChooser.chooseFiles(myParent, descriptor);
+      file = FileChooser.chooseFile(myParent, descriptor, null);
     }
 
-    return ArrayUtil.getFirstElement(files);
+    return file;
   }
 
   @NotNull

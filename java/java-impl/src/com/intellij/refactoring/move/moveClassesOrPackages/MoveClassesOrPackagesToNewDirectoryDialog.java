@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -74,12 +75,12 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     myElementsToMove = elementsToMove;
     myMoveCallback = moveCallback;
     myDestDirectoryField.setText(FileUtil.toSystemDependentName(directory.getVirtualFile().getPath()));
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myDestDirectoryField.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final VirtualFile[] files = FileChooser.chooseFiles(myDirectory.getProject(), descriptor, directory.getVirtualFile());
-        if (files.length == 1) {
-          myDestDirectoryField.setText(FileUtil.toSystemDependentName(files[0].getPath()));
+        final VirtualFile file = FileChooser.chooseFile(myDirectory.getProject(), descriptor, directory.getVirtualFile());
+        if (file != null) {
+          myDestDirectoryField.setText(FileUtil.toSystemDependentName(file.getPath()));
         }
       }
     });

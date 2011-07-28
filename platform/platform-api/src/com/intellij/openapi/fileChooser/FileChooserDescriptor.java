@@ -32,6 +32,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @see FileChooserDescriptorFactory
+ */
 public class FileChooserDescriptor implements Cloneable{
   private boolean myChooseFiles;
   private boolean myChooseFolders;
@@ -51,6 +54,7 @@ public class FileChooserDescriptor implements Cloneable{
   private final Map<String, Object> myUserData = new HashMap<String, Object>();
 
   /**
+   * Creates new instance. Use methods from {@link FileChooserDescriptorFactory} for most used descriptors
    * @param chooseFiles controls whether files can be chosen
    * @param chooseFolders controls whether folders can be chosen
    * @param chooseJars

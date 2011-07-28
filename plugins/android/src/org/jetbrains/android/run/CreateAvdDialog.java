@@ -22,7 +22,7 @@ import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -256,7 +256,7 @@ public class CreateAvdDialog extends DialogWrapper {
     updateSpinner();
     mySdCardFileTextField
       .addBrowseFolderListener(AndroidBundle.message("android.create.avd.dialog.sdcard.file.browser.title"), null, project,
-                               new FileChooserDescriptor(true, false, false, false, false, false));
+                               FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     reloadAbiCombo();
   }
 

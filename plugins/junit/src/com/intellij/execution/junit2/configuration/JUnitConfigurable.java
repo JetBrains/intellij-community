@@ -34,6 +34,7 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -130,10 +131,9 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       new BrowseModuleValueActionListener(project) {
         @Override
         protected String showDialog() {
-          final VirtualFile[] virtualFiles =
-            FileChooser.chooseFiles(project, new FileChooserDescriptor(false, true, false, false, false, false));
-          if (virtualFiles.length == 1) {
-            return FileUtil.toSystemDependentName(virtualFiles[0].getPath());
+          final VirtualFile virtualFile = FileChooser.chooseFile(project, FileChooserDescriptorFactory.createSingleFolderDescriptor(), null);
+          if (virtualFile != null) {
+            return FileUtil.toSystemDependentName(virtualFile.getPath());
           }
           return null;
         }
@@ -166,7 +166,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     panel.add(editBtn, BorderLayout.EAST);
     myTestLocations[JUnitConfigurationModel.PATTERN] = myPattern;
 
-    final FileChooserDescriptor dirFileChooser = new FileChooserDescriptor(false, true, false, false, false, false);
+    final FileChooserDescriptor dirFileChooser = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     dirFileChooser.setHideIgnored(false);
     final JTextField textField = myDir.getComponent().getTextField();
     InsertPathAction.addTo(textField, dirFileChooser);

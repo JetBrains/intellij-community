@@ -2,7 +2,7 @@ package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -22,7 +22,6 @@ import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -94,7 +93,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable 
     myProcessorPathField = new TextFieldWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final VirtualFile[] files =
-          FileChooser.chooseFiles(myProcessorPathField, new FileChooserDescriptor(true, true, true, true, false, true));
+          FileChooser.chooseFiles(myProcessorPathField, FileChooserDescriptorFactory.createAllButJarContentsDescriptor());
         if (files.length > 0) {
           final StringBuilder builder = new StringBuilder();
           for (VirtualFile file : files) {

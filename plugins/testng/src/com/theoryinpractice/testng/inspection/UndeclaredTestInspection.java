@@ -25,7 +25,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -202,10 +202,10 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          final VirtualFile[] files = FileChooser.chooseFiles(project, new FileChooserDescriptor(false, true, false, false, false, false));
-          if (files.length == 1) {
+          final VirtualFile file = FileChooser.chooseFile(project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+          if (file != null) {
             final PsiManager psiManager = PsiManager.getInstance(project);
-            final PsiDirectory directory = psiManager.findDirectory(files[0]);
+            final PsiDirectory directory = psiManager.findDirectory(file);
             LOG.assertTrue(directory != null);
             new WriteCommandAction(project, getName(), null) {
               protected void run(final Result result) throws Throwable {

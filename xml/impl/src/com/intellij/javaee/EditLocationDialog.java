@@ -97,9 +97,9 @@ public class EditLocationDialog extends DialogWrapper {
           new ActionListener() {
             public void actionPerformed(ActionEvent ignored) {
               FileChooserDescriptor descriptor = getChooserDescriptor();
-              VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor);
-              if (files.length != 0) {
-                myTfPath.setText(files[0].getPath().replace('/', File.separatorChar));
+              VirtualFile file = FileChooser.chooseFile(myProject, descriptor);
+              if (file != null) {
+                myTfPath.setText(file.getPath().replace('/', File.separatorChar));
               }
             }
           }
