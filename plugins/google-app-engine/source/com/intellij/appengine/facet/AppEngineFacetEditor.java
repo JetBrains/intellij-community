@@ -4,8 +4,8 @@ import com.intellij.appengine.sdk.impl.AppEngineSdkUtil;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.facet.Facet;
 import com.intellij.facet.ui.*;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -94,8 +94,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     for (VirtualFile file : rootModel.getSourceRoots()) {
       descriptor.addRoot(file);
     }
-    final VirtualFile[] files =
-        FileChooserFactory.getInstance().createFileChooser(descriptor, myContext.getProject()).choose(null, myContext.getProject());
+    final VirtualFile[] files = FileChooser.chooseFiles(myContext.getProject(), descriptor);
     for (VirtualFile file : files) {
       myFilesListModel.addElement(file.getPath());
     }
