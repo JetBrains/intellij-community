@@ -26,7 +26,7 @@ import javax.swing.*;
 public abstract class Animator implements Disposable {
   private int myTotalFrames;
   private int myCycleLength;
-  private final Timer myTimer;
+  private Timer myTimer;
 
   private int myCurrentFrame;
   private int myQueuedFrames = 0;
