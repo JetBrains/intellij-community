@@ -141,7 +141,7 @@ public final class LoadTextUtil {
 
   // returns offset of the BOM end
   private static int detectAndSetBOM(@NotNull VirtualFile virtualFile, byte[] content) {
-    final byte[] bom = getBOM(content, Patches.SUN_BUG_ID_4508058 ? virtualFile.getCharset() : null);
+    final byte[] bom = getBOM(content, virtualFile.getCharset());
     if (bom.length != 0) {
       virtualFile.setBOM(bom);
     }
@@ -150,10 +150,8 @@ public final class LoadTextUtil {
 
   @NotNull
   private static byte[] getBOM(@NotNull byte[] content, final Charset charset) {
-    if (Patches.SUN_BUG_ID_4508058) {
-      if (charset != null && charset.name().contains(CharsetToolkit.UTF8) && CharsetToolkit.hasUTF8Bom(content)) {
-        return CharsetToolkit.UTF8_BOM;
-      }
+    if (charset != null && charset.name().contains(CharsetToolkit.UTF8) && CharsetToolkit.hasUTF8Bom(content)) {
+      return CharsetToolkit.UTF8_BOM;
     }
     if (CharsetToolkit.hasUTF16LEBom(content)) {
       return CharsetToolkit.UTF16LE_BOM;

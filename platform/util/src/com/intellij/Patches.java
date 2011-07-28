@@ -130,12 +130,6 @@ public class Patches {
   public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfo.isLinux || SystemInfo.isFreeBSD || SystemInfo.isMac;
 
   /**
-   * Java does not recognize the optional BOM which can begin a UTF-8 stream.
-   * It treats the BOM as if it were the initial character of the stream
-   */
-  public static final boolean SUN_BUG_ID_4508058 = true;
-
-  /**
    * Huge int[] leak through VolatileImages cached in RepaintManager whenever screen configuration changes.
    * For instance screen saver activates or computer goes hibernate. The problem still exists in 1.6 when two (or more)
    * monitors exists

@@ -459,10 +459,8 @@ public class CharsetToolkit {
   }
 
   public static int getBOMLength(@NotNull byte[] content, Charset charset) {
-    if (Patches.SUN_BUG_ID_4508058) {
-      if (charset != null && charset.name().contains(UTF8) && hasUTF8Bom(content)) {
-        return UTF8_BOM.length;
-      }
+    if (charset != null && charset.name().contains(UTF8) && hasUTF8Bom(content)) {
+      return UTF8_BOM.length;
     }
     if (hasUTF16LEBom(content)) {
       return UTF16LE_BOM.length;

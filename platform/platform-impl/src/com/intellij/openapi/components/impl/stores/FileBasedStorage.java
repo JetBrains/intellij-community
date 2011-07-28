@@ -310,10 +310,8 @@ public class FileBasedStorage extends XmlElementStorage {
           input.close();
         }
 
-        if (Patches.SUN_BUG_ID_4508058) {
-          if (startsWith(BUFFER, read, CharsetToolkit.UTF8_BOM)) {
-            return CharsetToolkit.UTF8_BOM.length;
-          }
+        if (startsWith(BUFFER, read, CharsetToolkit.UTF8_BOM)) {
+          return CharsetToolkit.UTF8_BOM.length;
         }
         return 0;
       }
