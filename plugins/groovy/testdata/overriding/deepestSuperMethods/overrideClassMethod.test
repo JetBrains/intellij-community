@@ -17,4 +17,4 @@ class A extends Foo4 {
   def int foo () {}
 }
 -----
-Class definition: Foo1; MethodSignature: foo([])
+Class definition: Foo1; HierarchicalMethodSignatureImpl: foo([])

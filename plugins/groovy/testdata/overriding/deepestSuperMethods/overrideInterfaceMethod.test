@@ -14,4 +14,4 @@ class A implements Bar3 {
   def int foo () {}
 }
 -----
-Interface definition: Bar1; MethodSignature: foo([])
+Interface definition: Bar1; HierarchicalMethodSignatureImpl: foo([])

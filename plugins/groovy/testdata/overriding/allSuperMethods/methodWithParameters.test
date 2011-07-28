@@ -6,4 +6,4 @@ class A implements Foo {
   def foo (String s) {}
 }
 -----
-Interface definition: Foo; MethodSignature: foo([PsiType:String])
+Interface definition: Foo; HierarchicalMethodSignatureImpl: foo([PsiType:String])

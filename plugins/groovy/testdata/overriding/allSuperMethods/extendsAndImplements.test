@@ -10,5 +10,5 @@ class A extends Foo implements Bar {
   def int foo () {}
 }
 -----
-Class definition: Foo; MethodSignature: foo([])
-Interface definition: Bar; MethodSignature: foo([])
+Class definition: Foo; HierarchicalMethodSignatureImpl: foo([])
+Interface definition: Bar; HierarchicalMethodSignatureImpl: foo([])

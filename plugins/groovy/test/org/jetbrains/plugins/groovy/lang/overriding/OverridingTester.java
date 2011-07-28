@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.overriding;
 
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -13,7 +13,7 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 31.07.2007
  */
-public abstract class OverridingTester extends CodeInsightFixtureTestCase {
+public abstract class OverridingTester extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "overriding/";
