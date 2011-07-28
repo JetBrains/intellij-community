@@ -421,7 +421,7 @@ public class TreeModelBuilder {
 
     LibraryNode node = getMap(myLibraryNodes, ScopeType.LIB).get(libraryOrJdk);
     if (node != null) return node;
-    node = new LibraryNode(libraryOrJdk, null);
+    node = new LibraryNode(libraryOrJdk, myProject);
     getMap(myLibraryNodes, ScopeType.LIB).put(libraryOrJdk, node);
 
     getRootNode(ScopeType.LIB).add(node);
