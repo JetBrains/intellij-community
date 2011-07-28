@@ -1,6 +1,7 @@
 package com.jetbrains.python.refactoring.move;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -41,7 +42,7 @@ public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
     myPanel = new PyMoveClassOrFunctionPanel(moveText, getContainingFileName(elements[0]));
     setTitle(PyBundle.message("refactoring.move.class.or.function.dialog.title"));
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     for (VirtualFile file : ProjectRootManager.getInstance(project).getContentRoots()) {
       descriptor.addRoot(file);
     }
