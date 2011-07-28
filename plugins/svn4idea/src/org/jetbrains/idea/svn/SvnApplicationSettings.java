@@ -35,7 +35,6 @@ import java.util.List;
   name="SvnApplicationSettings",
   storages = {
     @Storage(
-      id="SvnApplicationSettings",
       file="$APP_CONFIG$/other.xml"
     )}
 )

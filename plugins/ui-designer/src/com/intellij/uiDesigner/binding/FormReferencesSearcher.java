@@ -1,5 +1,6 @@
 package com.intellij.uiDesigner.binding;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,7 +68,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     else if (refElement instanceof PsiField) {
       if (!processReferencesInUIForms(consumer, (PsiField)refElement, scope, filterScope)) return false;
     }
-    else if (refElement instanceof Property) {
+    else if (refElement instanceof IProperty) {
       if (!processReferencesInUIForms(consumer, (Property)refElement, scope, filterScope)) return false;
     }
     else if (refElement instanceof PropertiesFile) {
@@ -259,7 +260,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
   private static boolean processReferencesInUIForms(final Processor<PsiReference> processor, final PropertiesFile propFile, final GlobalSearchScope globalSearchScope,
                                                    final LocalSearchScope filterScope) {
     GlobalSearchScope scope = GlobalSearchScope.projectScope(propFile.getProject()).intersectWith(globalSearchScope);
-    PsiManagerImpl manager = (PsiManagerImpl)propFile.getManager();
+    PsiManagerImpl manager = (PsiManagerImpl)propFile.getContainingFile().getManager();
     final String baseName = propFile.getResourceBundle().getBaseName();
     manager.startBatchFilesProcessingMode();
 
@@ -270,7 +271,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
         ProgressManager.checkCanceled();
 
         if (file.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
-        if (!processReferences(processor, file, baseName, propFile, filterScope)) return false;
+        if (!processReferences(processor, file, baseName, propFile.getContainingFile(), filterScope)) return false;
       }
     }
     finally {

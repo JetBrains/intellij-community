@@ -44,7 +44,6 @@ import java.util.Map;
 @State(
     name = "DimensionService",
     storages = {@Storage(
-        id = "other",
         file = "$APP_CONFIG$/options.xml")})
 public class DimensionService implements PersistentStateComponent<Element>, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DimensionService");

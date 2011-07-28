@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
     name = "GithubSettings",
     storages = {
         @Storage(
-            id = "main",
             file = "$APP_CONFIG$/github_settings.xml"
         )}
 )

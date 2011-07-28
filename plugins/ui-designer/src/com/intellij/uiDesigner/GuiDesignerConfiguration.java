@@ -28,10 +28,9 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name = "uidesigner-configuration",
   storages = {
     @Storage(
-      id ="other",
       file = "$PROJECT_FILE$"
     )
-    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    ,@Storage( file = "$PROJECT_CONFIG_DIR$/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public final class GuiDesignerConfiguration implements PersistentStateComponent<GuiDesignerConfiguration> {

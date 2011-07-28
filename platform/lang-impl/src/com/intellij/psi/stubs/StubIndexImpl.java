@@ -61,7 +61,6 @@ import java.util.concurrent.locks.Lock;
   roamingType = RoamingType.DISABLED,
   storages = {
   @Storage(
-    id = "stubIndex",
     file = "$APP_CONFIG$/stubIndex.xml")
     }
 )

@@ -65,9 +65,9 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
       .disableUpAction()
       .disableDownAction()
-      .setAddAction(new Runnable() {
+      .setAddAction(new AnActionButtonRunnable() {
         @Override
-        public void run() {
+        public void run(AnActionButton button) {
           addElement(findItemToAdd());
         }
       });

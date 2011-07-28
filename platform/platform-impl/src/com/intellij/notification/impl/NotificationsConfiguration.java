@@ -40,7 +40,7 @@ import java.util.*;
  * @author spleaner
  */
 @State(name = "NotificationConfiguration",
-       storages = {@Storage(id = "other", file = "$APP_CONFIG$/notifications.xml")})
+       storages = {@Storage( file = "$APP_CONFIG$/notifications.xml")})
 public class NotificationsConfiguration implements ApplicationComponent, Notifications, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");
 

@@ -16,6 +16,8 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +27,7 @@ import java.util.List;
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
-  private static final int PAGE_SIZE = IntToIntBtree.doSanityCheck ? 64:2048;
+  private static final int PAGE_SIZE = /*IntToIntBtree.doSanityCheck ? 64:*/2048;
   private static final int RECORD_SIZE = 4;
   private final byte[] myBuffer;
 
@@ -44,8 +46,13 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private IntToIntBtree btree;
   private final boolean myInlineKeysNoMapping;
 
+  private static final int DIRTY_MAGIC = 0xbabe1977;
+  private static final int VERSION = 6;
+  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafc + VERSION;
+  private static Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
+
   public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024, false), dataDescriptor, initialSize);
+    super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024, false), dataDescriptor, initialSize, ourVersion);
 
     myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantInlineKeyMapping();
     myBuffer = new byte[getRecordSize()];
@@ -94,13 +101,19 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private void storeBTreeVars(boolean toDisk) {
     if (btree != null) {
-      btree.setMaxStepsSearched(store(DATA_START + 36, btree.getMaxStepsSearched(), toDisk));
-      btree.setPagesCount(store(DATA_START + 40, btree.getPageCount(), toDisk));
-      btree.setMovedMembersCount(store(DATA_START + 44, btree.getMovedMembersCount(), toDisk));
+      final int BTREE_DATA_START = DATA_START + 36;
+      btree.persistVars(new IntToIntBtree.BtreeDataStorage() {
+        @Override
+        public int persistInt(int offset, int value, boolean toDisk) {
+          return store(BTREE_DATA_START + offset, value, toDisk);
+        }
+      }, toDisk);
     }
   }
 
   private int store(int offset, int value, boolean toDisk) {
+    assert offset + 4 < PAGE_SIZE;
+
     if (toDisk) {
       myStorage.putInt(offset, value);
     } else {
@@ -140,6 +153,21 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return allocEmptyPage(myLogicalFileLength);
   }
 
+  public boolean processAllDataObject(final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
+    if(myInlineKeysNoMapping) {
+      return traverseAllRecords(new RecordsProcessor() {
+        public boolean process(final int record) throws IOException {
+          if (filter == null || filter.accept(record)) {
+            Data data = ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(getCurrentKey());
+            return processor.process(data);
+          }
+          return true;
+        }
+      });
+    }
+    return super.processAllDataObject(processor, filter);
+  }
+
   @Override
   public boolean traverseAllRecords(RecordsProcessor p) throws IOException {
     synchronized (ourLock) {
@@ -148,9 +176,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         collectLeafPages(btree.root, leafPages);
 
         out:
-        for(IntToIntBtree.BtreeIndexNodeView value:leafPages) {
-          for(int i = 0; i < value.getChildrenCount(); ++i) {
-            if (!p.process(value.keyAt(i))) break out;
+        for(IntToIntBtree.BtreeIndexNodeView page:leafPages) {
+          for(int key:page.exportKeys()) {
+            Integer record = btree.get(key);
+            p.setCurrentKey(key);
+            assert record != null;
+            if (!p.process(record)) break out;
           }
         }
         return true;
@@ -248,10 +279,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         if (keyValue != null) return indexNodeValueAddress;
       }
 
-      int newValueId = writeData(value, valueHC);  // TODO: we can store at Btree leaf index
+      int newValueId = writeData(value, valueHC);
       ++valuesCount;
 
-      if (valuesCount % 10000 == 0 && IOStatistics.DEBUG) {
+      if (valuesCount % 20000 == 0 && IOStatistics.DEBUG) {
         IOStatistics.dump("Index " +
                           myFile +
                           ", values " +

@@ -318,7 +318,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
   @Nullable
   public static String getBundleName(final PropertiesFile propertiesFile) {
-    final PsiDirectory directory = propertiesFile.getContainingDirectory();
+    final PsiDirectory directory = propertiesFile.getParent();
     if (directory == null) {
       return null;
     }

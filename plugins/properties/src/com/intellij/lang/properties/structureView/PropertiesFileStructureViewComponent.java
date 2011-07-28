@@ -17,6 +17,7 @@ package com.intellij.lang.properties.structureView;
 
 import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewComponent;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -28,7 +29,7 @@ import com.intellij.openapi.project.Project;
 public class PropertiesFileStructureViewComponent extends PropertiesGroupingStructureViewComponent {
   private final PropertiesFile myPropertiesFile;
 
-  public PropertiesFileStructureViewComponent(Project project, PropertiesFile propertiesFile, FileEditor editor) {
+  public PropertiesFileStructureViewComponent(Project project, PropertiesFileImpl propertiesFile, FileEditor editor) {
     super(project, editor, new PropertiesFileStructureViewModel(propertiesFile));
     myPropertiesFile = propertiesFile;
   }

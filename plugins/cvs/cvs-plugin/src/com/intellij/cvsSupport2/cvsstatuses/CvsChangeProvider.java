@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,9 @@ import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsInfo;
-import com.intellij.cvsSupport2.changeBrowser.CvsBinaryContentRevision;
-import com.intellij.cvsSupport2.changeBrowser.CvsContentRevision;
 import com.intellij.cvsSupport2.checkinProject.DirectoryContent;
 import com.intellij.cvsSupport2.checkinProject.VirtualFileEntry;
-import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
@@ -38,7 +33,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -58,7 +52,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
-import java.io.File;
 import java.text.ParseException;
 import java.util.*;
 
@@ -81,7 +74,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress,
-                         final ChangeListManagerGate addGate) {
+                         final ChangeListManagerGate addGate) throws VcsException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing changes for scope " + dirtyScope);
     }
@@ -134,7 +127,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively,
-                                final Runnable checkCanceled) {
+                                final Runnable checkCanceled) throws VcsException {
     final FilePath path = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir);
     if (!scope.belongsTo(path)) {
       if (LOG.isDebugEnabled()) {
@@ -207,7 +200,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
 
-  private void processFile(final FilePath filePath, final ChangelistBuilder builder, final Runnable checkCanceled) {
+  private void processFile(final FilePath filePath, final ChangelistBuilder builder, final Runnable checkCanceled) throws VcsException {
     checkCanceled.run();
     final VirtualFile dir = filePath.getVirtualFileParent();
     if (dir == null) return;
@@ -215,21 +208,21 @@ public class CvsChangeProvider implements ChangeProvider {
     final Entry entry = myEntriesManager.getEntryFor(dir, filePath.getName());
     final FileStatus status = CvsStatusProvider.getStatus(filePath.getVirtualFile(), entry);
     VcsRevisionNumber number = entry != null ? createRevisionNumber(entry.getRevision(), status) : VcsRevisionNumber.NULL;
-    processStatus(filePath, dir.findChild(filePath.getName()), status, number, entry != null && entry.isBinary(), builder);
+    processStatus(filePath, dir.findChild(filePath.getName()), status, number, builder);
     checkSwitchedFile(filePath, builder, dir, entry);
   }
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder,
-                           final Runnable checkCanceled) {
+                           final Runnable checkCanceled) throws VcsException {
     checkCanceled.run();
     final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir, entry.getFileName());
     final FileStatus status = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = createRevisionNumber(entry.getRevision(), status);
-    processStatus(filePath, file, status, number, entry.isBinary(), builder);
+    processStatus(filePath, file, status, number, builder);
     checkSwitchedFile(filePath, builder, dir, entry);
   }
 
-  private CvsRevisionNumber createRevisionNumber(final String revision, final FileStatus status) {
+  private static CvsRevisionNumber createRevisionNumber(final String revision, final FileStatus status) {
     final String correctedRevision;
     if (FileStatus.DELETED.equals(status)) {
       final int idx = revision.indexOf('-');
@@ -359,28 +352,40 @@ public class CvsChangeProvider implements ChangeProvider {
                              final VirtualFile file,
                              final FileStatus status,
                              final VcsRevisionNumber number,
-                             final boolean isBinary,
-                             final ChangelistBuilder builder) {
+                             final ChangelistBuilder builder) throws VcsException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("processStatus: filePath=" + filePath + " status=" + status);
     }
     if (status == FileStatus.NOT_CHANGED) {
       if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
         builder.processChange(
-          new Change(createCvsRevision(filePath, number, isBinary), CurrentContentRevision.create(filePath), FileStatus.MODIFIED), CvsVcs2.getKey());
+          new Change(createCvsRevision(filePath, number), CurrentContentRevision.create(filePath), FileStatus.MODIFIED), CvsVcs2.getKey());
       }
       return;
     }
     if (status == FileStatus.MODIFIED || status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS) {
-      builder.processChange(new Change(createCvsRevision(filePath, number, isBinary),
-          CurrentContentRevision.create(filePath), status), CvsVcs2.getKey());
+      final CvsUpToDateRevision beforeRevision = createCvsRevision(filePath, number);
+      final ContentRevision afterRevision = CurrentContentRevision.create(filePath);
+      if (beforeRevision instanceof BinaryContentRevision) {
+        final byte[] binaryContent = ((BinaryContentRevision)beforeRevision).getBinaryContent();
+        if (binaryContent != null && Arrays.equals(binaryContent, ((BinaryContentRevision)afterRevision).getBinaryContent())) {
+          return;
+        }
+      }
+      else {
+        final String content = beforeRevision.getContent();
+        if (content != null && content.equals(afterRevision.getContent())) {
+          return;
+        }
+      }
+      builder.processChange(new Change(beforeRevision, afterRevision, status), CvsVcs2.getKey());
     }
     else if (status == FileStatus.ADDED) {
       builder.processChange(new Change(null, CurrentContentRevision.create(filePath), status), CvsVcs2.getKey());
     }
     else if (status == FileStatus.DELETED) {
       // not sure about deleted content
-      builder.processChange(new Change(createCvsRevision(filePath, number, isBinary), null, status), CvsVcs2.getKey());
+      builder.processChange(new Change(createCvsRevision(filePath, number), null, status), CvsVcs2.getKey());
     }
     else if (status == FileStatus.DELETED_FROM_FS) {
       builder.processLocallyDeletedFile(filePath);
@@ -390,28 +395,6 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     else if (status == FileStatus.IGNORED) {
       builder.processIgnoredFile(filePath.getVirtualFile());
-    }
-  }
-
-  private ContentRevision createRemote(final CvsRevisionNumber revisionNumber, final VirtualFile selectedFile) {
-    final CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(selectedFile.getParent());
-    final File file = new File(CvsUtil.getModuleName(selectedFile));
-
-    final RevisionOrDate versionInfo;
-    if (revisionNumber.getDateOrRevision() != null) {
-      versionInfo = RevisionOrDateImpl.createOn(revisionNumber.getDateOrRevision());
-    }
-    else {
-      versionInfo = new SimpleRevision(revisionNumber.asString());
-    }
-
-    final Project project = myVcs.getProject();
-    final File ioFile = new File(selectedFile.getPath());
-    if (selectedFile.getFileType().isBinary()) {
-      return new CvsBinaryContentRevision(file, ioFile, versionInfo, settings, project);
-    }
-    else {
-      return new CvsContentRevision(file, ioFile, versionInfo, settings, project);
     }
   }
 
@@ -458,8 +441,9 @@ public class CvsChangeProvider implements ChangeProvider {
     return lastModified.getTime();
   }
 
-  private CvsUpToDateRevision createCvsRevision(FilePath path, VcsRevisionNumber revisionNumber, boolean isBinary) {
-    if (isBinary) {
+  private CvsUpToDateRevision createCvsRevision(FilePath path, VcsRevisionNumber revisionNumber) {
+    final VirtualFile vFile = path.getVirtualFile();
+    if (vFile.getFileType().isBinary()) {
       return new CvsUpToDateBinaryRevision(path, revisionNumber);
     }
     return new CvsUpToDateRevision(path, revisionNumber);
@@ -575,10 +559,10 @@ public class CvsChangeProvider implements ChangeProvider {
         if (virtualFile != null) {
           // todo maybe refactor where data lives
           Entry entry = myEntriesManager.getEntryFor(virtualFile.getParent(), virtualFile.getName());
-          if (entry != null && entry.isResultOfMerge()) {
+          if (entry != null) {
             createVersionFile = entry.getRevision();
           }
-          
+
           operation = GetFileContentOperation.createForFile(virtualFile, SimpleRevision.createForTheSameVersionOf(virtualFile));
         }
         else {

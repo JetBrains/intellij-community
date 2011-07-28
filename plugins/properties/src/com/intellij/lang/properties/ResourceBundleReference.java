@@ -17,7 +17,9 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.*;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +29,12 @@ import java.util.List;
  * @author yole
  */
 public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implements PsiPolyVariantReference, BundleNameEvaluator {
+  private static final Function<PropertiesFile,PsiElement> PROPERTIES_FILE_PSI_ELEMENT_FUNCTION = new Function<PropertiesFile, PsiElement>() {
+    @Override
+    public PsiElement fun(PropertiesFile propertiesFile) {
+      return propertiesFile.getContainingFile();
+    }
+  };
   private String myBundleName;
 
   public ResourceBundleReference(final PsiElement element) {
@@ -46,7 +54,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
   @NotNull public ResolveResult[] multiResolve(final boolean incompleteCode) {
     PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(myElement.getProject());
     List<PropertiesFile> propertiesFiles = referenceManager.findPropertiesFiles(myElement.getResolveScope(), myBundleName, this);
-    return PsiElementResolveResult.createResults(propertiesFiles);
+    return PsiElementResolveResult.createResults(ContainerUtil.map(propertiesFiles, PROPERTIES_FILE_PSI_ELEMENT_FUNCTION));
   }
 
   @NotNull

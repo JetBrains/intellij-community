@@ -28,7 +28,6 @@ import javax.swing.*;
   name="NamedScopeManager",
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

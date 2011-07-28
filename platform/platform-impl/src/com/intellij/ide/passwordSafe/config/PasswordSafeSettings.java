@@ -28,7 +28,6 @@ import com.intellij.openapi.components.Storage;
 @State(
   name = "PasswordSafe",
   storages = {@Storage(
-    id = "PasswordSafe",
     file = "$APP_CONFIG$/security.xml")})
 public class PasswordSafeSettings implements PersistentStateComponent<PasswordSafeSettings.State> {
   /**

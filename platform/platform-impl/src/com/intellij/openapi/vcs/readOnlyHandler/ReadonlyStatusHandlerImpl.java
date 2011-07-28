@@ -37,7 +37,6 @@ import java.util.*;
   name="ReadonlyStatusHandler",
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.io.FileUtil;
@@ -127,8 +128,8 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
         _propertyName = propertyName.substring(prefix.length());
       }
       if (psiFile instanceof PropertiesFile) {
-        final Property property = ((PropertiesFile)psiFile).findPropertyByKey(_propertyName);
-        return property != null? property.getNavigationElement() : null;
+        final IProperty property = ((PropertiesFile)psiFile).findPropertyByKey(_propertyName);
+        return property != null? property.getPsiElement() : null;
       }
     }
     return null;
@@ -182,7 +183,7 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
       if (psiFile != null) {
         if (psiFile instanceof PropertiesFile) {
           result = new HashMap<String, String>();
-          for (Property property : ((PropertiesFile)psiFile).getProperties()) {
+          for (IProperty property : ((PropertiesFile)psiFile).getProperties()) {
             result.put(property.getKey(), property.getValue());
           }
         }

@@ -17,7 +17,6 @@ package com.intellij.util.download;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.download.impl.FileDownloader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +35,14 @@ public abstract class DownloadableFileService {
   @NotNull
   public abstract DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName);
 
+  /**
+   * Create descriptor for set of files
+   * @param groupId id of the file set descriptors on http://frameworks.jetbrains.com/ site
+   * @param localUrls URLs of local copies of the descriptors
+   * @return {@link DownloadableFileSetVersions} instance
+   */
   @NotNull
-  public abstract DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@NotNull String groupId,
+  public abstract DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
                                                                                                     @NotNull URL... localUrls);
 
   @NotNull

@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Storage {
-  @NonNls String id();
+  @NonNls String id() default "default";
   boolean isDefault() default true;
   @NonNls String file() default "";
   StorageScheme scheme() default StorageScheme.DEFAULT;

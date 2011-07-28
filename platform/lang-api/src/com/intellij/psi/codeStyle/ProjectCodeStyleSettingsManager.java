@@ -24,8 +24,8 @@ import com.intellij.openapi.components.StorageScheme;
 @State(
   name = "CodeStyleSettingsManager",
   storages = {
-    @Storage(id = "default", file = "$PROJECT_FILE$")
-   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/projectCodeStyle.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage( file = "$PROJECT_FILE$")
+   ,@Storage( file = "$PROJECT_CONFIG_DIR$/projectCodeStyle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager{

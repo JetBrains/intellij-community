@@ -21,7 +21,7 @@ import java.util.List;
 */
 @State(
   name = "TaskProjectConfiguration",
-  storages = {@Storage(id = "default", file = "$PROJECT_FILE$")})
+  storages = {@Storage( file = "$PROJECT_FILE$")})
 public class TaskProjectConfiguration implements PersistentStateComponent<TaskProjectConfiguration> {
 
   @Tag("server")

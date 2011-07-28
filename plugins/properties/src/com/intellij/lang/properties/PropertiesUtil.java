@@ -16,11 +16,11 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyKeyIndex;
+import com.intellij.lang.properties.xml.XmlPropertiesFile;
+import com.intellij.lang.properties.xml.XmlPropertiesIndex;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
@@ -31,14 +31,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * @author cdr
@@ -47,9 +44,36 @@ public class PropertiesUtil {
   private PropertiesUtil() {
   }
 
+  public static boolean isPropertiesFile(VirtualFile file, Project project) {
+    return getPropertiesFile(PsiManager.getInstance(project).findFile(file)) != null;
+  }
+
+  @Nullable
+  public static PropertiesFile getPropertiesFile(@Nullable PsiFile file) {
+    if (file == null) return null;
+    return file instanceof PropertiesFile ? (PropertiesFile)file : XmlPropertiesFile.getPropertiesFile(file);
+  }
+
   @NotNull
-  public static List<Property> findPropertiesByKey(Project project, final String key) {
-    return new ArrayList<Property>(PropertyKeyIndex.getInstance().get(key, project, GlobalSearchScope.allScope(project)));
+  public static List<IProperty> findPropertiesByKey(final Project project, final String key) {
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    final ArrayList<IProperty> properties =
+      new ArrayList<IProperty>(PropertyKeyIndex.getInstance().get(key, project, scope));
+    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    FileBasedIndex.getInstance().processValues(XmlPropertiesIndex.NAME, new XmlPropertiesIndex.Key(key), null, new FileBasedIndex.ValueProcessor<String>() {
+      @Override
+      public boolean process(VirtualFile file, String value) {
+        if (files.add(file)) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+          PropertiesFile propertiesFile = XmlPropertiesFile.getPropertiesFile(psiFile);
+          if (propertiesFile != null) {
+            properties.addAll(propertiesFile.findPropertiesByKey(key));
+          }
+        }
+        return false;
+      }
+    }, scope);
+    return properties;
   }
 
   public static boolean isPropertyComplete(final Project project, ResourceBundle resourceBundle, String propertyName) {
@@ -144,8 +168,8 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static List<Property> findAllProperties(Project project, @NotNull ResourceBundle resourceBundle, String key) {
-    List<Property> result = new SmartList<Property>();
+  public static List<IProperty> findAllProperties(Project project, @NotNull ResourceBundle resourceBundle, String key) {
+    List<IProperty> result = new SmartList<IProperty>();
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(project);
     for (PropertiesFile propertiesFile : propertiesFiles) {
       result.addAll(propertiesFile.findPropertiesByKey(key));
@@ -166,22 +190,6 @@ public class PropertiesUtil {
     return result;
   }
 
-  /**
-   * @deprecated Use getPropertiesFile() with specified locale instead
-   * @param bundleName
-   * @param searchFromModule
-   * @return
-   */
-  @Nullable public static PropertiesFile getPropertiesFile(final String bundleName, final Module searchFromModule) {
-    @NonNls final String fileName = bundleName + PropertiesFileType.DOT_DEFAULT_EXTENSION;
-    VirtualFile vFile = ResourceFileUtil.findResourceFileInDependents(searchFromModule, fileName);
-    if (vFile != null) {
-      PsiFile psiFile = PsiManager.getInstance(searchFromModule.getProject()).findFile(vFile);
-      if (psiFile instanceof PropertiesFile) return (PropertiesFile) psiFile;
-    }
-    return null;
-  }
-
   @Nullable
   public static PropertiesFile getPropertiesFile(@NotNull String bundleName,
                                                  @NotNull Module searchFromModule,
@@ -190,8 +198,23 @@ public class PropertiesUtil {
     return manager.findPropertiesFile(searchFromModule, bundleName, locale);
   }
 
+  @Nullable
   public static String getPackageQualifiedName(PsiDirectory directory) {
     return ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
   }
 
+  public static ResourceBundle getResourceBundle(final PsiFile containingFile) {
+    VirtualFile virtualFile = containingFile.getVirtualFile();
+    if (!containingFile.isValid() || virtualFile == null) {
+      return ResourceBundleImpl.NULL;
+    }
+    String baseName = getBaseName(virtualFile);
+    PsiDirectory directory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
+      @Nullable
+      public PsiDirectory compute() {
+        return containingFile.getContainingDirectory();
+    }});
+    if (directory == null) return ResourceBundleImpl.NULL;
+    return new ResourceBundleImpl(directory.getVirtualFile(), baseName);
+  }
 }

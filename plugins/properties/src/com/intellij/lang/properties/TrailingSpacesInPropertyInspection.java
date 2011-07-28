@@ -51,10 +51,10 @@ public class TrailingSpacesInPropertyInspection extends PropertySuppressableInsp
 
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
-    final List<Property> properties = ((PropertiesFile)file).getProperties();
+    final List<IProperty> properties = ((PropertiesFile)file).getProperties();
     final List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
 
-    for (Property property : properties) {
+    for (IProperty property : properties) {
       ProgressManager.checkCanceled();
 
       ASTNode keyNode = ((PropertyImpl)property).getKeyNode();

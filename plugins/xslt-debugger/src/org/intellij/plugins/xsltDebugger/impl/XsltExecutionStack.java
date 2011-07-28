@@ -2,6 +2,7 @@ package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
+import org.intellij.plugins.xsltDebugger.VMPausedException;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 
@@ -26,20 +27,24 @@ public class XsltExecutionStack extends XExecutionStack {
 
   @Override
   public void computeStackFrames(int firstFrameIndex, XStackFrameContainer container) {
-    if (myDebuggerSession.getCurrentState() == Debugger.State.SUSPENDED) {
-      Debugger.Frame frame = myTopFrame.getFrame();
-      final List<XStackFrame> frames = new ArrayList<XStackFrame>();
-      while (frame != null) {
-        frame = frame.getPrevious();
-        if (frame != null) {
-          frames.add(new XsltStackFrame(frame, myDebuggerSession));
+    try {
+      if (myDebuggerSession.getCurrentState() == Debugger.State.SUSPENDED) {
+        Debugger.Frame frame = myTopFrame.getFrame();
+        final List<XStackFrame> frames = new ArrayList<XStackFrame>();
+        while (frame != null) {
+          frame = frame.getPrevious();
+          if (frame != null) {
+            frames.add(new XsltStackFrame(frame, myDebuggerSession));
+          }
+        }
+        if (firstFrameIndex <= frames.size()) {
+          container.addStackFrames(frames.subList(firstFrameIndex - 1, frames.size()), true);
+        } else {
+          container.addStackFrames(Collections.<XStackFrame>emptyList(), true);
         }
       }
-      if (firstFrameIndex <= frames.size()) {
-        container.addStackFrames(frames.subList(firstFrameIndex - 1, frames.size()), true);
-      } else {
-        container.addStackFrames(Collections.<XStackFrame>emptyList(), true);
-      }
+    } catch (VMPausedException e) {
+      container.errorOccurred("VM is paused");
     }
   }
 }

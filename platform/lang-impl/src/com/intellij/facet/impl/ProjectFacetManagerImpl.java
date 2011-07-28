@@ -32,7 +32,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
@@ -41,7 +44,6 @@ import java.util.*;
     name = ProjectFacetManagerImpl.COMPONENT_NAME,
     storages = {
         @Storage(
-            id="other",
             file="$PROJECT_FILE$"
         )
     }

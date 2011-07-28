@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
     name = "GroovyDebuggerSettings",
     storages = {
     @Storage(
-        id = "groovy_debugger",
         file = "$APP_CONFIG$/groovy_debug.xml"
     )}
 )

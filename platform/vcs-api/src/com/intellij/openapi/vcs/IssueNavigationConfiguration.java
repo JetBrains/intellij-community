@@ -40,10 +40,9 @@ import java.util.regex.Pattern;
   name = "IssueNavigationConfiguration",
   storages = {
     @Storage(
-      id ="other",
       file = "$PROJECT_FILE$"
     )
-    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    ,@Storage( file = "$PROJECT_CONFIG_DIR$/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class IssueNavigationConfiguration implements PersistentStateComponent<IssueNavigationConfiguration> {

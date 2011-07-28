@@ -30,7 +30,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name = "CompilerWorkspaceConfiguration",
   storages = {
     @Storage(
-      id ="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

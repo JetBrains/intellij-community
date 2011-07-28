@@ -20,10 +20,10 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
@@ -49,10 +49,10 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
 
   public StructureViewTreeElement[] getChildren() {
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
-    Map<String, Property> propertyNames = new LinkedHashMap<String, Property>();
+    Map<String, IProperty> propertyNames = new LinkedHashMap<String, IProperty>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
-      List<Property> properties = propertiesFile.getProperties();
-      for (Property property : properties) {
+      List<IProperty> properties = propertiesFile.getProperties();
+      for (IProperty property : properties) {
         String name = property.getUnescapedKey();
         if (!propertyNames.containsKey(name)) {
           propertyNames.put(name, property);

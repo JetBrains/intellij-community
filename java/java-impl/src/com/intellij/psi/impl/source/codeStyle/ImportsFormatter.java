@@ -106,7 +106,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
     final StringBuffer result = new StringBuffer();
 
     final int lineStartOffset = myDocumentModel.getLineStartOffset(myDocumentModel.getLineNumber(startOffset));
-    final int emptyLineEnd = CharArrayUtil.shiftForward(myDocumentModel.getDocument().getText(), lineStartOffset, " \t");
+    final int emptyLineEnd = CharArrayUtil.shiftForward(myDocumentModel.getDocument().getCharsSequence(), lineStartOffset, " \t");
     final CharSequence spaces = myDocumentModel.getText(new TextRange(lineStartOffset, emptyLineEnd));
 
     if (spaces != null) {

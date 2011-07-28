@@ -19,12 +19,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.RemovePropertyLocalFix;
-import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
@@ -35,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -148,16 +142,16 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
       Set<String> overriddenKeys = new THashSet<String>(file.getNamesMap().keySet());
       overriddenKeys.retainAll(parentKeys);
       for (String overriddenKey : overriddenKeys) {
-        Property property = file.findPropertyByKey(overriddenKey);
+        IProperty property = file.findPropertyByKey(overriddenKey);
         assert property != null;
         while (parent != null) {
-          Property parentProperty = parent.findPropertyByKey(overriddenKey);
+          IProperty parentProperty = parent.findPropertyByKey(overriddenKey);
           if (parentProperty != null && Comparing.strEqual(property.getValue(), parentProperty.getValue())) {
             String message = InspectionsBundle.message("inconsistent.bundle.property.inherited.with.the.same.value", parent.getName());
-            ProblemDescriptor descriptor = manager.createProblemDescriptor(property, message,
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(property.getPsiElement(), message,
                                                                            RemovePropertyLocalFix.INSTANCE,
                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
-            processor.addProblemElement(refManager.getReference(file), descriptor);
+            processor.addProblemElement(refManager.getReference(file.getContainingFile()), descriptor);
           }
           parent = parents.get(parent);
         }
@@ -185,12 +179,12 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
       Set<String> keys = new THashSet<String>(file.getNamesMap().keySet());
       keys.removeAll(parentKeys);
       for (String inconsistentKey : keys) {
-        Property property = file.findPropertyByKey(inconsistentKey);
+        IProperty property = file.findPropertyByKey(inconsistentKey);
         assert property != null;
         String message = InspectionsBundle.message("inconsistent.bundle.property.error", inconsistentKey, parent.getName());
-        ProblemDescriptor descriptor = manager.createProblemDescriptor(property, message, false, LocalQuickFix.EMPTY_ARRAY,
+        ProblemDescriptor descriptor = manager.createProblemDescriptor(property.getPsiElement(), message, false, LocalQuickFix.EMPTY_ARRAY,
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-        processor.addProblemElement(refManager.getReference(file), descriptor);
+        processor.addProblemElement(refManager.getReference(file.getContainingFile()), descriptor);
       }
     }
   }
@@ -219,7 +213,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
       }
       parentKeys.removeAll(keys);
       for (String untranslatedKey : parentKeys) {
-        Property untranslatedProperty = null;
+        IProperty untranslatedProperty = null;
         PropertiesFile untranslatedFile = parent;
         while (untranslatedFile != null) {
           untranslatedProperty = untranslatedFile.findPropertyByKey(untranslatedKey);
@@ -228,9 +222,9 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
         }
         assert untranslatedProperty != null;
         String message = InspectionsBundle.message("inconsistent.bundle.untranslated.property.error", untranslatedKey, file.getName());
-        ProblemDescriptor descriptor = manager.createProblemDescriptor(untranslatedProperty, message, false, LocalQuickFix.EMPTY_ARRAY,
+        ProblemDescriptor descriptor = manager.createProblemDescriptor(untranslatedProperty.getPsiElement(), message, false, LocalQuickFix.EMPTY_ARRAY,
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-        processor.addProblemElement(refManager.getReference(untranslatedFile), descriptor);
+        processor.addProblemElement(refManager.getReference(untranslatedFile.getContainingFile()), descriptor);
       }
     }
   }

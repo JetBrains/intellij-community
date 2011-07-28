@@ -28,8 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ import java.util.List;
  */
 @State(
     name = "TemplateDataLanguagePatterns",
-    storages = @Storage(id="default", file = "$OPTIONS$/templateLanguages.xml") )
+    storages = @Storage(file = "$OPTIONS$/templateLanguages.xml") )
 public class TemplateDataLanguagePatterns implements PersistentStateComponent<Element> {
   private FileTypeAssocTable<Language> myAssocTable = new FileTypeAssocTable<Language>();
   @NonNls private static final String SEPARATOR = ";";

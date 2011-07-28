@@ -678,15 +678,20 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final int selStart = editor.getSelectionModel().getSelectionStart();
     final int selEnd = editor.getSelectionModel().getSelectionEnd();
 
+    final int vOffset = editor.getScrollingModel().getVerticalScrollOffset();
+    final int hOffset = editor.getScrollingModel().getHorizontalScrollOffset();
+
     return new Runnable() {
       @Override
       public void run() {
         DocumentEx document = (DocumentEx) editor.getDocument();
 
-        // restore the text in two steps, because otherwise the dumb caret model will scroll the editor
-        document.replaceString(0, editor.getCaretModel().getOffset(), documentText.substring(0, caret));
-        document.replaceString(caret, document.getTextLength(), documentText.substring(caret));
+        document.replaceString(0, document.getTextLength(), documentText);
+        editor.getCaretModel().moveToOffset(caret);
         editor.getSelectionModel().setSelection(selStart, selEnd);
+
+        editor.getScrollingModel().scrollHorizontally(hOffset);
+        editor.getScrollingModel().scrollVertically(vOffset);
       }
     };
   }

@@ -42,7 +42,6 @@ import java.util.regex.Pattern;
 @State(
   name = "LogFilters",
   storages = {@Storage(
-    id = "LogFilters",
     file = "$WORKSPACE_FILE$")})
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class LogConsolePreferences extends LogFilterRegistrar {

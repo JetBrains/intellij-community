@@ -140,7 +140,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     //file/package/directory/module scope
     myFileButton.setText(myFileName);
-    myFileButton.setMnemonic(myFileName.charAt(0));
+    myFileButton.setMnemonic(myFileName.charAt(getSelectedScopeMnemonic()));
 
     VirtualFile file = PsiUtilBase.getVirtualFile(myContext);
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -188,6 +188,21 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     }
     new RadioUpDownListener(myProjectButton, myModuleButton, myUncommitedFilesButton, myFileButton, myCustomScopeButton);
     return wholePanel;
+  }
+
+  private int getSelectedScopeMnemonic() {
+
+    final int fileIdx = StringUtil.indexOfIgnoreCase(myFileName, "file", 0);
+    if (fileIdx > -1) {
+      return fileIdx;
+    }
+
+    final int dirIdx = StringUtil.indexOfIgnoreCase(myFileName, "directory", 0);
+    if (dirIdx > -1) {
+      return dirIdx;
+    }
+
+    return 0;
   }
 
   private void onScopeRadioButtonPressed() {

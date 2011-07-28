@@ -21,12 +21,18 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * User: anna
@@ -34,7 +40,7 @@ import java.util.*;
  */
 @State(
     name = "NullableNotNullManager",
-    storages = {@Storage(id = "default", file = "$PROJECT_FILE$")}
+    storages = {@Storage( file = "$PROJECT_FILE$")}
 )
 public class NullableNotNullManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#" + NullableNotNullManager.class.getName());

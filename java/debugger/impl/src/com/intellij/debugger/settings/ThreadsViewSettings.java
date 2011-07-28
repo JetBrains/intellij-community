@@ -25,7 +25,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name="ThreadsViewSettings",
   storages= {
     @Storage(
-      id="other",
       file = "$APP_CONFIG$/debugger.threadsview.xml"
     )}
 )

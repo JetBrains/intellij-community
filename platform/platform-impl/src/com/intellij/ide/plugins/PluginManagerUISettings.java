@@ -37,7 +37,6 @@ import javax.swing.*;
   name = "PluginManagerConfigurable",
   storages = {
   @Storage(
-    id = "other",
     file = "$APP_CONFIG$/other.xml")
     }
 )

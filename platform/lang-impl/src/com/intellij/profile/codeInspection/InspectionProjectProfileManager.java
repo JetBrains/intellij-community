@@ -54,10 +54,9 @@ import java.util.concurrent.ConcurrentHashMap;
   name = "InspectionProjectProfileManager",
   storages = {
     @Storage(
-      id ="default",
       file = "$PROJECT_FILE$"
     )
-    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/inspectionProfiles/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = InspectionProjectProfileManager.ProfileStateSplitter.class)
+    ,@Storage( file = "$PROJECT_CONFIG_DIR$/inspectionProfiles/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = InspectionProjectProfileManager.ProfileStateSplitter.class)
     }
 )
 public class InspectionProjectProfileManager extends DefaultProjectProfileManager implements SeverityProvider, ProjectComponent, PersistentStateComponent<Element> {

@@ -13,27 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.download;
+package com.intellij.ui;
 
-import com.intellij.openapi.util.Condition;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ParameterizedRunnable;
 
 /**
- * @author nik
+ * @author Konstantin Bulenkov
  */
-public interface DownloadableFileDescription {
-  @NotNull
-  String getDownloadUrl();
-
-  @NotNull
-  String getPresentableFileName();
-
-  @NotNull
-  String getPresentableDownloadUrl();
-
-  @NotNull
-  String getDefaultFileName();
-
-  @NotNull
-  String generateFileName(@NotNull Condition<String> validator);
+public interface AnActionButtonRunnable extends ParameterizedRunnable<AnActionButton> {
 }

@@ -69,8 +69,8 @@ import java.util.*;
 @State(
   name = ModuleManagerImpl.COMPONENT_NAME,
   storages = {
-    @Storage(id = "default", file = "$PROJECT_FILE$")
-   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/modules.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage( file = "$PROJECT_FILE$")
+   ,@Storage( file = "$PROJECT_CONFIG_DIR$/modules.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element>, ModificationTracker {

@@ -30,6 +30,7 @@ import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
@@ -95,14 +96,19 @@ public final class FileContent extends UserDataHolderBase {
     this(file, null, null, null);
   }
 
-  private FileContent(@NotNull VirtualFile file, CharSequence contentAsText, byte[] content, Charset charset) {
+  @TestOnly
+  public FileContent(byte[] content) {
+    this(null, null, content, null);
+  }
+
+  private FileContent(VirtualFile file, CharSequence contentAsText, byte[] content, Charset charset) {
     myFile = file;
     myContentAsText = contentAsText;
     myContent = content;
     myCharset = charset;
-    myFileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+    myFileType = file == null ? null : FileTypeManager.getInstance().getFileTypeByFile(file);
     // remember name explicitly because the file could be renamed afterwards
-    fileName = file.getName();
+    fileName = file == null ? null : file.getName();
   }
 
   private FileType substituteFileType(VirtualFile file, FileType fileType) {

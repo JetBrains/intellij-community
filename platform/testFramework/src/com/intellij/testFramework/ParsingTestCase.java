@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,6 +43,10 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NonNls;
 import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoInitializationException;
+import org.picocontainer.PicoIntrospectionException;
+import org.picocontainer.defaults.AbstractComponentAdapter;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -68,6 +73,16 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   protected void setUp() throws Exception {
     super.setUp();
     initApplication();
+    getApplication().getPicoContainer().registerComponent(new AbstractComponentAdapter("com.intellij.openapi.progress.ProgressManager", Object.class) {
+      @Override
+      public Object getComponentInstance(PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
+        return new ProgressManagerImpl(getApplication());
+      }
+
+      @Override
+      public void verify(PicoContainer container) throws PicoIntrospectionException {
+      }
+    });
     myProject = disposeOnTearDown(new MockProject());
     myPsiManager = new MockPsiManager(myProject);
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
@@ -176,7 +191,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     String name = getTestName(false);
     String text = loadFile(name + "." + myFileExt);
     myFile = createPsiFile(name, text);
-    myFile.accept(new PsiRecursiveElementVisitor(){});
+    ensureParsed(myFile);
     assertEquals(text, myFile.getText());
     checkResult(name + suffix + ".txt", myFile);
   }
@@ -184,7 +199,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   protected void doCodeTest(String code) throws IOException {
     String name = getTestName(false);
     myFile = createPsiFile("a", code);
-    myFile.accept(new PsiRecursiveElementVisitor(){});
+    ensureParsed(myFile);
     assertEquals(code, myFile.getText());
     checkResult(myFilePrefix + name + ".txt", myFile);
   }
@@ -256,5 +271,14 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     String text = FileUtil.loadFile(new File(fullName)).trim();
     text = StringUtil.convertLineSeparators(text);
     return text;
+  }
+
+  private static void ensureParsed(PsiFile file) {
+    file.accept(new PsiElementVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        element.acceptChildren(this);
+      }
+    });
   }
 }

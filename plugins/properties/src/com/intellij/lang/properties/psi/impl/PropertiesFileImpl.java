@@ -18,24 +18,21 @@ package com.intellij.lang.properties.psi.impl;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.properties.PropertiesLanguage;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
+import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +42,8 @@ import java.util.*;
 
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private static final TokenSet outPropertiesListSet = TokenSet.create(PropertiesElementTypes.PROPERTIES_LIST);
-  private Map<String,List<Property>> myPropertiesMap;
-  private List<Property> myProperties;
+  private MultiMap<String,IProperty> myPropertiesMap;
+  private List<IProperty> myProperties;
 
   public PropertiesFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, PropertiesLanguage.INSTANCE);
@@ -63,7 +60,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   @NotNull
-  public List<Property> getProperties() {
+  public List<IProperty> getProperties() {
     synchronized (PsiLock.LOCK) {
     ensurePropertiesLoaded();
     return myProperties;
@@ -71,8 +68,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private ASTNode getPropertiesList() {
-    final ASTNode[] nodes = getNode().getChildren(outPropertiesListSet);
-    return nodes.length > 0 ? nodes[0]:null;
+    return ArrayUtil.getFirstElement(getNode().getChildren(outPropertiesListSet));
   }
 
   private void ensurePropertiesLoaded() {
@@ -80,52 +76,36 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       return;
     }
     final ASTNode[] props = getPropertiesList().getChildren(PropertiesElementTypes.PROPERTIES);
-    myPropertiesMap = new LinkedHashMap<String, List<Property>>();
-    myProperties = new ArrayList<Property>(props.length);
+    myPropertiesMap = new MultiMap<String, IProperty>();
+    myProperties = new ArrayList<IProperty>(props.length);
     for (final ASTNode prop : props) {
       final Property property = (Property)prop.getPsi();
       String key = property.getUnescapedKey();
-      List<Property> list = myPropertiesMap.get(key);
-      if (list == null) {
-        list = new SmartList<Property>();
-        myPropertiesMap.put(key, list);
-      }
-      list.add(property);
+      myPropertiesMap.putValue(key, property);
       myProperties.add(property);
     }
   }
 
-  public Property findPropertyByKey(@NotNull String key) {
+  public IProperty findPropertyByKey(@NotNull String key) {
     synchronized (PsiLock.LOCK) {
       ensurePropertiesLoaded();
-      List<Property> list = myPropertiesMap.get(key);
-      return list == null ? null : list.get(0);
+      Collection<IProperty> list = myPropertiesMap.get(key);
+      return list.isEmpty() ? null : list.iterator().next();
     }
   }
 
   @NotNull
-  public List<Property> findPropertiesByKey(@NotNull String key) {
+  public List<IProperty> findPropertiesByKey(@NotNull String key) {
     synchronized (PsiLock.LOCK) {
       ensurePropertiesLoaded();
-      List<Property> list = myPropertiesMap.get(key);
-      return list == null ? Collections.<Property>emptyList() : list;
+      List<IProperty> list = (List<IProperty>)myPropertiesMap.get(key);
+      return list == null ? Collections.<IProperty>emptyList() : list;
     }
   }
 
   @NotNull
   public ResourceBundle getResourceBundle() {
-    VirtualFile virtualFile = getVirtualFile();
-    if (!isValid() || virtualFile == null) {
-      return ResourceBundleImpl.NULL;
-    }
-    String baseName = PropertiesUtil.getBaseName(virtualFile);
-    PsiDirectory directory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
-      @Nullable
-      public PsiDirectory compute() {
-        return getContainingFile().getContainingDirectory();
-    }});
-    if (directory == null) return ResourceBundleImpl.NULL;
-    return new ResourceBundleImpl(directory.getVirtualFile(), baseName);
+    return PropertiesUtil.getResourceBundle(getContainingFile());
   }
 
   @NotNull
@@ -141,11 +121,11 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   @NotNull
-  public PsiElement addProperty(@NotNull Property property) throws IncorrectOperationException {
+  public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
     if (haveToAddNewLine()) {
       insertLinebreakBefore(null);
     }
-    final TreeElement copy = ChangeUtil.copyToElement(property);
+    final TreeElement copy = ChangeUtil.copyToElement(property.getPsiElement());
     getPropertiesList().addChild(copy);
     return copy.getPsi();
   }
@@ -153,8 +133,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @NotNull
   public PsiElement addPropertyAfter(@NotNull final Property property, @Nullable final Property anchor) throws IncorrectOperationException {
     final TreeElement copy = ChangeUtil.copyToElement(property);
-    List<Property> properties = getProperties();
-    ASTNode anchorBefore = anchor == null ? properties.isEmpty() ? null : properties.get(0).getNode()
+    List<IProperty> properties = getProperties();
+    ASTNode anchorBefore = anchor == null ? properties.isEmpty() ? null : properties.get(0).getPsiElement().getNode()
                            : anchor.getNode().getTreeNext();
     if (anchorBefore != null) {
       if (anchorBefore.getElementType() == TokenType.WHITE_SPACE) {
@@ -171,6 +151,11 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return copy.getPsi();
   }
 
+  @Override
+  public IProperty addProperty(String key, String value) {
+    return (IProperty)addProperty(PropertiesElementFactory.createProperty(getProject(), key, value));
+  }
+
   private void insertLinebreakBefore(final ASTNode anchorBefore) {
     getPropertiesList().addChild(ASTFactory.whitespace("\n"), anchorBefore);
   }
@@ -183,7 +168,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @NotNull
   public Map<String, String> getNamesMap() {
     Map<String, String> result = new THashMap<String, String>();
-    for (Property property : getProperties()) {
+    for (IProperty property : getProperties()) {
       result.put(property.getUnescapedKey(), property.getValue());
     }
     return result;

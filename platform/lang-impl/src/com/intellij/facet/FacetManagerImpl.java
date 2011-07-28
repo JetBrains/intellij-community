@@ -48,7 +48,6 @@ import java.util.*;
     name = FacetManagerImpl.COMPONENT_NAME,
     storages = {
       @Storage(
-        id = "default",
         file = "$MODULE_FILE$"
       )
     }

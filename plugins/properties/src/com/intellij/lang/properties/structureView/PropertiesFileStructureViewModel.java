@@ -23,8 +23,8 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewModel;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +36,7 @@ import java.util.Comparator;
  * @author max
  */
 public class PropertiesFileStructureViewModel extends TextEditorBasedStructureViewModel implements PropertiesGroupingStructureViewModel {
-  private final PropertiesFile myPropertiesFile;
+  private final PropertiesFileImpl myPropertiesFile;
   private final GroupByWordPrefixes myGroupByWordPrefixes;
   @NonNls public static final String KIND_SORTER_ID = "KIND_SORTER";
   private static final Sorter KIND_SORTER = new Sorter() {
@@ -66,7 +66,7 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
     }
   };
 
-  public PropertiesFileStructureViewModel(final PropertiesFile root) {
+  public PropertiesFileStructureViewModel(final PropertiesFileImpl root) {
     super(root);
     myPropertiesFile = root;
     String separator = PropertiesSeparatorManager.getInstance().getSeparator(root.getProject(), root.getVirtualFile());

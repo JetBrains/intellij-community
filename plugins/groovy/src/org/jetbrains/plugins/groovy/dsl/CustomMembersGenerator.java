@@ -131,6 +131,11 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     method(setter);
   }
 
+  public void constructor(Map<Object, Object> args) {
+    args.put("constructor", true);
+    method(args);
+  }
+
   public void method(Map<Object, Object> args) {
     args.put("type", stringifyType(args.get("type")));
     //noinspection unchecked

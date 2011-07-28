@@ -24,7 +24,6 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
@@ -35,9 +34,6 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -617,20 +613,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @Override
   public Object getData(String dataId) {
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    else if (PlatformDataKeys.EDITOR.is(dataId)) {
-      return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-    }
-    else {
-      Editor editor = (Editor)getData(PlatformDataKeys.EDITOR.getName());
-      if (editor != null) {
-        FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
-        return manager.getData(dataId, editor, manager.getSelectedFiles()[0]);
-      }
-      return null;
-    }
+    return new TestDataProvider(myProject).getData(dataId);
   }
 
   public static File createTempDir(@NonNls final String prefix) throws IOException {

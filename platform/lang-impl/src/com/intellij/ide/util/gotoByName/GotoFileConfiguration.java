@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 @State(
     name = "GotoFileConfiguration",
     storages = {@Storage(
-        id = "other",
         file = "$WORKSPACE_FILE$")})
 public class GotoFileConfiguration extends ChooseByNameFilterConfiguration<FileType> {
   /**

@@ -17,15 +17,15 @@ package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
-import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
-import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -66,7 +66,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
     for (TreeElement element : children) {
       String text = null;
       if (element instanceof PropertiesStructureViewElement) {
-        Property property = ((PropertiesStructureViewElement)element).getValue();
+        IProperty property = ((PropertiesStructureViewElement)element).getValue();
         text = property.getUnescapedKey();
       }
       else if (element instanceof ResourceBundlePropertyStructureViewElement) {

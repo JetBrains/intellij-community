@@ -32,7 +32,6 @@ import java.util.Set;
   name = "SystemNotifications",
   storages = {
     @Storage(
-      id="SystemNotifications",
       file="$APP_CONFIG$/other.xml"
     )}
 )

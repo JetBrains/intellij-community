@@ -47,6 +47,7 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -199,8 +200,7 @@ public final class ComponentTree extends Tree implements DataProvider {
    */
   @Nullable
   public RadComponent getSelectedComponent() {
-    final RadComponent[] selectedComponents = getSelectedComponents();
-    return selectedComponents.length > 0 ? selectedComponents[0] : null;
+    return ArrayUtil.getFirstElement(getSelectedComponents());
   }
 
   /**
@@ -374,7 +374,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
   }
 
-  public void setDropTargetComponent(final RadComponent dropTargetComponent) {
+  public void setDropTargetComponent(final @Nullable RadComponent dropTargetComponent) {
     if (dropTargetComponent != myDropTargetComponent) {
       myDropTargetComponent = dropTargetComponent;
       repaint();

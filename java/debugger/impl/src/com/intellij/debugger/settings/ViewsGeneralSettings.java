@@ -28,7 +28,6 @@ import org.jdom.Element;
   name="ViewsSettings",
   storages= {
     @Storage(
-      id="other",
       file = "$APP_CONFIG$/debugger.frameview.xml"
     )}
 )

@@ -38,7 +38,6 @@ import java.util.List;
   name="Cvs2Configuration",
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

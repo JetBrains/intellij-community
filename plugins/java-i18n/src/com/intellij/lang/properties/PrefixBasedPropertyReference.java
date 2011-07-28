@@ -21,7 +21,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +51,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
   }
 
   protected void addKey(Object property, Set<Object> variants) {
-    String key = ((Property)property).getUnescapedKey();
+    String key = ((IProperty)property).getUnescapedKey();
     final String keyPrefix = getKeyPrefix();
     if (keyPrefix != null && key != null) {
       if (!key.startsWith(keyPrefix)) return;

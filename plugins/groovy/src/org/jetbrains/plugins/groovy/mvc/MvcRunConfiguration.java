@@ -290,12 +290,8 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     protected JavaParameters createJavaParametersMVC() throws ExecutionException {
       Pair<String, String[]> parsedCmd = MvcFramework.parsedCmd(myCmdLine);
 
-      final JavaParameters params = myFramework.createJavaParameters(myModule, false, myForTests, depsClasspath, parsedCmd.first,
+      final JavaParameters params = myFramework.createJavaParameters(myModule, false, myForTests, depsClasspath, vmParams, parsedCmd.first,
                                                                      parsedCmd.second);
-
-      if (vmParams != null) {
-        params.getVMParametersList().addParametersString(vmParams);
-      }
 
       addEnvVars(params);
 

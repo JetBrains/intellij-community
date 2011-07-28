@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 
 @State(
     name = "SliceManager",
-    storages = {@Storage(id = "other", file = "$WORKSPACE_FILE$")}
+    storages = {@Storage( file = "$WORKSPACE_FILE$")}
 )
 public class SliceManager implements PersistentStateComponent<SliceManager.StoredSettingsBean> {
   private final Project myProject;

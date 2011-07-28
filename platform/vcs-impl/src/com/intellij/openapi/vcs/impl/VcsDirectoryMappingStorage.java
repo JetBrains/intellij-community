@@ -30,10 +30,9 @@ import org.jetbrains.annotations.NotNull;
   name = "VcsDirectoryMappings",
   storages = {
     @Storage(
-      id ="other",
       file = "$PROJECT_FILE$"
     )
-    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    ,@Storage( file = "$PROJECT_CONFIG_DIR$/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class VcsDirectoryMappingStorage extends AbstractProjectComponent implements PersistentStateComponent<Element> {

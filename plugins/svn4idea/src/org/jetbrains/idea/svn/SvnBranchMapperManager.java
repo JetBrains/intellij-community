@@ -32,7 +32,6 @@ import java.util.*;
   name = "SvnBranchMapperManager",
   storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

@@ -18,7 +18,6 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.editor.ResourceBundleEditor;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -54,7 +53,7 @@ public class ResourceBundleUtil {
   @Nullable
   public static ResourceBundle getResourceBundleFromDataContext(@NotNull DataContext dataContext) {
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (element instanceof Property) return null; //rename property
+    if (element instanceof IProperty) return null; //rename property
     VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (virtualFile == null) {
       return null;

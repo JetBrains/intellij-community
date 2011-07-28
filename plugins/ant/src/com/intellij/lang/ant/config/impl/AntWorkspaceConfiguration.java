@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicReference;
   name="antWorkspaceConfiguration",
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

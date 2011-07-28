@@ -30,7 +30,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
     name = "GroovyApplicationSettings",
     storages = {
     @Storage(
-        id = "groovy_config",
         file = "$APP_CONFIG$/groovy_config.xml"
     )}
 )

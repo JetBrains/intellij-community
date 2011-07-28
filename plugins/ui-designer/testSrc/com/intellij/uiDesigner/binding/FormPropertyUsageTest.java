@@ -18,7 +18,6 @@ package com.intellij.uiDesigner.binding;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,7 +71,7 @@ public class FormPropertyUsageTest extends PsiTestCase {
   private void doPropertyUsageTest(final String propertyFileName) {
     PropertiesFile propFile = (PropertiesFile) myPsiManager.findFile(myTestProjectRoot.findChild(propertyFileName));
     assertNotNull(propFile);
-    final Property prop = propFile.findPropertyByKey("key");
+    final Property prop = (Property)propFile.findPropertyByKey("key");
     assertNotNull(prop);
     final Query<PsiReference> query = ReferencesSearch.search(prop);
     final Collection<PsiReference> result = query.findAll();
@@ -91,7 +90,7 @@ public class FormPropertyUsageTest extends PsiTestCase {
   private void doPropertyFileUsageTest(final String fileName) {
     PropertiesFile propFile = (PropertiesFile) myPsiManager.findFile(myTestProjectRoot.findChild(fileName));
     assertNotNull(propFile);
-    final Query<PsiReference> query = ReferencesSearch.search(propFile);
+    final Query<PsiReference> query = ReferencesSearch.search(propFile.getContainingFile());
     final Collection<PsiReference> result = query.findAll();
     assertEquals(1, result.size());
     verifyReference(result, 0, "form.form", 949);

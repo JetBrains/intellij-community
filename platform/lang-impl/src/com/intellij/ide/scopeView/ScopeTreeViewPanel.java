@@ -33,6 +33,7 @@ import com.intellij.ide.scopeView.nodes.BasePsiNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -53,6 +54,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -87,6 +89,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
@@ -141,6 +144,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("ScopeViewUpdate", 300, isTreeShowing(), myTree);
   private ScopeTreeViewPanel.MyChangesListListener myChangesListListener = new MyChangesListListener();
+  protected ActionCallback myActionCallback;
 
   public ScopeTreeViewPanel(final Project project) {
     super(new BorderLayout());
@@ -176,31 +180,38 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     ChangeListManager.getInstance(myProject).removeChangeListListener(myChangesListListener);
   }
 
-  public void selectNode(final PsiElement element, final PsiFile file, final boolean requestFocus) {
-    myUpdateQueue.queue(new Update("Select") {
+  public void selectNode(final PsiElement element, final PsiFileSystemItem file, final boolean requestFocus) {
+    final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
-        if (myProject.isDisposed()) return;
-        if (myUpdateQueue.isSuspended()) {
-          myUpdateQueue.queue(this);
-          return;
-        }
-        PackageDependenciesNode node = myBuilder.findNode(file, element);
-        if (node != null && node.getPsiElement() != element) {
-          final TreePath path = new TreePath(node.getPath());
-          if (myTree.isCollapsed(path)) {
-            myTree.expandPath(path);
-            myTree.makeVisible(path);
+        myUpdateQueue.queue(new Update("Select") {
+          public void run() {
+            if (myProject.isDisposed()) return;
+            PackageDependenciesNode node = myBuilder.findNode(file, element);
+            if (node != null && node.getPsiElement() != element) {
+              final TreePath path = new TreePath(node.getPath());
+              if (myTree.isCollapsed(path)) {
+                myTree.expandPath(path);
+                myTree.makeVisible(path);
+              }
+            }
+            node = myBuilder.findNode(file, element);
+            if (node != null) {
+              TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
+              if (requestFocus) {
+                myTree.requestFocus();
+              }
+            }
           }
-        }
-        node = myBuilder.findNode(file, element);
-        if (node != null) {
-          TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
-          if (requestFocus) {
-            myTree.requestFocus();
-          }
-        }
+        });
       }
-    });
+    };
+    if (myActionCallback == null || ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    }
+    else {
+      myActionCallback.doWhenDone(runnable);
+    }
   }
 
   public void selectScope(final NamedScope scope) {
@@ -253,7 +264,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   private void refreshScope(@Nullable NamedScope scope, boolean showProgress) {
     FileTreeModelBuilder.clearCaches(myProject);
-    myTreeExpansionMonitor.freeze();
     if (scope == null || scope.getValue() == null) { //was deleted
       scope = DefaultScopesProvider.getAllScope();
     }
@@ -275,20 +285,18 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myTree.setPaintBusy(true);
     myBuilder.setTree(myTree);
     myTree.getEmptyText().setText("Loading...");
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myUpdateQueue.suspend();
-    }
+    myActionCallback = new ActionCallback();
+    myTree.putClientProperty(TreeState.CALLBACK, new WeakReference<ActionCallback>(myActionCallback));
     myTree.setModel(myBuilder.build(myProject, showProgress, new Runnable(){
       @Override
       public void run() {
         myTree.setPaintBusy(false);
         myTree.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
-        myUpdateQueue.resume();
+        myActionCallback.setDone();
       }
     }));
     ((PackageDependenciesNode)myTree.getModel().getRoot()).sortChildren();
     ((DefaultTreeModel)myTree.getModel()).reload();
-    myTreeExpansionMonitor.restore();
     FileTreeModelBuilder.clearCaches(myProject);
   }
 
@@ -481,8 +489,12 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       }
       else if (psiElement instanceof PsiDirectory) {
         final PsiElement[] children = psiElement.getChildren();
-        for (PsiElement child : children) {
-          processNodeCreation(child);
+        if (children.length > 0) {
+          for (PsiElement child : children) {
+            processNodeCreation(child);
+          }
+        } else {
+          reload((DefaultMutableTreeNode)myBuilder.addDirNode((PsiDirectory)psiElement).getParent());
         }
       }
     }
@@ -651,25 +663,23 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private class MyIdeView implements IdeView {
     public void selectElement(final PsiElement element) {
       if (element != null) {
-        final boolean isDirectory = element instanceof PsiDirectory;
-        if (!isDirectory) {
-          final PsiFile psiFile = element.getContainingFile();
-          final PackageSet packageSet = getCurrentScope().getValue();
-          if (packageSet == null) return;
-          if (psiFile != null) {
-            final ProjectView projectView = ProjectView.getInstance(myProject);
-            if (!packageSet.contains(psiFile, NamedScopesHolder.getHolder(myProject, CURRENT_SCOPE_NAME, myDependencyValidationManager))) {
-              projectView.changeView(ProjectViewPane.ID);
-            }
-            projectView.select(psiFile, psiFile.getVirtualFile(), false);
+        final PackageSet packageSet = getCurrentScope().getValue();
+        final PsiFile psiFile = element.getContainingFile();
+        if (packageSet == null) return;
+        final VirtualFile virtualFile = psiFile != null ? psiFile.getVirtualFile() :
+                                        (element instanceof PsiDirectory ? ((PsiDirectory)element).getVirtualFile() : null);
+        if (virtualFile != null) {
+          final ProjectView projectView = ProjectView.getInstance(myProject);
+          final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, CURRENT_SCOPE_NAME, myDependencyValidationManager);
+          if (packageSet instanceof PackageSetBase && !((PackageSetBase)packageSet).contains(virtualFile, holder) ||
+              psiFile != null && !packageSet.contains(psiFile, holder)) {
+            projectView.changeView(ProjectViewPane.ID);
           }
-          Editor editor = EditorHelper.openInEditor(element);
-          if (editor != null) {
-            ToolWindowManager.getInstance(myProject).activateEditorComponent();
-          }
+          projectView.select(element, virtualFile, false);
         }
-        else {
-          ((PsiDirectory)element).navigate(true);
+        Editor editor = EditorHelper.openInEditor(element);
+        if (editor != null) {
+          ToolWindowManager.getInstance(myProject).activateEditorComponent();
         }
       }
     }

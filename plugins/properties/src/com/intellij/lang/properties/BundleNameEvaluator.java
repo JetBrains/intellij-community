@@ -15,10 +15,9 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 public interface BundleNameEvaluator {
@@ -28,7 +27,7 @@ public interface BundleNameEvaluator {
     @Nullable
     public String evaluateBundleName(final PsiFile psiFile) {
       final VirtualFile virtualFile = psiFile == null ? null : psiFile.getOriginalFile().getVirtualFile();
-      if (virtualFile == null || !(psiFile instanceof PropertiesFile)) {
+      if (virtualFile == null) {
         return null;
       }
 

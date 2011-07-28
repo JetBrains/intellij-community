@@ -44,8 +44,8 @@ import java.util.Set;
 @State(
   name = "ProjectRunConfigurationManager",
   storages = {
-    @Storage(id = "default", file = "$PROJECT_FILE$")
-   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/runConfigurations/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class)
+    @Storage( file = "$PROJECT_FILE$")
+   ,@Storage( file = "$PROJECT_CONFIG_DIR$/runConfigurations/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class)
     }
 )
 public class ProjectRunConfigurationManager implements ProjectComponent, PersistentStateComponent<Element> {

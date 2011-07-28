@@ -28,6 +28,10 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
 
+  private static final int DIRTY_MAGIC = 0xbabe0589;
+  private static final int VERSION = 5;
+  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac + VERSION;
+
   private static final int FIRST_VECTOR_OFFSET = DATA_START;
 
   private static final int BITS_PER_LEVEL = 4;
@@ -47,9 +51,10 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int KEY_REF_OFFSET = KEY_HASHCODE_OFFSET + 4;
   private static final int RECORD_SIZE = KEY_REF_OFFSET + 4;
   private int valuesCount; // TODO: valuesCount should be persistent
+  private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
 
   public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new MappedFileSimpleStorage(file, initialSize), dataDescriptor, initialSize);
+    super(file, new MappedFileSimpleStorage(file, initialSize), dataDescriptor, initialSize, ourVersion);
   }
 
   protected  void setupEmptyFile() throws IOException {
@@ -177,7 +182,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     int id = super.writeData(value, hashCode);
     ++valuesCount;
 
-    if (valuesCount % 10000 == 0 && IOStatistics.DEBUG) {
+    if (valuesCount % 20000 == 0 && IOStatistics.DEBUG) {
       IOStatistics.dump("Index " + myFile + ", values " + valuesCount + ", storage size:" + myStorage.length());
     }
     return id;

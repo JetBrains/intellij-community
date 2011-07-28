@@ -19,6 +19,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.concurrency.JobUtil;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -147,7 +148,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     if (!context.isToCheckMember(file, this)) return;
     final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
     final PropertiesFile propertiesFile = (PropertiesFile)file;
-    final List<Property> properties = propertiesFile.getProperties();
+    final List<IProperty> properties = propertiesFile.getProperties();
     Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return;
     final GlobalSearchScope scope = CURRENT_FILE
@@ -161,8 +162,8 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     final ProgressIndicator progress = ProgressWrapper.wrap(original);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-        if (!JobUtil.invokeConcurrentlyUnderProgress(properties, new Processor<Property>() {
-          public boolean process(final Property property) {
+        if (!JobUtil.invokeConcurrentlyUnderProgress(properties, new Processor<IProperty>() {
+          public boolean process(final IProperty property) {
             if (original != null) {
               if (original.isCanceled()) return false;
               original.setText2(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
@@ -269,12 +270,12 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       for (PsiFile file : psiFilesWithDuplicates) {
         if (!(file instanceof PropertiesFile)) continue;
         PropertiesFile propertiesFile = (PropertiesFile)file;
-        final List<Property> propertiesByKey = propertiesFile.findPropertiesByKey(key);
-        for (Property property : propertiesByKey) {
+        final List<IProperty> propertiesByKey = propertiesFile.findPropertiesByKey(key);
+        for (IProperty property : propertiesByKey) {
           if (duplicatesCount == 0){
             message.append(InspectionsBundle.message("duplicate.property.key.problem.descriptor", key));
           }
-          surroundWithHref(message, property.getFirstChild(), false);
+          surroundWithHref(message, property.getPsiElement().getFirstChild(), false);
           duplicatesCount ++;
           //prepare for filter same keys different values
           Set<String> values = keyToValues.get(key);
@@ -314,13 +315,13 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         for (PsiFile file : psiFiles) {
           if (!(file instanceof PropertiesFile)) continue;
           PropertiesFile propertiesFile = (PropertiesFile)file;
-          final List<Property> propertiesByKey = propertiesFile.findPropertiesByKey(key);
-          for (Property property : propertiesByKey) {
+          final List<IProperty> propertiesByKey = propertiesFile.findPropertiesByKey(key);
+          for (IProperty property : propertiesByKey) {
             if (firstUsage){
               message.append(InspectionsBundle.message("duplicate.property.diff.key.problem.descriptor", key));
               firstUsage = false;
             }
-            surroundWithHref(message, property.getFirstChild(), false);
+            surroundWithHref(message, property.getPsiElement().getFirstChild(), false);
           }
         }
         problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(), false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));

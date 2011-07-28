@@ -22,7 +22,6 @@ import com.intellij.openapi.components.Storage;
 @State(
     name = "PropertiesComponent",
     storages = {@Storage(
-        id = "other",
         file = "$WORKSPACE_FILE$")})
 public class ProjectPropertiesComponentImpl extends PropertiesComponentImpl implements ProjectComponent {
   public void projectClosed() {

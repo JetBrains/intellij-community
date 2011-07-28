@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.UpDownHandler;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -86,6 +87,10 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase {
 
   public void addListener(ChangeListener listener) {
     myEventDispatcher.addListener(listener);
+  }
+  
+  public final void registerUpDownActionsFor(JComponent input) {
+    UpDownHandler.register(input, myComboBox);
   }
 
   @Override

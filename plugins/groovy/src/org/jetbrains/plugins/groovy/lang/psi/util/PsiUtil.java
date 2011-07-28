@@ -35,7 +35,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +75,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -809,36 +807,27 @@ public class PsiUtil {
   }
 
   public static GroovyResolveResult[] getConstructorCandidates(GroovyPsiElement place, GroovyResolveResult[] classCandidates, PsiType[] argTypes) {
-    List<GroovyResolveResult> constructorResults = new ArrayList<GroovyResolveResult>();
     for (GroovyResolveResult classResult : classCandidates) {
       final PsiElement element = classResult.getElement();
       if (element instanceof PsiClass) {
         final GroovyPsiElement context = classResult.getCurrentFileResolveContext();
         PsiClass clazz = (PsiClass)element;
         String className = clazz.getName();
-        PsiType thisType =
-          JavaPsiFacade.getInstance(place.getProject()).getElementFactory().createType(clazz, classResult.getSubstitutor());
-        final MethodResolverProcessor processor =
-          new MethodResolverProcessor(className, place, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
+        PsiType thisType = JavaPsiFacade.getElementFactory(place.getProject()).createType(clazz, classResult.getSubstitutor());
+        final MethodResolverProcessor processor = new MethodResolverProcessor(className, place, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
         PsiSubstitutor substitutor = classResult.getSubstitutor();
-        final ResolveState state =
-          ResolveState.initial().put(PsiSubstitutor.KEY, substitutor).put(ResolverProcessor.RESOLVE_CONTEXT, context);
-        final PsiMethod[] methods = clazz.getMethods();
-        boolean toBreak = true;
-        for (PsiMethod method : methods) {
-          if (method.isConstructor() && !processor.execute(method, state)) {
-            toBreak = false;
-            break;
+        final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor).put(ResolverProcessor.RESOLVE_CONTEXT, context);
+        List<GroovyResolveResult> constructors = ResolveUtil.getAllClassConstructors(clazz, place, substitutor);
+        if (!constructors.isEmpty()) {
+          for (GroovyResolveResult result : constructors) {
+            processor.execute(result.getElement(), state.put(PsiSubstitutor.KEY, result.getSubstitutor()));
           }
+          return processor.getCandidates();
         }
-
-        NonCodeMembersContributor.runContributors(thisType, processor, place, state);
-        ContainerUtil.addAll(constructorResults, processor.getCandidates());
-        if (!toBreak) break;
       }
     }
 
-    return constructorResults.toArray(new GroovyResolveResult[constructorResults.size()]);
+    return GroovyResolveResult.EMPTY_ARRAY;
   }
 
   public static boolean isAccessedForReading(GrExpression expr) {

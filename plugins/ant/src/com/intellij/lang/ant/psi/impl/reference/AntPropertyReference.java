@@ -25,6 +25,7 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.quickfix.AntChangeContextFix;
 import com.intellij.lang.ant.quickfix.AntCreatePropertyFix;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -100,7 +101,8 @@ public class AntPropertyReference extends AntGenericReference {
       final String propName = cutPrefix(text, resolved.getPrefix());
       final PropertiesFile propFile = resolved.getPropertiesFile();
       if (propFile != null) {
-        return propFile.findPropertyByKey(propName);
+        IProperty property = propFile.findPropertyByKey(propName);
+        return property == null ? null : property.getPsiElement();
       }
       return resolved.getFormatElement(propName);
     }

@@ -15,9 +15,9 @@
  */
 package com.intellij.uiDesigner.binding;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -52,27 +52,28 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
     if (module == null) {
       return null;
     }
-    final PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(myBundleName, module);
+    final PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(myBundleName, module, null);
     if (propertiesFile == null) {
       return null;
     }
-    return propertiesFile.findPropertyByKey(getRangeText());
+    IProperty property = propertiesFile.findPropertyByKey(getRangeText());
+    return property == null ? null : property.getPsiElement();
   }
 
   public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
-    if (!(element instanceof Property)) {
+    if (!(element instanceof IProperty)) {
       throw new IncorrectOperationException();
     }
-    updateRangeText(((Property)element).getUnescapedKey());
+    updateRangeText(((IProperty)element).getUnescapedKey());
     return myFile;
   }
 
   public boolean isReferenceTo(final PsiElement element) {
-    if (!(element instanceof Property)) {
+    if (!(element instanceof IProperty)) {
       return false;
     }
-    Property property = (Property) element;
-    String baseName = PropertiesUtil.getFullName(property.getContainingFile());
+    IProperty property = (IProperty) element;
+    String baseName = PropertiesUtil.getFullName(property.getPropertiesFile());
     return baseName != null && myBundleName.equals(baseName.replace('.', '/')) && getRangeText().equals(property.getUnescapedKey());
   }
 }

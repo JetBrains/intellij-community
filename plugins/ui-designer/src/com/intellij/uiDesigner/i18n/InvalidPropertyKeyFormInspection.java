@@ -17,7 +17,6 @@ package com.intellij.uiDesigner.i18n;
 
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.inspections.FormErrorCollector;
@@ -69,7 +68,7 @@ public class InvalidPropertyKeyFormInspection extends StringDescriptorInspection
     }
 
     for(PropertiesFile propFile: propFiles) {
-      final Property property = propFile.findPropertyByKey(key);
+      final com.intellij.lang.properties.IProperty property = propFile.findPropertyByKey(key);
       if (property == null) {
         return UIDesignerBundle.message("inspection.invalid.property.in.form.quickfix.error.key.not.found",
                                          key, bundleName, propFile.getLocale().getDisplayName());

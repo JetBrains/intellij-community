@@ -18,10 +18,7 @@ package com.intellij.util.download.impl;
 import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.download.DownloadableFileDescription;
-import com.intellij.util.download.DownloadableFileService;
-import com.intellij.util.download.DownloadableFileSetDescription;
-import com.intellij.util.download.DownloadableFileSetVersions;
+import com.intellij.util.download.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +38,7 @@ public class DownloadableFileServiceImpl extends DownloadableFileService {
 
   @NotNull
   @Override
-  public DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@NotNull String groupId,
+  public DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
                                                                                            @NotNull URL... localUrls) {
     return new FileSetVersionsFetcherBase<DownloadableFileSetDescription>(groupId, localUrls) {
       @Override

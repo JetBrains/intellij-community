@@ -60,8 +60,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
         LOG.error("Document is uncommitted");
       }
       if (!document.getText().equals(file.getText())) {
-        LOG.error(
-          "Document and psi file texts should be equal : \nDocument text:\n" + document.getText() + "\nFile text:\n" + file.getText());
+        LOG.error("Document and psi file texts should be equal");
       }
       return new FormattingDocumentModelImpl(document, file);
     }

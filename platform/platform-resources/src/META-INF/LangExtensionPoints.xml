@@ -492,5 +492,4 @@
   <extensionPoint name="patternProvider"
                   interface="com.intellij.codeInsight.generation.PatternProvider"/>
 
-
 </extensionPoints>

@@ -38,7 +38,6 @@ import java.util.List;
   name = "CodeInsightSettings",
   storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/editor.codeinsight.xml"
     )}
 )

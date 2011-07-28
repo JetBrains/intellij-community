@@ -32,7 +32,6 @@ import java.util.TreeMap;
 @State(
   name = "SSHConnectionSettings",
   storages = {@Storage(
-    id = "SSHConnectionSettings",
     file = "$APP_CONFIG$/security.xml")})
 public class SSHConnectionSettings implements PersistentStateComponent<SSHConnectionSettings.State> {
   /**

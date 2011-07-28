@@ -22,7 +22,7 @@ package com.intellij.lang.properties;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
-import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.lang.properties.structureView.PropertiesFileStructureViewComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -35,7 +35,7 @@ public class PropertiesStructureViewBuilderFactory implements PsiStructureViewFa
     return new StructureViewBuilder() {
       @NotNull
       public StructureView createStructureView(FileEditor fileEditor, Project project) {
-        return new PropertiesFileStructureViewComponent(project, (PropertiesFile)psiFile, fileEditor);
+        return new PropertiesFileStructureViewComponent(project, (PropertiesFileImpl)psiFile, fileEditor);
       }
     };
   }

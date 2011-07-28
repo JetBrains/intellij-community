@@ -13,19 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.download.impl;
+package com.intellij.util.download;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
+ * Describes file which can be downloaded from the net
+ *
+ * Use {@link DownloadableFileService#createFileDescription(String, String)} to create instances of this interface
+ *
  * @author nik
  */
-public interface FileDownloader {
+public interface DownloadableFileDescription {
   @NotNull
-  FileDownloader toDirectory(@NotNull String directoryForDownloadedFilesPath);
+  String getDownloadUrl();
 
-  @Nullable
-  VirtualFile[] download();
+  @NotNull
+  String getPresentableFileName();
+
+  @NotNull
+  String getPresentableDownloadUrl();
+
+  @NotNull
+  String getDefaultFileName();
+
+  @NotNull
+  String generateFileName(@NotNull Condition<String> validator);
 }

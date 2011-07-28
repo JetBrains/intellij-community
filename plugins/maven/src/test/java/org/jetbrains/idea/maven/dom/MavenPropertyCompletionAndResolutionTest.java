@@ -707,7 +707,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
     assertResolved(myProjectPom, MavenDomUtil.findProperty(myProject,
                                                            MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE,
-                                                           "user.home"));
+                                                           "user.home").getPsiElement());
   }
 
   public void testEnvProperties() throws Exception {
@@ -719,7 +719,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
     assertResolved(myProjectPom, MavenDomUtil.findProperty(myProject,
                                                            MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE,
-                                                           getEnvVar()));
+                                                           getEnvVar()).getPsiElement());
   }
 
   public void testHighlightUnresolvedProperties() throws Exception {

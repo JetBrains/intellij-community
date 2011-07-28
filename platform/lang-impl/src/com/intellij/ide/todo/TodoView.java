@@ -57,7 +57,6 @@ import java.util.List;
   name="TodoView",
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

@@ -19,11 +19,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -31,7 +29,6 @@ import java.util.Set;
 @State(
     name = "FeatureUsageStatistics",
     storages = {@Storage(
-        id = "other",
         file = "$APP_CONFIG$/feature.usage.statistics.xml")})
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final int HOUR = 1000 * 60 * 60;

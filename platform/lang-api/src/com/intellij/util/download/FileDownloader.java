@@ -15,20 +15,28 @@
  */
 package com.intellij.util.download;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
+ * Use {@link DownloadableFileService} to create instances of this interface
+ *
  * @author nik
  */
-public interface DownloadableFileSetDescription {
+public interface FileDownloader {
+  /**
+   * Specifies target directory for downloaded files. If target directory is not specified a file chooser will be shown from {@link #download()} method
+   * @param directoryForDownloadedFilesPath target directory path
+   * @return the same instance
+   */
   @NotNull
-  String getName();
+  FileDownloader toDirectory(@NotNull String directoryForDownloadedFilesPath);
 
-  @NotNull
-  String getVersionString();
-
-  @NotNull
-  List<? extends DownloadableFileDescription> getFiles();
+  /**
+   * Download files with modal progress dialog.
+   * @return downloaded files
+   */
+  @Nullable
+  VirtualFile[] download();
 }

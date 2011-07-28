@@ -26,10 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -340,15 +337,6 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return unescape(getKey());
   }
 
-  @Nullable
-  public String getKeyValueSeparator() {
-    final ASTNode node = getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
-    if (node == null) {
-      return null;
-    }
-    return node.getText();
-  }
-
   public Icon getIcon(int flags) {
     return PlatformIcons.PROPERTY_ICON;
   }
@@ -367,7 +355,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     }
   }
 
-  public PropertiesFile getContainingFile() {
+  public PropertiesFile getPropertiesFile() {
     return (PropertiesFile)super.getContainingFile();
   }
 
@@ -391,6 +379,11 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return text.toString();
   }
 
+  @Override
+  public PsiElement getPsiElement() {
+    return this;
+  }
+
   @NotNull
   public SearchScope getUseScope() {
     // property ref can occur in any file
@@ -404,7 +397,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
       }
 
       public String getLocationString() {
-        return getContainingFile().getName();
+        return getPropertiesFile().getName();
       }
 
       public Icon getIcon(final boolean open) {

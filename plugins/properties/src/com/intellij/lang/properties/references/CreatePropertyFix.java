@@ -147,7 +147,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
                                     @NotNull final String key,
                                     @NotNull final String value) {
     for (PropertiesFile selectedFile : selectedPropertiesFiles) {
-      if (!CodeInsightUtilBase.prepareFileForWrite(selectedFile)) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(selectedFile.getContainingFile())) return;
     }
     UndoUtil.markPsiFileForUndo(psiElement.getContainingFile());
 

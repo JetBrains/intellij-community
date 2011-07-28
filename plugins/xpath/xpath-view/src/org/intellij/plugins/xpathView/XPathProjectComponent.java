@@ -39,7 +39,6 @@ import java.util.List;
   name="XPathView.XPathProjectComponent",
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

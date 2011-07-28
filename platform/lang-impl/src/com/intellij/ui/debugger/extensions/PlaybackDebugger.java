@@ -53,7 +53,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.StatusCallback {
 
@@ -456,7 +457,6 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       name = "PlaybackDebugger",
       storages = {
           @Storage(
-              id = "other",
               file="$APP_CONFIG$/other.xml")}
   )
   public static class PlaybackDebuggerState implements PersistentStateComponent<Element> {

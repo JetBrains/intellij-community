@@ -31,7 +31,6 @@ import java.util.*;
   name = "ToStringTemplates",
   storages = {
     @Storage(
-      id ="toStringTemplates",
       file = "$APP_CONFIG$/toStringTemplates.xml"
     )}
 )

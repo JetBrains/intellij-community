@@ -21,8 +21,8 @@ import com.intellij.lang.ant.psi.impl.reference.AntRefIdReference;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
@@ -292,7 +292,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         (PropertiesFile)createDummyFile("dummy.properties", StdFileTypes.PROPERTIES, builder, element.getManager());
       final AntStructuredElement parent = getAntParent();
       final AntFile antFile = parent != null? parent.getAntFile() : null;
-      for (final Property property : propFile.getProperties()) {
+      for (final IProperty property : propFile.getProperties()) {
         loadClass(antFile, property.getValue(), property.getUnescapedKey(), getUri(),getAntParent());
       }
     }

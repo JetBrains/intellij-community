@@ -28,8 +28,8 @@ import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
 @State(
     name = "GradleSettings",
     storages = {
-      @Storage(id = "default", file = "$PROJECT_FILE$"),
-      @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
+      @Storage( file = "$PROJECT_FILE$"),
+      @Storage( file = "$PROJECT_CONFIG_DIR$/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class GradleSettings extends SdkHomeSettings {

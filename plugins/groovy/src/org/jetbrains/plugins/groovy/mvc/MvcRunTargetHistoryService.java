@@ -7,7 +7,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.LinkedList;
 
 /**
@@ -16,7 +15,6 @@ import java.util.LinkedList;
 @State(
     name = "mvcRunTargetHistory",
     storages = @Storage(
-      id ="other",
       file = "$APP_CONFIG$/other.xml"
     )
 )

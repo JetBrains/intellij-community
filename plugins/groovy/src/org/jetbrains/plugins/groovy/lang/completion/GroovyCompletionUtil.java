@@ -45,6 +45,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -74,7 +75,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
 /**
@@ -357,19 +358,12 @@ public class GroovyCompletionUtil {
     return builder;
   }
 
-  public static boolean hasConstructorParameters(PsiClass clazz) {
-    final PsiMethod[] constructors;
-    if (clazz instanceof GroovyPsiElement) {
-      constructors = ResolveUtil.getAllClassConstructors(clazz, (GroovyPsiElement)clazz, PsiSubstitutor.EMPTY);
+  public static boolean hasConstructorParameters(@NotNull PsiClass clazz, @NotNull GroovyPsiElement place) {
+    for (GroovyResolveResult result : ResolveUtil.getAllClassConstructors(clazz, place, PsiSubstitutor.EMPTY)) {
+      if (result.isAccessible() && ((PsiMethod)result.getElement()).getParameterList().getParametersCount() > 0) {
+        return true;
+      }
     }
-    else {
-      constructors = clazz.getConstructors();
-    }
-
-    for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParametersCount() > 0) return true;
-    }
-
     return false;
   }
 

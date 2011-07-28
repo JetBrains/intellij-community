@@ -55,7 +55,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
-@State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
+@State(name = "MavenProjectNavigator", storages = {@Storage( file = "$WORKSPACE_FILE$")})
 public class MavenProjectsNavigator extends SimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState> {
   public static final String TOOL_WINDOW_ID = "Maven Projects";
 

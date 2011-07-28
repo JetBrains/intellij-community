@@ -67,9 +67,9 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
         }
         prev = prev.getPrevSibling();
       }
-      file = property.getContainingFile();
+      file = property.getPropertiesFile();
     }
-    PsiElement leaf = file.findElementAt(0);
+    PsiElement leaf = file.getContainingFile().findElementAt(0);
     while (leaf instanceof PsiWhiteSpace) leaf = leaf.getNextSibling();
 
     while (leaf instanceof PsiComment) {

@@ -53,7 +53,6 @@ import java.util.*;
   name = "SvnBranchConfigurationManager",
   storages = {
     @Storage(
-      id ="other",
       file = "$PROJECT_FILE$"
     )}
 )

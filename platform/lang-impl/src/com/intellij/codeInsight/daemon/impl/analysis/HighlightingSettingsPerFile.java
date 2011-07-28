@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@State(name="HighlightingSettingsPerFile", storages = @Storage(id = "other", file ="$WORKSPACE_FILE$"))
+@State(name="HighlightingSettingsPerFile", storages = @Storage( file ="$WORKSPACE_FILE$"))
 public class HighlightingSettingsPerFile implements PersistentStateComponent<Element> {
   @NonNls private static final String SETTING_TAG = "setting";
   @NonNls private static final String ROOT_ATT_PREFIX = "root";

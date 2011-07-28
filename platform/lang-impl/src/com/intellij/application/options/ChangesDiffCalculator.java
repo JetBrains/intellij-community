@@ -56,7 +56,7 @@ public class ChangesDiffCalculator {
     myOldMarkup.document = beforeDocument;
     myNewMarkup.document = currentDocument;
 
-    List<LineFragment> lineFragments = null;
+    List<LineFragment> lineFragments;
     try {
       lineFragments = myCompareProcessor.process(beforeDocument.getText(), currentDocument.getText());
     }

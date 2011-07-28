@@ -17,8 +17,9 @@ package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
@@ -32,19 +33,19 @@ import java.util.List;
 /**
  * @author max
  */
-public class PropertiesFileStructureViewElement extends PsiTreeElementBase<PropertiesFile> {
+public class PropertiesFileStructureViewElement extends PsiTreeElementBase<PropertiesFileImpl> {
 
-  protected PropertiesFileStructureViewElement(PropertiesFile propertiesFile) {
+  protected PropertiesFileStructureViewElement(PropertiesFileImpl propertiesFile) {
     super(propertiesFile);
   }
 
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
-    List<Property> properties = getElement().getProperties();
+    List<? extends IProperty> properties = getElement().getProperties();
 
     Collection<StructureViewTreeElement> elements = new ArrayList<StructureViewTreeElement>(properties.size());
-    for (Property property : properties) {
-      elements.add(new PropertiesStructureViewElement(property));
+    for (IProperty property : properties) {
+      elements.add(new PropertiesStructureViewElement((Property)property));
     }
     return elements;
   }

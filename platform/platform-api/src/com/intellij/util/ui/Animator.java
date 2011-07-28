@@ -26,7 +26,7 @@ import javax.swing.*;
 public abstract class Animator implements Disposable {
   private int myTotalFrames;
   private int myCycleLength;
-  private final Timer myTimer;
+  private Timer myTimer;
 
   private int myCurrentFrame;
   private int myQueuedFrames = 0;
@@ -62,8 +62,9 @@ public abstract class Animator implements Disposable {
     myCurrentFrame = forward ? 0 : totalFrames;
 
     Application application = ApplicationManager.getApplication();
-    myTimer = application == null || application.isUnitTestMode() ? null :
-              new Timer(name, myCycleLength / myTotalFrames) {
+
+    if (application == null || !application.isUnitTestMode()) {
+      myTimer = new Timer(name, myCycleLength / myTotalFrames) {
       protected void onTimer() throws InterruptedException {
         boolean repaint = true;
         if (!isAnimated()) {
@@ -128,6 +129,7 @@ public abstract class Animator implements Disposable {
         }
       }
     };
+    }
 
     if (application == null) {
       try {

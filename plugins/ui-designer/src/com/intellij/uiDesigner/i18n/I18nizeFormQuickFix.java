@@ -74,7 +74,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
     PropertiesFile aPropertiesFile = null;
     for (PropertiesFile file : propertiesFiles) {
-      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(file.getContainingFile())) return;
       if (aPropertiesFile == null) {
         aPropertiesFile = file;
       }
@@ -97,7 +97,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
 
     // saving files is necessary to ensure correct reload of properties files by UI Designer
     for(PropertiesFile file: propertiesFiles) {
-      FileDocumentManager.getInstance().saveDocument(PsiDocumentManager.getInstance(project).getDocument(file));
+      FileDocumentManager.getInstance().saveDocument(PsiDocumentManager.getInstance(project).getDocument(file.getContainingFile()));
     }
 
     if (aPropertiesFile != null) {

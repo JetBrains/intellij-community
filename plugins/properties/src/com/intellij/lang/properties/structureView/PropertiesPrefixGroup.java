@@ -17,8 +17,8 @@ package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Comparing;
@@ -73,7 +73,7 @@ public class PropertiesPrefixGroup implements Group {
       String key;
       if (treeElement instanceof PropertiesStructureViewElement) {
         PropertiesStructureViewElement propertiesElement = (PropertiesStructureViewElement)treeElement;
-        Property property = propertiesElement.getValue();
+        IProperty property = propertiesElement.getValue();
 
         key = property.getUnescapedKey();
       }

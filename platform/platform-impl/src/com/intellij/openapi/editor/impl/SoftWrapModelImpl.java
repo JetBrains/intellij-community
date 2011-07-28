@@ -616,8 +616,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       if (Boolean.getBoolean(DEBUG_PROPERTY_NAME)) {
         LOG.error(String.format(
           "Unexpected exception occurred during performing '%s'. Current soft wraps cache: %n"
-          + "%s%nDocument:%n%s%nFold regions: %s",
-          task, myDataMapper, myEditor.getDocument().getText(), Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e);
+          + "%s%nFold regions: %s",
+          task, myDataMapper, Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e
+        );
       }
       myEditor.getFoldingModel().rebuild();
       myDataMapper.release();

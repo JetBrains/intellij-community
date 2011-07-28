@@ -114,7 +114,6 @@ import java.util.List;
   name="ProjectView",
   storages= {
     @Storage(
-      id="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

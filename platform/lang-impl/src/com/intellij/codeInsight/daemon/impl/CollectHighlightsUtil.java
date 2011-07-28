@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -172,6 +171,6 @@ public class CollectHighlightsUtil {
     final VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return false;
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
-    return !(projectFileIndex.isInSource(file) && !projectFileIndex.isInLibrarySource(file));
+    return !projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file);
   }
 }

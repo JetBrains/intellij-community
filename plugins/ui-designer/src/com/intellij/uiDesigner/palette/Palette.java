@@ -64,8 +64,8 @@ import java.util.Map;
 @State(
   name = "Palette2",
   storages = {
-    @Storage(id = "default", file = "$PROJECT_FILE$")
-   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage( file = "$PROJECT_FILE$")
+   ,@Storage( file = "$PROJECT_CONFIG_DIR$/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public final class Palette implements ProjectComponent, PersistentStateComponent<Element> {

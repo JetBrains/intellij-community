@@ -43,7 +43,6 @@ import java.util.Map;
 @State(
         name = "NoNamespaceConfig.Mappings",
         storages = { @Storage(
-                id = "other",
                 file = "$WORKSPACE_FILE$") })
 class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentStateComponent<NoNamespaceConfigImpl.Mappings> {
 

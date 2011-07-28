@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NonNls;
   name = "ExportToHTMLSettings",
   storages = {
     @Storage(
-      id ="other",
       file = "$PROJECT_FILE$"
     )}
 )

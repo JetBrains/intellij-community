@@ -10035,7 +10035,7 @@ RncFileImpl:Docbook.rnc
           PsiWhiteSpace(' ')
           PsiElement(=)('=')
           PsiWhiteSpace('\n    \n    ')
-          PsiComment(DOCUMENTATION)('## Specifies Arabic numeration (1, 2, 3, …)')
+          PsiComment(DOCUMENTATION)('## Specifies Arabic numeration (1, 2, 3, ...)')
           PsiWhiteSpace('\n    ')
           CHOICE
             DATATYPE_PATTERN
@@ -10043,28 +10043,28 @@ RncFileImpl:Docbook.rnc
             PsiWhiteSpace('\n    ')
             PsiElement(|)('|')
             PsiWhiteSpace(' \n      ')
-            PsiComment(DOCUMENTATION)('## Specifies upper-case alphabetic numeration (A, B, C, …)')
+            PsiComment(DOCUMENTATION)('## Specifies upper-case alphabetic numeration (A, B, C, ...)')
             PsiWhiteSpace('\n      ')
             DATATYPE_PATTERN
               PsiElement(LITERAL)('"upperalpha"')
             PsiWhiteSpace('\n    ')
             PsiElement(|)('|')
             PsiWhiteSpace(' \n      ')
-            PsiComment(DOCUMENTATION)('## Specifies lower-case alphabetic numeration (a, b, c, …)')
+            PsiComment(DOCUMENTATION)('## Specifies lower-case alphabetic numeration (a, b, c, ...)')
             PsiWhiteSpace('\n      ')
             DATATYPE_PATTERN
               PsiElement(LITERAL)('"loweralpha"')
             PsiWhiteSpace('\n    ')
             PsiElement(|)('|')
             PsiWhiteSpace(' \n      ')
-            PsiComment(DOCUMENTATION)('## Specifies upper-case Roman numeration (I, II, III, …)')
+            PsiComment(DOCUMENTATION)('## Specifies upper-case Roman numeration (I, II, III, ...)')
             PsiWhiteSpace('\n      ')
             DATATYPE_PATTERN
               PsiElement(LITERAL)('"upperroman"')
             PsiWhiteSpace('\n    ')
             PsiElement(|)('|')
             PsiWhiteSpace(' \n      ')
-            PsiComment(DOCUMENTATION)('## Specifies lower-case Roman numeration (i, ii, iii …)')
+            PsiComment(DOCUMENTATION)('## Specifies lower-case Roman numeration (i, ii, iii ...)')
             PsiWhiteSpace('\n      ')
             DATATYPE_PATTERN
               PsiElement(LITERAL)('"lowerroman"')

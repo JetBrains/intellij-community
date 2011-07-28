@@ -105,7 +105,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
     }
 
     @State(name = "XSLT-Support.FileAssociations.UIState",
-            storages = @Storage(id = "default", file = "$WORKSPACE_FILE$")
+            storages = @Storage( file = "$WORKSPACE_FILE$")
     )
     public static class UIState implements PersistentStateComponent<TreeState> {
         private TreeState state;

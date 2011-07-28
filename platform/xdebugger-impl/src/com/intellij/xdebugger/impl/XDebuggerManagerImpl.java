@@ -61,7 +61,6 @@ import java.util.*;
 @State(
     name = XDebuggerManagerImpl.COMPONENT_NAME,
     storages = {@Storage(
-        id = "other",
         file = "$WORKSPACE_FILE$")})
 public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectComponent, PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
   @NonNls public static final String COMPONENT_NAME = "XDebuggerManager";

@@ -16,6 +16,9 @@
 
 package com.intellij.internal.statistic.persistence;
 
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.beans.GroupDescriptor;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -23,9 +26,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
-import com.intellij.internal.statistic.beans.GroupDescriptor;
-import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +40,6 @@ import java.util.Set;
   name = "UsagesStatistic",
   storages = {
     @Storage(
-      id = "usages",
       file = "$APP_CONFIG$/usage.statistics.xml"
     )}
 )

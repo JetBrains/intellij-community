@@ -49,7 +49,7 @@ import java.util.*;
  * @author mike
  */
 @State(name = "ExternalResourceManagerImpl",
-       storages = {@Storage(id = "other", file = "$APP_CONFIG$/other.xml")})
+       storages = {@Storage( file = "$APP_CONFIG$/other.xml")})
 public class ExternalResourceManagerImpl extends ExternalResourceManagerEx implements JDOMExternalizable {
   static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl");
 

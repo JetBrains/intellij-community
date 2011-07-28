@@ -33,7 +33,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 /**
  * @author Rustam Vishnyakov
  */
-@State(name = "EnforcedPlainTextFileTypeManager", storages = {@Storage(id = "default", file = "$APP_CONFIG$/plainTextFiles.xml")})
+@State(name = "EnforcedPlainTextFileTypeManager", storages = {@Storage( file = "$APP_CONFIG$/plainTextFiles.xml")})
 public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager {
   
   public boolean isMarkedAsPlainText(VirtualFile file) {

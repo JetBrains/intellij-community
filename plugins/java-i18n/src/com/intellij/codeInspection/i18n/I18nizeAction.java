@@ -114,7 +114,7 @@ public class I18nizeAction extends AnAction {
     if (!CodeInsightUtilBase.prepareFileForWrite(psiFile)) return;
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
     for (PropertiesFile file : propertiesFiles) {
-      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(file.getContainingFile())) return;
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable(){

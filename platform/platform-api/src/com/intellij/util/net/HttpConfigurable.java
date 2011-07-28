@@ -43,7 +43,7 @@ import java.net.*;
 @State(
   name = "HttpConfigurable",
   storages = {
-    @Storage(id = "other", file = "$APP_CONFIG$/other.xml")
+    @Storage( file = "$APP_CONFIG$/other.xml")
   }
 )
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, JDOMExternalizable {

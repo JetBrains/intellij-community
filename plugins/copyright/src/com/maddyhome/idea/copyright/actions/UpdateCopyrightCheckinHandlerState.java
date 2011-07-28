@@ -32,7 +32,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name = "UpdateCopyrightCheckinHandler",
   storages = {
     @Storage(
-      id ="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

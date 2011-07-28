@@ -79,6 +79,7 @@ public class DebugUtil {
   }
 
   public static /*final*/ boolean CHECK = false;
+  public static final boolean DO_EXPENSIVE_CHECKS = true;
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = false;
 
   public static String psiTreeToString(@NotNull final PsiElement element, final boolean skipWhitespaces) {

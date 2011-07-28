@@ -184,7 +184,7 @@ public class AnalysisScope {
               return;
             }
           }
-          if (!ProblemHighlightFilter.shouldHighlightFile(file)) return;
+          if (!shouldHighlightFile(file)) return;
           myFilesSet.add(virtualFile);
           if (indicator != null) {
             indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
@@ -252,7 +252,7 @@ public class AnalysisScope {
               return ((GlobalSearchScope)myScope).contains(fileOrDir);
             }
           }).booleanValue();
-          return !isInScope || AnalysisScope.processFile(fileOrDir, visitor, psiManager, needReadAction);
+          return !isInScope || AnalysisScope.this.processFile(fileOrDir, visitor, psiManager, needReadAction);
         }
       };
       projectFileIndex.iterateContent(contentIterator);
@@ -327,7 +327,7 @@ public class AnalysisScope {
     return true;
   }
 
-  private static boolean processFile(final VirtualFile fileOrDir, final PsiElementVisitor visitor, final PsiManager psiManager,
+  private boolean processFile(final VirtualFile fileOrDir, final PsiElementVisitor visitor, final PsiManager psiManager,
                                      final boolean needReadAction) {
     if (!fileOrDir.isValid()) return false;
     final PsiFile file = getPsiFileInReadAction(psiManager, fileOrDir);
@@ -335,7 +335,7 @@ public class AnalysisScope {
       //skip .class files under src directory
       return true;
     }
-    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
+    if (!shouldHighlightFile(file)) return true;
     if (needReadAction) {
       PsiDocumentManager.getInstance(psiManager.getProject()).commitAndRunReadAction(new Runnable(){
         public void run() {
@@ -348,6 +348,10 @@ public class AnalysisScope {
     }
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     return indicator == null || !indicator.isCanceled();
+  }
+
+  protected boolean shouldHighlightFile(PsiFile file) {
+    return ProblemHighlightFilter.shouldHighlightFile(file);
   }
 
   private static void doProcessFile(PsiElementVisitor visitor, PsiManager psiManager, PsiFile file) {
@@ -365,7 +369,7 @@ public class AnalysisScope {
       public boolean processFile(final VirtualFile fileOrDir) {
         if (!myIncludeTestSource && index.isInTestSourceContent(fileOrDir)) return true;
         if (!fileOrDir.isDirectory()) {
-          return AnalysisScope.processFile(fileOrDir, visitor, psiManager, needReadAction);
+          return AnalysisScope.this.processFile(fileOrDir, visitor, psiManager, needReadAction);
         }
         return true;
       }

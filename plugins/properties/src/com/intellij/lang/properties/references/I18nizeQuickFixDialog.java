@@ -23,9 +23,9 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.ide.util.TreeFileChooserFactory;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.LastSelectedPropertiesFileStore;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -130,7 +130,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       public void actionPerformed(ActionEvent e) {
         TreeFileChooserFactory chooserFactory = TreeFileChooserFactory.getInstance(myProject);
         TreeFileChooser fileChooser = chooserFactory.createFileChooser(
-          CodeInsightBundle.message("i18nize.dialog.property.file.chooser.title"), getPropertiesFile(), StdFileTypes.PROPERTIES, null);
+          CodeInsightBundle.message("i18nize.dialog.property.file.chooser.title"), getPropertiesFile().getContainingFile(), StdFileTypes.PROPERTIES, null);
         fileChooser.showDialog();
         PsiFile selectedFile = fileChooser.getSelectedFile();
         if (selectedFile == null) return;
@@ -195,7 +195,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     // check if property value already exists among properties file values and suggest corresponding key
     PropertiesFile propertiesFile = getPropertiesFile();
     if (propertiesFile != null) {
-      for (Property property : propertiesFile.getProperties()) {
+      for (IProperty property : propertiesFile.getProperties()) {
         if (Comparing.strEqual(property.getValue(), value)) {
           result.add(0, property.getUnescapedKey());
         }
@@ -317,7 +317,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
         if (file == null) continue;
         PsiFile psiFile = myContext.getManager().findFile(file);
         if (!(psiFile instanceof PropertiesFile)) continue;
-        for (Property property : ((PropertiesFile)psiFile).getProperties()) {
+        for (IProperty property : ((PropertiesFile)psiFile).getProperties()) {
           if (property.getValue().equals(myDefaultPropertyValue)) return path;
         }
       }
@@ -426,7 +426,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     if (!createPropertiesFileIfNotExists()) return;
     Collection<PropertiesFile> propertiesFiles = getAllPropertiesFiles();
     for (PropertiesFile propertiesFile : propertiesFiles) {
-      Property existingProperty = propertiesFile.findPropertyByKey(getKey());
+      IProperty existingProperty = propertiesFile.findPropertyByKey(getKey());
       final String propValue = myValue.getText();
       if (existingProperty != null && !Comparing.strEqual(existingProperty.getValue(), propValue)) {
         Messages.showErrorDialog(myProject, CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.message", getKey(),

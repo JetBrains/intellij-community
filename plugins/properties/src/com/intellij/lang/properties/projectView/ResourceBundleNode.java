@@ -46,16 +46,12 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
     super(project, resourceBundle, settings);
   }
 
-  public ResourceBundleNode(Project project, Object value, final ViewSettings viewSettings) {
-    this(project, (ResourceBundle)value, viewSettings);
-  }
-
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles(myProject);
     Collection<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
-      AbstractTreeNode node = new PsiFileNode(myProject, propertiesFile, getSettings());
+      AbstractTreeNode node = new PsiFileNode(myProject, propertiesFile.getContainingFile(), getSettings());
       children.add(node);
     }
     return children;

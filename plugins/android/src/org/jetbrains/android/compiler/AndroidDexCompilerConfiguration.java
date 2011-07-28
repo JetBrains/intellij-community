@@ -25,8 +25,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 @State(
   name = "AndroidDexCompilerConfiguration",
   storages = {
-    @Storage(id = "default", file = "$WORKSPACE_FILE$"),
-    @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/androidDexCompiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage( file = "$WORKSPACE_FILE$"),
+    @Storage( file = "$PROJECT_CONFIG_DIR$/androidDexCompiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public class AndroidDexCompilerConfiguration implements PersistentStateComponent<AndroidDexCompilerConfiguration> {

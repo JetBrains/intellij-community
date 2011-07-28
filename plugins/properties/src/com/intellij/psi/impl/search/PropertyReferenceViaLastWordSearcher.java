@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,9 +44,9 @@ public class PropertyReferenceViaLastWordSearcher extends QueryExecutorBase<PsiR
   @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     final PsiElement refElement = queryParameters.getElementToSearch();
-    if (!(refElement instanceof Property)) return;
+    if (!(refElement instanceof IProperty)) return;
 
-    final String name = ((Property)refElement).getName();
+    final String name = ((IProperty)refElement).getName();
     if (name == null) return;
     final List<String> words = StringUtil.getWordsIn(name);
     if (words.isEmpty()) return;

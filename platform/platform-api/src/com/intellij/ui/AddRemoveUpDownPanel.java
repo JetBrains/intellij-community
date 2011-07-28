@@ -75,7 +75,7 @@ class AddRemoveUpDownPanel extends JPanel {
     void doAdd();
     void doRemove();
     void doUp();
-    void doDown();
+    void doDown();    
 
     class Adapter implements Listener {
       public void doAdd() {}
@@ -88,11 +88,12 @@ class AddRemoveUpDownPanel extends JPanel {
   private Map<Buttons, MyActionButton> myButtons = new HashMap<Buttons, MyActionButton>();
   private final AnActionButton[] myActions;
 
-  AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contextComponent, boolean isHorizontal,
+  AddRemoveUpDownPanel(ListenerFactory factory, @Nullable JComponent contextComponent, boolean isHorizontal,
                        @Nullable AnActionButton[] additionalActions,
                        String addName, String removeName, String moveUpName,String moveDownName,
                        Buttons... buttons) {
     super(new BorderLayout());
+    final Listener listener = factory.createListener(this);
     AnActionButton[] actions = new AnActionButton[buttons.length];
     for (int i = 0; i < buttons.length; i++) {
       Buttons button = buttons[i];
@@ -121,6 +122,10 @@ class AddRemoveUpDownPanel extends JPanel {
                                                                                   isHorizontal);
     toolbar.getComponent().setBorder(null);
     add(toolbar.getComponent(), BorderLayout.CENTER);
+  }
+  
+  public AnActionButton getAnActionButton(Buttons button) {
+    return myButtons.get(button);
   }
 
   @Override
@@ -170,15 +175,27 @@ class AddRemoveUpDownPanel extends JPanel {
 
     @Override
     public void update(AnActionEvent e) {
-      final JComponent component = getContextComponent();
-      if (myButton != Buttons.ADD && component != null) {
-        if ((component instanceof JTable && ((JTable)component).getRowCount() == 0)
-          || (component instanceof JList && ((JList)component).getModel().getSize() == 0)) {
+      final JComponent c = getContextComponent();
+      if (c instanceof JTable || c instanceof JList) {
+        final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel() 
+                                                             : ((JList)c).getSelectionModel();
+        final int size = c instanceof JTable ? ((JTable)c).getRowCount()  
+                                             : ((JList)c).getModel().getSize();
+        final int min = model.getMinSelectionIndex();
+        final int max = model.getMaxSelectionIndex();
+        
+        if ((myButton == Buttons.UP && min < 1)
+          || (myButton == Buttons.DOWN && max == size - 1)
+          || (myButton != Buttons.ADD && size == 0)) {
           e.getPresentation().setEnabled(false);
         } else {
-          e.getPresentation().setEnabled(true);
+          e.getPresentation().setEnabled(isEnabled());
         }
       }
     }
+  }
+
+  interface ListenerFactory {
+    Listener createListener(AddRemoveUpDownPanel panel);
   }
 }

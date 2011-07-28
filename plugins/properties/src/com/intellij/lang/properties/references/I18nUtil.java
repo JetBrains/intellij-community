@@ -15,11 +15,10 @@
  */
 package com.intellij.lang.properties.references;
 
-import com.intellij.lang.properties.PropertiesFilesManager;
+import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesFileProcessor;
 import com.intellij.lang.properties.PropertiesReferenceManager;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -30,7 +29,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -64,14 +62,13 @@ public class I18nUtil {
                                     final Collection<PropertiesFile> propertiesFiles,
                                     final String key,
                                     final String value) throws IncorrectOperationException {
-    Property property = PropertiesElementFactory.createProperty(project, key, value);
     for (PropertiesFile file : propertiesFiles) {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      documentManager.commitDocument(documentManager.getDocument(file));
+      documentManager.commitDocument(documentManager.getDocument(file.getContainingFile()));
 
-      Property existingProperty = file.findPropertyByKey(property.getUnescapedKey());
+      IProperty existingProperty = file.findPropertyByKey(key);
       if (existingProperty == null) {
-        file.addProperty(property);
+        file.addProperty(key, value);
       }
     }
   }
@@ -80,8 +77,11 @@ public class I18nUtil {
     final List<String> paths = new ArrayList<String>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    PropertiesFilesManager.getInstance(project).processAllPropertiesFiles(new Processor<VirtualFile>() {
-      public boolean process(VirtualFile virtualFile) {
+    PropertiesReferenceManager.getInstance(project).processAllPropertiesFiles(new PropertiesFileProcessor() {
+
+      @Override
+      public boolean process(String baseName, PropertiesFile propertiesFile) {
+        VirtualFile virtualFile = propertiesFile.getVirtualFile();
         if (projectFileIndex.isInContent(virtualFile)) {
           String path = FileUtil.toSystemDependentName(virtualFile.getPath());
           paths.add(path);

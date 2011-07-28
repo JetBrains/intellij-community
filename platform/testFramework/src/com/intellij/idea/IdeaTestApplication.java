@@ -45,10 +45,11 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
     };
   }
 
-  public void setDataProvider(DataProvider dataContext) {
+  public void setDataProvider(@Nullable DataProvider dataContext) {
     myDataContext = dataContext;
   }
 
+  @Nullable
   public Object getData(String dataId) {
     return myDataContext == null ? null : myDataContext.getData(dataId);
   }

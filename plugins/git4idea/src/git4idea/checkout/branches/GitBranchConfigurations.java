@@ -57,7 +57,6 @@ import java.util.*;
 @State(
   name = "Git.Branch.Configurations",
   storages = {@Storage(
-    id = "ws",
     file = "$WORKSPACE_FILE$")})
 public class GitBranchConfigurations implements PersistentStateComponent<GitBranchConfigurations.State>, Disposable {
   /**

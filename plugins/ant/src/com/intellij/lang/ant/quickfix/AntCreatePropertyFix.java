@@ -22,7 +22,6 @@ import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -83,7 +82,7 @@ public class AntCreatePropertyFix extends BaseIntentionAction {
     
     Navigatable result = null;
     if (myPropFile != null) {
-      result = (Navigatable)myPropFile.addProperty(PropertiesElementFactory.createProperty(myPropFile.getProject(), name, ""));
+      result = myPropFile.addProperty(name, "");
     }
     else {
       final AntElement element = myRef.getElement();

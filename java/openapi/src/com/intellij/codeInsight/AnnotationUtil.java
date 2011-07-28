@@ -163,7 +163,7 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  private static PsiAnnotation findAnnotationInHierarchy(final @NotNull PsiClass psiClass, final Set<String> annotationNames, Set<PsiClass> processed) {
+  private static PsiAnnotation findAnnotationInHierarchy(final @NotNull PsiClass psiClass, final Set<String> annotationNames, @Nullable Set<PsiClass> processed) {
     final PsiClass[] superClasses = psiClass.getSupers();
     for (final PsiClass superClass : superClasses) {
       if (processed == null) processed = new THashSet<PsiClass>();
@@ -180,7 +180,7 @@ public class AnnotationUtil {
   private static PsiAnnotation findAnnotationInHierarchy(HierarchicalMethodSignature signature,
                                                          Set<String> annotationNames,
                                                          PsiElement place,
-                                                         Set<PsiMethod> processed) {
+                                                         @Nullable Set<PsiMethod> processed) {
     final List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
     for (final HierarchicalMethodSignature superSignature : superSignatures) {
@@ -221,7 +221,7 @@ public class AnnotationUtil {
 
   private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                      @NonNls String annotationFQN,
-                                     boolean checkHierarchy, final boolean skipExternal, Set<PsiMember> processed) {
+                                     boolean checkHierarchy, final boolean skipExternal, @Nullable Set<PsiMember> processed) {
     if (!listOwner.isValid()) return false;
     final PsiModifierList modifierList = listOwner.getModifierList();
     if (modifierList == null) return false;
@@ -312,8 +312,7 @@ public class AnnotationUtil {
     final PsiClass psiClass = JavaPsiFacade.getInstance(pair.getProject()).findClass(fqn, pair.getResolveScope());
     if (psiClass != null && psiClass.isAnnotationType()) {
       final String name = pair.getName();
-      final PsiMethod[] methods = psiClass.findMethodsByName(name != null ? name : "value", false);
-      return methods.length > 0 ? methods[0] : null;
+      return ArrayUtil.getFirstElement(psiClass.findMethodsByName(name != null ? name : "value", false));
     }
     return null;
   }

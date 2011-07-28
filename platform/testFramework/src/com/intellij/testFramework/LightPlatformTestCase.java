@@ -147,9 +147,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return ourPsiManager;
   }
 
-  public static void initApplication(final DataProvider dataProvider) throws Exception {
+  public static IdeaTestApplication initApplication() {
     ourApplication = IdeaTestApplication.getInstance(null);
-    ourApplication.setDataProvider(dataProvider);
+    return ourApplication;
   }
 
   @TestOnly
@@ -325,7 +325,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    initApplication(this);
+    initApplication();
+    ourApplication.setDataProvider(this);
     doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(), myAvailableInspectionTools);
     ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
 

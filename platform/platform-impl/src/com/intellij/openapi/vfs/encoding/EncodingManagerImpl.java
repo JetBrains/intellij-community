@@ -65,7 +65,7 @@ import java.util.Set;
 @State(
   name = "Encoding",
   storages = {
-      @Storage(id = "Encoding", file = "$APP_CONFIG$/encoding.xml")
+      @Storage( file = "$APP_CONFIG$/encoding.xml")
   }
 )
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<Element>, Disposable {

@@ -41,7 +41,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
                                     @NotNull CompletionResultSet result) {
         if (parameters.getInvocationCount() > 0) return; //only in autopopups for now
 
-        final PsiFile file = parameters.getOriginalFile();
+        final PsiFile file = parameters.getPosition().getContainingFile();
         final int offset = parameters.getOffset();
         if (Registry.is("show.live.templates.in.completion")) {
           for (final TemplateImpl possible : listApplicableTemplates(file, offset)) {

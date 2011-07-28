@@ -24,8 +24,8 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeView;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -299,6 +299,7 @@ public abstract class MvcFramework {
                                                       boolean forCreation,
                                                       boolean forTests,
                                                       boolean classpathFromDependencies,
+                                                      @Nullable String jvmParams,
                                                       @NotNull String command,
                                                       @NotNull String... args) throws ExecutionException;
 
@@ -354,15 +355,11 @@ public abstract class MvcFramework {
   }
 
   @NotNull
-  public ProcessBuilder createCommand(@NotNull Module module, @Nullable String vmOptions, final boolean forCreation, @NotNull String command, @NotNull String... args)
+  public ProcessBuilder createCommand(@NotNull Module module, @Nullable String jvmParams, final boolean forCreation, @NotNull String command, @NotNull String... args)
     throws ExecutionException {
-    final JavaParameters params = createJavaParameters(module, forCreation, false, true, command, args);
+    final JavaParameters params = createJavaParameters(module, forCreation, false, true, jvmParams, command, args);
 
     addJavaHome(params, module);
-
-    if (!StringUtil.isEmpty(vmOptions)) {
-      params.getVMParametersList().addParametersString(vmOptions);
-    }
 
     final ProcessBuilder builder = createProcessBuilder(params);
     final VirtualFile griffonHome = getSdkRoot(module);
@@ -502,7 +499,7 @@ public abstract class MvcFramework {
   public static Map<String, String> getInstalledPluginVersions(@NotNull PropertiesFile properties) {
     Map<String, String> pluginNames = new HashMap<String, String>();
 
-    for (final Property property : properties.getProperties()) {
+    for (final IProperty property : properties.getProperties()) {
       String propName = property.getName();
       if (propName != null) {
         propName = propName.trim();

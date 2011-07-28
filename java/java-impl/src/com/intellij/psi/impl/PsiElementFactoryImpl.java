@@ -177,7 +177,11 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
     final String text = join("class _Dummy_ { private ", type.getCanonicalText(), " ", name, "; }");
     final PsiJavaFile aFile = createDummyJavaFile(text);
-    final PsiClass psiClass = aFile.getClasses()[0];
+    final PsiClass[] classes = aFile.getClasses();
+    if (classes.length < 1) {
+      throw new IncorrectOperationException("Class was not created " + text);
+    }
+    final PsiClass psiClass = classes[0];
     final PsiField[] fields = psiClass.getFields();
     if (fields.length < 1) {
       throw new IncorrectOperationException("Field was not created " + text);

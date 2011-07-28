@@ -72,8 +72,8 @@ import java.util.*;
 @State(
     name = "AntConfiguration",
     storages = {
-      @Storage(id = "default", file = "$PROJECT_FILE$"), 
-      @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
+      @Storage( file = "$PROJECT_FILE$"),
+      @Storage( file = "$PROJECT_CONFIG_DIR$/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, ModificationTracker {

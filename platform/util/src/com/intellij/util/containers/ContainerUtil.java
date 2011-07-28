@@ -1272,7 +1272,7 @@ public class ContainerUtil {
     if (list.isEmpty()) return Collections.emptyList();
 
     if (list instanceof ArrayList) {
-      ((ArrayList)list).trimToSize();
+      list = new ArrayList(list);
     }
 
     return list;

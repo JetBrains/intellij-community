@@ -44,9 +44,9 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
 
   private final ConcurrentMap<Class, SimpleProviderBinding> myBindingsMap = new ConcurrentHashMap<Class, SimpleProviderBinding>();
   private final ConcurrentMap<Class, NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentHashMap<Class, NamedObjectProviderBinding>();
-  private final FactoryMap<Class, List<Class>> myKnownSupers = new ConcurrentFactoryMap<Class, List<Class>>() {
+  private final FactoryMap<Class, Class[]> myKnownSupers = new ConcurrentFactoryMap<Class, Class[]>() {
     @Override
-    protected List<Class> create(Class key) {
+    protected Class[] create(Class key) {
       final Set<Class> result = new LinkedHashSet<Class>();
       for (Class candidate : myBindingsMap.keySet()) {
         if (candidate.isAssignableFrom(key)) {
@@ -59,9 +59,9 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
         }
       }
       if (result.isEmpty()) {
-        return Collections.emptyList();
+        return ArrayUtil.EMPTY_CLASS_ARRAY;
       }
-      return new ArrayList<Class>(result);
+      return result.toArray(new Class[result.size()]);
     }
   };
 
@@ -166,10 +166,8 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
                                                                                    @NotNull PsiReferenceService.Hints hints) {
     final Class<? extends PsiElement> clazz = element.getClass();
     List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> ret = null;
-    List<Class> classes = myKnownSupers.get(clazz);
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < classes.size(); i++) {
-      Class aClass = classes.get(i);
+
+    for (Class aClass : myKnownSupers.get(clazz)) {
       final SimpleProviderBinding simpleBinding = myBindingsMap.get(aClass);
       final NamedObjectProviderBinding namedBinding = myNamedBindingsMap.get(aClass);
       if (simpleBinding == null && namedBinding == null) continue;

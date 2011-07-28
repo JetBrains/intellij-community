@@ -28,7 +28,7 @@ import java.util.List;
  */
 @State(
   name = "GitRememberedInputs",
-  storages = @Storage(id = "GitRememberedInputs", file = "$APP_CONFIG$/vcs.xml")
+  storages = @Storage( file = "$APP_CONFIG$/vcs.xml")
 )
 public class GitRememberedInputs implements PersistentStateComponent<GitRememberedInputs.State> {
 

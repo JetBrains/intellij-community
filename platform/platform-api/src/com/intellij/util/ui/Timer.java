@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +36,7 @@ public abstract class Timer implements Disposable, Runnable  {
   private final Object LOCK = new Object();
 
   private SharedThread mySharedThread;
+  private ScheduledFuture<?> myFuture;
 
   enum TimerState {startup, intialSleep, running, suspended, restarting, pausing, disposed}
 
@@ -186,46 +188,21 @@ public abstract class Timer implements Disposable, Runnable  {
     }
 
     public void queue(Timer timer, int span) {
-      myExecutor.remove(timer);
-      myExecutor.schedule(timer, span, TimeUnit.MILLISECONDS);
-    }
-  }
-
-  public static void main(String[] args) {
-    final Timer timer = new MyTimer();
-
-    timer.setTakeInitialDelay(false);
-    timer.start();
-  }
-
-  private static class MyTimer extends Timer {
-    private final int[] myCount;
-
-    public MyTimer() {
-      super("", 500);
-      myCount = new int[] {3};
-    }
-
-    @Override
-    protected void onTimer() throws InterruptedException {
-      System.out.println("Timer.onTimer");
-      myCount[0]--;
-      if (myCount[0] == 0) {
-        suspend();
-        new Thread() {
-          @Override
-          public void run() {
-            try {
-              Thread.currentThread().sleep(2000);
-            }
-            catch (InterruptedException e) {
-              e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            }
-            myCount[0] = 3;
-            MyTimer.this.restart();
-          }
-        }.start();
+      final ScheduledFuture<?> future = timer.getFuture();
+      if (future != null) {
+        future.cancel(true);
       }
+
+      timer.setFuture(myExecutor.schedule(timer, span, TimeUnit.MILLISECONDS));
     }
   }
+
+  private void setFuture(ScheduledFuture<?> schedule) {
+    myFuture = schedule;
+  }
+
+  public ScheduledFuture<?> getFuture() {
+    return myFuture;
+  }
+
 }

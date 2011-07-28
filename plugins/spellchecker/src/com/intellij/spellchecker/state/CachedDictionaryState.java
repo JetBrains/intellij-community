@@ -23,7 +23,6 @@ import com.intellij.spellchecker.dictionary.EditableDictionary;
 @State(
   name = "CachedDictionaryState",
   storages = {@Storage(
-    id = "spellchecker",
     file = "$APP_CONFIG$/cachedDictionary.xml")})
 public class CachedDictionaryState extends DictionaryState implements PersistentStateComponent<DictionaryState> {
   public static final String DEFAULT_NAME = "cached";

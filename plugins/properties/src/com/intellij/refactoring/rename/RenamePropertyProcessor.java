@@ -15,13 +15,12 @@
  */
 package com.intellij.refactoring.rename;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,16 +29,17 @@ import java.util.Map;
 
 public class RenamePropertyProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(@NotNull final PsiElement element) {
-    return element instanceof Property;
+    return element instanceof IProperty;
   }
 
-  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
-    Property property = (Property) element;
-    ResourceBundle resourceBundle = property.getContainingFile().getResourceBundle();
-    List<Property> properties = PropertiesUtil.findAllProperties(element.getProject(), resourceBundle, property.getUnescapedKey());
+  public void prepareRenaming(final PsiElement element, final String newName,
+                              final Map<PsiElement, String> allRenames) {
+    IProperty property = (IProperty) element;
+    ResourceBundle resourceBundle = property.getPropertiesFile().getResourceBundle();
+    List<IProperty> properties = PropertiesUtil.findAllProperties(element.getProject(), resourceBundle, property.getUnescapedKey());
     allRenames.clear();
-    for (Property otherProperty : properties) {
-      allRenames.put(otherProperty, newName);
+    for (IProperty otherProperty : properties) {
+      allRenames.put(otherProperty.getPsiElement(), newName);
     }
   }
 
@@ -48,9 +48,9 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
                              final String newName,
                              Map<? extends PsiElement, String> allRenames,
                              List<UsageInfo> result) {
-    for (Property property : ((PropertiesFile)element.getContainingFile()).getProperties()) {
+    for (IProperty property : ((PropertiesFile)element.getContainingFile()).getProperties()) {
       if (Comparing.strEqual(newName, property.getKey())) {
-        result.add(new UnresolvableCollisionUsageInfo(property, element) {
+        result.add(new UnresolvableCollisionUsageInfo(property.getPsiElement(), element) {
           @Override
           public String getDescription() {
             return "New property name \'" + newName + "\' hides existing property";

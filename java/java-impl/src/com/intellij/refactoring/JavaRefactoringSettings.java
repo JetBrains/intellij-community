@@ -25,7 +25,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name = "RefactoringSettings",
   storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

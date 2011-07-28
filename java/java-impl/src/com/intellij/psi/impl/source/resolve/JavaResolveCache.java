@@ -24,13 +24,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
@@ -54,6 +52,7 @@ public class JavaResolveCache {
   }
 
   private final ConcurrentMap<PsiExpression, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
+  private final ConcurrentMap<PsiElement, PsiType> myCachedReferencesInPsiTypes = new ConcurrentWeakHashMap<PsiElement, PsiType>();
 
   private final Map<PsiVariable,Object> myVarToConstValueMap1;
   private final Map<PsiVariable,Object> myVarToConstValueMap2;
@@ -78,6 +77,7 @@ public class JavaResolveCache {
 
   private void clearCaches(boolean isPhysical) {
     myCalculatedTypes.clear();
+    myCachedReferencesInPsiTypes.clear();
     if (isPhysical) {
       myVarToConstValueMap1.clear();
     }
@@ -97,20 +97,31 @@ public class JavaResolveCache {
         type = TypeConversionUtil.NULL_TYPE;
       }
       type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, type);
-      DebugUtil.trackInvalidation(expr, new Processor<PsiElement>() {
-        @Override
-        public boolean process(PsiElement element) {
-          PsiType cached = myCalculatedTypes.get(element);
-          if (cached != null) {
-            LOG.error(element + " is invalid and yet it is still cached: " + cached);
+      if (type instanceof PsiClassReferenceType) {
+        PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
+        myCachedReferencesInPsiTypes.put(reference, type);
+      }
+      if (DebugUtil.DO_EXPENSIVE_CHECKS) {
+        DebugUtil.trackInvalidation(expr, new Processor<PsiElement>() {
+          @Override
+          public boolean process(PsiElement element) {
+            PsiType cached = myCalculatedTypes.get(element);
+            if (cached != null) {
+              LOG.error(element + " is invalid and yet it is still cached: " + cached);
+            }
+
+            PsiType cachedRef = myCachedReferencesInPsiTypes.get(element);
+            if (cachedRef != null) {
+              LOG.error(element + " is invalid and yet it is still cached (inside PsiType): " + cachedRef);
+            }
+            return true;
           }
-          return true;
-        }
-      });
+        });
+      }
     }
     if (!type.isValid()) {
       if (expr.isValid()) {
-        LOG.error("Type is invalid: " + type + "; expr: '" + expr + "' is valid");
+        LOG.error("Type is invalid: " + type + " (" + type.getClass() + "); expr: '" + expr + "' is valid");
       }
       else {
         LOG.error("Expression: '"+expr+"' is invalid, must not be used for getType()");

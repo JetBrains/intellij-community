@@ -186,8 +186,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (!ignoreWrongMoves && !myEditor.offsetToLogicalPosition(myOffset).equals(myEditor.offsetToLogicalPosition(offset))) {
       LOG.error(
         "caret moved to wrong offset. Requested:" + offset + " but actual:" + myOffset 
-        + ". Soft wraps data: " + myEditor.getSoftWrapModel() + ", folding data: " + myEditor.getFoldingModel()
-        + ", document:\n" + myEditor.getDocument().getText());
+        + ". Soft wraps data: " + myEditor.getSoftWrapModel() + ", folding data: " + myEditor.getFoldingModel());
     }
   }
 

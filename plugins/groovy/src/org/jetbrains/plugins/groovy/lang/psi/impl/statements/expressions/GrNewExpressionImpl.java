@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -37,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -205,19 +203,12 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
     final GrCodeReferenceElement referenceElement = getReferenceElement();
     if (referenceElement == null) return GroovyResolveResult.EMPTY_ARRAY;
-    final GroovyResolveResult[] classResults = referenceElement.multiResolve(false);
+
     List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
-    final PsiResolveHelper helper = JavaPsiFacade.getInstance(getProject()).getResolveHelper();
-    for (GroovyResolveResult classResult : classResults) {
+    for (GroovyResolveResult classResult : referenceElement.multiResolve(false)) {
       final PsiElement element = classResult.getElement();
       if (element instanceof PsiClass) {
-        final PsiMethod[] constructors = ((PsiClass)element).getConstructors();
-        for (PsiMethod constructor : constructors) {
-          boolean isAccessible = helper.isAccessible(constructor, this, null);
-          result.add(new GroovyResolveResultImpl(constructor, null, classResult.getSubstitutor(), isAccessible, true));
-        }
-        final GroovyResolveResult[] results = ResolveUtil.getNonCodeConstructors((PsiClass)element, this, classResult.getSubstitutor());
-        ContainerUtil.addAll(result, results);
+        result.addAll(ResolveUtil.getAllClassConstructors((PsiClass)element, this, classResult.getSubstitutor()));
       }
     }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -38,8 +39,10 @@ public class PropertiesSafeDeleteProcessor implements SafeDeleteProcessorDelegat
   public NonCodeUsageSearchInfo findUsages(final PsiElement element, final PsiElement[] allElementsToDelete, final List<UsageInfo> result) {
     PropertiesFile file = (PropertiesFile) element;
     List<PsiElement> elements = new ArrayList<PsiElement>();
-    elements.add(file);
-    elements.addAll(file.getProperties());
+    elements.add(file.getContainingFile());
+    for (IProperty property : file.getProperties()) {
+      elements.add(property.getPsiElement());
+    }
     for(PsiElement psiElement: elements) {
       SafeDeleteProcessor.findGenericElementUsages(psiElement, result, allElementsToDelete);
     }

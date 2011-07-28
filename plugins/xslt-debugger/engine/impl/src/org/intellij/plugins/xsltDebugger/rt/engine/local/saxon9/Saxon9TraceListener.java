@@ -85,6 +85,8 @@ public class Saxon9TraceListener implements TraceListener {
   }
 
   public void endCurrentItem(Item item) {
-    myDebugger.popSource();
+    if (item instanceof NodeInfo) {
+      myDebugger.popSource();
+    }
   }
 }

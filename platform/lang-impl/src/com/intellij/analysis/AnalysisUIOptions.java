@@ -39,7 +39,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name = "AnalysisUIOptions",
   storages = {
     @Storage(
-      id ="other",
       file = "$WORKSPACE_FILE$"
     )}
 )

@@ -76,15 +76,15 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     }
 
     final JPanel panel = ToolbarDecorator.createDecorator(myTable)
-      .setAddAction(new Runnable() {
+      .setAddAction(new AnActionButtonRunnable() {
         @Override
-        public void run() {
+        public void run(AnActionButton button) {
           doAdd();
         }
       })
-      .setRemoveAction(new Runnable() {
+      .setRemoveAction(new AnActionButtonRunnable() {
         @Override
-        public void run() {
+        public void run(AnActionButton button) {
           doRemove();
         }
       })

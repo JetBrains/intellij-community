@@ -34,7 +34,6 @@ import java.io.File;
   name="DaemonCodeAnalyzerSettings",
   storages= {
     @Storage(
-      id="other",
       file = "$APP_CONFIG$/editor.codeinsight.xml"
     )}
 )

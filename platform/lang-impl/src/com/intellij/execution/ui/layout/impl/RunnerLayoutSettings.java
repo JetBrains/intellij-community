@@ -29,7 +29,6 @@ import java.util.Map;
 @State(
   name = "RunnerLayoutSettings",
   storages = {@Storage(
-    id = "other",
     file = "$APP_CONFIG$/runner.layout.xml")})
 public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
   public static RunnerLayoutSettings getInstance() {

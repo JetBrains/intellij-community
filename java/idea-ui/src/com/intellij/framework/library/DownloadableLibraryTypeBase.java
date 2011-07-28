@@ -12,13 +12,14 @@ import java.net.URL;
 import java.util.List;
 
 public abstract class DownloadableLibraryTypeBase extends DownloadableLibraryType {
-  private Icon myIcon;
+  private final Icon myIcon;
 
-  public DownloadableLibraryTypeBase(@NotNull String libraryCategoryName,
-                                     @NotNull String groupId,
-                                     @NotNull Icon icon,
-                                     @NotNull URL... localUrls) {
-    super(new LibraryKind<LibraryVersionProperties>(libraryCategoryName), libraryCategoryName,
+  protected DownloadableLibraryTypeBase(@NotNull String libraryCategoryName,
+                                        @NotNull String libraryTypeId,
+                                        @NotNull String groupId,
+                                        @NotNull Icon icon,
+                                        @NotNull URL... localUrls) {
+    super(new LibraryKind<LibraryVersionProperties>(libraryTypeId), libraryCategoryName,
           DownloadableLibraryService.getInstance().createLibraryDescription(groupId, localUrls));
     myIcon = icon;
   }
@@ -27,7 +28,7 @@ public abstract class DownloadableLibraryTypeBase extends DownloadableLibraryTyp
     return myIcon;
   }
 
-  public abstract String[] getDetectionClassNames();
+  protected abstract String[] getDetectionClassNames();
 
   @Override
   public LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {
@@ -40,7 +41,7 @@ public abstract class DownloadableLibraryTypeBase extends DownloadableLibraryTyp
   }
 
   @Nullable
-  private LibraryVersionProperties detectJsfVersion(List<VirtualFile> classesRoots, String detectionClass) {
+  private static LibraryVersionProperties detectJsfVersion(List<VirtualFile> classesRoots, String detectionClass) {
     if (!LibraryUtil.isClassAvailableInLibrary(classesRoots, detectionClass)) {
       return null;
     }

@@ -142,17 +142,7 @@ public class FileTreeModelBuilder {
         if (indicator != null) {
           indicator.setIndeterminate(false);
         }
-        myFileIndex.iterateContent(new ContentIterator() {
-          PackageDependenciesNode lastParent = null;
-          public boolean processFile(VirtualFile fileOrDir) {
-            if (!fileOrDir.isDirectory()) {
-              lastParent = buildFileNode(fileOrDir, lastParent);
-            } else {
-              lastParent = null;
-            }
-            return true;
-          }
-        });
+        myFileIndex.iterateContent(new MyContentIterator());
       }
     };
     final TreeModel treeModel = new TreeModel(myRoot);
@@ -343,6 +333,15 @@ public class FileTreeModelBuilder {
     return rootToReload;
   }
 
+  public DefaultMutableTreeNode addDirNode(PsiDirectory dir) {
+    final VirtualFile vFile = dir.getVirtualFile();
+    boolean isMarked = myMarker != null && myMarker.isMarked(vFile);
+    if (!isMarked) return null;
+    myFileIndex.iterateContentUnderDirectory(vFile, new MyContentIterator());
+    return getModuleDirNode(vFile, myFileIndex.getModuleForFile(vFile), null);
+  }
+
+
   @Nullable
   public PackageDependenciesNode findNode(PsiFileSystemItem file, final PsiElement psiElement) {
     if (file instanceof PsiDirectory) {
@@ -520,4 +519,16 @@ public class FileTreeModelBuilder {
   }
 
 
+  private class MyContentIterator implements ContentIterator {
+    PackageDependenciesNode lastParent = null;
+
+    public boolean processFile(VirtualFile fileOrDir) {
+      if (!fileOrDir.isDirectory()) {
+        lastParent = buildFileNode(fileOrDir, lastParent);
+      } else {
+        lastParent = null;
+      }
+      return true;
+    }
+  }
 }

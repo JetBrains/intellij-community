@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
     name = "Registry",
     storages = {
         @Storage(
-            id = "other",
             file="$APP_CONFIG$/other.xml")}
 )
 public class RegistryState implements BaseComponent, PersistentStateComponent<Element> {

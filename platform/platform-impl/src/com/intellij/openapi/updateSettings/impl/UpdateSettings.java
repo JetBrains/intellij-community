@@ -38,7 +38,6 @@ import java.util.List;
   name = "UpdatesConfigurable",
   storages = {
     @Storage(
-      id ="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )

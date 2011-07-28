@@ -21,7 +21,10 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
@@ -29,6 +32,12 @@ import java.util.List;
  * @author cdr
  */
 class ResourceBundleDeleteProvider implements DeleteProvider {
+  private static final Function<PropertiesFile,PsiElement> MAPPER = new Function<PropertiesFile, PsiElement>() {
+    @Override
+    public PsiElement fun(PropertiesFile propertiesFile) {
+      return propertiesFile.getContainingFile();
+    }
+  };
   private final ResourceBundle myResourceBundle;
 
   public ResourceBundleDeleteProvider(ResourceBundle resourceBundle) {
@@ -38,8 +47,8 @@ class ResourceBundleDeleteProvider implements DeleteProvider {
   public void deleteElement(DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(project);
-    PropertiesFile[] array = propertiesFiles.toArray(new PropertiesFile[propertiesFiles.size()]);
-    new SafeDeleteHandler().invoke(project, array, dataContext);
+    assert project != null;
+    new SafeDeleteHandler().invoke(project, ContainerUtil.map2Array(propertiesFiles, PsiElement.class, MAPPER), dataContext);
   }
 
   public boolean canDeleteElement(DataContext dataContext) {

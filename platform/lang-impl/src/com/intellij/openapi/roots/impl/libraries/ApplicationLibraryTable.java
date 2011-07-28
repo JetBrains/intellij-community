@@ -32,7 +32,7 @@ import java.io.File;
   name = "libraryTable",
   roamingType = RoamingType.DISABLED,
   storages = {
-    @Storage(id = "default", file = "$OPTIONS$/applicationLibraries.xml")
+    @Storage( file = "$OPTIONS$/applicationLibraries.xml")
     }
 )
 public class ApplicationLibraryTable extends LibraryTableBase implements ExportableComponent {

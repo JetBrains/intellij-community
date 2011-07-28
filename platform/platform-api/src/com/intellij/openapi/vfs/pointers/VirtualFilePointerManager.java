@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class VirtualFilePointerManager implements Disposable {
   public static VirtualFilePointerManager getInstance() {
@@ -44,14 +45,14 @@ public abstract class VirtualFilePointerManager implements Disposable {
   public abstract VirtualFilePointerContainer createContainer(VirtualFilePointerFactory factory);
 
   @NotNull
-  public abstract VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent,VirtualFilePointerListener listener);
+  public abstract VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
 
   @NotNull
-  public abstract VirtualFilePointer create(@NotNull VirtualFile file, @NotNull Disposable parent, VirtualFilePointerListener listener);
+  public abstract VirtualFilePointer create(@NotNull VirtualFile file, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
 
   @NotNull
   public abstract VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer, @NotNull Disposable parent,
-                                               VirtualFilePointerListener listener);
+                                               @Nullable VirtualFilePointerListener listener);
 
   @NotNull
   public abstract VirtualFilePointerContainer createContainer(@NotNull Disposable parent);

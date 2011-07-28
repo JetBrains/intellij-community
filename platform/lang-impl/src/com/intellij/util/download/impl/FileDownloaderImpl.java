@@ -37,7 +37,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.download.DownloadableFileDescription;
+import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
@@ -184,7 +186,7 @@ public class FileDownloaderImpl implements FileDownloader {
       files = FileChooser.chooseFiles(myParent, descriptor);
     }
 
-    return files.length > 0 ? files[0] : null;
+    return ArrayUtil.getFirstElement(files);
   }
 
   @NotNull

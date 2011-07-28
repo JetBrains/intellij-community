@@ -22,8 +22,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 @State(
   name = "JavacSettings",
   storages = {
-    @Storage(id = "default", file = "$PROJECT_FILE$")
-   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage( file = "$PROJECT_FILE$")
+   ,@Storage( file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class JavacConfiguration implements PersistentStateComponent<JavacSettings> {
