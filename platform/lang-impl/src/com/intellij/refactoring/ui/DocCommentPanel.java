@@ -40,7 +40,7 @@ public class DocCommentPanel extends JPanel {
 
   public DocCommentPanel(String title) {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    myBorder = IdeBorderFactory.createTitledBorderBoldWithIndent(title);
+    myBorder = IdeBorderFactory.createTitledBorderSimpleWithIndent(title);
     this.setBorder(myBorder);
 
     myRbJavaDocAsIs = new JRadioButton();

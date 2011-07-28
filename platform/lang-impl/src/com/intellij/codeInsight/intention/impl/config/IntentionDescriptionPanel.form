@@ -22,7 +22,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
             </clientProperties>
             <border type="none" title-resource-bundle="messages/CodeInsightBundle" title-key="powered.by"/>
             <children/>
@@ -40,7 +40,7 @@
           <alignmentY value="0.2"/>
         </properties>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
         </clientProperties>
         <border type="none" title-resource-bundle="messages/CodeInsightBundle" title-key="dialog.intention.settings.description.panel.title"/>
         <children>
@@ -69,7 +69,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
         <border type="none" title-resource-bundle="messages/CodeInsightBundle" title-key="dialog.intention.settings.description.usage.example.title"/>
         <children>

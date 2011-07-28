@@ -141,7 +141,6 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    myRootPanel.setBorder(IdeBorderFactory.createRoundedBorder());
     return myRootPanel;
   }
 

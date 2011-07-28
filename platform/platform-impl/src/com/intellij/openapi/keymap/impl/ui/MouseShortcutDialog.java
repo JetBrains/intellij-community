@@ -124,11 +124,11 @@ class MouseShortcutDialog extends DialogWrapper{
     // Single/Double click
 
     JPanel clickCountPanel=new JPanel(new GridBagLayout());
-    clickCountPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+    clickCountPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
       KeyMapBundle.message("mouse.shortcut.dialog.click.count.border")));
     panel.add(
       clickCountPanel,
-      new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,4,0),0,0)
+      new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
     );
     clickCountPanel.add(
       myRbSingleClick,
@@ -154,7 +154,7 @@ class MouseShortcutDialog extends DialogWrapper{
       clickPadPanel,
       new GridBagConstraints(0,1,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,4,0),0,0)
     );
-    clickPadPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+    clickPadPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
       KeyMapBundle.message("mouse.shortcut.dialog.click.pad.border")));
     myClickPad.setPreferredSize(new Dimension(260,60));
     clickPadPanel.add(myClickPad,BorderLayout.CENTER);
@@ -162,7 +162,7 @@ class MouseShortcutDialog extends DialogWrapper{
     // Shortcut preview
 
     JPanel previewPanel=new JPanel(new GridBagLayout());
-    previewPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+    previewPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
       KeyMapBundle.message("mouse.shortcut.dialog.shortcut.preview.border")));
     panel.add(
       previewPanel,
@@ -176,7 +176,7 @@ class MouseShortcutDialog extends DialogWrapper{
     // Conflicts panel
 
     JPanel conflictsPanel=new JPanel(new GridBagLayout());
-    conflictsPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+    conflictsPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
       KeyMapBundle.message("mouse.shortcut.dialog.conflicts.border")));
     panel.add(
       conflictsPanel,

@@ -140,10 +140,10 @@
               <grid row="3" column="0" row-span="1" col-span="5" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
+            </clientProperties>
             <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="update.plugin.hosts.title"/>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
-</clientProperties>
             <children>
               <scrollpane id="af53b" class="com.intellij.ui.components.JBScrollPane">
                 <constraints>

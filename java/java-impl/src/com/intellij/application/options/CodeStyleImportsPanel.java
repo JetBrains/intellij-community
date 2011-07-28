@@ -141,7 +141,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JPanel createPackagesPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(ApplicationBundle.message("title.packages.to.use.import.with")));
+    panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithoutIndent(ApplicationBundle.message("title.packages.to.use.import.with")));
 
     panel.add(createPackagesTable(), BorderLayout.CENTER);
     panel.add(createPackagesButtonsPanel(), BorderLayout.EAST);
@@ -151,7 +151,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JPanel createImportLayoutPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(ApplicationBundle.message("title.import.layout")));
+    panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithoutIndent(ApplicationBundle.message("title.import.layout")));
     myCbLayoutStaticImportsSeparately = new JCheckBox("Layout static imports separately");
 
     myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener(){
