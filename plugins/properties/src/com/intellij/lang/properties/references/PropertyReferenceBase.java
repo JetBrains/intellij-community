@@ -25,6 +25,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -169,6 +170,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
 
   protected void addVariantsFromFile(final PropertiesFile propertiesFile, final Set<Object> variants) {
     if (propertiesFile == null) return;
+    if (!ProjectRootManager.getInstance(myElement.getProject()).getFileIndex().isInContent(propertiesFile.getVirtualFile())) return;
     List<? extends IProperty> properties = propertiesFile.getProperties();
     for (IProperty property : properties) {
       addKey(property, variants);
