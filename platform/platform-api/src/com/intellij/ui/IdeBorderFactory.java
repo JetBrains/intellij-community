@@ -29,6 +29,10 @@ public class IdeBorderFactory {
   private IdeBorderFactory() {
   }
 
+  public static TitledBorder createTitledBorder(String s) {
+    return createTitledBorderSimpleWithoutIndent(s);
+  }
+
   public static Border createBorder() {
     return createBorder(SideBorder.ALL);
   }
