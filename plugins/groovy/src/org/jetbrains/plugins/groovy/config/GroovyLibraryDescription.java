@@ -110,10 +110,9 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     };
     descriptor.setTitle(myFrameworkName + " SDK");
     descriptor.setDescription("Choose a directory containing " + myFrameworkName + " distribution");
-    final VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, initial);
-    if (files.length != 1) return null;
+    final VirtualFile dir = FileChooser.chooseFile(parentComponent, descriptor, initial);
+    if (dir == null) return null;
 
-    final VirtualFile dir = files[0];
     final GroovyLibraryPresentationProviderBase provider = findManager(dir);
     if (provider == null) {
       return null;

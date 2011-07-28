@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavadocOrderRootType;
@@ -260,7 +261,7 @@ public class JavadocEditor extends ModuleElementsEditor {
     private final FileChooserDescriptor myDescriptor;
 
     public AddPathActionListener() {
-      myDescriptor = new FileChooserDescriptor(false, true, true, false, true, true);
+      myDescriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
       myDescriptor.setTitle(ProjectBundle.message("module.javadoc.add.path.title"));
       myDescriptor.setDescription(ProjectBundle.message("module.javadoc.add.path.prompt"));
     }

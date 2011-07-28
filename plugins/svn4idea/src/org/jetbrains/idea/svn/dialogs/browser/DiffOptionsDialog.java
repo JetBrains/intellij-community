@@ -174,11 +174,11 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     fcd.setTitle(title);
     fcd.setDescription(description);
     fcd.setHideIgnored(false);
-    VirtualFile[] files = FileChooser.chooseFiles(myBrowser, fcd, null);
-    if (files.length != 1 || files[0] == null) {
+    VirtualFile file = FileChooser.chooseFile(myBrowser, fcd);
+    if (file == null) {
       return null;
     }
-    return new File(files[0].getPath());
+    return new File(file.getPath());
   }
 
   public void actionPerformed(ActionEvent e) {

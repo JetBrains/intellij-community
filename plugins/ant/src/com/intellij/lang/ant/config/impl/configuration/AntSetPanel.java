@@ -214,11 +214,10 @@ public class AntSetPanel {
     }
 
     public AntInstallation create() {
-      VirtualFile[] files = FileChooser.chooseFiles(myParent, FileChooserDescriptorFactory.createSingleFolderDescriptor());
-      if (files.length == 0) return null;
-      VirtualFile homePath = files[0];
+      VirtualFile file = FileChooser.chooseFile(myParent, FileChooserDescriptorFactory.createSingleFolderDescriptor(), null);
+      if (file == null) return null;
       try {
-        final AntInstallation inst = AntInstallation.fromHome(homePath.getPresentableUrl());
+        final AntInstallation inst = AntInstallation.fromHome(file.getPresentableUrl());
         adjustName(inst);
         return inst;
       }

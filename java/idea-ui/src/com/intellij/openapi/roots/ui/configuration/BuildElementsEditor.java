@@ -24,6 +24,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -179,7 +180,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
   private CommitableFieldPanel createOutputPathPanel(final String title, final CommitPathRunnable commitPathRunnable) {
     final JTextField textField = new JTextField();
-    final FileChooserDescriptor outputPathsChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     outputPathsChooserDescriptor.setHideIgnored(false);
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     FileChooserFactory.getInstance().installFileCompletion(textField, outputPathsChooserDescriptor, true, null);

@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -382,7 +383,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
           file = VirtualFileManager.getInstance().findFileByUrl(path[0]); 
         }
       }
-      FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
+      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
 
       descriptor.setShowFileSystemRoots(true);
       descriptor.setTitle(SvnBundle.message("dialog.title.openssh.v2.private.key"));

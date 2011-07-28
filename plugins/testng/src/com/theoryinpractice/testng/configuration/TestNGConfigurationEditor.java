@@ -27,7 +27,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
@@ -36,12 +35,12 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -59,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -343,7 +341,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     TextFieldWithBrowseButton outputDirectoryButton = new TextFieldWithBrowseButton();
     outputDirectory.setComponent(outputDirectoryButton);
     outputDirectoryButton.addBrowseFolderListener("TestNG", "Select test output directory", project,
-                                                  new FileChooserDescriptor(false, true, false, false, false, false));
+                                                  FileChooserDescriptorFactory.createSingleFolderDescriptor());
     moduleClasspath.setEnabled(true);
     moduleClasspath.setComponent(new JComboBox());
 

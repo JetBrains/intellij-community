@@ -49,9 +49,9 @@ public class JikesConfigurable implements Configurable{
     myJikesPathFieldBrowseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-        VirtualFile[] files = FileChooser.chooseFiles(myPathField, descriptor);
-        if (files.length != 0) {
-          myPathField.setText(files[0].getPath().replace('/', File.separatorChar));
+        VirtualFile file = FileChooser.chooseFile(myPathField, descriptor, null);
+        if (file != null) {
+          myPathField.setText(file.getPath().replace('/', File.separatorChar));
         }
       }
     });

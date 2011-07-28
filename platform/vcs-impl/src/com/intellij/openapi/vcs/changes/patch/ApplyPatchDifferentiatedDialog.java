@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.impl.patch.PatchVirtualFileReader;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -541,18 +542,17 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class NewBaseSelector implements Runnable {
     public void run() {
-      final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-      VirtualFile[] selectedFiles = FileChooser.chooseFiles(myProject, descriptor);
-      if (selectedFiles.length != 1 || selectedFiles[0] == null) {
+      final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+      VirtualFile selectedFile = FileChooser.chooseFile(myProject, descriptor);
+      if (selectedFile == null) {
         return;
       }
-      final VirtualFile selectedValue = selectedFiles[0];
 
       final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       if (selectedChanges.size() >= 1) {
         for (FilePatchInProgress.PatchChange patchChange : selectedChanges) {
           final FilePatchInProgress patch = patchChange.getPatchInProgress();
-          patch.setNewBase(selectedValue);
+          patch.setNewBase(selectedFile);
         }
         updateTree(false);
       }

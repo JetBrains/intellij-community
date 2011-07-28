@@ -17,7 +17,7 @@
 
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -118,11 +118,11 @@ public class MavenEnvironmentForm {
   public JComponent createComponent() {
     // all listeners will be removed when dialog is closed
     mavenHomeComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.maven.home.directory"), "", null,
-                                                              new FileChooserDescriptor(false, true, false, false, false, false));
+                                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
     settingsFileComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.maven.settings.file"), "", null,
-                                                                 new FileChooserDescriptor(true, false, false, false, false, false));
+                                                                 FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     localRepositoryComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.local.repository"), "", null,
-                                                                    new FileChooserDescriptor(false, true, false, false, false, false));
+                                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
     return panel;
   }
 

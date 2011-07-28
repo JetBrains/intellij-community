@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -98,7 +98,7 @@ public class CopyDialog extends DialogWrapper {
                                                            myWorkingCopyField.getPreferredSize().height));
 
     myWorkingCopyField.addBrowseFolderListener("Select Working Copy Location", "Select Location to Copy From:",
-                                               project, new FileChooserDescriptor(false, true, false, false, false, false));
+                                               project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myWorkingCopyField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         updateControls();

@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.module.Module;
@@ -140,7 +141,7 @@ public class VcsStructureChooser extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true);
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
     calculateRoots();
     final ArrayList<VirtualFile> list = new ArrayList<VirtualFile>(myRoots);
     final Comparator<VirtualFile> comparator = new Comparator<VirtualFile>() {

@@ -96,10 +96,9 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
                                                                descriptor.setTitle(DevKitBundle.message("sandbox.home"));
                                                                descriptor.setDescription(
                                                                  DevKitBundle.message("sandbox.purpose"));
-                                                               VirtualFile[] files = FileChooser.chooseFiles(mySandboxHome, descriptor);
-                                                               if (files.length != 0) {
-                                                                 mySandboxHome.setText(
-                                                                   FileUtil.toSystemDependentName(files[0].getPath()));
+                                                               VirtualFile file = FileChooser.chooseFile(mySandboxHome, descriptor, null);
+                                                               if (file != null) {
+                                                                 mySandboxHome.setText(FileUtil.toSystemDependentName(file.getPath()));
                                                                }
                                                                myModified = true;
                                                              }

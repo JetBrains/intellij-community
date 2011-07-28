@@ -19,7 +19,7 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootEditor;
 import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 
@@ -42,7 +42,7 @@ public class SshConnectionSettingsPanel {
     myRootProvider = rootProvider;
     myPathToPrivateKeyFile.addBrowseFolderListener(CvsBundle.message("dialog.title.path.to.private.key.file"),
                                                    CvsBundle.message("dialog.description.path.to.private.key.file"),
-                                                   null, new FileChooserDescriptor(true, false, false, false, false, false));
+                                                   null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     ActionListener actionListener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         setPathToPPKEnabled();

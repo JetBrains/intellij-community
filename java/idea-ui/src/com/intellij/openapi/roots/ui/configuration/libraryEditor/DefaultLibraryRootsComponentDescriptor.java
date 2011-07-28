@@ -13,6 +13,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
@@ -86,7 +87,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
 
     public FileChooserDescriptor createChooserDescriptor() {
-      return new FileChooserDescriptor(false, true, false, false, false, true);
+      return FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
     }
 
     public boolean addAsJarDirectories() {
@@ -113,7 +114,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
 
     public FileChooserDescriptor createChooserDescriptor() {
-      return new FileChooserDescriptor(false, true, false, false, false, true);
+      return FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
     }
 
     public boolean addAsJarDirectories() {
@@ -168,7 +169,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
 
     @Override
     public FileChooserDescriptor createChooserDescriptor() {
-      return new FileChooserDescriptor(false, true, false, false, false, false);
+      return FileChooserDescriptorFactory.createSingleFolderDescriptor();
     }
   }
 

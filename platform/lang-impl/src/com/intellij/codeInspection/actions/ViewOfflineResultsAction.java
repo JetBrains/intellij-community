@@ -81,16 +81,15 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
 
     LOG.assertTrue(project != null);
 
-    final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
-    if (virtualFiles.length == 0) return;
-    if (!virtualFiles[0].isDirectory()) return;
+    final VirtualFile virtualFile = FileChooser.chooseFile(project, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+    if (virtualFile == null || !virtualFile.isDirectory()) return;
 
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap =
       new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
     final String [] profileName = new String[1];
     final Runnable process = new Runnable() {
       public void run() {
-        final VirtualFile[] files = virtualFiles[0].getChildren();
+        final VirtualFile[] files = virtualFile.getChildren();
         try {
           for (final VirtualFile inspectionFile : files) {
             if (inspectionFile.isDirectory()) continue;

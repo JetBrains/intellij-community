@@ -105,10 +105,10 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
       }
     };
     descriptor.setTitle("Specify Path to MANIFEST.MF file");
-    final VirtualFile[] files = FileChooser.chooseFiles(myContext.getProject(), descriptor);
-    if (files.length != 1) return;
+    final VirtualFile file = FileChooser.chooseFile(myContext.getProject(), descriptor, null);
+    if (file == null) return;
 
-    ManifestFileUtil.addManifestFileToLayout(files[0].getPath(), myContext, myElement);
+    ManifestFileUtil.addManifestFileToLayout(file.getPath(), myContext, myElement);
     updateManifest();
     myContext.getThisArtifactEditor().updateLayoutTree();
   }

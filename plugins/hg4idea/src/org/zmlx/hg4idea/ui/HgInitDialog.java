@@ -112,8 +112,7 @@ public class HgInitDialog extends DialogWrapper {
     if (myShowDialog) {
       super.show();
     } else {
-      final VirtualFile[] files = FileChooser.chooseFiles(myProject, myFileDescriptor);
-      mySelectedDir = (files.length == 0 ? null : files[0]);
+      mySelectedDir = FileChooser.chooseFile(myProject, myFileDescriptor);
     }
   }
 
