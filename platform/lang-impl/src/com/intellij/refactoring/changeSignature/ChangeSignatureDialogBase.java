@@ -184,7 +184,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       }
     };
 
-    final JLabel nameLabel = new JLabel(RefactoringBundle.message("name.prompt"));
+    final JLabel nameLabel = new JLabel(RefactoringBundle.message("changeSignature.name.prompt"));
     myNameField = new EditorTextField(myMethod.getName());
     nameLabel.setLabelFor(myNameField);
     namePanel.add(nameLabel);
