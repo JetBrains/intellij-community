@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.MessageFormat;
 
 public class ChangeListStorageImpl implements ChangeListStorage {
@@ -80,7 +81,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     return ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp();
   }
 
-  private void handleError(Throwable e) {
+  private void handleError(Throwable e, @Nullable String message) {
     long storageTimestamp = -1;
 
     long vfsTimestamp = getVFSTimestamp();
@@ -93,11 +94,11 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       LocalHistoryLog.LOG.warn("cannot read storage timestamp", ex);
     }
 
-    LocalHistoryLog.LOG.warn("Local history is broken" +
+    LocalHistoryLog.LOG.error("Local history is broken" +
                              "(version:" + VERSION +
-                             ",current timestamp:" + timestamp +
-                             ",storage timestamp:" + storageTimestamp +
-                             ",vfs timestamp:" + vfsTimestamp + ")", e);
+                             ",current timestamp:" + DateFormat.getDateTimeInstance().format(timestamp) +
+                             ",storage timestamp:" + DateFormat.getDateTimeInstance().format(storageTimestamp) +
+                             ",vfs timestamp:" + DateFormat.getDateTimeInstance().format(vfsTimestamp) + ")\n" + message, e);
 
     myStorage.dispose();
     try {
@@ -105,7 +106,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       initStorage(myStorageDir);
     }
     catch (Throwable ex) {
-      LocalHistoryLog.LOG.warn("cannot recreate storage", ex);
+      LocalHistoryLog.LOG.error("cannot recreate storage", ex);
       isCompletelyBroken = true;
     }
   }
@@ -122,14 +123,32 @@ public class ChangeListStorageImpl implements ChangeListStorage {
   public synchronized ChangeSetHolder readPrevious(int id, TIntHashSet recursionGuard) {
     if (isCompletelyBroken) return null;
 
+    int prevId = 0;
     try {
-      int prevId = id == -1 ? myStorage.getLastRecord() : doReadPrevSafely(id, recursionGuard);
+      prevId = id == -1 ? myStorage.getLastRecord() : doReadPrevSafely(id, recursionGuard);
       if (prevId == 0) return null;
 
       return doReadBlock(prevId);
     }
     catch (Throwable e) {
-      handleError(e);
+      String message = null;
+      if (prevId != 0) {
+        try {
+          long prevRecordTimestamp = myStorage.getTimestamp(prevId);
+          int lastRecord = myStorage.getLastRecord();
+          long lastRecordTimestamp = myStorage.getTimestamp(lastRecord);
+
+          message = "invalid record is: " + prevId
+                    + " (created " + DateFormat.getDateTimeInstance().format(prevRecordTimestamp) + ") "
+                    + "last record is: " + lastRecord
+                    + " (created " + DateFormat.getDateTimeInstance().format(lastRecordTimestamp) + ")";
+        }
+        catch (Exception e1) {
+          message = "cannot retrieve more debug info: " + e1.getMessage();
+        }
+      }
+
+      handleError(e, message);
       return null;
     }
   }
@@ -161,7 +180,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       myStorage.force();
     }
     catch (IOException e) {
-      handleError(e);
+      handleError(e, null);
     }
   }
 
@@ -184,7 +203,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       myStorage.force();
     }
     catch (IOException e) {
-      handleError(e);
+      handleError(e, null);
     }
   }
 
