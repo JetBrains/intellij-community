@@ -22,12 +22,27 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
-  private static final int PAGE_SIZE = /*IntToIntBtree.doSanityCheck ? 64:*/2048;
+  private static final int PAGE_SIZE;
+  private static final int DEFAULT_PAGE_SIZE = 4096;
+
+  static {
+    int pageSize;
+    try {
+      String property = System.getProperty("idea.btree.page.size");
+      pageSize = property != null ? Integer.parseInt(property, 10):DEFAULT_PAGE_SIZE;
+    } catch (NumberFormatException ex) {
+      pageSize = DEFAULT_PAGE_SIZE;
+    }
+    PAGE_SIZE = pageSize;
+  }
+
   private static final int RECORD_SIZE = 4;
   private final byte[] myBuffer;
 
@@ -48,7 +63,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private static final int DIRTY_MAGIC = 0xbabe1977;
   private static final int VERSION = 6;
-  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafc + VERSION;
+  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafc + VERSION + PAGE_SIZE;
   private static Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
 
   public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
@@ -174,6 +189,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       if (myInlineKeysNoMapping) {
         List<IntToIntBtree.BtreeIndexNodeView> leafPages = new ArrayList<IntToIntBtree.BtreeIndexNodeView> ();
         collectLeafPages(btree.root, leafPages);
+        Collections.sort(leafPages, new Comparator<IntToIntBtree.BtreeIndexNodeView>() {
+          @Override
+          public int compare(IntToIntBtree.BtreeIndexNodeView o1, IntToIntBtree.BtreeIndexNodeView o2) {
+            return o1.address - o2.address;
+          }
+        });
 
         out:
         for(IntToIntBtree.BtreeIndexNodeView page:leafPages) {
