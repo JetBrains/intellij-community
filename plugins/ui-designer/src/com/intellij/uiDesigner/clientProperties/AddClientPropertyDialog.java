@@ -18,7 +18,6 @@ package com.intellij.uiDesigner.clientProperties;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.uiDesigner.clientProperties.ClientPropertiesManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +39,7 @@ public class AddClientPropertyDialog extends DialogWrapper {
     super(project, false);
     init();
     setTitle(UIDesignerBundle.message("client.property.add.title"));
-    myGroupPanel.setBorder(IdeBorderFactory.createTitledBorder(UIDesignerBundle.message("client.properties.type.header")));
+    myGroupPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(UIDesignerBundle.message("client.properties.type.header")));
   }
 
   @Nullable

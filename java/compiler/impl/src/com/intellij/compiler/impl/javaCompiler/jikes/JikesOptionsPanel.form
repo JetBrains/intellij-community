@@ -9,7 +9,7 @@
     <properties/>
     <border type="etched" title-resource-bundle="messages/CompilerBundle" title-key="jikes.options.group.title"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
     <children>
       <component id="3d38f" class="javax.swing.JCheckBox" binding="myCbDebuggingInfo">

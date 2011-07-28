@@ -56,12 +56,14 @@ public class EditClassFiltersDialog extends DialogWrapper {
 
     myClassFilterEditor = new ClassFilterEditor(myProject, myChooserFilter);
     myClassFilterEditor.setPreferredSize(new Dimension(400, 200));
-    myClassFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("class.filters.dialog.inclusion.filters.group")));
+    myClassFilterEditor.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+      DebuggerBundle.message("class.filters.dialog.inclusion.filters.group")));
     mainPanel.add(myClassFilterEditor);
 
     myClassExclusionFilterEditor = new ClassFilterEditor(myProject, myChooserFilter);
     myClassExclusionFilterEditor.setPreferredSize(new Dimension(400, 200));
-    myClassExclusionFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("class.filters.dialog.exclusion.filters.group")));
+    myClassExclusionFilterEditor.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+      DebuggerBundle.message("class.filters.dialog.exclusion.filters.group")));
     mainPanel.add(myClassExclusionFilterEditor);
 
     contentPanel.add(mainPanel, BorderLayout.CENTER);

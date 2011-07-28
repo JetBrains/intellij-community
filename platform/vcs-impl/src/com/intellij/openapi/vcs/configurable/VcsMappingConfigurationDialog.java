@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -63,7 +64,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myVCSComboBox.setModel(VcsDirectoryConfigurationPanel.buildVcsWrappersModel(project));
     myDirectoryTextField.addActionListener(new MyBrowseFolderListener("Select Directory", "Select directory to map to a VCS",
                                                                       myDirectoryTextField, project,
-                                                                      new FileChooserDescriptor(false, true, false, false, false, false)));
+                                                                      FileChooserDescriptorFactory.createSingleFolderDescriptor()));
     myMappingCopy = new VcsDirectoryMapping("", "");
     setTitle(title);
     init();

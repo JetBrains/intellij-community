@@ -26,12 +26,14 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.TitledBorderWithMnemonic;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -47,9 +49,7 @@ public class MemberSelectionPanel extends JPanel {
    */
   public MemberSelectionPanel(String title, List<MemberInfo> memberInfo, String abstractColumnHeader) {
     super();
-    TitledBorderWithMnemonic titledBorder = new TitledBorderWithMnemonic(appendTitledBorderMnemonic(title));
-    Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
-    Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
+    Border border = IdeBorderFactory.createTitledBorderSimpleWithoutIndent(title);
     setBorder(border);
     setLayout(new BorderLayout());
 

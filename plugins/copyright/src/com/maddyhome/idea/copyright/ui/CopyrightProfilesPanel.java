@@ -197,10 +197,10 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
               }
             };
             descriptor.setTitle("Choose file containing copyright notice");
-            final VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor);
-            if (files.length != 1) return;
+            final VirtualFile file = FileChooser.chooseFile(myProject, descriptor);
+            if (file == null) return;
 
-            final List<CopyrightProfile> copyrightProfiles = ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(files[0]));
+            final List<CopyrightProfile> copyrightProfiles = ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(file));
             if (copyrightProfiles == null) return;
             if (!copyrightProfiles.isEmpty()) {
               if (copyrightProfiles.size() == 1) {

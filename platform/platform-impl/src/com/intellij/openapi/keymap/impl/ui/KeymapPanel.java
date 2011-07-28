@@ -227,15 +227,15 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
   private JPanel createShortcutsPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
-    JLabel currentKeysLabel = new JLabel(KeyMapBundle.message("shortcuts.keymap.label"));
-    panel.add(currentKeysLabel, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
-
     myShortcutsList = new JBList(new DefaultListModel());
     myShortcutsList.getEmptyText().setText(KeyMapBundle.message("shortcuts.keymap.no.shortcuts"));
 
     myShortcutsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myShortcutsList.setCellRenderer(new ShortcutListRenderer());
-    currentKeysLabel.setLabelFor(myShortcutsList);
+
+    JComponent separator = SeparatorFactory.createSeparator(KeyMapBundle.message("shortcuts.keymap.label"), myShortcutsList);
+    panel.add(separator, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 8), 0, 0));
+
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myShortcutsList);
     scrollPane.setPreferredSize(new Dimension(160, 200));
     panel.add(scrollPane, new GridBagConstraints(1,1,1,1,1,1,GridBagConstraints.WEST,GridBagConstraints.BOTH, new Insets(0, 0, 0, 2), 0, 0));
@@ -465,7 +465,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
         return new Dimension(300, -1);
       }
     };
-    panel.add(new JLabel(KeyMapBundle.message("action.description.ide.border.factory.title")), BorderLayout.NORTH);
+    panel.add(SeparatorFactory.createSeparator(KeyMapBundle.message("action.description.ide.border.factory.title"), null), BorderLayout.NORTH);
     myDescription = new JEditorPane(UIUtil.HTML_MIME, "<html><body></body></html>");
     myDescription.setEditable(false);
     panel.add(ScrollPaneFactory.createScrollPane(myDescription), BorderLayout.CENTER);

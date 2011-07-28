@@ -61,7 +61,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     for (CodeFoldingOptionsProvider provider : getConfigurables()) {
       myFoldingPanel
         .add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                                GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+                                                                GridBagConstraints.NONE, new Insets(5, 0, 7, 0), 0, 0));
     }
     return myRootPanel;
   }

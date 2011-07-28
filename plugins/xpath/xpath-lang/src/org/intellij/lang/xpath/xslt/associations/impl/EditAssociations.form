@@ -29,7 +29,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
             </clientProperties>
             <border type="none" title="Associated Files"/>
             <children>
@@ -42,7 +42,7 @@
                 <border type="none"/>
                 <children/>
               </grid>
-              <scrollpane class="com.intellij.ui.components.JBScrollPane" id="cc69">
+              <scrollpane id="cc69" class="com.intellij.ui.components.JBScrollPane">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
                     <preferred-size width="200" height="300"/>
@@ -66,11 +66,11 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
             </clientProperties>
             <border type="none" title="Project XSLT Files"/>
             <children>
-              <scrollpane class="com.intellij.ui.components.JBScrollPane" id="39878">
+              <scrollpane id="39878" class="com.intellij.ui.components.JBScrollPane">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>

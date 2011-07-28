@@ -76,20 +76,20 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     myFirstStrokePanel = new StrokePanel(KeyMapBundle.message("first.stroke.panel.title"));
     panel.add(
       myFirstStrokePanel,
-      new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,5,0),0,0)
+      new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
     );
 
     // Second stroke panel
 
     panel.add(
       myEnableSecondKeystroke,
-      new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0,0,5,0),0,0)
+      new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0,0,0,0),0,0)
     );
 
     mySecondStrokePanel = new StrokePanel(KeyMapBundle.message("second.stroke.panel.title"));
     panel.add(
       mySecondStrokePanel,
-      new GridBagConstraints(0,2,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,5,0),0,0)
+      new GridBagConstraints(0,2,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,20,0,0),0,0)
     );
 
     // Shortcut preview
@@ -97,20 +97,20 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     JPanel previewPanel = new JPanel(new BorderLayout());
     previewPanel.setBorder(
       BorderFactory.createCompoundBorder(
-        IdeBorderFactory.createTitledBorder(KeyMapBundle.message("shortcut.preview.ide.border.factory.title")),
+        IdeBorderFactory.createTitledBorderBoldWithIndent(KeyMapBundle.message("shortcut.preview.ide.border.factory.title")),
         BorderFactory.createEmptyBorder(5,5,5,5)
       )
     );
     previewPanel.add(myKeystrokePreview);
     panel.add(
       previewPanel,
-      new GridBagConstraints(0,3,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,5,0),0,0)
+      new GridBagConstraints(0,3,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
     );
 
     // Conflicts
 
     JPanel conflictsPanel = new JPanel(new BorderLayout());
-    conflictsPanel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("conflicts.ide.border.factory.title")));
+    conflictsPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(KeyMapBundle.message("conflicts.ide.border.factory.title")));
     myConflictInfoArea.setEditable(false);
     myConflictInfoArea.setBackground(panel.getBackground());
     myConflictInfoArea.setLineWrap(true);
@@ -248,7 +248,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
       setLayout(new BorderLayout());
       setBorder(
         BorderFactory.createCompoundBorder(
-          IdeBorderFactory.createTitledBorder(borderText),
+          IdeBorderFactory.createTitledBorderSimpleWithIndent(borderText),
           BorderFactory.createEmptyBorder(5,5,5,5)
         )
       );

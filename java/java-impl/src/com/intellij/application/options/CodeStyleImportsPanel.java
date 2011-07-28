@@ -18,7 +18,6 @@ package com.intellij.application.options;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -91,12 +90,13 @@ public class CodeStyleImportsPanel extends JPanel {
     final MultiLineLabel oneImportPerDirectiveLabel = new MultiLineLabel("<% page import=\"com.company.Boo\"%>\n" +
                                                                          "<% page import=\"com.company.Far\"%>");
     final JPanel labelPanel = new JPanel(new BorderLayout());
-    labelPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(20, 10, 0, 0), IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview"))));
+    labelPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(20, 10, 0, 0), IdeBorderFactory.createTitledBorderBoldWithIndent(
+      ApplicationBundle.message("title.preview"))));
 
     JPanel resultPanel = new JPanel(new BorderLayout());
     resultPanel.add(btnPanel, BorderLayout.NORTH);
     resultPanel.add(labelPanel, BorderLayout.CENTER);
-    resultPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.jsp.imports.layout")));
+    resultPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(ApplicationBundle.message("title.jsp.imports.layout")));
 
 
     ActionListener actionListener = new ActionListener() {
@@ -141,7 +141,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JPanel createPackagesPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with")));
+    panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithoutIndent(ApplicationBundle.message("title.packages.to.use.import.with")));
 
     panel.add(createPackagesTable(), BorderLayout.CENTER);
     panel.add(createPackagesButtonsPanel(), BorderLayout.EAST);
@@ -151,7 +151,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JPanel createImportLayoutPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout")));
+    panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithoutIndent(ApplicationBundle.message("title.import.layout")));
     myCbLayoutStaticImportsSeparately = new JCheckBox("Layout static imports separately");
 
     myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener(){

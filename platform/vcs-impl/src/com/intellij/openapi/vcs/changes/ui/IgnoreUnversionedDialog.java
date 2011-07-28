@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -78,7 +79,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     myIgnoreDirectoryTextField.addBrowseFolderListener("Select Directory to Ignore",
                                                        "Select the directory which will not be tracked for changes",
                                                        project,
-                                                       new FileChooserDescriptor(false, true, false, false, false, false));
+                                                       FileChooserDescriptorFactory.createSingleFolderDescriptor());
     ActionListener listener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         updateControls();

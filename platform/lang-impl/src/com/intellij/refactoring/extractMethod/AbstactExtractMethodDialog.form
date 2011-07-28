@@ -26,9 +26,6 @@
               <columns value="10"/>
               <horizontalAlignment value="2"/>
             </properties>
-            <clientProperties>
-              <caretAspectRatio class="java.lang.Float" value="0.04"/>
-            </clientProperties>
           </component>
           <component id="e8f16" class="javax.swing.JLabel">
             <constraints>
@@ -46,10 +43,10 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="1" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
+        </clientProperties>
         <border type="etched" title-resource-bundle="messages/RefactoringBundle" title-key="refactoring.extract.method.dialog.parameters"/>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
-</clientProperties>
         <children>
           <component id="d4ee9" class="com.intellij.refactoring.extractMethod.AbstractParameterTablePanel" binding="myParametersPanel" custom-create="true">
             <constraints>
@@ -59,7 +56,7 @@
           </component>
         </children>
       </grid>
-      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="b0a7b">
+      <scrollpane id="b0a7b" class="com.intellij.ui.components.JBScrollPane">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="1" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -75,9 +72,6 @@
               <rows value="0"/>
               <text value="def foo()"/>
             </properties>
-            <clientProperties>
-              <caretAspectRatio class="java.lang.Float" value="0.04"/>
-            </clientProperties>
           </component>
         </children>
       </scrollpane>
@@ -89,7 +83,7 @@
           <text resource-bundle="messages/RefactoringBundle" key="refactoring.extract.method.dialog.signature.preview"/>
         </properties>
       </component>
-      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="ca3f5">
+      <scrollpane id="ca3f5" class="com.intellij.ui.components.JBScrollPane">
         <constraints>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="1" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -101,9 +95,6 @@
             <properties>
               <editable value="false"/>
             </properties>
-            <clientProperties>
-              <caretAspectRatio class="java.lang.Float" value="0.04"/>
-            </clientProperties>
           </component>
         </children>
       </scrollpane>

@@ -124,10 +124,11 @@ class MouseShortcutDialog extends DialogWrapper{
     // Single/Double click
 
     JPanel clickCountPanel=new JPanel(new GridBagLayout());
-    clickCountPanel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("mouse.shortcut.dialog.click.count.border")));
+    clickCountPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
+      KeyMapBundle.message("mouse.shortcut.dialog.click.count.border")));
     panel.add(
       clickCountPanel,
-      new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,4,0),0,0)
+      new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
     );
     clickCountPanel.add(
       myRbSingleClick,
@@ -153,14 +154,16 @@ class MouseShortcutDialog extends DialogWrapper{
       clickPadPanel,
       new GridBagConstraints(0,1,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,4,0),0,0)
     );
-    clickPadPanel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("mouse.shortcut.dialog.click.pad.border")));
+    clickPadPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
+      KeyMapBundle.message("mouse.shortcut.dialog.click.pad.border")));
     myClickPad.setPreferredSize(new Dimension(260,60));
     clickPadPanel.add(myClickPad,BorderLayout.CENTER);
 
     // Shortcut preview
 
     JPanel previewPanel=new JPanel(new GridBagLayout());
-    previewPanel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("mouse.shortcut.dialog.shortcut.preview.border")));
+    previewPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
+      KeyMapBundle.message("mouse.shortcut.dialog.shortcut.preview.border")));
     panel.add(
       previewPanel,
       new GridBagConstraints(0,2,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,4,0),0,0)
@@ -173,7 +176,8 @@ class MouseShortcutDialog extends DialogWrapper{
     // Conflicts panel
 
     JPanel conflictsPanel=new JPanel(new GridBagLayout());
-    conflictsPanel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("mouse.shortcut.dialog.conflicts.border")));
+    conflictsPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
+      KeyMapBundle.message("mouse.shortcut.dialog.conflicts.border")));
     panel.add(
       conflictsPanel,
       new GridBagConstraints(0,3,1,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,0,0),0,0)

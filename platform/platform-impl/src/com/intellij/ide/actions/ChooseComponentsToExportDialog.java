@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.io.FileUtil;
@@ -123,8 +124,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
   @Nullable
   public static String chooseSettingsFile(String oldPath, Component parent, final String title, final String description) {
-    FileChooserDescriptor chooserDescriptor;
-    chooserDescriptor = new FileChooserDescriptor(true, true, true, true, false, false);
+    FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     chooserDescriptor.setDescription(description);
     chooserDescriptor.setHideIgnored(false);
     chooserDescriptor.setTitle(title);
@@ -140,11 +140,10 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     else {
       initialDir = null;
     }
-    final VirtualFile[] files = FileChooser.chooseFiles(parent, chooserDescriptor, initialDir);
-    if (files.length == 0) {
+    final VirtualFile file = FileChooser.chooseFile(parent, chooserDescriptor, initialDir);
+    if (file == null) {
       return null;
     }
-    VirtualFile file = files[0];
     String path;
     if (file.isDirectory()) {
       String defaultName = new File(DEFAULT_PATH).getName();

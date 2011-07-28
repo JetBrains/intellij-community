@@ -80,9 +80,9 @@ public class GuiUtils {
     return constructFieldWithBrowseButton(aTextField, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getDirectoryChooserDescriptor(aSearchedObjectName);
-        VirtualFile[] files = FileChooser.chooseFiles(aTextField, descriptor);
-        if (files.length != 0) {
-          aTextField.setText(FileUtil.toSystemDependentName(files[0].getPath()));
+        VirtualFile file = FileChooser.chooseFile(aTextField, descriptor);
+        if (file != null) {
+          aTextField.setText(FileUtil.toSystemDependentName(file.getPath()));
           aTextField.postActionEvent();
         }
       }
@@ -94,10 +94,10 @@ public class GuiUtils {
     return constructFieldWithBrowseButton(aFieldWithHistory, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getFileChooserDescriptor(aSearchedObjectName);
-        VirtualFile[] files = FileChooser.chooseFiles(aFieldWithHistory, descriptor);
-        if (files.length != 0) {
+        VirtualFile file = FileChooser.chooseFile(aFieldWithHistory, descriptor);
+        if (file != null) {
           try {
-            aFieldWithHistory.setText(VfsUtil.virtualToIoFile(files[0]).toURL().toString());
+            aFieldWithHistory.setText(VfsUtil.virtualToIoFile(file).toURL().toString());
           }
           catch (MalformedURLException e1) {
             aFieldWithHistory.setText("");
@@ -125,7 +125,7 @@ public class GuiUtils {
 
   public static JPanel makeTitledPanel(JComponent aComponent, String aTitle) {
     JPanel result = makePaddedPanel(aComponent, false, true, false, true);
-    return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle));
+    return wrapWithBorder(result, IdeBorderFactory.createTitledBorderBoldWithIndent(aTitle));
   }
 
 

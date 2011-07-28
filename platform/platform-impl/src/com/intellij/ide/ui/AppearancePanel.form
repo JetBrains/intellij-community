@@ -23,7 +23,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
             </clientProperties>
             <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="group.ui.options"/>
             <children>
@@ -178,7 +178,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
             </clientProperties>
             <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="group.transparency"/>
             <children>
@@ -234,7 +234,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
             </clientProperties>
             <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="group.window.options"/>
             <children>

@@ -231,7 +231,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
     gbc.weighty = 1.0;
     gbc.gridwidth = 1;
-    gbc.insets = new Insets(4, 8, 4, 4);
+    gbc.insets = new Insets(4, 0, 4, 4);
 
     myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("delegate.members"), Collections.<MemberInfo>emptyList(), null);
     panel.add(myMemberSelectionPanel, gbc);

@@ -122,12 +122,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
           }
         };
         descriptor.setDescription("Choose profile file");
-        final VirtualFile[] files = FileChooser.chooseFiles(myWholePanel, descriptor);
-        if (files.length == 0) return;
+        final VirtualFile file = FileChooser.chooseFile(myWholePanel, descriptor, null);
+        if (file == null) return;
         InspectionProfileImpl profile =
         new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), myProfileManager);
         try {
-          Element rootElement = JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(files[0])).getRootElement();
+          Element rootElement = JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(file)).getRootElement();
           if (Comparing.strEqual(rootElement.getName(), "component")) {//import right from .idea/inspectProfiles/xxx.xml
             rootElement = (Element)rootElement.getChildren().get(0);
           }
@@ -187,15 +187,15 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void actionPerformed(ActionEvent e) {
         final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         descriptor.setDescription("Choose directory to store profile file");
-        final VirtualFile[] files = FileChooser.chooseFiles(myWholePanel, descriptor);
-        if (files.length == 0) return;
+        final VirtualFile file = FileChooser.chooseFile(myWholePanel, descriptor, null);
+        if (file == null) return;
         final Element element = new Element("inspections");
         try {
           final SingleInspectionProfilePanel panel = getSelectedPanel();
           LOG.assertTrue(panel != null);
           final InspectionProfileImpl profile = (InspectionProfileImpl)panel.getSelectedProfile();
           profile.writeExternal(element);
-          final String filePath = FileUtil.toSystemDependentName(files[0].getPath()) + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml";
+          final String filePath = FileUtil.toSystemDependentName(file.getPath()) + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml";
           if (new File(filePath).isFile()) {
             if (Messages.showOkCancelDialog(myWholePanel, "File \'" + filePath + "\' already exist. Do you want to overwrite it?", "Warning", Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return;
           }

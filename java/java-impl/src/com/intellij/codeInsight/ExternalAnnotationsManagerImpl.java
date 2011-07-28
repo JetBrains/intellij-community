@@ -232,26 +232,24 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(ProjectBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
     descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
-    final VirtualFile[] files = FileChooser.chooseFiles(project, descriptor);
-    if (files.length > 0) {
+    final VirtualFile file = FileChooser.chooseFile(project, descriptor);
+    if (file != null) {
       new WriteCommandAction(project) {
         protected void run(final Result result) throws Throwable {
-          if (files[0] != null) {
-            appendChosenAnnotationsRoot(entry, files[0]);
-            final List<XmlFile> xmlFiles = findExternalAnnotationsFile(listOwner);
-            if (xmlFiles != null) { //file already exists under appeared content root
-              if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFiles.get(0))) return;
-              annotateExternally(listOwner, annotationFQName, xmlFiles.get(0), fromFile, value);
+          appendChosenAnnotationsRoot(entry, file);
+          final List<XmlFile> xmlFiles = findExternalAnnotationsFile(listOwner);
+          if (xmlFiles != null) { //file already exists under appeared content root
+            if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFiles.get(0))) return;
+            annotateExternally(listOwner, annotationFQName, xmlFiles.get(0), fromFile, value);
+          }
+          else {
+            final XmlFile annotationsXml = createAnnotationsXml(file, packageName);
+            if (annotationsXml != null) {
+              final List<XmlFile> createdFiles = new ArrayList<XmlFile>();
+              createdFiles.add(annotationsXml);
+              myExternalAnnotations.put(getFQN(packageName, virtualFile), createdFiles);
             }
-            else {
-              final XmlFile annotationsXml = createAnnotationsXml(files[0], packageName);
-              if (annotationsXml != null) {
-                final List<XmlFile> createdFiles = new ArrayList<XmlFile>();
-                createdFiles.add(annotationsXml);
-                myExternalAnnotations.put(getFQN(packageName, virtualFile), createdFiles);
-              }
-              annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value);
-            }
+            annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value);
           }
         }
       }.execute();

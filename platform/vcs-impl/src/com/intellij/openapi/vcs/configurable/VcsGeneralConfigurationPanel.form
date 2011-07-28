@@ -91,7 +91,7 @@
         <properties/>
         <border type="etched" title="When files are created"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
         <children>
           <component id="61373" class="javax.swing.JRadioButton" binding="myShowDialogOnAddingFile">
@@ -129,7 +129,7 @@
         <properties/>
         <border type="etched" title="When empty changelist becomes inactive"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
         <children>
           <component id="7b546" class="javax.swing.JRadioButton">
@@ -167,7 +167,7 @@
         <properties/>
         <border type="etched" title="When files are deleted"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
         <children>
           <component id="1256b" class="javax.swing.JRadioButton" binding="myShowDialogOnRemovingFile">
@@ -211,7 +211,7 @@
         <properties/>
         <border type="etched" title-resource-bundle="messages/VcsBundle" title-key="border.display.dialog.when.commands.invoked"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
         <children/>
       </grid>

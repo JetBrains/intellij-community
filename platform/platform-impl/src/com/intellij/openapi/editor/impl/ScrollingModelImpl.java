@@ -37,15 +37,13 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -384,9 +382,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     private static final int SCROLL_DURATION = 150;
     private static final int SCROLL_INTERVAL = 10;
 
-    private final Timer myTimer;
-    private int myTicksCount = 0;
-
     private final int myStartHOffset;
     private final int myStartVOffset;
     private final int myEndHOffset;
@@ -404,6 +399,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
     private final int myStepCount;
     private final double myPow;
+    private final Animator myAnimator;
 
     public AnimatedScrollingRunnable(int startHOffset,
                                      int startVOffset,
@@ -435,13 +431,26 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
       myStartCommand = CommandProcessor.getInstance().getCurrentCommand();
 
-      myTimer = UIUtil.createNamedTimer("Animated scroller",SCROLL_INTERVAL, new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          tick();
+      myAnimator = new Animator("Animated scroller", myStepCount, SCROLL_INTERVAL, false, 0, 0, true) {
+        @Override
+        public void paintNow(float frame, float totalFrames, float cycle) {
+          double time = (frame + 1) / (double)totalFrames;
+          double fraction = timeToFraction(time);
+
+          final int hOffset = (int)(myStartHOffset + (myEndHOffset - myStartHOffset) * fraction + 0.5);
+          final int vOffset = (int)(myStartVOffset + (myEndVOffset - myStartVOffset) * fraction + 0.5);
+
+          _scrollHorizontally(hOffset);
+          _scrollVertically(vOffset);
         }
-      });
-      myTimer.setRepeats(true);
-      myTimer.start();
+
+        @Override
+        protected void paintCycleEnd() {
+          finish(true);
+        }
+      };
+
+      myAnimator.resume();
     }
 
     public Rectangle getTargetVisibleArea() {
@@ -453,21 +462,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     //public Runnable getStartCommand() {
     //  return myStartCommand;
     //}
-
-    private void tick() {
-      double time = (myTicksCount + 1) / (double)myStepCount;
-      double fraction = timeToFraction(time);
-
-      final int hOffset = (int)(myStartHOffset + (myEndHOffset - myStartHOffset) * fraction + 0.5);
-      final int vOffset = (int)(myStartVOffset + (myEndVOffset - myStartVOffset) * fraction + 0.5);
-
-      _scrollHorizontally(hOffset);
-      _scrollVertically(vOffset);
-
-      if (++myTicksCount == myStepCount) {
-        finish(true);
-      }
-    }
 
     public void cancel(boolean scrollToTarget) {
       assertIsDispatchThread();
@@ -485,7 +479,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
         executePostRunnables();
       }
 
-      myTimer.stop();
+      myAnimator.dispose();
       if (myCurrentAnimationRequest == this) {
         myCurrentAnimationRequest = null;
       }

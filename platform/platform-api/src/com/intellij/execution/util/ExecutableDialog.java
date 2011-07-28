@@ -13,6 +13,7 @@
 package com.intellij.execution.util;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -58,7 +59,7 @@ public class ExecutableDialog extends DialogWrapper {
   private void createUIComponents() {
     myExecutablePath = new TextFieldWithBrowseButton();
     myExecutablePath.setText(myExecutableValidator.getCurrentExecutable());
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     myExecutablePath.addBrowseFolderListener(myExecutableValidator.getFileChooserTitle(), myExecutableValidator.getFileChooserDescription(),
                                              null, descriptor);
     myExecutablePath.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {

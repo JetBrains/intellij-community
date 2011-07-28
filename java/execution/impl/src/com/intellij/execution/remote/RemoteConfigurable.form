@@ -27,7 +27,7 @@
         <properties/>
         <border type="etched" title-resource-bundle="messages/ExecutionBundle" title-key="remote.configuration.settings.border"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
         <children>
           <grid id="d0319" binding="mySocketPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

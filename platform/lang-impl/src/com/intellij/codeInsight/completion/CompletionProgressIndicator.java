@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
@@ -599,7 +600,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void scheduleRestart() {
     if (isAutopopupCompletion() && hideAutopopupIfMeaningless()) {
-      CompletionAutoPopupHandler.scheduleAutoPopup(myEditor, null);
+      AutoPopupController.getInstance(getProject()).scheduleAutoPopup(myEditor, null);
       return;
     }
 

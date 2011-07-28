@@ -32,7 +32,6 @@ import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,12 +110,10 @@ public class PullUpDialog extends RefactoringDialog {
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel();
 
-    panel.setBorder(IdeBorderFactory.createRoundedBorder());
-
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = new Insets(4, 5, 4, 8);
     gbConstraints.weighty = 1;
     gbConstraints.weightx = 1;
     gbConstraints.gridy = 0;

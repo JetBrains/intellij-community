@@ -16,7 +16,9 @@
 
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
@@ -38,7 +40,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -83,34 +84,43 @@ public class AutoPopupController implements Disposable {
   }
 
   public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<PsiFile> condition){
+    scheduleAutoPopup(editor, condition);
+  }
+
+  public void scheduleAutoPopup(final Editor editor, @Nullable final Condition<PsiFile> condition) {
     if (ApplicationManager.getApplication().isUnitTestMode() &&
         !CompletionAutoPopupHandler.ourTestingAutopopup) {
       return;
     }
 
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.AUTO_POPUP_COMPLETION_LOOKUP) {
-      if (PsiUtilBase.getPsiFileInEditor(editor, myProject) == null) return;
-      final Runnable request = new Runnable(){
-        public void run(){
-          if (!myProject.isDisposed() && !editor.isDisposed()) {
-            CompletionAutoPopupHandler.scheduleAutoPopup(editor, condition);
-          }
-        }
-      };
-
-      addRequest(request, settings.AUTO_LOOKUP_DELAY);
+    if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) {
+      return;
     }
-  }
 
-  public void invokeAutoPopupRunnable(final Runnable request, final int delay) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) return;
     final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
       currentCompletion.closeAndFinish(true);
     }
 
-    addRequest(request, delay);
+    final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false, editor);
+    CompletionServiceImpl.setCompletionPhase(phase);
+
+    addRequest(new Runnable() {
+      @Override
+      public void run() {
+        CompletionAutoPopupHandler.runLaterWithCommitted(myProject, editor.getDocument(), new Runnable() {
+          @Override
+          public void run() {
+            if (phase.isExpired()) return;
+
+            PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+            if (file != null && condition != null && !condition.value(file)) return;
+
+            CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0);
+          }
+        });
+      }
+    }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
   }
 
   @TestOnly

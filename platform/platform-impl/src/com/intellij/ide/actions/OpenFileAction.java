@@ -75,7 +75,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
       }
     });
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, true);
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor();
     descriptor.setTitle(IdeBundle.message("title.open.file"));
 
     final String lastFilePath = project != null ? getLastFilePath(project) : null;

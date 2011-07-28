@@ -307,9 +307,12 @@ public class UIUtil {
 
   public static int getDisplayMnemonicIndex(@NotNull String s) {
     int idx = s.indexOf('&');
-    if (idx >= 0) return idx;
+    if (idx >= 0 && idx != s.length() - 1 && idx == s.lastIndexOf('&')) return idx;
 
-    return s.indexOf(MNEMONIC);
+    idx = s.indexOf(MNEMONIC);
+    if (idx >= 0 && idx != s.length() - 1 && idx == s.lastIndexOf(MNEMONIC)) return idx;
+
+    return -1;
   }
 
   public static String replaceMnemonicAmpersand(final String value) {
@@ -1434,7 +1437,7 @@ public class UIUtil {
   }
 
   public static Font getBorderFont() {
-    return UIManager.getFont("TitledBorder.font").deriveFont(Font.BOLD);
+    return UIManager.getFont("TitledBorder.font");
   }
 
   /**

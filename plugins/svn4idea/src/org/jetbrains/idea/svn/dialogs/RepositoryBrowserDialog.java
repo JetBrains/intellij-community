@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -931,16 +932,16 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   @Nullable
   private File selectFile(String title, String description) {
-    FileChooserDescriptor fcd = new FileChooserDescriptor(false, true, false, false, false, false);
+    FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
     fcd.setTitle(title);
     fcd.setDescription(description);
     fcd.setHideIgnored(false);
-    VirtualFile[] files = FileChooser.chooseFiles(myProject, fcd, null);
-    if (files.length != 1 || files[0] == null) {
+    VirtualFile file = FileChooser.chooseFile(myProject, fcd);
+    if (file == null) {
       return null;
     }
-    final String path = files[0].getPath();
+    final String path = file.getPath();
     if (path.endsWith(":")) {   // workaround for VFS oddities with drive root (IDEADEV-20870)
       return new File(path + "/");
     }

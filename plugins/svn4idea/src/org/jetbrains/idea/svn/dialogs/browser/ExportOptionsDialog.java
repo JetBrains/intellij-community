@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -164,15 +165,15 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
 
   public void actionPerformed(ActionEvent e) {
     // choose directory here/
-    FileChooserDescriptor fcd = new FileChooserDescriptor(false, true, false, false, false, false);
+    FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
     fcd.setTitle("Export Directory");
     fcd.setDescription("Select directory to export from subversion");
     fcd.setHideIgnored(false);
-    VirtualFile[] files = FileChooser.chooseFiles(getContentPane(), fcd, null);
-    if (files == null || files.length != 1 || files[0] == null) {
+    VirtualFile file = FileChooser.chooseFile(getContentPane(), fcd);
+    if (file == null) {
       return;
     }
-    myPathField.setText(files[0].getPath().replace('/', File.separatorChar));
+    myPathField.setText(file.getPath().replace('/', File.separatorChar));
   }
 }

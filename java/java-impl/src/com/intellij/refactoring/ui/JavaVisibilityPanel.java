@@ -33,7 +33,6 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.EventListener;
 
 public class JavaVisibilityPanel extends VisibilityPanelBase {
   private JRadioButton myRbAsIs;
@@ -44,7 +43,7 @@ public class JavaVisibilityPanel extends VisibilityPanelBase {
   private final JRadioButton myRbPublic;
 
   public JavaVisibilityPanel(boolean hasAsIs, final boolean hasEscalate) {
-    setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title")));
+    setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(RefactoringBundle.message("visibility.border.title")));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     ButtonGroup bg = new ButtonGroup();
 

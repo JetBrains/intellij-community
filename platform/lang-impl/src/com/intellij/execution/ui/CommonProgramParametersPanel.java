@@ -71,9 +71,9 @@ public class CommonProgramParametersPanel extends JPanel {
         FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
         fileChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModuleContext);
-        VirtualFile[] files = FileChooser.chooseFiles(myWorkingDirectoryComponent, fileChooserDescriptor);
-        if (files.length != 0) {
-          setWorkingDirectory(files[0].getPresentableUrl());
+        VirtualFile file = FileChooser.chooseFile(myWorkingDirectoryComponent, fileChooserDescriptor, null);
+        if (file != null) {
+          setWorkingDirectory(file.getPresentableUrl());
         }
       }
     });

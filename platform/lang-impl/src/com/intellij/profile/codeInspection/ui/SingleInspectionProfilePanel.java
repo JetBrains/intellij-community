@@ -877,7 +877,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     fillTreeData(myProfileFilter != null ? myProfileFilter.getFilter() : null, true);
 
     JPanel descriptionPanel = new JPanel(new BorderLayout());
-    //descriptionPanel.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.description.title")));
+    //descriptionPanel.setBorder(IdeBorderFactory.createBoldTitledBorder(InspectionsBundle.message("inspection.description.title")));
     descriptionPanel.add(ScrollPaneFactory.createScrollPane(myBrowser), BorderLayout.CENTER);
 
     Splitter rightPanel = new Splitter(true);
