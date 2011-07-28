@@ -187,6 +187,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     actions.add(new MyRemoveAction());
     actions.add(Separator.getInstance());
     addCollapseExpandActions(actions);
+    actions.add(Separator.getInstance());
+    actions.add(new EditFrameworkDetectionExcludesAction(myProject));
     return actions;
   }
 

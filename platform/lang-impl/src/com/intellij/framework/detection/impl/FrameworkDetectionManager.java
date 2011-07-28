@@ -157,7 +157,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       if (detector != null) {
         excludesConfiguration.removeExcluded(newFiles, detector);
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Detector '" + detector.getFrameworkTypeId() + "': " + files.size() + " accepted files, " + newFiles.size() + " files to process");
+          LOG.debug("Detector '" + detector.getDetectorId() + "': " + files.size() + " accepted files, " + newFiles.size() + " files to process");
         }
         final List<? extends DetectedFrameworkDescription> frameworks;
         if (!newFiles.isEmpty()) {

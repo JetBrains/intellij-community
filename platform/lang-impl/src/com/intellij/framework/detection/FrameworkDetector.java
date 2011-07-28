@@ -15,6 +15,7 @@
  */
 package com.intellij.framework.detection;
 
+import com.intellij.framework.FrameworkType;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,15 +31,15 @@ import java.util.List;
  */
 public abstract class FrameworkDetector {
   public static final ExtensionPointName<FrameworkDetector> EP_NAME = ExtensionPointName.create("com.intellij.framework.detector");
-  private final String myFrameworkTypeId;
+  private final String myDetectorId;
   private final int myDetectorVersion;
 
-  protected FrameworkDetector(String frameworkTypeId) {
-    this(frameworkTypeId, 0);
+  protected FrameworkDetector(String detectorId) {
+    this(detectorId, 0);
   }
 
-  protected FrameworkDetector(@NotNull String frameworkTypeId, int detectorVersion) {
-    myFrameworkTypeId = frameworkTypeId;
+  protected FrameworkDetector(@NotNull String detectorId, int detectorVersion) {
+    myDetectorId = detectorId;
     myDetectorVersion = detectorVersion;
   }
 
@@ -52,11 +53,13 @@ public abstract class FrameworkDetector {
                                                                       @NotNull FrameworkDetectionContext context);
 
   @NotNull
-  public final String getFrameworkTypeId() {
-    return myFrameworkTypeId;
+  public final String getDetectorId() {
+    return myDetectorId;
   }
 
   public final int getDetectorVersion() {
     return myDetectorVersion;
   }
+
+  public abstract FrameworkType getFrameworkType();
 }

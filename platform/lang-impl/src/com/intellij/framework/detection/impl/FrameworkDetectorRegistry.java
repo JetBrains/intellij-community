@@ -15,6 +15,7 @@
  */
 package com.intellij.framework.detection.impl;
 
+import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -30,6 +32,13 @@ public abstract class FrameworkDetectorRegistry {
   public static FrameworkDetectorRegistry getInstance() {
     return ServiceManager.getService(FrameworkDetectorRegistry.class);
   }
+
+  @Nullable
+  public abstract FrameworkType findFrameworkType(@NotNull String typeId);
+
+  @NotNull
+  public abstract List<? extends FrameworkType> getFrameworkTypes();
+
 
   public abstract int getDetectorsVersion();
 

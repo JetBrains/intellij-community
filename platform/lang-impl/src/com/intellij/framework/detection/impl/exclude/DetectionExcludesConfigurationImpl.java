@@ -114,7 +114,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
 
   @Override
   public void removeExcluded(@NotNull Collection<VirtualFile> files, @NotNull FrameworkDetector detector) {
-    if (myExcludedFrameworks.contains(detector.getFrameworkTypeId())) {
+    if (myExcludedFrameworks.contains(detector.getFrameworkType().getId())) {
       files.clear();
       return;
     }
@@ -122,7 +122,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     final Iterator<VirtualFile> iterator = files.iterator();
     while (iterator.hasNext()) {
       VirtualFile file = iterator.next();
-      if (isFileExcluded(file, detector.getFrameworkTypeId())) {
+      if (isFileExcluded(file, detector.getFrameworkType().getId())) {
         iterator.remove();
       }
     }

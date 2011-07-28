@@ -15,6 +15,7 @@
  */
 package com.intellij.framework.detection.impl;
 
+import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,7 +48,7 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
   private void loadDetectors() {
     Map<String, FrameworkDetector> newDetectors = new HashMap<String, FrameworkDetector>();
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
-      newDetectors.put(detector.getFrameworkTypeId(), detector);
+      newDetectors.put(detector.getDetectorId(), detector);
     }
 
     myDetectorIds = new TObjectIntHashMap<String>();
@@ -106,10 +107,10 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
     myDetectorById = new TIntObjectHashMap<FrameworkDetector>();
     myDetectorsByFileType = new MultiMap<FileType, Integer>();
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
-      final int id = myDetectorIds.get(detector.getFrameworkTypeId());
+      final int id = myDetectorIds.get(detector.getDetectorId());
       myDetectorsByFileType.putValue(detector.getFileType(), id);
       myDetectorById.put(id, detector);
-      LOG.debug("'" + detector.getFrameworkTypeId() + "' framework detector: id = " + id);
+      LOG.debug("'" + detector.getDetectorId() + "' framework detector: id = " + id);
     }
   }
 
@@ -124,8 +125,8 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
         final FrameworkDetector[] detectors = FrameworkDetector.EP_NAME.getExtensions();
         output.writeInt(detectors.length);
         for (FrameworkDetector detector : detectors) {
-          output.writeUTF(detector.getFrameworkTypeId());
-          output.writeInt(myDetectorIds.get(detector.getFrameworkTypeId()));
+          output.writeUTF(detector.getDetectorId());
+          output.writeInt(myDetectorIds.get(detector.getDetectorId()));
           output.writeInt(detector.getDetectorVersion());
         }
       }
@@ -147,13 +148,33 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
   }
 
   @Override
+  public FrameworkType findFrameworkType(@NotNull String typeId) {
+    for (FrameworkType type : getFrameworkTypes()) {
+      if (typeId.equals(type.getId())) {
+        return type;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public List<? extends FrameworkType> getFrameworkTypes() {
+    final List<FrameworkType> types = new ArrayList<FrameworkType>();
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
+      types.add(detector.getFrameworkType());
+    }
+    return types;
+  }
+
+  @Override
   public int getDetectorsVersion() {
     return myDetectorsVersion;
   }
 
   @Override
   public int getDetectorId(@NotNull FrameworkDetector detector) {
-    return myDetectorIds.get(detector.getFrameworkTypeId());
+    return myDetectorIds.get(detector.getDetectorId());
   }
 
   @Override
