@@ -206,7 +206,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     PsiElement[] pattern = statements;
     ReturnValue matchedReturnValue = null;
     if (statements.length != 1 || !(statements[0] instanceof PsiReturnStatement)) {
-      final PsiStatement lastStatement = statements[statements.length - 1];
+      final PsiStatement lastStatement = statements.length > 0 ? statements[statements.length - 1] : null;
       if (lastStatement instanceof PsiReturnStatement) {
         final PsiExpression returnValue = ((PsiReturnStatement)lastStatement).getReturnValue();
         if (returnValue instanceof PsiReferenceExpression) {
