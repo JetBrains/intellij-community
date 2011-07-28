@@ -33,7 +33,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
   public void testSpaceBeforeAnnotationParamArray() {
     // Inspired by IDEA-24329
-    getSettings().SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true;
+    getSettings().SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = true;
 
     String text =
       "@SuppressWarnings( {\"ALL\"})\n" +
