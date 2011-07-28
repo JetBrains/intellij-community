@@ -1,5 +1,6 @@
 package com.intellij.ui.border;
 
+import com.intellij.util.xmlb.annotations.Text;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -14,15 +15,17 @@ import java.awt.*;
 public class IdeaTitledBorder extends TitledBorder {
 
   // Space between the border and the component's edge
-  protected int EDGE_SPACING = 0;
+  private int EDGE_SPACING = 0;
 
   // Space between the border and text
   private int TEXT_SPACING = 2;
 
   // Horizontal inset of text that is left or right justified
-  private int TEXT_INSET_H = 0;
+  private int TEXT_INSET_H = 5;
 
   private static final int SEPARATOR_RIGHT_SPACING = 5;
+
+  //private static final int TITLE_LEFT_SPACING = 5;
   //static private final int DARKNESS = 10;
 
   public IdeaTitledBorder(String title, Font font, Color borderColor, int indent, int borderWidth, Insets insets) {
@@ -31,9 +34,14 @@ public class IdeaTitledBorder extends TitledBorder {
     Insets insideInsets = new Insets(0, 0, 0, 0);
     Insets outsideInsets = new Insets(0, 0, 0, 0);
 
+    //applying text inset
+    insideInsets.left -= TEXT_INSET_H;
+    outsideInsets.left += TEXT_INSET_H;
+
     //applying indent
     TEXT_INSET_H -= indent;
     insideInsets.left += indent;
+
 
     //applying separator right spacing
     insideInsets.right -= SEPARATOR_RIGHT_SPACING;
