@@ -594,11 +594,11 @@ public class CompositeElement extends TreeElement {
     return lastChild;
   }
 
-  public void setFirstChildNode(TreeElement firstChild) {
+  void setFirstChildNode(TreeElement firstChild) {
     this.firstChild = firstChild;
   }
 
-  public void setLastChildNode(TreeElement lastChild) {
+  void setLastChildNode(TreeElement lastChild) {
     this.lastChild = lastChild;
   }
 

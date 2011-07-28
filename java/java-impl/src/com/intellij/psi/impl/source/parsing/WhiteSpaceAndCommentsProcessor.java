@@ -48,8 +48,7 @@ public class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
         throw new RuntimeException();
       }
       if (last != null) {
-        last.setTreeNext(tokenElement);
-        tokenElement.setTreePrev(last);
+        last.rawInsertAfterMe(tokenElement);
         last = tokenElement;
       }
       else {

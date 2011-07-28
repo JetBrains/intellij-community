@@ -42,8 +42,7 @@ public abstract class DefaultWhiteSpaceTokenProcessorImpl implements TokenProces
         throw new RuntimeException();
       }
       if (last != null) {
-        last.setTreeNext(tokenElement);
-        tokenElement.setTreePrev(last);
+        last.rawInsertAfterMe(tokenElement);
         last = tokenElement;
       }
       else {

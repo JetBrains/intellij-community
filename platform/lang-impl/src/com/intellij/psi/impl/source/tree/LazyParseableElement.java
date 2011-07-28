@@ -129,7 +129,7 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   @Override
-  public void setFirstChildNode(TreeElement child) {
+  final void setFirstChildNode(TreeElement child) {
     if (myText() != null) {
       LOG.error("Mutating collapsed chameleon");
     }
@@ -137,7 +137,7 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   @Override
-  public void setLastChildNode(TreeElement child) {
+  final void setLastChildNode(TreeElement child) {
     if (myText() != null) {
       LOG.error("Mutating collapsed chameleon");
     }

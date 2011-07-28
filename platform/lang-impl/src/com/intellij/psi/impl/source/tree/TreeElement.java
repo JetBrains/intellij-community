@@ -170,11 +170,11 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     return myPrevSibling;
   }
 
-  public final void setTreeParent(CompositeElement parent) {
+  final void setTreeParent(CompositeElement parent) {
     myParent = parent;
   }
 
-  public final void setTreePrev(TreeElement prev) {
+  final void setTreePrev(TreeElement prev) {
     myPrevSibling = prev;
     clearRelativeOffsets(this);
   }
@@ -183,7 +183,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     return myNextSibling;
   }
 
-  public final void setTreeNext(TreeElement next) {
+  final void setTreeNext(TreeElement next) {
     myNextSibling = next;
     clearRelativeOffsets(next);
   }

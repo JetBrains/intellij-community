@@ -342,8 +342,8 @@ public class OldXmlParsing implements XmlElementType {
         lexer.start(lexer.getBufferSequence(), pos, lexer.getBufferEnd());
         if (tagEnd != null) {
           final TreeElement start = tagEnd.getTreeNext();
-          tagEnd.setTreeNext(null);
           if (start != null) {
+            start.rawRemoveUpToLast();
             parent.rawAddChildren(start);
           }
         }
@@ -953,8 +953,7 @@ public class OldXmlParsing implements XmlElementType {
         }
 
         if (last != null) {
-          last.setTreeNext(tokenElement);
-          tokenElement.setTreePrev(last);
+          last.rawInsertAfterMe(tokenElement);
           last = tokenElement;
         }
         else {
