@@ -131,6 +131,9 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     if (element == myRootPsiElement) {
       return myRootElement;
     }
+    if (element instanceof PsiFile && ((PsiFile)element).getContext() != null) {
+      return new Inject(((PsiFile)element).getContext(), (PsiElement)element);
+    }
     return element instanceof Inject ? ((Inject)element).getParent() :((PsiElement)element).getContext();
   }
 
@@ -192,6 +195,26 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     @Override
     public String toString() {
       return "INJECTION " + myPsi.getLanguage();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Inject inject = (Inject)o;
+
+      if (!myParent.equals(inject.myParent)) return false;
+      if (!myPsi.equals(inject.myPsi)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myParent.hashCode();
+      result = 31 * result + myPsi.hashCode();
+      return result;
     }
   }
 }
