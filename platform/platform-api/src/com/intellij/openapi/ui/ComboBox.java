@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
@@ -23,9 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.util.List;
 
 /**
  * Due to many bugs and "features" in <code>JComboBox</code> implementation we provide
@@ -41,7 +43,7 @@ import java.awt.event.KeyEvent;
  *
  * @author Vladimir Kondratyev
  */
-public class ComboBox extends ComboBoxWithWidePopup {
+public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener {
   private int myMinimumAndPreferredWidth;
 
   public ComboBox() {
@@ -69,6 +71,7 @@ public class ComboBox extends ComboBoxWithWidePopup {
   @Override
   public void setPopupVisible(boolean v) {
     if (getModel().getSize() == 0 && v) return;
+    if (v && JBPopupFactory.getInstance().getChildFocusedPopup(this) != null) return;
 
     final boolean wasShown = isPopupVisible();
     super.setPopupVisible(v);
@@ -83,13 +86,35 @@ public class ComboBox extends ComboBoxWithWidePopup {
   }
 
   @Override
+  public void eventDispatched(AWTEvent event) {
+    if (event.getID() == WindowEvent.WINDOW_OPENED) {
+      final WindowEvent we = (WindowEvent)event;
+      final List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
+      for (JBPopup each : popups) {
+        if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
+          super.setPopupVisible(false);
+        }
+      }
+    }
+  }
+
+  @Override
   public void addNotify() {
     super.addNotify();
 
     if (SwingUtilities.getAncestorOfClass(JTable.class, this) != null) {
       putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
     }
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(this, WindowEvent.WINDOW_EVENT_MASK);
   }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+  }
+
 
   @Nullable
   public ComboPopup getPopup() {

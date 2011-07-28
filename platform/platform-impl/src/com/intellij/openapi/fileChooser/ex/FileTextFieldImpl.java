@@ -803,7 +803,6 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     final Object action = ((InputMap)UIManager.get("ComboBox.ancestorInputMap")).get(stroke);
     if ("selectNext".equals(action)) {
       if (!isPopupShowing()) {
-        suggestCompletion(true, true);
         return true;
       }
       else {
