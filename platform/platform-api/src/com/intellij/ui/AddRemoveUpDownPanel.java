@@ -75,7 +75,7 @@ class AddRemoveUpDownPanel extends JPanel {
     void doAdd();
     void doRemove();
     void doUp();
-    void doDown();
+    void doDown();    
 
     class Adapter implements Listener {
       public void doAdd() {}
@@ -88,11 +88,12 @@ class AddRemoveUpDownPanel extends JPanel {
   private Map<Buttons, MyActionButton> myButtons = new HashMap<Buttons, MyActionButton>();
   private final AnActionButton[] myActions;
 
-  AddRemoveUpDownPanel(Listener listener, @Nullable JComponent contextComponent, boolean isHorizontal,
+  AddRemoveUpDownPanel(ListenerFactory factory, @Nullable JComponent contextComponent, boolean isHorizontal,
                        @Nullable AnActionButton[] additionalActions,
                        String addName, String removeName, String moveUpName,String moveDownName,
                        Buttons... buttons) {
     super(new BorderLayout());
+    final Listener listener = factory.createListener(this);
     AnActionButton[] actions = new AnActionButton[buttons.length];
     for (int i = 0; i < buttons.length; i++) {
       Buttons button = buttons[i];
@@ -121,6 +122,10 @@ class AddRemoveUpDownPanel extends JPanel {
                                                                                   isHorizontal);
     toolbar.getComponent().setBorder(null);
     add(toolbar.getComponent(), BorderLayout.CENTER);
+  }
+  
+  public AnActionButton getAnActionButton(Buttons button) {
+    return myButtons.get(button);
   }
 
   @Override
@@ -180,5 +185,9 @@ class AddRemoveUpDownPanel extends JPanel {
         }
       }
     }
+  }
+
+  interface ListenerFactory {
+    Listener createListener(AddRemoveUpDownPanel panel);
   }
 }

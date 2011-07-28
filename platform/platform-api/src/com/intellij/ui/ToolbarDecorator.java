@@ -44,7 +44,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UnusedDeclaration")
-public class ToolbarDecorator implements DataProvider {
+public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.ListenerFactory {
   private JTable myTable;
   private TableModel myTableModel;
   private ListModel myListModel;
@@ -56,10 +56,10 @@ public class ToolbarDecorator implements DataProvider {
   private Border myBorder;
   private List<AnActionButton> myExtraActions = new ArrayList<AnActionButton>();
   private ActionToolbarPosition myToolbarPosition;
-  private Runnable myAddAction;
-  private Runnable myRemoveAction;
-  private Runnable myUpAction;
-  private Runnable myDownAction;
+  private AnActionButtonRunnable myAddAction;
+  private AnActionButtonRunnable myRemoveAction;
+  private AnActionButtonRunnable myUpAction;
+  private AnActionButtonRunnable myDownAction;
   private String myAddName;
   private String myRemoveName;
   private String myMoveUpName;
@@ -108,23 +108,23 @@ public class ToolbarDecorator implements DataProvider {
   }
 
   private void createDefaultListActions() {
-    myRemoveAction = new Runnable() {
+    myRemoveAction = new AnActionButtonRunnable() {
       @Override
-      public void run() {
+      public void run(AnActionButton button) {
         ListUtil.removeSelectedItems(myList);
         updateListButtons(myList, myPanel);
       }
     };
-    myUpAction = new Runnable() {
+    myUpAction = new AnActionButtonRunnable() {
       @Override
-      public void run() {
+      public void run(AnActionButton button) {
         ListUtil.moveSelectedItemsUp(myList);
         updateListButtons(myList, myPanel);
       }
     };
-    myDownAction = new Runnable() {
+    myDownAction = new AnActionButtonRunnable() {
       @Override
-      public void run() {
+      public void run(AnActionButton button) {
         ListUtil.moveSelectedItemsDown(myList);
         updateListButtons(myList, myPanel);
       }
@@ -143,8 +143,9 @@ public class ToolbarDecorator implements DataProvider {
     final JTable table = myTable;
     final EditableModel tableModel = (EditableModel)myTableModel;
 
-    myAddAction = new Runnable() {
-      public void run() {
+    myAddAction = new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
         TableUtil.stopEditing(table);
         final int rowCount = table.getRowCount();
         if (tableModel instanceof ListTableModel && producer != null) {
@@ -168,8 +169,9 @@ public class ToolbarDecorator implements DataProvider {
       }
     };
 
-    myRemoveAction = new Runnable() {
-      public void run() {
+    myRemoveAction = new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
         TableUtil.stopEditing(table);
         int index = table.getSelectedRow();
         if (0 <= index && index < myTableModel.getRowCount()) {
@@ -190,8 +192,9 @@ public class ToolbarDecorator implements DataProvider {
       }
     };
 
-    myUpAction = new Runnable() {
-      public void run() {
+    myUpAction = new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
         TableUtil.stopEditing(table);
         final int[] indexes = table.getSelectedRows();
         for (int index : indexes) {
@@ -204,8 +207,9 @@ public class ToolbarDecorator implements DataProvider {
       }
     };
 
-    myDownAction = new Runnable() {
-      public void run() {
+    myDownAction = new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
         TableUtil.stopEditing(table);
         final int[] indexes = table.getSelectedRows();
         for (int index : indexes) {
@@ -310,25 +314,25 @@ public class ToolbarDecorator implements DataProvider {
     return this;
   }
 
-  public ToolbarDecorator setAddAction(Runnable action) {
+  public ToolbarDecorator setAddAction(AnActionButtonRunnable action) {
     myAddActionEnabled = action != null;
     myAddAction = action;
     return this;
   }
 
-  public ToolbarDecorator setRemoveAction(Runnable action) {
+  public ToolbarDecorator setRemoveAction(AnActionButtonRunnable action) {
     myRemoveActionEnabled = action != null;
     myRemoveAction = action;
     return this;
   }
 
-  public ToolbarDecorator setUpAction(Runnable action) {
+  public ToolbarDecorator setUpAction(AnActionButtonRunnable action) {
     myUpActionEnabled = action != null;
     myUpAction = action;
     return this;
   }
 
-  public ToolbarDecorator setDownAction(Runnable action) {
+  public ToolbarDecorator setDownAction(AnActionButtonRunnable action) {
     myDownActionEnabled = action != null;
     myDownAction = action;
     return this;
@@ -356,7 +360,7 @@ public class ToolbarDecorator implements DataProvider {
 
   public JPanel createPanel() {
     final AddRemoveUpDownPanel.Buttons[] buttons = getButtons();
-    myPanel = new AddRemoveUpDownPanel(createListener(),
+    myPanel = new AddRemoveUpDownPanel(this,
                              myTable == null ? myList : myTable,
                              myToolbarPosition == ActionToolbarPosition.TOP || myToolbarPosition == ActionToolbarPosition.BOTTOM,
                              myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
@@ -445,26 +449,34 @@ public class ToolbarDecorator implements DataProvider {
     return buttons.toArray(new AddRemoveUpDownPanel.Buttons[buttons.size()]);
   }
 
-  private AddRemoveUpDownPanel.Listener createListener() {
+  public AddRemoveUpDownPanel.Listener createListener(final AddRemoveUpDownPanel panel) {
     return new AddRemoveUpDownPanel.Listener() {
       @Override
       public void doAdd() {
-        if (myAddAction != null) myAddAction.run();
+        if (myAddAction != null) {
+          myAddAction.run(panel.getAnActionButton(AddRemoveUpDownPanel.Buttons.ADD));
+        }
       }
 
       @Override
       public void doRemove() {
-        if (myRemoveAction != null) myRemoveAction.run();
+        if (myRemoveAction != null) {
+          myRemoveAction.run(panel.getAnActionButton(AddRemoveUpDownPanel.Buttons.REMOVE));
+        }
       }
 
       @Override
       public void doUp() {
-        if (myUpAction != null) myUpAction.run();
+        if (myUpAction != null) {
+          myUpAction.run(panel.getAnActionButton(AddRemoveUpDownPanel.Buttons.UP));
+        }
       }
 
       @Override
       public void doDown() {
-        if (myDownAction != null) myDownAction.run();
+        if (myDownAction != null) {
+          myDownAction.run(panel.getAnActionButton(AddRemoveUpDownPanel.Buttons.DOWN));
+        }
       }
     };
   }
