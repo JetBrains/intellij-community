@@ -214,7 +214,7 @@ public class CompletionServiceImpl extends CompletionService{
     CompletionPhase oldPhase = getCompletionPhase();
     CompletionProgressIndicator oldIndicator = oldPhase.indicator;
     if (oldIndicator != null && !(phase instanceof CompletionPhase.BgCalculation)) {
-      LOG.assertTrue(!oldIndicator.isRunning() || oldIndicator.isCanceled(), "don't change phase during running completion");
+      LOG.assertTrue(!oldIndicator.isRunning() || oldIndicator.isCanceled(), "don't change phase during running completion: oldPhase=" + oldPhase);
     }
 
     Disposer.dispose(oldPhase);
