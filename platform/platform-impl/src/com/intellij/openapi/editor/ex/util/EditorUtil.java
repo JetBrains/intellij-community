@@ -129,9 +129,9 @@ public class EditorUtil {
 
     assert false : String.format(
       "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: [%s]-[%s], soft wraps for "
-      + "the target logical line: %s, all soft wraps: %s, fold regions: %s%nDocument text: '%s'",
+      + "the target logical line: %s, all soft wraps: %s, fold regions: %s",
       line, resultLogLine, resVisStart, resVisEnd, softWraps, editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()),
-      Arrays.toString(editor.getFoldingModel().getAllFoldRegions()), editor.getDocument().getText()
+      Arrays.toString(editor.getFoldingModel().getAllFoldRegions())
     );
     return resVisEnd.column;
   }

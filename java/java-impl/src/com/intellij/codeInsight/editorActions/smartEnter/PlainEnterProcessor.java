@@ -147,8 +147,7 @@ public class PlainEnterProcessor implements EnterProcessor {
 
     int i = CharArrayUtil.shiftForward(whiteSpaceText, 0, " \t");
     if (i >= whiteSpaceText.length() - 1) {
-      assert false : String.format("document: '%s', code block: %s, white space: %s",
-                                   document.getText(), codeBlock.getTextRange(), whiteSpace.getTextRange());
+      assert false : String.format("code block: %s, white space: %s", codeBlock.getTextRange(), whiteSpace.getTextRange());
       return false;
     }
 
