@@ -18,18 +18,17 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.ASTTransformContributors;
+import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 
 import java.util.Collection;
 
 /**
  * @author Max Medvedev
  */
-public class AutoCloneContributor extends ASTTransformContributors {
+public class AutoCloneContributor extends AstTransformContributor {
 
   @Override
   public void getMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
