@@ -3,10 +3,11 @@ package com.intellij.structuralsearch.plugin.replace.ui;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -35,11 +36,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
   private final Project project;
   private RangeHighlighter hilighter;
   private Editor editor;
-  private static final TextAttributes attributes = new TextAttributes();
 
-  static {
-    attributes.setBackgroundColor( new Color(162,3,229,32) );
-  }
 
   public ReplacementPreviewDialog(final Project project, UsageInfo info, String replacementString) {
     super(project,true);
@@ -71,7 +68,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
       start,
       end,
       HighlighterLayer.SELECTION - 100,
-      attributes,
+      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
       HighlighterTargetArea.EXACT_RANGE
     );
   }
