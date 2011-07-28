@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 /**
@@ -90,15 +89,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
 
   boolean isDisposed();
 
-  @NotNull
-  ComponentConfig[] getComponentConfigurations();
-
-  @Nullable
-  Object getComponent(final ComponentConfig componentConfig);
-
   <T> T[] getExtensions(ExtensionPointName<T> extensionPointName);
-
-  ComponentConfig getConfig(Class componentImplementation);
 
   /**
    * @return condition for this component being disposed.

@@ -17,7 +17,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.convertors.Convertor01;
 import com.intellij.openapi.project.impl.convertors.Convertor12;
 import com.intellij.openapi.project.impl.convertors.Convertor23;
@@ -28,7 +28,7 @@ import org.jdom.Element;
  * @author mike
  */
 public class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
-  public IdeaProjectStoreImpl(final ProjectEx project) {
+  public IdeaProjectStoreImpl(final ProjectImpl project) {
     super(project);
   }
 

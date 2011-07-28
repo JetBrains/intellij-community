@@ -58,7 +58,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls static final String OPTION_WORKSPACE = "workspace";
 
-  protected ProjectEx myProject;
+  protected ProjectImpl myProject;
 
   @NonNls static final String PROJECT_FILE_MACRO = "PROJECT_FILE";
   @NonNls static final String WS_FILE_MACRO = "WORKSPACE_FILE";
@@ -74,7 +74,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   private StorageScheme myScheme = StorageScheme.DEFAULT;
   private String myCachedLocation;
 
-  ProjectStoreImpl(final ProjectEx project) {
+  ProjectStoreImpl(final ProjectImpl project) {
     super(project);
     myProject = project;
   }

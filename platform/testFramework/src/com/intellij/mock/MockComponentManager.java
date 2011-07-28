@@ -17,7 +17,6 @@ package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
@@ -126,29 +125,12 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @Override
-  @NotNull
-  public ComponentConfig[] getComponentConfigurations() {
-    return new ComponentConfig[0];
-  }
-
-  @Override
-  @Nullable
-  public Object getComponent(final ComponentConfig componentConfig) {
-    return null;
-  }
-
-  @Override
   public void dispose() {
   }
 
   @Override
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     throw new UnsupportedOperationException("getExtensions()");
-  }
-
-  @Override
-  public ComponentConfig getConfig(Class componentImplementation) {
-    throw new UnsupportedOperationException("Method getConfig not implemented in " + getClass());
   }
 
   @NotNull

@@ -20,17 +20,17 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 
 class ProjectStateStorageManager extends StateStorageManagerImpl {
-  protected final Project myProject;
+  protected final ProjectImpl myProject;
   @NonNls protected static final String ROOT_TAG_NAME = "project";
 
-  public ProjectStateStorageManager(final TrackingPathMacroSubstitutor macroSubstitutor, Project project) {
+  public ProjectStateStorageManager(final TrackingPathMacroSubstitutor macroSubstitutor, ProjectImpl project) {
     super(macroSubstitutor, ROOT_TAG_NAME, project, project.getPicoContainer());
     myProject = project;
   }
