@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -186,15 +187,13 @@ public class ScopeEditorPanel {
     myPackageTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        final ArrayList<PackageSet> selectedRecSets = getSelectedSets(true);
-        final boolean noRecursiveSet = selectedRecSets == null || selectedRecSets.isEmpty();
-        includeRec.setEnabled(!noRecursiveSet);
-        excludeRec.setEnabled(!noRecursiveSet);
+        final boolean recursiveEnabled = isButtonEnabled(true);
+        includeRec.setEnabled(recursiveEnabled);
+        excludeRec.setEnabled(recursiveEnabled);
 
-        final ArrayList<PackageSet> selectedSets = getSelectedSets(false);
-        final boolean noSet = selectedSets == null || selectedSets.isEmpty();
-        include.setEnabled(!noSet);
-        exclude.setEnabled(!noSet);
+        final boolean nonRecursiveEnabled = isButtonEnabled(false);
+        include.setEnabled(nonRecursiveEnabled);
+        exclude.setEnabled(nonRecursiveEnabled);
       }
     });
 
@@ -228,6 +227,11 @@ public class ScopeEditorPanel {
     return buttonsPanel;
   }
 
+  boolean isButtonEnabled(boolean rec) {
+    final ArrayList<PackageSet> selectedSetsInclude = getSelectedSets(rec);
+    return selectedSetsInclude != null && !selectedSetsInclude.isEmpty();
+  }
+
   private void excludeSelected(boolean recurse) {
     final ArrayList<PackageSet> selected = getSelectedSets(recurse);
     if (selected == null || selected.isEmpty()) return;
@@ -235,7 +239,14 @@ public class ScopeEditorPanel {
       if (myCurrentScope == null) {
         myCurrentScope = new ComplementPackageSet(set);
       } else {
-        myCurrentScope = new IntersectionPackageSet(myCurrentScope, new ComplementPackageSet(set));
+        final boolean[] append = {true};
+        final PackageSet simplifiedScope = processComplementaryScope(myCurrentScope, set, false, append);
+        if (!append[0]) {
+          myCurrentScope = simplifiedScope;
+        }
+        else {
+          myCurrentScope = simplifiedScope != null ? new IntersectionPackageSet(simplifiedScope, new ComplementPackageSet(set)) : new ComplementPackageSet(set);
+        }
       }
     }
     rebuild(true);
@@ -249,10 +260,52 @@ public class ScopeEditorPanel {
         myCurrentScope = set;
       }
       else {
-        myCurrentScope = new UnionPackageSet(myCurrentScope, set);
+        final boolean[] append = {true};
+        final PackageSet simplifiedScope = processComplementaryScope(myCurrentScope, set, true, append);
+        if (!append[0]) {
+          myCurrentScope = simplifiedScope;
+        } else {
+          myCurrentScope = simplifiedScope != null ? new UnionPackageSet(simplifiedScope, set) : set;
+        }
       }
     }
     rebuild(true);
+  }
+
+  @Nullable
+  static PackageSet processComplementaryScope(@NotNull PackageSet current, PackageSet added, boolean checkComplementSet, boolean[] append) {
+    final String text = added.getText();
+    if (current instanceof ComplementPackageSet &&
+        Comparing.strEqual(((ComplementPackageSet)current).getComplementarySet().getText(), text)) {
+      if (checkComplementSet) {
+        append[0] = false;
+      }
+      return null;
+    }
+    if (Comparing.strEqual(current.getText(), text)) {
+      if (!checkComplementSet) {
+        append[0] = false;
+      }
+      return null;
+    }
+
+    if (current instanceof UnionPackageSet) {
+      final PackageSet left = processComplementaryScope(((UnionPackageSet)current).getFirstSet(), added, checkComplementSet, append);
+      final PackageSet right = processComplementaryScope(((UnionPackageSet)current).getSecondSet(), added, checkComplementSet, append);
+      if (left == null) return right;
+      if (right == null) return left;
+      return new UnionPackageSet(left, right);
+    }
+
+    if (current instanceof IntersectionPackageSet) {
+      final PackageSet left = processComplementaryScope(((IntersectionPackageSet)current).getFirstSet(), added, checkComplementSet, append);
+      final PackageSet right = processComplementaryScope(((IntersectionPackageSet)current).getSecondSet(), added, checkComplementSet, append);
+      if (left == null) return right;
+      if (right == null) return left;
+      return new IntersectionPackageSet(left, right);
+    }
+
+    return current;
   }
 
   @Nullable
@@ -310,8 +363,8 @@ public class ScopeEditorPanel {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
             myIsInUpdate = true;
-            if (updateText && myCurrentScope != null) {
-              final String text = myCurrentScope.getText();
+            if (updateText) {
+              final String text = myCurrentScope != null ? myCurrentScope.getText() : "";
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                   myPatternField.setText(text);
@@ -444,7 +497,7 @@ public class ScopeEditorPanel {
     myMatchingCountPanel.revalidate();
     myMatchingCountPanel.repaint();
     if (requestFocus) {
-      SwingUtilities.invokeLater(new Runnable(){
+      SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           myPatternField.requestFocusInWindow();
         }
