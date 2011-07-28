@@ -99,7 +99,6 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       }
     }
 
-    treeElement.clearCaches();
     treeElement.subtreeChanged();
     TreeElement childNode = treeElement.getFirstChildNode();
 
