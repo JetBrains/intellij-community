@@ -715,6 +715,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
   public void drop(Marker marker) {
+    final DoneMarker doneMarker = ((StartMarker)marker).myDoneMarker;
+    if (doneMarker != null) {
+      myProduction.remove(myProduction.lastIndexOf(doneMarker));
+      DONE_MARKERS.recycle(doneMarker);
+    }
     final boolean removed = myProduction.remove(myProduction.lastIndexOf(marker)) == marker;
     if (!removed) {
       LOG.error("The marker must be added before it is dropped.");
