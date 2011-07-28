@@ -39,6 +39,8 @@ public class TitledSeparator extends JPanel {
     add(separator,
         new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                                new Insets(3, 0, 0, 2), 0, 0));
+
+    setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
   }
 
   public TitledSeparator(String text) {
