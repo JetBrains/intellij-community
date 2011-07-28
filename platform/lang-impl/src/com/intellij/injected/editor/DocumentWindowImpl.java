@@ -412,12 +412,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @NotNull
-  public MarkupModel getMarkupModel() {
-    //noinspection deprecation
-    return new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(), this);
-  }
-
-  @NotNull
   public MarkupModel getMarkupModel(final Project project) {
     return new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(project), this);
   }

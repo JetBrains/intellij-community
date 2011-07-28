@@ -206,11 +206,6 @@ public interface Document extends UserDataHolder {
   @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange);
 
   /**
-   * @deprecated use {@link #getMarkupModel(com.intellij.openapi.project.Project)} instead.
-   */
-  @NotNull MarkupModel getMarkupModel();
-
-  /**
    * Returns the markup model for the specified project. A document can have multiple markup
    * models for different projects if the file to which it corresponds belongs to multiple projects
    * opened in different IDEA frames at the same time.

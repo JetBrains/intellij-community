@@ -156,11 +156,6 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
   }
 
   @NotNull
-  public MarkupModel getMarkupModel() {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @NotNull
   public MarkupModel getMarkupModel(@Nullable final Project project) {
     throw new UnsupportedOperationException("Not implemented");
   }

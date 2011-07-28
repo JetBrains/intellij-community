@@ -126,11 +126,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return CharArrayUtil.fromSequence(getCharsSequence());
   }
 
-  @NotNull
-  public MarkupModel getMarkupModel() {
-    return getMarkupModel(null);
-  }
-
   public void setStripTrailingSpacesEnabled(boolean isEnabled) {
     isStripTrailingSpacesEnabled = isEnabled;
   }

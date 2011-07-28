@@ -169,12 +169,6 @@ public class MockDocument implements DocumentEx {
 
   @Override
   @NotNull
-  public MarkupModel getMarkupModel() {
-    return null;
-  }
-
-  @Override
-  @NotNull
   public MarkupModel getMarkupModel(Project project) {
     return new EmptyMarkupModel(this);
   }
