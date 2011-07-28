@@ -16,6 +16,7 @@
 package org.jetbrains.android.maven;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,6 @@ public class AndroidMavenUtil {
 
   @Nullable
   public static AndroidMavenProvider getMavenProvider() {
-    AndroidMavenProvider[] extensions = AndroidMavenProvider.EP_NAME.getExtensions();
-    return extensions.length > 0 ? extensions[0] : null;
+    return ArrayUtil.getFirstElement(AndroidMavenProvider.EP_NAME.getExtensions());
   }
 }

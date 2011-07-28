@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.android.facet.SimpleClassMapConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +38,7 @@ public class AndroidClassTagNameReference extends TagNameReference {
     assert element instanceof PsiClass;
     XmlTag tagElement = getTagElement();
     assert tagElement != null;
-    String[] tagNames = SimpleClassMapConstructor.getInstance().getTagNamesByClass((PsiClass)element);
-    String tagName = tagNames.length > 0 ? tagNames[0] : null;
+    String tagName = ArrayUtil.getFirstElement(SimpleClassMapConstructor.getInstance().getTagNamesByClass((PsiClass)element));
     return tagElement.setName(tagName != null ? tagName : "");
   }
 }

@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
@@ -67,8 +68,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private ASTNode getPropertiesList() {
-    final ASTNode[] nodes = getNode().getChildren(outPropertiesListSet);
-    return nodes.length > 0 ? nodes[0]:null;
+    return ArrayUtil.getFirstElement(getNode().getChildren(outPropertiesListSet));
   }
 
   private void ensurePropertiesLoaded() {

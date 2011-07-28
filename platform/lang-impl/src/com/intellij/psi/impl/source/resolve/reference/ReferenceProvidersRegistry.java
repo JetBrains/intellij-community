@@ -25,15 +25,11 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -116,23 +112,39 @@ public class ReferenceProvidersRegistry {
     assert context.isValid() : "Invalid context: " + context;
 
     ReferenceProvidersRegistry registry = getInstance();
-    PsiReferenceRegistrarImpl registrar = registry.getRegistrar(context.getLanguage());
-    SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providers = new SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>>();
-    providers.addAll(registrar.getPairsByElement(context, hints));
-    providers.addAll(registry.getRegistrar(Language.ANY).getPairsByElement(context, hints));
-    if (providers.isEmpty()) {
+
+    List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providersForContextLanguage;
+    providersForContextLanguage = registry.getRegistrar(context.getLanguage()).getPairsByElement(context, hints);
+
+    List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providersForAllLanguages;
+    providersForAllLanguages = registry.getRegistrar(Language.ANY).getPairsByElement(context, hints);
+
+    int providersCount = providersForContextLanguage.size() + providersForAllLanguages.size();
+
+    if (providersCount == 0) {
       return PsiReference.EMPTY_ARRAY;
     }
 
-    if (providers.size() == 1) {
-      final Trinity<PsiReferenceProvider, ProcessingContext, Double> firstProvider = providers.get(0);
+    if (providersCount == 1) {
+      final Trinity<PsiReferenceProvider, ProcessingContext, Double> firstProvider =
+        (providersForAllLanguages.isEmpty() ? providersForContextLanguage : providersForAllLanguages).get(0);
       return firstProvider.getFirst().getReferencesByElement(context, firstProvider.getSecond());
     }
 
-    providers.sort(PRIORITY_COMPARATOR);
+    Trinity<PsiReferenceProvider, ProcessingContext, Double>[] providers = new Trinity[providersCount];
+
+    int i = 0;
+    for (Trinity<PsiReferenceProvider, ProcessingContext, Double> provider : providersForContextLanguage) {
+      providers[i++] = provider;
+    }
+    for (Trinity<PsiReferenceProvider, ProcessingContext, Double> provider : providersForAllLanguages) {
+      providers[i++] = provider;
+    }
+
+    Arrays.sort(providers, PRIORITY_COMPARATOR);
 
     List<PsiReference> result = new ArrayList<PsiReference>();
-    final double maxPriority = providers.get(0).getThird();
+    final double maxPriority = providers[0].getThird();
     next:
     for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : providers) {
       final PsiReference[] refs;

@@ -25,6 +25,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
@@ -379,8 +380,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             if (body instanceof PsiBlockStatement) {
                 final PsiBlockStatement block = (PsiBlockStatement)body;
                 final PsiCodeBlock codeBlock = block.getCodeBlock();
-                final PsiStatement[] statements = codeBlock.getStatements();
-                return statements.length > 0 ? statements[0] : null;
+                return ArrayUtil.getFirstElement(codeBlock.getStatements());
             } else {
                 return body;
             }
