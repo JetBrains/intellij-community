@@ -480,4 +480,29 @@ public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.List
       }
     };
   }
+  
+  public static AnActionButton findAddButton(@NotNull JComponent container) {
+    return findButton(container, AddRemoveUpDownPanel.Buttons.ADD);
+  }
+
+  public static AnActionButton findRemoveButton(@NotNull JComponent container) {
+    return findButton(container, AddRemoveUpDownPanel.Buttons.REMOVE);
+  }
+
+  public static AnActionButton findUpButton(@NotNull JComponent container) {
+    return findButton(container, AddRemoveUpDownPanel.Buttons.UP);
+  }
+
+  public static AnActionButton findDownButton(@NotNull JComponent container) {
+    return findButton(container, AddRemoveUpDownPanel.Buttons.DOWN);
+  }
+
+
+  private static AnActionButton findButton(JComponent comp, AddRemoveUpDownPanel.Buttons type) {
+    final AddRemoveUpDownPanel panel = UIUtil.findComponentOfType(comp, AddRemoveUpDownPanel.class);
+    if (panel != null) {
+      return panel.getAnActionButton(type);
+    }
+    return null;
+  }
 }
