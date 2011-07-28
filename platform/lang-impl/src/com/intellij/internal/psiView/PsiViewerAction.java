@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project;
 public class PsiViewerAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    new PsiViewerDialog(project, false).show();
+    new PsiViewerDialog(project, false, null, null).show();
   }
 
   @Override

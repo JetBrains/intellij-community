@@ -9,8 +9,8 @@ import javax.swing.tree.DefaultTreeModel;
 
 public class BlockTreeBuilder extends SimpleTreeBuilder {
 
-  public BlockTreeBuilder( JTree tree) {
-    super(tree, new DefaultTreeModel(new DefaultMutableTreeNode()), new BlockTreeStructure(), IndexComparator.INSTANCE);
+  public BlockTreeBuilder(JTree tree, BlockTreeStructure blockTreeStructure) {
+    super(tree, new DefaultTreeModel(new DefaultMutableTreeNode()), blockTreeStructure, IndexComparator.INSTANCE);
     initRootNode();
   }
 }
