@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAware;
@@ -26,26 +27,30 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.util.messages.MessageBusConnection;
 
 /**
  * @author Konstantin Bulenkov
  */
 public final class UnscrambleAction extends AnAction implements DumbAware {
   private static final UnscrambleListener LISTENER = new UnscrambleListener();
+  private static MessageBusConnection ourConnection;
 
   static {
     final String key = "analyze.exceptions.on.the.fly";
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     if (Registry.is(key)) {
-      app.addApplicationListener(LISTENER);
+      ourConnection = app.getMessageBus().connect();
+      ourConnection.subscribe(ApplicationActivationListener.TOPIC, LISTENER);
     }
 
     Registry.get(key).addListener(new RegistryValueListener.Adapter() {
       public void afterValueChanged(RegistryValue value) {
         if (value.asBoolean()) {
-          app.addApplicationListener(LISTENER);
+          ourConnection = app.getMessageBus().connect();
+          ourConnection.subscribe(ApplicationActivationListener.TOPIC, LISTENER);
         } else {
-          app.removeApplicationListener(LISTENER);
+          ourConnection.disconnect();
         }
       }
     }, app);

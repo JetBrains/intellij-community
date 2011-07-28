@@ -16,7 +16,7 @@
 package com.intellij.unscramble;
 
 import com.intellij.Patches;
-import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 /**
  * @author Konstantin Bulenkov
  */
-public class UnscrambleListener extends ApplicationAdapter {
+public class UnscrambleListener implements ApplicationActivationListener {
   private static final int MAX_STACKTRACE_SIZE = 100 * 1024;
   private String stacktrace = null;
 

@@ -1005,11 +1005,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       if (isActive() != active) {
         myActive = Boolean.valueOf(active);
         System.setProperty("idea.active", Boolean.valueOf(myActive).toString());
+        ApplicationActivationListener publisher = getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC);
         if (active) {
-          myDispatcher.getMulticaster().applicationActivated(ideFrame);
+          publisher.applicationActivated(ideFrame);
         }
         else {
-          myDispatcher.getMulticaster().applicationDeactivated(ideFrame);
+          publisher.applicationDeactivated(ideFrame);
         }
         return true;
       }

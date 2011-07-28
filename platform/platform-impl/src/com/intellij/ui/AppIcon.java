@@ -16,7 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,7 +70,7 @@ public abstract class AppIcon {
 
   private static abstract class BaseIcon extends AppIcon {
 
-    private ApplicationListener myAppListener;
+    private ApplicationActivationListener myAppListener;
     protected Object myCurrentProcessId;
 
     @Override
@@ -128,15 +128,19 @@ public abstract class AppIcon {
       Application app = ApplicationManager.getApplication();
 
       if (app != null && myAppListener == null) {
-        myAppListener = new ApplicationAdapter() {
+        myAppListener = new ApplicationActivationListener() {
           @Override
           public void applicationActivated(IdeFrame ideFrame) {
             hideProgress(myCurrentProcessId);
             _setOkBadge(false);
             _setTextBadge(null);
           }
+
+          @Override
+          public void applicationDeactivated(IdeFrame ideFrame) {
+          }
         };
-        app.addApplicationListener(myAppListener);
+        app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
       }
 
       return app != null ? app.isActive() : false;

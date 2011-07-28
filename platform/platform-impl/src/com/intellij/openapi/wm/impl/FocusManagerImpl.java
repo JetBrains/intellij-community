@@ -21,7 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -110,7 +110,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     myIdleAlarm = new EdtAlarm(this);
 
     final AppListener myAppListener = new AppListener();
-    myApp.addApplicationListener(myAppListener);
+    myApp.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
 
     IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
       public boolean dispatch(AWTEvent e) {
@@ -764,7 +764,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     callback.setRejected();
   }
 
-  private class AppListener extends ApplicationAdapter {
+  private class AppListener implements ApplicationActivationListener {
 
     @Override
     public void applicationDeactivated(IdeFrame ideFrame) {

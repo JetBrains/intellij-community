@@ -33,10 +33,4 @@ public abstract class ApplicationAdapter implements ApplicationListener {
 
   public void writeActionFinished(Object action) {
   }
-
-  public void applicationActivated(IdeFrame ideFrame) {
-  }
-
-  public void applicationDeactivated(IdeFrame ideFrame) {
-  }
 }

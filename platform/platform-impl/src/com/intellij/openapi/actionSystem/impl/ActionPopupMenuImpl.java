@@ -21,10 +21,11 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +39,11 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class ActionPopupMenuImpl extends ApplicationAdapter implements ActionPopupMenu {
+final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
 
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
+  private MessageBusConnection myConnection;
 
   private final Application myApp;
   private IdeFrame myFrame;
@@ -147,7 +149,8 @@ final class ActionPopupMenuImpl extends ApplicationAdapter implements ActionPopu
           if (frame instanceof IdeFrame) {
             myFrame = (IdeFrame)frame;
           }
-          myApp.addApplicationListener(ActionPopupMenuImpl.this);
+          myConnection = myApp.getMessageBus().connect();
+          myConnection.subscribe(ApplicationActivationListener.TOPIC, ActionPopupMenuImpl.this);
        }
       }
 
@@ -172,8 +175,8 @@ final class ActionPopupMenuImpl extends ApplicationAdapter implements ActionPopu
       private void disposeMenu() {
         myManager.removeActionPopup(ActionPopupMenuImpl.this);
         MyMenu.this.removeAll();
-        if (myApp != null) {
-          myApp.removeApplicationListener(ActionPopupMenuImpl.this);
+        if (myConnection != null) {
+          myConnection.disconnect();
         }
       }
 
@@ -184,6 +187,10 @@ final class ActionPopupMenuImpl extends ApplicationAdapter implements ActionPopu
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
     }
+  }
+
+  @Override
+  public void applicationActivated(IdeFrame ideFrame) {
   }
 
   @Override

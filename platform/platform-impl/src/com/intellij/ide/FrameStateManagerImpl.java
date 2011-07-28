@@ -15,7 +15,7 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.ActionCallback;
@@ -51,7 +51,7 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     myShouldSynchronize = false;
     mySyncAlarm = new Alarm();
 
-    app.addApplicationListener(new ApplicationAdapter() {
+    app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
       @Override
       public void applicationActivated(IdeFrame ideFrame) {
         myActive.onReady();
