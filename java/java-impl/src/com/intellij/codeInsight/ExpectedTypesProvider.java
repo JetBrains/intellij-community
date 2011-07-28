@@ -1094,7 +1094,7 @@ public class ExpectedTypesProvider {
       }
       if (("assertEquals".equals(name) || "assertSame".equals(name)) && method.getParameterList().getParametersCount() == 2 && args.length == 2) {
         ExpectedTypeInfo info = getEqualsType(args[0] == argument ? args[1] : args[0]);
-        if (info != null) {
+        if (info != null && parameterType.isAssignableFrom(info.getDefaultType())) {
           return info.getDefaultType();
         }
       }
