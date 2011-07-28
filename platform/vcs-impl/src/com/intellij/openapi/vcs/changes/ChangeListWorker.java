@@ -238,7 +238,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public boolean addChangeToList(@NotNull final String name, final Change change, final VcsKey vcsKey) {
-    LOG.info("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() + " vcs: " +
+    LOG.debug("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() + " vcs: " +
               (vcsKey == null ? null : vcsKey.getName()));
     final LocalChangeList changeList = myMap.get(name);
     if (changeList != null) {
