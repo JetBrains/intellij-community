@@ -133,7 +133,8 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   @Override
   public void searchResultsUpdated(SearchResults sr) {
-    if (mySearchResults.getProject().isDisposed()) return;
+    final Project project = mySearchResults.getProject();
+    if (project == null || project.isDisposed()) return;
     if (mySuppressedUpdate) {
       mySuppressedUpdate = false;
       return;

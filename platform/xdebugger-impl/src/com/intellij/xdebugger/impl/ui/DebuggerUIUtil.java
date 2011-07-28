@@ -148,16 +148,9 @@ public class DebuggerUIUtil {
                                           breakpoint, showAllOptions);
 
     final JComponent mainPanel = propertiesPanel.getMainPanel();
-    final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(mainPanel).
-      setHideOnAction(false).
+    final Balloon balloon = JBPopupFactory.getInstance().createDialogBalloonBuilder(mainPanel, breakpoint.getType().getDisplayText(breakpoint)).
       setHideOnClickOutside(true).
-      setHideOnKeyOutside(false).
-      setCloseButtonEnabled(true).
-      setDialogMode(true).
-      setFillColor(mainPanel.getBackground()).
-      setTitle(breakpoint.getType().getDisplayText(breakpoint)).
-      setHideOnFrameResize(false).
-      setAnimationCycle(200).createBalloon();
+      createBalloon();
     final XBreakpointListener<XBreakpoint<?>> breakpointListener = new XBreakpointListener<XBreakpoint<?>>() {
       @Override
       public void breakpointAdded(@NotNull XBreakpoint<?> breakpoint1) {

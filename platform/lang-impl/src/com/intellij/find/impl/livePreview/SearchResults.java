@@ -154,6 +154,7 @@ public class SearchResults implements DocumentListener {
     return myOccurrences;
   }
 
+  @Nullable
   public Project getProject() {
     return myEditor.getProject();
   }
