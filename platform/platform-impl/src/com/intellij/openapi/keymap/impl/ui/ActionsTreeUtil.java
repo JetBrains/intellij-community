@@ -21,8 +21,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
@@ -74,7 +73,7 @@ public class ActionsTreeUtil {
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final List<IdeaPluginDescriptor> plugins = new ArrayList<IdeaPluginDescriptor>();
-    Collections.addAll(plugins, ApplicationManager.getApplication().getPlugins());
+    Collections.addAll(plugins, PluginsFacade.INSTANCE.getPlugins());
     Collections.sort(plugins, new Comparator<IdeaPluginDescriptor>() {
       public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
         return o1.getName().compareTo(o2.getName());

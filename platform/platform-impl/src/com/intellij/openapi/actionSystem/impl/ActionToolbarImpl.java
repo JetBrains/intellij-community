@@ -742,7 +742,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         }
       }
 
-      updateActions(false, myActionManager.isTransparrentOnlyActionsUpdateNow(), false);
+      updateActions(false, myActionManager.isTransparentOnlyActionsUpdateNow(), false);
     }
   }
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
@@ -188,7 +189,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public void loadProjectComponents() {
     final Application app = ApplicationManager.getApplication();
-    final IdeaPluginDescriptor[] plugins = app.getPlugins();
+    final IdeaPluginDescriptor[] plugins = PluginsFacade.INSTANCE.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
       if (PluginManager.shouldSkipPlugin(plugin)) continue;
       loadComponentsConfiguration(plugin.getProjectComponents(), plugin, isDefault());

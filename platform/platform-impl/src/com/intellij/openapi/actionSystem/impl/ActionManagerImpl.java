@@ -31,6 +31,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -122,7 +123,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   private final Map<AnAction, AnActionEvent> myQueuedNotificationsEvents = new LinkedHashMap<AnAction, AnActionEvent>();
 
   private Runnable myPreloadActionsRunnable;
-  private boolean myTransparrentOnlyUpdate;
+  private boolean myTransparentOnlyUpdate;
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myId2Action = new THashMap<String, Object>();
@@ -197,8 +198,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
 
   private void registerPluginActions() {
-    final Application app = ApplicationManager.getApplication();
-    final IdeaPluginDescriptor[] plugins = app.getPlugins();
+    final IdeaPluginDescriptor[] plugins = PluginsFacade.INSTANCE.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
       if (PluginManager.shouldSkipPlugin(plugin)) continue;
       final List<Element> elementList = plugin.getActionsDescriptionElements();
@@ -329,8 +329,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
    */
   @Nullable
   private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
-    final Application app = ApplicationManager.getApplication();
-    final IdeaPluginDescriptor plugin = app.getPlugin(pluginId);
+    final IdeaPluginDescriptor plugin = PluginsFacade.INSTANCE.getPlugin(pluginId);
     ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
 
     if (!ACTION_ELEMENT_NAME.equals(element.getName())) {
@@ -472,8 +471,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   private AnAction processGroupElement(Element element, final ClassLoader loader, PluginId pluginId) {
-    final Application app = ApplicationManager.getApplication();
-    final IdeaPluginDescriptor plugin = app.getPlugin(pluginId);
+    final IdeaPluginDescriptor plugin = PluginsFacade.INSTANCE.getPlugin(pluginId);
     ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
 
     if (!GROUP_ELEMENT_NAME.equals(element.getName())) {
@@ -721,7 +719,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   /**
-   * @param parentGroup group wich is the parent of the separator. It can be <code>null</code> in that
+   * @param parentGroup group which is the parent of the separator. It can be <code>null</code> in that
    *                    case separator will be added to group described in the <add-to-group ....> subelement.
    * @param element     XML element which represent separator.
    */
@@ -934,7 +932,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @NonNls
   private static String getPluginInfo(@Nullable PluginId id) {
     if (id != null) {
-      final IdeaPluginDescriptor plugin = ApplicationManager.getApplication().getPlugin(id);
+      final IdeaPluginDescriptor plugin = PluginsFacade.INSTANCE.getPlugin(id);
       if (plugin != null) {
         String name = plugin.getName();
         if (name == null) {
@@ -1016,8 +1014,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   @Override
-  public boolean isTransparrentOnlyActionsUpdateNow() {
-    return myTransparrentOnlyUpdate;
+  public boolean isTransparentOnlyActionsUpdateNow() {
+    return myTransparentOnlyUpdate;
   }
 
   private void flushActionPerformed() {
@@ -1192,7 +1190,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   private class MyTimer extends Timer implements ActionListener {
     private final List<TimerListener> myTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
-    private final List<TimerListener> myTransparrentTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
+    private final List<TimerListener> myTransparentTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
     private int myLastTimePerformed;
 
     MyTimer() {
@@ -1208,7 +1206,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
     public void addTimerListener(TimerListener listener, boolean transparent){
       if (transparent) {
-        myTransparrentTimerListeners.add(listener);
+        myTransparentTimerListeners.add(listener);
       } else {
         myTimerListeners.add(listener);
       }
@@ -1216,7 +1214,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
     public void removeTimerListener(TimerListener listener, boolean transparent){
       if (transparent) {
-       myTransparrentTimerListeners.remove(listener);
+       myTransparentTimerListeners.remove(listener);
       } else {
         myTimerListeners.remove(listener);
       }
@@ -1236,8 +1234,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
       try {
         HashSet<TimerListener> notified = new HashSet<TimerListener>();
-        myTransparrentOnlyUpdate = transparentOnly;
-        notifyListeners(myTransparrentTimerListeners, notified);
+        myTransparentOnlyUpdate = transparentOnly;
+        notifyListeners(myTransparentTimerListeners, notified);
 
         if (transparentOnly) {
           return;
@@ -1246,7 +1244,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         notifyListeners(myTimerListeners, notified);
       }
       finally {
-        myTransparrentOnlyUpdate = false;
+        myTransparentOnlyUpdate = false;
       }
     }
 
@@ -1303,7 +1301,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   private void tryToExecuteNow(final AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
-    final Presentation presenation = (Presentation)action.getTemplatePresentation().clone();
+    final Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
 
     IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(new Runnable() {
       public void run() {
@@ -1312,7 +1310,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         AnActionEvent event = new AnActionEvent(
           inputEvent, context,
           place != null ? place : ActionPlaces.UNKNOWN,
-          presenation, ActionManagerImpl.this,
+          presentation, ActionManagerImpl.this,
           inputEvent.getModifiersEx()
         );
 

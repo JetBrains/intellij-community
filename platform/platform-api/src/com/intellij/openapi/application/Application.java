@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
@@ -274,10 +272,6 @@ public interface Application extends ComponentManager {
    * @return true if IDEA is running in command line  mode, false otherwise
    */
   boolean isCommandLine();
-
-  IdeaPluginDescriptor getPlugin(PluginId id);
-
-  IdeaPluginDescriptor[] getPlugins();
 
   boolean isDisposed();
 

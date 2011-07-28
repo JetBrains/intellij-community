@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -101,7 +102,7 @@ public class IdeaApplication {
   protected ApplicationStarter getStarter() {
     if (myArgs.length > 0) {
       final Application app = ApplicationManager.getApplication();
-      app.getPlugins(); //TODO[max] make it clearer plugins should initialize before querying for extpoints.
+      PluginsFacade.INSTANCE.getPlugins(); //TODO[max] make it clearer plugins should initialize before querying for extpoints.
 
       ExtensionPoint<ApplicationStarter> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER);
       final ApplicationStarter[] starters = point.getExtensions();

@@ -402,14 +402,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myCommandLineMode;
   }
 
-  public IdeaPluginDescriptor getPlugin(PluginId id) {
-    return PluginsFacade.INSTANCE.getPlugin(id);
-  }
-
-  public IdeaPluginDescriptor[] getPlugins() {
-    return PluginsFacade.INSTANCE.getPlugins();
-  }
-
   public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
     return ourThreadExecutorsService.submit(new Runnable() {
       public void run() {

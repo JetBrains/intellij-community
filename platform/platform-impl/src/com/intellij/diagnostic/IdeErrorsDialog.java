@@ -32,6 +32,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -263,7 +264,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
       else {
         final Application app = ApplicationManager.getApplication();
-        return DiagnosticBundle.message("error.list.message.blame.plugin", app.getPlugin(pluginId).getName());
+        return DiagnosticBundle.message("error.list.message.blame.plugin", PluginsFacade.INSTANCE.getPlugin(pluginId).getName());
       }
     }
     return "";
@@ -744,7 +745,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (pluginId != null) {
         PluginManager.disablePlugin(pluginId.toString());
         final Application app = ApplicationManager.getApplication();
-        final String pluginName = app.getPlugin(pluginId).getName();
+        final String pluginName = PluginsFacade.INSTANCE.getPlugin(pluginId).getName();
         int rc = Messages.showYesNoDialog(getRootPane(), "Are you sure you would like to disable the plugin " + pluginName +
                                                          "? The features provided by the plugin will no longer be available.",
                                           "Disable Plugin", Messages.getQuestionIcon());
@@ -768,7 +769,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       PluginId pluginId = getSelectedPluginId();
       if (pluginId != null) {
         setEnabled(true);
-        putValue(NAME, "Disable " + ApplicationManager.getApplication().getPlugin(pluginId).getName());
+        putValue(NAME, "Disable " + PluginsFacade.INSTANCE.getPlugin(pluginId).getName());
       }
       else {
         setEnabled(false);

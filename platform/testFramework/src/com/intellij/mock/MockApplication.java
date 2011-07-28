@@ -15,7 +15,6 @@
  */
 package com.intellij.mock;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationListener;
@@ -25,7 +24,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -112,17 +110,6 @@ public class MockApplication extends MockComponentManager implements Application
   public boolean isCommandLine() {
     return true;
   }
-
-  @Override
-  public IdeaPluginDescriptor getPlugin(PluginId id) {
-    return null;
-  }
-
-  @Override
-  public IdeaPluginDescriptor[] getPlugins() {
-    return new IdeaPluginDescriptor[0];
-  }
-
 
   @Override
   public Future<?> executeOnPooledThread(@NotNull Runnable action) {
