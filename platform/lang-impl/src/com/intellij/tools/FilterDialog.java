@@ -111,7 +111,7 @@ class FilterDialog extends DialogWrapper {
 
     makePopup();
 
-    panel.setPreferredSize(new Dimension(335, 150));
+    panel.setPreferredSize(new Dimension(335, 160));
 
     mainPanel.add(panel, BorderLayout.NORTH);
 

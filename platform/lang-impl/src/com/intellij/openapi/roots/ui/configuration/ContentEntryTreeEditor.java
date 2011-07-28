@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.actions.NewFolderAction;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
@@ -91,7 +92,7 @@ public class ContentEntryTreeEditor {
     myTreePanel.add(new ToolbarPanel(scrollPane, myEditingActionsGroup), BorderLayout.CENTER);
 
     myTreePanel.setVisible(false);
-    myDescriptor = new FileChooserDescriptor(false, true, false, false, false, true);
+    myDescriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
     myDescriptor.setShowFileSystemRoots(false);
   }
 

@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -68,16 +69,16 @@ public class CheckoutOptionsDialog extends DialogWrapper {
     mySelectTarget.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         // choose directory here/
-        FileChooserDescriptor fcd = new FileChooserDescriptor(false, true, false, false, false, false);
+        FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         fcd.setShowFileSystemRoots(true);
         fcd.setTitle(SvnBundle.message("checkout.directory.chooser.title"));
         fcd.setDescription(SvnBundle.message("checkout.directory.chooser.prompt"));
         fcd.setHideIgnored(false);
-        VirtualFile[] files = FileChooser.chooseFiles(getContentPane(), fcd, null);
-        if (files.length != 1 || files[0] == null) {
+        VirtualFile file = FileChooser.chooseFile(getContentPane(), fcd, null);
+        if (file == null) {
           return;
         }
-        fillTargetList(new File(files[0].getPath()));
+        fillTargetList(new File(file.getPath()));
         validateTargetSelected();
       }
     });

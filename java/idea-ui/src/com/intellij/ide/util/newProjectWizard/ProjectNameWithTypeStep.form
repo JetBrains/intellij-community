@@ -17,7 +17,7 @@
           <preferredSize width="250" height="150"/>
         </properties>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
         </clientProperties>
         <border type="etched" title="Module Settings"/>
         <children>

@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -629,11 +630,9 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
           }
         }
       }
-      VirtualFile[] files =
-        FileChooser.chooseFiles(myContentPanel, new FileChooserDescriptor(false, true, false, false, false, false), initialFile);
-      if (files.length > 0) {
-        assert files.length == 1;
-        myTextField.setText(FileUtil.toSystemDependentName(files[0].getPath()));
+      VirtualFile file = FileChooser.chooseFile(myContentPanel, FileChooserDescriptorFactory.createSingleFolderDescriptor(), initialFile);
+      if (file != null) {
+        myTextField.setText(FileUtil.toSystemDependentName(file.getPath()));
       }
     }
   }

@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -122,7 +121,7 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
     kbConfig.add(modifiers);
     kbConfig.add(hold);
 
-    kbConfig.setBorder(IdeBorderFactory.createTitledBorder("Keyboard Configuration"));
+    kbConfig.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent("Keyboard Configuration"));
 
     box.add(kbConfig);
 
@@ -179,7 +178,7 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
     hasConflicts |= printConflict(c, KeyEvent.VK_ENTER, QuickAccessSettings.SWITCH_APPLY);
 
     if (hasConflicts) {
-      myConflicts.setBorder(IdeBorderFactory.createTitledBorder("Conflicts"));
+      myConflicts.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent("Conflicts"));
       c.gridx = 0;
       c.gridy++;
       c.gridwidth = 2;

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.InsertPathAction;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -129,7 +130,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   private void initBrowseActions() {
-    InsertPathAction.addTo(myPathToCertificatesField, new FileChooserDescriptor(true, false, false, false, false, false));
+    InsertPathAction.addTo(myPathToCertificatesField, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     myClientCertificatePathField.addBrowseFolderListener(
         SvnBundle.message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title"),
         null, null, new FileChooserDescriptor(true, false, false, false, false, false));

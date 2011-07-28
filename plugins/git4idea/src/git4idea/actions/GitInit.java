@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -52,17 +53,16 @@ public class GitInit extends DumbAwareAction {
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
-    FileChooserDescriptor fcd = new FileChooserDescriptor(false, true, false, false, false, false);
+    FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
     fcd.setTitle(GitBundle.getString("init.destination.directory.title"));
     fcd.setDescription(GitBundle.getString("init.destination.directory.description"));
     fcd.setHideIgnored(false);
     final VirtualFile baseDir = project.getBaseDir();
-    final VirtualFile[] files = FileChooser.chooseFiles(project, fcd, baseDir);
-    if (files.length == 0) {
+    final VirtualFile root = FileChooser.chooseFile(project, fcd, baseDir);
+    if (root == null) {
       return;
     }
-    final VirtualFile root = files[0];
     if (GitUtil.isUnderGit(root)) {
       final int v = Messages.showYesNoDialog(project,
                                              GitBundle.message("init.warning.already.under.git",

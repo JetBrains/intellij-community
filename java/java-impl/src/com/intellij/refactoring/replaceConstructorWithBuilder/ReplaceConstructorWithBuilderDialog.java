@@ -197,7 +197,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
-    //final Border titledBorder = IdeBorderFactory.createTitledBorder("Parameters to Pass to the Builder");
+    //final Border titledBorder = IdeBorderFactory.createBoldTitledBorder("Parameters to Pass to the Builder");
     //final Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     //final Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
     //scrollPane.setBorder(border);

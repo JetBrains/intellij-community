@@ -188,7 +188,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     final JPanel main = new JPanel(new BorderLayout());
     final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 2, true, false));
     final JLabel nameLabel = new JLabel();
-    nameLabel.setText(RefactoringBundle.message("name.prompt"));
+    nameLabel.setText(RefactoringBundle.message("changeSignature.name.prompt"));
     namePanel.add(nameLabel);
     namePanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 0));
     namePanel.add(myNameField);

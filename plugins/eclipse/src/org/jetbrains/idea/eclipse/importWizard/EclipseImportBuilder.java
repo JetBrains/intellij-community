@@ -16,7 +16,6 @@
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -345,12 +344,12 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         };
         descriptor.setDescription(buf.toString());
         descriptor.setTitle(getTitle());
-        final VirtualFile[] selectedFiles = FileChooser.chooseFiles(project, descriptor, project.getBaseDir());
-        if (selectedFiles.length == 1) {
+        final VirtualFile selectedFile = FileChooser.chooseFile(project, descriptor, project.getBaseDir());
+        if (selectedFile != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
-                EclipseUserLibrariesHelper.readProjectLibrariesContent(new File(selectedFiles[0].getPath()), project, unknownLibraries);
+                EclipseUserLibrariesHelper.readProjectLibrariesContent(new File(selectedFile.getPath()), project, unknownLibraries);
               }
               catch (Exception e) {
                 LOG.error(e);
@@ -385,9 +384,9 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       };
       fileChooserDescriptor.setTitle(EclipseBundle.message("eclipse.create.library.title"));
       fileChooserDescriptor.setDescription(EclipseBundle.message("eclipse.create.library.description", libraryName));
-      final VirtualFile[] files = FileChooser.chooseFiles(project, fileChooserDescriptor);
-      if (files.length == 1) {
-        final VirtualFile pluginsDir = files[0].findChild("plugins");
+      final VirtualFile file = FileChooser.chooseFile(project, fileChooserDescriptor, null);
+      if (file != null) {
+        final VirtualFile pluginsDir = file.findChild("plugins");
         if (pluginsDir != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {

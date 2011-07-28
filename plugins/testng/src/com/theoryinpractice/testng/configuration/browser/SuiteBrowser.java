@@ -32,26 +32,17 @@ public class SuiteBrowser extends BrowseModuleValueActionListener
 
     @Override
     public String showDialog() {
-        FileChooserDescriptor descriptor = new FileChooserDescriptor(true,
-                                                                     false,
-                                                                     false,
-                                                                     false,
-                                                                     false,
-                                                                     false)
-        {
-            @Override
-            public boolean isFileVisible(VirtualFile virtualFile, boolean showHidden) {
+        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+          @Override
+          public boolean isFileVisible(VirtualFile virtualFile, boolean showHidden) {
                 if(!showHidden && virtualFile.getName().charAt(0) == '.') return false;
                 return virtualFile.isDirectory() || "xml".equals(virtualFile.getExtension());
             }
         };
         descriptor.setDescription("Please select the testng.xml suite file");
         descriptor.setTitle("Select Suite");
-        VirtualFile[] files = FileChooser.chooseFiles(getProject(), descriptor);
-        if(files.length > 0) {
-            return files[0].getPath();
-        }
-        return null;
+        VirtualFile file = FileChooser.chooseFile(getProject(), descriptor);
+        return file != null ? file.getPath() : null;
     }
 
 }

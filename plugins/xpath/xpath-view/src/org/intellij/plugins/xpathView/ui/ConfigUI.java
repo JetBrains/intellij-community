@@ -23,8 +23,6 @@ import com.intellij.ui.ColorPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -74,7 +72,7 @@ public class ConfigUI extends JPanel {
         showInMainMenu.setToolTipText("Uncheck to remove XPath-related actions from the Main-Menubar");
 
         JPanel settings = new JPanel(new BorderLayout());
-        settings.setBorder(IdeBorderFactory.createTitledBorder("Settings"));
+        settings.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent("Settings"));
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.NORTH);
         c.add(settings, BorderLayout.NORTH);
 
@@ -92,7 +90,7 @@ public class ConfigUI extends JPanel {
         settings.add(/*settings = */new JPanel(new BorderLayout()), BorderLayout.SOUTH);
 
         JPanel colors = new JPanel(new GridBagLayout());
-        colors.setBorder(IdeBorderFactory.createTitledBorder("Colors"));
+        colors.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent("Colors"));
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.SOUTH);
         c.add(colors, BorderLayout.NORTH);
 

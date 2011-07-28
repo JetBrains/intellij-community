@@ -31,7 +31,10 @@ public class SeparatorFactory {
   }
 
   public static JComponent createSeparator(String textWithMnemonic, @Nullable JComponent labelFor) {
+    Color oldColor = UIManager.getColor("Separator.foreground");
+    UIManager.put("Separator.foreground", UIUtil.getBorderColor());
     final JComponent separator = DefaultComponentFactory.getInstance().createSeparator(textWithMnemonic);
+    UIManager.put("Separator.foreground", oldColor);
     if (labelFor != null) {
       ((JLabel) separator.getComponent(0)).setLabelFor(labelFor);
     }
@@ -41,13 +44,9 @@ public class SeparatorFactory {
 
   public static JComponent createSeparatorWithBoldTitle(String textWithMnemonic, @Nullable JComponent labelFor) {
     Font oldFont = UIManager.getFont("TitledBorder.font");
-    UIManager.put("TitledBorder.font", UIUtil.getBorderFont());
-    final JComponent separator = DefaultComponentFactory.getInstance().createSeparator(textWithMnemonic);
+    UIManager.put("TitledBorder.font", oldFont.deriveFont(Font.BOLD));
+    final JComponent separator = createSeparator(textWithMnemonic, labelFor);
     UIManager.put("TitledBorder.font", oldFont);
-    if (labelFor != null) {
-      ((JLabel) separator.getComponent(0)).setLabelFor(labelFor);
-    }
-    separator.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
     return separator;
   }
 }

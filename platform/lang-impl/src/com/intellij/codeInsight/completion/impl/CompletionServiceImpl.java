@@ -53,8 +53,11 @@ public class CompletionServiceImpl extends CompletionService{
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
       public void projectClosing(Project project) {
-        LookupManager.getInstance(project).hideActiveLookup();
-        setCompletionPhase(CompletionPhase.NoCompletion);
+        CompletionProgressIndicator indicator = getCurrentCompletion();
+        if (indicator != null && indicator.getProject() == project) {
+          LookupManager.getInstance(project).hideActiveLookup();
+          setCompletionPhase(CompletionPhase.NoCompletion);
+        }
       }
     });
   }
@@ -214,7 +217,7 @@ public class CompletionServiceImpl extends CompletionService{
     CompletionPhase oldPhase = getCompletionPhase();
     CompletionProgressIndicator oldIndicator = oldPhase.indicator;
     if (oldIndicator != null && !(phase instanceof CompletionPhase.BgCalculation)) {
-      LOG.assertTrue(!oldIndicator.isRunning() || oldIndicator.isCanceled(), "don't change phase during running completion");
+      LOG.assertTrue(!oldIndicator.isRunning() || oldIndicator.isCanceled(), "don't change phase during running completion: oldPhase=" + oldPhase);
     }
 
     Disposer.dispose(oldPhase);

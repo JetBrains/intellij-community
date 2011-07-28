@@ -33,7 +33,9 @@ import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.util.*;
 
 public abstract class InspectionRVContentProvider {
@@ -281,13 +283,6 @@ public abstract class InspectionRVContentProvider {
             return;
           }
         }
-        else if (current instanceof ProblemDescriptionNode) {
-          if (((ProblemDescriptionNode)current).getDescriptor().getDescriptionTemplate()
-            .compareTo(((ProblemDescriptionNode)child).getDescriptor().getDescriptionTemplate()) == 0) {
-            processDepth(model, child, current);
-            return;
-          }
-        }
       }
     }
     add(model, child, parent);
@@ -298,13 +293,17 @@ public abstract class InspectionRVContentProvider {
       parent.add(child);
     }
     else {
-      model.insertNodeInto(child, parent, parent.getChildCount());
+      model.insertNodeInto(child, parent, child.getParent() == parent ? parent.getChildCount() - 1 : parent.getChildCount());
     }
   }
 
   private static void processDepth(@Nullable DefaultTreeModel model, final InspectionTreeNode child, final InspectionTreeNode current) {
-    for (int j = 0; j < child.getChildCount(); j++) {
-      merge(model, (InspectionTreeNode)child.getChildAt(j), current, true);
+    InspectionTreeNode[] children = new InspectionTreeNode[child.getChildCount()];
+    for (int i = 0; i < children.length; i++) {
+      children[i] = (InspectionTreeNode)child.getChildAt(i);
+    }
+    for (InspectionTreeNode node : children) {
+      merge(model, node, current, true);
     }
   }
 }

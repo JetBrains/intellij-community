@@ -129,7 +129,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
   private JPanel createEditorFontPanel() {
     JPanel editorFontPanel = new JPanel();
-    editorFontPanel.setBorder(IdeBorderFactory.createTitledBorder(myTitle));
+    editorFontPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent(myTitle));
     editorFontPanel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;

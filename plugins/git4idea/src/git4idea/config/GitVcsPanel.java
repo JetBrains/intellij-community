@@ -16,7 +16,7 @@
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -72,7 +72,7 @@ public class GitVcsPanel {
     myConvertTextFilesComboBox.addItem(CRLF_ASK);
     myConvertTextFilesComboBox.setSelectedItem(CRLF_ASK);
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
-                                       new FileChooserDescriptor(true, false, false, false, false, false));
+                                       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
   }
 
   /**

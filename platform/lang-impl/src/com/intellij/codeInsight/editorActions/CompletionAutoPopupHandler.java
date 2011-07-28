@@ -29,13 +29,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -83,33 +81,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.CONTINUE;
     }
 
-    scheduleAutoPopup(editor, null);
+    AutoPopupController.getInstance(project).scheduleAutoPopup(editor, null);
     return Result.STOP;
-  }
-
-  public static void scheduleAutoPopup(final Editor editor, @Nullable final Condition<PsiFile> condition) {
-    final Project project = editor.getProject();
-    if (project == null) return;
-
-    final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false, editor);
-    CompletionServiceImpl.setCompletionPhase(phase);
-
-    AutoPopupController.getInstance(project).invokeAutoPopupRunnable(new Runnable() {
-      @Override
-      public void run() {
-        runLaterWithCommitted(project, editor.getDocument(), new Runnable() {
-          @Override
-          public void run() {
-            if (phase.isExpired()) return;
-
-            PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-            if (file != null && condition != null && !condition.value(file)) return;
-
-            invokeCompletion(CompletionType.BASIC, true, project, editor, 0);
-          }
-        });
-      }
-    }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
   }
 
   public static void invokeCompletion(CompletionType completionType,
@@ -130,7 +103,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
   }
 
-  public static void runLaterWithCommitted(@NotNull final Project project, final Document document, final Runnable runnable) {
+  public static void runLaterWithCommitted(@NotNull final Project project,
+                                           @NotNull final Document document, @NotNull final Runnable runnable) {
     final long beforeStamp = document.getModificationStamp();
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).performWhenAllCommitted(new Runnable() {
         @Override

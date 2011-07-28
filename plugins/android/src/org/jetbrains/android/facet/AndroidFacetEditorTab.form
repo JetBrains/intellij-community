@@ -116,7 +116,7 @@
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.facet.settings.res.overlay.panel.title"/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
                 </clientProperties>
                 <children>
                   <component id="de3b3" class="com.intellij.ui.components.JBList" binding="myResOverlayList">
@@ -179,7 +179,7 @@
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apk.settings.title"/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
                 </clientProperties>
                 <children>
                   <component id="d83b5" class="javax.swing.JRadioButton" binding="myUseAptResDirectoryFromPathRadio">
@@ -241,7 +241,7 @@
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.aidl.settings.title"/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
                 </clientProperties>
                 <children>
                   <component id="1d0b4" class="javax.swing.JLabel" binding="myAidlGenPathLabel">
@@ -276,7 +276,7 @@
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apt.settings.title"/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
                 </clientProperties>
                 <children>
                   <grid id="1f282" binding="myAaptCompilerPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

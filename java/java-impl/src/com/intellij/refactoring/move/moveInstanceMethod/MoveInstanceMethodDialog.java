@@ -25,6 +25,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TitledSeparatorWithMnemonic;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -60,8 +61,8 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   protected JComponent createCenterPanel() {
     JPanel mainPanel = new JPanel(new GridBagLayout());
-    final JLabel jLabel = new JLabel();
-    mainPanel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
+    final TitledSeparatorWithMnemonic separator = new TitledSeparatorWithMnemonic();
+    mainPanel.add(separator, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
 
     myList = createTargetVariableChooser();
     myList.addListSelectionListener(new ListSelectionListener() {
@@ -70,7 +71,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       }
     });
 
-    jLabel.setText(RefactoringBundle.message("moveInstanceMethod.select.an.instance.parameter"));
+    separator.setText(RefactoringBundle.message("moveInstanceMethod.select.an.instance.parameter"));
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     mainPanel.add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
@@ -83,7 +84,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       mainPanel.add(parametersPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
     }
 
-    jLabel.setLabelFor(myList);
+    separator.setLabelFor(myList);
     validateTextFields(myList.getSelectedIndex());
     return mainPanel;
   }
@@ -109,10 +110,10 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     myThisClassesMap = MoveInstanceMembersUtil.getThisClassesToMembers(myMethod);
     myOldClassParameterNameFields = new HashMap<PsiClass, EditorTextField>();
     if (myThisClassesMap.size() == 0) return null;
-    JPanel panel = new JPanel(new VerticalFlowLayout());
+    JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
     for (PsiClass aClass : myThisClassesMap.keySet()) {
       final String text = RefactoringBundle.message("move.method.this.parameter.label", aClass.getName());
-      panel.add(new JLabel(text));
+      panel.add(new TitledSeparatorWithMnemonic(text, null));
 
       String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(aClass);
       final EditorTextField field = new EditorTextField(suggestedName, getProject(), StdFileTypes.JAVA);
@@ -120,6 +121,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       myOldClassParameterNameFields.put(aClass, field);
       panel.add(field);
     }
+    panel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
     return panel;
   }
 

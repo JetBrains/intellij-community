@@ -54,7 +54,7 @@
         <properties/>
         <border type="etched" title-resource-bundle="messages/XDebuggerBundle" title-key="xbreakpoints.conditions.group.title"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
         <children>
           <component id="66f59" class="javax.swing.JCheckBox" binding="myConditionCheckBox" default-binding="true">

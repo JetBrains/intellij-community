@@ -92,8 +92,6 @@ class CopyClassDialog extends DialogWrapper{
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    panel.setBorder(IdeBorderFactory.createRoundedBorder());
-
     gbConstraints.insets = new Insets(4,8,4,8);
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = 2;
@@ -148,6 +146,8 @@ class CopyClassDialog extends DialogWrapper{
     gbConstraints.anchor = GridBagConstraints.EAST;
     gbConstraints.fill = GridBagConstraints.NONE;
     panel.add(myCbMoveToAnotherSourceFolder, gbConstraints);
+
+    panel.setPreferredSize(new Dimension(400, 120));
 
     return panel;
   }

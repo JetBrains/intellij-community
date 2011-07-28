@@ -16,19 +16,15 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesIndex;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -117,43 +113,34 @@ public class PropertiesReferenceManager {
   }
 
   public boolean processPropertiesFiles(@NotNull final GlobalSearchScope searchScope,
-                                      @NotNull final PropertiesFileProcessor processor,
-                                      @NotNull final BundleNameEvaluator evaluator) {
+                                        @NotNull final PropertiesFileProcessor processor,
+                                        @NotNull final BundleNameEvaluator evaluator) {
 
-    final ProjectFileIndex index = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
     boolean result = FileBasedIndex.getInstance()
       .processValues(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, null, new FileBasedIndex.ValueProcessor<Void>() {
-          public boolean process(VirtualFile file, Void value) {
-            if (!index.isInContent(file)) return true;
-            final PsiFile psiFile = myPsiManager.findFile(file);
-            if (psiFile instanceof PropertiesFile) {
-              final String qName = evaluator.evaluateBundleName(psiFile);
-              if (qName != null) {
-                if (!processor.process(qName, (PropertiesFile)psiFile)) return false;
-              }
-            }
-            return true;
-          }
-        },
-                     searchScope);
+        public boolean process(VirtualFile file, Void value) {
+          return processFile(file, evaluator, processor);
+        }
+      }, searchScope);
     if (!result) return false;
-    return FileBasedIndex.getInstance().processValues(XmlPropertiesIndex.NAME, XmlPropertiesIndex.MARKER_KEY, null,
-                                                      new FileBasedIndex.ValueProcessor<String>() {
-                                                        public boolean process(VirtualFile file, String value) {
 
-                                                          if (!index.isInContent(file)) return true;
-                                                          final PsiFile psiFile = myPsiManager.findFile(file);
-                                                          if (psiFile instanceof XmlFile) {
-                                                            final String qName = evaluator.evaluateBundleName(psiFile);
-                                                            if (qName != null) {
-                                                              PropertiesFile propertiesFile = XmlPropertiesFile.getPropertiesFile(psiFile);
-                                                              if (propertiesFile != null) {
-                                                                if (!processor.process(qName, propertiesFile)) return false;
-                                                              }
-                                                            }
-                                                          }
-                                                          return true;
-                                                        }
-                                                      }, searchScope);
+    return FileBasedIndex.getInstance()
+      .processValues(XmlPropertiesIndex.NAME, XmlPropertiesIndex.MARKER_KEY, null, new FileBasedIndex.ValueProcessor<String>() {
+        public boolean process(VirtualFile file, String value) {
+          return processFile(file, evaluator, processor);
+        }
+      }, searchScope);
+  }
+
+  private boolean processFile(VirtualFile file, BundleNameEvaluator evaluator, PropertiesFileProcessor processor) {
+    final PsiFile psiFile = myPsiManager.findFile(file);
+    PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(psiFile);
+    if (propertiesFile != null) {
+      final String qName = evaluator.evaluateBundleName(psiFile);
+      if (qName != null) {
+        if (!processor.process(qName, propertiesFile)) return false;
+      }
+    }
+    return true;
   }
 }

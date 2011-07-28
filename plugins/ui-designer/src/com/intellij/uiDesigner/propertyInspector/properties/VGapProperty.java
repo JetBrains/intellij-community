@@ -35,7 +35,7 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
   }
 
   public VGapProperty(){
-    super(null," Vertical Gap", -1);
+    super(null,"Vertical Gap", -1);
   }
 
   public Integer getValue(final RadContainer component) {

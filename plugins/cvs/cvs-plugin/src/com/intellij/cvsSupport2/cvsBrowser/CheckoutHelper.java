@@ -23,10 +23,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -70,13 +70,12 @@ public class CheckoutHelper {
     return compareResult == 0;
   }
 
+  @Nullable
   public VirtualFile chooseCheckoutLocation(String pathToSuggestedFolder) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(com.intellij.CvsBundle.message("dialog.description.select.a.directory.to.check.out.the.files.to"));
     VirtualFile suggestedCheckoutFolder = LocalFileSystem.getInstance().findFileByPath(pathToSuggestedFolder.replace(File.separatorChar, '/'));
-    VirtualFile[] files = FileChooser.chooseFiles(myPanel, descriptor, suggestedCheckoutFolder);
-    if (files.length == 0) return null;
-    return files[0];
+    return FileChooser.chooseFile(myPanel, descriptor, suggestedCheckoutFolder);
   }
 
   private boolean requestLocation() {

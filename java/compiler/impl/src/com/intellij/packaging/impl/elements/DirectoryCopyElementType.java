@@ -15,9 +15,7 @@
  */
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,9 +52,8 @@ public class DirectoryCopyElementType extends PackagingElementType<DirectoryCopy
   @NotNull
   public List<? extends DirectoryCopyPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, true);
-    final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, context.getProject());
-    final VirtualFile[] files = chooser.choose(null, context.getProject());
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
+    final VirtualFile[] files = FileChooser.chooseFiles(context.getProject(), descriptor);
     final List<DirectoryCopyPackagingElement> list = new ArrayList<DirectoryCopyPackagingElement>();
     for (VirtualFile file : files) {
       list.add(new DirectoryCopyPackagingElement(file.getPath()));

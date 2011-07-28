@@ -105,7 +105,7 @@ public class EditMigrationDialog extends DialogWrapper{
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
     gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
-    gbConstraints.anchor = GridBagConstraints.EAST;
+    gbConstraints.anchor = GridBagConstraints.NORTHEAST;
     JLabel descriptionPromptLabel = new JLabel(RefactoringBundle.message("migration.map.description.label"));
     panel.add(descriptionPromptLabel, gbConstraints);
 

@@ -18,7 +18,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -110,9 +110,9 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       }
 
       public void actionPerformed(final AnActionEvent e) {
-        final VirtualFile[] files = FileChooser.chooseFiles(myProject, new FileChooserDescriptor(false, true, false, false, false, false));
-        if (files.length > 0) {
-          final File file = new File(files[0].getPath());
+        final VirtualFile vFile = FileChooser.chooseFile(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+        if (vFile != null) {
+          final File file = new File(vFile.getPath());
           if (hasDuplicate(file)) {
             return; // silently do not add duplicate
           }

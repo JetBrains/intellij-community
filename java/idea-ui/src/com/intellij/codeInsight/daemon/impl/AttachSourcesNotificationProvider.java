@@ -27,6 +27,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
@@ -256,7 +257,7 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
     }
 
     public ActionCallback perform(final List<LibraryOrderEntry> libraries) {
-      FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, true, false, true, true);
+      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
       descriptor.setTitle(ProjectBundle.message("library.attach.sources.action"));
       descriptor.setDescription(ProjectBundle.message("library.attach.sources.description"));
       final Library firstLibrary = libraries.get(0).getLibrary();

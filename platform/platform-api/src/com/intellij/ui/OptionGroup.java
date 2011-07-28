@@ -64,7 +64,7 @@ public class OptionGroup {
   public JPanel createPanel() {
     JPanel panel = new JPanel();
     if (myTitle != null) {
-      panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle));
+      panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(myTitle));
     }
     panel.setLayout(new GridBagLayout());
 

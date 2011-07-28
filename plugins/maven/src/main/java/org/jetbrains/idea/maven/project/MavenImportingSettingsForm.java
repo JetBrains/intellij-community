@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,7 +65,7 @@ public class MavenImportingSettingsForm {
     mySeparateModulesDirCheckBox.addActionListener(listener);
 
     mySeparateModulesDirChooser.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
-                                                        new FileChooserDescriptor(false, true, false, false, false, false));
+                                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
   }

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
@@ -118,8 +119,9 @@ public final class MacrosDialog extends DialogWrapper {
     constr = new GridBagConstraints();
     constr.gridy = 0;
     constr.anchor = GridBagConstraints.WEST;
+    constr.fill = GridBagConstraints.HORIZONTAL;
     constr.insets = new Insets(5, 5, 0, 5);
-    panel.add(new JLabel(IdeBundle.message("label.macros")), constr);
+    panel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.macros"), null), constr);
 
     // macros list
     constr = new GridBagConstraints();
@@ -138,8 +140,9 @@ public final class MacrosDialog extends DialogWrapper {
     constr.gridx = 0;
     constr.gridy = 2;
     constr.anchor = GridBagConstraints.WEST;
+    constr.fill = GridBagConstraints.HORIZONTAL;
     constr.insets = new Insets(5, 5, 0, 5);
-    panel.add(new JLabel(IdeBundle.message("label.macro.preview")), constr);
+    panel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.macro.preview"), null), constr);
 
     // preview
     constr = new GridBagConstraints();

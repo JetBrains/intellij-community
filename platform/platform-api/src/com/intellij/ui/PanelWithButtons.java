@@ -18,7 +18,6 @@ package com.intellij.ui;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EtchedBorder;
 import java.awt.*;
 
 public abstract class PanelWithButtons extends JPanel {
@@ -32,7 +31,7 @@ public abstract class PanelWithButtons extends JPanel {
 
     String labelText = getLabelText();
     if (labelText != null) {
-      setBorder(IdeBorderFactory.createTitledBorder(labelText));
+      setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent(labelText));
     }
 
     add(

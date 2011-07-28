@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.export;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -77,7 +78,7 @@ public class ExportTestResultsForm {
 
     myFolderField
       .addBrowseFolderListener(ExecutionBundle.message("export.test.results.output.folder.chooser.title"), null, null,
-                               new FileChooserDescriptor(false, true, false, false, false, false),
+                               FileChooserDescriptorFactory.createSingleFolderDescriptor(),
                                TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT, false);
 
     myFileNameField.getDocument().addDocumentListener(new DocumentAdapter() {

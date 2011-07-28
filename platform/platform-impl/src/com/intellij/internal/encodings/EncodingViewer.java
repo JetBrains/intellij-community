@@ -17,7 +17,6 @@ package com.intellij.internal.encodings;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -47,10 +46,9 @@ public class EncodingViewer extends DialogWrapper {
     initEncodings();
     myLoadFile.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-        VirtualFile[] files = FileChooser.chooseFiles(myPanel, descriptor);
-        if (files.length != 0) {
-          loadFrom(files[0]);
+        VirtualFile file = FileChooser.chooseFile(myPanel, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+        if (file != null) {
+          loadFrom(file);
         }
       }
     });

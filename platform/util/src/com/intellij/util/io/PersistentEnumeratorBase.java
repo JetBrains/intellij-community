@@ -64,6 +64,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     public Version(int _correctlyClosedMagic, int _dirtyMagic) {
       correctlyClosedMagic = _correctlyClosedMagic;
       dirtyMagic = _dirtyMagic;
+      assert correctlyClosedMagic != dirtyMagic;
     }
   }
 

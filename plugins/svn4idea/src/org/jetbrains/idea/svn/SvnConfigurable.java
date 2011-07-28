@@ -21,6 +21,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -109,12 +110,12 @@ public class SvnConfigurable implements Configurable {
 
         String oldValue = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
         PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.TRUE.toString());
-        VirtualFile[] files = FileChooser.chooseFiles(myComponent, descriptor, root);
+        VirtualFile file = FileChooser.chooseFile(myComponent, descriptor, root);
         PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", oldValue);
-        if (files.length != 1 || files[0] == null) {
+        if (file == null) {
           return;
         }
-        myConfigurationDirectoryText.setText(files[0].getPath().replace('/', File.separatorChar));
+        myConfigurationDirectoryText.setText(file.getPath().replace('/', File.separatorChar));
       }
     });
     myConfigurationDirectoryText.setEditable(false);
@@ -132,8 +133,8 @@ public class SvnConfigurable implements Configurable {
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
  }
 
-  private FileChooserDescriptor createFileDescriptor() {
-    final FileChooserDescriptor descriptor =  new FileChooserDescriptor(false, true, false, false, false, false);
+  private static FileChooserDescriptor createFileDescriptor() {
+    final FileChooserDescriptor descriptor =  FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setShowFileSystemRoots(true);
     descriptor.setTitle(SvnBundle.message("dialog.title.select.configuration.directory"));
     descriptor.setDescription(SvnBundle.message("dialog.description.select.configuration.directory"));

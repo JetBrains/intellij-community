@@ -16,7 +16,7 @@
         <properties/>
         <border type="none" title="Annotation Classes"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
 </clientProperties>
         <children>
           <component id="f36cc" class="javax.swing.JLabel">
@@ -84,7 +84,7 @@
         <properties/>
         <border type="none" title="Runtime Pattern Validation"/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
         </clientProperties>
         <children>
           <component id="633b5" class="javax.swing.JRadioButton" binding="myNoInstrumentation">
@@ -121,7 +121,7 @@
         <properties/>
         <border type="none" title="Performance"/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
         </clientProperties>
         <children>
           <component id="8aa19" class="javax.swing.JRadioButton" binding="myDfaOff">

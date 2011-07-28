@@ -37,7 +37,7 @@ public class HgRepositorySelectorComponent {
   }
 
   public void setTitle(String title) {
-    mainPanel.setBorder(IdeBorderFactory.createTitledBorder(title));
+    mainPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(title));
   }
 
   public VirtualFile getRepository() {

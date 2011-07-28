@@ -261,12 +261,12 @@ public class ManifestFileUtil {
   public static VirtualFile showDialogAndCreateManifest(final ArtifactEditorContext context, final CompositePackagingElement<?> element) {
     FileChooserDescriptor descriptor = createDescriptorForManifestDirectory();
     final VirtualFile directory = suggestManifestFileDirectory(element, context, context.getArtifactType());
-    final VirtualFile[] files = FileChooser.chooseFiles(context.getProject(), descriptor, directory);
-    if (files.length != 1) {
+    final VirtualFile file = FileChooser.chooseFile(context.getProject(), descriptor, directory);
+    if (file == null) {
       return null;
     }
 
-    return createManifestFile(files[0], context.getProject());
+    return createManifestFile(file, context.getProject());
   }
 
   @Nullable

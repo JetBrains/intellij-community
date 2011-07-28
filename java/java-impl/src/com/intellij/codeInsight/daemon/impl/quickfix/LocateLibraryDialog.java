@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -75,7 +76,7 @@ public class LocateLibraryDialog extends DialogWrapper {
     myCopyToDir.setText(new File (module.getModuleFilePath()).getParent());
     myCopyToDir.addBrowseFolderListener(QuickFixBundle.message("add.library.title.choose.folder"),
                                         QuickFixBundle.message("add.library.description.choose.folder"), myProject,
-                                        new FileChooserDescriptor(false,true,false,false,false,false));
+                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     final ActionListener listener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {

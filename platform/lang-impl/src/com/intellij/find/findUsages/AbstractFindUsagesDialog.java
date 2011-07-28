@@ -23,9 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.ui.*;
 import com.intellij.usageView.UsageViewManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,7 +256,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   @Nullable
   protected JPanel createUsagesOptionsPanel() {
     JPanel optionsPanel = new JPanel();
-    optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.options.group")));
+    optionsPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(FindBundle.message("find.options.group")));
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
     addUsagesOptions(optionsPanel);
     return optionsPanel.getComponents().length == 0 ? null : optionsPanel;
@@ -268,13 +266,12 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   private JComponent createSearchScopePanel() {
     if (isInFileOnly()) return null;
     JPanel optionsPanel = new JPanel(new BorderLayout());
-    JLabel label = new JLabel(FindBundle.message("find.scope.label"));
-    optionsPanel.add(label, BorderLayout.WEST);
     String scope = myFindUsagesOptions.searchScope.getDisplayName();
     myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, scope);
     Disposer.register(myDisposable, myScopeCombo);
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);
-    label.setLabelFor(myScopeCombo.getComboBox());
+    JComponent separator = SeparatorFactory.createSeparator(FindBundle.message("find.scope.label"), myScopeCombo.getComboBox());
+    optionsPanel.add(separator, BorderLayout.NORTH);
     return optionsPanel;
   }
 

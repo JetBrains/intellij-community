@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -67,7 +67,7 @@ public class SSLCredentialsDialog extends DialogWrapper {
 
     myCertificatePath.addBrowseFolderListener(
         SvnBundle.message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title"),
-        null, null, new FileChooserDescriptor(true, false, false, false, false, false));
+        null, null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
 
     gb.weightx = 1;
     ++ gb.gridx;

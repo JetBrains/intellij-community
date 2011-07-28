@@ -21,6 +21,7 @@ import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -324,7 +325,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
   private void createUIComponents() {
     myLanguageLevelCombo = new LanguageLevelCombo();
     final JTextField textField = new JTextField();
-    final FileChooserDescriptor outputPathsChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     outputPathsChooserDescriptor.setHideIgnored(false);
     BrowseFilesListener listener = new BrowseFilesListener(textField, "", ProjectBundle.message("project.compiler.output"), outputPathsChooserDescriptor);

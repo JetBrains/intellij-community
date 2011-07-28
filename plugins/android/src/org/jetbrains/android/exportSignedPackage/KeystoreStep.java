@@ -19,7 +19,7 @@ package org.jetbrains.android.exportSignedPackage;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -198,10 +198,9 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
         path = defaultLocation != null ? defaultLocation : "";
       }
       VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path);
-      VirtualFile[] files = FileChooser.chooseFiles(myContentPanel, new FileChooserDescriptor(true, false, false, false, false, false), f);
-      if (files.length > 0) {
-        assert files.length == 1;
-        myKeystoreLocationField.setText(FileUtil.toSystemDependentName(files[0].getPath()));
+      VirtualFile file = FileChooser.chooseFile(myContentPanel, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(), f);
+      if (file != null) {
+        myKeystoreLocationField.setText(FileUtil.toSystemDependentName(file.getPath()));
       }
     }
   }

@@ -3,15 +3,15 @@
   <grid id="82e7b" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="115" y="72" width="246" height="217"/>
+      <xy x="115" y="72" width="597" height="345"/>
     </constraints>
     <properties/>
+    <clientProperties>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
+    </clientProperties>
     <border type="etched" title-resource-bundle="messages/FileTypesBundle" title-key="filetypes.recognized.group"/>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory"/>
-</clientProperties>
     <children>
-      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="de9d1">
+      <scrollpane id="de9d1" class="com.intellij.ui.components.JBScrollPane">
         <constraints>
           <grid row="0" column="0" row-span="6" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <minimum-size width="80" height="80"/>
