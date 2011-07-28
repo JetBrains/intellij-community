@@ -209,7 +209,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
 
     handler.addLineListener(new GitLineHandlerAdapter() {
       public void onLineAvailable(String line, Key outputType) {
-        if (line.contains("after resolving the conflicts, mark the corrected paths")) {
+        if (line.toLowerCase().contains("after resolving the conflicts")) {
           conflict.set(true);
         }
       }
