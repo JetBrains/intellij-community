@@ -18,17 +18,19 @@ package com.intellij.framework.detection.impl.exclude;
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.impl.FrameworkDetectorRegistry;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SortedListModel;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -71,19 +71,23 @@ public class DetectionExcludesConfigurable implements Configurable {
     });
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(excludesList)
       .disableUpAction().disableDownAction()
-      .setAddAction(new Runnable() {
+      .setAddAction(new AnActionButtonRunnable() {
         @Override
-        public void run() {
-          doAddAction();
+        public void run(AnActionButton button) {
+          doAddAction(button);
         }
       });
     myMainPanel.add(decorator.createPanel());
     return myMainPanel;
   }
 
-  private void doAddAction() {
+  private void doAddAction(AnActionButton button) {
     final List<FrameworkType> types = new ArrayList<FrameworkType>();
-    types.addAll(FrameworkDetectorRegistry.getInstance().getFrameworkTypes());
+    for (FrameworkType type : FrameworkDetectorRegistry.getInstance().getFrameworkTypes()) {
+      if (!isExcluded(type)) {
+        types.add(type);
+      }
+    }
     Collections.sort(types, new Comparator<FrameworkType>() {
       @Override
       public int compare(FrameworkType o1, FrameworkType o2) {
@@ -91,7 +95,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       }
     });
     types.add(0, null);
-    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<FrameworkType>("Select Framework", types) {
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<FrameworkType>("Framework to Exclude", types) {
       @Override
       public Icon getIconFor(FrameworkType value) {
         return value != null ? value.getIcon() : null;
@@ -100,7 +104,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       @NotNull
       @Override
       public String getTextFor(FrameworkType value) {
-        return value != null ? value.getPresentableName() : "All Frameworks";
+        return value != null ? value.getPresentableName() : "All Frameworks...";
       }
 
       @Override
@@ -122,7 +126,23 @@ public class DetectionExcludesConfigurable implements Configurable {
           return addExcludedFramework(frameworkType);
         }
       }
-    }).showInCenterOf(myMainPanel);
+    });
+    final RelativePoint popupPoint = button.getPreferredPopupPoint();
+    if (popupPoint != null) {
+      popup.show(popupPoint);
+    }
+    else {
+      popup.showInCenterOf(myMainPanel);
+    }
+  }
+
+  private boolean isExcluded(@NotNull FrameworkType type) {
+    for (ExcludeListItem item : myModel.getItems()) {
+      if (type.getId().equals(item.getFrameworkTypeId()) && item.getFileUrl() == null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private PopupStep addExcludedFramework(final @NotNull FrameworkType frameworkType) {
@@ -131,7 +151,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
         if (selectedValue.equals(projectItem)) {
-          myModel.add(new ValidExcludeListItem(frameworkType, null));
+          addAndRemoveDuplicates(frameworkType, null);
           return FINAL_CHOICE;
         }
         else {
@@ -146,11 +166,40 @@ public class DetectionExcludesConfigurable implements Configurable {
     };
   }
 
+  private void addAndRemoveDuplicates(@Nullable FrameworkType frameworkType, final @Nullable VirtualFile file) {
+    final Iterator<ExcludeListItem> iterator = myModel.iterator();
+    boolean add = true;
+    while (iterator.hasNext()) {
+      ExcludeListItem item = iterator.next();
+      final String fileUrl = item.getFileUrl();
+      VirtualFile itemFile = fileUrl != null ? VirtualFileManager.getInstance().findFileByUrl(fileUrl) : null;
+      final String itemTypeId = item.getFrameworkTypeId();
+      if (file == null) {
+        if (frameworkType != null && frameworkType.getId().equals(itemTypeId)) {
+          iterator.remove();
+        }
+      }
+      else if (itemFile != null) {
+        if (VfsUtil.isAncestor(file, itemFile, false) && (frameworkType == null || frameworkType.getId().equals(itemTypeId))) {
+          iterator.remove();
+        }
+        if (VfsUtil.isAncestor(itemFile, file, false) && (itemTypeId == null || frameworkType != null && itemTypeId.equals(frameworkType.getId()))) {
+          add = false;
+        }
+      }
+    }
+    if (add) {
+      myModel.add(new ValidExcludeListItem(frameworkType, file));
+    }
+  }
+
   private void chooseDirectoryAndAdd(final @Nullable FrameworkType type) {
-    final VirtualFile[] files = FileChooser.chooseFiles(myMainPanel, FileChooserDescriptorFactory.createSingleFolderDescriptor(), myProject.getBaseDir());
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    descriptor.setDescription((type != null ? type.getPresentableName() + " framework detection" : "Detection for all frameworks") + " will be disabled in selected directory");
+    final VirtualFile[] files = FileChooser.chooseFiles(myMainPanel, descriptor, myProject.getBaseDir());
     final VirtualFile file = files.length > 0 ? files[0] : null;
     if (file != null) {
-      myModel.add(new ValidExcludeListItem(type, file));
+      addAndRemoveDuplicates(type, file);
     }
   }
 
