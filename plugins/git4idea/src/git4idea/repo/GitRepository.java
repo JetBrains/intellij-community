@@ -23,6 +23,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import git4idea.GitBranch;
+import git4idea.status.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,15 +51,17 @@ public final class GitRepository implements Disposable {
 
   public static final Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change", GitRepositoryChangeListener.class);
 
+  private final Project myProject;
   private final VirtualFile myRootDir;
   private final GitRepositoryReader myReader;
   private final VirtualFile myGitDir;
   private final MessageBus myMessageBus;
+  private final GitUntrackedFilesHolder myUntrackedFilesHolder;
 
   private volatile State myState;
   private volatile String myCurrentRevision;
-  private volatile GitBranch myCurrentBranch;
 
+  private volatile GitBranch myCurrentBranch;
   private final ReadWriteLock STATE_LOCK = new ReentrantReadWriteLock();
   private final ReadWriteLock CUR_REV_LOCK = new ReentrantReadWriteLock();
   private final ReadWriteLock CUR_BRANCH_LOCK = new ReentrantReadWriteLock();
@@ -124,17 +127,19 @@ public final class GitRepository implements Disposable {
   /**
    * Don't use this constructor - get the GitRepository instance from the {@link GitRepositoryManager}.
    */
-  GitRepository(@NotNull VirtualFile rootDir, Project project) {
+  GitRepository(@NotNull VirtualFile rootDir, @NotNull Project project) {
     myRootDir = rootDir;
+    myProject = project;
     myReader = new GitRepositoryReader(this);
     GitRepositoryUpdater updater = new GitRepositoryUpdater(this);
     Disposer.register(this, updater);
 
     myGitDir = myRootDir.findChild(".git");
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
+    
+    myUntrackedFilesHolder = GitUntrackedFilesHolder.init(rootDir, project);
 
     myMessageBus = project.getMessageBus();
-
     update(TrackedTopic.ALL);
   }
 
@@ -145,6 +150,14 @@ public final class GitRepository implements Disposable {
   @NotNull
   public VirtualFile getRoot() {
     return myRootDir;
+  }
+
+  public Project getProject() {
+    return myProject;
+  }
+
+  public GitUntrackedFilesHolder getUntrackedFilesHolder() {
+    return myUntrackedFilesHolder;
   }
 
   @NotNull

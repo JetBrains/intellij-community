@@ -31,32 +31,21 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitCommand;
 import git4idea.commands.GitFileUtils;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
 import git4idea.i18n.GitBundle;
+import git4idea.status.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Git virtual file adapter
- */
 public class GitVFSListener extends VcsVFSListener {
   /**
    * More than zero if events are suppressed
    */
-  final AtomicInteger myEventsSuppressLevel = new AtomicInteger(0);
+  private final AtomicInteger myEventsSuppressLevel = new AtomicInteger(0);
 
-  /**
-   * A constructor for listener
-   *
-   * @param project a project
-   * @param vcs     a vcs for that project
-   */
   public GitVFSListener(final Project project, final GitVcs vcs) {
     super(project, vcs);
   }
@@ -76,38 +65,23 @@ public class GitVFSListener extends VcsVFSListener {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected boolean isEventIgnored(VirtualFileEvent event) {
     return super.isEventIgnored(event) || myEventsSuppressLevel.get() != 0;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected String getAddTitle() {
     return GitBundle.getString("vfs.listener.add.title");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected String getSingleFileAddTitle() {
     return GitBundle.getString("vfs.listener.add.single.title");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected String getSingleFileAddPromptTemplate() {
     return GitBundle.getString("vfs.listener.add.single.prompt");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void executeAdd(final List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copiedFiles) {
     // Filter added files before further processing
@@ -125,34 +99,21 @@ public class GitVFSListener extends VcsVFSListener {
       public void run(@NotNull ProgressIndicator pi) {
         for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
           VirtualFile root = e.getKey();
+          final List<VirtualFile> files = e.getValue();
           pi.setText(root.getPresentableUrl());
-          for (List<String> paths : VcsFileUtil.chunkFiles(root, e.getValue())) {
-            pi.setText2(paths.get(0) + "...");
-            try {
-              GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
-              h.setNoSSH(true);
-              h.setSilent(true);
-              h.addParameters("--exclude-standard", "--others");
-              h.endOptions();
-              h.addParameters(paths);
-              for (StringScanner s = new StringScanner(h.run()); s.hasMoreData();) {
-                String l = s.line();
-                String p = GitUtil.unescapePath(l);
-                VirtualFile f = root.findFileByRelativePath(p);
-                assert f != null : "The virtual file must be available at this point: " + p + " (" + root.getPresentableUrl() + ")";
-                retainedFiles.add(f);
+          try {
+            retainedFiles.addAll(GitUntrackedFilesHolder.retrieveUntrackedFiles(myProject, root, files));
+          }
+          catch (final VcsException ex) {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              public void run() {
+                gitVcs().showMessages(ex.getMessage());
               }
-            }
-            catch (final VcsException ex) {
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                public void run() {
-                  gitVcs().showMessages(ex.getMessage());
-                }
-              });
-            }
+            });
           }
         }
         addedFiles.retainAll(retainedFiles);
+
         AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
           @Override
           public void run() {
@@ -173,9 +134,6 @@ public class GitVFSListener extends VcsVFSListener {
     super.executeAdd(addedFiles, copiedFiles);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
     final Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
@@ -208,9 +166,6 @@ public class GitVFSListener extends VcsVFSListener {
     });
   }
 
-  /**
-   * @return casted vcs instance
-   */
   private GitVcs gitVcs() {
     return ((GitVcs)myVcs);
   }
@@ -251,30 +206,18 @@ public class GitVFSListener extends VcsVFSListener {
     });
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected String getDeleteTitle() {
     return GitBundle.getString("vfs.listener.delete.title");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected String getSingleFileDeleteTitle() {
     return GitBundle.getString("vfs.listener.delete.single.title");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected String getSingleFileDeletePromptTemplate() {
     return GitBundle.getString("vfs.listener.delete.single.prompt");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected void performDeletion(final List<FilePath> filesToDelete) {
     final Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
@@ -315,9 +258,6 @@ public class GitVFSListener extends VcsVFSListener {
     });
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected void performMoveRename(final List<MovedFileInfo> movedFiles) {
     // because git does not tracks moves, the file are just added and deleted.
     ArrayList<FilePath> added = new ArrayList<FilePath>();
@@ -330,16 +270,10 @@ public class GitVFSListener extends VcsVFSListener {
     performDeletion(removed);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected boolean isDirectoryVersioningSupported() {
     return false;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected Collection<FilePath> selectFilePathsToDelete(final List<FilePath> deletedFiles) {
     // For git asking about vcs delete does not make much sense. The result is practically identical.

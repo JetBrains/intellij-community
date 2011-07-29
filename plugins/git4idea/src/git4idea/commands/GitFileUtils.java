@@ -20,6 +20,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
+import git4idea.status.GitUntrackedFilesHolder;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -108,6 +111,10 @@ public class GitFileUtils {
       handler.setNoSSH(true);
       handler.run();
     }
+    final GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+    if (repository != null) {
+      repository.getUntrackedFilesHolder().remove(files);
+    }
   }
 
   /**
@@ -133,12 +140,22 @@ public class GitFileUtils {
    * @throws VcsException in case of git problem
    */
   public static void addPaths(Project project, VirtualFile root, Collection<FilePath> files) throws VcsException {
+    final GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+    final GitUntrackedFilesHolder untrackedFilesHolder = (repository == null ? null : repository.getUntrackedFilesHolder());
+
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
       handler.endOptions();
       handler.addParameters(paths);
       handler.setNoSSH(true);
       handler.run();
+    }
+
+    for (FilePath path : files) {
+      VirtualFile vf = path.getVirtualFile();
+      if (untrackedFilesHolder != null && vf != null) {
+        untrackedFilesHolder.remove(vf);
+      }
     }
   }
 
@@ -158,6 +175,14 @@ public class GitFileUtils {
     h.setSilent(true);
     h.addParameters(revisionOrBranch + ":" + relativePath);
     return h.run();
+  }
+
+  public static String stripFileProtocolPrefix(String path) {
+    final String FILE_PROTOCOL = "file://";
+    if (path.startsWith(FILE_PROTOCOL)) {
+      return path.substring(FILE_PROTOCOL.length());
+    }
+    return path;
   }
 
 }

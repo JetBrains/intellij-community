@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitFormatException;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
@@ -41,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <p>
@@ -56,9 +56,10 @@ import java.util.HashSet;
  */
 class GitNewChangesCollector extends GitChangesCollector {
 
-  private Collection<Change> myChanges = new HashSet<Change>();
-  private Collection<VirtualFile> myUnversionedFiles = new HashSet<VirtualFile>();
   private static final Logger LOG = Logger.getInstance(GitNewChangesCollector.class);
+  private final GitRepository myRepository;
+  private final Collection<Change> myChanges = new HashSet<Change>();
+  private Set<VirtualFile> myUnversionedFiles;
 
   /**
    * Collects the changes from git command line and returns the instance of GitNewChangesCollector from which these changes can be retrieved.
@@ -72,7 +73,11 @@ class GitNewChangesCollector extends GitChangesCollector {
   @Override
   @NotNull
   Collection<VirtualFile> getUnversionedFiles() {
-    return myUnversionedFiles;
+    if (myRepository != null) {
+      return myRepository.getUntrackedFilesHolder().getUntrackedFiles();
+    } else { // GitRepository was not initialized at the time of creation of the GitNewChangesCollector => we've already collected unversioned files by hands.
+      return myUnversionedFiles;
+    }
   }
 
   @NotNull
@@ -85,13 +90,15 @@ class GitNewChangesCollector extends GitChangesCollector {
     throws VcsException
   {
     super(project, changeListManager, dirtyScope, vcsRoot);
+    myRepository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(vcsRoot);
+
     Collection<FilePath> dirtyPaths = dirtyPaths(true);
     if (dirtyPaths.isEmpty()) {
       return;
     }
 
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.STATUS);
-    final String[] params = {"--porcelain", "-z", "--untracked-files=all"};   // get all untracked files as a list without collapsing them into dirs.
+    final String[] params = {"--porcelain", "-z", "--untracked-files=no"};   // untracked files are stored separately
     handler.addParameters(params);
     handler.setNoSSH(true);
     handler.setSilent(true);
@@ -109,6 +116,11 @@ class GitNewChangesCollector extends GitChangesCollector {
     }
     String output = handler.run();
     parseOutput(output, handler);
+
+    // if GitRepository was not initialized at the time of creation of the GitNewChangesCollector => collecting unversioned files by hands.
+    if (myRepository == null) {
+      myUnversionedFiles = GitUntrackedFilesHolder.retrieveUntrackedFiles(myProject, myVcsRoot, null);
+    }
   }
 
   /**
@@ -210,7 +222,7 @@ class GitNewChangesCollector extends GitChangesCollector {
           break;
 
         case '?':
-          reportUnversioned(filepath);
+          throwGFE("Unexpected unversioned file flag.", handler, output, line, xStatus, yStatus);
           break;
 
         case '!':
@@ -227,10 +239,8 @@ class GitNewChangesCollector extends GitChangesCollector {
   private VcsRevisionNumber getHead() throws VcsException {
     VcsRevisionNumber nativeHead = getHeadFromGit();
 
-    final GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myVcsRoot);
-
-    if (repository != null) {
-      final String rev = repository.getCurrentRevision();
+    if (myRepository != null) {
+      final String rev = myRepository.getCurrentRevision();
       final VcsRevisionNumber cachedHead = rev != null ? new GitRevisionNumber(rev) : VcsRevisionNumber.NULL;
 
       if (!cachedHead.equals(nativeHead)) {
@@ -268,44 +278,37 @@ class GitNewChangesCollector extends GitChangesCollector {
                                                message, xStatus, yStatus, line.replace('\u0000', '!'), handler, output));
   }
 
-  private void reportUnversioned(String filepath) throws VcsException {
-    VirtualFile file = myVcsRoot.findFileByRelativePath(filepath);
-    if (GitUtil.gitRootOrNull(file) == myVcsRoot) { // false if we've entered the sub-repository
-      myUnversionedFiles.add(file);
-    }
-  }
-
   private void reportModified(String filepath, VcsRevisionNumber head) throws VcsException {
     ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, false, true, false);
     ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false, false);
-    reportChange(FileStatus.MODIFIED, before, after);
+    reportChange(filepath, FileStatus.MODIFIED, before, after);
   }
 
   private void reportAdded(String filepath) throws VcsException {
     ContentRevision before = null;
     ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false, false);
-    reportChange(FileStatus.ADDED, before, after);
+    reportChange(filepath, FileStatus.ADDED, before, after);
   }
 
   private void reportDeleted(String filepath, VcsRevisionNumber head) throws VcsException {
     ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, true, true, false);
     ContentRevision after = null;
-    reportChange(FileStatus.DELETED, before, after);
+    reportChange(filepath, FileStatus.DELETED, before, after);
   }
 
   private void reportRename(VcsRevisionNumber head, String filepath, String oldFilename) throws VcsException {
     ContentRevision before = GitContentRevision.createRevision(myVcsRoot, oldFilename, head, myProject, true, true, false);
     ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false, false);
-    reportChange(FileStatus.MODIFIED, before, after);
+    reportChange(filepath, FileStatus.MODIFIED, before, after);
   }
 
   private void reportConflict(VcsRevisionNumber head, String filepath) throws VcsException {
     ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, false, true, false);
     ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false, false);
-    reportChange(FileStatus.MERGED_WITH_CONFLICTS, before, after);
+    reportChange(filepath, FileStatus.MERGED_WITH_CONFLICTS, before, after);
   }
 
-  private void reportChange(FileStatus status, ContentRevision before, ContentRevision after) {
+  private void reportChange(String filepath, FileStatus status, ContentRevision before, ContentRevision after) {
     myChanges.add(new Change(before, after, status));
   }
 
