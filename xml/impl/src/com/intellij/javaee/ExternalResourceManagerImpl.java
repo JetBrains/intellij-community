@@ -82,7 +82,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
     StandardResourceEP[] extensions = Extensions.getExtensions(StandardResourceEP.EP_NAME);
     for (StandardResourceEP extension : extensions) {
-      registrar.addStdResource(extension.url, extension.version, extension.resourcePath, extension.getLoaderForClass());
+      registrar.addStdResource(extension.url, extension.version, extension.resourcePath, null, extension.getLoaderForClass());
     }
 
     myIgnoredResources.addAll(registrar.getIgnored());
@@ -431,13 +431,16 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   static class Resource {
     String file;
     ClassLoader classLoader;
+    Class clazz;
 
     @Nullable
     String getResourceUrl() {
 
-      if (classLoader == null) return file;
+      if (classLoader == null && clazz == null) return file;
 
-      final URL resource = classLoader.getResource(file);
+      final URL resource = clazz == null ? classLoader.getResource(file) : clazz.getResource(file);
+      classLoader = null;
+      clazz = null;
       if (resource == null) {
         String message = "Cannot find standard resource. filename:" + file + " class=" + classLoader;
         if (ApplicationManager.getApplication().isUnitTestMode()) {
