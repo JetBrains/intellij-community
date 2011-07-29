@@ -41,6 +41,35 @@ public class InplaceIntroduceFieldTest extends AbstractInplaceIntroduceTest {
     });
   }
 
+  public void testBeforeAssignment() throws Exception {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+      }
+    });
+  }
+
+  public void testBeforeAssignmentReplaceAll() throws Exception {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+      }
+    });
+  }
+
+  public void testBeforeAssignmentReplaceAllCall() throws Exception {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+      }
+    });
+  }
+
   public void testReplaceAll() throws Exception {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {

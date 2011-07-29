@@ -330,8 +330,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       for (E expression : getOccurrences()) {
         stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
       }
-    }
-    else if (getExpr() != null) {
+    }  else if (getExpr() != null) {
+      correctExpression();
       stringUsages.add(Pair.<PsiElement, TextRange>create(getExpr(), new TextRange(0, getExpr().getTextLength())));
     }
 
@@ -344,6 +344,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       }
     }
   }
+
+  protected void correctExpression() {}
 
   @Override
   protected void collectAdditionalRangesToHighlight(Map<TextRange, TextAttributes> rangesToHighlight,

@@ -6,11 +6,13 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -57,6 +59,19 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   }
 
   @Override
+  protected void correctExpression() {
+    final PsiElement parent = getExpr().getParent();
+    if (parent instanceof PsiExpressionStatement && parent.getLastChild() instanceof PsiErrorElement) {
+      myExpr = ((PsiExpressionStatement)ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
+        @Override
+        public PsiElement compute() {
+          return parent.replace(JavaPsiFacade.getElementFactory(myProject).createStatementFromText(parent.getText() + ";", parent));
+        }
+      })).getExpression();
+    }
+  }
+
+  @Override
   public PsiExpression restoreExpression(PsiFile containingFile, PsiVariable psiVariable, RangeMarker marker, String exprText) {
     return restoreExpression(containingFile, psiVariable, JavaPsiFacade.getElementFactory(myProject), marker, exprText);
   }
@@ -65,9 +80,14 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   protected void restoreState(PsiVariable psiField) {
     final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(getType());
     super.restoreState(psiField);
-    myTypeSelectorManager = myExpr != null
-                            ? new TypeSelectorManagerImpl(myProject, typePointer.getType(), myExpr, myOccurrences)
-                            : new TypeSelectorManagerImpl(myProject, typePointer.getType(), myOccurrences);
+    try {
+      myTypeSelectorManager = myExpr != null
+                              ? new TypeSelectorManagerImpl(myProject, typePointer.getType(), myExpr, myOccurrences)
+                              : new TypeSelectorManagerImpl(myProject, typePointer.getType(), myOccurrences);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   @Override

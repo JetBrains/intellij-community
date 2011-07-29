@@ -721,7 +721,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             initializerPlace == InitializationPlace.IN_CONSTRUCTOR && enclosingConstructor != null && initializer != null) {
           if (myReplaceAll) {
             if (enclosingConstructor != null) {
-              final PsiElement anchorInConstructor = myOccurenceManager.getAnchorStatementForAllInScope(enclosingConstructor);
+              final PsiElement anchorInConstructor = RefactoringUtil.getAnchorElementForMultipleExpressions(mySettings.myOccurrences,
+                                                                                                            enclosingConstructor);
               anchorElementHere = anchorInConstructor != null ? anchorInConstructor : myAnchorStatementIfAll;
             }
             else {
