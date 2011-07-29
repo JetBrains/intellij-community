@@ -29,7 +29,7 @@ public class GetPathPerformanceTest extends LightPlatformTestCase {
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(ioFile.getPath().replace(File.separatorChar, '/'));
     assertNotNull(file);
 
-    PlatformTestUtil.startPerformanceTest("VF.getPath() performance failed", 3000, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("VF.getPath() performance failed", 4000, new ThrowableRunnable() {
       @Override
       public void run() {
         for (int i = 0; i < 1000000; ++i) {
