@@ -155,7 +155,7 @@ public class GitRepositoryManager extends AbstractProjectComponent implements Di
   }
 
   private GitRepository createGitRepository(VirtualFile root) {
-    GitRepository repository = new GitRepository(root);
+    GitRepository repository = new GitRepository(root, myProject);
     for (GitRepositoryChangeListener listener : myListeners) {
       repository.addListener(listener);
     }

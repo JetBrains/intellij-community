@@ -45,7 +45,7 @@ public class GitRepositoryTest extends GitTest {
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
-    myRepository = new GitRepository(myRepo.getVFRootDir());
+    myRepository = new GitRepository(myRepo.getVFRootDir(), myProject);
     myReader = new GitRepositoryReader(myRepository);
   }
 

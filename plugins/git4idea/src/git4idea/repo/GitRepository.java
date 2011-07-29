@@ -16,7 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
@@ -51,7 +51,6 @@ public class GitRepository implements Disposable {
   private final GitRepositoryReader myReader;
   private final VirtualFile myGitDir;
   private final MessageBus myMessageBus;
-  private final MessageBusConnection myMessageBusConnection;
   private final GitRepositoryUpdater myUpdater;
 
   private State myState;
@@ -83,7 +82,7 @@ public class GitRepository implements Disposable {
   /**
    * Don't use this constructor - get the GitRepository instance from the {@link GitRepositoryManager}.
    */
-  GitRepository(@NotNull VirtualFile rootDir) {
+  GitRepository(@NotNull VirtualFile rootDir, Project project) {
     myRootDir = rootDir;
     myReader = new GitRepositoryReader(this);
     myUpdater = new GitRepositoryUpdater(this);
@@ -92,9 +91,7 @@ public class GitRepository implements Disposable {
     myGitDir = myRootDir.findChild(".git");
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
 
-    myMessageBus = ApplicationManager.getApplication().getMessageBus();
-    myMessageBusConnection = myMessageBus.connect();
-    Disposer.register(this, myMessageBusConnection);
+    myMessageBus = project.getMessageBus();
 
     fullReRead();
   }
@@ -146,7 +143,9 @@ public class GitRepository implements Disposable {
   }
 
   public void addListener(GitRepositoryChangeListener listener) {
-    myMessageBusConnection.subscribe(GIT_REPO_CHANGE, listener);
+    MessageBusConnection connection = myMessageBus.connect();
+    Disposer.register(this, connection);
+    connection.subscribe(GIT_REPO_CHANGE, listener);
   }
 
   /**
