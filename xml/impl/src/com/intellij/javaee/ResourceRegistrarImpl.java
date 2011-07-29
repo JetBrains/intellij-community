@@ -18,6 +18,7 @@ package com.intellij.javaee;
 
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,13 +40,17 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
     addStdResource(resource, null, fileName, klass);
   }
 
-  public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class klass) {
+  public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, ClassLoader classLoader) {
     final Map<String, ExternalResourceManagerImpl.Resource> map = ExternalResourceManagerImpl.getMap(myResources, version, true);
     assert map != null;
     ExternalResourceManagerImpl.Resource res = new ExternalResourceManagerImpl.Resource();
     res.file = fileName;
-    res.clazz = klass == null ? ExternalResourceManagerImpl.class : klass;
+    res.classLoader = classLoader;
     map.put(resource, res);
+  }
+
+  public void addStdResource(@NonNls String resource, @Nullable @NonNls String version, @NonNls String fileName, Class klass) {
+    addStdResource(resource, version, fileName, klass == null ? null : klass.getClassLoader());
   }
 
   public void addIgnoredResource(@NonNls String url) {

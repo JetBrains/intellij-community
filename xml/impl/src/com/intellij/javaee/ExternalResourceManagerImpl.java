@@ -80,6 +80,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     for (StandardResourceProvider provider : Extensions.getExtensions(StandardResourceProvider.EP_NAME)) {
       provider.registerResources(registrar);
     }
+    StandardResourceEP[] extensions = Extensions.getExtensions(StandardResourceEP.EP_NAME);
+    for (StandardResourceEP extension : extensions) {
+      registrar.addStdResource(extension.url, extension.version, extension.resourcePath, extension.getLoaderForClass());
+    }
+
     myIgnoredResources.addAll(registrar.getIgnored());
     return registrar.getResources();
   }
@@ -425,17 +430,16 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   static class Resource {
     String file;
-    Class clazz;
+    ClassLoader classLoader;
 
     @Nullable
     String getResourceUrl() {
 
-      if (clazz == null) return file;
+      if (classLoader == null) return file;
 
-      final URL resource = clazz.getResource(file);
-      clazz = null;
+      final URL resource = classLoader.getResource(file);
       if (resource == null) {
-        String message = "Cannot find standard resource. filename:" + file + " class=" + clazz;
+        String message = "Cannot find standard resource. filename:" + file + " class=" + classLoader;
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           LOG.error(message);
         }
@@ -461,7 +465,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
       Resource resource = (Resource)o;
 
-      if (clazz != resource.clazz) return false;
+      if (classLoader != resource.classLoader) return false;
       if (file != null ? !file.equals(resource.file) : resource.file != null) return false;
 
       return true;
@@ -474,7 +478,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
     @Override
     public String toString() {
-      return file + " for " + clazz;
+      return file + " for " + classLoader;
     }
   }
 }

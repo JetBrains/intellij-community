@@ -37,4 +37,7 @@ public class StandardResourceEP extends AbstractExtensionPointBean {
    */
   @Attribute("path")
   public String resourcePath;
+
+  @Attribute("version")
+  public String version;
 }
