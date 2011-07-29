@@ -97,8 +97,8 @@ public class LocalHistoryStorage extends AbstractStorage {
       int id = table.createNewRecord();
       int prev = table.getLastRecord();
 
-      table.setPrevRecord(id, prev);
       if (prev > 0) {
+        table.setPrevRecord(id, prev);
         table.setNextRecord(prev, id);
       }
       else {
@@ -116,21 +116,26 @@ public class LocalHistoryStorage extends AbstractStorage {
     synchronized (myLock) {
       LocalHistoryRecordsTable table = (LocalHistoryRecordsTable)myRecordsTable;
 
-      int next = table.getNextRecord(idInclusively);
-      if (next == 0) {
+      int each = table.getFirstRecord();
+      if (each == 0) return;
+
+      while (each != 0) {
+        boolean stop = each == idInclusively;
+
+        int next = table.getNextRecord(each);
+        doDeleteRecord(each);
+        each = next;
+
+        if (stop) break;
+      }
+
+      if (each == 0) {
         table.setFirstRecord(0);
         table.setLastRecord(0);
       }
       else {
-        table.setFirstRecord(next);
-        table.setPrevRecord(next, 0);
-      }
-
-      int eachId = idInclusively;
-      while (eachId != 0) {
-        int prevId = table.getPrevRecord(eachId);
-        doDeleteRecord(eachId);
-        eachId = prevId;
+        table.setFirstRecord(each);
+        table.setPrevRecord(each, 0);
       }
     }
   }
