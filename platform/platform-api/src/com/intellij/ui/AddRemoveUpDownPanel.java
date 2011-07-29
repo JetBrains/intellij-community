@@ -123,7 +123,7 @@ class AddRemoveUpDownPanel extends JPanel {
     toolbar.getComponent().setBorder(null);
     add(toolbar.getComponent(), BorderLayout.CENTER);
   }
-  
+
   public AnActionButton getAnActionButton(Buttons button) {
     return myButtons.get(button);
   }
@@ -134,7 +134,11 @@ class AddRemoveUpDownPanel extends JPanel {
     for (AnActionButton button : myActions) {
       final ShortcutSet shortcut = button.getShortcut();
       if (shortcut != null) {
-        button.registerCustomShortcutSet(shortcut, pane);
+        if (button instanceof MyActionButton) {
+          button.registerCustomShortcutSet(shortcut, button.getContextComponent());
+        } else {
+          button.registerCustomShortcutSet(shortcut, pane);
+        }
       }
     }
     super.addNotify(); // call after all to construct actions tooltips properly
@@ -165,8 +169,8 @@ class AddRemoveUpDownPanel extends JPanel {
     @Override
     public ShortcutSet getShortcut() {
       switch (myButton) {
-        case ADD: return CommonShortcuts.getNew();
-        case REMOVE: return CustomShortcutSet.fromString("alt DELETE");
+        case ADD: return CommonShortcuts.getNewForDialogs();
+        case REMOVE: return CustomShortcutSet.fromString("DELETE");
         case UP: return CustomShortcutSet.fromString("alt UP");
         case DOWN: return CustomShortcutSet.fromString("alt DOWN");
       }
@@ -192,6 +196,15 @@ class AddRemoveUpDownPanel extends JPanel {
           e.getPresentation().setEnabled(isEnabled());
         }
       }
+    }
+
+    @Override
+    public boolean isEnabled() {
+      if (myButton == Buttons.REMOVE) {
+        final JComponent c = getContextComponent();
+        if (c instanceof JTable && ((JTable)c).isEditing()) return false;
+      }
+      return super.isEnabled();
     }
   }
 

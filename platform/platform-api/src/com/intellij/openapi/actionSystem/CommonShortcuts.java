@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 public class CommonShortcuts {
 
@@ -37,6 +39,25 @@ public class CommonShortcuts {
   public static final ShortcutSet ESCAPE = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
 
   public static final ShortcutSet DOUBLE_CLICK_1 = new CustomShortcutSet(new Shortcut[]{new MouseShortcut(MouseEvent.BUTTON1, 0, 2)});
+  
+  public static ShortcutSet getNewForDialogs() {
+    final ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
+    for (Shortcut shortcut : getNew().getShortcuts()) {
+      if (isCtrlEnter(shortcut)) continue;
+      shortcuts.add(shortcut);
+    }
+    return new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()]));
+  }
+
+  private static boolean isCtrlEnter(Shortcut shortcut) {
+    if (shortcut instanceof KeyboardShortcut) {
+      KeyStroke keyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
+      return keyStroke != null
+        && keyStroke.getKeyCode() == KeyEvent.VK_ENTER
+        && (keyStroke.getModifiers() & InputEvent.CTRL_MASK) != 0;
+    }
+    return false;
+  }
 
   public static KeyStroke getInsertKeystroke() {
     return SystemInfo.isMac ? KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.CTRL_DOWN_MASK)
