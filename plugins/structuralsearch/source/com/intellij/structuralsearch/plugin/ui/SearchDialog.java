@@ -40,6 +40,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDial
 import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TitledSeparatorWithMnemonic;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -648,7 +649,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     JPanel searchOptions = new JPanel();
     searchOptions.setLayout(new GridLayout(getRowsCount(), 1, 0, 0));
-    searchOptions.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(SSRBundle.message("ssdialog.options.group.border")));
+    searchOptions.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(SSRBundle.message("ssdialog.options.group.border")));
 
     myScopeChooserCombo = new ScopeChooserCombo(
       searchContext.getProject(),
@@ -659,13 +660,12 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     Disposer.register(myDisposable, myScopeChooserCombo);
     JPanel allOptions = new JPanel(new BorderLayout());
     if (myShowScopePanel) {
-      JPanel scopePanel = new JPanel(new BorderLayout());
-      scopePanel.add(Box.createVerticalStrut(8), BorderLayout.NORTH);
-      JLabel label = new JLabel(SSRBundle.message("search.dialog.scope.label"));
-      scopePanel.add(label, BorderLayout.WEST);
+      JPanel scopePanel = new JPanel(new GridBagLayout());
 
-      scopePanel.add(myScopeChooserCombo, BorderLayout.CENTER);
-      label.setLabelFor(myScopeChooserCombo.getComboBox());
+      TitledSeparatorWithMnemonic separator = new TitledSeparatorWithMnemonic(SSRBundle.message("search.dialog.scope.label"), myScopeChooserCombo.getComboBox());
+      scopePanel.add(separator, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5,0,0,0), 0, 0));
+
+      scopePanel.add(myScopeChooserCombo, new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,10,0,0), 0, 0));
 
       allOptions.add(
         scopePanel,
