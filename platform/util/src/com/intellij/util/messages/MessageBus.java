@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * </ul>
  * </pre>
  * <p/>
- * Use {@link com.intellij.openapi.components.ComponentManager#getMessageBus()} to obtain one.
+ * Use <code>'com.intellij.openapi.components.ComponentManager#getMessageBus()'</code> to obtain one.
  */
 public interface MessageBus {
 
