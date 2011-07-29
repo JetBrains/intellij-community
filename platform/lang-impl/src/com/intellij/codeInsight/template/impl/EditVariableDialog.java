@@ -95,7 +95,7 @@ class EditVariableDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+    panel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent(
       CodeInsightBundle.message("templates.dialog.edit.variables.border.title")));
     panel.setLayout(new BorderLayout());
     panel.add(createVariablesTable(), BorderLayout.CENTER);

@@ -113,7 +113,7 @@ public class PullUpDialog extends RefactoringDialog {
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 5, 4, 8);
+    gbConstraints.insets = new Insets(4, 0, 4, 8);
     gbConstraints.weighty = 1;
     gbConstraints.weightx = 1;
     gbConstraints.gridy = 0;

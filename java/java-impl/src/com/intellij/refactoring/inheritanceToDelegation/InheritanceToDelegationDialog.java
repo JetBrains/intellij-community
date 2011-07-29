@@ -167,7 +167,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.gridx = 0;
 
 
-    gbc.insets = new Insets(4, 8, 0, 8);
+    gbc.insets = new Insets(4, 0, 0, 8);
     myClassCombo = new JComboBox(mySuperClasses);
     myClassCombo.setRenderer(new ClassCellRenderer(myClassCombo.getRenderer()));
     gbc.gridwidth = 2;
@@ -182,14 +182,14 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
     gbc.gridy++;
     gbc.gridwidth = 1;
-    gbc.insets = new Insets(4, 8, 4, 0);
+    gbc.insets = new Insets(4, 0, 4, 0);
     final JLabel fieldNameLabel = new JLabel();
     panel.add(fieldNameLabel, gbc);
 
     myFieldNameField = new NameSuggestionsField(myProject);
     gbc.gridx++;
     gbc.gridwidth = GridBagConstraints.REMAINDER;
-    gbc.insets = new Insets(4, 4, 4, 8);
+    gbc.insets = new Insets(4, 0, 4, 8);
     gbc.weightx = 1.0;
     panel.add(myFieldNameField.getComponent(), gbc);
     fieldNameLabel.setText(RefactoringBundle.message("field.name"));
@@ -198,7 +198,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.gridx = 0;
     gbc.gridy++;
     gbc.gridwidth = 1;
-    gbc.insets = new Insets(4, 8, 4, 0);
+    gbc.insets = new Insets(4, 0, 4, 0);
     gbc.weightx = 0.0;
     final JLabel innerClassNameLabel = new JLabel();
     panel.add(innerClassNameLabel, gbc);
