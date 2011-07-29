@@ -1495,6 +1495,13 @@ public class StringUtil {
     return -1;
   }
 
+  public static int indexOf(@NotNull CharSequence s, char c, int start, int end, boolean caseSensitive) {
+    for (int i = start; i < end; i++) {
+      if (charsMatch(s.charAt(i), c, !caseSensitive)) return i;
+    }
+    return -1;
+  }
+
   public static int indexOfSubstringEnd(@NotNull String text, @NotNull String subString) {
     int i = text.indexOf(subString);
     if (i == -1) return -1;
