@@ -1,1 +1,1 @@
-gcc -framework CoreServices -o fsnotifier fsnotifier.c
+gcc -mmacosx-version-min=10.5 -framework CoreServices -o fsnotifier fsnotifier.c
