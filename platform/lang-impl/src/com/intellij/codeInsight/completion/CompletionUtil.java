@@ -254,7 +254,7 @@ public class CompletionUtil {
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
     final PsiFile file = psi.getContainingFile();
-    if (file != null) {
+    if (file != null && file != file.getOriginalFile()) {
       final Document document = file.getViewProvider().getDocument();
       if (document != null) {
         final List<DocumentEvent> translator = document.getUserData(RANGE_TRANSLATION);
