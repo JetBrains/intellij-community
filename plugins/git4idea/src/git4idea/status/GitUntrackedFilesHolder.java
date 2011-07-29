@@ -17,6 +17,7 @@ package git4idea.status;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -80,6 +81,8 @@ import java.util.Set;
  * @author Kirill Likhodedov
  */
 public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
+
+  private static final Logger LOG = Logger.getInstance(GitUntrackedFilesHolder.class);
 
   private final Project myProject;
   private final VirtualFile myRoot;
@@ -190,9 +193,17 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     Set<VirtualFile> untrackedFiles;
     try {
       untrackedFiles = retrieveUntrackedFiles(myProject, myRoot, files);
+
+      // remove tracked files
       files.removeAll(untrackedFiles);
-      add(untrackedFiles);
       remove(files);
+
+      // add untracked files, not ignored (by IDEA)
+      for (VirtualFile untrackedFile : untrackedFiles) {
+        if (!myChangeListManager.isIgnoredFile(untrackedFile)) {
+          add(untrackedFile);
+        }
+      }
     }
     catch (VcsException e) {
       throw new GitExecutionException("Couldn't scan for unversioned files in " + myRoot + " among the following list:\n" + files, e);
@@ -200,7 +211,10 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   /**
-   * Queries Git for the unversioned files in the given paths.
+   * <p>Queries Git for the unversioned files in the given paths.</p>
+   * <p>
+   *   <b>Note:</b> this method doesn't check for ignored files. You have to check if the file is ignored afterwards, if needed.
+   * </p>
    *
    * @param files files that are to be checked for the unversioned files among them.
    *              <b>Pass <code>null</code> to query the whole repository.</b>
@@ -241,9 +255,13 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
     for (String relPath : output.split("\u0000")) {
       VirtualFile f = root.findFileByRelativePath(relPath);
-      assert f != null : String.format("VirtualFile shouldn't be null here. Relative path: [%s], \nFull output:\n%s",
-                                              relPath, output.replace('\u0000', '!'));
-      untrackedFiles.add(f);
+      if (f == null) {
+        // files was created on disk, but VirtualFile hasn't yet been created,
+        // when the GitChangeProvider has already been requested about changes.
+        LOG.info(String.format("VirtualFile for path [%s] is null", relPath));
+      } else {
+        untrackedFiles.add(f);
+      }
     }
     
     return untrackedFiles;
