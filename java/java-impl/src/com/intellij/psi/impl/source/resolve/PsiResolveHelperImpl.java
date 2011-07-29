@@ -722,7 +722,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   @Nullable
-  private static Pair<PsiType, ConstraintType> inferTypeForCompletionFromCallContext(final PsiCallExpression innerMethodCall,
+  private static Pair<PsiType, ConstraintType> inferTypeForCompletionFromCallContext(@NotNull final PsiCallExpression innerMethodCall,
                                                                                      final PsiExpressionList expressionList,
                                                                                      final PsiCallExpression contextCall,
                                                                                      final PsiTypeParameter typeParameter) {

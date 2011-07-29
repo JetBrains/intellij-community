@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public abstract class RecursionGuard {
   @SuppressWarnings("JavaDoc")
   @Deprecated
   @Nullable
-  public <T> T doPreventingRecursion(Object key, Computable<T> computation) {
+  public <T> T doPreventingRecursion(@NotNull Object key, Computable<T> computation) {
     return doPreventingRecursion(key, false, computation);
   }
 
@@ -45,7 +46,7 @@ public abstract class RecursionGuard {
    * @return the result of the computation or null if we're entering a computation with this key on this thread recursively,
    */
   @Nullable
-  public abstract <T> T doPreventingRecursion(Object key, boolean memoize, Computable<T> computation);
+  public abstract <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation);
 
   /**
    * Used in pair with {@link com.intellij.openapi.util.RecursionGuard.StackStamp#mayCacheNow()} to ensure that cached are only the reliable values,
