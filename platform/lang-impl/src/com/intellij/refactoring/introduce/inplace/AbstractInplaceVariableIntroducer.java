@@ -39,6 +39,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.PositionTracker;
 
 import javax.swing.*;
 import java.awt.*;
@@ -134,8 +135,6 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
     if (component == null) return;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null);
-    final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
-    final Point screenPoint = target.getScreenPoint();
     myBalloon = balloonBuilder.createBalloon();
     Disposer.register(myBalloon, new Disposable() {
       @Override
@@ -143,12 +142,19 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
         releaseIfNotRestart();
       }
     });
-    int y = screenPoint.y;
-    if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
-      y -= myEditor.getLineHeight();
-    }
-    myTarget = new RelativePoint(new Point(screenPoint.x, y));
-    myBalloon.show(myTarget, Balloon.Position.above);
+    myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
+      @Override
+      public RelativePoint recalculateLocation(Balloon object) {
+        final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
+        final Point screenPoint = target.getScreenPoint();
+        int y = screenPoint.y;
+        if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
+          y -= myEditor.getLineHeight();
+        }
+        myTarget = new RelativePoint(new Point(screenPoint.x, y));
+        return myTarget;
+      }
+    }, Balloon.Position.above);
   }
 
   protected void releaseIfNotRestart() {
