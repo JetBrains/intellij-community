@@ -18,6 +18,7 @@ package git4idea.status;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -28,10 +29,8 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitExecutionException;
-import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryFiles;
 import git4idea.repo.GitRepositoryManager;
@@ -229,18 +228,24 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LS_FILES);
     h.setNoSSH(true);
     h.setSilent(true);
-    h.addParameters("--exclude-standard", "--others");
+    h.addParameters("--exclude-standard", "--others", "-z");
     h.endOptions();
     if (relativePaths != null) {
       h.addParameters(relativePaths);
     }
-    for (StringScanner s = new StringScanner(h.run()); s.hasMoreData();) {
-      String l = s.line();
-      String p = GitUtil.unescapePath(l);
-      VirtualFile f = root.findFileByRelativePath(p);
-      assert f != null : "The virtual file must be available at this point: " + p + " (" + root.getPresentableUrl() + ")";
+
+    final String output = h.run();
+    if (StringUtil.isEmptyOrSpaces(output)) {
+      return untrackedFiles;
+    }
+
+    for (String relPath : output.split("\u0000")) {
+      VirtualFile f = root.findFileByRelativePath(relPath);
+      assert f != null : String.format("VirtualFile shouldn't be null here. Relative path: [%s], \nFull output:\n%s",
+                                              relPath, output);
       untrackedFiles.add(f);
     }
+    
     return untrackedFiles;
   }
 
