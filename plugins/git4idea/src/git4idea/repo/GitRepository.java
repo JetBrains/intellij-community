@@ -138,6 +138,7 @@ public final class GitRepository implements Disposable {
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
     
     myUntrackedFilesHolder = GitUntrackedFilesHolder.init(rootDir, project);
+    Disposer.register(this, myUntrackedFilesHolder);
 
     myMessageBus = project.getMessageBus();
     update(TrackedTopic.ALL);
