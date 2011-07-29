@@ -98,7 +98,7 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
   public void testDelegateBasicToClassName() throws Exception{
     addClassToProject("a", "FooBarGooDoo");
     myFixture.configureByText("a.groovy", "FBGD<caret>a")
-    myFixture.completeBasic()
+    myFixture.complete(CompletionType.BASIC, 2)
     myFixture.type '.'.charAt(0)
     myFixture.checkResult "a.FooBarGooDoo.<caret>a"
   }
@@ -106,7 +106,7 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
   public void testDelegateBasicToClassNameAutoinsert() throws Exception{
     addClassToProject("a", "FooBarGooDoo");
     myFixture.configureByText("a.groovy", "FBGD<caret>")
-    myFixture.completeBasic()
+    myFixture.complete(CompletionType.BASIC, 2)
     myFixture.checkResult "a.FooBarGooDoo<caret>"
   }
 
@@ -228,7 +228,7 @@ abcMethod()<caret>"""
   public void testNewClassName() {
     addClassToProject("foo", "Fxoo")
     myFixture.configureByText("a.groovy", "new Fxo<caret>\n")
-    myFixture.completeBasic()
+    myFixture.complete(CompletionType.BASIC, 2)
     myFixture.checkResult """import foo.Fxoo
 
 new Fxoo()<caret>\n"""

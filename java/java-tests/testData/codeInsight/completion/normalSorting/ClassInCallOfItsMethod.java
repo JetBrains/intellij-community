@@ -1,4 +1,5 @@
 import foo.Foo;
+import bar.*;
 
 class Bar {
     {

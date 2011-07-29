@@ -40,10 +40,14 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
   }
 
   protected LookupImpl invokeCompletion(final String path) {
-    myFixture.configureFromExistingVirtualFile(
-      myFixture.copyFileToProject(path, com.intellij.openapi.util.text.StringUtil.getShortName(path, '/')));
+    configureNoCompletion(path);
     myFixture.complete(myType);
     return getLookup();
+  }
+
+  protected void configureNoCompletion(String path) {
+    myFixture.configureFromExistingVirtualFile(
+      myFixture.copyFileToProject(path, com.intellij.openapi.util.text.StringUtil.getShortName(path, '/')));
   }
 
   protected static void incUseCount(final LookupImpl lookup, final int index) {

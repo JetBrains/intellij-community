@@ -42,13 +42,6 @@ public class HeavyNormalCompletionTest extends CompletionTestCase{
     assertTrue(JavaPsiFacade.getInstance(myProject).findPackage("foo.bar.goo").isValid());
   }
 
-  public void testAllClassesWhenNothingIsFound() throws Throwable {
-    createClass("package foo.bar; public class AxBxCxDxEx {}");
-
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
-  }
-  
   public void testAllClassesOnSecondBasicCompletion() throws Throwable {
     createClass("package foo.bar; public class AxBxCxDxEx {}");
 

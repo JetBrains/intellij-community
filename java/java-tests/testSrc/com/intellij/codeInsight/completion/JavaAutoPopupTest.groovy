@@ -224,11 +224,11 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
   public void testFocusInJavadoc() {
     myFixture.configureByText("a.java", """
     /**
-    * {@link ArrLi<caret>}
+    * {@link AIO<caret>}
     */
       class Foo {}
     """)
-    type 's'
+    type 'O'
     assert lookup.focused
 
   }
@@ -236,6 +236,8 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
   public void testPrefixLengthDependentSorting() {
     myFixture.addClass("package foo; public class PsiJavaCodeReferenceElement {}")
     myFixture.configureByText("a.java", """
+    import foo.PsiJavaCodeReferenceElement;
+
     class PsiJavaCodeReferenceElementImpl {
       { <caret> }
     }
@@ -373,8 +375,8 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       { <caret> }
     }
     """)
-    type 'FilInpStr.'
-    assert myFixture.file.text.contains("FileInputStream.")
+    type 'AIOO.'
+    assert myFixture.file.text.contains("ArrayIndexOutOfBoundsException.")
     assert lookup
   }
 
@@ -384,8 +386,8 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       void foo(<caret>) {}
     }
     """)
-    type 'FilInpStr...'
-    assert myFixture.editor.document.text.contains("FileInputStream...")
+    type 'AIOO...'
+    assert myFixture.editor.document.text.contains("ArrayIndexOutOfBoundsException...")
     assert !lookup
   }
 
@@ -660,8 +662,8 @@ class Foo {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     try {
       myFixture.configureByText("a.java", """ class Foo { { new <caret> } } """)
-      type 'fil('
-      assert myFixture.editor.document.text.contains('new File()')
+      type 'aioo('
+      assert myFixture.editor.document.text.contains('new ArrayIndexOutOfBoundsException()')
     }
     finally {
       CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
@@ -796,7 +798,7 @@ public class UTest {
 
   public void testSamePrefixIgnoreCase() {
     myFixture.addClass("package xxxxx; public class SYSTEM_EXCEPTION {}")
-    myFixture.configureByText "a.java", "class Foo { S<caret> }"
+    myFixture.configureByText "a.java", "import xxxxx.*; class Foo { S<caret> }"
     type 'Ystem'
     assert 'java.lang.System' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[0]).qualifiedName
     assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[1]).qualifiedName
@@ -805,7 +807,7 @@ public class UTest {
   public void testSamePrefixIgnoreCase2() {
     myFixture.addClass("package xxxxx; public class SYSTEM_EXCEPTION {}")
     myFixture.addClass("package xxxxx; public class SYstem {}")
-    myFixture.configureByText "a.java", "class Foo { S<caret> }"
+    myFixture.configureByText "a.java", "import xxxxx.*; class Foo { S<caret> }"
     type 'Ystem'
     assert 'xxxxx.SYstem' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[0]).qualifiedName
     assert 'java.lang.System' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[1]).qualifiedName
