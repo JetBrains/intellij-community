@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -133,7 +134,13 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       if (parameter1 == null || parameter2 == null) {
         return;
       }
-      @NonNls String text = "try { } catch(" + parameter1.getTypeElement().getText() + " | " + parameter2.getTypeElement().getText() + " e) { }";
+      String typeText = parameter1.getTypeElement().getText() + " | " + parameter2.getTypeElement().getText() + " e";
+      if (TypeConversionUtil.isAssignable(parameter1.getType(), parameter2.getType())) {
+        typeText = parameter1.getText();
+      } else if (TypeConversionUtil.isAssignable(parameter2.getType(), parameter1.getType())) {
+        typeText = parameter2.getText();
+      }
+      @NonNls String text = "try { } catch(" + typeText + ") { }";
       PsiTryStatement newTryCatch = (PsiTryStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(text, stmt);
       parameter1.getTypeElement().replace(newTryCatch.getCatchSections() [0].getParameter().getTypeElement());
       section.delete();
