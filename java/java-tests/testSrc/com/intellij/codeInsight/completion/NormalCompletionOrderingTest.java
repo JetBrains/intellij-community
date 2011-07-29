@@ -100,7 +100,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testDispreferImpls() throws Throwable {
     myFixture.addClass("package foo; public class Xxx {}");
-    checkPreferredItems(0, "Xxx", "XxxEx", "XxxImpl", "Xxy");
+    configureSecondCompletion();
+    assertPreferredItems(0, "Xxx", "XxxEx", "XxxImpl", "Xxy");
   }
 
   public void testPreferOwnInnerClasses() throws Throwable {
@@ -108,18 +109,26 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferTopLevelClasses() throws Throwable {
-    checkPreferredItems(0, "XxxYyy", "XxzYyy");
+    configureSecondCompletion();
+    assertPreferredItems(0, "XxxYyy", "XxzYyy");
+  }
+
+  private void configureSecondCompletion() {
+    configureNoCompletion(getTestName(false) + ".java");
+    myFixture.complete(CompletionType.BASIC, 2);
   }
 
   public void testDontDispreferImplsAfterNew() throws Throwable {
     myFixture.addClass("package foo; public interface Xxx {}");
-    checkPreferredItems(0, "Xxx", "XxxImpl");
+    configureSecondCompletion();
+    assertPreferredItems(0, "Xxx", "XxxImpl");
   }
 
   public void testPreferLessHumps() throws Throwable {
     myFixture.addClass("package foo; public interface XaYa {}");
     myFixture.addClass("package foo; public interface XyYa {}");
-    checkPreferredItems(0, "XaYa", "XaYaEx", "XaYaImpl", "XyYa", "XyYaXa");
+    configureSecondCompletion();
+    assertPreferredItems(0, "XaYa", "XaYaEx", "XaYaImpl", "XyYa", "XyYaXa");
   }
 
   public void testPreferLessParameters() throws Throwable {
@@ -133,7 +142,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.addClass("package foo; public interface FooBar {}");
     myFixture.addClass("package foo; public interface FooBee {}");
 
-    checkPreferredItems(0, "FooBar", "FooBee");
+    invokeCompletion(getTestName(false) + ".java");
+    configureSecondCompletion();
     incUseCount(getLookup(), 1);
     assertPreferredItems(0, "FooBee", "FooBar");
   }
@@ -175,7 +185,9 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.addClass("public interface Baaaaaaar {}");
     myFixture.addClass("package zoo; public interface Baaaaaaar {}");
 
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
+    configureSecondCompletion();
+
+    final LookupImpl lookup = getLookup();
     assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.getItems().get(0)).getQualifiedName());
     assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.getItems().get(1)).getQualifiedName());
     incUseCount(lookup, 1);
@@ -216,6 +228,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   public void testPreselectMostRelevantInTheMiddle() {
     myFixture.addClass("package foo; public class Elaaaaaaaaaaaaaaaaaaaa {}");
     invokeCompletion(getTestName(false) + ".java");
+    myFixture.completeBasic();
     LookupImpl lookup = getLookup();
     assertPreferredItems(lookup.getList().getSelectedIndex());
     assertEquals("Elaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
@@ -242,7 +255,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.addClass("package bar; public class Bar {}");
     final String path = getTestName(false) + ".java";
     myFixture.configureByFile(getTestName(false) + ".java");
-    myFixture.complete(CompletionType.BASIC);
+    myFixture.complete(CompletionType.BASIC, 2);
     assertPreferredItems(0, "Bar", "Bar");
     List<LookupElement> items = getLookup().getItems();
     assertEquals(((JavaPsiClassReferenceElement)items.get(0)).getQualifiedName(), "Bar");
