@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -96,12 +97,15 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
           if (otherCatchBlock == null) continue;
           Match match = finder.isDuplicate(otherCatchBlock, true);
           if (match != null && match.getReturnValue() == null) {
-            PsiJavaToken rParenth = otherSection.getRParenth();
-            if (rParenth != null) {
-                registerError(otherSection, 0, rParenth.getStartOffsetInParent() + 1, i);
+            final List<PsiElement> parameterValues = match.getParameterValues(parameter);
+            if (parameterValues == null || (parameterValues.size() == 1 && parameterValues.get(0) instanceof PsiReferenceExpression)) {
+              PsiJavaToken rParenth = otherSection.getRParenth();
+              if (rParenth != null) {
+                  registerError(otherSection, 0, rParenth.getStartOffsetInParent() + 1, i);
+              }
+              duplicates[i] = true;
+              duplicates[j] = true;
             }
-            duplicates[i] = true;
-            duplicates[j] = true;
           }
         }
       }

@@ -31,6 +31,49 @@ class TryIdenticalCatches {
   String b(String s) { return s;}
 
 
+  public void nonIdenticalWithParameterValue() throws StorageException {
+    try {
+      throwAllExceptions();
+    }
+    catch (StorageInitializationException e) {
+      throw e;
+    }
+    catch (java.io.IOException e) {
+      throw new StorageInitializationException("Can not setup storage factory.", e);
+    }
+    catch (Exception e) {
+      throw new StorageInitializationException("Unspecified exception occurs while DB storage initialization.", e);
+    }
+  }
+
+  void throwAllExceptions() throws StorageInitializationException, java.io.IOException {
+  }
+
+  class StorageException extends Exception {
+  }
+
+  class StorageInitializationException extends StorageException {
+    private StorageInitializationException(String m, Exception e) {
+    }
+  }
+
+  public void identicalWithoutParams(boolean value) {
+     try {
+       if (value) {
+         throw new ClassNotFoundException();
+       }
+       else {
+         throw new NumberFormatException();
+       }
+     }
+     catch(ClassNotFoundException cnfe) {
+       System.out.println();
+     }
+     <warning descr="Identical 'catch' branches in 'try' statement">catch(NumberFormatException nfe)</warning> {
+      System.out.println();
+     }
+   }
+
   public void identical(boolean value) {
     try {
       if (value) {
