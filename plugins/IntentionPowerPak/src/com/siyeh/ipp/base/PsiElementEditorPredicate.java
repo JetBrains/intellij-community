@@ -15,11 +15,15 @@
  */
 package com.siyeh.ipp.base;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
-public interface PsiElementPredicate{
-  /**
-   * Use {@link PsiElementEditorPredicate} when editor selection should be checked
-   */
-    boolean satisfiedBy(PsiElement element);
+public abstract class PsiElementEditorPredicate implements PsiElementPredicate {
+  public abstract boolean satisfiedBy(PsiElement element, @Nullable Editor editor);
+
+  @Override
+  public boolean satisfiedBy(PsiElement element) {
+    return satisfiedBy(element, null);
+  }
 }

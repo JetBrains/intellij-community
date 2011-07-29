@@ -49,7 +49,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
         if (!isWritable(project, element)) {
             return;
         }
-        final PsiElement matchingElement = findMatchingElement(element);
+        final PsiElement matchingElement = findMatchingElement(element, editor);
         if (matchingElement == null) {
             return;
         }
@@ -172,12 +172,16 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
         codeStyleManager.reformat(shortenedElement);
     }
 
-    @Nullable PsiElement findMatchingElement(@Nullable PsiElement element) {
+    @Nullable PsiElement findMatchingElement(@Nullable PsiElement element, Editor editor) {
         while(element != null){
             if(!StdLanguages.JAVA.equals(element.getLanguage())){
                 break;
             }
-            if(predicate.satisfiedBy(element)){
+            if (predicate instanceof PsiElementEditorPredicate) {
+              if (((PsiElementEditorPredicate)predicate).satisfiedBy(element, editor)) {
+                return element;
+              }
+            } else if(predicate.satisfiedBy(element)){
                 return element;
             }
             element = element.getParent();
@@ -191,7 +195,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor,
                                @NotNull PsiElement element) {
-        return findMatchingElement(element) != null;
+        return findMatchingElement(element, editor) != null;
     }
 
     @Override

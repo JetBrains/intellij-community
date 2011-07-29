@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementEditorPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.PsiSelectionSearcher;
 import org.jetbrains.annotations.NotNull;
@@ -123,10 +124,10 @@ public class FlipSetterCallIntention extends Intention {
     return editor != null && editor.getSelectionModel().hasSelection() ? editor : null; 
   }
 
-  private static class SetterCallPredicate implements PsiElementPredicate {
-    public boolean satisfiedBy(PsiElement element) {
+  private static class SetterCallPredicate extends PsiElementEditorPredicate {
+    @Override
+    public boolean satisfiedBy(PsiElement element, @Nullable Editor editor) {
       boolean underCorrectElement = element instanceof PsiMethodCallExpression && isSetGetMethodCall((PsiMethodCallExpression)element);
-      final Editor editor = FileEditorManager.getInstance(element.getProject()).getSelectedTextEditor();
       if (editor == null || !editor.getSelectionModel().hasSelection()) {
         return underCorrectElement;
       }
