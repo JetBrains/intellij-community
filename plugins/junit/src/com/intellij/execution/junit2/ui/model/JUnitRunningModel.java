@@ -79,6 +79,10 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
     selectTest(getRoot());
     myTreeListener.install();
   }
+  
+  public JTree getTree() {
+    return myTreeView;
+  }
 
   public void dispose() {
   }
@@ -114,6 +118,12 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
     if (test == null) return;
 
     myTreeBuilder.select(test, null);
+  }
+
+  public void expandTest(final TestProxy test) {
+    if (test == null) return;
+
+    myTreeBuilder.expand(test, null);
   }
 
 
