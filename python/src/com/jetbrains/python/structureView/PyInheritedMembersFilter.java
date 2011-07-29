@@ -1,10 +1,13 @@
 package com.jetbrains.python.structureView;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.FileStructureFilter;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.IconLoader;
 import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author vlan
  */
-public class PyInheritedMembersFilter implements Filter {
+public class PyInheritedMembersFilter implements FileStructureFilter {
   private static final String ID = "SHOW_INHERITED";
 
   @Override
@@ -46,5 +49,15 @@ public class PyInheritedMembersFilter implements Filter {
     return new ActionPresentationData(IdeBundle.message("action.structureview.show.inherited"),
                                       null,
                                       IconLoader.getIcon("/hierarchy/supertypes.png"));
+  }
+
+  @Override
+  public String getCheckBoxText() {
+    return IdeBundle.message("file.structure.toggle.show.inherited");
+  }
+
+  @Override
+  public Shortcut[] getShortcut() {
+    return KeymapManager.getInstance().getActiveKeymap().getShortcuts("FileStructurePopup");
   }
 }
