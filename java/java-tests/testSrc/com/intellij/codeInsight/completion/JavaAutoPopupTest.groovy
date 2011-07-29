@@ -768,6 +768,13 @@ public class Bar {
     assert myFixture.lookupElementStrings.containsAll(['private', 'protected'])
   }
 
+  public void testArrays() {
+    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
+    type 'Arrays'
+    assert myFixture.lookupElementStrings == ['Arrays', 'ArrayStoreException']
+  }
+
+
   public void testExactMatchesFirst() {
     myFixture.configureByText("a.java", """
 public class UTest {
@@ -866,6 +873,5 @@ class LiveComplete {
     type 'iter'
     assert myFixture.lookupElementStrings == ['iterator']
   }
-
 
 }

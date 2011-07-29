@@ -54,10 +54,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
 
@@ -237,7 +234,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   public static void addAllClasses(CompletionParameters parameters,
                                    final CompletionResultSet result,
                                    final InheritorsHolder inheritors) {
-    if (shouldRunClassNameCompletion(result, parameters)) {
+    if (mayShowAllClasses(parameters) && isClassNamePossible(parameters) && mayStartClassName(result, parameters.isRelaxedMatching())) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, result, new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
@@ -262,11 +259,16 @@ public class JavaCompletionContributor extends CompletionContributor {
 
             final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);
             final PsiFile originalFile = parameters.getOriginalFile();
-            for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
-                                                                                 (PsiJavaReference)reference,
-                                                                                 new ElementExtractorFilter(filter),
-                                                                                 checkAccess,
-                                                                                 result.getPrefixMatcher(), parameters)) {
+            Set<LookupElement> set = JavaCompletionUtil.processJavaReference(position,
+                                                                                  (PsiJavaReference)reference,
+                                                                                  new ElementExtractorFilter(filter),
+                                                                                  checkAccess,
+                                                                                  result.getPrefixMatcher(), parameters);
+            PsiClass arrays = JavaPsiFacade.getInstance(position.getProject()).findClass(CommonClassNames.JAVA_UTIL_ARRAYS, position.getResolveScope());
+            if (arrays != null && filter.isAcceptable(arrays, position) && isClassNamePossible(parameters)) {
+              set.add(JavaClassNameCompletionContributor.createClassLookupItem(arrays, true));
+            }
+            for (LookupElement element : set) {
               if (inheritors.alreadyProcessed(element)) {
                 continue;
               }
@@ -337,11 +339,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static boolean shouldRunClassNameCompletion(CompletionResultSet result, CompletionParameters parameters) {
-    if (!mayShowAllClasses(parameters)) {
-      return false;
-    }
-
+  private static boolean isClassNamePossible(CompletionParameters parameters) {
     PsiElement position = parameters.getPosition();
     final PsiElement parent = position.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return false;
@@ -367,8 +365,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (grand instanceof PsiNewExpression && ((PsiNewExpression)grand).getQualifier() != null) {
       return false;
     }
-
-    return mayStartClassName(result, parameters.isRelaxedMatching());
+    return true;
   }
 
   public static boolean mayShowAllClasses(CompletionParameters parameters) {
