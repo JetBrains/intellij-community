@@ -32,11 +32,13 @@ public interface FilePath {
   /**
    * @return a virtual file that corresponds to this path, or null if the virtual file is no more valid.
    */
+  @Nullable
   VirtualFile getVirtualFile();
 
   /**
    * @return the virtual file that corresponds to the parent file path, or null if the virtual file is no more valid.
    */
+  @Nullable
   VirtualFile getVirtualFileParent();
 
   /**

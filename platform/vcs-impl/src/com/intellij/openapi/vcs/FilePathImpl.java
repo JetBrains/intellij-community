@@ -150,6 +150,7 @@ public class FilePathImpl implements FilePath {
     return new FilePathImpl(new File(path.substring(0, pos)), true);
   }
 
+  @Nullable
   public VirtualFile getVirtualFile() {
     if (myVirtualFile != null && !myVirtualFile.isValid()) {
       myVirtualFile = null;
@@ -157,6 +158,7 @@ public class FilePathImpl implements FilePath {
     return myVirtualFile;
   }
 
+  @Nullable
   public VirtualFile getVirtualFileParent() {
     if (myVirtualParent != null && !myVirtualParent.isValid()) {
       myVirtualParent = null;

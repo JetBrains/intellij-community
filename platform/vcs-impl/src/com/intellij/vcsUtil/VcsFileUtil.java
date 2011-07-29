@@ -92,7 +92,7 @@ public class VcsFileUtil {
    * @param files the file list
    * @return chunked relative paths
    */
-  public static List<List<String>> chunkFiles(VirtualFile root, Collection<VirtualFile> files) {
+  public static List<List<String>> chunkFiles(@NotNull VirtualFile root, @NotNull Collection<VirtualFile> files) {
     return chunkRelativePaths(toRelativeFiles(root, files));
   }
 
