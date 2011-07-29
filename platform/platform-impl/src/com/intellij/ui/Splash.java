@@ -19,7 +19,6 @@ import com.intellij.ide.StartupProgress;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -86,21 +85,11 @@ public class Splash extends JDialog implements StartupProgress {
     if (getProgressColor() == null) return;
 
     final Graphics g = getGraphics();
-    final GraphicsConfig config = new GraphicsConfig(g);
     final int y = getProgressY();
     final Color col = getProgressColor();
-    //final Color col2 = new Color(col.getRed(), col.getGreen(), col.getBlue(), 64);
     final int progressWidth = (int)((myImage.getIconWidth() - 2) * progress);
     g.setColor(col);
-    //for (int i = 1; i <= progressWidth; i++) {
-    //  g.setColor(col);
-    //  final int offset = i % 2 == 0 ? 1 : 0;
-    //  g.fillRect(i, y + offset, 1, 1);
-    //  g.setColor(col2);
-    //  g.fillRect(i, y + 1 - offset, 1, 1);
-    //}
     g.fillRect(1, y, progressWidth, getProgressHeight());
-    config.restore();
   }
 
   private int getProgressHeight() {
