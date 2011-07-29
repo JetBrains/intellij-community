@@ -118,7 +118,6 @@ public class GroovyDslScript {
   }
 
   private boolean handleDslError(Throwable e) {
-    LOG.error(e);
     if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
     }
