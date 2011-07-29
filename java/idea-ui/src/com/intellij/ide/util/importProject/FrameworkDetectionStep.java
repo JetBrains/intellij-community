@@ -23,21 +23,24 @@ import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.facet.impl.autodetecting.FacetDetectorForWizardRegistry;
 import com.intellij.facet.impl.autodetecting.FacetDetectorRegistryEx;
 import com.intellij.facet.impl.autodetecting.FileContentPattern;
-import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsTreeComponent;
-import com.intellij.facet.impl.ui.FacetDetectionProcessor;
+import com.intellij.framework.detection.DetectedFrameworkDescription;
+import com.intellij.framework.detection.DetectionExcludesConfiguration;
+import com.intellij.framework.detection.FrameworkDetectionContext;
+import com.intellij.framework.detection.impl.FrameworkDetectionProcessor;
+import com.intellij.framework.detection.impl.ui.DetectedFrameworksComponent;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
+import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,28 +48,26 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author nik
  */
-public abstract class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>>>
+public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<List<DetectedFrameworkDescription>>
   implements ProjectFromSourcesBuilder.ProjectConfigurationUpdater {
   private final Icon myIcon;
-  private final ModuleType myModuleType;
   private List<File> myLastRoots = null;
-  private final DetectedFacetsTreeComponent myDetectedFacetsComponent;
+  private final DetectedFrameworksComponent myDetectedFrameworksComponent;
   private JPanel myMainPanel;
-  private JPanel myFacetsTreePanel;
-  private JLabel myFacetsDetectedLabel;
+  private JPanel myFrameworksPanel;
+  private JLabel myFrameworksDetectedLabel;
+  private final FrameworkDetectionContext myContext;
 
-  public FacetDetectionStep(final Icon icon, ModuleType moduleType) {
-    super(ProjectBundle.message("message.text.stop.searching.for.facets", ApplicationNamesInfo.getInstance().getProductName()));
+  public FrameworkDetectionStep(final Icon icon, SourcePathsBuilder builder) {
+    super(ProjectBundle.message("message.text.stop.searching.for.frameworks", ApplicationNamesInfo.getInstance().getProductName()));
     myIcon = icon;
-    myModuleType = moduleType;
-    myDetectedFacetsComponent = new DetectedFacetsTreeComponent();
+    myContext = new FrameworkDetectionInWizardContext(builder);
+    myDetectedFrameworksComponent = new DetectedFrameworksComponent(myContext);
   }
 
   public void updateDataModel() {
@@ -77,38 +78,28 @@ public abstract class FacetDetectionStep extends AbstractStepWithProgress<Map<Mo
   }
 
   protected String getProgressText() {
-    return ProjectBundle.message("progress.text.searching.facets");
+    return ProjectBundle.message("progress.text.searching.frameworks");
   }
 
   protected JComponent createResultsPanel() {
-    JPanel mainPanel = myDetectedFacetsComponent.getMainPanel();
-    myFacetsTreePanel.add(ScrollPaneFactory.createScrollPane(mainPanel), BorderLayout.CENTER);
+    JComponent mainPanel = myDetectedFrameworksComponent.getMainPanel();
+    myFrameworksPanel.add(mainPanel, BorderLayout.CENTER);
     return myMainPanel;
   }
 
-  protected Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>> calculate() {
+  protected List<DetectedFrameworkDescription> calculate() {
     myLastRoots = getRoots();
 
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
-    Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>> result = new HashMap<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>>();
+    List<File> roots = new ArrayList<File>();
     for (ModuleDescriptor moduleDescriptor : getModuleDescriptors()) {
-
-      Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>> root2Facets = new HashMap<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>();
-      for (File root : moduleDescriptor.getContentRoots()) {
-        FacetDetectionProcessor processor = new FacetDetectionProcessor(progressIndicator, myModuleType);
-        processor.process(root);
-        List<FacetDetectionProcessor.DetectedInWizardFacetInfo> facets = processor.getDetectedFacetsInfos();
-        if (!facets.isEmpty()) {
-          root2Facets.put(root, facets);
-        }
-      }
-
-      if (!root2Facets.isEmpty()) {
-        result.put(moduleDescriptor, root2Facets);
-      }
+      roots.addAll(moduleDescriptor.getContentRoots());
     }
 
+    List<DetectedFrameworkDescription> result = new ArrayList<DetectedFrameworkDescription>();
+    FrameworkDetectionProcessor processor = new FrameworkDetectionProcessor(progressIndicator, myContext);
+    processor.processRoots(roots);
     return result;
   }
 
@@ -122,17 +113,13 @@ public abstract class FacetDetectionStep extends AbstractStepWithProgress<Map<Mo
     return roots;
   }
 
-  protected void onFinished(final Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>> result, final boolean canceled) {
-    myDetectedFacetsComponent.clear();
-    for (ModuleDescriptor moduleDescriptor : result.keySet()) {
-      myDetectedFacetsComponent.addFacets(moduleDescriptor, result.get(moduleDescriptor));
-    }
-    myDetectedFacetsComponent.createTree();
+  protected void onFinished(final List<DetectedFrameworkDescription> result, final boolean canceled) {
+    myDetectedFrameworksComponent.getTree().rebuildTree(result);
     if (result.isEmpty()) {
-      myFacetsDetectedLabel.setText(ProjectBundle.message("label.text.no.facets.detected"));
+      myFrameworksDetectedLabel.setText(ProjectBundle.message("label.text.no.frameworks.detected"));
     }
     else {
-      myFacetsDetectedLabel.setText(ProjectBundle.message("label.text.the.following.facets.are.detected"));
+      myFrameworksDetectedLabel.setText(ProjectBundle.message("label.text.the.following.frameworks.are.detected"));
     }
   }
 
@@ -167,7 +154,11 @@ public abstract class FacetDetectionStep extends AbstractStepWithProgress<Map<Mo
     return "reference.dialogs.new.project.fromCode.facets";
   }
 
-  public void updateModule(final ModuleDescriptor descriptor, final Module module, final ModifiableRootModel rootModel) {
-    myDetectedFacetsComponent.createFacets(descriptor, module, rootModel);
+  public void updateProject(@NotNull Project project) {
+    final PlatformModifiableModelsProvider modelsProvider = new PlatformModifiableModelsProvider();
+    for (DetectedFrameworkDescription description : myDetectedFrameworksComponent.getSelectedFrameworks()) {
+      description.configureFramework(modelsProvider);
+    }
+    myDetectedFrameworksComponent.processUncheckedNodes(DetectionExcludesConfiguration.getInstance(project));
   }
 }

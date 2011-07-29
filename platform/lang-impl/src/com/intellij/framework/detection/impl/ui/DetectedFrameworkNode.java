@@ -98,7 +98,7 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
 
   @NotNull
   private String getRelativePath(@NotNull VirtualFile file) {
-    final VirtualFile dir = myContext.getProject().getBaseDir();
+    final VirtualFile dir = myContext.getBaseDir();
     if (dir != null) {
       final String path = VfsUtil.getRelativePath(dir, file, File.separatorChar);
       if (path != null) {

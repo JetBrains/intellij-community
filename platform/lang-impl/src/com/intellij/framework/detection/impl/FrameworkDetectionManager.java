@@ -21,7 +21,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetector;
-import com.intellij.framework.detection.impl.ui.SetupDetectedFrameworksDialog;
+import com.intellij.framework.detection.impl.ui.ConfigureDetectedFrameworksDialog;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
@@ -210,7 +210,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
         frameworksToId.put(description, id);
       }
     }
-    final SetupDetectedFrameworksDialog dialog = new SetupDetectedFrameworksDialog(myProject, descriptions);
+    final ConfigureDetectedFrameworksDialog dialog = new ConfigureDetectedFrameworksDialog(myProject, descriptions);
     dialog.show();
     if (dialog.isOK()) {
       notification.expire();
@@ -220,8 +220,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
         final PlatformModifiableModelsProvider provider = new PlatformModifiableModelsProvider();
         for (DetectedFrameworkDescription description : selected) {
           description.configureFramework(provider);
-          final Collection<? extends VirtualFile> files = description.getRelatedFiles();
-          myDetectedFrameworksData.putExistentFrameworkFiles(frameworksToId.get(description), files);
+          myDetectedFrameworksData.putExistentFrameworkFiles(frameworksToId.get(description), description.getRelatedFiles());
         }
       }
       finally {

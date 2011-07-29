@@ -38,37 +38,22 @@ import java.util.Map;
  * @author nik
  */
 public class DetectedFrameworksTree extends CheckboxTree {
-  private final List<DetectedFrameworkDescription> myDetectedFrameworks;
+  private List<DetectedFrameworkDescription> myDetectedFrameworks;
   private final FrameworkDetectionContext myContext;
-  private SetupDetectedFrameworksDialog.GroupByOption myGroupByOption;
+  private DetectedFrameworksComponent.GroupByOption myGroupByOption;
 
-  public DetectedFrameworksTree(List<DetectedFrameworkDescription> detectedFrameworks,
-                                final FrameworkDetectionContext context,
-                                SetupDetectedFrameworksDialog.GroupByOption groupByOption) {
+  public DetectedFrameworksTree(final FrameworkDetectionContext context, DetectedFrameworksComponent.GroupByOption groupByOption) {
     super(new DetectedFrameworksTreeRenderer(), new CheckedTreeNode(null), new CheckPolicy(true, true, true, false));
-    myDetectedFrameworks = detectedFrameworks;
     myContext = context;
     myGroupByOption = groupByOption;
     setShowsRootHandles(false);
     setRootVisible(false);
-    createNodes();
-    TreeUtil.expandAll(this);
   }
 
-  private void createNodes() {
-    CheckedTreeNode root = getRoot();
-    if (myGroupByOption == SetupDetectedFrameworksDialog.GroupByOption.TYPE) {
-      createNodesGroupedByType(root);
-    }
-    else {
-      createNodesGroupedByDirectory(root);
-    }
-  }
-
-  private void createNodesGroupedByDirectory(CheckedTreeNode root) {
+  private void createNodesGroupedByDirectory(CheckedTreeNode root, final List<DetectedFrameworkDescription> frameworks) {
     Map<VirtualFile, FrameworkDirectoryNode> nodes = new HashMap<VirtualFile, FrameworkDirectoryNode>();
     List<DetectedFrameworkNode> externalNodes = new ArrayList<DetectedFrameworkNode>();
-    for (DetectedFrameworkDescription framework : myDetectedFrameworks) {
+    for (DetectedFrameworkDescription framework : frameworks) {
       VirtualFile parent = VfsUtil.getCommonAncestor(framework.getRelatedFiles());
       if (parent != null && !parent.isDirectory()) {
         parent = parent.getParent();
@@ -140,9 +125,9 @@ public class DetectedFrameworksTree extends CheckboxTree {
     return newNode;
   }
 
-  private void createNodesGroupedByType(CheckedTreeNode root) {
+  private void createNodesGroupedByType(CheckedTreeNode root, final List<DetectedFrameworkDescription> frameworks) {
     Map<FrameworkType, FrameworkTypeNode> groupNodes = new HashMap<FrameworkType, FrameworkTypeNode>();
-    for (DetectedFrameworkDescription framework : myDetectedFrameworks) {
+    for (DetectedFrameworkDescription framework : frameworks) {
       final FrameworkType type = framework.getFrameworkType();
       FrameworkTypeNode group = groupNodes.get(type);
       if (group == null) {
@@ -158,13 +143,26 @@ public class DetectedFrameworksTree extends CheckboxTree {
     return ((CheckedTreeNode)getModel().getRoot());
   }
 
-  public void changeGroupBy(SetupDetectedFrameworksDialog.GroupByOption option) {
+  public void changeGroupBy(DetectedFrameworksComponent.GroupByOption option) {
     if (myGroupByOption.equals(option)) return;
     myGroupByOption = option;
-    getRoot().removeAllChildren();
-    createNodes();
-    ((DefaultTreeModel)getModel()).nodeStructureChanged(getRoot());
+    if (myDetectedFrameworks != null) {
+      rebuildTree(myDetectedFrameworks);
+    }
+  }
+
+  public void rebuildTree(final List<DetectedFrameworkDescription> frameworks) {
+    final CheckedTreeNode root = getRoot();
+    root.removeAllChildren();
+    if (myGroupByOption == DetectedFrameworksComponent.GroupByOption.TYPE) {
+      createNodesGroupedByType(root, frameworks);
+    }
+    else {
+      createNodesGroupedByDirectory(root, frameworks);
+    }
+    ((DefaultTreeModel)getModel()).nodeStructureChanged(root);
     TreeUtil.expandAll(this);
+    myDetectedFrameworks = frameworks;
   }
 
   private static class DetectedFrameworksTreeRenderer extends CheckboxTreeCellRenderer {

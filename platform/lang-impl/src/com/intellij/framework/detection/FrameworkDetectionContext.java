@@ -18,12 +18,11 @@ package com.intellij.framework.detection;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,11 +31,9 @@ import java.util.List;
  * @author nik
  */
 public interface FrameworkDetectionContext {
-  @NotNull
-  Project getProject();
 
-  @NotNull
-  FacetsProvider getFacetsProvider();
+  @Nullable
+  VirtualFile getBaseDir();
 
   @NotNull
   <F extends Facet, C extends FacetConfiguration>
@@ -45,12 +42,12 @@ public interface FrameworkDetectionContext {
   @NotNull
   <F extends Facet, C extends FacetConfiguration>
   List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetType<F, C> facetType, @NotNull Collection<VirtualFile> files,
-                                                                               @NotNull FacetConfigurationCreator<F, C> creator);
+                                                                               @NotNull FacetConfigurationCreator<C> creator);
 
-  abstract class FacetConfigurationCreator<F extends Facet, C extends FacetConfiguration> {
+  abstract class FacetConfigurationCreator<C extends FacetConfiguration> {
     @NotNull
     public abstract List<Pair<C,Collection<VirtualFile>>> createConfigurations(@NotNull Collection<VirtualFile> files,
                                                                                @NotNull ModuleRootModel rootModel,
-                                                                               @NotNull Collection<F> existentFacets);
+                                                                               @NotNull Collection<C> existentFacetConfigurations);
   }
 }

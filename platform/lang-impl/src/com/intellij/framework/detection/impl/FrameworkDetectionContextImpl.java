@@ -20,24 +20,25 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
-import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMapBasedOnSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author nik
  */
-public class FrameworkDetectionContextImpl implements FrameworkDetectionContext {
+public class FrameworkDetectionContextImpl extends FrameworkDetectionContextBase {
   private final Project myProject;
 
   public FrameworkDetectionContextImpl(@NotNull Project project) {
@@ -46,35 +47,9 @@ public class FrameworkDetectionContextImpl implements FrameworkDetectionContext 
 
   @NotNull
   @Override
-  public Project getProject() {
-    return myProject;
-  }
-
-  @NotNull
-  @Override
-  public FacetsProvider getFacetsProvider() {
-    return DefaultFacetsProvider.INSTANCE;
-  }
-
-  @NotNull
-  @Override
-  public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull final FacetType<F, C> facetType,
-                                                                                                                     @NotNull Collection<VirtualFile> files) {
-    return createDetectedFacetDescriptions(facetType, files, new FacetConfigurationCreator<F, C>() {
-      @NotNull
-      @Override
-      public List<Pair<C,Collection<VirtualFile>>> createConfigurations(@NotNull Collection<VirtualFile> files,
-                                                                        @NotNull ModuleRootModel rootModel, @NotNull Collection<F> existentFacets) {
-        return Collections.singletonList(Pair.create(facetType.createDefaultConfiguration(), files));
-      }
-    });
-  }
-
-  @NotNull
-  @Override
   public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetType<F, C> facetType,
                                                                                                                      @NotNull Collection<VirtualFile> files,
-                                                                                                                     @NotNull FacetConfigurationCreator<F, C> creator) {
+                                                                                                                     @NotNull FacetConfigurationCreator<C> creator) {
     MultiMapBasedOnSet<Module, VirtualFile> filesByModule = new MultiMapBasedOnSet<Module, VirtualFile>();
     for (VirtualFile file : files) {
       final Module module = ModuleUtil.findModuleForFile(file, myProject);
@@ -83,17 +58,26 @@ public class FrameworkDetectionContextImpl implements FrameworkDetectionContext 
       }
     }
     final List<DetectedFrameworkDescription> result = new ArrayList<DetectedFrameworkDescription>();
-    final FacetsProvider provider = getFacetsProvider();
+    final FacetsProvider provider = DefaultFacetsProvider.INSTANCE;
     for (Module module : filesByModule.keySet()) {
       final Collection<F> facets = provider.getFacetsByType(module, facetType.getId());
       if (facetType.isOnlyOneFacetAllowed() && !facets.isEmpty()) {
         continue;
       }
-      final List<Pair<C, Collection<VirtualFile>>> pairs = creator.createConfigurations(files, ModuleRootManager.getInstance(module), facets);
+      List<C> existentConfigurations = new ArrayList<C>();
+      for (F facet : facets) {
+        //noinspection unchecked
+        existentConfigurations.add((C)facet.getConfiguration());
+      }
+      final List<Pair<C, Collection<VirtualFile>>> pairs = creator.createConfigurations(files, ModuleRootManager.getInstance(module), existentConfigurations);
       for (Pair<C, Collection<VirtualFile>> pair : pairs) {
         result.add(new FacetBasedDetectedFrameworkDescription<C>(module, pair.getFirst(), new HashSet<VirtualFile>(pair.getSecond()), facetType));
       }
     }
     return result;
+  }
+
+  public VirtualFile getBaseDir() {
+    return myProject.getBaseDir();
   }
 }

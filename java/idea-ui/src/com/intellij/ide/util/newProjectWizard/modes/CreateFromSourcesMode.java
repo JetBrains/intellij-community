@@ -70,14 +70,14 @@ public class CreateFromSourcesMode extends WizardMode {
     sequence.addCommonStep(new ModulesDetectionStep(projectBuilder, moduleInsight, icon, "reference.dialogs.new.project.fromCode.page2"));
     sequence.addCommonStep(factory.createProjectJdkStep(context));
 
-    if (FacetDetectionStep.isEnabled(StdModuleTypes.JAVA)) {
-      FacetDetectionStep facetDetectionStep = new FacetDetectionStep(icon, StdModuleTypes.JAVA) {
+    if (FrameworkDetectionStep.isEnabled(StdModuleTypes.JAVA)) {
+      FrameworkDetectionStep frameworkDetectionStep = new FrameworkDetectionStep(icon, projectBuilder) {
         protected List<ModuleDescriptor> getModuleDescriptors() {
           return projectBuilder.getModules();
         }
       };
-      projectBuilder.addConfigurationUpdater(facetDetectionStep);
-      sequence.addCommonStep(facetDetectionStep);
+      projectBuilder.addConfigurationUpdater(frameworkDetectionStep);
+      sequence.addCommonStep(frameworkDetectionStep);
     }
 
     return sequence;
