@@ -20,6 +20,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -234,7 +235,9 @@ public class JavaCompletionContributor extends CompletionContributor {
   public static void addAllClasses(CompletionParameters parameters,
                                    final CompletionResultSet result,
                                    final InheritorsHolder inheritors) {
-    if (mayShowAllClasses(parameters) && isClassNamePossible(parameters) && mayStartClassName(result, parameters.isRelaxedMatching())) {
+    if (!isClassNamePossible(parameters) || !mayStartClassName(result, parameters.isRelaxedMatching())) return;
+
+    if (mayShowAllClasses(parameters)) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, result, new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
@@ -243,6 +246,14 @@ public class JavaCompletionContributor extends CompletionContributor {
           }
         }
       });
+    } else {
+      advertiseSecondCompletion(parameters.getPosition().getProject());
+    }
+  }
+
+  public static void advertiseSecondCompletion(Project project) {
+    if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.SECOND_BASIC_COMPLETION, project)) {
+      CompletionService.getCompletionService().setAdvertisementText("Press " + getActionShortcut(IdeActions.ACTION_CODE_COMPLETION) + " to see non-imported classes");
     }
   }
 
