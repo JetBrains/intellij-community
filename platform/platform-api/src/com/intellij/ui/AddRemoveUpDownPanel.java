@@ -134,7 +134,7 @@ class AddRemoveUpDownPanel extends JPanel {
     for (AnActionButton button : myActions) {
       final ShortcutSet shortcut = button.getShortcut();
       if (shortcut != null) {
-        if (button instanceof MyActionButton) {
+        if (button instanceof MyActionButton && !((MyActionButton)button).isAddButton()) {
           button.registerCustomShortcutSet(shortcut, button.getContextComponent());
         } else {
           button.registerCustomShortcutSet(shortcut, pane);
@@ -205,6 +205,10 @@ class AddRemoveUpDownPanel extends JPanel {
         if (c instanceof JTable && ((JTable)c).isEditing()) return false;
       }
       return super.isEnabled();
+    }
+
+    boolean isAddButton() {
+      return myButton == Buttons.ADD;
     }
   }
 
