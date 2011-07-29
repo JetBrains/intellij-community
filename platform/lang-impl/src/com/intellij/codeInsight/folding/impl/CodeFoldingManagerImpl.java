@@ -18,6 +18,8 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.*;
@@ -86,6 +88,10 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
       public void mouseMoved(EditorMouseEvent e) {
         if (myProject.isDisposed()) return;
+        HintManager hintManager = HintManager.getInstance();
+        if (hintManager != null && hintManager.hasShownHintsThatWillHideByOtherHint()) {
+          return;
+        } 
 
         if (e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) return;
         LightweightHint hint = null;
