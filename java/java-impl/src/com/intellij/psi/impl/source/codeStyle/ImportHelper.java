@@ -253,7 +253,11 @@ public class ImportHelper{
   private static void calcClassesConflictingViaOnDemandImports(PsiJavaFile file, Collection<String> onDemandImportsList,
                                                                GlobalSearchScope resolveScope, final Set<String> namesToUseSingle) {
     List<String> onDemands = new ArrayList<String>(Arrays.asList(file.getImplicitlyImportedPackages()));
-    onDemands.addAll(onDemandImportsList);
+    for (String onDemand : onDemands) {
+      if (!onDemands.contains(onDemand)) {
+        onDemands.add(onDemand);
+      }
+    }
     if (onDemands.size() < 2) return;
 
     Map<String, Set<String>> classNames = new THashMap<String, Set<String>>();
