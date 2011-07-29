@@ -469,6 +469,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
       Resource resource = (Resource)o;
 
       if (classLoader != resource.classLoader) return false;
+      if (clazz != resource.clazz) return false;
       if (file != null ? !file.equals(resource.file) : resource.file != null) return false;
 
       return true;
