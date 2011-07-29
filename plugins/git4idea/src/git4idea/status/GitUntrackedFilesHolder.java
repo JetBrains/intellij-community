@@ -242,7 +242,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     for (String relPath : output.split("\u0000")) {
       VirtualFile f = root.findFileByRelativePath(relPath);
       assert f != null : String.format("VirtualFile shouldn't be null here. Relative path: [%s], \nFull output:\n%s",
-                                              relPath, output);
+                                              relPath, output.replace('\u0000', '!'));
       untrackedFiles.add(f);
     }
     
