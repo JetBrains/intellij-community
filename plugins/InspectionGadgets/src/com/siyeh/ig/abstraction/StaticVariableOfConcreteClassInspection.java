@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeElement;
@@ -23,14 +24,21 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
+
 public class StaticVariableOfConcreteClassInspection extends BaseInspection {
 
+    @SuppressWarnings("PublicField")
+    public boolean ignoreAbstractClasses = false;
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.variable.of.concrete.class.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -38,11 +46,20 @@ public class StaticVariableOfConcreteClassInspection extends BaseInspection {
                 infos[0]);
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "static.variable.of.concrete.class.option"),
+                this, "ignoreAbstractClasses");
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StaticVariableOfConcreteClassVisitor();
     }
 
-    private static class StaticVariableOfConcreteClassVisitor
+    private class StaticVariableOfConcreteClassVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitField(@NotNull PsiField field) {
@@ -54,7 +71,8 @@ public class StaticVariableOfConcreteClassInspection extends BaseInspection {
             if (typeElement == null) {
                 return;
             }
-            if (!ConcreteClassUtil.typeIsConcreteClass(typeElement)) {
+            if (!ConcreteClassUtil.typeIsConcreteClass(typeElement,
+                    ignoreAbstractClasses)) {
                 return;
             }
             final String variableName = field.getName();
