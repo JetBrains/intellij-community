@@ -263,7 +263,9 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                 } else {
                     boolean skippingWhiteSpace = false;
                     for (final PsiElement child : children) {
-                        if (child.equals(childToSkip)) {
+                        if (shouldSkip(iterator, contentType, child)) {
+                            skippingWhiteSpace = true;
+                        } else if (child.equals(childToSkip)) {
                             skippingWhiteSpace = true;
                         } else if (child instanceof PsiWhiteSpace &&
                                    skippingWhiteSpace) {
@@ -276,6 +278,19 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                     }
                 }
             }
+        }
+
+        private static boolean shouldSkip(PsiVariable iterator,
+                                          PsiType contentType,
+                                          PsiElement child) {
+            if (!(child instanceof PsiExpressionStatement)) {
+                return false;
+            }
+            final PsiExpressionStatement expressionStatement =
+                    (PsiExpressionStatement) child;
+            final PsiExpression expression =
+                    expressionStatement.getExpression();
+            return isIteratorNext(expression, iterator, contentType);
         }
 
         private static boolean isIteratorNextDeclaration(
@@ -567,7 +582,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
     public static PsiStatement getPreviousStatement(PsiElement context) {
         final PsiElement prevStatement =
                 PsiTreeUtil.skipSiblingsBackward(context,
-                    PsiWhiteSpace.class, PsiComment.class);
+                        PsiWhiteSpace.class, PsiComment.class);
         if (prevStatement == null || !(prevStatement instanceof PsiStatement)) {
             return null;
         }
