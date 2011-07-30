@@ -126,7 +126,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
 
   public static CvsHandler createCheckoutFileHandler(FilePath[] files,
                                                      CvsConfiguration configuration,
-                                                     PerformInBackgroundOption option) {
+                                                     @Nullable PerformInBackgroundOption option) {
     return new CommandCvsHandler(CvsBundle.message("operation.name.check.out.files"), new CheckoutFilesOperation(files, configuration),
                                  FileSetToBeUpdated.selectedFiles(files),
                                  (option == null) ? PerformInBackgroundOption.DEAF : option);
@@ -137,7 +137,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
                                                  final File target,
                                                  boolean useAltCheckoutDir,
                                                  boolean makeNewFilesReadOnly, final PerformInBackgroundOption option) {
-    CheckoutProjectOperation checkoutOperation = CheckoutProjectOperation.create(environment, checkoutPath, target,
+    final CheckoutProjectOperation checkoutOperation = CheckoutProjectOperation.create(environment, checkoutPath, target,
                                         useAltCheckoutDir, makeNewFilesReadOnly);
     return new CommandCvsHandler(CvsBundle.message("operation.name.check.out.project"), checkoutOperation, FileSetToBeUpdated.allFiles(),
                                  (option == null) ? PerformInBackgroundOption.DEAF : option) {
@@ -161,7 +161,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   public static CvsHandler createBranchOrTagHandler(FilePath[] selectedFiles, String branchName,
                                                     boolean switchToThisAction, boolean overrideExisting,
                                                     boolean isTag, boolean makeNewFilesReadOnly, Project project) {
-    CompositeOperation operation = new CompositeOperation();
+    final CompositeOperation operation = new CompositeOperation();
     operation.addOperation(new BranchOperation(selectedFiles, branchName, overrideExisting, isTag));
     if (switchToThisAction) {
       operation.addOperation(new UpdateOperation(selectedFiles, branchName, makeNewFilesReadOnly, project));
@@ -179,7 +179,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
                                                final boolean tagFilesAfterCommit,
                                                final String tagName,
                                                @NotNull final List<File> dirsToPrune) {
-    CommitFilesOperation operation = new CommitFilesOperation(commitMessage, makeNewFilesReadOnly);
+    final CommitFilesOperation operation = new CommitFilesOperation(commitMessage, makeNewFilesReadOnly);
     if (selectedFiles != null) {
       for (FilePath selectedFile : selectedFiles) {
         operation.addFile(selectedFile.getIOFile());
@@ -188,7 +188,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     if (!dirsToPrune.isEmpty()) {
       operation.addFinishAction(new Runnable() {
         public void run() {
-          IOFilesBasedDirectoryPruner pruner = new IOFilesBasedDirectoryPruner(null);
+          final IOFilesBasedDirectoryPruner pruner = new IOFilesBasedDirectoryPruner(null);
           for(File dir: dirsToPrune) {
             pruner.addFile(dir);
           }
@@ -207,14 +207,14 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createAddFilesHandler(final Project project, Collection<AddedFileInfo> addedRoots) {
-    AddFilesOperation operation = new AddFilesOperation();
-    ArrayList<AddedFileInfo> addedFileInfo = new ArrayList<AddedFileInfo>();
+    final AddFilesOperation operation = new AddFilesOperation();
+    final ArrayList<AddedFileInfo> addedFileInfo = new ArrayList<AddedFileInfo>();
     for (final AddedFileInfo info : addedRoots) {
       info.clearAllCvsAdminDirectoriesInIncludedDirectories();
       addedFileInfo.addAll(info.collectAllIncludedFiles());
     }
 
-    ArrayList<VirtualFile> addedFiles = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> addedFiles = new ArrayList<VirtualFile>();
 
     for (AddedFileInfo info : addedFileInfo) {
       addedFiles.add(info.getFile());
@@ -226,7 +226,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createRemoveFilesHandler(Project project, Collection<File> files) {
-    RemoveFilesOperation operation = new RemoveFilesOperation();
+    final RemoveFilesOperation operation = new RemoveFilesOperation();
     for (final File file : files) {
       operation.addFile(file.getPath());
     }
@@ -236,10 +236,10 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   private static VirtualFile[] getAdminDirectoriesFor(Collection<File> files) {
-    Collection<VirtualFile> result = new HashSet<VirtualFile>();
+    final Collection<VirtualFile> result = new HashSet<VirtualFile>();
     for (File file : files) {
-      File parentFile = file.getParentFile();
-      VirtualFile cvsAdminDirectory = CvsVfsUtil.findFileByIoFile(new File(parentFile, CvsUtil.CVS));
+      final File parentFile = file.getParentFile();
+      final VirtualFile cvsAdminDirectory = CvsVfsUtil.findFileByIoFile(new File(parentFile, CvsUtil.CVS));
       if (cvsAdminDirectory != null) result.add(cvsAdminDirectory);
     }
     return VfsUtil.toVirtualFileArray(result);
@@ -283,13 +283,13 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createEditHandler(VirtualFile[] selectedFiles, boolean isReservedEdit) {
-    EditOperation operation = new EditOperation(isReservedEdit);
+    final EditOperation operation = new EditOperation(isReservedEdit);
     operation.addFiles(selectedFiles);
     return new CommandCvsHandler(CvsBundle.message("action.name.edit"), operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
   }
 
   public static CvsHandler createUneditHandler(VirtualFile[] selectedFiles, boolean makeNewFilesReadOnly) {
-    UneditOperation operation = new UneditOperation(makeNewFilesReadOnly);
+    final UneditOperation operation = new UneditOperation(makeNewFilesReadOnly);
     operation.addFiles(selectedFiles);
     return new CommandCvsHandler(CvsBundle.message("operation.name.unedit"), operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
   }
@@ -304,7 +304,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     if (entry == null) {
       return null;
     }
-    String result = entry.getRevision();
+    final String result = entry.getRevision();
     if (result == null) return null;
     if (StringUtil.startsWithChar(result, '-')) return result.substring(1);
     return result;
@@ -347,7 +347,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     onOperationFinished(executor);
 
     while (!myPostActivities.isEmpty()) {
-      CvsOperation cvsOperation = myPostActivities.get(0);
+      final CvsOperation cvsOperation = myPostActivities.get(0);
       if (! runOperation(executionEnvironment, runInReadAction, cvsOperation)) return;
       myPostActivities.remove(cvsOperation);
     }
@@ -405,23 +405,23 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createGetFileFromRepositoryHandler(CvsLightweightFile[] cvsLightweightFiles, boolean makeNewFilesReadOnly) {
-    CompositeOperation compositeOperaton = new CompositeOperation();
+    final CompositeOperation compositeOperaton = new CompositeOperation();
     final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
     for (CvsLightweightFile cvsLightweightFile : cvsLightweightFiles) {
-      File root = cvsLightweightFile.getRoot();
+      final File root = cvsLightweightFile.getRoot();
       File workingDirectory = root;
       if (workingDirectory == null) continue;
       if (cvsLightweightFile.getLocalFile().getParentFile().equals(workingDirectory)) {
         workingDirectory = workingDirectory.getParentFile();
       }
-      String alternativeCheckoutPath = getAlternativeCheckoutPath(cvsLightweightFile, workingDirectory);
-      CheckoutProjectOperation checkoutFileOperation = new CheckoutProjectOperation(new String[]{cvsLightweightFile.getModuleName()},
-                                                                                    entriesManager.getCvsConnectionSettingsFor(root),
-                                                                                    makeNewFilesReadOnly,
-                                                                                    workingDirectory,
-                                                                                    alternativeCheckoutPath,
-                                                                                    true,
-                                                                                    null);
+      final String alternativeCheckoutPath = getAlternativeCheckoutPath(cvsLightweightFile, workingDirectory);
+      final CheckoutProjectOperation checkoutFileOperation = new CheckoutProjectOperation(new String[]{cvsLightweightFile.getModuleName()},
+                                                                                          entriesManager.getCvsConnectionSettingsFor(root),
+                                                                                          makeNewFilesReadOnly,
+                                                                                          workingDirectory,
+                                                                                          alternativeCheckoutPath,
+                                                                                          true,
+                                                                                          null);
       compositeOperaton.addOperation(checkoutFileOperation);
     }
 
@@ -430,7 +430,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   private static String getAlternativeCheckoutPath(CvsLightweightFile cvsLightweightFile, File workingDirectory) {
-    File parent = cvsLightweightFile.getLocalFile().getParentFile();
+    final File parent = cvsLightweightFile.getLocalFile().getParentFile();
     return parent.getAbsolutePath().substring(workingDirectory.getAbsolutePath().length());
   }
 }
