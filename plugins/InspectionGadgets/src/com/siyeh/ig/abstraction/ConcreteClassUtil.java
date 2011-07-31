@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,11 @@ import org.jetbrains.annotations.Nullable;
 
 class ConcreteClassUtil {
 
-    private ConcreteClassUtil() {
-        super();
-    }
+    private ConcreteClassUtil() {}
 
     public static boolean typeIsConcreteClass(
-            @Nullable PsiTypeElement typeElement) {
+            @Nullable PsiTypeElement typeElement,
+            boolean ignoreCastToAbstractClass) {
         if (typeElement == null) {
             return false;
         }
@@ -39,11 +38,15 @@ class ConcreteClassUtil {
         if (aClass == null) {
             return false;
         }
+        if (ignoreCastToAbstractClass &&
+                aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            return false;
+        }
         if (aClass.isInterface() || aClass.isEnum()||
                 aClass.isAnnotationType()) {
             return false;
         }
-        if(aClass instanceof PsiTypeParameter) {
+        if (aClass instanceof PsiTypeParameter) {
             return false;
         }
         return !LibraryUtil.classIsInLibrary(aClass);

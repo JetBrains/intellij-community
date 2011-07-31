@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.changes;
+package git4idea.status;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -24,18 +25,22 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitFormatException;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <p>
@@ -51,22 +56,28 @@ import java.util.HashSet;
  */
 class GitNewChangesCollector extends GitChangesCollector {
 
-  private Collection<Change> myChanges = new HashSet<Change>();
-  private Collection<VirtualFile> myUnversionedFiles = new HashSet<VirtualFile>();
+  private static final Logger LOG = Logger.getInstance(GitNewChangesCollector.class);
+  private final GitRepository myRepository;
+  private final Collection<Change> myChanges = new HashSet<Change>();
+  private Set<VirtualFile> myUnversionedFiles;
 
   /**
    * Collects the changes from git command line and returns the instance of GitNewChangesCollector from which these changes can be retrieved.
    * This may be lengthy.
    */
   @NotNull
-  static GitNewChangesCollector collect(final Project project, ChangeListManager changeListManager, VcsDirtyScope dirtyScope, final VirtualFile vcsRoot) throws VcsException {
+  static GitNewChangesCollector collect(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull VcsDirtyScope dirtyScope, @NotNull  VirtualFile vcsRoot) throws VcsException {
     return new GitNewChangesCollector(project, changeListManager, dirtyScope, vcsRoot);
   }
 
   @Override
   @NotNull
   Collection<VirtualFile> getUnversionedFiles() {
-    return myUnversionedFiles;
+    if (myRepository != null) {
+      return myRepository.getUntrackedFilesHolder().getUntrackedFiles();
+    } else { // GitRepository was not initialized at the time of creation of the GitNewChangesCollector => we've already collected unversioned files by hands.
+      return myUnversionedFiles;
+    }
   }
 
   @NotNull
@@ -75,17 +86,19 @@ class GitNewChangesCollector extends GitChangesCollector {
     return myChanges;
   }
 
-  private GitNewChangesCollector(Project project, ChangeListManager changeListManager, VcsDirtyScope dirtyScope, VirtualFile vcsRoot)
+  private GitNewChangesCollector(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot)
     throws VcsException
   {
     super(project, changeListManager, dirtyScope, vcsRoot);
+    myRepository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(vcsRoot);
+
     Collection<FilePath> dirtyPaths = dirtyPaths(true);
     if (dirtyPaths.isEmpty()) {
       return;
     }
 
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.STATUS);
-    final String[] params = {"--porcelain", "-z", "--untracked-files=all"};   // get all untracked files as a list without collapsing them into dirs.
+    final String[] params = {"--porcelain", "-z", "--untracked-files=no"};   // untracked files are stored separately
     handler.addParameters(params);
     handler.setNoSSH(true);
     handler.setSilent(true);
@@ -103,6 +116,11 @@ class GitNewChangesCollector extends GitChangesCollector {
     }
     String output = handler.run();
     parseOutput(output, handler);
+
+    // if GitRepository was not initialized at the time of creation of the GitNewChangesCollector => collecting unversioned files by hands.
+    if (myRepository == null) {
+      myUnversionedFiles = GitUntrackedFilesHolder.retrieveUntrackedFiles(myProject, myVcsRoot, null);
+    }
   }
 
   /**
@@ -110,16 +128,8 @@ class GitNewChangesCollector extends GitChangesCollector {
    * See <a href=http://www.kernel.org/pub/software/scm/git/docs/git-status.html#_output">Git man</a> for details.
    */
   // handler is here for debugging purposes in the case of parse error
-  private void parseOutput(String output, GitHandler handler) throws VcsException {
-    GitRevisionNumber head = null;
-    try {
-      head = GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD"); // TODO substitute with a call to GitRepository#getCurrentRevision()
-    }
-    catch (VcsException e) {
-      if (!GitChangeUtils.isHeadMissing(e)) { // fresh repository
-        throw e;
-      }
-    }
+  private void parseOutput(@NotNull String output, @NotNull GitHandler handler) throws VcsException {
+    VcsRevisionNumber head = getHead();
 
     final String[] split = output.split("\u0000");
 
@@ -212,7 +222,7 @@ class GitNewChangesCollector extends GitChangesCollector {
           break;
 
         case '?':
-          reportUnversioned(filepath);
+          throwGFE("Unexpected unversioned file flag.", handler, output, line, xStatus, yStatus);
           break;
 
         case '!':
@@ -225,6 +235,39 @@ class GitNewChangesCollector extends GitChangesCollector {
     }
   }
 
+  @NotNull
+  private VcsRevisionNumber getHead() throws VcsException {
+    VcsRevisionNumber nativeHead = getHeadFromGit();
+
+    if (myRepository != null) {
+      final String rev = myRepository.getCurrentRevision();
+      final VcsRevisionNumber cachedHead = rev != null ? new GitRevisionNumber(rev) : VcsRevisionNumber.NULL;
+
+      if (!cachedHead.equals(nativeHead)) {
+        LOG.error(String.format("GitRepository#getCurrentRevision() returned incorrect value. \nActual: %s\nReturned: %s",
+                                nativeHead, cachedHead));
+      }
+    } else {
+      // this may happen on the project startup, when GitChangeProvider may be queried before GitRepository has been initialized.
+      LOG.info("GitRepository is null for root " + myVcsRoot);
+    }
+    return nativeHead;
+  }
+
+  @NotNull
+  private VcsRevisionNumber getHeadFromGit() throws VcsException {
+    VcsRevisionNumber nativeHead = VcsRevisionNumber.NULL;
+    try {
+      nativeHead = GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD"); // TODO substitute with a call to GitRepository#getCurrentRevision()
+    }
+    catch (VcsException e) {
+      if (!GitChangeUtils.isHeadMissing(e)) { // fresh repository
+        throw e;
+      }
+    }
+    return nativeHead;
+  }
+
   private static void throwYStatus(String output, GitHandler handler, String line, char xStatus, char yStatus) {
     throwGFE("Unexpected symbol as yStatus.", handler, output, line, xStatus, yStatus);
   }
@@ -235,14 +278,7 @@ class GitNewChangesCollector extends GitChangesCollector {
                                                message, xStatus, yStatus, line.replace('\u0000', '!'), handler, output));
   }
 
-  private void reportUnversioned(String filepath) throws VcsException {
-    VirtualFile file = myVcsRoot.findFileByRelativePath(filepath);
-    if (GitUtil.gitRootOrNull(file) == myVcsRoot) { // false if we've entered the sub-repository
-      myUnversionedFiles.add(file);
-    }
-  }
-
-  private void reportModified(String filepath, GitRevisionNumber head) throws VcsException {
+  private void reportModified(String filepath, VcsRevisionNumber head) throws VcsException {
     ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, false, true, false);
     ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false, false);
     reportChange(FileStatus.MODIFIED, before, after);
@@ -254,19 +290,19 @@ class GitNewChangesCollector extends GitChangesCollector {
     reportChange(FileStatus.ADDED, before, after);
   }
 
-  private void reportDeleted(String filepath, GitRevisionNumber head) throws VcsException {
+  private void reportDeleted(String filepath, VcsRevisionNumber head) throws VcsException {
     ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, true, true, false);
     ContentRevision after = null;
     reportChange(FileStatus.DELETED, before, after);
   }
 
-  private void reportRename(GitRevisionNumber head, String filepath, String oldFilename) throws VcsException {
+  private void reportRename(VcsRevisionNumber head, String filepath, String oldFilename) throws VcsException {
     ContentRevision before = GitContentRevision.createRevision(myVcsRoot, oldFilename, head, myProject, true, true, false);
     ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false, false);
     reportChange(FileStatus.MODIFIED, before, after);
   }
 
-  private void reportConflict(GitRevisionNumber head, String filepath) throws VcsException {
+  private void reportConflict(VcsRevisionNumber head, String filepath) throws VcsException {
     ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, false, true, false);
     ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false, false);
     reportChange(FileStatus.MERGED_WITH_CONFLICTS, before, after);

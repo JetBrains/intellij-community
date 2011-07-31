@@ -92,8 +92,8 @@
         serviceInterface="git4idea.checkin.GitCheckinEnvironment"
         serviceImplementation="git4idea.checkin.GitCheckinEnvironment"/>
     <projectService
-        serviceInterface="git4idea.changes.GitChangeProvider"
-        serviceImplementation="git4idea.changes.GitChangeProvider"/>
+        serviceInterface="git4idea.status.GitChangeProvider"
+        serviceImplementation="git4idea.status.GitChangeProvider"/>
     <projectService
         serviceInterface="git4idea.history.GitHistoryProvider"
         serviceImplementation="git4idea.history.GitHistoryProvider"/>

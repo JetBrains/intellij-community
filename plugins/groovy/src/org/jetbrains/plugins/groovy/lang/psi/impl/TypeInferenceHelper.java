@@ -23,6 +23,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.*;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -52,7 +53,7 @@ import java.util.List;
 public class TypeInferenceHelper {
 
   @Nullable
-  public static PsiType getInferredType(final GrReferenceExpression refExpr) {
+  public static PsiType getInferredType(@NotNull final GrReferenceExpression refExpr) {
     return RecursionManager.createGuard("refType").doPreventingRecursion(refExpr, true, new Computable<PsiType>() {
       @Override
       public PsiType compute() {

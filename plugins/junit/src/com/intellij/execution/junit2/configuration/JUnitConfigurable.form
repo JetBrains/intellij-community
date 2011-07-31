@@ -3,7 +3,7 @@
   <grid id="ece1c" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="5">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="28" y="28" width="660" height="531"/>
+      <xy x="28" y="28" width="722" height="746"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -90,6 +90,9 @@
               </grid>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
+            </clientProperties>
             <border type="etched" title-resource-bundle="messages/ExecutionBundle" title-key="junit.configuration.test.border"/>
             <children>
               <component id="b109" class="com.intellij.openapi.ui.LabeledComponent" binding="myMethod" custom-create="true">

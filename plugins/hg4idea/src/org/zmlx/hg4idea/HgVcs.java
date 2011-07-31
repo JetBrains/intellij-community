@@ -103,7 +103,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final ProjectLevelVcsManager myVcsManager;
 
   private HgVFSListener myVFSListener;
-  private RepositoryChangeListener myDirStateChangeListener;
   private final HgMergeProvider myMergeProvider;
   private HgExecutableValidator myExecutableValidator;
   private final Object myExecutableValidatorLock = new Object();
@@ -126,7 +125,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     updateEnvironment = new HgUpdateEnvironment(project);
     integrateEnvironment = new HgIntegrateEnvironment(project);
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project);
-    myDirStateChangeListener = new RepositoryChangeListener(myProject, ".hg/dirstate");
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
   }
@@ -299,7 +297,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     );
 
     myVFSListener = new HgVFSListener(myProject, this);
-    myDirStateChangeListener.activate();
 
     // ignore temporary files
     final String ignoredPattern = FileTypeManager.getInstance().getIgnoredFilesList();
@@ -332,8 +329,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
-
-    myDirStateChangeListener.dispose();
   }
 
   @Nullable

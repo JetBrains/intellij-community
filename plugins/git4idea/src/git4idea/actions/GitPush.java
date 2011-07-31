@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.checkin.GitPushDialog;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,6 +56,6 @@ public class GitPush extends GitRepositoryAction {
       return;
     }
     GitHandlerUtil.doSynchronously(d.handler(), GitBundle.getString("pushing.all.changes"), "git push");
-    GitRepositoryManager.getInstance(project).refreshRepository(d.getGitRoot());
+    GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot(), GitRepository.TrackedTopic.ALL);
   }
 }

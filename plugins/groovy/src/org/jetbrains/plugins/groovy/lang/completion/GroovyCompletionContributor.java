@@ -295,9 +295,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
           if (reference.getQualifier() == null) {
             GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
 
-            if (JavaCompletionContributor.mayShowAllClasses(parameters) && !PsiJavaPatterns.psiElement().inside(GrImportStatement.class).accepts(position)) {
-              if (JavaCompletionContributor.mayStartClassName(result, parameters.isRelaxedMatching())) {
+            if (!PsiJavaPatterns.psiElement().inside(GrImportStatement.class).accepts(position) &&
+                JavaCompletionContributor.mayStartClassName(result, parameters.isRelaxedMatching())) {
+              if (JavaCompletionContributor.mayShowAllClasses(parameters)) {
                 addAllClasses(parameters, result, inheritors);
+              } else {
+                JavaCompletionContributor.advertiseSecondCompletion(position.getProject());
               }
             }
           }

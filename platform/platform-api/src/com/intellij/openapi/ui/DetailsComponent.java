@@ -169,7 +169,7 @@ public class DetailsComponent {
 
   private void invalidateContentBorder() {
     if (myDetailsEnabled) {
-      myContent.setBorder(new EmptyBorder(5, 5, 5, 5));
+      myContent.setBorder(new EmptyBorder(8, 10, 8, 8));
     }
     else {
       myContent.setBorder(null);

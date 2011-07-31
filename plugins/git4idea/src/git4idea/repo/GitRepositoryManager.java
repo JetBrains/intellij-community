@@ -29,17 +29,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * GitRepositoryManager initializes and stores {@link GitRepository GitRepositories} for Git roots defined in the project.
  * @author Kirill Likhodedov
  */
-public class GitRepositoryManager extends AbstractProjectComponent implements Disposable, GitRootsListener {
+public final class GitRepositoryManager extends AbstractProjectComponent implements Disposable, GitRootsListener {
 
-  private GitVcs myVcs;
-  private ProjectLevelVcsManager myVcsManager;
+  private final GitVcs myVcs;
+  private final ProjectLevelVcsManager myVcsManager;
+
   private final Map<VirtualFile, GitRepository> myRepositories = new HashMap<VirtualFile, GitRepository>();
   private final Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
+
+  private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
 
   public static GitRepositoryManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GitRepositoryManager.class);
@@ -60,8 +64,14 @@ public class GitRepositoryManager extends AbstractProjectComponent implements Di
 
   @Override
   public void dispose() {
-    myRepositories.clear();
-    myListeners.clear();
+    try {
+      REPO_LOCK.writeLock().lock();
+      myRepositories.clear();
+      myListeners.clear();
+    }
+    finally {
+      REPO_LOCK.writeLock().unlock();
+    }
   }
 
   /**
@@ -70,7 +80,13 @@ public class GitRepositoryManager extends AbstractProjectComponent implements Di
    */
   @Nullable
   public GitRepository getRepositoryForRoot(@NotNull VirtualFile root) {
-    return myRepositories.get(root);
+    try {
+      REPO_LOCK.readLock().lock();
+      return myRepositories.get(root);
+    }
+    finally {
+      REPO_LOCK.readLock().unlock();
+    }
   }
 
   /**
@@ -84,24 +100,27 @@ public class GitRepositoryManager extends AbstractProjectComponent implements Di
   }
 
   /**
+   * @return all repositories tracked by the manager.
+   */
+  @NotNull
+  public Collection<GitRepository> getRepositories() {
+    try {
+      REPO_LOCK.readLock().lock();
+      return myRepositories.values();
+    }
+    finally {
+      REPO_LOCK.readLock().unlock();
+    }
+  }
+
+  /**
    * Adds the listener to all existing repositories AND all future repositories.
    * I.e. if a new GitRepository is be created via this GitRepositoryManager, the listener will be added to the repository.
    */
   public void addListenerToAllRepositories(@NotNull GitRepositoryChangeListener listener) {
     myListeners.add(listener);
-    for (GitRepository repo : myRepositories.values()) {
+    for (GitRepository repo : getRepositories()) {
       repo.addListener(listener);
-    }
-  }
-
-  /**
-   * Asynchronously refreshes the {@link GitRepository} related for the given root.
-   * @param root Git repository root directory.
-   */
-  public void refreshRepository(@NotNull VirtualFile root) {
-    GitRepository repo = getRepositoryForRoot(root);
-    if (repo != null) {
-      repo.refresh();
     }
   }
 
@@ -109,48 +128,45 @@ public class GitRepositoryManager extends AbstractProjectComponent implements Di
    * Asynchronously refreshes all {@link GitRepository GitRepositories}.
    */
   public void refreshAllRepositories() {
-    refreshRepositories(myRepositories.values());
-  }
-
-  /**
-   * Asynchronously refreshes the given {@link GitRepository GitRepositories}.
-   */
-  public static void refreshRepositories(Collection<GitRepository> repositories) {
-    for (GitRepository repository : repositories) {
+    for (GitRepository repository : getRepositories()) {
       repository.refresh();
     }
   }
 
   /**
-   * Finds all {@link GitRepository GitRepositories} for the given files, and refreshes them.
+   * Synchronously updates the specified information about Git repository under the given root.
+   * @param root   root directory of the Git repository.
+   * @param topics TrackedTopics that are to be updated.
    */
-  public void refreshRepositoriesForFiles(@NotNull VirtualFile... files) {
-    Set<GitRepository> repositories = new HashSet<GitRepository>();
-    for (VirtualFile file : files) {
-      final GitRepository repo = getRepositoryForFile(file);
-      if (repo != null) {
-        repositories.add(repo);
-      }
+  public void updateRepository(VirtualFile root, GitRepository.TrackedTopic... topics) {
+    GitRepository repo = getRepositoryForRoot(root);
+    if (repo != null) {
+      repo.update(topics);
     }
-    refreshRepositories(repositories);
   }
 
   // note: we are not calling this method during the project startup - it is called anyway by the GitRootTracker
   @Override
   public void gitRootsChanged() {
-    final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(myVcs);
-    // remove repositories that are not in the roots anymore
-    for (Iterator<Map.Entry<VirtualFile, GitRepository>> iterator = myRepositories.entrySet().iterator(); iterator.hasNext(); ) {
-      if (!ArrayUtil.contains(iterator.next().getValue().getRoot(), roots)) {
-        iterator.remove();
+    try {
+      REPO_LOCK.writeLock().lock();
+      final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(myVcs);
+      // remove repositories that are not in the roots anymore
+      for (Iterator<Map.Entry<VirtualFile, GitRepository>> iterator = myRepositories.entrySet().iterator(); iterator.hasNext(); ) {
+        if (!ArrayUtil.contains(iterator.next().getValue().getRoot(), roots)) {
+          iterator.remove();
+        }
+      }
+      // add GitRepositories for all roots that don't have correspondent GitRepositories yet.
+      for (VirtualFile root : roots) {
+        if (!myRepositories.containsKey(root)) {
+          GitRepository repository = createGitRepository(root);
+          myRepositories.put(root, repository);
+        }
       }
     }
-    // add GitRepositories for all roots that don't have correspondent GitRepositories yet.
-    for (VirtualFile root : roots) {
-      if (!myRepositories.containsKey(root)) {
-        GitRepository repository = createGitRepository(root);
-        myRepositories.put(root, repository);
-      }
+    finally {
+      REPO_LOCK.writeLock().unlock();
     }
   }
 

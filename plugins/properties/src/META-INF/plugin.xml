@@ -56,6 +56,7 @@
     <spellchecker.support implementation="com.intellij.lang.properties.spellchecker.PropertiesSpellcheckingStrategy"/>
 
     <fileBasedIndex implementation="com.intellij.lang.properties.xml.XmlPropertiesIndex"/>
+    <standardResource url="http://java.sun.com/dtd/properties.dtd" path="schemas/properties.dtd"/>
   </extensions>
 
   <project-components>

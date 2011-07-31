@@ -183,7 +183,7 @@ public class GroovyPsiManager {
   }
 
   @Nullable
-  public static PsiType inferType(PsiElement element, Computable<PsiType> computable) {
+  public static PsiType inferType(@NotNull PsiElement element, Computable<PsiType> computable) {
     List<Object> stack = ourGuard.currentStack();
     if (stack.size() > 7) { //don't end up walking the whole project PSI
       ourGuard.prohibitResultCaching(stack.get(0));

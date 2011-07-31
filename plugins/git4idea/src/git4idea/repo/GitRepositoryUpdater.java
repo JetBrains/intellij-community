@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.messages.MessageBusConnection;
+import git4idea.commands.GitFileUtils;
 
 import java.util.List;
 
@@ -29,48 +30,17 @@ import java.util.List;
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
  * @author Kirill Likhodedov
  */
-public class GitRepositoryUpdater implements Disposable, BulkFileListener {
+final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
   private final GitRepository myRepository;
-  private MessageBusConnection myMessageBusConnection;
+  private final GitRepositoryFiles myRepositoryFiles;
+  private final MessageBusConnection myMessageBusConnection;
 
-  private final String myHeadFilePath;
-  private final String myMergeHeadPath;
-  private final String myRebaseApplyPath;
-  private final String myRebaseMergePath;
-  private final String myPackedRefsPath;
-  private final String myRefsHeadsDirPath;
-
-  public GitRepositoryUpdater(GitRepository repository) {
+  GitRepositoryUpdater(GitRepository repository) {
     myRepository = repository;
-
-    // add .git/ and .git/refs/heads to the VFS
-    VirtualFile gitDir = repository.getRoot().findChild(".git");
-    assert gitDir != null;
-    gitDir.getChildren();
-    final VirtualFile refsHeadsDir = gitDir.findFileByRelativePath("refs/heads");
-    assert refsHeadsDir != null;
-    refsHeadsDir.getChildren();
-
-    // save paths of the files, that we will watch
-    String gitDirPath = stripFileProtocolPrefix(gitDir.getPath());
-    myHeadFilePath = gitDirPath + "/HEAD";
-    myMergeHeadPath = gitDirPath + "/MERGE_HEAD";
-    myRebaseApplyPath = gitDirPath + "/rebase-apply";
-    myRebaseMergePath = gitDirPath + "/rebase-merge";
-    myPackedRefsPath = gitDirPath + "/packed-refs";
-    myRefsHeadsDirPath = gitDirPath + "/refs/heads";
-
-    myMessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    myRepositoryFiles = GitRepositoryFiles.getInstance(repository.getRoot());
+    myMessageBusConnection = repository.getProject().getMessageBus().connect();
     myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
-  }
-
-  private static String stripFileProtocolPrefix(String path) {
-    final String FILE_PROTOCOL = "file://";
-    if (path.startsWith(FILE_PROTOCOL)) {
-      return path.substring(FILE_PROTOCOL.length());
-    }
-    return path;
   }
 
   @Override
@@ -96,16 +66,16 @@ public class GitRepositoryUpdater implements Disposable, BulkFileListener {
       if (file == null) {
         continue;
       }
-      String filePath = stripFileProtocolPrefix(file.getPath());
-      if (isHeadFile(filePath)) {
+      String filePath = GitFileUtils.stripFileProtocolPrefix(file.getPath());
+      if (myRepositoryFiles.isHeadFile(filePath)) {
         headChanged = true;
-      } else if (isBranchFile(filePath)) {
+      } else if (myRepositoryFiles.isBranchFile(filePath)) {
         branchFileChanged = true;
-      } else if (isPackedRefs(filePath)) {
+      } else if (myRepositoryFiles.isPackedRefs(filePath)) {
         packedRefsChanged = true;
-      } else if (isRebaseFile(filePath)) {
+      } else if (myRepositoryFiles.isRebaseFile(filePath)) {
         rebaseFileChanged = true;
-      } else if (isMergeFile(filePath)) {
+      } else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
       }
     }
@@ -130,44 +100,24 @@ public class GitRepositoryUpdater implements Disposable, BulkFileListener {
     if (updateCurrentBranch) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          myRepository.updateCurrentBranch();
+          myRepository.update(GitRepository.TrackedTopic.CURRENT_BRANCH);
         }
       });
     }
     if (updateCurrentRevision) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          myRepository.updateCurrentRevision();
+          myRepository.update(GitRepository.TrackedTopic.CURRENT_REVISION);
         }
       });
     }
     if (updateState) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          myRepository.updateState();
+          myRepository.update(GitRepository.TrackedTopic.STATE);
         }
       });
     }
-  }
-
-  private boolean isHeadFile(String file) {
-    return file.equals(myHeadFilePath);
-  }
-
-  private boolean isBranchFile(String filePath) {
-    return filePath.startsWith(myRefsHeadsDirPath);
-  }
-
-  private boolean isRebaseFile(String path) {
-    return path.equals(myRebaseApplyPath) || path.equals(myRebaseMergePath);
-  }
-
-  private boolean isMergeFile(String file) {
-    return file.equals(myMergeHeadPath);
-  }
-
-  private boolean isPackedRefs(String file) {
-    return file.equals(myPackedRefsPath);
   }
 
 }

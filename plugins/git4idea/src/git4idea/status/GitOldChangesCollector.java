@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.changes;
+package git4idea.status;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
@@ -103,7 +104,10 @@ class GitOldChangesCollector extends GitChangesCollector {
    * This may be lengthy.
    */
   @NotNull
-  static GitOldChangesCollector collect(final Project project, ChangeListManager changeListManager, VcsDirtyScope dirtyScope, final VirtualFile vcsRoot) throws VcsException {
+  static GitOldChangesCollector collect(@NotNull Project project,
+                                        @NotNull ChangeListManager changeListManager,
+                                        @NotNull VcsDirtyScope dirtyScope,
+                                        @NotNull VirtualFile vcsRoot) throws VcsException {
     return new GitOldChangesCollector(project, changeListManager, dirtyScope, vcsRoot);
   }
 
@@ -119,10 +123,10 @@ class GitOldChangesCollector extends GitChangesCollector {
     return myChanges;
   }
 
-  private GitOldChangesCollector(final Project project,
-                                ChangeListManager changeListManager,
-                                VcsDirtyScope dirtyScope,
-                                final VirtualFile vcsRoot) throws VcsException {
+  private GitOldChangesCollector(@NotNull Project project,
+                                 @NotNull ChangeListManager changeListManager,
+                                 @NotNull VcsDirtyScope dirtyScope,
+                                 @NotNull VirtualFile vcsRoot) throws VcsException {
     super(project, changeListManager, dirtyScope, vcsRoot);
     updateIndex();
     collectUnmergedAndUnversioned();

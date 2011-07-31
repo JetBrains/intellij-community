@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +49,12 @@ public class GitRevert extends BasicAction {
       }
     }
     RollbackChangesDialog.rollbackChanges(project, changes);
-    GitRepositoryManager.getInstance(project).refreshRepositoriesForFiles(affectedFiles);
+    for (VirtualFile conflictedFile : affectedFiles) {
+      final GitRepository repo = GitRepositoryManager.getInstance(project).getRepositoryForFile(conflictedFile);
+      if (repo != null) {
+        repo.update(GitRepository.TrackedTopic.ALL_CURRENT);
+      }
+    }
     return false;
   }
 

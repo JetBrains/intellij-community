@@ -33,8 +33,11 @@ public class StandardResourceEP extends AbstractExtensionPointBean {
   public String url;
 
   /**
-   * Path to resource, e.g. /foo/bar.xsd
+   * Path to resource, e.g. foo/bar.xsd (without leading slash)
    */
   @Attribute("path")
   public String resourcePath;
+
+  @Attribute("version")
+  public String version;
 }

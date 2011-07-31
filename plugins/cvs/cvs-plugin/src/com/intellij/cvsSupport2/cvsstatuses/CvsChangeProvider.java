@@ -31,6 +31,7 @@ import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -442,8 +443,8 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private CvsUpToDateRevision createCvsRevision(FilePath path, VcsRevisionNumber revisionNumber) {
-    final VirtualFile vFile = path.getVirtualFile();
-    if (vFile.getFileType().isBinary()) {
+    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path.getName());
+    if (fileType.isBinary()) {
       return new CvsUpToDateBinaryRevision(path, revisionNumber);
     }
     return new CvsUpToDateRevision(path, revisionNumber);

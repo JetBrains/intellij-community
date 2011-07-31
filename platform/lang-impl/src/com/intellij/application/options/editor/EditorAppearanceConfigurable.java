@@ -181,7 +181,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   public JComponent createComponent() {
     for (UnnamedConfigurable provider : getConfigurables()) {
       myAddonPanel.add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                                            GridBagConstraints.NONE, new Insets(5,0,7,0), 0,0));
+                                                                            GridBagConstraints.NONE, new Insets(0,0,15,0), 0,0));
     }
     return myRootPanel;
   }

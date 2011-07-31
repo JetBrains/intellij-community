@@ -21,7 +21,7 @@ public class IdeaTitledBorder extends TitledBorder {
   private int TEXT_SPACING = 2;
 
   // Horizontal inset of text that is left or right justified
-  private int TEXT_INSET_H = 5;
+  private int TEXT_INSET_H = 4;
 
   private static final int SEPARATOR_RIGHT_SPACING = 5;
 
@@ -36,7 +36,7 @@ public class IdeaTitledBorder extends TitledBorder {
 
     //applying text inset
     insideInsets.left -= TEXT_INSET_H;
-    outsideInsets.left += TEXT_INSET_H;
+    //outsideInsets.left += TEXT_INSET_H;
 
     //applying indent
     TEXT_INSET_H -= indent;

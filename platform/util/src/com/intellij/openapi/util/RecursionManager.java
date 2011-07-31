@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -78,7 +79,7 @@ public class RecursionManager {
   public static RecursionGuard createGuard(@NonNls final String id) {
     return new RecursionGuard() {
       @Override
-      public <T> T doPreventingRecursion(Object key, boolean memoize, Computable<T> computation) {
+      public <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
         MyKey realKey = new MyKey(id, key);
         LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
         if (progressMap.containsKey(realKey)) {

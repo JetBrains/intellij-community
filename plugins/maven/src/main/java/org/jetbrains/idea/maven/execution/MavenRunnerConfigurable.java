@@ -104,7 +104,7 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
     c.fill = GridBagConstraints.HORIZONTAL;
 
     JPanel propertiesPanel = new JPanel(new BorderLayout());
-    propertiesPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent("Properties"));
+    propertiesPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent("Properties"));
 
     propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox("Skip tests"), BorderLayout.NORTH);
     mySkipTestsCheckBox.setMnemonic('t');

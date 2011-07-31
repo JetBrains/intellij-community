@@ -26,13 +26,16 @@ import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.status.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -42,56 +45,33 @@ import java.util.*;
  * Git rollback/revert environment
  */
 public class GitRollbackEnvironment implements RollbackEnvironment {
-  /**
-   * The project
-   */
   private final Project myProject;
 
-  /**
-   * A constructor
-   *
-   * @param project the context project
-   */
   public GitRollbackEnvironment(@NotNull Project project) {
     myProject = project;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @NotNull
   public String getRollbackOperationName() {
     return GitBundle.getString("revert.action.name");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void rollbackModifiedWithoutCheckout(@NotNull List<VirtualFile> files,
                                               final List<VcsException> exceptions,
                                               final RollbackProgressListener listener) {
     throw new UnsupportedOperationException("Explicit file checkout is not supported by GIT.");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void rollbackMissingFileDeletion(@NotNull List<FilePath> files,
                                           final List<VcsException> exceptions,
                                           final RollbackProgressListener listener) {
     throw new UnsupportedOperationException("Missing file delete is not reported by GIT.");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void rollbackIfUnchanged(@NotNull VirtualFile file) {
     // do nothing
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void rollbackChanges(@NotNull List<Change> changes,
                               final List<VcsException> exceptions,
                               @NotNull final RollbackProgressListener listener) {
@@ -173,7 +153,10 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     lfs.refreshIoFiles(filesToRefresh);
-    GitRepositoryManager.getInstance(myProject).refreshAllRepositories();
+
+    for (GitRepository repo : GitRepositoryManager.getInstance(myProject).getRepositories()) {
+      repo.update(GitRepository.TrackedTopic.ALL_CURRENT);
+    }
   }
 
   /**
@@ -203,6 +186,16 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    */
   private void unindex(final VirtualFile root, final List<FilePath> files) throws VcsException {
     GitFileUtils.delete(myProject, root, files, "--cached", "-f");
+
+    final GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
+    final GitUntrackedFilesHolder untrackedFilesHolder = (repo == null ? null : repo.getUntrackedFilesHolder());
+    
+    for (FilePath path : files) {
+      final VirtualFile vf = VcsUtil.getVirtualFile(path.getIOFile());
+      if (untrackedFilesHolder != null && vf != null) {
+        untrackedFilesHolder.add(vf);
+      }
+    }
   }
 
 

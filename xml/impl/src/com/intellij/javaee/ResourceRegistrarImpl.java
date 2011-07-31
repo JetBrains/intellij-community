@@ -18,6 +18,7 @@ package com.intellij.javaee;
 
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,13 +40,18 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
     addStdResource(resource, null, fileName, klass);
   }
 
-  public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class klass) {
+  public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class klass, @Nullable ClassLoader classLoader) {
     final Map<String, ExternalResourceManagerImpl.Resource> map = ExternalResourceManagerImpl.getMap(myResources, version, true);
     assert map != null;
     ExternalResourceManagerImpl.Resource res = new ExternalResourceManagerImpl.Resource();
     res.file = fileName;
-    res.clazz = klass == null ? ExternalResourceManagerImpl.class : klass;
+    res.classLoader = classLoader;
+    res.clazz = klass;
     map.put(resource, res);
+  }
+
+  public void addStdResource(@NonNls String resource, @Nullable @NonNls String version, @NonNls String fileName, Class klass) {
+    addStdResource(resource, version, fileName, klass, null);
   }
 
   public void addIgnoredResource(@NonNls String url) {
@@ -64,7 +70,7 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
     addInternalResource(resource, version, fileName, getClass());
   }
 
-  public void addInternalResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class clazz) {
+  public void addInternalResource(@NonNls String resource, @Nullable @NonNls String version, @NonNls String fileName, @Nullable Class clazz) {
     addStdResource(resource, version, ExternalResourceManagerImpl.STANDARD_SCHEMAS + fileName, clazz);
   }
 

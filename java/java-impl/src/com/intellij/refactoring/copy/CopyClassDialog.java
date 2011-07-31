@@ -147,7 +147,7 @@ class CopyClassDialog extends DialogWrapper{
     gbConstraints.fill = GridBagConstraints.NONE;
     panel.add(myCbMoveToAnotherSourceFolder, gbConstraints);
 
-    panel.setPreferredSize(new Dimension(400, 120));
+    panel.setPreferredSize(new Dimension(400, 150));
 
     return panel;
   }

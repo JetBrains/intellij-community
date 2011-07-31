@@ -52,7 +52,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.branch.GitBranchWidget;
-import git4idea.changes.GitChangeProvider;
+import git4idea.status.GitChangeProvider;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
@@ -124,7 +124,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private GitReferenceTracker myReferenceTracker;
   private boolean isActivated; // If true, the vcs was activated
   private GitExecutableValidator myExecutableValidator;
-  private RepositoryChangeListener myIndexChangeListener;
   private GitBranchWidget myBranchWidget;
 
   private GitVersion myVersion; // version of Git which this plugin uses.
@@ -167,7 +166,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(gitCheckinEnvironment);
     myReferenceTracker = new GitReferenceTracker(myProject, this, myReferenceListeners.getMulticaster());
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
-    myIndexChangeListener = new RepositoryChangeListener(myProject, ".git/index");
   }
 
 
@@ -359,7 +357,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myGitIgnoreTracker == null) {
       myGitIgnoreTracker = new GitIgnoreTracker(myProject, this);
     }
-    myIndexChangeListener.activate();
     myReferenceTracker.activate();
     NewGitUsersComponent.getInstance(myProject).activate();
     GitProjectLogManager.getInstance(myProject).activate();
@@ -392,7 +389,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myConfigTracker.dispose();
       myConfigTracker = null;
     }
-    myIndexChangeListener.dispose();
     myReferenceTracker.deactivate();
     NewGitUsersComponent.getInstance(myProject).deactivate();
     GitProjectLogManager.getInstance(myProject).deactivate();
@@ -582,7 +578,4 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return myExecutableValidator;
   }
 
-  public RepositoryChangeListener getIndexChangeListener() {
-    return myIndexChangeListener;
-  }
 }

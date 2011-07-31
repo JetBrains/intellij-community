@@ -26,14 +26,14 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public abstract class ASTTransformContributors {
-  private static final ExtensionPointName<ASTTransformContributors> EP_NAME = ExtensionPointName.create("org.intellij.groovy.astTransformContributor");
+public abstract class AstTransformContributor {
+  private static final ExtensionPointName<AstTransformContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.astTransformContributor");
 
   public abstract void getMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector);
 
 
   public static Collection<PsiMethod> runContributors(@NotNull final GrTypeDefinition clazz, List<PsiMethod> collector) {
-    for (final ASTTransformContributors contributor : EP_NAME.getExtensions()) {
+    for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
       contributor.getMethods(clazz, collector);
     }
     return collector;

@@ -70,7 +70,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ASTTransformContributors;
+import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -351,7 +351,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     }
 
     List<PsiMethod> result = new ArrayList<PsiMethod>(cached);
-    ASTTransformContributors.runContributors(this, result);
+    AstTransformContributor.runContributors(this, result);
     return result.toArray(new PsiMethod[result.size()]);
   }
 

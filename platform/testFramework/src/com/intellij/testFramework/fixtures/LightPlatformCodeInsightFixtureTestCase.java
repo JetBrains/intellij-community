@@ -78,23 +78,30 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
   }
 
   /**
-   * Return absolute path to the test data. Not intended to be overrided.
+   * Return absolute path to the test data.
    *
    * @return absolute path to the test data.
    */
   @NonNls
-  protected final String getTestDataPath() {
+  protected String getTestDataPath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 
   @Override
   protected void runTest() throws Throwable {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        doRunTests();
-      }
-    }.execute();
+    if (isWriteActionRequired()) {
+      new WriteCommandAction(getProject()) {
+        @Override
+        protected void run(Result result) throws Throwable {
+          doRunTests();
+        }
+      }.execute();
+    }
+    else doRunTests();
+  }
+
+  protected boolean isWriteActionRequired() {
+    return true;
   }
 
   protected void doRunTests() throws Throwable {

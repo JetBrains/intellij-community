@@ -708,7 +708,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testReturningTypeVariable() throws Throwable { doTest(); }
   public void testReturningTypeVariable2() throws Throwable { doTest(); }
   public void testReturningTypeVariable3() throws Throwable { doTest(); }
-  public void testImportInGenericType() throws Throwable { doTest(); }
+  public void testImportInGenericType() throws Throwable {
+    configure()
+    myFixture.complete(CompletionType.BASIC, 2)
+    checkResult();
+  }
 
   public void testCaseTailType() throws Throwable { doTest(); }
 
@@ -866,7 +870,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testClassNameInIfBeforeIdentifier() throws Throwable {
-    myFixture.addClass("package foo; public class ABCDEFFFFF {}")
+    myFixture.addClass("public class ABCDEFFFFF {}")
     doTest('\n')
   }
 
@@ -929,13 +933,19 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testClassNameInsideIdentifierInIf() throws Throwable {
-    doTest '\n'
+    configure()
+    myFixture.complete(CompletionType.BASIC, 2)
+    type '\n'
+    checkResult()
   }
 
   public void testImportStringValue() throws Throwable {
     myFixture.addClass("package foo; public class StringValue {}")
     myFixture.addClass("package java.lang; class StringValue {}")
-    doTest ' '
+    configure()
+    myFixture.complete(CompletionType.BASIC, 2)
+    type ' '
+    checkResult()
   }
 
   public void testPrimitiveArrayWithRBrace() throws Throwable { doTest '[' }
@@ -978,8 +988,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testStaticInnerExtendingOuter() throws Exception { doTest() }
 
   public void testSaxParserCommonPrefix() throws Exception {
-    myFixture.addClass("package foo.bar; public class SAXParser {}")
-    myFixture.addClass("package foo.bar.goo; public class SAXParseException {}")
+    myFixture.addClass("public class SAXParser {}")
+    myFixture.addClass("public class SAXParseException {}")
     doTest()
   }
 

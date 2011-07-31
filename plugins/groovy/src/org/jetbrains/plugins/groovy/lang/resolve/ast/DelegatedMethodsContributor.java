@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.ASTTransformContributors;
+import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class DelegatedMethodsContributor extends ASTTransformContributors {
+public class DelegatedMethodsContributor extends AstTransformContributor {
 
   @Override
   public void getMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector) {

@@ -80,6 +80,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     for (StandardResourceProvider provider : Extensions.getExtensions(StandardResourceProvider.EP_NAME)) {
       provider.registerResources(registrar);
     }
+    StandardResourceEP[] extensions = Extensions.getExtensions(StandardResourceEP.EP_NAME);
+    for (StandardResourceEP extension : extensions) {
+      registrar.addStdResource(extension.url, extension.version, extension.resourcePath, null, extension.getLoaderForClass());
+    }
+
     myIgnoredResources.addAll(registrar.getIgnored());
     return registrar.getResources();
   }
@@ -425,17 +430,19 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   static class Resource {
     String file;
+    ClassLoader classLoader;
     Class clazz;
 
     @Nullable
     String getResourceUrl() {
 
-      if (clazz == null) return file;
+      if (classLoader == null && clazz == null) return file;
 
-      final URL resource = clazz.getResource(file);
+      final URL resource = clazz == null ? classLoader.getResource(file) : clazz.getResource(file);
+      classLoader = null;
       clazz = null;
       if (resource == null) {
-        String message = "Cannot find standard resource. filename:" + file + " class=" + clazz;
+        String message = "Cannot find standard resource. filename:" + file + " class=" + classLoader;
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           LOG.error(message);
         }
@@ -461,6 +468,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
       Resource resource = (Resource)o;
 
+      if (classLoader != resource.classLoader) return false;
       if (clazz != resource.clazz) return false;
       if (file != null ? !file.equals(resource.file) : resource.file != null) return false;
 
@@ -474,7 +482,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
     @Override
     public String toString() {
-      return file + " for " + clazz;
+      return file + " for " + classLoader;
     }
   }
 }

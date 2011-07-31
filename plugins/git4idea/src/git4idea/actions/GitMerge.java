@@ -27,6 +27,7 @@ import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeDialog;
 import git4idea.merge.GitMergeUtil;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,7 +71,7 @@ public class GitMerge extends GitRepositoryAction {
     }
     finally {
       exceptions.addAll(h.errors());
-      GitRepositoryManager.getInstance(project).refreshRepository(root);
+      GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL_CURRENT);
     }
     if (exceptions.size() != 0) {
       return;

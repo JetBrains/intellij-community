@@ -23,7 +23,6 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.GitTask;
 import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -51,12 +50,10 @@ public class GitGcAction extends GitRepositoryAction {
       task.executeAsync(new GitTaskResultHandlerAdapter() {
         @Override
         protected void onSuccess() {
-          GitRepositoryManager.getInstance(project).refreshRepository(root);
         }
 
         @Override
         protected void onFailure() {
-          GitRepositoryManager.getInstance(project).refreshRepository(root);
         }
       });
     }

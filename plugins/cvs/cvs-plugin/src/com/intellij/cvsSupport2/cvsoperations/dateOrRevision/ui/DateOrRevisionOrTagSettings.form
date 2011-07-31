@@ -3,13 +3,13 @@
   <grid id="1bd41" binding="myPanel" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="0">
     <margin top="5" left="0" bottom="5" right="5"/>
     <constraints>
-      <xy x="70" y="46" width="311" height="161"/>
+      <xy x="70" y="46" width="311" height="184"/>
     </constraints>
     <properties/>
+    <clientProperties>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
+    </clientProperties>
     <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.configure.branch.or.date.use.version"/>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
-</clientProperties>
     <children>
       <component id="ca0af" class="javax.swing.JRadioButton" binding="myUseBranch">
         <constraints>

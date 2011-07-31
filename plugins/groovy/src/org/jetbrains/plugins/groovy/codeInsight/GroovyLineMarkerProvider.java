@@ -217,7 +217,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   public LineMarkerInfo getLineMarkerInfo(final PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiNameIdentifierOwner) {
-      if (parent instanceof GrField) {
+      if (parent instanceof GrField && element == ((GrField)parent).getNameIdentifierGroovy()) {
         for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors((GrField)parent)) {
           MethodSignatureBackedByPsiMethod superSignature = null;
           try {

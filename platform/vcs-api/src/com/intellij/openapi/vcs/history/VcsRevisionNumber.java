@@ -17,12 +17,16 @@ package com.intellij.openapi.vcs.history;
 
 public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
   VcsRevisionNumber NULL = new VcsRevisionNumber() {
-    public String asString() {
+    @Override public String asString() {
       return "";
     }
 
-    public int compareTo(VcsRevisionNumber vcsRevisionNumber) {
+    @Override public int compareTo(VcsRevisionNumber vcsRevisionNumber) {
       return 0;
+    }
+
+    @Override public String toString() {
+      return "NULL";
     }
   };
 

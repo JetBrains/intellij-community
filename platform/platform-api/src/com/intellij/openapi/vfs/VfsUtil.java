@@ -328,7 +328,7 @@ public class VfsUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
-  public static VirtualFile findRelativeFile(@NotNull String uri, VirtualFile base) {
+  public static VirtualFile findRelativeFile(@NotNull String uri, @Nullable VirtualFile base) {
     if (base != null) {
       if (!base.isValid()){
         LOG.error("Invalid file name: " + base.getName() + ", url: " + uri);
