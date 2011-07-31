@@ -459,6 +459,10 @@ public class FileWatcher {
     return line;
   }
 
+  public boolean isWatched(VirtualFile file) {
+    return isOperational() && checkWatchable(file.getPresentableUrl()) != null;
+  }
+
   @Nullable
   private String checkWatchable(String path) {
     if (path == null) return null;

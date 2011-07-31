@@ -72,6 +72,8 @@ public class ModalityStateEx extends ModalityState {
   }
 
   public boolean dominates(@NotNull ModalityState anotherState){
+    if (anotherState == ModalityState.any()) return false;
+    
     for (WeakReference modalEntity : myModalEntities) {
       Object entity = modalEntity.get();
       if (entity == null) continue;

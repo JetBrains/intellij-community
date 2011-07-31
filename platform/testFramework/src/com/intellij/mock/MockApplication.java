@@ -299,6 +299,11 @@ public class MockApplication extends MockComponentManager implements Application
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public ModalityState getAnyModalityState() {
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   @Override
   public ModalityState getDefaultModalityState() {

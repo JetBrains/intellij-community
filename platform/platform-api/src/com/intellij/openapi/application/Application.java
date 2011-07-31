@@ -236,6 +236,12 @@ public interface Application extends ComponentManager {
   ModalityState getNoneModalityState();
 
   /**
+   * Returns modality state which is active anytime
+   * @return modality state
+   */
+  ModalityState getAnyModalityState();
+
+  /**
    * Returns the time of IDEA start, in milliseconds since midnight, January 1, 1970 UTC.
    *
    * @return the IDEA start time.

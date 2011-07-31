@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -123,11 +124,16 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   public void refresh(boolean asynchronous, @Nullable final Runnable postAction) {
+    refresh(asynchronous, postAction, ModalityState.NON_MODAL);
+  }
+
+  @Override
+  public void refresh(boolean asynchronous, @Nullable Runnable postAction, ModalityState modalityState) {
     if (!asynchronous) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
 
-    RefreshQueue.getInstance().refresh(asynchronous, true, postAction, myPersistence.getLocalRoots()); // TODO: Get an idea how to deliver chnages from local FS to jar fs before they go refresh
+    RefreshQueue.getInstance().refresh(asynchronous, true, postAction, modalityState, myPersistence.getLocalRoots()); // TODO: Get an idea how to deliver chnages from local FS to jar fs before they go refresh
 
     //final VirtualFile[] managedRoots = ManagingFS.getInstance().getRoots();
     //for (int i = 0; i < managedRoots.length; i++) {

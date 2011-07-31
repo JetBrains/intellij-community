@@ -22,6 +22,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MockVirtualFileManager extends VirtualFileManagerEx {
   public MockVirtualFileManager() {
@@ -44,6 +45,10 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
 
   @Override
   public void refresh(boolean asynchronous, Runnable postAction) {
+  }
+
+  @Override
+  public void refresh(boolean asynchronous, @Nullable Runnable postAction, ModalityState modalityState) {
   }
 
   @Override
