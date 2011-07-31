@@ -237,21 +237,17 @@ class GitNewChangesCollector extends GitChangesCollector {
 
   @NotNull
   private VcsRevisionNumber getHead() throws VcsException {
-    VcsRevisionNumber nativeHead = getHeadFromGit();
-
     if (myRepository != null) {
+      // we force update the GitRepository, because update is asynchronous, and thus the GitChangeProvider may be asked for changes
+      // before the GitRepositoryUpdater has captures the current revision change and has updated the GitRepository.
+      myRepository.update(GitRepository.TrackedTopic.CURRENT_REVISION);
       final String rev = myRepository.getCurrentRevision();
-      final VcsRevisionNumber cachedHead = rev != null ? new GitRevisionNumber(rev) : VcsRevisionNumber.NULL;
-
-      if (!cachedHead.equals(nativeHead)) {
-        LOG.error(String.format("GitRepository#getCurrentRevision() returned incorrect value. \nActual: %s\nReturned: %s",
-                                nativeHead, cachedHead));
-      }
+      return rev != null ? new GitRevisionNumber(rev) : VcsRevisionNumber.NULL;
     } else {
       // this may happen on the project startup, when GitChangeProvider may be queried before GitRepository has been initialized.
       LOG.info("GitRepository is null for root " + myVcsRoot);
+      return getHeadFromGit();
     }
-    return nativeHead;
   }
 
   @NotNull
