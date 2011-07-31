@@ -76,6 +76,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
                               final List<VcsException> exceptions,
                               @NotNull final RollbackProgressListener listener) {
     HashMap<VirtualFile, List<FilePath>> toUnindex = new HashMap<VirtualFile, List<FilePath>>();
+    HashMap<VirtualFile, List<FilePath>> toUnversion = new HashMap<VirtualFile, List<FilePath>>();
     HashMap<VirtualFile, List<FilePath>> toRevert = new HashMap<VirtualFile, List<FilePath>>();
     List<FilePath> toDelete = new ArrayList<FilePath>();
 
@@ -86,7 +87,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
         case NEW:
           // note that this the only change that could happen
           // for HEAD-less working directories.
-          registerFile(toUnindex, c.getAfterRevision().getFile(), exceptions);
+          registerFile(toUnversion, c.getAfterRevision().getFile(), exceptions);
           break;
         case MOVED:
           registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
@@ -107,7 +108,17 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
     for (Map.Entry<VirtualFile, List<FilePath>> entry : toUnindex.entrySet()) {
       listener.accept(entry.getValue());
       try {
-        unindex(entry.getKey(), entry.getValue());
+        unindex(entry.getKey(), entry.getValue(), false);
+      }
+      catch (VcsException e) {
+        exceptions.add(e);
+      }
+    }
+    // unversion files
+    for (Map.Entry<VirtualFile, List<FilePath>> entry : toUnversion.entrySet()) {
+      listener.accept(entry.getValue());
+      try {
+        unindex(entry.getKey(), entry.getValue(), true);
       }
       catch (VcsException e) {
         exceptions.add(e);
@@ -181,19 +192,21 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * Remove file paths from index (git remove --cached).
    *
    * @param root  a git root
-   * @param files files to remove from index. @throws VcsException if there is a problem with running command
+   * @param files files to remove from index.
+   * @param toUnversioned passed true if the file will be unversioned after unindexing, i.e. it was added before the revert operation.
    * @throws VcsException if there is a problem with running git
    */
-  private void unindex(final VirtualFile root, final List<FilePath> files) throws VcsException {
+  private void unindex(final VirtualFile root, final List<FilePath> files, boolean toUnversioned) throws VcsException {
     GitFileUtils.delete(myProject, root, files, "--cached", "-f");
 
-    final GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
-    final GitUntrackedFilesHolder untrackedFilesHolder = (repo == null ? null : repo.getUntrackedFilesHolder());
-    
-    for (FilePath path : files) {
-      final VirtualFile vf = VcsUtil.getVirtualFile(path.getIOFile());
-      if (untrackedFilesHolder != null && vf != null) {
-        untrackedFilesHolder.add(vf);
+    if (toUnversioned) {
+      final GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
+      final GitUntrackedFilesHolder untrackedFilesHolder = (repo == null ? null : repo.getUntrackedFilesHolder());
+      for (FilePath path : files) {
+        final VirtualFile vf = VcsUtil.getVirtualFile(path.getIOFile());
+        if (untrackedFilesHolder != null && vf != null) {
+          untrackedFilesHolder.add(vf);
+        }
       }
     }
   }

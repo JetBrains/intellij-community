@@ -34,6 +34,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.history.browser.SHAHash;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -222,8 +223,8 @@ public class GitChangeUtils {
    * @return a resolved revision
    * @throws VcsException if there is a problem with running git
    */
-  @SuppressWarnings({"SameParameterValue"})
-  public static GitRevisionNumber loadRevision(final Project project, final VirtualFile vcsRoot, @NonNls final String revisionNumber)
+  @NotNull
+  public static GitRevisionNumber loadRevision(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NonNls final String revisionNumber)
     throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, vcsRoot, GitCommand.REV_LIST);
     handler.addParameters("--timestamp", "--max-count=1", revisionNumber);
