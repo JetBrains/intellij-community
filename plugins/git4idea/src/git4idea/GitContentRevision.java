@@ -149,7 +149,7 @@ public class GitContentRevision implements ContentRevision {
                                                Project project,
                                                boolean isDeleted, final boolean canBeDeleted, boolean unescapePath) throws VcsException {
     final FilePath file = createPath(vcsRoot, path, isDeleted, canBeDeleted, unescapePath);
-    if (revisionNumber != null) {
+    if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
       return createRevisionImpl(file, (GitRevisionNumber)revisionNumber, project, null);
     }
     else {
@@ -182,7 +182,7 @@ public class GitContentRevision implements ContentRevision {
 
   public static ContentRevision createRevision(final FilePath filePath, final VcsRevisionNumber revisionNumber, final Project project,
                                                final Charset charset) {
-    if (revisionNumber != null) {
+    if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
       return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, charset);
     }
     else {
