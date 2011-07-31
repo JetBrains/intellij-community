@@ -147,6 +147,17 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private Boolean myActive;
 
   private static final ThreadLocal<Integer> ourEdtSafe = new ThreadLocal<Integer>();
+  private static final ModalityState ANY = new ModalityState() {
+    @Override
+    public boolean dominates(@NotNull ModalityState anotherState) {
+      return false;
+    }
+
+    @Override
+    public String toString() {
+      return "ANY";
+    }
+  };
 
   protected void boostrapPicoContainer() {
     super.boostrapPicoContainer();
@@ -643,6 +654,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Window window = c instanceof Window ? (Window)c : SwingUtilities.windowForComponent(c);
     if (window == null) return getNoneModalityState(); //?
     return LaterInvocator.modalityStateForWindow(window);
+  }
+
+  @Override
+  public ModalityState getAnyModalityState() {
+    return ANY;
   }
 
   @NotNull

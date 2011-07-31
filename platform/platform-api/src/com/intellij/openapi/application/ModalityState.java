@@ -51,6 +51,11 @@ public abstract class ModalityState {
   }
 
   @NotNull
+  public static ModalityState any() {
+    return ApplicationManager.getApplication().getAnyModalityState();
+  }
+  
+  @NotNull
   public static ModalityState stateForComponent(Component component){
     return ApplicationManager.getApplication().getModalityStateForComponent(component);
   }

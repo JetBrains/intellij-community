@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -327,10 +328,11 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       final VirtualFile existingFile = findFileByPathIfCached(rootPath);
       if (existingFile != null) {
         if (!isAlreadyWatched(result)) {
-          existingFile.refresh(true, toWatchRecursively);
+          final ModalityState modalityState = ModalityState.current();
+          existingFile.refresh(true, toWatchRecursively, null, modalityState);
           if (existingFile.isDirectory() && !toWatchRecursively && existingFile instanceof NewVirtualFile) {
             for (VirtualFile child : ((NewVirtualFile)existingFile).getCachedChildren()) {
-              child.refresh(true, false);
+              child.refresh(true, false, null, modalityState);
             }
           }
         }
