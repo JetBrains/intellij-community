@@ -18,6 +18,7 @@ package git4idea.repo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.Processor;
 import git4idea.GitBranch;
 import git4idea.merge.GitMergeUtil;
 import git4idea.rebase.GitRebaseUtils;
@@ -28,6 +29,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -94,10 +97,9 @@ class GitRepositoryReader {
 
     // look in /refs/heads/<branch name>
     File branchFile = null;
-    final File[] files = myRefsHeadsDir.listFiles();
-    for (File file : files) {
-      if (file.getName().equals(head.ref)) {
-        branchFile = file;
+    for (Map.Entry<String, File> entry : getLocalBranches().entrySet()) {
+      if (entry.getKey().equals(head.ref)) {
+        branchFile = entry.getValue();
       }
     }
     if (branchFile != null) {
@@ -192,6 +194,24 @@ class GitRepositoryReader {
         }
       }
     }, packedRefs);
+  }
+
+  /**
+   * @return the list of local branches in this Git repository.
+   *         key is the branch name, value is the file.
+   */
+  private Map<String, File> getLocalBranches() {
+    final Map<String, File> branches = new HashMap<String, File>();
+    FileUtil.processFilesRecursively(myRefsHeadsDir, new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        if (!file.isDirectory()) {
+          branches.put(FileUtil.getRelativePath(myRefsHeadsDir, file), file);
+        }
+        return true;
+      }
+    });
+    return branches;
   }
 
   @Nullable
