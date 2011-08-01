@@ -160,7 +160,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
       if (oldParameter != null) {
         parameterInfos[i] = new ParameterInfoImpl(oldParameter.getOldIndex(),
                                                   oldParameter.getName(),
-                                                  oldParameter.getTypeWrapper().getType(element, element.getManager()),
+                                                  oldParameter.getTypeWrapper(),
                                                   null);
         untouchedParams.put(parameterInfos[i], oldParameter.getOldIndex());
       }
@@ -180,7 +180,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
         }
         parameterInfos[i] = new ParameterInfoImpl(oldParameter != null ? oldParameter.getOldIndex() : - 1,
                                                   parameterInfo.getName(),
-                                                  parameterInfo.getTypeWrapper().getType(element, element.getManager()),
+                                                  parameterInfo.getTypeWrapper(),
                                                   null);
       }
     }
@@ -398,9 +398,11 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
 
   private static boolean isInsideMethodSignature(PsiElement element, @NotNull PsiMethod method) {
     final PsiCodeBlock body = method.getBody();
+    final TextRange textRange = element.getTextRange();
     if (body != null) {
-      return element.getTextOffset() < body.getTextOffset() && element.getTextOffset() > method.getModifierList().getTextRange().getEndOffset();
+      return textRange.getEndOffset() < body.getTextOffset() && textRange.getStartOffset() > method.getModifierList().getTextRange().getEndOffset();
     }
-    return method.hasModifierProperty(PsiModifier.ABSTRACT);
+    return textRange.getStartOffset() > method.getModifierList().getTextRange().getEndOffset() &&
+           textRange.getEndOffset() < method.getTextRange().getEndOffset();
   }
 }

@@ -59,6 +59,13 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     useAnySingleVariable = useAnyVariable;
   }
 
+  public ParameterInfoImpl(int oldParameterIndex, String name, CanonicalTypes.Type typeWrapper, String defaultValue) {
+    setName(name);
+    this.oldParameterIndex = oldParameterIndex;
+    myType = typeWrapper;
+    this.defaultValue = defaultValue;
+  }
+
   public int getOldIndex() {
     return oldParameterIndex;
   }
