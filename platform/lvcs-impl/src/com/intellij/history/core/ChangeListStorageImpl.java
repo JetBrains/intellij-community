@@ -18,6 +18,7 @@ package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -178,6 +179,18 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       }
       myStorage.setLastId(myLastId);
       myStorage.force();
+
+      LocalHistoryLog.LOG.info("Block was written: " + id);
+
+      // todo remove this check when buf is found
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        try {
+          doReadBlock(id);
+        }
+        catch (IOException e) {
+          handleError(e, "failed to check the just-written block: " + id);
+        }
+      }
     }
     catch (IOException e) {
       handleError(e, null);
