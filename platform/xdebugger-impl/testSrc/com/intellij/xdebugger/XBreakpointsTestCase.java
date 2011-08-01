@@ -19,7 +19,6 @@ import com.intellij.testFramework.TempFiles;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
@@ -55,7 +54,7 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
     final XBreakpointBase<?,?,?>[] breakpoints = myBreakpointManager.getAllBreakpoints();
     final List<XBreakpoint<?>> result = new ArrayList<XBreakpoint<?>>();
     for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
-      final XBreakpointType<? extends XBreakpoint<?>, ? extends XBreakpointProperties> type = breakpoint.getType();
+      final XBreakpointType type = breakpoint.getType();
       if (type instanceof MySimpleBreakpointType || type instanceof MyLineBreakpointType) {
         result.add(breakpoint);
       }
