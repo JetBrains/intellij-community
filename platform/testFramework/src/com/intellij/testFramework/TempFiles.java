@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class TempFiles {
   private final Collection<File> myFilesToDelete;
@@ -34,22 +33,27 @@ public class TempFiles {
     myFilesToDelete = filesToDelete;
   }
 
-  public VirtualFile createVFile(String prefix) throws IOException {
+  public VirtualFile createVFile(String prefix) {
     return getVFileByFile(createTempFile(prefix));
   }
 
-  public VirtualFile createVFile(String prefix, String postfix) throws IOException {
+  public VirtualFile createVFile(String prefix, String postfix) {
     return getVFileByFile(createTempFile(prefix, postfix));
   }
 
-  public File createTempFile(String prefix) throws IOException {
+  public File createTempFile(String prefix) {
     return createTempFile(prefix, "_Temp_File_");
   }
 
-  public File createTempFile(String prefix, String postfix) throws IOException {
-    File tempFile = FileUtil.createTempFile(prefix, postfix);
-    tempFileCreated(tempFile);
-    return tempFile;
+  public File createTempFile(String prefix, String postfix) {
+    try {
+      File tempFile = FileUtil.createTempFile(prefix, postfix);
+      tempFileCreated(tempFile);
+      return tempFile;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void tempFileCreated(File tempFile) {
@@ -71,21 +75,26 @@ public class TempFiles {
     });
   }
 
-  public File createTempDir() throws IOException {
+  public File createTempDir() {
     return createTempDir("dir");
   }
 
-  private File createTempDir(String prefix) throws IOException {
-    File dir = FileUtil.createTempDirectory(prefix, "test");
-    tempFileCreated(dir);
-    return dir;
+  private File createTempDir(String prefix) {
+    try {
+      File dir = FileUtil.createTempDirectory(prefix, "test");
+      tempFileCreated(dir);
+      return dir;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  public VirtualFile createTempVDir() throws IOException {
+  public VirtualFile createTempVDir() {
     return createTempVDir("dir");
   }
 
-  public VirtualFile createTempVDir(String prefix) throws IOException {
+  public VirtualFile createTempVDir(String prefix) {
     return getVFileByFile(createTempDir(prefix));
   }
 
@@ -96,7 +105,7 @@ public class TempFiles {
     return subDir;
   }
 
-  public String createTempPath() throws IOException {
+  public String createTempPath() {
     File tempFile = createTempFile("xxx");
     String absolutePath = tempFile.getAbsolutePath();
     tempFile.delete();
@@ -104,15 +113,19 @@ public class TempFiles {
   }
 
   public void deleteAll() {
-    for (Iterator<File> iterator = myFilesToDelete.iterator(); iterator.hasNext();) {
-      File file = iterator.next();
-      file.delete();
+    for (File file : myFilesToDelete) {
+      FileUtil.delete(file);
     }
   }
 
-  public VirtualFile createVFile(VirtualFile parentDir, String name, String text) throws IOException {
-    final VirtualFile virtualFile = parentDir.createChildData(this, name);
-    VfsUtil.saveText(virtualFile, text + "\n");
-    return virtualFile;
+  public VirtualFile createVFile(VirtualFile parentDir, String name, String text) {
+    try {
+      final VirtualFile virtualFile = parentDir.createChildData(this, name);
+      VfsUtil.saveText(virtualFile, text + "\n");
+      return virtualFile;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
