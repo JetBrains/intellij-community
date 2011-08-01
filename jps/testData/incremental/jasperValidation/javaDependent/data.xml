@@ -1,0 +1,12 @@
+<testData>
+  <delete>
+  </delete>
+
+  <deleted_by_make>
+    <file path="classes/x/S.class" />
+  </deleted_by_make>
+
+  <recompile>
+    <file path="root/a.jsp" />
+  </recompile>
+</testData>

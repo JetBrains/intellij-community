@@ -1,0 +1,10 @@
+<testData>
+  <deleted_by_make>
+    <file path="classes/Super.class" />
+    <file path="classes/Derived.class" />
+  </deleted_by_make>
+
+  <recompile>
+    <file path="source/Derived.java" />
+  </recompile>
+</testData>

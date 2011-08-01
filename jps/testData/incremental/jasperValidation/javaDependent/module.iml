@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4" relativePaths="true" type="JAVA_MODULE">
+  <component name="ModuleRootManager" />
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/classes" />
+    <exclude-output />
+    <exploded url="file://$MODULE_DIR$/exploded" />
+    <exclude-exploded />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/xxx.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntryProperties />
+  </component>
+  <component name="FacetManager">
+    <facet type="web" name="module">
+      <configuration>
+        <webroots>
+          <root url="file://$MODULE_DIR$/root" relative="/" />
+        </webroots>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/WEB-INF/web.xml" version="2.3" />
+        </descriptors>
+      </configuration>
+    </facet>
+  </component>
+</module>
+

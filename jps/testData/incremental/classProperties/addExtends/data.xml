@@ -1,0 +1,12 @@
+<testData>
+  <deleted_by_make>
+    <file path="classes/Super.class" />
+    <file path="classes/Client2.class" />
+    <file path="classes/Client3.class" />
+  </deleted_by_make>
+
+  <recompile>
+    <file path="source/Client2.java" />
+    <file path="source/Client3.java" />
+  </recompile>
+</testData>

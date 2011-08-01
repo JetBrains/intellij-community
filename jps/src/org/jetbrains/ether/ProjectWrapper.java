@@ -25,6 +25,8 @@ public class ProjectWrapper {
         boolean incremental();
 
         boolean force();
+
+        PrintStream logStream();
     }
 
     private final static Flags defaultFlags = new Flags() {
@@ -39,7 +41,35 @@ public class ProjectWrapper {
         public boolean force() {
             return true;
         }
+
+        public PrintStream logStream() {
+            return null;
+        }
     };
+
+    private abstract class Logger {
+        private final PrintStream stream;
+
+        public Logger(final Flags flags) {
+            this.stream = flags.logStream();
+        }
+
+        public <T extends Comparable> void logMany(final PrintStream stream, final Collection<T> list) {
+            final Object[] a = list.toArray();
+            Arrays.sort(a);
+
+            for (Object o : a) {
+                stream.println(o);
+            }
+        }
+
+        public abstract void log(final PrintStream stream);
+
+        public void log() {
+            if (stream != null)
+                log(stream);
+        }
+    }
 
     // Home directory
     private static final String myHomeDir = System.getProperty("user.home");
@@ -54,8 +84,11 @@ public class ProjectWrapper {
     private static void initJPSDirectory() {
         final File f = new File(myHomeDir + File.separator + myJPSDir);
 
-        if (!f.exists())
-            f.mkdir();
+        if (!f.exists()) {
+            if (!f.mkdir()) {
+                throw new RuntimeException("unable to create JPS snapshot directory " + f.getPath());
+            }
+        }
     }
 
     // File separator replacement
@@ -956,13 +989,11 @@ public class ProjectWrapper {
         final Set<StringCache.S> compiledFiles = new HashSet<StringCache.S>();
         final Set<Module> cleared = new HashSet<Module>();
 
-        //Mappings delta = new Mappings(ProjectWrapper.this);
-
         BusyBeaver(ProjectBuilder builder) {
             this.builder = builder;
         }
 
-        boolean iterativeCompile(final ModuleChunk chunk, final boolean tests, final Set<StringCache.S> sources, final Set<StringCache.S> outdated, final Set<StringCache.S> removed) {
+        boolean iterativeCompile(final ModuleChunk chunk, final boolean tests, final Set<StringCache.S> sources, final Set<StringCache.S> outdated, final Set<StringCache.S> removed, final Flags flags) {
             final Collection<StringCache.S> filesToCompile = DefaultGroovyMethods.intersect(affectedFiles, sources);
             final Set<StringCache.S> safeFiles = new HashSet<StringCache.S>();
 
@@ -1017,11 +1048,29 @@ public class ProjectWrapper {
                 }
 
                 if (!outputFiles.isEmpty()) {
+                    new Logger(flags) {
+                        @Override
+                        public void log(PrintStream stream) {
+                            stream.println("Cleaning output files:");
+                            logMany(stream, outputFiles);
+                            stream.println("End of files");
+                        }
+                    }.log();
+
                     builder.clearChunk(chunk, outputFiles, ProjectWrapper.this);
                 }
 
                 final Mappings delta = new Mappings(ProjectWrapper.this);
                 final Callbacks.Backend deltaBackend = delta.getCallback();
+
+                new Logger(flags) {
+                    @Override
+                    public void log(PrintStream stream) {
+                        stream.println("Compiling files:");
+                        logMany(stream, filesToCompile);
+                        stream.println("End of files");
+                    }
+                }.log();
 
                 builder.buildChunk(chunk, tests, filesToCompile, deltaBackend, ProjectWrapper.this);
 
@@ -1034,11 +1083,11 @@ public class ProjectWrapper {
 
                 if (!incremental) {
                     affectedFiles.addAll(sources);
-                    iterativeCompile(chunk, tests, sources, null, null);
+                    iterativeCompile(chunk, tests, sources, null, null, flags);
                     return false;
                 }
 
-                return iterativeCompile(chunk, tests, sources, null, null);
+                return iterativeCompile(chunk, tests, sources, null, null, flags);
             } else {
                 for (Module m : chunk.getElements()) {
                     Reporter.reportBuildSuccess(m, tests);
@@ -1048,7 +1097,8 @@ public class ProjectWrapper {
             return true;
         }
 
-        public void build(final Collection<Module> modules, final boolean tests, boolean incremental) {
+        public void build(final Collection<Module> modules, final boolean tests, final Flags flags) {
+            boolean incremental = flags.incremental();
             final List<ModuleChunk> chunks = myProject.getChunks(tests);
 
             for (ModuleChunk c : chunks) {
@@ -1067,7 +1117,7 @@ public class ProjectWrapper {
                             removedSources.addAll(tests ? mw.getRemovedTests() : mw.getRemovedSources());
                         }
 
-                        incremental = iterativeCompile(c, tests, chunkSources, outdatedSources, removedSources);
+                        incremental = iterativeCompile(c, tests, chunkSources, outdatedSources, removedSources, flags);
                     } else {
                         final Set<Module> toClean = new HashSet<Module>();
 
@@ -1095,6 +1145,15 @@ public class ProjectWrapper {
     }
 
     private void makeModules(final Collection<Module> initial, final Flags flags) {
+        new Logger(flags) {
+            @Override
+            public void log(final PrintStream stream) {
+                stream.println("Request to make modules:");
+                logMany(stream, initial);
+                stream.println("End of request");
+            }
+        }.log();
+
         final ClasspathKind kind = myProject.getCompileClasspathKind(flags.tests());
 
         final Set<Module> modules = new HashSet<Module>();
@@ -1103,19 +1162,20 @@ public class ProjectWrapper {
         final Set<String> frontier = new HashSet<String>();
 
         final Map<String, Set<String>> reversedDependencies = new HashMap<String, Set<String>>();
+        final DotPrinter printer = new DotPrinter(flags.logStream());
 
-        DotPrinter.header();
+        printer.header();
 
         for (Module m : myProject.getModules().values()) {
             final String mName = m.getName();
 
-            DotPrinter.node(mName);
+            printer.node(mName);
 
             for (ClasspathItem cpi : m.getClasspath(kind)) {
                 if (cpi instanceof Module) {
                     final String name = ((Module) cpi).getName();
 
-                    DotPrinter.edge(name, mName);
+                    printer.edge(name, mName);
 
                     Set<String> sm = reversedDependencies.get(name);
 
@@ -1129,11 +1189,11 @@ public class ProjectWrapper {
             }
         }
 
-        DotPrinter.footer();
+        printer.footer();
 
         // Building "upper" subgraph
 
-        DotPrinter.header();
+        printer.header();
 
         new Object() {
             public void run(final Collection<Module> initial) {
@@ -1147,13 +1207,13 @@ public class ProjectWrapper {
                     if (marked.contains(mName))
                         continue;
 
-                    DotPrinter.node(mName);
+                    printer.node(mName);
 
                     final List<Module> dep = new ArrayList<Module>();
 
                     for (ClasspathItem cpi : module.getClasspath(kind)) {
                         if (cpi instanceof Module && !marked.contains(((Module) cpi).getName())) {
-                            DotPrinter.edge(((Module) cpi).getName(), mName);
+                            printer.edge(((Module) cpi).getName(), mName);
                             dep.add((Module) cpi);
                         }
                     }
@@ -1169,7 +1229,7 @@ public class ProjectWrapper {
             }
         }.run(initial);
 
-        DotPrinter.footer();
+        printer.footer();
 
         // Traversing "upper" subgraph and collecting outdated modules and their descendants
         new Object() {
@@ -1199,6 +1259,15 @@ public class ProjectWrapper {
             }
         }.run(frontier, flags.force());
 
+        new Logger(flags) {
+            @Override
+            public void log(PrintStream stream) {
+                stream.println("Propagated modules:");
+                logMany(stream, modules);
+                stream.println("End of propagated");
+            }
+        }.log();
+
         if (modules.size() == 0 && !flags.force()) {
             System.out.println("All requested modules are up-to-date.");
             return;
@@ -1209,10 +1278,10 @@ public class ProjectWrapper {
 
         builder.buildStart();
 
-        beaver.build(modules, false, flags.incremental());
+        beaver.build(modules, false, flags);
 
         if (flags.tests()) {
-            beaver.build(modules, true, flags.incremental());
+            beaver.build(modules, true, flags);
         }
 
         builder.buildStop();

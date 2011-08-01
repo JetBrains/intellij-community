@@ -57,6 +57,10 @@ public class StringCache {
                 return StringCache.get(s);
             }
         };
+
+        public String toString () {
+            return value;
+        }
     }
 
     private static final Map<String, S> map = new HashMap<String, S>();

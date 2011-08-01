@@ -1,11 +1,6 @@
 package org.jetbrains.ether;
 
-import com.sun.corba.se.spi.ior.MakeImmutable;
-import org.apache.tools.ant.types.Description;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -31,22 +26,50 @@ public class Main {
         final Options.Descriptor[] descrs = {
                 new Options.Descriptor("script", "script", "s", Options.ArgumentSpecifier.MANDATORY, "specify script for project library/sdk setup; use prefix '@' to specify script file"),
                 new Options.Descriptor("inspect", "inspect", "i", Options.ArgumentSpecifier.OPTIONAL, "list relevant information for the whole project or specified module"),
-                new Options.Descriptor("save", "save", "s", Options.ArgumentSpecifier.NONE, "collect and save project information"),
+                new Options.Descriptor("save", "save", "x", Options.ArgumentSpecifier.NONE, "collect and save project information"),
                 new Options.Descriptor("clean", "clean", "c", Options.ArgumentSpecifier.NONE, "clean project"),
                 new Options.Descriptor("rebuild", "rebuild", "r", Options.ArgumentSpecifier.NONE, "rebuild project"),
                 new Options.Descriptor("make", "make", "m", Options.ArgumentSpecifier.OPTIONAL, "make the whole project or specified module"),
                 new Options.Descriptor("tests", "tests", "t", Options.ArgumentSpecifier.NONE, "make tests as well"),
                 new Options.Descriptor("force", "force", "f", Options.ArgumentSpecifier.NONE, "force actions"),
-                new Options.Descriptor("incremental", "incremental", "i", Options.ArgumentSpecifier.NONE, "perform incremental make"),
+                new Options.Descriptor("incremental", "incremental", "u", Options.ArgumentSpecifier.NONE, "perform incremental make"),
                 new Options.Descriptor("help", "help", "h", Options.ArgumentSpecifier.NONE, "show help on options"),
-                new Options.Descriptor("debug", "debug", "d", Options.ArgumentSpecifier.NONE, "debug info (for development purposes)")
+                new Options.Descriptor("log", "log", "l", Options.ArgumentSpecifier.OPTIONAL, "log into file (for development purposes)")
         };
 
         myOptions = new Options(descrs);
     }
 
-    private static boolean doDebug() {
-        return myOptions.get("debug") instanceof Options.Switch;
+    private static PrintStream logStream = null;
+    private static boolean logStreamSet = false;
+
+    private static PrintStream getLog() {
+        if (logStreamSet) {
+            return logStream;
+        }
+
+        logStreamSet = true;
+
+        final Options.Argument arg = myOptions.get("log");
+
+        if (arg == null) {
+            return null;
+        }
+
+        if (arg instanceof Options.Value) {
+            try {
+                return logStream = new PrintStream(new FileOutputStream(((Options.Value) arg).get()));
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        if (arg instanceof Options.Switch) {
+            return logStream = System.out;
+        }
+
+        return null;
     }
 
     private static boolean doSave() {
@@ -106,6 +129,10 @@ public class Main {
 
             public boolean incremental () {
                 return doIncremental();
+            }
+
+            public PrintStream logStream () {
+                return getLog();
             }
         };
     }
@@ -170,10 +197,6 @@ public class Main {
 
         if (projects.isEmpty() && !doHelp()) {
             System.out.println("Nothing to do; use --help or -h option to see the help.\n");
-        }
-
-        if (doDebug()) {
-            DotPrinter.setPrintStream(System.out);
         }
 
         for (String prj : projects) {

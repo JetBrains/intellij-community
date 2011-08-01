@@ -1,0 +1,18 @@
+Request to make modules:
+module AddAnnotationTypeMemberWithDefaultValue2
+End of request
+digraph X {
+  AddAnnotationTypeMemberWithDefaultValue2[label="AddAnnotationTypeMemberWithDefaultValue2"];
+}
+digraph X {
+  AddAnnotationTypeMemberWithDefaultValue2[label="AddAnnotationTypeMemberWithDefaultValue2"];
+}
+Propagated modules:
+module AddAnnotationTypeMemberWithDefaultValue2
+End of propagated
+Cleaning output files:
+out/production/AddAnnotationTypeMemberWithDefaultValue2/A.class
+End of files
+Compiling files:
+src/A.java
+End of files

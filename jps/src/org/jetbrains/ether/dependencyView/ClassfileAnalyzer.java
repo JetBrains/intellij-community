@@ -28,6 +28,28 @@ public class ClassfileAnalyzer {
                 new SignatureReader(sig).accept(signatureCrawler);
         }
 
+        private final AnnotationVisitor annotationCrawler = new AnnotationVisitor() {
+            public void visit(final String name, final Object value) {
+                return;
+            }
+
+            public void visitEnum(String name, String desc, String value) {
+                return;
+            }
+
+            public AnnotationVisitor visitAnnotation(String name, String desc) {
+                return annotationCrawler;
+            }
+
+            public AnnotationVisitor visitArray(String name) {
+                return annotationCrawler;
+            }
+
+            public void visitEnd() {
+
+            }
+        };
+
         private final SignatureVisitor signatureCrawler = new SignatureVisitor() {
             public void visitFormalTypeParameter(String name) {
             }
@@ -136,6 +158,11 @@ public class ClassfileAnalyzer {
         }
 
         @Override
+        public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+            return annotationCrawler;
+        }
+
+        @Override
         public void visitSource(String source, String debug) {
             sourceFile = StringCache.get(source);
         }
@@ -160,6 +187,21 @@ public class ClassfileAnalyzer {
             }
 
             return new EmptyVisitor() {
+                @Override
+                public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+                    return annotationCrawler;
+                }
+
+                @Override
+                public AnnotationVisitor visitAnnotationDefault() {
+                    return annotationCrawler;
+                }
+
+                @Override
+                public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
+                    return annotationCrawler;
+                }
+
                 @Override
                 public void visitMultiANewArrayInsn(String desc, int dims) {
                     TypeRepr.getType(desc).updateClassUsages(usages);

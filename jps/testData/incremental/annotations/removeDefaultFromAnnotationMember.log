@@ -1,0 +1,24 @@
+Request to make modules:
+module RemoveDefaultFromAnnotationMember
+End of request
+digraph X {
+  RemoveDefaultFromAnnotationMember[label="RemoveDefaultFromAnnotationMember"];
+}
+digraph X {
+  RemoveDefaultFromAnnotationMember[label="RemoveDefaultFromAnnotationMember"];
+}
+Propagated modules:
+module RemoveDefaultFromAnnotationMember
+End of propagated
+Cleaning output files:
+out/production/RemoveDefaultFromAnnotationMember/A.class
+out/production/RemoveDefaultFromAnnotationMember/C.class
+out/production/RemoveDefaultFromAnnotationMember/C1.class
+out/production/RemoveDefaultFromAnnotationMember/C2.class
+End of files
+Compiling files:
+src/A.java
+src/C.java
+src/C1.java
+src/C2.java
+end of files

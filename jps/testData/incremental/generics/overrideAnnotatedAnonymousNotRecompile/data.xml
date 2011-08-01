@@ -1,0 +1,13 @@
+<testData>
+
+  <delete>
+  </delete>
+
+  <deleted_by_make>
+    <file path="classes/packageA/Base.class" />
+  </deleted_by_make>
+
+  <recompile>
+  </recompile>
+
+</testData>

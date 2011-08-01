@@ -1,6 +1,7 @@
 package org.jetbrains.ether;
 
 import junit.framework.TestCase;
+import junitx.framework.FileAssert;
 
 import java.io.*;
 
@@ -20,7 +21,7 @@ public abstract class IncrementalTestCase extends TestCase {
     protected IncrementalTestCase(final String name) throws Exception {
         super(name);
         groupName = name;
-        baseDir = "testData" + File.separator + "incremental" + File.separator + groupName;
+        baseDir = "testData" + File.separator + "incremental" + File.separator; // + groupName;
 
         for (int i = 0; ; i++) {
             final File tmp = new File(tempDir + File.separator + "__temp__" + i);
@@ -75,7 +76,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
     private void copy(final File input, final File output) throws Exception {
         if (input.isDirectory()) {
-            if (output.mkdir()) {
+            if (output.mkdirs()) {
                 for (File f : input.listFiles()) {
                     copy(f, new File(output.getPath() + File.separator + f.getName()));
                 }
@@ -94,7 +95,7 @@ public abstract class IncrementalTestCase extends TestCase {
     }
 
     private void prepare() throws Exception {
-        copy(new File(baseDir), new File(workDir + groupName));
+        copy(new File(getBaseDir()), new File(getWorkDir()));
     }
 
     private void modify() throws Exception {
@@ -120,9 +121,10 @@ public abstract class IncrementalTestCase extends TestCase {
         first.rebuild();
         first.save();
 
-        //modify();
+        modify();
 
         final ProjectWrapper second = ProjectWrapper.load(getWorkDir(), null);
+        final PrintStream stream = new PrintStream(new FileOutputStream(getWorkDir() + ".log"));
 
         second.makeModule(null, new ProjectWrapper.Flags() {
             public boolean tests() {
@@ -136,7 +138,14 @@ public abstract class IncrementalTestCase extends TestCase {
             public boolean force() {
                 return false;
             }
+
+            public PrintStream logStream() {
+                return stream;
+            }
         });
 
+        stream.close();
+
+        FileAssert.assertEquals(new File (getBaseDir () + ".log"), new File (getWorkDir() + ".log"));
     }
 }

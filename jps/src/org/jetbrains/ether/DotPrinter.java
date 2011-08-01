@@ -1,5 +1,6 @@
 package org.jetbrains.ether;
 
+import java.io.BufferedWriter;
 import java.io.PrintStream;
 
 /**
@@ -10,7 +11,11 @@ import java.io.PrintStream;
  * To change this template use File | Settings | File Templates.
  */
 public class DotPrinter {
-    static PrintStream deafultStream;
+    private final PrintStream stream;
+
+    public DotPrinter(final PrintStream stream) {
+        this.stream = stream;
+    }
 
     private static String escape(final String s) {
         final StringBuilder b = new StringBuilder();
@@ -30,17 +35,13 @@ public class DotPrinter {
         return b.toString();
     }
 
-    public static void setPrintStream(final PrintStream s) {
-        deafultStream = s;
-    }
-
     public static void header(final PrintStream s) {
         if (s != null)
             s.println("digraph X {");
     }
 
-    public static void header() {
-        header(deafultStream);
+    public void header() {
+        header(stream);
     }
 
     public static void footer(final PrintStream s) {
@@ -48,8 +49,8 @@ public class DotPrinter {
             s.println("}");
     }
 
-    public static void footer() {
-        footer(deafultStream);
+    public void footer() {
+        footer(stream);
     }
 
     public static void node(final PrintStream s, String n) {
@@ -59,8 +60,8 @@ public class DotPrinter {
         }
     }
 
-    public static void node(final String n) {
-        node(deafultStream, n);
+    public void node(final String n) {
+        node(stream, n);
     }
 
     public static void edge(final PrintStream s, String b, String e) {
@@ -72,7 +73,7 @@ public class DotPrinter {
         }
     }
 
-    public static void edge(final String b, final String e) {
-        edge(deafultStream, b, e);
+    public void edge(final String b, final String e) {
+        edge(stream, b, e);
     }
 }

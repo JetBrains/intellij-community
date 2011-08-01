@@ -1,0 +1,4 @@
+class Super implements java.lang.Runnable {
+  public void run() {
+  }
+}
