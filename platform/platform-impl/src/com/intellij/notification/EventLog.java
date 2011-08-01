@@ -52,6 +52,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -179,12 +180,14 @@ public class EventLog implements Notifications {
   }
 
   private static int eolIndex(String mainText) {
-    int nlIndex = mainText.indexOf("<br>");
-    if (nlIndex < 0) nlIndex = mainText.indexOf("<br/>");
-    if (nlIndex < 0) nlIndex = mainText.indexOf("<p/>");
-    if (nlIndex < 0) nlIndex = mainText.indexOf("<p>");
-    if (nlIndex < 0) nlIndex = mainText.indexOf("\n");
-    return nlIndex;
+    TreeSet<Integer> indices = new TreeSet<Integer>();
+    indices.add(mainText.indexOf("<br>"));
+    indices.add(mainText.indexOf("<br/>"));
+    indices.add(mainText.indexOf("<p/>"));
+    indices.add(mainText.indexOf("<p>"));
+    indices.add(mainText.indexOf("\n"));
+    indices.remove(-1);
+    return indices.isEmpty() ? -1 : indices.iterator().next();
   }
 
   public static boolean isEventLogVisible(Project project) {
