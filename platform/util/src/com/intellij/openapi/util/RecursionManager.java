@@ -98,6 +98,10 @@ public class RecursionManager {
           }
         }
 
+        if (progressMap.isEmpty() && ourStamp.get() != 0) {
+          throw new AssertionError("Non-zero stamp with empty stack: " + ourStamp.get());
+        }
+
         progressMap.put(realKey, ourStamp.get());
         int startStamp = ourMemoizationStamp.get();
 
@@ -115,6 +119,12 @@ public class RecursionManager {
           ourStamp.set(value);
           if (value == 0) {
             ourIntermediateCache.get().clear();
+          }
+          else if (progressMap.isEmpty()) {
+            ourIntermediateCache.get().clear();
+            throw new AssertionError("Non-zero stamp for empty progress map: " + key + ", " + value);
+          } else {
+            checkZero();
           }
         }
       }
@@ -151,6 +161,8 @@ public class RecursionManager {
         int stamp = ourStamp.get() + 1;
         ourStamp.set(stamp);
 
+        checkZero();
+
         boolean inLoop = false;
         for (Map.Entry<MyKey, Integer> entry: ourProgress.get().entrySet()) {
           if (inLoop) {
@@ -160,11 +172,21 @@ public class RecursionManager {
             inLoop = true;
           }
         }
+
+        checkZero();
+
         return stamp;
       }
     };
   }
-  
+
+  private static void checkZero() {
+    LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
+    if (!progressMap.isEmpty() && progressMap.get(progressMap.keySet().iterator().next()) != 0) {
+      throw new AssertionError("Prisoner Zero has escaped");
+    }
+  }
+
   private static class MyKey extends Pair<String, Object> {
     public MyKey(String first, Object second) {
       super(first, second);
