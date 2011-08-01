@@ -49,10 +49,14 @@ class RenderService {
   private final LayoutLibrary myLayoutLib;
   private final FolderConfiguration myConfig;
   private final int myMinSdkVersion;
+  private final float myXdpi;
+  private final float myYdpi;
 
   RenderService(LayoutLibrary layoutLibrary,
                 @NotNull ResourceResolver resourceResolver,
                 FolderConfiguration config,
+                float xdpi,
+                float ydpi,
                 IProjectCallback projectCallback,
                 int minSdkVersion) {
     myLayoutLib = layoutLibrary;
@@ -60,6 +64,8 @@ class RenderService {
     myConfig = config;
     myProjectCallback = projectCallback;
     myMinSdkVersion = minSdkVersion;
+    myXdpi = xdpi;
+    myYdpi = ydpi;
   }
 
   @Nullable
@@ -86,8 +92,8 @@ class RenderService {
 
     final PixelDensityQualifier densityQualifier = myConfig.getPixelDensityQualifier();
     final Density density = densityQualifier != null ? densityQualifier.getValue() : Density.MEDIUM;
-    final int xdpi = density.getDpiValue();
-    final int ydpi = density.getDpiValue();
+    final float xdpi = Float.isNaN(myXdpi) ? density.getDpiValue() : myXdpi;
+    final float ydpi = Float.isNaN(myYdpi) ? density.getDpiValue() : myYdpi;
 
     final SessionParams params =
       new SessionParams(parser, RenderingMode.NORMAL, this, dimension.width, dimension.height, density, xdpi, ydpi, myResourceResolver,

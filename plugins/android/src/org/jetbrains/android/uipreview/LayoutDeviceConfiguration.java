@@ -7,10 +7,12 @@ import org.jetbrains.annotations.NotNull;
 * @author Eugene.Kudelevsky
 */
 class LayoutDeviceConfiguration {
+  private LayoutDevice myDevice;
   private final String myName;
   private final FolderConfiguration myConfiguration;
 
-  LayoutDeviceConfiguration(@NotNull String name, @NotNull FolderConfiguration configuration) {
+  LayoutDeviceConfiguration(@NotNull LayoutDevice device, @NotNull String name, @NotNull FolderConfiguration configuration) {
+    myDevice = device;
     myName = name;
     myConfiguration = configuration;
   }
@@ -23,6 +25,15 @@ class LayoutDeviceConfiguration {
   @NotNull
   public FolderConfiguration getConfiguration() {
     return myConfiguration;
+  }
+
+  @NotNull
+  public LayoutDevice getDevice() {
+    return myDevice;
+  }
+
+  public void setDevice(LayoutDevice device) {
+    myDevice = device;
   }
 }
 

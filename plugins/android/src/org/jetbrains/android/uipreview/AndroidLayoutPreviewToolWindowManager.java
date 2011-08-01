@@ -235,6 +235,10 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     final String imgPath = FileUtil.getTempDirectory() + "/androidLayoutPreview.png";
 
     try {
+      if (AndroidPlatform.getInstance(facet.getModule()) == null) {
+        throw new AndroidSdkNotConfiguredException();
+      }
+
       final LayoutDeviceConfiguration deviceConfiguration = myToolWindowForm.getSelectedDeviceConfiguration();
       if (deviceConfiguration == null) {
         throw new RenderingException("Device is not specified");
@@ -245,6 +249,9 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       config.setNightModeQualifier(new NightModeQualifier(myToolWindowForm.getSelectedNightMode()));
 
       final LocaleData localeData = myToolWindowForm.getSelectedLocaleData();
+      if (localeData == null) {
+        throw new RenderingException("Locale is not specified");
+      }
 
       config.setLanguageQualifier(new LanguageQualifier(localeData.getLanguage()));
       config.setRegionQualifier(new RegionQualifier(localeData.getRegion()));
@@ -252,9 +259,12 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       final IAndroidTarget target = myToolWindowForm.getSelectedTarget();
       final ThemeData theme = myToolWindowForm.getSelectedTheme();
 
+      final float xdpi = deviceConfiguration.getDevice().getXDpi();
+      final float ydpi = deviceConfiguration.getDevice().getYDpi();
+
       synchronized (RENDERING_LOCK) {
         if (target != null && theme != null &&
-            RenderUtil.renderLayout(myProject, layoutXmlText, imgPath, target, facet, config, theme)) {
+            RenderUtil.renderLayout(myProject, layoutXmlText, imgPath, target, facet, config, xdpi, ydpi, theme)) {
           final File input = new File(imgPath);
           image = ImageIO.read(input);
         }
@@ -264,8 +274,8 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       LOG.debug(e);
       final String message = e.getPresentableMessage();
       errorMessage = new RenderingErrorMessage(message != null
-                                        ? message
-                                        : AndroidBundle.message("android.layout.preview.default.error.message"));
+                                               ? message
+                                               : AndroidBundle.message("android.layout.preview.default.error.message"));
     }
     catch (IOException e) {
       LOG.info(e);
@@ -388,10 +398,10 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         if (module != null) {
           final Sdk prevSdk = myModule2Sdk.get(module);
           final Sdk newSdk = ModuleRootManager.getInstance(module).getSdk();
+          myModule2Sdk.put(module, newSdk);
           if (newSdk != null &&
               (newSdk.getSdkType() instanceof AndroidSdkType || prevSdk.getSdkType() instanceof AndroidSdkType) &&
               !newSdk.equals(prevSdk)) {
-            myModule2Sdk.put(module, newSdk);
 
             final AndroidSdkAdditionalData additionalData = (AndroidSdkAdditionalData)newSdk.getSdkAdditionalData();
             final AndroidPlatform newPlatform = additionalData != null ? additionalData.getAndroidPlatform() : null;

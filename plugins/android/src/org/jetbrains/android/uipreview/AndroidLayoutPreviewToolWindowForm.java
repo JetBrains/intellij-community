@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,10 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
@@ -56,11 +54,13 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidLayoutPreviewToolWindowForm implements Disposable {
+class AndroidLayoutPreviewToolWindowForm implements Disposable {
   private static final Icon ZOOM_TO_FIT_ICON = IconLoader.getIcon("/icons/zoomFit.png");
   private static final Icon ZOOM_IN_ICON = IconLoader.getIcon("/icons/zoomIn.png");
   private static final Icon ZOOM_OUT_ICON = IconLoader.getIcon("/icons/zoomOut.png");
   private static final Icon ZOOM_ACTUAL_ICON = IconLoader.getIcon("/icons/zoomActual.png");
+
+  private static final String CUSTOM_DEVICE_STRING = "Edit...";
 
   private JPanel myContentPanel;
   private AndroidLayoutPreviewPanel myPreviewPanel;
@@ -96,7 +96,7 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   private final AndroidLayoutPreviewToolWindowSettings mySettings;
 
-  public AndroidLayoutPreviewToolWindowForm(Project project, AndroidLayoutPreviewToolWindowManager toolWindowManager) {
+  public AndroidLayoutPreviewToolWindowForm(final Project project, AndroidLayoutPreviewToolWindowManager toolWindowManager) {
     myToolWindowManager = toolWindowManager;
     mySettings = AndroidLayoutPreviewToolWindowSettings.getInstance(project);
 
@@ -142,13 +142,13 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
           final LayoutDevice device = (LayoutDevice)value;
           setText(device.getName());
         }
-        else {
+        else if (index == -1 || !CUSTOM_DEVICE_STRING.equals(value)) {
           setText("<html><font color='red'>[none]</font></html>");
         }
       }
     });
 
-    myDeviceConfigurationsCombo.setRenderer(new ListCellRendererWrapper(myDevicesCombo.getRenderer()) {
+    myDeviceConfigurationsCombo.setRenderer(new ListCellRendererWrapper(myDeviceConfigurationsCombo.getRenderer()) {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LayoutDeviceConfiguration) {
@@ -164,9 +164,70 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myDevicesCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final LayoutDevice newSelectedDevice = getSelectedDevice();
-        updateDeviceConfigurations(newSelectedDevice);
-        myToolWindowManager.render();
+        final Object selectedItem = myDevicesCombo.getSelectedItem();
+        if (selectedItem instanceof LayoutDevice) {
+          updateDeviceConfigurations((LayoutDevice)selectedItem);
+          saveState();
+          myToolWindowManager.render();
+        }
+      }
+    });
+
+    myDevicesCombo.addItemListener(new ItemListener() {
+      private LayoutDevice myPrevDevice = null;
+
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        final Object item = e.getItem();
+        if (item instanceof LayoutDevice) {
+          if (e.getStateChange() == ItemEvent.DESELECTED) {
+            myPrevDevice = (LayoutDevice)item;
+          }
+        }
+        else if (e.getStateChange() == ItemEvent.SELECTED) {
+          // "Custom..." element selected
+          if (myPrevDevice != null) {
+            myDevicesCombo.setSelectedItem(myPrevDevice);
+          }
+          else if (myDevices.size() > 0) {
+            myDevicesCombo.setSelectedItem(myDevices.get(0));
+          }
+
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              final LayoutDeviceConfiguration selectedConfig = getSelectedDeviceConfiguration();
+              final LayoutDeviceConfiguration configToSelectInDialog =
+                selectedConfig != null && selectedConfig.getDevice().getType() == LayoutDevice.Type.CUSTOM ? selectedConfig : null;
+              final LayoutDeviceConfigurationsDialog dialog =
+                new LayoutDeviceConfigurationsDialog(project, configToSelectInDialog, myLayoutDeviceManager);
+              dialog.show();
+
+              if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+                myLayoutDeviceManager.saveUserDevices();
+              }
+
+              final AndroidPlatform platform = myFile != null ? getPlatform(myFile) : null;
+              updateDevicesAndTargets(platform);
+
+              final String selectedDeviceName = dialog.getSelectedDeviceName();
+              if (selectedDeviceName != null) {
+                final LayoutDevice selectedDevice = findDeviceByName(selectedDeviceName);
+                if (selectedDevice != null) {
+                  myDevicesCombo.setSelectedItem(selectedDevice);
+                }
+              }
+
+              final String selectedDeviceConfigName = dialog.getSelectedDeviceConfigName();
+              if (selectedDeviceConfigName != null) {
+                final LayoutDeviceConfiguration selectedDeviceConfig = findDeviceConfigByName(selectedDeviceConfigName);
+                if (selectedDeviceConfig != null) {
+                  myDeviceConfigurationsCombo.setSelectedItem(selectedDeviceConfig);
+                }
+              }
+            }
+          });
+        }
       }
     });
 
@@ -183,7 +244,7 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     final JComponent toolbar = myActionToolBar.getComponent();
     final JPanel toolBarWrapper = new JPanel(new BorderLayout());
     toolBarWrapper.add(toolbar, BorderLayout.CENTER);
-    toolBarWrapper.setPreferredSize(new Dimension(10, toolbar.getPreferredSize().height));
+    toolBarWrapper.setPreferredSize(new Dimension(10, toolbar.getMinimumSize().height));
     toolBarWrapper.setMinimumSize(new Dimension(10, toolbar.getMinimumSize().height));
     myComboPanel.add(toolBarWrapper, gb);
 
@@ -222,9 +283,10 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
         setText(((DockMode)value).getLongDisplayValue());
       }
     });
-    final ActionListener renderingListener = new ActionListener() {
+    final ActionListener defaultComboListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        saveState();
         myToolWindowManager.render();
       }
     };
@@ -237,7 +299,7 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
       }
     });
 
-    myTargetCombo.setRenderer(new ListCellRendererWrapper(myDevicesCombo.getRenderer()) {
+    myTargetCombo.setRenderer(new ListCellRendererWrapper(myTargetCombo.getRenderer()) {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof IAndroidTarget) {
@@ -254,15 +316,33 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
       @Override
       public void actionPerformed(ActionEvent e) {
         updateThemes();
+        saveState();
         myToolWindowManager.render();
       }
     });
 
-    myDeviceConfigurationsCombo.addActionListener(renderingListener);
-    myDockModeCombo.addActionListener(renderingListener);
-    myNightCombo.addActionListener(renderingListener);
-    myLocaleCombo.addActionListener(renderingListener);
-    myThemeCombo.addActionListener(renderingListener);
+    myThemeCombo.addItemListener(new ItemListener() {
+      private ThemeData myPrevThemeData;
+
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        final Object item = e.getItem();
+        if (item instanceof ThemeData) {
+          if (e.getStateChange() == ItemEvent.DESELECTED) {
+            myPrevThemeData = (ThemeData)item;
+          }
+        }
+        else if (e.getStateChange() == ItemEvent.SELECTED && myPrevThemeData != null) {
+          myThemeCombo.setSelectedItem(myPrevThemeData);
+        }
+      }
+    });
+
+    myDeviceConfigurationsCombo.addActionListener(defaultComboListener);
+    myDockModeCombo.addActionListener(defaultComboListener);
+    myNightCombo.addActionListener(defaultComboListener);
+    myLocaleCombo.addActionListener(defaultComboListener);
+    myThemeCombo.addActionListener(defaultComboListener);
 
     myDeviceConfigurationsCombo.setMinimumAndPreferredWidth(10);
     myDockModeCombo.setMinimumAndPreferredWidth(10);
@@ -271,6 +351,9 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myTargetCombo.setMinimumAndPreferredWidth(10);
     myLocaleCombo.setMinimumAndPreferredWidth(10);
     myThemeCombo.setMinimumAndPreferredWidth(10);
+
+    myDevicesCombo.setMaximumRowCount(20);
+    myThemeCombo.setMaximumRowCount(20);
   }
 
   public JPanel getContentPanel() {
@@ -284,7 +367,7 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
   public void setFile(@Nullable PsiFile file) {
     myFile = file;
 
-    final AndroidPlatform newPlatform = getNewPlatform(file);
+    final AndroidPlatform newPlatform = getPlatform(file);
     if (newPlatform == null || !newPlatform.equals(myPrevPlatform)) {
       myPrevPlatform = newPlatform;
       if (file != null) {
@@ -292,9 +375,73 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
         updateDevicesAndTargets(newPlatform);
         updateThemes();
         if (!myResetFlag) {
-          myResetFlag = true;
           reset();
+          myResetFlag = true;
         }
+      }
+    }
+  }
+  
+  @Nullable
+  private LayoutDevice findDeviceByName(@NotNull String name) {
+    for (LayoutDevice device : myDevices) {
+      if (device.getName().equals(name)) {
+        return device;
+      }
+    }
+    return null;
+  }
+  
+  @Nullable
+  private LayoutDeviceConfiguration findDeviceConfigByName(@NotNull String name) {
+    for (LayoutDeviceConfiguration configuration : myDeviceConfigurations) {
+      if (configuration.getName().equals(name)) {
+        return configuration;
+      }
+    }
+    return null;
+  }
+
+  private void saveState() {
+    final AndroidLayoutPreviewToolWindowSettings.State state = mySettings.getState();
+
+    if (myResetFlag) {
+      final LayoutDevice selectedDevice = getSelectedDevice();
+      if (selectedDevice != null) {
+        state.setDevice(selectedDevice.getName());
+      }
+
+      final LayoutDeviceConfiguration deviceConfig = getSelectedDeviceConfiguration();
+      if (deviceConfig != null) {
+        state.setDeviceConfiguration(deviceConfig.getName());
+      }
+
+      final DockMode dockMode = getSelectedDockMode();
+      if (dockMode != null) {
+        state.setDockMode(dockMode.getResourceValue());
+      }
+
+      final NightMode nightMode = getSelectedNightMode();
+      if (nightMode != null) {
+        state.setNightMode(nightMode.getResourceValue());
+      }
+
+      final LocaleData localeData = getSelectedLocaleData();
+      if (localeData != null) {
+        state.setLocaleLanguage(localeData.getLanguage());
+        state.setLocaleRegion(localeData.getRegion());
+      }
+
+      final IAndroidTarget target = getSelectedTarget();
+      if (target != null) {
+        state.setTargetHashString(target.hashString());
+      }
+    }
+
+    if (myThemesResetFlag) {
+      final ThemeData theme = getSelectedTheme();
+      if (theme != null) {
+        state.setTheme(theme.getName());
       }
     }
   }
@@ -383,14 +530,17 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
     }
   }
 
-  private void resetThemes(Collection<ThemeData> themes) {
+  private void resetThemes(Collection<Object> themes) {
     final String savedThemeName = mySettings.getState().getTheme();
     if (savedThemeName != null) {
       ThemeData savedTheme = null;
-      for (ThemeData theme : themes) {
-        if (savedThemeName.equals(theme.getName())) {
-          savedTheme = theme;
-          break;
+      for (Object o : themes) {
+        if (o instanceof ThemeData) {
+          final ThemeData theme = (ThemeData)o;
+          if (savedThemeName.equals(theme.getName())) {
+            savedTheme = theme;
+            break;
+          }
         }
       }
       if (savedTheme != null) {
@@ -404,7 +554,7 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
   }
 
   @Nullable
-  private static AndroidPlatform getNewPlatform(PsiFile file) {
+  private static AndroidPlatform getPlatform(PsiFile file) {
     if (file == null) {
       return null;
     }
@@ -462,7 +612,9 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
       newSelectedDevice = devices.get(0);
     }
     myDevices = devices;
-    myDevicesCombo.setModel(new CollectionComboBoxModel(devices, newSelectedDevice));
+    final List<Object> devicesCopy = new ArrayList<Object>(devices);
+    devicesCopy.add(CUSTOM_DEVICE_STRING);
+    myDevicesCombo.setModel(new CollectionComboBoxModel(devicesCopy, newSelectedDevice));
 
     if (newSelectedDevice != null) {
       updateDeviceConfigurations(newSelectedDevice);
@@ -631,72 +783,126 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
       return;
     }
 
-    final List<ThemeData> themes = new ArrayList<ThemeData>();
+    final List<Object> themes = new ArrayList<Object>();
     final HashSet<ThemeData> addedThemes = new HashSet<ThemeData>();
-    collectThemesFromManifest(facet, themes, addedThemes);
-    collectProjectThemes(facet, themes, addedThemes);
+    final ArrayList<ThemeData> projectThemes = new ArrayList<ThemeData>();
+
+    collectThemesFromManifest(facet, projectThemes, addedThemes, true);
+    collectProjectThemes(facet, projectThemes, addedThemes);
+
+    if (projectThemes.size() > 0) {
+      themes.add("Project themes");
+      themes.addAll(projectThemes);
+    }
 
     final Module module = facet.getModule();
+    AndroidTargetData targetData = null;
     final AndroidPlatform androidPlatform = AndroidPlatform.getInstance(module);
     if (androidPlatform != null) {
       IAndroidTarget target = getSelectedTarget();
       if (target == null) {
         target = androidPlatform.getTarget();
       }
-      final AndroidTargetData targetData = androidPlatform.getSdk().getTargetData(target);
-      if (targetData != null) {
-        if (targetData.areThemesCached()) {
-          collectFrameworkThemes(module, targetData, themes);
-          doApplyThemes(themes);
-        }
-        else {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      targetData = androidPlatform.getSdk().getTargetData(target);
+    }
+
+    if (targetData == null || targetData.areThemesCached()) {
+      collectFrameworkThemes(themes, facet, targetData, addedThemes);
+      doApplyThemes(themes, addedThemes);
+    }
+    else {
+      final AndroidTargetData finalTargetData = targetData;
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          collectFrameworkThemes(themes, facet, finalTargetData, addedThemes);
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              collectFrameworkThemes(module, targetData, themes);
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  doApplyThemes(themes);
-                  myToolWindowManager.render();
-                }
-              });
+              doApplyThemes(themes, addedThemes);
+              myToolWindowManager.render();
             }
           });
         }
-      }
+      });
     }
   }
 
-  private void doApplyThemes(List<ThemeData> themes) {
+  private void collectFrameworkThemes(List<Object> themes,
+                                      AndroidFacet facet,
+                                      @Nullable AndroidTargetData targetData,
+                                      Set<ThemeData> addedThemes) {
+    final List<ThemeData> frameworkThemes = new ArrayList<ThemeData>();
+    collectThemesFromManifest(facet, frameworkThemes, addedThemes, false);
+    if (targetData != null) {
+      doCollectFrameworkThemes(facet.getModule(), targetData, frameworkThemes, addedThemes);
+    }
+    if (frameworkThemes.size() > 0) {
+      themes.add("Framework themes");
+      themes.addAll(frameworkThemes);
+    }
+  }
+
+  private void doApplyThemes(List<Object> themes, final Set<ThemeData> themesSet) {
     final ThemeData oldSelection = (ThemeData)myThemeCombo.getSelectedItem();
 
     ThemeData selection = null;
-    for (ThemeData theme : themes) {
-      if (theme.equals(oldSelection)) {
-        selection = theme;
+    for (Object o : themes) {
+      if (o instanceof ThemeData && o.equals(oldSelection)) {
+        selection = (ThemeData)o;
       }
     }
-    if (selection == null && themes.size() > 0) {
-      selection = themes.get(0);
+    if (selection == null) {
+      for (Object o : themes) {
+        if (o instanceof ThemeData) {
+          selection = (ThemeData)o;
+          break;
+        }
+      }
     }
     myThemeCombo.setModel(new CollectionComboBoxModel(themes, selection));
 
+    myThemeCombo.setRenderer(new ListCellRendererWrapper(myThemeCombo.getRenderer()) {
+      @Override
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        if (value instanceof ThemeData) {
+          final ThemeData themeData = (ThemeData)value;
+          if (index == -1 && !themeData.isProjectTheme() && themesSet.contains(new ThemeData(themeData.getName(), true))) {
+            setText(value.toString() + " (framework)");
+          }
+          else if (index != -1) {
+            setText("      " + value.toString());
+          }
+        }
+        else if (index == -1) {
+          setText("<html><font color='red'>[none]</font></html>");
+        }
+      }
+    });
+
     if (myFile != null && !myThemesResetFlag) {
-      myThemesResetFlag = true;
       resetThemes(themes);
+      myThemesResetFlag = true;
     }
+
+    saveState();
   }
 
-  private static void collectFrameworkThemes(Module module, AndroidTargetData targetData, List<ThemeData> themes) {
+  private static void doCollectFrameworkThemes(Module module,
+                                               @NotNull AndroidTargetData targetData,
+                                               List<ThemeData> themes,
+                                               Set<ThemeData> addedThemes) {
     final List<String> frameworkThemeNames = new ArrayList<String>(targetData.getThemes(module));
     Collections.sort(frameworkThemeNames);
     for (String themeName : frameworkThemeNames) {
-      themes.add(new ThemeData(themeName, false));
+      final ThemeData themeData = new ThemeData(themeName, false);
+      if (addedThemes.add(themeData)) {
+        themes.add(themeData);
+      }
     }
   }
 
-  private void collectThemesFromManifest(AndroidFacet facet, List<ThemeData> resultList, Set<ThemeData> addedThemes) {
+  private void collectThemesFromManifest(AndroidFacet facet, List<ThemeData> resultList, Set<ThemeData> addedThemes, boolean fromProject) {
     final Manifest manifest = facet.getManifest();
     if (manifest == null) {
       return;
@@ -731,7 +937,8 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
       preferredTheme = getThemeByRef(getDefaultTheme(target, renderingTarget, screenSize));
     }
 
-    if (addedThemes.add(preferredTheme)) {
+    if (!addedThemes.contains(preferredTheme) && fromProject == preferredTheme.isProjectTheme()) {
+      addedThemes.add(preferredTheme);
       resultList.add(preferredTheme);
     }
 
@@ -741,7 +948,8 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
         final String activityThemeRef = activityTag.getAttributeValue("theme", SdkConstants.NS_RESOURCES);
         if (activityThemeRef != null) {
           final ThemeData activityTheme = getThemeByRef(activityThemeRef);
-          if (addedThemes.add(activityTheme)) {
+          if (!addedThemes.contains(activityTheme) && fromProject == activityTheme.isProjectTheme()) {
+            addedThemes.add(activityTheme);
             activityThemesList.add(activityTheme);
           }
         }
@@ -849,78 +1057,57 @@ public class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   @NotNull
   private static ThemeData getThemeByRef(@NotNull String themeRef) {
+    final boolean isProjectTheme = !themeRef.startsWith(ResourceResolver.PREFIX_ANDROID_STYLE);
     if (themeRef.startsWith(ResourceResolver.PREFIX_STYLE)) {
       themeRef = themeRef.substring(ResourceResolver.PREFIX_STYLE.length());
     }
     else if (themeRef.startsWith(ResourceResolver.PREFIX_ANDROID_STYLE)) {
       themeRef = themeRef.substring(ResourceResolver.PREFIX_ANDROID_STYLE.length());
     }
-    boolean isProjectTheme = !themeRef.startsWith(ResourceResolver.PREFIX_ANDROID_STYLE);
     return new ThemeData(themeRef, isProjectTheme);
   }
 
   @Nullable
   public LayoutDeviceConfiguration getSelectedDeviceConfiguration() {
-    final LayoutDeviceConfiguration selectedDeviceConfig = (LayoutDeviceConfiguration)myDeviceConfigurationsCombo.getSelectedItem();
-    if (selectedDeviceConfig != null) {
-      mySettings.getState().setDeviceConfiguration(selectedDeviceConfig.getName());
-    }
-    return selectedDeviceConfig;
+    return (LayoutDeviceConfiguration)myDeviceConfigurationsCombo.getSelectedItem();
   }
 
   @Nullable
   public LayoutDevice getSelectedDevice() {
-    final LayoutDevice selectedDevice = (LayoutDevice)myDevicesCombo.getSelectedItem();
-    if (selectedDevice != null) {
-      mySettings.getState().setDevice(selectedDevice.getName());
+    final Object selectedObj = myDevicesCombo.getSelectedItem();
+    if (selectedObj instanceof LayoutDevice) {
+      return (LayoutDevice)selectedObj;
     }
-    return selectedDevice;
+    return null;
   }
 
   @Nullable
   public DockMode getSelectedDockMode() {
-    final DockMode selectedDockMode = (DockMode)myDockModeCombo.getSelectedItem();
-    if (selectedDockMode != null) {
-      mySettings.getState().setDockMode(selectedDockMode.getResourceValue());
-    }
-    return selectedDockMode;
+    return (DockMode)myDockModeCombo.getSelectedItem();
   }
 
   @Nullable
   public NightMode getSelectedNightMode() {
-    final NightMode selectedNightMode = (NightMode)myNightCombo.getSelectedItem();
-    if (selectedNightMode != null) {
-      mySettings.getState().setNightMode(selectedNightMode.getResourceValue());
-    }
-    return selectedNightMode;
+    return (NightMode)myNightCombo.getSelectedItem();
   }
 
   @Nullable
   public IAndroidTarget getSelectedTarget() {
-    final IAndroidTarget selectedTarget = (IAndroidTarget)myTargetCombo.getSelectedItem();
-    if (selectedTarget != null) {
-      mySettings.getState().setTargetHashString(selectedTarget.hashString());
-    }
-    return selectedTarget;
+    return (IAndroidTarget)myTargetCombo.getSelectedItem();
   }
 
   @Nullable
   public LocaleData getSelectedLocaleData() {
-    final LocaleData selectedLocale = (LocaleData)myLocaleCombo.getSelectedItem();
-    if (selectedLocale != null) {
-      mySettings.getState().setLocaleLanguage(selectedLocale.getLanguage());
-      mySettings.getState().setLocaleRegion(selectedLocale.getRegion());
-    }
-    return selectedLocale;
+    return (LocaleData)myLocaleCombo.getSelectedItem();
   }
 
   @Nullable
   public ThemeData getSelectedTheme() {
-    final ThemeData selectedTheme = (ThemeData)myThemeCombo.getSelectedItem();
-    if (selectedTheme != null) {
-      mySettings.getState().setTheme(selectedTheme.getName());
+    final Object item = myThemeCombo.getSelectedItem();
+    if (item instanceof ThemeData) {
+      return (ThemeData)item;
     }
-    return selectedTheme;
+    return null;
   }
 
   private class MyZoomInAction extends AnAction {

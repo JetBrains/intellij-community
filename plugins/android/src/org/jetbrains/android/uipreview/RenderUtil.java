@@ -55,6 +55,8 @@ class RenderUtil {
                                      @NotNull IAndroidTarget target,
                                      @NotNull AndroidFacet facet,
                                      @NotNull FolderConfiguration config,
+                                     float xdpi,
+                                     float ydpi,
                                      @NotNull ThemeData theme)
     throws RenderingException, IOException, AndroidSdkNotConfiguredException {
     final Sdk sdk = ModuleRootManager.getInstance(facet.getModule()).getSdk();
@@ -79,14 +81,6 @@ class RenderUtil {
       throw new RenderingException(AndroidBundle.message("android.layout.preview.cannot.load.library.error"));
     }
 
-    /*if (ourTargetHashString == null || ourCachedFactory == null || !ourTargetHashString.equals(target.hashString())) {
-      ourTargetHashString = target.hashString();
-      ourCachedFactory = RenderServiceFactory.create(target, enumMap);
-      if (ourCachedFactory == null) {
-        throw new RenderingException(AndroidBundle.message("android.layout.preview.cannot.load.library.error"));
-      }
-    }*/
-
     final ResourceRepository repository = new ResourceRepository(false) {
       @Override
       protected ResourceItem createResourceItem(String name) {
@@ -101,7 +95,7 @@ class RenderUtil {
 
     final ResourceResolver resources = factory.createResourceResolver(config, repository, theme.getName(), theme.isProjectTheme());
     final int minSdkVersion = getMinSdkVersion(facet);
-    final RenderService renderService = factory.createService(resources, config, new ProjectCallback(), minSdkVersion);
+    final RenderService renderService = factory.createService(resources, config, xdpi, ydpi, new ProjectCallback(), minSdkVersion);
 
     final RenderSession session;
     try {

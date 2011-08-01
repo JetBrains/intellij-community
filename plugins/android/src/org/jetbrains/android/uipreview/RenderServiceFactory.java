@@ -75,9 +75,11 @@ public class RenderServiceFactory {
 
   public RenderService createService(ResourceResolver resources,
                                      FolderConfiguration config,
+                                     float xdpi,
+                                     float ydpi,
                                      IProjectCallback projectCallback,
                                      int minSdkVersion) {
-    return new RenderService(myLibrary, resources, config, projectCallback, minSdkVersion);
+    return new RenderService(myLibrary, resources, config, xdpi, ydpi, projectCallback, minSdkVersion);
   }
 
   private RenderServiceFactory(@NotNull Map<String, Map<String, Integer>> enumMap) {
