@@ -79,11 +79,7 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
         removeReferences(myParameter);
       }
     };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-    }
+    runnable.run();
   }
 
   private static void removeReferences(PsiParameter parameter) {

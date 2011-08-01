@@ -113,11 +113,7 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
           UndoUtil.markPsiFileForUndo(file);
         }
       };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable.run();
-      } else {
-        ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-      }
+      runnable.run();
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

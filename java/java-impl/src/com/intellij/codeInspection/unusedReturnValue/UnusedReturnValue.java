@@ -165,16 +165,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
                                                                   PsiType.VOID,
                                                                   infos);
 
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          csp.run();
-        }
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable.run();
-      } else {
-        ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-      }
+      csp.run();
     }
 
     private static void replaceReturnStatements(@NotNull final PsiMethod method) {
