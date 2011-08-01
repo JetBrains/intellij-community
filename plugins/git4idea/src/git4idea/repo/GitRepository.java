@@ -38,7 +38,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * </p>
  * <p>
  *   The GitRepository is updated "externally" by the {@link git4idea.repo.GitRepositoryUpdater}, when correspondent .git service files
- *   change. To force the update procedure call {@link #refresh()}.
+ *   change. To force asynchronous update, it is enough to call {@link VirtualFile#refresh(boolean, boolean) refresh} on the root directory.
+ * </p>
+ * <p>
+ *   To make a synchronous update of the repository call {@link #update(TrackedTopic...)} and specify
+ *   which topics should be updated. Updating requires reading from disk, so updating {@link GitRepository.TrackedTopic.ALL} may take some time.
  * </p>
  * <p>
  *   Other components may subscribe to GitRepository changes via the {@link #GIT_REPO_CHANGE} {@link Topic}
@@ -221,14 +225,6 @@ public final class GitRepository implements Disposable {
     MessageBusConnection connection = myMessageBus.connect();
     Disposer.register(this, connection);
     connection.subscribe(GIT_REPO_CHANGE, listener);
-  }
-
-  /**
-   * Refreshes the .git directory asynchronously.
-   * Call this method after performing write operations on the Git repository: such as commit, fetch, reset, etc.
-   */
-  public void refresh() {
-    myGitDir.refresh(true, true);
   }
 
   /**
