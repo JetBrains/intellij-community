@@ -322,17 +322,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   public void installActions(final int index, final NavBarItem component) {
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-          myModel.setSelectedIndex(index);
-          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
-          doubleClick(index);
-          e.consume();
-        }
-      }
-    });
-
-    ListenerUtil.addMouseListener(component, new MouseAdapter() {
       public void mouseReleased(final MouseEvent e) {
         if (SystemInfo.isWindows) {
           click(e);
@@ -346,33 +335,26 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
 
       private void click(final MouseEvent e) {
-        if (!e.isConsumed() && e.isPopupTrigger()) {
+        if (e.isConsumed()) return;
+
+        if (e.isPopupTrigger()) {
           myModel.setSelectedIndex(index);
           IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
           rightClick(index);
           e.consume();
         }
-      }
-    });
-
-    ListenerUtil.addMouseListener(component, new MouseAdapter() {
-      public void mouseReleased(final MouseEvent e) {
-        if (SystemInfo.isWindows) {
-          click(e);
-        }
-      }
-
-      public void mousePressed(final MouseEvent e) {
-        if (!SystemInfo.isWindows) {
-          click(e);
-        }
-      }
-
-      private void click(final MouseEvent e) {
-        if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 1) {
-          ctrlClick(index);
-          myModel.setSelectedIndex(index);
-          e.consume();
+        else if (!e.isPopupTrigger()) {
+          if (e.getClickCount() == 1) {
+            ctrlClick(index);
+            myModel.setSelectedIndex(index);
+            e.consume();
+          }
+          else if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+            myModel.setSelectedIndex(index);
+            IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+            doubleClick(index);
+            e.consume();
+          }
         }
       }
     });
