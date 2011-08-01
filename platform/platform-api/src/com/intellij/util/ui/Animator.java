@@ -17,6 +17,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
@@ -127,7 +128,8 @@ public abstract class Animator implements Disposable {
   }
 
   public void resume() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    final Application app = ApplicationManager.getApplication();
+    if (app == null || app.isUnitTestMode()) return;
 
     if (myCycleDuration == 0) {
       myCurrentFrame = myTotalFrames - 1;
