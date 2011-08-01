@@ -253,7 +253,7 @@ public class ImportHelper{
   private static void calcClassesConflictingViaOnDemandImports(PsiJavaFile file, Collection<String> onDemandImportsList,
                                                                GlobalSearchScope resolveScope, final Set<String> namesToUseSingle) {
     List<String> onDemands = new ArrayList<String>(Arrays.asList(file.getImplicitlyImportedPackages()));
-    for (String onDemand : onDemands) {
+    for (String onDemand : onDemandImportsList) {
       if (!onDemands.contains(onDemand)) {
         onDemands.add(onDemand);
       }

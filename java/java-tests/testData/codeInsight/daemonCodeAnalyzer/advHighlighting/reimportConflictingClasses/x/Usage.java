@@ -4,6 +4,7 @@ import x.n.X1;
 import x.n.X2;
 import x.n.X3;
 
+@Deprecated
 public class Y {
     X1 x1;
     x.n.Class s;
