@@ -61,7 +61,9 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
   @Override
   public FileHolder copy() {
     final IgnoredFilesCompositeHolder result = new IgnoredFilesCompositeHolder(myProject);
-    result.myHolderMap.putAll(new HashMap<AbstractVcs, IgnoredFilesHolder>(myHolderMap));
+    for (Map.Entry<AbstractVcs, IgnoredFilesHolder> entry : myHolderMap.entrySet()) {
+      result.myHolderMap.put(entry.getKey(), (IgnoredFilesHolder) entry.getValue().copy());
+    }
     return result;
   }
 
