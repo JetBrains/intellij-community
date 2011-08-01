@@ -15,7 +15,9 @@
  */
 package com.intellij.framework;
 
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -27,10 +29,10 @@ public class FrameworkType {
   private final String myPresentableName;
   private final Icon myIcon;
 
-  public FrameworkType(@NotNull String id, @NotNull String presentableName, @NotNull Icon icon) {
+  public FrameworkType(@NotNull String id, @NotNull String presentableName, @Nullable Icon icon) {
     myId = id;
     myPresentableName = presentableName;
-    myIcon = icon;
+    myIcon = icon != null ? icon : EmptyIcon.ICON_16;
   }
 
   @NotNull

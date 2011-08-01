@@ -20,10 +20,10 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
+import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,9 +47,8 @@ public class FrameworkDetectionContextImpl extends FrameworkDetectionContextBase
 
   @NotNull
   @Override
-  public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetType<F, C> facetType,
-                                                                                                                     @NotNull Collection<VirtualFile> files,
-                                                                                                                     @NotNull FacetConfigurationCreator<C> creator) {
+  public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetBasedFrameworkDetector<F, C> detector,
+                                                                                                                                      @NotNull Collection<VirtualFile> files) {
     MultiMapBasedOnSet<Module, VirtualFile> filesByModule = new MultiMapBasedOnSet<Module, VirtualFile>();
     for (VirtualFile file : files) {
       final Module module = ModuleUtil.findModuleForFile(file, myProject);
@@ -58,6 +57,7 @@ public class FrameworkDetectionContextImpl extends FrameworkDetectionContextBase
       }
     }
     final List<DetectedFrameworkDescription> result = new ArrayList<DetectedFrameworkDescription>();
+    final FacetType<F,C> facetType = detector.getFacetType();
     final FacetsProvider provider = DefaultFacetsProvider.INSTANCE;
     for (Module module : filesByModule.keySet()) {
       final Collection<F> facets = provider.getFacetsByType(module, facetType.getId());
@@ -69,9 +69,10 @@ public class FrameworkDetectionContextImpl extends FrameworkDetectionContextBase
         //noinspection unchecked
         existentConfigurations.add((C)facet.getConfiguration());
       }
-      final List<Pair<C, Collection<VirtualFile>>> pairs = creator.createConfigurations(files, ModuleRootManager.getInstance(module), existentConfigurations);
+      final Collection<VirtualFile> moduleFiles = filesByModule.get(module);
+      final List<Pair<C, Collection<VirtualFile>>> pairs = detector.createConfigurations(moduleFiles, existentConfigurations);
       for (Pair<C, Collection<VirtualFile>> pair : pairs) {
-        result.add(new FacetBasedDetectedFrameworkDescription<C>(module, pair.getFirst(), new HashSet<VirtualFile>(pair.getSecond()), facetType));
+        result.add(new FacetBasedDetectedFrameworkDescriptionImpl<F, C>(module, detector, pair.getFirst(), new HashSet<VirtualFile>(pair.getSecond())));
       }
     }
     return result;

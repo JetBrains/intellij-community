@@ -17,6 +17,7 @@ package com.intellij.framework.detection;
 
 import com.intellij.framework.FrameworkType;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,7 @@ public abstract class DetectedFrameworkDescription {
   @NotNull
   public abstract String getSetupDescription();
 
-  public abstract void configureFramework(ModifiableModelsProvider modifiableModelsProvider);
+  public abstract void configureFramework(ModifiableModelsProvider modifiableModelsProvider, ModulesProvider modulesProvider);
 
   public abstract boolean equals(Object obj);
 

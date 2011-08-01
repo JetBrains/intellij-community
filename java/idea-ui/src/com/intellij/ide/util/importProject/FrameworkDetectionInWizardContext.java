@@ -17,38 +17,72 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.FacetType;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
+import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.impl.FrameworkDetectionContextBase;
-import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.io.File;
+import java.util.*;
 
 /**
  * @author nik
  */
-public class FrameworkDetectionInWizardContext extends FrameworkDetectionContextBase {
-  private final SourcePathsBuilder myBuilder;
-
-  public FrameworkDetectionInWizardContext(SourcePathsBuilder builder) {
-    myBuilder = builder;
+public abstract class FrameworkDetectionInWizardContext extends FrameworkDetectionContextBase {
+  protected FrameworkDetectionInWizardContext() {
   }
 
   @NotNull
   @Override
-  public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetType<F, C> facetType,
-                                                                                                                                      @NotNull Collection<VirtualFile> files,
-                                                                                                                                      @NotNull FacetConfigurationCreator<C> creator) {
-    return Collections.emptyList();
+  public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetBasedFrameworkDetector<F, C> detector,
+                                                                                                                                      @NotNull Collection<VirtualFile> files) {
+    final List<ModuleDescriptor> descriptors = getModuleDescriptors();
+    MultiMap<ModuleDescriptor, VirtualFile> filesByModule = new MultiMap<ModuleDescriptor, VirtualFile>();
+    for (VirtualFile file : files) {
+      final File ioFile = VfsUtil.virtualToIoFile(file);
+      ModuleDescriptor descriptor = findDescriptorByFile(descriptors, ioFile);
+      if (descriptor != null) {
+        filesByModule.putValue(descriptor, file);
+      }
+    }
+
+    final List<DetectedFrameworkDescription> result = new ArrayList<DetectedFrameworkDescription>();
+    for (ModuleDescriptor module : filesByModule.keySet()) {
+      final List<Pair<C,Collection<VirtualFile>>> pairs = detector.createConfigurations(filesByModule.get(module), Collections.<C>emptyList());
+      for (Pair<C, Collection<VirtualFile>> pair : pairs) {
+        result.add(new FacetBasedDetectedFrameworkDescriptionInWizard<F, C>(module, detector, pair.getFirst(),
+                                                                            new HashSet<VirtualFile>(pair.getSecond())));
+      }
+    }
+    return result;
+  }
+
+  protected abstract List<ModuleDescriptor> getModuleDescriptors();
+
+  @Nullable
+  private static ModuleDescriptor findDescriptorByFile(List<ModuleDescriptor> descriptors, File file) {
+    for (ModuleDescriptor descriptor : descriptors) {
+      for (File root : descriptor.getContentRoots()) {
+        if (FileUtil.isAncestor(root, file, false)) {
+          return descriptor;
+        }
+      }
+    }
+    return null;
   }
 
   public VirtualFile getBaseDir() {
-    final String path = myBuilder.getContentEntryPath();
+    final String path = getContentPath();
     return path != null ? LocalFileSystem.getInstance().refreshAndFindFileByPath(path) : null;
   }
+
+  @Nullable
+  protected abstract String getContentPath();
 }

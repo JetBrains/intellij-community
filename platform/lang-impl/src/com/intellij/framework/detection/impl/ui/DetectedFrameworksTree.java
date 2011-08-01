@@ -67,10 +67,14 @@ public class DetectedFrameworksTree extends CheckboxTree {
         externalNodes.add(frameworkNode);
       }
     }
+    List<FrameworkDirectoryNode> rootDirs = new ArrayList<FrameworkDirectoryNode>();
     for (FrameworkDirectoryNode directoryNode : nodes.values()) {
       if (directoryNode.getParent() == null) {
-        root.add(collapseDirectoryNode(directoryNode));
+        rootDirs.add(directoryNode);
       }
+    }
+    for (FrameworkDirectoryNode dir : rootDirs) {
+      root.add(collapseDirectoryNode(dir));
     }
     for (DetectedFrameworkNode node : externalNodes) {
       root.add(node);

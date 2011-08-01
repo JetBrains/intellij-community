@@ -15,35 +15,10 @@
  */
 package com.intellij.framework.detection.impl;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.FacetType;
-import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.FrameworkDetectionContext;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author nik
  */
 public abstract class FrameworkDetectionContextBase implements FrameworkDetectionContext {
-  @NotNull
-  @Override
-  public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull final FacetType<F, C> facetType,
-                                                                                                                     @NotNull Collection<VirtualFile> files) {
-    return createDetectedFacetDescriptions(facetType, files, new FacetConfigurationCreator<C>() {
-      @NotNull
-      @Override
-      public List<Pair<C,Collection<VirtualFile>>> createConfigurations(@NotNull Collection<VirtualFile> files,
-                                                                        @NotNull ModuleRootModel rootModel, @NotNull Collection<C> existentFacetConfigurations) {
-        return Collections.singletonList(Pair.create(facetType.createDefaultConfiguration(), files));
-      }
-    });
-  }
 }

@@ -36,6 +36,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -219,7 +220,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       try {
         final PlatformModifiableModelsProvider provider = new PlatformModifiableModelsProvider();
         for (DetectedFrameworkDescription description : selected) {
-          description.configureFramework(provider);
+          description.configureFramework(provider, new DefaultModulesProvider(myProject));
           myDetectedFrameworksData.putExistentFrameworkFiles(frameworksToId.get(description), description.getRelatedFiles());
         }
       }

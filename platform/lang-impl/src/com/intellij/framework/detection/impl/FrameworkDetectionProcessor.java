@@ -18,6 +18,7 @@ package com.intellij.framework.detection.impl;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.framework.detection.FrameworkDetector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,15 +29,21 @@ import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
  */
 public class FrameworkDetectionProcessor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.FrameworkDetectionProcessor");
   private final ProgressIndicator myProgressIndicator;
   private final MultiMap<FileType, FrameworkDetectorData> myDetectorsByFileType;
+  private Set<VirtualFile> myProcessedFiles;
+
   private final FrameworkDetectionContext myContext;
 
   public FrameworkDetectionProcessor(ProgressIndicator progressIndicator, final FrameworkDetectionContext context) {
@@ -50,6 +57,7 @@ public class FrameworkDetectionProcessor {
   }
 
   public List<DetectedFrameworkDescription> processRoots(List<File> roots) {
+    myProcessedFiles = new HashSet<VirtualFile>();
     for (File root : roots) {
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
       if (virtualFile == null) continue;
@@ -63,7 +71,7 @@ public class FrameworkDetectionProcessor {
   }
 
   private void collectSuitableFiles(@NotNull VirtualFile file) {
-    if (myProgressIndicator.isCanceled()) return;
+    if (myProgressIndicator.isCanceled() || !myProcessedFiles.add(file)) return;
 
     if (file.isDirectory()) {
       file.getChildren();//initialize myChildren field to ensure that refresh will be really performed
@@ -76,16 +84,21 @@ public class FrameworkDetectionProcessor {
     }
 
     final FileType fileType = file.getFileType();
-    if (myDetectorsByFileType.containsKey(fileType)) {
+    if (!myDetectorsByFileType.containsKey(fileType)) {
       return;
     }
 
     myProgressIndicator.setText2(file.getPresentableUrl());
-    FileContent fileContent = new FileContent(file);
-    for (FrameworkDetectorData detector : myDetectorsByFileType.get(fileType)) {
-      if (detector.myFilePattern.accepts(fileContent)) {
-        detector.mySuitableFiles.add(file);
+    try {
+      FileContent fileContent = new FileContent(file, file.contentsToByteArray(false));
+      for (FrameworkDetectorData detector : myDetectorsByFileType.get(fileType)) {
+        if (detector.myFilePattern.accepts(fileContent)) {
+          detector.mySuitableFiles.add(file);
+        }
       }
+    }
+    catch (IOException e) {
+      LOG.info(e);
     }
   }
 

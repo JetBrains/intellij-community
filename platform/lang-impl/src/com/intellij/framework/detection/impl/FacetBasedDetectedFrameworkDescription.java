@@ -15,16 +15,13 @@
  */
 package com.intellij.framework.detection.impl;
 
-import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetType;
-import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.facet.*;
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
+import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,20 +31,22 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class FacetBasedDetectedFrameworkDescription<C extends FacetConfiguration> extends DetectedFrameworkDescription {
-  private final Module myModule;
+public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C extends FacetConfiguration> extends DetectedFrameworkDescription {
+  private final FacetBasedFrameworkDetector<F, C> myDetector;
   private final C myConfiguration;
   private final Set<VirtualFile> myRelatedFiles;
-  private final FacetType<?,C> myFacetType;
-  private FrameworkType myFrameworkType;
+  private final FacetType<F,C> myFacetType;
+  private final FrameworkType myFrameworkType;
 
-  public FacetBasedDetectedFrameworkDescription(@NotNull Module module, @NotNull C configuration, Set<VirtualFile> files, FacetType<?, C> type) {
-    myModule = module;
+  public FacetBasedDetectedFrameworkDescription(FacetBasedFrameworkDetector<F, C> detector,
+                                                @NotNull C configuration,
+                                                Set<VirtualFile> files) {
+    myDetector = detector;
     myConfiguration = configuration;
     myRelatedFiles = files;
-    myFacetType = type;
+    myFacetType = detector.getFacetType();
     final Icon icon = myFacetType.getIcon();
-    myFrameworkType = new FrameworkType(myFacetType.getStringId(), myFacetType.getPresentableName(), icon != null ? icon : EmptyIcon.ICON_16);
+    myFrameworkType = new FrameworkType(myFacetType.getStringId(), myFacetType.getPresentableName(), icon);
   }
 
   @NotNull
@@ -65,14 +64,17 @@ public class FacetBasedDetectedFrameworkDescription<C extends FacetConfiguration
   @NotNull
   @Override
   public String getSetupDescription() {
-    return "'" + myFacetType.getPresentableName() + "' facet will be added to '" + myModule.getName() + "' module";
+    return "'" + myFacetType.getPresentableName() + "' facet will be added to '" + getModuleName() + "' module";
   }
 
-  @Override
-  public void configureFramework(ModifiableModelsProvider modifiableModelsProvider) {
-    final ModifiableFacetModel model = modifiableModelsProvider.getFacetModifiableModel(myModule);
-    model.addFacet(FacetManager.getInstance(myModule).createFacet(myFacetType, myFacetType.getDefaultFacetName(), myConfiguration, null));
-    modifiableModelsProvider.commitFacetModifiableModel(myModule, model);
+  protected abstract String getModuleName();
+
+  protected void doConfigure(ModifiableModelsProvider modifiableModelsProvider, final Module module) {
+    final ModifiableFacetModel model = modifiableModelsProvider.getFacetModifiableModel(module);
+    final F facet = FacetManager.getInstance(module).createFacet(myFacetType, myFacetType.getDefaultFacetName(), myConfiguration, null);
+    model.addFacet(facet);
+    modifiableModelsProvider.commitFacetModifiableModel(module, model);
+    myDetector.setupFacet(facet);
   }
 
   @Override
@@ -81,11 +83,11 @@ public class FacetBasedDetectedFrameworkDescription<C extends FacetConfiguration
       return false;
     }
     final FacetBasedDetectedFrameworkDescription other = (FacetBasedDetectedFrameworkDescription)obj;
-    return myModule.equals(other.myModule) && myFacetType.equals(other.myFacetType) && myRelatedFiles.equals(other.myRelatedFiles);
+    return getModuleName().equals(other.getModuleName()) && myFacetType.equals(other.myFacetType) && myRelatedFiles.equals(other.myRelatedFiles);
   }
 
   @Override
   public int hashCode() {
-    return myModule.hashCode() + 31*myFacetType.hashCode() + 239*myRelatedFiles.hashCode();
+    return getModuleName().hashCode() + 31*myFacetType.hashCode() + 239*myRelatedFiles.hashCode();
   }
 }

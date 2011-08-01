@@ -22,7 +22,6 @@ import com.intellij.framework.detection.impl.exclude.ExcludesConfigurationState;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.ui.EmptyIcon;
 
 import java.io.File;
 import java.io.IOException;
@@ -128,11 +127,11 @@ public class DetectionExcludesConfigurationTest extends PlatformTestCase {
   }
 
   private static FrameworkType getType() {
-    return new FrameworkType("type", "Type", EmptyIcon.ICON_16);
+    return new FrameworkType("type", "Type", null);
   }
 
   private static FrameworkType getType2() {
-    return new FrameworkType("type2", "Type2", EmptyIcon.ICON_16);
+    return new FrameworkType("type2", "Type2", null);
   }
 
   private DetectionExcludesConfigurationImpl getConfiguration() {
