@@ -18,7 +18,6 @@ package com.intellij.ui.plaf.gtk;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import sun.swing.plaf.synth.SynthUI;
 
 import javax.swing.*;
 import javax.swing.plaf.MenuItemUI;
@@ -38,7 +37,7 @@ public class GtkMenuItemUI extends BasicMenuItemUI {
   }
 
   public static boolean isUiAcceptable(final MenuItemUI ui) {
-    return ui instanceof BasicMenuItemUI && ui instanceof SynthUI;
+    return ui instanceof BasicMenuItemUI && GtkPaintingUtil.isSynthUI(ui);
   }
 
   @Override
@@ -63,7 +62,7 @@ public class GtkMenuItemUI extends BasicMenuItemUI {
 
   private static Icon getCheckIconFromContext(final BasicMenuItemUI originalUI, final JCheckBoxMenuItem item) {
     if (myCachedCheckIcon == null) {
-      final SynthContext context = ((SynthUI)originalUI).getContext(item);
+      final SynthContext context = GtkPaintingUtil.getSynthContext(originalUI, item);
       myCachedCheckIcon = context.getStyle().getIcon(context, "CheckBoxMenuItem.checkIcon");
     }
     return myCachedCheckIcon;
@@ -89,7 +88,7 @@ public class GtkMenuItemUI extends BasicMenuItemUI {
       disabledForeground = fg;
     }
     if (checkIcon != null && !(checkIcon instanceof IconWrapper) && !(checkIcon instanceof EmptyIcon)) {
-      checkIcon = new IconWrapper(checkIcon, (SynthUI)myOriginalUI);
+      checkIcon = new IconWrapper(checkIcon, myOriginalUI);
     }
 
     super.update(g, c);
