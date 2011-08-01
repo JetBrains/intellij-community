@@ -249,10 +249,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     PsiStatement statement = statements[0];
     if (PropertyUtil.isSimplePropertyGetter(method)) {
       if (statement instanceof PsiReturnStatement) {
-        PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
-        if (returnValue instanceof PsiReferenceExpression) {
-          return ((PsiReferenceExpression)returnValue).resolve() instanceof PsiField;
-        }
+        return ((PsiReturnStatement)statement).getReturnValue() instanceof PsiReferenceExpression;
       }
     }
     else if (PropertyUtil.isSimplePropertySetter(method)) {
@@ -261,10 +258,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
         if (expr instanceof PsiAssignmentExpression) {
           PsiExpression lhs = ((PsiAssignmentExpression)expr).getLExpression();
           PsiExpression rhs = ((PsiAssignmentExpression)expr).getRExpression();
-          if (lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
-            return ((PsiReferenceExpression)lhs).resolve() instanceof PsiField &&
-                   ((PsiReferenceExpression)rhs).resolve() instanceof PsiParameter;
-          }
+          return lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression && !((PsiReferenceExpression)rhs).isQualified();
         }
       }
     }
