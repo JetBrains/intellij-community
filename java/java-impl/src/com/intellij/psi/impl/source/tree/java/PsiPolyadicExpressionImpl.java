@@ -116,9 +116,19 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
   @NotNull
   @Override
   public PsiExpression[] getOperands() {
-    return getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, Constants.PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
+    PsiExpression[] operands = cachedOperands;
+    if (operands == null) {
+      cachedOperands = operands = getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, Constants.PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
+    }
+    return operands;
   }
 
+  private volatile PsiExpression[] cachedOperands;
+  @Override
+  public void clearCaches() {
+    cachedOperands = null;
+    super.clearCaches();
+  }
 
   public String toString() {
     return "PsiPolyadicExpression: " + getText();

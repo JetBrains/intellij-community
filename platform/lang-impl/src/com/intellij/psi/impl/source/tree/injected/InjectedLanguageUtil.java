@@ -37,7 +37,6 @@ import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.util.ParameterizedCachedValueImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -187,53 +186,29 @@ public class InjectedLanguageUtil {
   }
 
   private static final InjectedPsiCachedValueProvider INJECTED_PSI_PROVIDER = new InjectedPsiCachedValueProvider();
-  private static final Key<ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>> INJECTED_PSI_KEY = Key.create("INJECTED_PSI");
-  public static ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> NULL_VALUE = new ParameterizedCachedValueImpl<MultiHostRegistrarImpl, PsiElement>(new ParameterizedCachedValueProvider<MultiHostRegistrarImpl, PsiElement>() {
-    @Override
-    public CachedValueProvider.Result<MultiHostRegistrarImpl> compute(PsiElement param) {
-      return CachedValueProvider.Result.create(NULL_REGISTRAR, param.getManager().getModificationTracker());
-    }
-  }) {
-    @Override
-    public boolean isFromMyProject(Project project) {
-      return true;
-    }
-  };
-
-  private static final MultiHostRegistrarImpl NULL_REGISTRAR = new MultiHostRegistrarImpl();
-
+  private static final Key<ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>> INJECTED_PSI = Key.create("INJECTED_PSI");
 
   private static MultiHostRegistrarImpl probeElementsUp(@NotNull PsiElement element, @NotNull PsiFile hostPsiFile, boolean probeUp) {
     PsiManager psiManager = hostPsiFile.getManager();
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
     if (injectedManager == null) return null; //for tests
-
+    long modificationCount = psiManager.getModificationTracker().getModificationCount();
     MultiHostRegistrarImpl registrar = null;
-    PsiElement current;
+    PsiElement current = element;
     nextParent:
-    for (current = element; current != null && current != hostPsiFile; current = current.getParent()) {
+    while (current != null && current != hostPsiFile) {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
-      ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> data = current.getUserData(INJECTED_PSI_KEY);
+      ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> data = current.getUserData(INJECTED_PSI);
       if (data == null) {
         registrar = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
-        if (registrar != null) {
-          ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
-            CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
-
-          CachedValueProvider.Result<MultiHostRegistrarImpl> result = CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, calcDependencies(registrar));
-          ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(result);
-          current.putUserData(INJECTED_PSI_KEY, cachedValue);
-        }
       }
       else {
         registrar = data.getValue(current);
       }
-      if (registrar == NULL_REGISTRAR) {
-        registrar = null;
-        break;
-      }
+      current = current.getParent(); // cache no injection for current
+
       if (registrar != null) {
         List<Pair<Place, PsiFile>> places = registrar.result;
         // check that injections found intersect with queried element
@@ -247,13 +222,27 @@ public class InjectedLanguageUtil {
           }
         }
       }
-      if (!probeUp) break;
+      if (!probeUp) {
+        break;
+      }
     }
-    if (registrar == null) {
+
+    if (probeUp) {
+      // cache only if we walked all parents
       for (PsiElement e = element; e != current && e != null && e != hostPsiFile; e = e.getParent()) {
         ProgressManager.checkCanceled();
-        //store no-injection flag
-        e.putUserData(INJECTED_PSI_KEY, NULL_VALUE);
+        if (registrar == null) {
+          e.putUserData(INJECTED_PSI, null);
+        }
+        else {
+          ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
+            CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
+
+          CachedValueProvider.Result<MultiHostRegistrarImpl> result = CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, calcDependencies(registrar));
+          ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(result);
+
+          e.putUserData(INJECTED_PSI, cachedValue);
+        }
       }
     }
     return registrar;

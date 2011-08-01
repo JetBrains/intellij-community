@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -106,6 +107,10 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     }
     
     return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, toIgnore, false);
+  }
+
+  protected List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {
+    return DaemonAnalyzerTestCase.filter(doHighlighting(), minSeverity);
   }
 
   protected boolean doFolding() {

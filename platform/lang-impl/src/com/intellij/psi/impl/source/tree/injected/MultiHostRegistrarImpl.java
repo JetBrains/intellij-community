@@ -96,6 +96,11 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   }
 
   @NotNull
+  public PsiElement getContextElement() {
+    return myContextElement;
+  }
+
+  @NotNull
   public MultiHostRegistrar startInjecting(@NotNull Language language) {
     escapers = new SmartList<LiteralTextEscaper<? extends PsiLanguageInjectionHost>>();
     shreds = new SmartList<PsiLanguageInjectionHost.Shred>();
