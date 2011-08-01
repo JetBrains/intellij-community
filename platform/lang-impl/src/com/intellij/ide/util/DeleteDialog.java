@@ -17,6 +17,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -65,6 +66,13 @@ public class DeleteDialog extends DialogWrapper {
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()/*, getHelpAction()*/};
   }
+
+  @Override
+   protected Action getOKAction() {
+     Action result = super.getOKAction();
+     result.putValue(Action.NAME, ApplicationBundle.message("button.delete"));
+     return result;
+   }
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("refactoring.safeDelete");
