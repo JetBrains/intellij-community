@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +130,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       myState.lastPath = getProjectPath(openProjects[openProjects.length - 1]);
       myState.openPaths = new ArrayList<String>();
       for (Project openProject : openProjects) {
-        myState.openPaths.add(getProjectPath(openProject));
+        ContainerUtil.addIfNotNull(myState.openPaths, getProjectPath(openProject));
       }
     }
   }
@@ -219,7 +220,9 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   private class MyProjectManagerListener extends ProjectManagerAdapter {
     public void projectOpened(final Project project) {
       String path = getProjectPath(project);
-      markPathRecent(path);
+      if (path != null) {
+        markPathRecent(path);
+      }
     }
 
     public void projectClosed(final Project project) {
