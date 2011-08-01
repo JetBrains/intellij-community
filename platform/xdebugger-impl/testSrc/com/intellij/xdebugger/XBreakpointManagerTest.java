@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
@@ -22,6 +23,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -136,6 +138,19 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     out.setLength(0);
     myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "url", 239, new MyBreakpointProperties("a"));
     assertEquals("", out.toString());
+  }
+
+  public void testRemoveFile() {
+    final VirtualFile file = myTempFiles.createVFile("breakpoint", ".txt");
+    myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, null);
+    assertOneElement(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
+    try {
+      file.delete(this);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    assertEmpty(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
   }
 
   private XBreakpoint<MyBreakpointProperties> getSingleBreakpoint() {

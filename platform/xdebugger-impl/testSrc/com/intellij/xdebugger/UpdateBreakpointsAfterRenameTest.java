@@ -18,7 +18,6 @@ package com.intellij.xdebugger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 
@@ -27,19 +26,7 @@ import java.io.File;
 /**
  * @author nik
  */
-public class UpdateBreakpointsAfterRenameTest extends PlatformTestCase {
-  private File myTempDirectory;
-
-  public UpdateBreakpointsAfterRenameTest() {
-    initPlatformLangPrefix();
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myTempDirectory = createTempDirectory();
-  }
-
+public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
   public void testRenameFile() throws Exception {
     final VirtualFile file = createFile("file.txt");
     XLineBreakpoint<?> b = putBreakpoint(file);
@@ -68,7 +55,7 @@ public class UpdateBreakpointsAfterRenameTest extends PlatformTestCase {
   }
 
   private VirtualFile createFile(String path) {
-    final File ioFile = new File(myTempDirectory, FileUtil.toSystemDependentName(path));
+    final File ioFile = new File(myTempFiles.createTempDir(), FileUtil.toSystemDependentName(path));
     FileUtil.createIfDoesntExist(ioFile);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     assertNotNull(virtualFile);

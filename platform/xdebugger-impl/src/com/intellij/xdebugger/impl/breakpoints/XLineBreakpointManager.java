@@ -93,6 +93,17 @@ public class XLineBreakpointManager {
             }
           }
         }
+
+        @Override
+        public void fileDeleted(VirtualFileEvent event) {
+          List<XBreakpoint<?>> toRemove = new ArrayList<XBreakpoint<?>>();
+          for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
+            if (breakpoint.getFileUrl().equals(event.getFile().getUrl())) {
+              toRemove.add(breakpoint);
+            }
+          }
+          removeBreakpoints(toRemove);
+        }
       }, project);
     }
     myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project);
@@ -152,7 +163,7 @@ public class XLineBreakpointManager {
     if (breakpoints == null) return;
 
     TIntHashSet lines = new TIntHashSet();
-    final List<XLineBreakpointImpl> toRemove = new ArrayList<XLineBreakpointImpl>();
+    final List<XBreakpoint<?>> toRemove = new ArrayList<XBreakpoint<?>>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
       if (!breakpoint.isValid() || !lines.add(breakpoint.getLine())) {
@@ -160,9 +171,13 @@ public class XLineBreakpointManager {
       }
     }
 
+    removeBreakpoints(toRemove);
+  }
+
+  private void removeBreakpoints(final List<? extends XBreakpoint<?>> toRemove) {
     new WriteAction() {
       protected void run(final Result result) {
-        for (XLineBreakpointImpl breakpoint : toRemove) {
+        for (XBreakpoint<?> breakpoint : toRemove) {
           XDebuggerManager.getInstance(myProject).getBreakpointManager().removeBreakpoint(breakpoint);
         }
       }

@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger;
 
+import com.intellij.testFramework.TempFiles;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -32,11 +33,13 @@ import java.util.List;
  */
 public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
   protected XBreakpointManagerImpl myBreakpointManager;
+  protected TempFiles myTempFiles;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myBreakpointManager = new XBreakpointManagerImpl(myProject, null, null);
+    myBreakpointManager = (XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager();
+    myTempFiles = new TempFiles(myFilesToDelete);
   }
 
   protected void load(final Element element) {
