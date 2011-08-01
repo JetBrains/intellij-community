@@ -17,6 +17,7 @@ package com.intellij.compiler.impl.generic;
 
 import com.intellij.openapi.compiler.generic.GenericCompiler;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -44,8 +45,14 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
   }
 
   private void createMap() throws IOException {
-    myPersistentMap = new PersistentHashMap<KeyAndTargetData<Key>, PersistentStateData<SourceState,OutputState>>(myCacheFile, new SourceItemDataDescriptor(myCompiler.getItemKeyDescriptor()),
-                                                                  new PersistentStateDataExternalizer(myCompiler));
+    try {
+      myPersistentMap = new PersistentHashMap<KeyAndTargetData<Key>, PersistentStateData<SourceState,OutputState>>(myCacheFile, new SourceItemDataDescriptor(myCompiler.getItemKeyDescriptor()),
+                                                                    new PersistentStateDataExternalizer(myCompiler));
+    }
+    catch (PersistentHashMap.CorruptedException e) {
+      FileUtil.delete(myCacheFile);
+      throw e;
+    }
   }
 
   private KeyAndTargetData<Key> getKeyAndTargetData(Key key, int target) {
