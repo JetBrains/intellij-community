@@ -925,6 +925,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerPackagingInspections() {
+        m_inspectionClasses.add(ClassOnlyUsedInOnePackageInspection.class);
         m_inspectionClasses.add(ClassUnconnectedToPackageInspection.class);
         m_inspectionClasses.add(DisjointPackageInspection.class);
         m_inspectionClasses.add(EmptyDirectoryInspection.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith
+ * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,7 @@ public class DependencyUtils {
     @SuppressWarnings({"MethodWithMultipleLoops"})
     static void tabulateDependencyClasses(RefJavaElement element,
                                           Set<RefClass> dependencies) {
-        final Collection<RefElement> references =
-                element.getOutReferences();
+        final Collection<RefElement> references = element.getOutReferences();
         final RefJavaUtil refUtil = RefJavaUtil.getInstance();
         for (RefElement reference : references) {
             final RefClass refClass = refUtil.getTopLevelClass(reference);
