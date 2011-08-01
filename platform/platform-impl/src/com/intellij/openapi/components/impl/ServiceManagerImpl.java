@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -137,11 +138,18 @@ public class ServiceManagerImpl implements BaseComponent {
 
       return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
         public Object compute() {
-          synchronized (MyComponentAdapter.this) {
-            Object instance = myInitializedComponentInstance;
-            if (instance != null) return instance; // DCL is fine, field is volatile
-            myInitializedComponentInstance = instance = initializeInstance(container);
-            return instance;
+          // prevent storages from flushing and blocking FS
+          HeavyProcessLatch.INSTANCE.processStarted();
+          try {
+            synchronized (MyComponentAdapter.this) {
+              Object instance = myInitializedComponentInstance;
+              if (instance != null) return instance; // DCL is fine, field is volatile
+              myInitializedComponentInstance = instance = initializeInstance(container);
+              return instance;
+            }
+          }
+          finally {
+            HeavyProcessLatch.INSTANCE.processFinished();
           }
         }
       });
