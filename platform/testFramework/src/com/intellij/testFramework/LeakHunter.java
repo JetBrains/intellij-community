@@ -211,7 +211,9 @@ public class LeakHunter {
     }
     finally {
       visited.clear();
+      ((THashSet)visited).compact();
       toVisit.clear();
+      toVisit.trimToSize();
     }
   }
 }
