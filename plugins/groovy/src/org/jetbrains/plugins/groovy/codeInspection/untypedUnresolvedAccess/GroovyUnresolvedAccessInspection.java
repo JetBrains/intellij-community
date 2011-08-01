@@ -20,11 +20,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static org.jetbrains.plugins.groovy.annotator.GroovyAnnotator.isDeclarationAssignment;
 
@@ -59,21 +62,19 @@ public class GroovyUnresolvedAccessInspection extends BaseInspection {
     public void visitReferenceExpression(GrReferenceExpression refExpr) {
       super.visitReferenceExpression(refExpr);
 
-      GroovyResolveResult resolveResult = refExpr.advancedResolve();
+      PsiElement resolved = refExpr.advancedResolve().getElement();
+      if (resolved != null) return;
 
-      PsiElement resolved = resolveResult.getElement();
-      if (resolved != null) {
-        if (isDeclarationAssignment(refExpr) || resolved instanceof PsiPackage) return;
-      }
-      else {
-        GrExpression qualifier = refExpr.getQualifierExpression();
-        if (qualifier == null && isDeclarationAssignment(refExpr)) return;
-      }
+      GrExpression qualifier = refExpr.getQualifierExpression();
+      if (qualifier == null && isDeclarationAssignment(refExpr)) return;
 
-      if (resolved == null) {
-        PsiElement refNameElement = refExpr.getReferenceNameElement();
-        registerError(refNameElement == null ? refExpr : refNameElement);
-      }
+      PsiElement parent = refExpr.getParent();
+      if (!(parent instanceof GrCall) && ResolveUtil.isKeyOfMap(refExpr)) return; // It's a key of map.
+
+      if (!GroovyAnnotator.shouldHighlightAsUnresolved(refExpr)) return;
+
+      PsiElement refNameElement = refExpr.getReferenceNameElement();
+      registerError(refNameElement == null ? refExpr : refNameElement);
     }
 
   }
