@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.border.IdeaTitledBorder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,9 +64,6 @@ public class OptionGroup {
 
   public JPanel createPanel() {
     JPanel panel = new JPanel();
-    if (myTitle != null) {
-      panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(myTitle));
-    }
     panel.setLayout(new GridBagLayout());
 
     for (int i = 0; i < myOptions.size(); i++) {
@@ -78,7 +76,7 @@ public class OptionGroup {
         JComponent component = (JComponent)option;
         int verticalInset = component instanceof JLabel || component instanceof JTextField ? 2 : 0;
         panel.add(component,
-                  new GridBagConstraints(0, i, GridBagConstraints.REMAINDER , 1, 1, 0, GridBagConstraints.NORTHWEST, getFill(component),
+                  new GridBagConstraints(0, i, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.WEST, getFill(component),
                                          new Insets(verticalInset, leftInset, verticalInset, 5), 0, 0));
       }
       else {
@@ -101,6 +99,12 @@ public class OptionGroup {
               new GridBagConstraints(0, myOptions.size(), GridBagConstraints.REMAINDER, 1, 0, 1,
                                      GridBagConstraints.NORTH, GridBagConstraints.NONE,
                                      new Insets(0, 0, 0, 0), 0, 0));
+
+    if (myTitle != null) {
+      IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorderBoldWithIndent(myTitle);
+      panel.setBorder(titledBorder);
+      titledBorder.acceptMinimumSize(panel);
+    }
 
     return panel;
   }

@@ -25,11 +25,14 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.OptionGroup;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -59,17 +62,34 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   protected void init() {
     super.init();
 
+    JPanel optionsPanel = new JPanel(new GridBagLayout());
+    optionsPanel.add(createKeepBlankLinesPanel(),
+                     new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                                            new Insets(0, 0, 0, 0), 0, 0));
+    optionsPanel.add(createBlankLinesPanel(),
+                     new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                                            new Insets(0, 0, 0, 0), 0, 0));
+    optionsPanel.add(new JPanel(),
+                     new GridBagConstraints(0, 2, 1, 1, 0, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,
+                                            0));
+    optionsPanel.add(new JPanel(),
+                     new GridBagConstraints(1, 0, 1, 3, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,
+                                            0));
+
+    JScrollPane scroll = ScrollPaneFactory.createScrollPane(optionsPanel);
+    scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scroll.setBorder(null);
+    scroll.setMinimumSize(new Dimension(350, 0));
+
     myPanel
-      .add(createKeepBlankLinesPanel(),
-           new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 0, 4), 0, 0));
-    myPanel
-      .add(createBlankLinesPanel(),
-           new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 0, 4), 0, 0));
+      .add(scroll,
+           new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 4, 0, 4), 0, 0));
 
     final JPanel previewPanel = createPreviewPanel();
     myPanel
       .add(previewPanel,
-           new GridBagConstraints(1, 0, 1, 2, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 4), 0, 0));
+           new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 4), 0, 0));
 
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);
