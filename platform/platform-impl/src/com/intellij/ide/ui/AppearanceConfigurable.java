@@ -18,6 +18,7 @@ package com.intellij.ide.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -321,6 +322,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       myFontSizeCombo.setEnabled(enableChooser);
       myFontNameLabel.setEnabled(enableChooser);
       myFontSizeLabel.setEnabled(enableChooser);
+    }
+
+    private void createUIComponents() {
+      myFontSizeCombo = new ComboBox();
     }
   }
 

@@ -82,7 +82,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="5ea1e" class="javax.swing.JComboBox" binding="myFontSizeCombo">
+                  <component id="5ea1e" class="javax.swing.JComboBox" binding="myFontSizeCombo" custom-create="true">
                     <constraints>
                       <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false">
                         <minimum-size width="140" height="-1"/>
