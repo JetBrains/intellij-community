@@ -262,6 +262,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 try {
+                  if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
                   PsiElement[] psiRoots = file.getPsiRoots();
                   Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
                   for (PsiElement psiRoot : psiRoots) {
