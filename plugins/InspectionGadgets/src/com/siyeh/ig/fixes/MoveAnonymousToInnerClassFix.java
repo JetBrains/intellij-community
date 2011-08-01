@@ -18,6 +18,7 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
@@ -45,7 +46,7 @@ public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
         return name;
     }
 
-    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull final Project project, ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiAnonymousClass aClass =
                 (PsiAnonymousClass) nameElement.getParent();
@@ -55,6 +56,15 @@ public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
                 factory.createAnonymousToInnerHandler();
         final DataManager dataManager = DataManager.getInstance();
         final DataContext dataContext = dataManager.getDataContext();
-        anonymousToInner.invoke(project, new PsiElement[]{aClass}, dataContext);
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            anonymousToInner.invoke(project, new PsiElement[]{aClass}, dataContext);
+          }
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          runnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+        }
     }
 }

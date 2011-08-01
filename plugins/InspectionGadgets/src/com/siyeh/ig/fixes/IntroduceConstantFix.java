@@ -52,6 +52,6 @@ public class IntroduceConstantFix extends InspectionGadgetsFix {
                 introduceHandler.invoke(project, new PsiElement[]{constant},
                         dataContext);
             }
-        });
+        }, project.getDisposed());
     }
 }
