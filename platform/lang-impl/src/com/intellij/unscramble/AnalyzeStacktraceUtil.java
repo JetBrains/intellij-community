@@ -27,7 +27,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,6 +37,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,12 +66,13 @@ public class AnalyzeStacktraceUtil {
 
   @Nullable
   public static String getTextInClipboard() {
-    final Transferable contents = CopyPasteManagerEx.getInstanceEx().getSystemClipboardContents();
-    if (contents != null) {
-      try {
-        return (String)contents.getTransferData(DataFlavor.stringFlavor);
-      } catch (Exception e) {
-        //no luck
+    final CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
+    if (copyPasteManager.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+      final Transferable contents = copyPasteManager.getContents();
+      if (contents != null) {
+        try {
+          return (String)contents.getTransferData(DataFlavor.stringFlavor);
+        } catch (Exception ignore) { }
       }
     }
     return null;

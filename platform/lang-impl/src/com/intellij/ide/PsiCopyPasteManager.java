@@ -55,7 +55,11 @@ public class PsiCopyPasteManager {
   @Nullable
   public PsiElement[] getElements(boolean[] isCopied) {
     try {
-      Transferable content = myCopyPasteManager.getSystemClipboardContents();
+      Transferable content = myCopyPasteManager.getContents();
+      if (content == null) {
+        return null;
+      }
+
       Object transferData;
       try {
         transferData = content.getTransferData(ourDataFlavor);
