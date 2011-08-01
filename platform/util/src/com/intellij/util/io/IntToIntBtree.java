@@ -19,12 +19,14 @@ abstract class IntToIntBtree {
   final int pageSize;
   private final short maxInteriorNodes;
   private final short maxLeafNodes;
+  private final short maxLeafNodesInHash;
   final BtreeIndexNodeView root;
   private int height;
   private int maxStepsSearchedInHash;
   private int totalHashStepsSearched;
   private int hashSearchRequests;
   private int pagesCount;
+  private int hashedPagesCount;
   private int nextFreePage = -1;
   private int nextFreePageCount = 0;
   private int count;
@@ -49,6 +51,7 @@ abstract class IntToIntBtree {
     int i = (pageSize - BtreePage.RESERVED_META_PAGE_LEN) / BtreeIndexNodeView.INTERIOR_SIZE - 1;
     assert i < Short.MAX_VALUE && i % 2 == 0;
     maxInteriorNodes = (short)i;
+    maxLeafNodes = (short)i;
 
     int metaPageLen = BtreePage.RESERVED_META_PAGE_LEN;
 
@@ -72,7 +75,7 @@ abstract class IntToIntBtree {
     metaDataLeafPageLength = metaPageLen;
 
     assert i > 0 && i % 2 == 0;
-    maxLeafNodes = (short) i;
+    maxLeafNodesInHash = (short) i;
 
     pagesCount = 1;
     ((BtreePage)root).load();
@@ -93,6 +96,7 @@ abstract class IntToIntBtree {
     totalHashStepsSearched = storage.persistInt(24, totalHashStepsSearched, toDisk);
     nextFreePage = storage.persistInt(28, nextFreePage, toDisk);
     nextFreePageCount = storage.persistInt(32, nextFreePageCount, toDisk);
+    hashedPagesCount = storage.persistInt(36, hashedPagesCount, toDisk);
   }
 
   interface BtreeDataStorage {
@@ -114,7 +118,7 @@ abstract class IntToIntBtree {
     int address;
 
     if (nextFreePageCount == 0) {
-      if ((height == 2 && root) || height >= 3) {
+      if ((height == 2 && root) || height >= 3) {  // ensure more locality for index pages
         nextFreePage = allocEmptyPage();
         nextFreePageCount = 1;
         int freePage = nextFreePage + pageSize;
@@ -174,8 +178,14 @@ abstract class IntToIntBtree {
   }
 
   void dumpStatistics() {
+    int leafPages = height == 3 ? pagesCount - (1 + root.getChildrenCount() + 1):height == 2 ? pagesCount - 1:1;
+    long leafNodesCapacity = hashedPagesCount * maxLeafNodesInHash + (leafPages - hashedPagesCount)* maxLeafNodes;
+    long leafNodesCapacity2 = leafPages * maxLeafNodes;
+    int usedPercent = (int)((count * 100L) / leafNodesCapacity);
+    int usedPercent2 = (int)((count * 100L) / leafNodesCapacity2);
     IOStatistics.dump("pagecount:" + pagesCount + ", height:" + height + ", movedMembers:"+movedMembersCount +
-                      ", hash steps:" + maxStepsSearchedInHash + ", avg search in hash:" + (totalHashStepsSearched / hashSearchRequests));
+                      ", hash steps:" + maxStepsSearchedInHash + ", avg search in hash:" + (totalHashStepsSearched / hashSearchRequests) +
+                      ", leaf pages used:" + usedPercent + "%, leaf pages used if max children: " + usedPercent2 + "%" );
   }
 
   void doFlush() {
@@ -404,7 +414,7 @@ abstract class IntToIntBtree {
     }
 
     final short getMaxChildrenCount() {
-      return isIndexLeaf() ? btree.maxLeafNodes:btree.maxInteriorNodes;
+      return isIndexLeaf() ? isHashedLeaf() ? btree.maxLeafNodesInHash:btree.maxLeafNodes:btree.maxInteriorNodes;
     }
 
     final boolean isFull() {
@@ -488,7 +498,7 @@ abstract class IntToIntBtree {
         Arrays.sort(keys);
         final int avg = keys.length / 2;
         medianKey = keys[avg];
-
+        --btree.hashedPagesCount;
         setChildrenCount((short)0);
         newIndexNode.setChildrenCount((short)0);
 
@@ -496,6 +506,19 @@ abstract class IntToIntBtree {
           insert(keys[i], map.get(keys[i]));
           newIndexNode.insert(keys[avg + i], map.get(keys[avg + i]));
         }
+
+        /*setHashedLeaf(false);
+                setChildrenCount((short)keys.length);
+
+                --btree.hashedPagesCount;
+                btree.movedMembersCount += keys.length;
+
+                for(int i = 0; i < keys.length; ++i) {
+                  int key = keys[i];
+                  setKeyAt(i, key);
+                  setAddressAt(i, map.get(key));
+                }
+                return parentAddress;*/
       } else {
         short recordCountInNewNode = (short)(recordCount - maxIndex);
         newIndexNode.setChildrenCount(recordCountInNewNode);
@@ -681,7 +704,7 @@ abstract class IntToIntBtree {
       while(true) {
         if (split && isFull()) {
           parentAddress = splitNode(parentAddress);
-          setAddress(parentAddress);
+          if (parentAddress != 0) setAddress(parentAddress);
           --searched;
         }
 
@@ -711,6 +734,7 @@ abstract class IntToIntBtree {
       if (indexLeaf) {
         if (recordCount == 0 && btree.indexNodeIsHashTable) {
           setHashedLeaf(true);
+          ++btree.hashedPagesCount;
         }
 
         if (isHashedLeaf()) {
