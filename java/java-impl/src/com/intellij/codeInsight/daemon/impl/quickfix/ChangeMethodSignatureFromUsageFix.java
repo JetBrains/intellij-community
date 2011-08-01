@@ -111,15 +111,15 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
       if (myTargetMethod.getContainingClass().findMethodsByName(targetMethodName, true).length == 1) {
         if (newParams.size() == 1) {
           final ParameterInfoImpl p = newParams.iterator().next();
-          return "Add " + p.getTypeText() + " as " + ArrayUtil.find(myNewParametersInfo, p) + " parameter to method " + targetMethodName;
+          return "Add " + p.getTypeText() + " as " + (ArrayUtil.find(myNewParametersInfo, p) + 1) + "nd parameter to method " + targetMethodName;
         }
         if (removedParams.size() == 1) {
           final ParameterInfoImpl p = removedParams.iterator().next();
-          return "Remove " + (p.getOldIndex() + 1) + " parameter from method " + targetMethodName;
+          return "Remove " + (p.getOldIndex() + 1) + "nd parameter from method " + targetMethodName;
         }
         if (changedParams.size() == 1) {
           final ParameterInfoImpl p = changedParams.iterator().next();
-          return "Change " + (p.getOldIndex() + 1)+ " parameter type of method " +targetMethodName + " from " + myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText() + " to " + p.getTypeText();
+          return "Change " + (p.getOldIndex() + 1)+ "nd parameter type of method " +targetMethodName + " from " + myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText() + " to " + p.getTypeText();
         }
       }
       return "<html> Change signature of " + targetMethodName + "(" + buf.toString() + ")</html>";
