@@ -91,7 +91,13 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   private static MyIXMLBuilderAdapter parse(byte[] bytes, boolean stopIfAccepted) {
     StdXMLReader reader;
     try {
-      reader = new StdXMLReader(new ByteArrayInputStream(bytes));
+      reader = new StdXMLReader(new ByteArrayInputStream(bytes)) {
+        @Override
+        public Reader openStream(String publicID, String systemID) throws IOException {
+          if (!"http://java.sun.com/dtd/properties.dtd".equals(systemID)) throw new IOException();
+          return new StringReader(" ");
+        }
+      };
     }
     catch (IOException e) {
       return null;
@@ -176,7 +182,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr)
       throws Exception {
       if (!accepted) {
-        if ("properties".equals(name) && "http://java.sun.com/dtd/properties.dtd".equals(systemID)) {
+        if ("properties".equals(name)) {
           accepted = true;
         }
         else throw new NanoXmlUtil.ParserStoppedException();
