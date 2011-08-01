@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.Processor;
 import git4idea.GitBranch;
+import git4idea.branch.GitBranchesCollection;
 import git4idea.merge.GitMergeUtil;
 import git4idea.rebase.GitRebaseUtils;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +31,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,12 +57,15 @@ class GitRepositoryReader {
   private static Pattern PACKED_REFS_TAGREF_LINE = Pattern.compile("\\^[0-9a-fA-F]+"); // tag reference in .git/packed-refs
 
   private static final String REFS_HEADS_PREFIX = "refs/heads/";
+  private static final String REFS_REMOTES_PREFIX = "refs/remotes/";
   private static final int    IO_RETRIES        = 3; // number of retries before fail if an IOException happens during file read.
 
   private final GitRepository myRepository;
-  private final File          myGitDir;       // .git/
-  private final File          myHeadFile;     // .git/HEAD
-  private final File          myRefsHeadsDir; // .git/refs/heads/
+  private final File          myGitDir;         // .git/
+  private final File          myHeadFile;       // .git/HEAD
+  private final File          myRefsHeadsDir;   // .git/refs/heads/
+  private final File          myRefsRemotesDir; // .git/refs/remotes/
+  private final File          myPackedRefsFile; // .git/packed-refs
 
   GitRepositoryReader(@NotNull GitRepository repository) {
     myRepository = repository;
@@ -67,6 +74,8 @@ class GitRepositoryReader {
     myHeadFile = new File(myGitDir, "HEAD");
     assertFileExists(myHeadFile, ".git/HEAD file not found in " + myRepository.getRoot());
     myRefsHeadsDir = new File(new File(myGitDir, "refs"), "heads");
+    myRefsRemotesDir = new File(new File(myGitDir, "refs"), "remotes");
+    myPackedRefsFile = new File(myGitDir, "packed-refs");
   }
 
   @NotNull
@@ -97,7 +106,7 @@ class GitRepositoryReader {
 
     // look in /refs/heads/<branch name>
     File branchFile = null;
-    for (Map.Entry<String, File> entry : getLocalBranches().entrySet()) {
+    for (Map.Entry<String, File> entry : readLocalBranches().entrySet()) {
       if (entry.getKey().equals(head.ref)) {
         branchFile = entry.getValue();
       }
@@ -167,8 +176,7 @@ class GitRepositoryReader {
    */
   @Nullable
   private String findBranchRevisionInPackedRefs(final String ref) {
-    final File packedRefs = new File(myGitDir, "packed-refs");
-    if (!packedRefs.exists()) {
+    if (!myPackedRefsFile.exists()) {
       return null;
     }
 
@@ -177,12 +185,23 @@ class GitRepositoryReader {
       public String call() throws Exception {
         BufferedReader reader = null;
         try {
-          reader = new BufferedReader(new FileReader(packedRefs));
+          reader = new BufferedReader(new FileReader(myPackedRefsFile));
           String line;
           while ((line = reader.readLine()) != null) {
-            String hash = findRefHashInPackedRefsLine(line, ref);
-            if (hash != null) {
-              return hash;
+            final AtomicReference<String> hashRef = new AtomicReference<String>();
+            parsePackedRefsLine(line, new PackedRefsLineResultHandler() {
+              @Override public void handleResult(String hash, String branchName) {
+                if (hash == null || branchName == null) {
+                  return;
+                }
+                if (branchName.endsWith(ref)) {
+                  hashRef.set(hash);
+                }
+              }
+            });
+            
+            if (hashRef.get() != null) {
+              return hashRef.get();
             }
           }
           return null;
@@ -193,14 +212,14 @@ class GitRepositoryReader {
           }
         }
       }
-    }, packedRefs);
+    }, myPackedRefsFile);
   }
 
   /**
    * @return the list of local branches in this Git repository.
    *         key is the branch name, value is the file.
    */
-  private Map<String, File> getLocalBranches() {
+  private Map<String, File> readLocalBranches() {
     final Map<String, File> branches = new HashMap<String, File>();
     FileUtil.processFilesRecursively(myRefsHeadsDir, new Processor<File>() {
       @Override
@@ -214,28 +233,96 @@ class GitRepositoryReader {
     return branches;
   }
 
-  @Nullable
-  private static String findRefHashInPackedRefsLine(String line, String ref) {
-    if (line.startsWith("#")) { // ignoring comments
-      return null;
+  /**
+   * @return all branches in this repository. local/remote/active information is stored in branch objects themselves. 
+   */
+  GitBranchesCollection readBranches() {
+    Set<GitBranch> localBranches = readUnpackedLocalBranches();
+    Set<GitBranch> remoteBranches = readUnpackedRemoteBranches();
+    GitBranchesCollection packedBranches = readPackedBranches();
+    localBranches.addAll(packedBranches.getLocalBranches());
+    remoteBranches.addAll(packedBranches.getRemoteBranches());
+    
+    // note that even the active branch may be packed. So at first we collect branches, then we find the active.
+    GitBranch currentBranch = readCurrentBranch();
+    markActiveBranch(localBranches, currentBranch);
+
+    return new GitBranchesCollection(currentBranch, localBranches, remoteBranches);
+  }
+  
+  /**
+   * Sets the 'active' flag to the current branch if it is contained in the specified collection.
+   * @param branches      branches to be walked through.
+   * @param currentBranch current branch.
+   */
+  private static void markActiveBranch(@NotNull Set<GitBranch> branches, @Nullable GitBranch currentBranch) {
+    if (currentBranch == null) {
+      return;
     }
-    if (PACKED_REFS_TAGREF_LINE.matcher(line).matches()) { // ignoring the hash which an annotated tag above points to
-      return null;
-    }
-    Matcher matcher = PACKED_REFS_BRANCH_LINE.matcher(line);
-    if (matcher.matches()) {
-      String hash = matcher.group(1);
-      String branch = matcher.group(2);
-      if (branch.endsWith(ref)) {
-        return hash;
+    for (GitBranch branch : branches) {
+      if (branch.getName().equals(currentBranch.getName())) {
+        branch.setActive(true);
       }
-    } else {
-      LOG.info("Ignoring invalid packed-refs line: [" + line + "]");
-      return null;
     }
-    return null;
   }
 
+  /**
+   * @return list of branches from refs/heads. active branch is not marked as active - the caller should do this.
+   */
+  @NotNull
+  private Set<GitBranch> readUnpackedLocalBranches() {
+    Set<GitBranch> branches = new HashSet<GitBranch>();
+    for (String branchName : readLocalBranches().keySet()) {
+      branches.add(new GitBranch(branchName, false, false));
+    }
+    return branches;
+  }
+
+  /**
+   * @return list of branches from refs/remotes.
+   */
+  private Set<GitBranch> readUnpackedRemoteBranches() {
+    final Set<GitBranch> branches = new HashSet<GitBranch>();
+    FileUtil.processFilesRecursively(myRefsRemotesDir, new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        if (!file.isDirectory()) {
+          final String relativePath = FileUtil.getRelativePath(myRefsRemotesDir, file);
+          branches.add(new GitBranch(relativePath, false, true));
+        }
+        return true;
+      }
+    });
+    return branches;
+  }
+
+  /**
+   * @return list of local and remote branches from packed-refs. Active branch is not marked as active.
+   */
+  @NotNull
+  private GitBranchesCollection readPackedBranches() {
+    final Set<GitBranch> localBranches = new HashSet<GitBranch>();
+    final Set<GitBranch> remoteBranches = new HashSet<GitBranch>();
+    final String content = tryLoadFile(myPackedRefsFile);
+    
+    for (String line : content.split("\n")) {
+      parsePackedRefsLine(line, new PackedRefsLineResultHandler() {
+        @Override public void handleResult(@Nullable String hash, @Nullable String branchName) {
+          if (hash == null || branchName == null) {
+            return;
+          }
+          if (branchName.startsWith(REFS_HEADS_PREFIX)) {
+            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), false, false));
+          } else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
+            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), false, true));
+          }
+        }
+      });
+    }
+    return new GitBranchesCollection(null, localBranches, remoteBranches);
+  }
+
+    
   private static String readBranchFile(File branchFile) {
     String rev = tryLoadFile(branchFile);
     return rev.trim();
@@ -297,6 +384,42 @@ class GitRepositoryReader {
     throw new GitRepoStateException("Couldn't load file " + fileToLoad, cause);
   }
 
+  /**
+   * Parses a line from the .git/packed-refs file.
+   * Passes the parsed hash-branch pair to the resultHandler.
+   * Comments, tags and incorrectly formatted lines are ignored, and (null, null) is passed to the handler then.
+   * Using a special handler may seem to be an overhead, but it is to avoid code duplication in two methods that parse packed-refs.
+   */
+  private static void parsePackedRefsLine(String line, PackedRefsLineResultHandler resultHandler) {
+    line = line.trim();
+    if (line.startsWith("#")) { // ignoring comments
+      resultHandler.handleResult(null, null);
+      return;
+    }
+    if (PACKED_REFS_TAGREF_LINE.matcher(line).matches()) { // ignoring the hash which an annotated tag above points to
+      resultHandler.handleResult(null, null);
+      return;
+    }
+    Matcher matcher = PACKED_REFS_BRANCH_LINE.matcher(line);
+    if (matcher.matches()) {
+      String hash = matcher.group(1);
+      String branch = matcher.group(2);
+      resultHandler.handleResult(hash, branch);
+    } else {
+      LOG.info("Ignoring invalid packed-refs line: [" + line + "]");
+      resultHandler.handleResult(null, null);
+      return;
+    }
+    resultHandler.handleResult(null, null);
+  }
+
+  private interface PackedRefsLineResultHandler {
+    void handleResult(@Nullable String hash, @Nullable String branchName);
+  }
+  
+  /**
+   * Container to hold two information items: current .git/HEAD value and is Git on branch.
+   */
   private static class Head {
     private final String ref;
     private final boolean isBranch;
@@ -305,7 +428,7 @@ class GitRepositoryReader {
       isBranch = branch;
       this.ref = ref;
     }
-
   }
+  
 
 }
