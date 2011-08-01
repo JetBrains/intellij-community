@@ -18,6 +18,7 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -34,7 +35,7 @@ public class ExtractMethodFix extends InspectionGadgetsFix {
         return InspectionGadgetsBundle.message("extract.method.quickfix");
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(final Project project, ProblemDescriptor descriptor) {
         final PsiExpression expression =
                 (PsiExpression) descriptor.getPsiElement();
         final JavaRefactoringActionHandlerFactory factory =
@@ -43,7 +44,16 @@ public class ExtractMethodFix extends InspectionGadgetsFix {
                 factory.createExtractMethodHandler();
         final DataManager dataManager = DataManager.getInstance();
         final DataContext dataContext = dataManager.getDataContext();
-        extractHandler.invoke(project,
-                new PsiElement[]{expression}, dataContext);
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            extractHandler.invoke(project,
+                    new PsiElement[]{expression}, dataContext);
+          }
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          runnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(runnable);
+        }
     }
 }

@@ -16,6 +16,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -33,7 +34,7 @@ public class InlineCallFix extends InspectionGadgetsFix {
         return InspectionGadgetsBundle.message("inline.call.quickfix");
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(final Project project, ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiReferenceExpression methodExpression =
                 (PsiReferenceExpression) nameElement.getParent();
@@ -43,6 +44,15 @@ public class InlineCallFix extends InspectionGadgetsFix {
         final JavaRefactoringActionHandlerFactory factory =
                 JavaRefactoringActionHandlerFactory.getInstance();
         final RefactoringActionHandler inlineHandler = factory.createInlineHandler();
-        inlineHandler.invoke(project, new PsiElement[]{methodCallExpression}, null);
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            inlineHandler.invoke(project, new PsiElement[]{methodCallExpression}, null);
+          }
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          runnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+        }
     }
 }

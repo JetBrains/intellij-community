@@ -16,6 +16,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -32,13 +33,24 @@ public class EncapsulateVariableFix extends InspectionGadgetsFix {
         return InspectionGadgetsBundle.message("encapsulate.variable.quickfix");
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    @Override
+    public void doFix(final Project project, ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiField field = (PsiField) nameElement.getParent();
         final JavaRefactoringActionHandlerFactory factory =
                 JavaRefactoringActionHandlerFactory.getInstance();
         final RefactoringActionHandler renameHandler =
                 factory.createEncapsulateFieldsHandler();
-        renameHandler.invoke(project, new PsiElement[]{field}, null);
+        final Runnable runnable = new Runnable() {
+          @Override
+          public void run() {
+            renameHandler.invoke(project, new PsiElement[]{field}, null);
+          }
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          runnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+        }
     }
 }

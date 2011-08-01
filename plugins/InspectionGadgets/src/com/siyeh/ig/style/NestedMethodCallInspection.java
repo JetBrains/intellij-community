@@ -16,8 +16,10 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,7 +29,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -76,7 +77,7 @@ public class NestedMethodCallInspection extends BaseInspection {
                     "introduce.variable.quickfix");
         }
 
-        public void doFix(Project project, ProblemDescriptor descriptor) {
+        public void doFix(final Project project, ProblemDescriptor descriptor) {
             final JavaRefactoringActionHandlerFactory factory =
                     JavaRefactoringActionHandlerFactory.getInstance();
             final RefactoringActionHandler introduceHandler =
@@ -90,8 +91,18 @@ public class NestedMethodCallInspection extends BaseInspection {
                     methodExpression.getParent();
             final DataManager dataManager = DataManager.getInstance();
             final DataContext dataContext = dataManager.getDataContext();
-            introduceHandler.invoke(project,
-                    new PsiElement[]{methodCallExpression}, dataContext);
+            final Runnable runnable = new Runnable() {
+              public void run() {
+                introduceHandler.invoke(project,
+                        new PsiElement[]{methodCallExpression}, dataContext);
+              }
+            };
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              runnable.run();
+            }
+            else {
+              ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+            }
         }
     }
 

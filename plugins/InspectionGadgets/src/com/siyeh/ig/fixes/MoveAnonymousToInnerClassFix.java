@@ -57,10 +57,15 @@ public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
                 factory.createAnonymousToInnerHandler();
         final DataManager dataManager = DataManager.getInstance();
         final DataContext dataContext = dataManager.getDataContext();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        final Runnable runnable = new Runnable() {
           public void run() {
             anonymousToInner.invoke(project, new PsiElement[]{aClass}, dataContext);
           }
-        }, project.getDisposed());
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          runnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+        }
     }
 }

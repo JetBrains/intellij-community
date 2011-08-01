@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -77,7 +78,7 @@ public class ChainedMethodCallInspection extends BaseInspection {
                     "introduce.variable.quickfix");
         }
 
-        public void doFix(Project project, ProblemDescriptor descriptor) {
+        public void doFix(final Project project, ProblemDescriptor descriptor) {
             final JavaRefactoringActionHandlerFactory factory =
                     JavaRefactoringActionHandlerFactory.getInstance();
             final RefactoringActionHandler introduceHandler =
@@ -90,8 +91,18 @@ public class ChainedMethodCallInspection extends BaseInspection {
                     methodCallExpression.getQualifierExpression();
             final DataManager dataManager = DataManager.getInstance();
             final DataContext dataContext = dataManager.getDataContext();
-            introduceHandler.invoke(project, new PsiElement[] {qualifier},
-                    dataContext);
+            final Runnable runnable = new Runnable() {
+              public void run() {
+                introduceHandler.invoke(project, new PsiElement[]{qualifier},
+                                        dataContext);
+              }
+            };
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              runnable.run();
+            }
+            else {
+              ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+            }
         }
     }
 
