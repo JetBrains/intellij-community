@@ -75,7 +75,7 @@ public class UpdateBreakpointsAfterRenameTest extends PlatformTestCase {
     return virtualFile;
   }
 
-  public XBreakpointManager getBreakpointManager() {
+  protected XBreakpointManager getBreakpointManager() {
     return XDebuggerManager.getInstance(myProject).getBreakpointManager();
   }
 }

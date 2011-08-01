@@ -15,43 +15,46 @@
  */
 package com.intellij.xdebugger;
 
-import com.intellij.mock.MockEditorFactory;
-import com.intellij.mock.MockVirtualFileManager;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.openapi.vfs.impl.http.HttpFileSystemImpl;
-import com.intellij.testFramework.PlatformLiteFixture;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.MutablePicoContainer;
 
 /**
  * @author nik
  */
-public abstract class XDebuggerTestCase extends PlatformLiteFixture {
+public abstract class XDebuggerTestCase extends PlatformTestCase {
   public static final MyLineBreakpointType MY_LINE_BREAKPOINT_TYPE = new MyLineBreakpointType();
   protected static final MySimpleBreakpointType MY_SIMPLE_BREAKPOINT_TYPE = new MySimpleBreakpointType();
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    initApplication();
-    registerExtensionPoint(XBreakpointType.EXTENSION_POINT_NAME, XBreakpointType.class);
-    registerExtension(XBreakpointType.EXTENSION_POINT_NAME, MY_LINE_BREAKPOINT_TYPE);
-    registerExtension(XBreakpointType.EXTENSION_POINT_NAME, MY_SIMPLE_BREAKPOINT_TYPE);
-
-    MutablePicoContainer container = getApplication().getPicoContainer();
-    registerComponentImplementation(container, EditorFactory.class, MockEditorFactory.class);
-    registerVfsComponents(container);
-    registerComponentImplementation(container, HttpFileSystem.class, HttpFileSystemImpl.class);
+  protected XDebuggerTestCase() {
+    initPlatformLangPrefix();
   }
 
-  protected void registerVfsComponents(MutablePicoContainer container) {
-    registerComponentImplementation(container, VirtualFileManager.class, MockVirtualFileManager.class);
+  @Override
+  protected void initApplication() throws Exception {
+    super.initApplication();
+    final ExtensionPoint<XBreakpointType> point = getBreakpointTypes();
+    point.registerExtension(MY_LINE_BREAKPOINT_TYPE);
+    point.registerExtension(MY_SIMPLE_BREAKPOINT_TYPE);
+  }
+
+  private static ExtensionPoint<XBreakpointType> getBreakpointTypes() {
+    return Extensions.getRootArea().getExtensionPoint(XBreakpointType.EXTENSION_POINT_NAME);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    getBreakpointTypes().unregisterExtension(MY_LINE_BREAKPOINT_TYPE);
+    getBreakpointTypes().unregisterExtension(MY_SIMPLE_BREAKPOINT_TYPE);
+    super.tearDown();
   }
 
   public static class MyLineBreakpointType extends XLineBreakpointType<MyBreakpointProperties> {

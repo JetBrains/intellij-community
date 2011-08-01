@@ -15,13 +15,17 @@
  */
 package com.intellij.xdebugger;
 
-import com.intellij.mock.MockProject;
-import com.intellij.openapi.vfs.impl.http.RemoteFileManager;
-import com.intellij.openapi.vfs.impl.http.RemoteFileManagerImpl;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jdom.Element;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -32,9 +36,7 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    MockProject project = disposeOnTearDown(new MockProject());
-    getApplication().registerService(RemoteFileManager.class, RemoteFileManagerImpl.class);
-    myBreakpointManager = new XBreakpointManagerImpl(project, null, null);
+    myBreakpointManager = new XBreakpointManagerImpl(myProject, null, null);
   }
 
   protected void load(final Element element) {
@@ -44,5 +46,17 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
 
   protected Element save() {
     return XmlSerializer.serialize(myBreakpointManager.getState(), new SkipDefaultValuesSerializationFilters());
+  }
+
+  protected List<XBreakpoint<?>> getAllBreakpoints() {
+    final XBreakpointBase<?,?,?>[] breakpoints = myBreakpointManager.getAllBreakpoints();
+    final List<XBreakpoint<?>> result = new ArrayList<XBreakpoint<?>>();
+    for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
+      final XBreakpointType<? extends XBreakpoint<?>, ? extends XBreakpointProperties> type = breakpoint.getType();
+      if (type instanceof MySimpleBreakpointType || type instanceof MyLineBreakpointType) {
+        result.add(breakpoint);
+      }
+    }
+    return result;
   }
 }

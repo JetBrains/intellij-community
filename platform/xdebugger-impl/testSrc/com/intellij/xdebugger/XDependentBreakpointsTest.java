@@ -20,6 +20,8 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
 import org.jdom.Element;
 
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -57,10 +59,10 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
     //System.out.println(JDOMUtil.writeElement(element, SystemProperties.getLineSeparator()));
     load(element);
 
-    XBreakpoint<?>[] breakpoints = myBreakpointManager.getAllBreakpoints();
-    assertEquals(3, breakpoints.length);
-    XLineBreakpoint newMaster = (XLineBreakpoint)breakpoints[1];
-    XLineBreakpoint newSlave = (XLineBreakpoint)breakpoints[2];
+    List<XBreakpoint<?>> breakpoints = getAllBreakpoints();
+    assertEquals(3, breakpoints.size());
+    XLineBreakpoint newMaster = (XLineBreakpoint)breakpoints.get(1);
+    XLineBreakpoint newSlave = (XLineBreakpoint)breakpoints.get(2);
     assertEquals("file://master", newMaster.getFileUrl());
     assertEquals("file://slave", newSlave.getFileUrl());
     assertSame(newMaster, myDependentBreakpointManager.getMasterBreakpoint(newSlave));
