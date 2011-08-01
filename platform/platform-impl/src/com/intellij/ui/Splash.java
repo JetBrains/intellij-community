@@ -77,7 +77,7 @@ public class Splash extends JDialog implements StartupProgress {
   public void show() {
     super.show();
     toFront();
-    myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
+    //myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
   }
 
   @Override
