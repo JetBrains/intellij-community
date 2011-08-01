@@ -17,6 +17,7 @@
 package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsManagerImpl;
@@ -44,6 +45,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +65,7 @@ import java.util.regex.Pattern;
 public class EventLog implements Notifications {
   public static final String LOG_REQUESTOR = "Internal log requestor";
   public static final String LOG_TOOL_WINDOW_ID = "Event Log";
+  public static final String HELP_ID = "reference.toolwindows.event.log";
   private final LogModel myModel = new LogModel(null);
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
@@ -285,7 +288,12 @@ public class EventLog implements Notifications {
     public void createToolWindowContent(final Project project, ToolWindow toolWindow) {
       final Editor editor = getProjectComponent(project).myConsole.getConsoleEditor();
 
-      SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
+      SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
+        @Override
+        public Object getData(@NonNls String dataId) {
+          return PlatformDataKeys.HELP_ID.is(dataId) ? HELP_ID : super.getData(dataId);
+        }
+      };
       panel.setContent(editor.getComponent());
 
       DefaultActionGroup group = new DefaultActionGroup();
@@ -316,6 +324,7 @@ public class EventLog implements Notifications {
           }
         }
       });
+      group.add(new ContextHelpAction(HELP_ID));
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
       toolbar.setTargetComponent(panel);
