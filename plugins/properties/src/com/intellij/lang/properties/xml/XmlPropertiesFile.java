@@ -19,7 +19,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
-import net.n3.nanoxml.StdXMLReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +46,7 @@ public class XmlPropertiesFile implements PropertiesFile {
                                   new CachedValueProvider<PropertiesFile>() {
                                     @Override
                                     public Result<PropertiesFile> compute() {
-                                      StdXMLReader reader = XmlPropertiesIndex.getReader(file.getText().getBytes());
-                                      PropertiesFile value = reader == null ? null : new XmlPropertiesFile(file);
+                                      PropertiesFile value = !XmlPropertiesIndex.isAccepted(file.getText().getBytes()) ? null : new XmlPropertiesFile(file);
                                       return Result.create(value, file);
                                     }
                                   }, false);

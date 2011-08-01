@@ -38,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -57,9 +58,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class FileSystemTreeImpl implements FileSystemTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileSystemTreeImpl");
@@ -73,6 +72,8 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   private final List<Listener> myListeners = new ArrayList<Listener>();
   private final MyExpansionListener myExpansionListener = new MyExpansionListener();
+
+  private Map<VirtualFile, VirtualFile> myEverExpanded = new WeakHashMap<VirtualFile, VirtualFile>();
 
   public FileSystemTreeImpl(@Nullable Project project, FileChooserDescriptor descriptor) {
     this(project, descriptor, new Tree(), null, null, null);
@@ -225,6 +226,8 @@ public class FileSystemTreeImpl implements FileSystemTree {
     if (myTreeBuilder != null) {
       Disposer.dispose(myTreeBuilder);
     }
+
+    myEverExpanded.clear();
   }
 
   public AbstractTreeBuilder getTreeBuilder() {
@@ -472,6 +475,14 @@ public class FileSystemTreeImpl implements FileSystemTree {
         final FileElement fileDescriptor = nodeDescriptor.getElement();
         final VirtualFile virtualFile = fileDescriptor.getFile();
         if (virtualFile != null) {
+          if (!myEverExpanded.containsKey(virtualFile)) {
+            if (virtualFile instanceof NewVirtualFile) {
+              ((NewVirtualFile)virtualFile).markDirty();
+            }
+            myEverExpanded.put(virtualFile, virtualFile);
+          }
+
+
           if (myTreeBuilder.getTreeStructure().isToBuildChildrenInBackground(virtualFile)) {
             virtualFile.refresh(true, false, null, ModalityState.stateForComponent(myTree));
           } else {

@@ -5,6 +5,7 @@ import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -25,6 +26,12 @@ public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
 
     List<IProperty> properties = PropertiesUtil.findPropertiesByKey(getProject(), "foo");
     assertEquals(1, properties.size());
+  }
+
+  public void testWrongFile() throws Exception {
+    PsiFile psiFile = myFixture.configureByFile("wrong.xml");
+    PropertiesFile file = PropertiesUtil.getPropertiesFile(psiFile);
+    assertNull(file);
   }
 
   public void testHighlighting() throws Exception {

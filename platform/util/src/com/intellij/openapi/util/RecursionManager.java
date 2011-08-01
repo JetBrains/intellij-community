@@ -187,7 +187,7 @@ public class RecursionManager {
   private static void checkZero() {
     LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
     if (!progressMap.isEmpty() && progressMap.get(progressMap.keySet().iterator().next()) != 0) {
-      throw new AssertionError("Prisoner zero has escaped");
+      throw new AssertionError("Prisoner Zero has escaped");
     }
   }
 

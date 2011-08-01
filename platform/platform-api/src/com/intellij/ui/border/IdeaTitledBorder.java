@@ -64,6 +64,7 @@ public class IdeaTitledBorder extends TitledBorder {
                                                        new EmptyBorder(insideInsets)));
   }
 
+  @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
 
     g.setPaintMode();
@@ -253,6 +254,14 @@ public class IdeaTitledBorder extends TitledBorder {
 
     g.setFont(font);
     g.setColor(color);
+  }
+
+  public void acceptMinimumSize(Component c) {
+    Dimension minimumSize = getMinimumSize(c);
+    c.setMinimumSize(new Dimension(Math.max(minimumSize.width, c.getMinimumSize().width),
+                                   Math.max(minimumSize.height, c.getMinimumSize().height)));
+    c.setPreferredSize(new Dimension(Math.max(c.getPreferredSize().width, c.getMinimumSize().width),
+                                     Math.max(c.getPreferredSize().height, c.getMinimumSize().height)));
   }
 
   private static boolean computeIntersection(Rectangle dest,

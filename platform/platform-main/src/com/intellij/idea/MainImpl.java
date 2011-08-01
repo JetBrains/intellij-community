@@ -36,7 +36,9 @@ public class MainImpl {
    */
   @SuppressWarnings("UnusedDeclaration")
   protected static void start(final String[] args) {
-    System.setProperty("idea.platform.prefix", "Idea");
+    if (System.getProperty("idea.platform.prefix") == null) {
+      System.setProperty("idea.platform.prefix", "Idea");
+    }
 
     StartupUtil.isHeadless = Main.isHeadless(args);
     if (!StartupUtil.isHeadless) {

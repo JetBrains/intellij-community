@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -38,7 +39,8 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file){
     if (file instanceof ResourceBundleAsVirtualFile) return true;
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    return psiFile instanceof PropertiesFile && ((PropertiesFile)psiFile).getResourceBundle().getPropertiesFiles(project).size() > 1;
+    PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(psiFile);
+    return propertiesFile != null &&  propertiesFile.getResourceBundle().getPropertiesFiles(project).size() > 1;
   }
 
   @NotNull
@@ -48,11 +50,11 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
       resourceBundle = ((ResourceBundleAsVirtualFile)file).getResourceBundle();
     }
     else {
-      PropertiesFile psiFile = (PropertiesFile)PsiManager.getInstance(project).findFile(file);
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) {
         throw new IllegalArgumentException("psifile cannot be null");
       }
-      resourceBundle = psiFile.getResourceBundle();
+      resourceBundle = PropertiesUtil.getPropertiesFile(psiFile).getResourceBundle();
     }
 
     return new ResourceBundleEditor(project, resourceBundle);
