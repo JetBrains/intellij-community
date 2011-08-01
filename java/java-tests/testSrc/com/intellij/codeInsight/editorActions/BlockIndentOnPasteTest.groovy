@@ -443,6 +443,26 @@ line to paste #1
     doTest(before, toPaste, expected, TestFileType.TEXT)
   }
   
+  def testPlainTextPasteWithCompleteReplacement() {
+    def before = '''\
+<selection>  line1
+  line2</selection>\
+'''
+
+    def toPaste =
+    '''\
+line to paste #1
+line to paste #2
+'''
+
+
+    def expected = '''\
+line to paste #1
+line to paste #2
+'''
+    doTest(before, toPaste, expected, TestFileType.TEXT)
+  }
+  
   def doTest(before, toPaste, expected, fileType = TestFileType.JAVA) {
     configureFromFileText("${getTestName(false)}.$fileType.extension", before)
 

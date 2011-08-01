@@ -342,11 +342,8 @@ public class PasteHandler extends EditorActionHandler {
     Arrays.fill(fill, ' ');
     String indentString = new String(fill);
 
-    for (
+    for (; linesToAdjustIndent > 0; linesToAdjustIndent--) {
       int lineStartOffset = document.getLineStartOffset(++line);
-      linesToAdjustIndent > 0;
-      lineStartOffset = document.getLineStartOffset(++line), linesToAdjustIndent--)
-    {
       document.insertString(lineStartOffset, indentString);
     } 
   }
