@@ -67,6 +67,11 @@ public class JetBrainsAccountDialog extends DialogWrapper {
     return "#com.intellij.diagnostic.AbstractSendErrorDialog";
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myItnLoginTextField;
+  }
+
   protected void init() {
     setTitle(ReportMessages.ERROR_REPORT);
     getContentPane().add(myMainPanel);
