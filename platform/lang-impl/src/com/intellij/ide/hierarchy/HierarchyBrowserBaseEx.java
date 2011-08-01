@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.TransferableWrapper;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -212,7 +212,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           }
 
           public DnDDragStartBean startDragging(final DnDAction action, final Point dragOrigin) {
-            return new DnDDragStartBean(new AbstractProjectViewPane.TransferableWrapper() {
+            return new DnDDragStartBean(new TransferableWrapper() {
               public TreeNode[] getTreeNodes() {
                 return tree.getSelectedNodes(TreeNode.class, null);
               }

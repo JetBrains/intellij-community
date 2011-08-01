@@ -184,13 +184,13 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
   public void rebuildUi() {
     if (!myPanel.isRebuildUiNeeded()) return;
 
-    myPanel.getItems().clear();
+    myPanel.clearItems();
     for (int index = 0; index < myPanel.getModel().size(); index++) {
       final Object object = myPanel.getModel().get(index);
       final NavBarItem label = new NavBarItem(myPanel, object, index);
 
       myPanel.installActions(index, label);
-      myPanel.getItems().add(label);
+      myPanel.addItem(label);
 
     }
 

@@ -20,13 +20,18 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.dnd.DnDActionInfo;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.ide.projectView.impl.TransferableWrapper;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -50,18 +55,19 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.io.File;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -136,8 +142,25 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return myContextObject;
   }
 
-  public ArrayList<NavBarItem> getItems() {
-    return myList;
+  public List<NavBarItem> getItems() {
+    return Collections.unmodifiableList(myList);
+  }
+  
+  public void addItem(NavBarItem item) {
+    myList.add(item);
+  }
+  
+  public void clearItems() {
+    final NavBarItem[] toDispose = myList.toArray(new NavBarItem[myList.size()]);
+    myList.clear();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        for (NavBarItem item : toDispose) {
+          Disposer.dispose(item);
+        }
+      }
+    });
   }
 
   public NavBarUpdateQueue getUpdateQueue() {
@@ -279,7 +302,15 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return super.getPreferredSize();
     }
     else {
-      return new NavBarItem(this, null, 0).getPreferredSize();
+      final NavBarItem item = new NavBarItem(this, null, 0);
+      final Dimension size = item.getPreferredSize();
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(item);
+        }
+      });
+      return size;
     }
   }
 
@@ -321,6 +352,40 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   public void installActions(final int index, final NavBarItem component) {
+    DnDSupport.createBuilder(component)
+      .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
+        @Override
+        public DnDDragStartBean fun(DnDActionInfo dnDActionInfo) {
+          return new DnDDragStartBean(new TransferableWrapper() {
+            @Override
+            public List<File> asFileList() {
+              final Object o = myModel.get(index);
+              if (o instanceof PsiElement) {
+                final VirtualFile vf =  o instanceof PsiDirectory ? ((PsiDirectory)o).getVirtualFile()
+                                                                  : ((PsiElement)o).getContainingFile().getVirtualFile();
+                if (vf != null) {
+                  return Arrays.asList(new File(vf.getPath()).getAbsoluteFile());
+                }
+              }
+              return Collections.emptyList();
+            }
+
+            @Override
+            public TreeNode[] getTreeNodes() {
+              return null;
+            }
+
+            @Override
+            public PsiElement[] getPsiElements() {
+              return null;
+            }
+          });
+        }
+      })
+      .setDisposableParent(component)
+      .install();
+
+
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
       public void mouseReleased(final MouseEvent e) {
         if (SystemInfo.isWindows) {
