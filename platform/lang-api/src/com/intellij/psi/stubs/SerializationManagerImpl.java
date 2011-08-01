@@ -57,7 +57,9 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   public SerializationManagerImpl() {
     myFile.getParentFile().mkdirs();
     try {
-      myNameStorage = new PersistentStringEnumerator(myFile);
+      // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
+      // and then index them (valueOf), also similar string items are expected to be enumerated during stubs processing
+      myNameStorage = new PersistentStringEnumerator(myFile, true);
     }
     catch (IOException e) {
       myNameStorageCrashed.set(true);
@@ -94,7 +96,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
             }
           }
         }
-        myNameStorage = new PersistentStringEnumerator(myFile);
+        myNameStorage = new PersistentStringEnumerator(myFile, true);
         
         mySerializerToId.clear();
         myIdToSerializer.clear();
