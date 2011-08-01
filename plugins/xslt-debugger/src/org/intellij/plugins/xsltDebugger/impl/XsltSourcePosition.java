@@ -1,10 +1,10 @@
 package org.intellij.plugins.xsltDebugger.impl;
 
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.jetbrains.annotations.NotNull;
@@ -14,13 +14,11 @@ import java.net.URI;
 
 public class XsltSourcePosition implements XSourcePosition {
   private final Debugger.Locatable myLocation;
-  private final VirtualFile myFile;
-  private final int myLine;
+  private final XSourcePosition myPosition;
 
-  XsltSourcePosition(Debugger.Locatable location, VirtualFile file, int line) {
+  XsltSourcePosition(Debugger.Locatable location, XSourcePosition position) {
     myLocation = location;
-    myFile = file;
-    myLine = line;
+    myPosition = position;
   }
 
   @Nullable
@@ -34,29 +32,30 @@ public class XsltSourcePosition implements XSourcePosition {
     }
 
     final int line = location.getLineNumber() - 1;
-    return line >= 0 ? new XsltSourcePosition(location, file, line) : null;
+    final XSourcePosition position = XDebuggerUtil.getInstance().createPosition(file, line);
+    return line >= 0 && position != null ? new XsltSourcePosition(location, position) : null;
   }
 
   @Override
   public int getLine() {
-    return myLine;
+    return myPosition.getLine();
   }
 
   @Override
   public int getOffset() {
-    return 0;
+    return myPosition.getOffset();
   }
 
   @NotNull
   @Override
   public VirtualFile getFile() {
-    return myFile;
+    return myPosition.getFile();
   }
 
   @NotNull
   @Override
   public Navigatable createNavigatable(@NotNull Project project) {
-    return new OpenFileDescriptor(project, getFile(), getLine(), 0);
+    return myPosition.createNavigatable(project);
   }
 
   public Debugger.Locatable getLocation() {
