@@ -20,7 +20,7 @@ public class PyTokenTypes {
 
   public static final PyElementType END_OF_LINE_COMMENT = new PyElementType("END_OF_LINE_COMMENT");
 
-  public static final PyElementType AND_KEYWORD = new PyElementType("AND_KEYWORD", "__and__");
+  public static final PyElementType AND_KEYWORD = new PyElementType("AND_KEYWORD");
   public static final PyElementType AS_KEYWORD = new PyElementType("AS_KEYWORD");
   public static final PyElementType ASSERT_KEYWORD = new PyElementType("ASSERT_KEYWORD");
   public static final PyElementType BREAK_KEYWORD = new PyElementType("BREAK_KEYWORD");
@@ -42,7 +42,7 @@ public class PyTokenTypes {
   public static final PyElementType IS_KEYWORD = new PyElementType("IS_KEYWORD");
   public static final PyElementType LAMBDA_KEYWORD = new PyElementType("LAMBDA_KEYWORD");
   public static final PyElementType NOT_KEYWORD = new PyElementType("NOT_KEYWORD");
-  public static final PyElementType OR_KEYWORD = new PyElementType("OR_KEYWORD", "__or__");
+  public static final PyElementType OR_KEYWORD = new PyElementType("OR_KEYWORD");
   public static final PyElementType PASS_KEYWORD = new PyElementType("PASS_KEYWORD");
   public static final PyElementType PRINT_KEYWORD = new PyElementType("PRINT_KEYWORD");
   public static final PyElementType RAISE_KEYWORD = new PyElementType("RAISE_KEYWORD");
