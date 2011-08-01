@@ -17,19 +17,24 @@ package com.intellij.ui.plaf.gtk;
 
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
-import sun.swing.plaf.synth.SynthUI;
 
 import javax.swing.*;
+import javax.swing.plaf.MenuItemUI;
 import javax.swing.plaf.basic.BasicMenuItemUI;
 import javax.swing.plaf.synth.ColorType;
 import javax.swing.plaf.synth.SynthContext;
 import java.awt.*;
+import java.lang.reflect.Method;
 
+// todo[r.sh] get rid of SynthUI reflection after migration to JDK 7
 public class GtkPaintingUtil {
+  private static final String V6_SYNTH_UI_CLASS = "sun.swing.plaf.synth.SynthUI";
+  private static final String V7_SYNTH_UI_CLASS = "javax.swing.plaf.synth.SynthUI";
+
   private GtkPaintingUtil() { }
 
   public static Color getForeground(final BasicMenuItemUI ui, final JMenuItem menuItem) {
-    final SynthContext context = ((SynthUI)ui).getContext(menuItem);
+    final SynthContext context = getSynthContext(ui, menuItem);
     return context.getStyle().getColor(context, ColorType.TEXT_FOREGROUND);
   }
 
@@ -48,5 +53,28 @@ public class GtkPaintingUtil {
     SwingUtilities2.drawStringUnderlineCharAt(menuItem, g, text, index, textRect.x + 1, textRect.y + fm.getAscent() + 1);
     g.setColor(fg);
     SwingUtilities2.drawStringUnderlineCharAt(menuItem, g, text, index, textRect.x, textRect.y + fm.getAscent());
+  }
+
+  public static boolean isSynthUI(final MenuItemUI ui) {
+    final Class<?>[] interfaces = ui.getClass().getInterfaces();
+    for (int i = 0, length = interfaces.length; i < length; i++) {
+      final Class<?> anInterface = interfaces[i];
+      if (V6_SYNTH_UI_CLASS.equals(anInterface.getName()) || V7_SYNTH_UI_CLASS.equals(anInterface.getName())) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public static SynthContext getSynthContext(final MenuItemUI ui, final JComponent item) {
+    try {
+      final Method getContext = ui.getClass().getMethod("getContext", JComponent.class);
+      getContext.setAccessible(true);
+      return (SynthContext)getContext.invoke(ui, item);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

@@ -162,9 +162,9 @@ public class DocumentCommitThread implements Runnable, Disposable {
     }
   }
 
-  private final StringBuffer log = new StringBuffer();
+  private final StringBuilder log = new StringBuilder();
   private void log(@NonNls String msg, Document document, boolean synchronously, @NonNls Object... args) {
-    //if (true) return;
+    if (true) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       String s = msg + (synchronously ? " (sync)" : "") +
                  (document == null ? "" : "; Document: " + System.identityHashCode(document) +

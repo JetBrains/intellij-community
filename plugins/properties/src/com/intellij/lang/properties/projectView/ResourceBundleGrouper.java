@@ -18,11 +18,13 @@ package com.intellij.lang.properties.projectView;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 
@@ -44,15 +46,17 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
     Map<ResourceBundle,Collection<PropertiesFile>> childBundles = new THashMap<ResourceBundle, Collection<PropertiesFile>>();
     for (AbstractTreeNode child : children) {
       Object f = child.getValue();
-      if (f instanceof PropertiesFile) {
-        PropertiesFile propertiesFile = (PropertiesFile)f;
-        ResourceBundle bundle = propertiesFile.getResourceBundle();
-        Collection<PropertiesFile> files = childBundles.get(bundle);
-        if (files == null) {
-          files = new SmartList<PropertiesFile>();
-          childBundles.put(bundle, files);
+      if (f instanceof PsiFile) {
+        PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile((PsiFile)f);
+        if (propertiesFile != null) {
+          ResourceBundle bundle = propertiesFile.getResourceBundle();
+          Collection<PropertiesFile> files = childBundles.get(bundle);
+          if (files == null) {
+            files = new SmartList<PropertiesFile>();
+            childBundles.put(bundle, files);
+          }
+          files.add(propertiesFile);
         }
-        files.add(propertiesFile);
       }
     }
 
@@ -66,11 +70,13 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
     }
     for (AbstractTreeNode child : children) {
       Object f = child.getValue();
-      if (f instanceof PropertiesFile) {
-        PropertiesFile propertiesFile = (PropertiesFile)f;
-        ResourceBundle bundle = propertiesFile.getResourceBundle();
-        if (childBundles.get(bundle).size() != 1) {
-          continue;
+      if (f instanceof PsiFile) {
+        PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile((PsiFile)f);
+        if (propertiesFile != null) {
+          ResourceBundle bundle = propertiesFile.getResourceBundle();
+          if (childBundles.get(bundle).size() != 1) {
+            continue;
+          }
         }
       }
       result.add(child);

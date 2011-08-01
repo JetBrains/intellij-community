@@ -16,7 +16,6 @@
 package com.intellij.ui.plaf.gtk;
 
 import com.intellij.util.ui.UIUtil;
-import sun.swing.plaf.synth.SynthUI;
 
 import javax.swing.*;
 import javax.swing.plaf.MenuItemUI;
@@ -32,7 +31,7 @@ public class GtkMenuUI extends BasicMenuUI {
   }
 
   public static boolean isUiAcceptable(final MenuItemUI ui) {
-    return ui instanceof BasicMenuUI && ui instanceof SynthUI;
+    return ui instanceof BasicMenuUI && GtkPaintingUtil.isSynthUI(ui);
   }
 
   @Override
@@ -47,7 +46,7 @@ public class GtkMenuUI extends BasicMenuUI {
   @Override
   public void update(final Graphics g, final JComponent c) {
     if (arrowIcon != null && !(arrowIcon instanceof IconWrapper)) {
-      arrowIcon = new IconWrapper(arrowIcon, (SynthUI)myOriginalUI);
+      arrowIcon = new IconWrapper(arrowIcon, myOriginalUI);
     }
     super.update(g, c);
   }

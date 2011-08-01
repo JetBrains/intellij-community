@@ -101,11 +101,11 @@ public class MyTestInjector {
   }
 
   private static void registerForStringVarInitializer(@NotNull Disposable parent,
-                                              @NotNull final Project project,
-                                              final Language language,
-                                              @NotNull @NonNls final String varName,
-                                              @NonNls final String prefix,
-                                              @NonNls final String suffix) {
+                                                      @NotNull final Project project,
+                                                      final Language language,
+                                                      @NotNull @NonNls final String varName,
+                                                      @NonNls final String prefix,
+                                                      @NonNls final String suffix) {
     if (language == null) return;
     final ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {
       public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement... operands) {

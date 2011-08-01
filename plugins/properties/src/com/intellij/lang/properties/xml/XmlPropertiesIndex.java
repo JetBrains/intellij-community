@@ -75,33 +75,38 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   @NotNull
   @Override
   public Map<Key, String> map(FileContent inputData) {
-    StdXMLReader reader = getReader(inputData.getContent());
-    if (reader == null) return Collections.emptyMap();
-    HashMap<Key, String> map = new HashMap<Key, String>();
-    MyIXMLBuilderAdapter builder = new MyIXMLBuilderAdapter(map);
-    NanoXmlUtil.parse(reader, builder);
+    MyIXMLBuilderAdapter builder = parse(inputData.getContent(), false);
+    if (builder == null) return Collections.emptyMap();
+    HashMap<Key, String> map = builder.myMap;
     if (builder.accepted) map.put(MARKER_KEY, "");
     return map;
   }
 
+  static boolean isAccepted(byte[] bytes) {
+    MyIXMLBuilderAdapter builder = parse(bytes, true);
+    return builder != null && builder.accepted;
+  }
+
   @Nullable
-  static StdXMLReader getReader(byte[] bytes) {
+  private static MyIXMLBuilderAdapter parse(byte[] bytes, boolean stopIfAccepted) {
     StdXMLReader reader;
     try {
       reader = new StdXMLReader(new ByteArrayInputStream(bytes)) {
         @Override
         public Reader openStream(String publicID, String systemID) throws IOException {
           if (!"http://java.sun.com/dtd/properties.dtd".equals(systemID)) throw new IOException();
-          return super.openStream(publicID, systemID);
+          return new StringReader(" ");
         }
       };
-      return reader;
     }
-    catch (IOException ignore) {
+    catch (IOException e) {
       return null;
     }
-
+    MyIXMLBuilderAdapter builder = new MyIXMLBuilderAdapter(stopIfAccepted);
+    NanoXmlUtil.parse(reader, builder);
+    return builder;
   }
+
   private final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
 
   @Override
@@ -166,10 +171,11 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     boolean accepted;
     boolean insideEntry;
     String key;
-    private final HashMap<Key, String> myMap;
+    private final HashMap<Key, String> myMap = new HashMap<Key, String>();
+    private final boolean myStopIfAccepted;
 
-    public MyIXMLBuilderAdapter(HashMap<Key, String> map) {
-      myMap = map;
+    public MyIXMLBuilderAdapter(boolean stopIfAccepted) {
+      myStopIfAccepted = stopIfAccepted;
     }
 
     @Override
@@ -184,6 +190,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
       else {
         insideEntry = "entry".equals(name);
       }
+      if (myStopIfAccepted) throw new NanoXmlUtil.ParserStoppedException();
     }
 
     @Override

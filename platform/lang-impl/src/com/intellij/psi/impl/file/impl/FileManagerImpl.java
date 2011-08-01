@@ -300,10 +300,10 @@ public class FileManagerImpl implements FileManager {
 
   private void dispatchPendingEvents() {
     if (!myInitialized) {
-      LOG.error("Project is not yet initialized");
+      LOG.error("Project is not yet initialized: "+myManager.getProject());
     }
     if (myDisposed) {
-      LOG.error("Project is already disposed");
+      LOG.error("Project is already disposed: "+myManager.getProject());
     }
 
     myConnection.deliverImmediately();

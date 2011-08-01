@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
@@ -27,7 +29,7 @@ import java.awt.*;
 /**
 * @author Konstantin Bulenkov
 */
-class NavBarItem extends SimpleColoredComponent {
+class NavBarItem extends SimpleColoredComponent implements Disposable {
   private final String myText;
   private final SimpleTextAttributes myAttributes;
   private final int myIndex;
@@ -59,6 +61,7 @@ class NavBarItem extends SimpleColoredComponent {
       myIcon = PlatformIcons.DIRECTORY_OPEN_ICON;
       myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     }
+    Disposer.register(panel, this);
 
     setOpaque(false);
     setFont(UIUtil.isUnderAquaLookAndFeel() ? UIUtil.getLabelFont().deriveFont(11.0f) : getFont());
@@ -160,5 +163,9 @@ class NavBarItem extends SimpleColoredComponent {
         return openIcon.getIconHeight();
       }
     };
+  }
+
+  @Override
+  public void dispose() {
   }
 }

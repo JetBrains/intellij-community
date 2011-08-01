@@ -105,7 +105,7 @@ public class LowLevelSearchUtil {
         prev = run;
         run = leafElement;
       }
-      contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
+      if (!contains) contains = run.getTextLength() - start >= patternLength;  //do not compute if already contains
       if (contains) {
         if (processInjectedPsi) {
           Boolean result = processInjectedFile(run, processor, searcher, progress);

@@ -25,6 +25,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
@@ -151,7 +152,7 @@ public class DeleteHandler {
       }
 
       int result = Messages.showDialog(project, warningMessage, IdeBundle.message("title.delete"),
-                                       new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()}, 0,
+                                       new String[]{ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText()}, 0,
                                        Messages.getQuestionIcon());
       if (result != 0) return;
     }

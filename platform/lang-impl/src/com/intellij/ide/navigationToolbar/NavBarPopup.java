@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -31,12 +32,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class NavBarPopup extends LightweightHint {
+public class NavBarPopup extends LightweightHint implements Disposable {
   private static final String JBLIST_KEY = "OriginalList";
   private final NavBarPanel myPanel;
   private int myIndex;
@@ -111,6 +115,10 @@ public class NavBarPopup extends LightweightHint {
     }
   }
 
+  @Override
+  public void dispose() {
+  }
+
   private static JComponent createPopupContent(final NavBarPanel panel, Object[] siblings) {
     final JBListWithHintProvider list = new JBListWithHintProvider(siblings) {
       @Override
@@ -128,7 +136,8 @@ public class NavBarPopup extends LightweightHint {
       @NotNull
       @Override
       public JComponent fun(Object obj) {
-        return new NavBarItem(panel, obj);
+        final NavBarItem navBarItem = new NavBarItem(panel, obj);
+        return navBarItem;
       }
     });
     list.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));

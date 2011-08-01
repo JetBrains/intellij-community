@@ -1246,7 +1246,10 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       myDoWhenDone = doWhenDone;
       getPicker();
       myTimer.start();
-      getPicker().setVisible(true);
+      Dialog picker = getPicker();
+      picker.setVisible(true);
+      // it seems like it's the lowest value for opacity for mouse events to be processed correctly
+      WindowManager.getInstance().setAlphaModeRatio(picker, 0.95f);
     }
 
     @Override
@@ -1303,9 +1306,6 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
         myPickerFrame.setUndecorated(true);
         myPickerFrame.setAlwaysOnTop(true);
         
-        // it seems like it's the lowest value for opacity for mouse events to be processed correctly
-        WindowManager.getInstance().setAlphaModeRatio(myPickerFrame, 0.95f);
-
         JRootPane rootPane = ((JDialog)myPickerFrame).getRootPane();
         rootPane.putClientProperty("Window.shadow", Boolean.FALSE);
         

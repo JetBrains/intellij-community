@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.File;
 import java.io.IOException;
 
 public class DnDEventImpl extends UserDataHolderBase implements Transferable, DnDEvent {
@@ -303,9 +302,5 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     myDropHandler = null;
     myHandlerComponent = null;
     myManager = null;
-  }
-
-  public interface FileFlavorProvider {
-    java.util.List<File> asFileList();
   }
 }

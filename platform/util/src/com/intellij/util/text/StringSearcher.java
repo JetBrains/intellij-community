@@ -76,6 +76,10 @@ public class StringSearcher {
     LOG.assertTrue(_start <= _end, _start - _end);
     LOG.assertTrue(_end <= text.length(), text.length() - _end);
     if (myForwardDirection) {
+      if (myPatternLength == 1) {
+        // optimization
+        return StringUtil.indexOf(text, myPatternArray[0], _start, _end, myCaseSensitive);
+      }
       int start = _start;
       int end = _end - myPatternLength;
 
@@ -95,7 +99,9 @@ public class StringSearcher {
             if (myPatternArray[i] != c) break;
             i--;
           }
-          if (i < 0) return start;
+          if (i < 0) {
+            return start;
+          }
         }
 
         int step = 0 <= lastChar && lastChar < 128 ? mySearchTable[lastChar] : 1;

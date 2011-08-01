@@ -15,18 +15,17 @@
  */
 package com.intellij.ui.plaf.gtk;
 
-import sun.swing.plaf.synth.SynthUI;
-
 import javax.swing.*;
+import javax.swing.plaf.MenuItemUI;
 import javax.swing.plaf.synth.SynthContext;
 import java.awt.*;
 import java.lang.reflect.Method;
 
 public class IconWrapper implements Icon {
   private final Icon myIcon;
-  private final SynthUI myOriginalUI;
+  private final MenuItemUI myOriginalUI;
 
-  public IconWrapper(final Icon icon, final SynthUI originalUI) {
+  public IconWrapper(final Icon icon, final MenuItemUI originalUI) {
     myIcon = icon;
     myOriginalUI = originalUI;
   }
@@ -37,7 +36,7 @@ public class IconWrapper implements Icon {
       final Method paintIcon = myIcon.getClass().getMethod("paintIcon", SynthContext.class, Graphics.class,
                                                            int.class, int.class, int.class, int.class);
       paintIcon.setAccessible(true);
-      paintIcon.invoke(myIcon, myOriginalUI.getContext((JComponent)c), g, x, y, getIconWidth(), getIconHeight());
+      paintIcon.invoke(myIcon, GtkPaintingUtil.getSynthContext(myOriginalUI, (JComponent)c), g, x, y, getIconWidth(), getIconHeight());
       return;
     }
     catch (Exception ignore) { }

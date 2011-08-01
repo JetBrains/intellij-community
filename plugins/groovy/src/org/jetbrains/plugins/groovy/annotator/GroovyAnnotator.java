@@ -219,13 +219,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
     if (isDeclarationAssignment(referenceExpression) || resolved instanceof PsiPackage) return;
 
-    if (resolved == null) {
+    if (resolved == null && shouldHighlightAsUnresolved(referenceExpression)) {
       PsiElement refNameElement = referenceExpression.getReferenceNameElement();
-      if (refNameElement != null && referenceExpression.getQualifier() == null) {
-        final IElementType type = refNameElement.getNode().getElementType();
-        if (type == GroovyTokenTypes.mGSTRING_LITERAL || type == GroovyTokenTypes.mSTRING_LITERAL) return;
-      }
       PsiElement elt = refNameElement == null ? referenceExpression : refNameElement;
+
       Annotation annotation = myHolder.createInfoAnnotation(elt, null);
       final GrExpression qualifier = referenceExpression.getQualifierExpression();
       if (qualifier == null) {
@@ -243,18 +240,28 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         }
       }
 
-      if (!GroovyUnresolvedHighlightFilter.shouldHighlight(referenceExpression)) return;
-
-      CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
-
-      for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
-        searcher.findDeclarationsAt(referenceExpression, 0, consumer);
-        if (consumer.getResult().size() > 0) return;
-      }
-
       registerReferenceFixes(referenceExpression, annotation);
       annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
     }
+  }
+
+  public static boolean shouldHighlightAsUnresolved(@NotNull GrReferenceExpression referenceExpression) {
+    PsiElement refNameElement = referenceExpression.getReferenceNameElement();
+    if (refNameElement != null && referenceExpression.getQualifier() == null) {
+      final IElementType type = refNameElement.getNode().getElementType();
+      if (type == GroovyTokenTypes.mGSTRING_LITERAL || type == GroovyTokenTypes.mSTRING_LITERAL) return false;
+    }
+
+    if (!GroovyUnresolvedHighlightFilter.shouldHighlight(referenceExpression)) return false;
+
+    CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
+
+    for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
+      searcher.findDeclarationsAt(referenceExpression, 0, consumer);
+      if (consumer.getResult().size() > 0) return false;
+    }
+
+    return true;
   }
 
   private void checkStringNameIdentifier(GrReferenceExpression ref) {

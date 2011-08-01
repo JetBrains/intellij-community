@@ -148,21 +148,23 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     int column = pos.column;
     int lineStartOffset = myDocumentWindow.getLineStartOffset(pos.line);
     int lineEndOffset = myDocumentWindow.getLineEndOffset(pos.line);
-    int delta;
-    int baseOffset;
     if (column > lineEndOffset - lineStartOffset) {
-      // in virtual space, calculate offset based on a line end
-      delta = column - (lineEndOffset - lineStartOffset);
-      baseOffset = lineEndOffset;
+      // in virtual space, calculate the host pos as an offset from the line end
+      int delta = column - (lineEndOffset - lineStartOffset);
+
+      int baseOffsetInHost = myDocumentWindow.injectedToHost(lineEndOffset);
+      LogicalPosition lineStartPosInHost = myDelegate.offsetToLogicalPosition(baseOffsetInHost);
+      return new LogicalPosition(lineStartPosInHost.line, lineStartPosInHost.column + delta);
     }
     else {
-      delta = column;
-      baseOffset = lineStartOffset;
+      int offset = lineStartOffset + column;
+      int hostOffset = getDocument().injectedToHost(offset);
+      int hostLineNumber = getDocument().getDelegate().getLineNumber(hostOffset);
+      int hostLineStart = getDocument().getDelegate().getLineStartOffset(hostLineNumber);
+
+      return new LogicalPosition(hostLineNumber, hostOffset - hostLineStart);
     }
 
-    int baseOffsetInHost = myDocumentWindow.injectedToHost(baseOffset);
-    LogicalPosition lineStartPosInHost = myDelegate.offsetToLogicalPosition(baseOffsetInHost);
-    return new LogicalPosition(lineStartPosInHost.line, lineStartPosInHost.column + delta);
   }
 
   private void dispose() {

@@ -4,6 +4,7 @@ import x.n.*;
 
 import java.lang.Class;
 
+@Deprecated
 public class Y {
     X1 x1;
     x.n.Class s;

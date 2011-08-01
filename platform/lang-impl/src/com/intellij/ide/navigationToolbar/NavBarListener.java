@@ -42,7 +42,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -123,7 +123,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
 
   public void focusGained(final FocusEvent e) {
     myPanel.updateItems();
-    final ArrayList<NavBarItem> items = myPanel.getItems();
+    final List<NavBarItem> items = myPanel.getItems();
     if (!myPanel.isInFloatingMode() && items.size() > 0) {
       myPanel.setContextComponent(items.get(items.size() - 1));
     } else {
