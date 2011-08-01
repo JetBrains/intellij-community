@@ -316,7 +316,7 @@ public class FileBasedIndex implements ApplicationComponent {
         int lastModCount = 0;
         public void run() {
           if (lastModCount == myLocalModCount) {
-            flushAllIndices();
+            flushAllIndices(lastModCount);
           }
           lastModCount = myLocalModCount;
         }
@@ -610,13 +610,14 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void flushAllIndices() {
-    if (HeavyProcessLatch.INSTANCE.isRunning()) return;
-
+  private void flushAllIndices(final long modCount) {
+    if (HeavyProcessLatch.INSTANCE.isRunning()) {
+      return;
+    }
     IndexingStamp.flushCache();
     for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
-      if (HeavyProcessLatch.INSTANCE.isRunning()) {
-        return;
+      if (HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount) {
+        return; // do not interfere with 'main' jobs
       }
       try {
         final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
