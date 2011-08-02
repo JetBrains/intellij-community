@@ -158,7 +158,8 @@ public class ScopeEditorPanel {
       myUpdateAlarm.cancelAllRequests();
       myCurrentScope = null;
       try {
-        myCurrentScope = PackageSetFactory.getInstance().compile(myPatternField.getText());
+        final String text = myPatternField.getText();
+        myCurrentScope = StringUtil.isEmpty(text) ? null: PackageSetFactory.getInstance().compile(text);
         myErrorMessage = null;
         myTextChanged = true;
         rebuild(false);
