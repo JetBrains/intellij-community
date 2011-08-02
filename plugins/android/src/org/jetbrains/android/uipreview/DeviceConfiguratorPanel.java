@@ -163,6 +163,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
           if (index >= 0) {
             myAvailableQualifiersList.setSelectedIndex(Math.min(index, myAvailableQualifiersList.getItemsCount() - 1));
           }
+          myChosenQualifiersList.setSelectedValue(selectedQualifier, true);
         }
       }
     });
