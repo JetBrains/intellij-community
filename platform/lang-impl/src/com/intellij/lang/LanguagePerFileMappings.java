@@ -129,7 +129,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       }
     }
     final List<VirtualFile> files = ContainerUtil.createMaybeSingletonList(file);
-    handleMappingChange(files, files, false);
+    handleMappingChange(files, files, true);
   }
 
   private void handleMappingChange(final Collection<VirtualFile> files, Collection<VirtualFile> oldFiles, final boolean includeOpenFiles) {
