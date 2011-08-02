@@ -28,9 +28,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import org.jetbrains.annotations.NonNls;
@@ -93,8 +93,8 @@ public class PackagePatternProvider extends PatternDialectProvider {
       FileNode fNode = (FileNode)node;
       final PsiElement element = fNode.getPsiElement();
       final StringBuilder buf = new StringBuilder(20);
-      if (element instanceof PsiJavaFile) {
-        final PsiJavaFile javaFile = (PsiJavaFile)element;
+      if (element instanceof PsiClassOwner) {
+        final PsiClassOwner javaFile = (PsiClassOwner)element;
         String packageName = javaFile.getPackageName();
         buf.append(packageName);
         if (buf.length() > 0) {

@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -503,10 +504,11 @@ public class FileTreeModelBuilder {
   }
 
   private PackageDependenciesNode getParentModuleGroup(String[] groupPath){
-    ModuleGroupNode groupNode = myModuleGroupNodes.get(groupPath[groupPath.length - 1]);
+    final String key = StringUtil.join(groupPath);
+    ModuleGroupNode groupNode = myModuleGroupNodes.get(key);
     if (groupNode == null) {
       groupNode = new ModuleGroupNode(new ModuleGroup(groupPath), myProject);
-      myModuleGroupNodes.put(groupPath[groupPath.length - 1], groupNode);
+      myModuleGroupNodes.put(key, groupNode);
       myRoot.add(groupNode);
     }
     if (groupPath.length > 1) {

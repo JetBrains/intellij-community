@@ -189,6 +189,8 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     queue(SyncAction.EnsureRunConfigurationExists, myProject);
     queue(SyncAction.UpgradeFramework, myProject);
     queue(SyncAction.CreateAppStructureIfNeeded, myProject);
+
+    MvcProjectWithoutLibraryNotificator.projectOpened(myProject);
   }
 
   private void queue(SyncAction action, Object on) {

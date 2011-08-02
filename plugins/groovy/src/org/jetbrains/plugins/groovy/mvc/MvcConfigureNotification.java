@@ -32,6 +32,17 @@ public class MvcConfigureNotification extends GroovyFrameworkConfigNotification 
     return framework.hasFrameworkJar(module);
   }
 
+  public static void configure(@NotNull MvcFramework framework, @NotNull Module module) {
+    final GroovyLibraryDescription description = framework.createLibraryDescription();
+    final AddCustomLibraryDialog dialog = AddCustomLibraryDialog.createDialog(description, module, null);
+    dialog.setTitle("Change " + framework.getDisplayName() + " SDK version");
+    dialog.show();
+
+    if (dialog.isOK()) {
+      module.putUserData(MvcFramework.UPGRADE, Boolean.TRUE);
+    }
+  }
+
   @Override
   public EditorNotificationPanel createConfigureNotificationPanel(final @NotNull Module module) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
@@ -39,14 +50,7 @@ public class MvcConfigureNotification extends GroovyFrameworkConfigNotification 
     panel.createActionLabel("Configure " + framework.getFrameworkName() + " SDK", new Runnable() {
       @Override
       public void run() {
-        final GroovyLibraryDescription description = framework.createLibraryDescription();
-        final AddCustomLibraryDialog dialog = AddCustomLibraryDialog.createDialog(description, module, null);
-        dialog.setTitle("Change " + framework.getDisplayName() + " SDK version");
-        dialog.show();
-
-        if (dialog.isOK()) {
-          module.putUserData(MvcFramework.UPGRADE, Boolean.TRUE);
-        }
+        configure(framework, module);
       }
     });
 
