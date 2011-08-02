@@ -19,6 +19,7 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.common.InjectedLanguageBlockBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ import java.util.List;
 public class CommentWithInjectionBlock extends AbstractJavaBlock {
   private InjectedLanguageBlockBuilder myInjectedBlockBuilder;
 
-  public CommentWithInjectionBlock(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, CodeStyleSettings settings) {
+  public CommentWithInjectionBlock(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, CommonCodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
     myInjectedBlockBuilder = new JavaCommentInjectedBlockBuilder();
   }
@@ -62,7 +63,7 @@ public class CommentWithInjectionBlock extends AbstractJavaBlock {
   private class JavaCommentInjectedBlockBuilder extends InjectedLanguageBlockBuilder {
     @Override
     public CodeStyleSettings getSettings() {
-      return mySettings;
+      return mySettings.getRootSettings();
     }
 
     @Override                                      

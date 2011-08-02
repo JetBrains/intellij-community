@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.java.FormattingAstUtil;
 import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
@@ -63,7 +64,7 @@ public class JavaChildWrapArranger {
    */
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
-  public Wrap arrange(ASTNode child, ASTNode parent, CodeStyleSettings settings, Wrap suggestedWrap, ReservedWrapsProvider reservedWrapsProvider) {
+  public Wrap arrange(ASTNode child, ASTNode parent, CommonCodeStyleSettings settings, Wrap suggestedWrap, ReservedWrapsProvider reservedWrapsProvider) {
     ASTNode directParent = child.getTreeParent();
     int role = ((CompositeElement)directParent).getChildRole(child);
     final IElementType nodeType = parent.getElementType();

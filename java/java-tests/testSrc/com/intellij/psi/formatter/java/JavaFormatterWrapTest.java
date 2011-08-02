@@ -27,7 +27,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testWrappingAnnotationArrayParameters() throws Exception {
-    getSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
     getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTextTest(
       "@AttributeOverrides( { @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\"))," +
@@ -59,7 +59,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testAnnotationParamValueExceedingRightMargin() throws Exception {
     // Inspired by IDEA-18051
-    getSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
     doTextTest(
       "package formatting;\n" +
       "\n" +
@@ -120,7 +120,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   public void testEnumConstantsWrapping() {
     // Inspired by IDEA-54667
     getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
 
     // Don't expect the constants to be placed on new line.
     doTextTest(
@@ -153,8 +153,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testWrapLongLine() {
     // Inspired by IDEA-55782
-    getSettings().RIGHT_MARGIN = 50;
-    getSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 50;
+    getSettings().getRootSettings().WRAP_LONG_LINES = true;
 
     doTextTest(
       "class TestClass {\n" +
@@ -182,8 +182,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testWrapLongLineWithTabs() {
     // Inspired by IDEA-55782
-    getSettings().RIGHT_MARGIN = 20;
-    getSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 20;
+    getSettings().getRootSettings().WRAP_LONG_LINES = true;
     getIndentOptions().USE_TAB_CHARACTER = true;
     getIndentOptions().TAB_SIZE = 4;
 
@@ -200,8 +200,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testWrapLongLineWithSelection() {
     // Inspired by IDEA-55782
-    getSettings().RIGHT_MARGIN = 20;
-    getSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 20;
+    getSettings().getRootSettings().WRAP_LONG_LINES = true;
 
     String initial =
       "class TestClass {\n" +
@@ -227,7 +227,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   
   public void testWrapMethodAnnotationBeforeParams() throws Exception {
     // Inspired by IDEA-59536
-    getSettings().RIGHT_MARGIN = 90;
+    getSettings().getRootSettings().RIGHT_MARGIN = 90;
     getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     
@@ -268,7 +268,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testResourceListWrap() throws Exception {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().RIGHT_MARGIN = 40;
+    getSettings().getRootSettings().RIGHT_MARGIN = 40;
     getSettings().RESOURCE_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doMethodTest("try (MyResource r1 = null; MyResource r2 = null) { }",
                  "try (MyResource r1 = null;\n" +

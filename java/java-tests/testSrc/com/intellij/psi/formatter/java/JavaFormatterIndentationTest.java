@@ -60,7 +60,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
   public void testNestedMethodsIndentation() throws Exception {
     // Inspired by IDEA-43962
 
-    getSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
 
     doMethodTest(
       "BigDecimal.ONE\n" +
@@ -89,7 +89,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
   public void testShiftedChainedIfElse() throws Exception {
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
     getSettings().ELSE_ON_NEW_LINE = true;
-    getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
     doMethodTest(
       "long a = System.currentTimeMillis();\n" +
       "    if (a == 0){\n" +
@@ -127,7 +127,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 
   public void testAlignedSubBlockIndentation() {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    getSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
 
     // Inspired by IDEA-54671
     doTextTest(

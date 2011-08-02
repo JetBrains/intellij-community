@@ -93,7 +93,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     mySettings = settings;
     myEditor = createEditor();
 
-    myUpdateAlarm.setActivationComponent(myEditor.getComponent());
+    if (myEditor != null) {
+      myUpdateAlarm.setActivationComponent(myEditor.getComponent());
+    }
     myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
       public void stateChanged() {
         somethingChanged();
@@ -129,7 +131,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     myUserActivityWatcher.register(component);
   }
 
+  @Nullable
   private Editor createEditor() {
+    if (getPreviewText() == null) return null;
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument("");
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument);
@@ -150,6 +154,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   protected void updatePreview(boolean useDefaultSample) {
+    if (myEditor == null) return;
     updateEditor(useDefaultSample);
     updatePreviewHighlighter((EditorEx)myEditor);
   }
@@ -383,6 +388,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   protected abstract FileType getFileType();
 
   @NonNls
+  @Nullable
   protected abstract String getPreviewText();
 
   public abstract void apply(CodeStyleSettings settings);
@@ -412,7 +418,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   public void dispose() {
     myUpdateAlarm.cancelAllRequests();
-    EditorFactory.getInstance().releaseEditor(myEditor);
+    if (myEditor != null) {
+      EditorFactory.getInstance().releaseEditor(myEditor);
+    }
   }
 
   protected abstract void resetImpl(final CodeStyleSettings settings);
@@ -462,11 +470,13 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   public void onSomethingChanged() {
     setSomethingChanged(true);
-    UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), new Runnable(){
-      public void run() {
-        addUpdatePreviewRequest();
-      }
-    });
+    if (myEditor != null) {
+      UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), new Runnable() {
+        public void run() {
+          addUpdatePreviewRequest();
+        }
+      });
+    }
   }
 
   private void addUpdatePreviewRequest() {
@@ -604,5 +614,5 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   public boolean setPanelLanguage(Language language) {
     return false;
   }
-  
+
 }

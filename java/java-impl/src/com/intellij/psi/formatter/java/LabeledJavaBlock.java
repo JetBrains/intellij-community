@@ -20,6 +20,7 @@ import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
                           final Wrap wrap,
                           final Alignment alignment,
                           final Indent indent,
-                          final CodeStyleSettings settings) {
+                          final CommonCodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
   }
 
@@ -55,7 +56,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
   }
 
   private Indent getLabelIndent() {
-    if (mySettings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE) {
+    if (mySettings.getRootSettings().getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE) {
       return Indent.getAbsoluteLabelIndent();
     } else {
       return Indent.getLabelIndent();

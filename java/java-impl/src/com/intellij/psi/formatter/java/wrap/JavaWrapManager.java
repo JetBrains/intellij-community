@@ -20,6 +20,7 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.java.wrap.impl.JavaChildBlockWrapFactory;
 import com.intellij.psi.formatter.java.wrap.impl.JavaChildWrapArranger;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +78,7 @@ public class JavaWrapManager {
    *                                <code>null</code> otherwise
    */
   @Nullable
-  public Wrap arrangeChildWrap(ASTNode child, ASTNode parent, CodeStyleSettings settings, Wrap suggestedWrap,
+  public Wrap arrangeChildWrap(ASTNode child, ASTNode parent, CommonCodeStyleSettings settings, Wrap suggestedWrap,
                                ReservedWrapsProvider reservedWrapsProvider) 
   {
     return myChildArranger.arrange(child, parent, settings, suggestedWrap, reservedWrapsProvider);
@@ -94,7 +95,7 @@ public class JavaWrapManager {
    * @return                        wrap to use for the sub-blocks of the given block
    */
   @Nullable
-  public Wrap createChildBlockWrap(ASTBlock block, CodeStyleSettings settings, ReservedWrapsProvider reservedWrapsProvider) {
+  public Wrap createChildBlockWrap(ASTBlock block, CommonCodeStyleSettings settings, ReservedWrapsProvider reservedWrapsProvider) {
     return myChildBlockFactory.create(block, settings, reservedWrapsProvider);
   }
 }

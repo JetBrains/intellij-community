@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -33,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -82,12 +84,13 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
   }
 
-  public static CodeStyleSettings getSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject());
+  public static CommonCodeStyleSettings getSettings() {
+    CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(getProject());
+    return rootSettings.getCommonSettings(JavaLanguage.INSTANCE);
   }
 
   public static CodeStyleSettings.IndentOptions getIndentOptions() {
-    return getSettings().getIndentOptions(StdFileTypes.JAVA);
+    return getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
   }
 
   public void doTest() throws Exception {

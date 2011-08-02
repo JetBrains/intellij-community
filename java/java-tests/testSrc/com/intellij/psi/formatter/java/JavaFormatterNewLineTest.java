@@ -147,7 +147,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
   
   public void testClassInitializationBlockBracesPlacement() throws Exception {
     // Inspired by IDEA-54191
-    getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
     doMethodTest(
       "new Expectations() {\n" +

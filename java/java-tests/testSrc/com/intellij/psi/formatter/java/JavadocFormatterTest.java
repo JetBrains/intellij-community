@@ -15,7 +15,8 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * @author Denis Zhdanov
@@ -24,8 +25,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   public void testRightMargin() throws Exception {
-    getSettings().WRAP_COMMENTS = true;
-    getSettings().RIGHT_MARGIN = 35;//      |
+    getSettings().getRootSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 35;//      |
     doTextTest(
       "/** Here is one-line java-doc comment */" +
       "class Foo {\n" +
@@ -41,9 +42,9 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   public void testLineFeedsArePreservedDuringWrap() {
     // Inspired by IDEA-61895
-    getSettings().WRAP_COMMENTS = true;
-    getSettings().JD_PRESERVE_LINE_FEEDS = true;
-    getSettings().RIGHT_MARGIN = 48;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().JD_PRESERVE_LINE_FEEDS = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 48;
     
     doTextTest(
       "/**\n" +
@@ -63,19 +64,19 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   }
   
   public void testSCR11296() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.RIGHT_MARGIN = 50;
-    settings.WRAP_COMMENTS = true;
-    settings.ENABLE_JAVADOC_FORMATTING = true;
-    settings.JD_P_AT_EMPTY_LINES = false;
-    settings.JD_KEEP_EMPTY_LINES = false;
+    final CommonCodeStyleSettings settings = getSettings();
+    settings.getRootSettings().RIGHT_MARGIN = 50;
+    settings.getRootSettings().WRAP_COMMENTS = true;
+    settings.getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    settings.getRootSettings().JD_P_AT_EMPTY_LINES = false;
+    settings.getRootSettings().JD_KEEP_EMPTY_LINES = false;
     doTest();
   }
 
   public void testSCR2632() throws Exception {
-    getSettings().ENABLE_JAVADOC_FORMATTING = true;
-    getSettings().WRAP_COMMENTS = true;
-    getSettings().RIGHT_MARGIN = 20;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 20;
 
     doTextTest("/**\n" + " * <p />\n" + " * Another paragraph of the description placed after blank line.\n" + " */\n" + "class A{}",
                "/**\n" +
@@ -91,8 +92,8 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   
   public void testParagraphTagGeneration() {
     // Inspired by IDEA-61811
-    getSettings().ENABLE_JAVADOC_FORMATTING = true;
-    getSettings().JD_P_AT_EMPTY_LINES = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().JD_P_AT_EMPTY_LINES = true;
     doTextTest(
       "/**\n" +
       " * line 1\n" +
@@ -123,9 +124,9 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   
   public void testWrappedParameterDescription() throws Exception {
     // Inspired by IDEA-13072
-    getSettings().ENABLE_JAVADOC_FORMATTING = true;
-    getSettings().WRAP_COMMENTS = true;
-    getSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE = true;
     doClassTest(
       "/**\n" +
       " * test description\n" +

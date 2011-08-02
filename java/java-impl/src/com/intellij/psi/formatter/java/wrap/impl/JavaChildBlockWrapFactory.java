@@ -20,7 +20,7 @@ import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiPolyadicExpression;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.java.FormattingAstUtil;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -49,7 +49,7 @@ public class JavaChildBlockWrapFactory {
    * @return                        wrap to use for the sub-blocks of the given block
    */
   @Nullable
-  public Wrap create(ASTBlock block, CodeStyleSettings settings, ReservedWrapsProvider reservedWrapsProvider) {
+  public Wrap create(ASTBlock block, CommonCodeStyleSettings settings, ReservedWrapsProvider reservedWrapsProvider) {
     ASTNode node = block.getNode();
     Wrap wrap = block.getWrap();
     final IElementType nodeType = node.getElementType();

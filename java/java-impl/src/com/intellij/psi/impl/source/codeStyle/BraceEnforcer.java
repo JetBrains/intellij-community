@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -35,7 +36,7 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
   private final PostFormatProcessorHelper myPostProcessor;
 
   public BraceEnforcer(CodeStyleSettings settings) {
-    myPostProcessor = new PostFormatProcessorHelper(settings);
+    myPostProcessor = new PostFormatProcessorHelper(settings.getCommonSettings(JavaLanguage.INSTANCE));
   }
 
   @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -50,10 +51,10 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
       if (statement == null) {
         return;
       }
-      processStatement(statement, statement.getThenBranch(), myPostProcessor.mySettings.IF_BRACE_FORCE);
+      processStatement(statement, statement.getThenBranch(), myPostProcessor.getSettings().IF_BRACE_FORCE);
       final PsiStatement elseBranch = statement.getElseBranch();
-      if (!(elseBranch instanceof PsiIfStatement) || !myPostProcessor.mySettings.SPECIAL_ELSE_IF_TREATMENT) {
-        processStatement(statement, elseBranch, myPostProcessor.mySettings.IF_BRACE_FORCE);
+      if (!(elseBranch instanceof PsiIfStatement) || !myPostProcessor.getSettings().SPECIAL_ELSE_IF_TREATMENT) {
+        processStatement(statement, elseBranch, myPostProcessor.getSettings().IF_BRACE_FORCE);
       }
     }
   }
@@ -61,28 +62,28 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
   @Override public void visitForStatement(PsiForStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitForStatement(statement);
-      processStatement(statement, statement.getBody(), myPostProcessor.mySettings.FOR_BRACE_FORCE);
+      processStatement(statement, statement.getBody(), myPostProcessor.getSettings().FOR_BRACE_FORCE);
     }
   }
 
   @Override public void visitForeachStatement(PsiForeachStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitForeachStatement(statement);
-      processStatement(statement, statement.getBody(), myPostProcessor.mySettings.FOR_BRACE_FORCE);
+      processStatement(statement, statement.getBody(), myPostProcessor.getSettings().FOR_BRACE_FORCE);
     }
   }
 
   @Override public void visitWhileStatement(PsiWhileStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitWhileStatement(statement);
-      processStatement(statement, statement.getBody(), myPostProcessor.mySettings.WHILE_BRACE_FORCE);
+      processStatement(statement, statement.getBody(), myPostProcessor.getSettings().WHILE_BRACE_FORCE);
     }
   }
 
   @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitDoWhileStatement(statement);
-      processStatement(statement, statement.getBody(), myPostProcessor.mySettings.DOWHILE_BRACE_FORCE);
+      processStatement(statement, statement.getBody(), myPostProcessor.getSettings().DOWHILE_BRACE_FORCE);
     }
   }
 

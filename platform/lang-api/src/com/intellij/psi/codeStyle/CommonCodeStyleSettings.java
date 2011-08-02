@@ -21,6 +21,7 @@ import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -35,9 +36,19 @@ import java.lang.reflect.Modifier;
 public class CommonCodeStyleSettings {
 
   private Language myLanguage;
+  private CodeStyleSettings myRootSettings;
 
   public CommonCodeStyleSettings(Language language) {
     myLanguage = language;
+  }
+  
+  public void setRootSettings(@NotNull CodeStyleSettings rootSettings) {
+    myRootSettings = rootSettings;
+  }
+
+  @NotNull
+  public CodeStyleSettings getRootSettings() {
+    return myRootSettings;
   }
 
   public CommonCodeStyleSettings clone() {

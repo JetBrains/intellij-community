@@ -22,6 +22,7 @@ import com.intellij.formatting.Wrap;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 
@@ -29,11 +30,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExtendsListBlock extends AbstractJavaBlock{
-  public ExtendsListBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, CodeStyleSettings settings) {
+  public ExtendsListBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, CommonCodeStyleSettings settings) {
     super(node, wrap, alignment, Indent.getNoneIndent(), settings);
   }
   
-  public ExtendsListBlock(final ASTNode node, final Wrap wrap, final AlignmentStrategy alignmentStrategy, CodeStyleSettings settings) {
+  public ExtendsListBlock(final ASTNode node, final Wrap wrap, final AlignmentStrategy alignmentStrategy, CommonCodeStyleSettings settings) {
     super(node, wrap, alignmentStrategy, Indent.getNoneIndent(), settings);
   }
 

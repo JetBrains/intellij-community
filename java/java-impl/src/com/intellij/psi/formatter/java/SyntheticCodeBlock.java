@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   private final List<Block> mySubBlocks;
   private final Alignment myAlignment;
   private final Indent myIndentContent;
-  private final CodeStyleSettings mySettings;
+  private final CommonCodeStyleSettings mySettings;
   private final Wrap myWrap;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.newXmlFormatter.java.SyntheticCodeBlock");
@@ -44,7 +45,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
 
   public SyntheticCodeBlock(final List<Block> subBlocks,
                             final Alignment alignment,
-                            CodeStyleSettings settings,
+                            CommonCodeStyleSettings settings,
                             Indent indent,
                             Wrap wrap) {
     myIndentContent = indent;
