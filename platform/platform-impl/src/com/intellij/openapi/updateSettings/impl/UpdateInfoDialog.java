@@ -19,6 +19,8 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
@@ -133,6 +135,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JLabel myPatchSizeLabel;
     private JEditorPane myUpdateMessageLabel;
     private JBScrollPane myScrollPane;
+    private JLabel myManualCheckLabel;
 
     public UpdateInfoPanel() {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
@@ -177,6 +180,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       else {
         myPatchSizeLabel.setText(patch.getSize() + "MB");
       }
+
+      if (SystemInfo.isMac) {
+        myManualCheckLabel.setText("<html><br>To check for new updates manually, use the <b>" +
+                                   ApplicationNamesInfo.getInstance().getProductName() + " | Check for Updates</b> command.</html>");
+      }
+
       LabelTextReplacingUtil.replaceText(myPanel);
     }
   }
