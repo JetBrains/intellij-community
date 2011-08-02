@@ -1,10 +1,10 @@
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.openapi.application.ApplicationInfo;
 
 import java.util.ArrayList;
 

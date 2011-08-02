@@ -1,10 +1,10 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.dupLocator.PsiElementRole;
+import com.intellij.dupLocator.DuplicatesProfileBase;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.duplicates.PsiElementRole;
-import com.intellij.structuralsearch.duplicates.SSRDuplicatesProfileBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 /**
  * @author Eugene.Kudelevsky
  */
-public class GroovyDuplicatesProfile extends SSRDuplicatesProfileBase {
+public class GroovyDuplicatesProfile extends DuplicatesProfileBase {
   @Override
   public boolean isMyLanguage(@NotNull Language language) {
     return language.isKindOf(GroovyFileType.GROOVY_LANGUAGE);

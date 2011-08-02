@@ -2,14 +2,11 @@ package com.intellij.structuralsearch.equivalence.xml;
 
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorBuilder;
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
+import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
+import com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder;
+import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**

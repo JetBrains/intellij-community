@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;

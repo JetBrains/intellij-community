@@ -2,9 +2,9 @@ package com.intellij.structuralsearch;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorBuilder;
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
+import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
+import com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder;
+import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;

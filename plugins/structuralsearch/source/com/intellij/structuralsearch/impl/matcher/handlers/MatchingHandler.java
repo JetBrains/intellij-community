@@ -1,12 +1,12 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
+import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
-import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;

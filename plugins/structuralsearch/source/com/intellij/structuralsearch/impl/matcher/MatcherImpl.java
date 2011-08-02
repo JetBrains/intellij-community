@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,9 +31,7 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
-import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
@@ -289,7 +289,7 @@ public class MatcherImpl {
 
         PsiElement parent = elements[0].getParent();
         if (elements.length > 0 && matchContext.getPattern().getStrategy().continueMatching(parent != null ? parent : elements[0])) {
-          visitor.matchContext(new FilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
+          visitor.matchContext(new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
         }
         else {
           for (PsiElement element : elements) {

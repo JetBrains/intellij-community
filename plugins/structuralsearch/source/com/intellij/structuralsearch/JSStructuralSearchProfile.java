@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.javascript.*;
@@ -22,11 +23,10 @@ import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisito
 import com.intellij.structuralsearch.impl.matcher.compiler.OptimizingSearchHelper;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
-import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
-import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
@@ -309,8 +309,8 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
       }
       else {
         myGlobalVisitor.setResult(myGlobalVisitor.matchSequentially(
-          new FilteringNodeIterator(element.getFirstChild()),
-          new FilteringNodeIterator(myGlobalVisitor.getElement().getFirstChild())
+          new SsrFilteringNodeIterator(element.getFirstChild()),
+          new SsrFilteringNodeIterator(myGlobalVisitor.getElement().getFirstChild())
         ));
       }
     }

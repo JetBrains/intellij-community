@@ -4,7 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.iterators.HierarchyNodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 
 /**
  * Created by IntelliJ IDEA.

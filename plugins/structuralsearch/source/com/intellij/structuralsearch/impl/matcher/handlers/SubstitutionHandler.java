@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
+import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.MatchResult;
@@ -7,9 +8,8 @@ import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
-import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
-import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.dupLocator.iterators.FilteringNodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 

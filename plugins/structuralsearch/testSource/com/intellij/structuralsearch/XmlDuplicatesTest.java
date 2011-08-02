@@ -1,20 +1,19 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.dupLocator.DuplicatesTestCase;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.application.PathManager;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class XmlDuplicatesTest extends DuplicatesTestCase {
-  @NonNls
-  private static final String BASE_PATH = "/xml/duplicates/";
 
   @Override
-  protected String getBasePath() {
-    return BASE_PATH;
+  protected String getTestDataPath() {
+    return PathManager.getHomePath() + "/plugins/structuralsearch/testData/xml/duplicates/";
   }
 
   @Override

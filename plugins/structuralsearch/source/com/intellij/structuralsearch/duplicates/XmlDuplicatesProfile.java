@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.duplicates;
 
+import com.intellij.dupLocator.DuplicatesProfileBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene.Kudelevsky
  */
-public class XmlDuplicatesProfile extends SSRDuplicatesProfileBase {
+public class XmlDuplicatesProfile extends DuplicatesProfileBase {
   private static final TokenSet LITERALS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS, XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN);
 
   @Override

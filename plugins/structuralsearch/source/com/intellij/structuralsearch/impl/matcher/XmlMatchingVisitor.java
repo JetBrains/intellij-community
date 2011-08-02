@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
+import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -6,7 +6,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 
 import java.util.HashMap;

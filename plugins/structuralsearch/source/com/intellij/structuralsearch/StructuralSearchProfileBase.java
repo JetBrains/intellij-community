@@ -1,5 +1,14 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.dupLocator.PsiElementRole;
+import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
+import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
+import com.intellij.dupLocator.equivalence.MultiChildDescriptor;
+import com.intellij.dupLocator.equivalence.SingleChildDescriptor;
+import com.intellij.dupLocator.iterators.FilteringNodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.dupLocator.util.DuplocatorUtil;
+import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -7,33 +16,23 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.duplicates.PsiElementRole;
-import com.intellij.structuralsearch.duplicates.SSRDuplicatesProfileBase;
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
-import com.intellij.structuralsearch.equivalence.MultiChildDescriptor;
-import com.intellij.structuralsearch.equivalence.SingleChildDescriptor;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
-import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
-import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +61,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
-        if (isIgnoredNode(element)) {
+        if (DuplocatorUtil.isIgnoredNode(element)) {
           return;
         }
         CompiledPattern pattern = globalVisitor.getContext().getPattern();
@@ -112,25 +111,9 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
       @Override
       public boolean shouldSkip(PsiElement element, PsiElement elementToMatchWith) {
-        return StructuralSearchProfileBase.shouldSkip(element, elementToMatchWith);
+        return DuplocatorUtil.shouldSkip(element, elementToMatchWith);
       }
     });
-  }
-
-  public static boolean shouldSkip(PsiElement element, PsiElement elementToMatchWith) {
-    if (element == null || elementToMatchWith == null) {
-      return false;
-    }
-
-    if (element.getClass() == elementToMatchWith.getClass()) {
-      return false;
-    }
-
-    if (element.getFirstChild() == null && element.getTextLength() == 0 && !(element instanceof LeafElement)) {
-      return true;
-    }
-
-    return false;
   }
 
   @NotNull
@@ -147,40 +130,13 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         @Override
         public void visitElement(PsiElement element) {
           super.visitElement(element);
-          if (isIgnoredNode(element)) {
+          if (DuplocatorUtil.isIgnoredNode(element)) {
             filter.setResult(true);
           }
         }
       };
     }
     return myLexicalNodesFilter;
-  }
-
-  public static boolean isIgnoredNode(PsiElement element) {
-    // ex. "var i = 0" in AS: empty JSAttributeList should be skipped
-    /*if (element.getText().length() == 0) {
-      return true;
-    }*/
-
-    if (element instanceof PsiWhiteSpace || element instanceof PsiErrorElement || element instanceof PsiComment) {
-      return true;
-    }
-
-    if (!(element instanceof LeafElement)) {
-      return false;
-    }
-
-    if (CharArrayUtil.containsOnlyWhiteSpaces(element.getText())) {
-      return true;
-    }
-
-    EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(element);
-    if (descriptorProvider == null) {
-      return false;
-    }
-
-    final IElementType elementType = ((LeafElement)element).getElementType();
-    return descriptorProvider.getIgnoredTokens().contains(elementType);
   }
 
   public static boolean containsOnlyDelimeters(String s) {
@@ -287,7 +243,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     }
   }
 
-  private boolean checkErrorElements(PsiElement element) {
+  private static boolean checkErrorElements(PsiElement element) {
     final boolean[] result = {true};
     final int endOffset = element.getTextRange().getEndOffset();
 
@@ -305,7 +261,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return result[0];
   }
 
-  private boolean checkOptionalChildren(PsiElement root) {
+  private static boolean checkOptionalChildren(PsiElement root) {
     final boolean[] result = {true};
 
     root.accept(new PsiRecursiveElementWalkingVisitor() {
@@ -372,26 +328,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       element = SkippingHandler.getOnlyNonWhitespaceChild(element);
     }
     return element != null;
-
-    /*PsiElement child = SkippingHandler.getOnlyNonWhitespaceChild(element);
-    return child != null && child instanceof LeafElement;*/
   }
-
-  /*@Nullable
-  private static PsiElement getOnlyNonLexicalChild(PsiElement element) {
-    PsiElement onlyChild = null;
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (LexicalNodesFilter.getInstance().accepts(child)) {
-        continue;
-      }
-      if (onlyChild != null) {
-        return null;
-      }
-      onlyChild = child;
-    }
-    return onlyChild;
-  }*/
-
 
   private static boolean isLiteral(PsiElement element) {
     if (element == null) return false;
@@ -421,140 +358,6 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
   protected TokenSet getVariableDelimiters() {
     return TokenSet.EMPTY;
-  }
-
-  public static boolean match(@NotNull EquivalenceDescriptor descriptor1,
-                              @NotNull EquivalenceDescriptor descriptor2,
-                              @NotNull AbstractMatchingVisitor g,
-                              @NotNull Set<PsiElementRole> skippedRoles,
-                              @Nullable SSRDuplicatesProfileBase profile) {
-
-    if (descriptor1.getSingleChildDescriptors().size() != descriptor2.getSingleChildDescriptors().size()) {
-      return false;
-    }
-
-    if (descriptor1.getMultiChildDescriptors().size() != descriptor2.getMultiChildDescriptors().size()) {
-      return false;
-    }
-
-    if (descriptor1.getCodeBlocks().size() != descriptor2.getCodeBlocks().size()) {
-      return false;
-    }
-
-    if (descriptor1.getConstants().size() != descriptor2.getConstants().size()) {
-      return false;
-    }
-
-    for (int i = 0, n = descriptor1.getConstants().size(); i < n; i++) {
-      Object childDescriptor1 = descriptor1.getConstants().get(i);
-      Object childDescriptor2 = descriptor2.getConstants().get(i);
-
-      if (!Comparing.equal(childDescriptor1, childDescriptor2)) {
-        return false;
-      }
-    }
-
-    for (int i = 0, n = descriptor1.getSingleChildDescriptors().size(); i < n; i++) {
-      SingleChildDescriptor childDescriptor1 = descriptor1.getSingleChildDescriptors().get(i);
-      SingleChildDescriptor childDescriptor2 = descriptor2.getSingleChildDescriptors().get(i);
-
-      if (!match(childDescriptor1, childDescriptor2, g, skippedRoles, profile)) {
-        return false;
-      }
-    }
-
-    for (int i = 0, n = descriptor1.getMultiChildDescriptors().size(); i < n; i++) {
-      MultiChildDescriptor childDescriptor1 = descriptor1.getMultiChildDescriptors().get(i);
-      MultiChildDescriptor childDescriptor2 = descriptor2.getMultiChildDescriptors().get(i);
-
-      if (!match(childDescriptor1, childDescriptor2, g)) {
-        return false;
-      }
-    }
-
-    for (int i = 0, n = descriptor1.getCodeBlocks().size(); i < n; i++) {
-      final PsiElement[] codeBlock1 = descriptor1.getCodeBlocks().get(i);
-      final PsiElement[] codeBlock2 = descriptor2.getCodeBlocks().get(i);
-
-      if (!g.matchSequentially(codeBlock1, codeBlock2)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private static boolean match(@NotNull SingleChildDescriptor childDescriptor1,
-                               @NotNull SingleChildDescriptor childDescriptor2,
-                               @NotNull AbstractMatchingVisitor g,
-                               @NotNull Set<PsiElementRole> skippedRoles,
-                               @Nullable SSRDuplicatesProfileBase duplicatesProfile) {
-    if (childDescriptor1.getType() != childDescriptor2.getType()) {
-      return false;
-    }
-
-    final PsiElement element1 = childDescriptor1.getElement();
-    final PsiElement element2 = childDescriptor2.getElement();
-
-    if (duplicatesProfile != null) {
-      final PsiElementRole role1 = element1 != null ? duplicatesProfile.getRole(element1) : null;
-      final PsiElementRole role2 = element2 != null ? duplicatesProfile.getRole(element2) : null;
-
-      if (role1 == role2 && skippedRoles.contains(role1)) {
-        return true;
-      }
-    }
-
-    switch (childDescriptor1.getType()) {
-
-      case DEFAULT:
-        return g.match(element1, element2);
-
-      case OPTIONALLY_IN_PATTERN:
-      case OPTIONALLY:
-        return g.matchOptionally(element1, element2);
-
-      case CHILDREN:
-        return g.matchSons(element1, element2);
-
-      case CHILDREN_OPTIONALLY_IN_PATTERN:
-      case CHILDREN_OPTIONALLY:
-        return g.matchSonsOptionally(element1, element2);
-
-      case CHILDREN_IN_ANY_ORDER:
-        return g.matchSonsInAnyOrder(element1, element2);
-
-      default:
-        return false;
-    }
-  }
-
-  private static boolean match(@NotNull MultiChildDescriptor childDescriptor1,
-                               @NotNull MultiChildDescriptor childDescriptor2,
-                               @NotNull AbstractMatchingVisitor g) {
-
-    if (childDescriptor1.getType() != childDescriptor2.getType()) {
-      return false;
-    }
-
-    final PsiElement[] elements1 = childDescriptor1.getElements();
-    final PsiElement[] elements2 = childDescriptor2.getElements();
-
-    switch (childDescriptor1.getType()) {
-
-      case DEFAULT:
-        return g.matchSequentially(elements1, elements2);
-
-      case OPTIONALLY_IN_PATTERN:
-      case OPTIONALLY:
-        return g.matchOptionally(elements1, elements2);
-
-      case IN_ANY_ORDER:
-        return g.matchInAnyOrder(elements1, elements2);
-
-      default:
-        return false;
-    }
   }
 
   public static PsiElement[] parsePattern(Project project,
@@ -776,7 +579,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         final EquivalenceDescriptor descriptor2 = descriptorProvider.buildDescriptor(myGlobalVisitor.getElement());
 
         if (descriptor1 != null && descriptor2 != null) {
-          final boolean result = match(descriptor1, descriptor2, myGlobalVisitor, Collections.<PsiElementRole>emptySet(), null);
+          final boolean result = DuplocatorUtil
+            .match(descriptor1, descriptor2, myGlobalVisitor, Collections.<PsiElementRole>emptySet(), null);
           myGlobalVisitor.setResult(result);
           return;
         }
@@ -810,8 +614,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         PsiElement patternChild = element.getFirstChild();
         PsiElement matchedChild = myGlobalVisitor.getElement().getFirstChild();
 
-        FilteringNodeIterator patternIterator = new FilteringNodeIterator(patternChild);
-        FilteringNodeIterator matchedIterator = new FilteringNodeIterator(matchedChild);
+        FilteringNodeIterator patternIterator = new SsrFilteringNodeIterator(patternChild);
+        FilteringNodeIterator matchedIterator = new SsrFilteringNodeIterator(matchedChild);
 
         boolean matched = myGlobalVisitor.matchSequentially(patternIterator, matchedIterator);
         myGlobalVisitor.setResult(matched);

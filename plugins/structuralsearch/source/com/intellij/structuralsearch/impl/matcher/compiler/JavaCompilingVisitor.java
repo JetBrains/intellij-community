@@ -10,7 +10,7 @@ import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.*;
 import org.jetbrains.annotations.NonNls;

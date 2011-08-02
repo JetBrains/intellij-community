@@ -1,11 +1,11 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
+import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
+import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.CountingNodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,8 +30,8 @@ public class DeclarationStatementHandler extends MatchingHandler {
 
     if (matchedNode instanceof PsiDeclarationStatement) {
       result = GlobalMatchingVisitor.continueMatchingSequentially(
-        new FilteringNodeIterator(patternNode.getFirstChild()),
-        new FilteringNodeIterator(matchedNode.getFirstChild()),
+        new SsrFilteringNodeIterator(patternNode.getFirstChild()),
+        new SsrFilteringNodeIterator(matchedNode.getFirstChild()),
         context
       );
     } else {
@@ -48,7 +48,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
           new ArrayBackedNodeIterator(declared),
           new CountingNodeIterator(
             declared.length,
-            new FilteringNodeIterator(matchedNode)
+            new SsrFilteringNodeIterator(matchedNode)
           ),
           context
         );

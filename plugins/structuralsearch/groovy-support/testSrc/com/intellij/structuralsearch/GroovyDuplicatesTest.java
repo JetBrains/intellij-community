@@ -1,31 +1,18 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.dupLocator.DuplicatesTestCase;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.PathManager;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class GroovyDuplicatesTest extends DuplicatesTestCase {
-  /*
-  def x = 1;
-  def int x = 1;
-  int x = 1;
-   */
-
-  /*
-  void f(x){}
-  void f(def x){}
-  void f(def int x){}
-  def void f(def int x){}
-  def f(def int x){2}
-  def f(def int x){sout(2)}
-  int[] arr=[1, 2, 3]
-   */
 
   @Override
-  protected String getBasePath() {
-    return "/groovy/duplicates/";
+  protected String getTestDataPath() {
+    return PathManager.getHomePath() + "/plugins/structuralsearch/testData/groovy/duplicates/";
   }
 
   @Override

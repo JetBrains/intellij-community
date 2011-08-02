@@ -1,11 +1,11 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
 
 import java.io.IOException;
 

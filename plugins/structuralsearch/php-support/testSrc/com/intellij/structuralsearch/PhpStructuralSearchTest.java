@@ -1,6 +1,6 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
+import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.jetbrains.php.lang.PhpFileType;

@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.dupLocator.AbstractMatchingVisitor;
+import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -9,11 +11,10 @@ import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
-import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.containers.HashMap;
@@ -41,13 +42,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
   private MatchingHandler myLastHandler;
 
-  //private final PsiElementVisitor myXmlVisitor = new XmlMatchingVisitor(this);
-  //private final PsiElementVisitor myJavaVisitor = new JavaMatchingVisitor(this);
-
   private Map<Language, PsiElementVisitor> myLanguage2MatchingVisitor = new HashMap<Language, PsiElementVisitor>(1);
-
-  /*private Language myLastLanguage;
-  private PsiElementVisitor myLastVisitor;*/
 
   public PsiElement getElement() {
     return myElement;
@@ -199,15 +194,6 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     );
   }
 
-  /*public boolean matchByHandler1(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    return context.getPattern().getHandler(patternNode).match(patternNode, matchedNode, context);
-  }*/
-
-  /*public boolean isMatchSequentiallySucceeded(NodeIterator nodes2) {
-    assert myLastHandler != null;
-    return myLastHandler.isMatchSequentiallySucceeded(nodes2);
-  }*/
-
   public static boolean continueMatchingSequentially(final NodeIterator nodes, final NodeIterator nodes2, MatchContext matchContext) {
     if (!nodes.hasNext()) {
       return nodes.hasNext() == nodes2.hasNext();
@@ -219,11 +205,6 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       matchContext
     );
   }
-
-  // Matches tree segments starting with given elements to find equality
-  // @param el1 the pattern element for matching
-  // @param el2 the tree element for matching
-  // @return if they are equal and false otherwise
 
   /**
    * Descents the tree in depth finding matches

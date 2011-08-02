@@ -1,12 +1,12 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
+import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.dupLocator.iterators.SiblingNodeIterator;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.SiblingNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
@@ -52,7 +52,7 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
         matchContext.shouldRecursivelyMatch()
        ) {
       matchContext.getMatcher().matchContext(
-        new FilteringNodeIterator(
+        new SsrFilteringNodeIterator(
           new SiblingNodeIterator(matchedNode.getFirstChild())
         )
       );

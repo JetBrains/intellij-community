@@ -1,6 +1,6 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
+import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.List;

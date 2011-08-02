@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
+import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlTag;
