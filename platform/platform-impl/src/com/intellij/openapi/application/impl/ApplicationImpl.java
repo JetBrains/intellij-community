@@ -499,6 +499,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public void dispose() {
     fireApplicationExiting();
+
+    ShutDownTracker.getInstance().ensureStopperThreadsFinished();
+
     disposeComponents();
 
     ourThreadExecutorsService.shutdownNow();

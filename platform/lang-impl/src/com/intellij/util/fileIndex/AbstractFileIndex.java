@@ -334,7 +334,7 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
       myFileTypesToRefresh = fileTypesToRefresh;
     }
 
-    public VirtualFile[] queryNeededFiles() {
+    public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
       return AbstractFileIndex.this.queryNeededFiles(myIncludeChangedFiles, myFileTypesToRefresh);
     }
 

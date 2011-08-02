@@ -52,26 +52,8 @@ public class ShutDownTracker implements Runnable {
   public void run() {
     myIsShutdownHookRunning = true;
 
-    Thread[] threads = getStopperThreads();
-    while (threads.length > 0) {
-      Thread thread = threads[0];
-      if (!thread.isAlive()) {
-        if (isRegistered(thread)) {
-          LOG.error("Thread '" + thread.getName() + "' did not unregister itself from ShutDownTracker.");
-          unregisterStopperThread(thread);
-        }
-      }
-      else {
-        try {
-          thread.join(100);
-        }
-        catch (InterruptedException ignored) {
-        }
-      }
-      threads = getStopperThreads();
-    }
-    
-    
+    ensureStopperThreadsFinished();
+
     for (Runnable task = removeLast(myShutdownTasks); task != null; task = removeLast(myShutdownTasks)) {
       //  task can change myShutdownTasks
       try {
@@ -89,6 +71,27 @@ public class ShutDownTracker implements Runnable {
       }
       catch (InterruptedException ignored) {
       }
+    }
+  }
+
+  public final void ensureStopperThreadsFinished() {
+    Thread[] threads = getStopperThreads();
+    while (threads.length > 0) {
+      Thread thread = threads[0];
+      if (!thread.isAlive()) {
+        if (isRegistered(thread)) {
+          LOG.error("Thread '" + thread.getName() + "' did not unregister itself from ShutDownTracker.");
+          unregisterStopperThread(thread);
+        }
+      }
+      else {
+        try {
+          thread.join(100);
+        }
+        catch (InterruptedException ignored) {
+        }
+      }
+      threads = getStopperThreads();
     }
   }
 

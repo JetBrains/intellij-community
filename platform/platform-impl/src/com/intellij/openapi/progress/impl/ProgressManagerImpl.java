@@ -20,27 +20,20 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.containers.SortedList;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProgressManagerImpl extends ProgressManager {
@@ -55,7 +48,7 @@ public class ProgressManagerImpl extends ProgressManager {
   @NonNls private static final String NAME = "Progress Cancel Checker";
   private static final boolean DISABLED = Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled");
 
-  private static final Map<String, Long> myWastedTime = new THashMap<String, Long>();
+  private volatile boolean enabled = true;
 
   public ProgressManagerImpl(Application application) {
     if (!application.isUnitTestMode() && !DISABLED) {
@@ -264,7 +257,6 @@ public class ProgressManagerImpl extends ProgressManager {
     else {
       task.onCancel();
     }
-    moreTimeWasted(time, task);
     return result;
   }
 
@@ -352,7 +344,6 @@ public class ProgressManagerImpl extends ProgressManager {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               task.onCancel();
-              moreTimeWasted(time, task);
             }
           }, ModalityState.NON_MODAL);
         }
@@ -367,7 +358,6 @@ public class ProgressManagerImpl extends ProgressManager {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               task.onSuccess();
-              moreTimeWasted(time, task);
             }
           }, ModalityState.NON_MODAL);
         }
@@ -382,40 +372,6 @@ public class ProgressManagerImpl extends ProgressManager {
       catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
-    }
-  }
-
-  private static void moreTimeWasted(long time, Task timeEater) {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return;
-    
-    synchronized (myWastedTime) {
-      String title = timeEater.getTitle();
-      Long total = myWastedTime.get(title);
-      myWastedTime.put(title, total == null ? time : total + time);
-    }
-  }
-
-  public static long getWastedTime() {
-    synchronized (myWastedTime) {
-      long result = 0;
-      for (Map.Entry<String, Long> each : myWastedTime.entrySet()) {
-        result += each.getValue();
-      }
-      return result;
-    }
-  }
-
-  public static List<Pair<String, Long>> getTimeWasters() {
-    synchronized (myWastedTime) {
-      SortedList<Pair<String, Long>> result = new SortedList<Pair<String, Long>>(new Comparator<Pair<String, Long>>() {
-        public int compare(Pair<String, Long> o1, Pair<String, Long> o2) {
-          return o2.second.compareTo(o1.second);
-        }
-      });
-      for (Map.Entry<String, Long> each : myWastedTime.entrySet()) {
-        result.add(Pair.create(each.getKey(), each.getValue()));
-      }
-      return result;
     }
   }
 
