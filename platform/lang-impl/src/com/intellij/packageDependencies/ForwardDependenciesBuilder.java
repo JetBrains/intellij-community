@@ -106,6 +106,12 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     do {
       if (depth++ > getTransitiveBorder()) return;
       for (PsiFile psiFile : new HashSet<PsiFile>(collectedDeps)) {
+        if (indicator != null) {
+          final VirtualFile virtualFile = psiFile.getVirtualFile();
+          if (virtualFile != null) {
+            indicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, getProject()));
+          }
+        }
         final Set<PsiFile> found = new HashSet<PsiFile>();
         if (!processed.contains(psiFile)) {
           processed.add(psiFile);
