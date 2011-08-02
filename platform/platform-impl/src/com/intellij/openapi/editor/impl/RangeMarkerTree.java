@@ -95,22 +95,29 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     marker.setValid(true);
     RangeMarkerTree<T>.RMNode node = (RMNode)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
 
-    checkBelongsToTheTree(interval, true);
     if (DEBUG && node.intervals.size() > DUPLICATE_LIMIT) {
-      System.gc();System.gc();System.gc();
-      final StringBuilder msg = new StringBuilder();
-      final AtomicInteger alive = new AtomicInteger();
-      node.processAliveKeys(new Processor<T>() {
-        @Override
-        public boolean process(T t) {
-          msg.append(t).append("\n");
-          alive.incrementAndGet();
-          return true;
+      l.readLock().lock();
+      try {
+        System.gc();
+        System.gc();
+        System.gc();
+        final StringBuilder msg = new StringBuilder();
+        final AtomicInteger alive = new AtomicInteger();
+        node.processAliveKeys(new Processor<T>() {
+          @Override
+          public boolean process(T t) {
+            msg.append(t).append("\n");
+            alive.incrementAndGet();
+            return true;
+          }
+        });
+        if (alive.get() > DUPLICATE_LIMIT) {
+          msg.insert(0, "Too many range markers (" + alive +") registered at ("+start+","+end+") in "+this+":\n");
+          LOG.error(msg);
         }
-      });
-      if (alive.get() > DUPLICATE_LIMIT) {
-        msg.insert(0, "Too many range markers (" + alive +") registered at ("+start+","+end+") in "+this+":\n");
-        LOG.error(msg);
+      }
+      finally {
+        l.readLock().unlock();
       }
     }
     return node;

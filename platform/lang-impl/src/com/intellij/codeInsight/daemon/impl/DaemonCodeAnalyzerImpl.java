@@ -509,6 +509,28 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     });
   }
 
+  public static boolean processHighlightsOverlappingOutside(@NotNull Document document,
+                                                            @NotNull Project project,
+                                                            @Nullable("null means all") final HighlightSeverity minSeverity,
+                                                            final int startOffset,
+                                                            final int endOffset,
+                                                            @NotNull final Processor<HighlightInfo> processor) {
+    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
+
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+    MarkupModelEx model = (MarkupModelEx)document.getMarkupModel(project);
+    return model.processHighlightsOverlappingOutside(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+      public boolean process(RangeHighlighterEx marker) {
+        Object tt = marker.getErrorStripeTooltip();
+        if (!(tt instanceof HighlightInfo)) return true;
+        HighlightInfo info = (HighlightInfo)tt;
+        return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
+               || info.highlighter == null
+               || processor.process(info);
+      }
+    });
+  }
+
 
   public static boolean processHighlightsNearOffset(@NotNull Document document,
                                                     @NotNull Project project,
