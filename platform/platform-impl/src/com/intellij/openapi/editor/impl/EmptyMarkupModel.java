@@ -106,6 +106,11 @@ public class EmptyMarkupModel implements MarkupModelEx {
     return false;
   }
 
+  @Override
+  public boolean processHighlightsOverlappingOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
+    return false;
+  }
+
   @NotNull
   @Override
   public Iterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {

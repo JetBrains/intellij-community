@@ -129,6 +129,12 @@ class MarkupModelWindow extends UserDataHolderBase implements MarkupModelEx {
     return false;
   }
 
+  @Override
+  public boolean processHighlightsOverlappingOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
+    //todo
+    return false;
+  }
+
   @NotNull
   @Override
   public Iterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {

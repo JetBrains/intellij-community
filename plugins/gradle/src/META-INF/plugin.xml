@@ -1,0 +1,13 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <name>Gradle</name>
+  <id>org.jetbrains.plugins.gradle</id>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <description>Gradle integration</description>
+
+  <!--// TODO den implement-->
+  <depends>com.intellij.modules.lang</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportProvider"/>
+  </extensions>
+</idea-plugin>

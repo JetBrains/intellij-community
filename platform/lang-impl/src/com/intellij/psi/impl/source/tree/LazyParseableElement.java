@@ -43,8 +43,10 @@ public class LazyParseableElement extends CompositeElement {
     }
   }
 
+  // Lock which protects expanding chameleon for this node.
+  // Under no circumstances should you grab the PSI_LOCK while holding this lock.
   private final ChameleonLock lock = new ChameleonLock();
-  private CharSequence myText;
+  private CharSequence myText; /** guarded by {@link #lock} */
 
   public LazyParseableElement(@NotNull IElementType type, CharSequence text) {
     super(type);
@@ -145,32 +147,34 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   private void ensureParsed() {
-    if (myText == null) return;
-    if (rawFirstChild() != null) {
-      LOG.error("Reentrant parsing?");
-    }
-
-    if (TreeUtil.getFileElement(this) == null) {
-      LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
-    }
-
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
-    ASTNode parsedNode = type.parseContents(this);
-
-    if (parsedNode == null && myText.length() > 0) {
-      if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error("No parse for a non-empty string: " + myText + "; type=" + LogUtil.objectAndClass(type));
-      } else {
-        LOG.error("No parse for a non-empty string: type=" + LogUtil.objectAndClass(type));
+    ASTNode parsedNode;
+    synchronized (lock) {
+      if (myText == null) return;
+      if (rawFirstChild() != null) {
+        LOG.error("Reentrant parsing?");
       }
-    }
 
-    //CharSequence text = myText;
-    myText = null;
+      if (TreeUtil.getFileElement(this) == null) {
+        LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
+      }
 
-    if (parsedNode != null) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+
+      ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
+      parsedNode = type.parseContents(this);
+
+      if (parsedNode == null && myText.length() > 0) {
+        if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.error("No parse for a non-empty string: " + myText + "; type=" + LogUtil.objectAndClass(type));
+        } else {
+          LOG.error("No parse for a non-empty string: type=" + LogUtil.objectAndClass(type));
+        }
+      }
+
+      //CharSequence text = myText;
+      myText = null;
+
+      if (parsedNode == null) return;
       rawAddChildren((TreeElement)parsedNode);
 
       //if (getNotCachedLength() != text.length()) {
@@ -181,11 +185,12 @@ public class LazyParseableElement extends CompositeElement {
       //  }
       //}
 
-      //ensure PSI is created all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
-      if (parsedNode instanceof CompositeElement) {
-        ((CompositeElement)parsedNode).createAllChildrenPsi();
-      }
+      if (!(parsedNode instanceof CompositeElement)) return;
     }
+
+    // create PSI all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
+    // create PSI outside the 'lock' since this method grabs PSI_LOCK and deadlock is possible when someone else locks in the other order.
+    ((CompositeElement)parsedNode).createAllChildrenPsiIfNecessary();
   }
 
   @Override
@@ -198,18 +203,14 @@ public class LazyParseableElement extends CompositeElement {
 
   @Override
   public TreeElement getFirstChildNode() {
-    synchronized (lock) {
-      ensureParsed();
-      return super.getFirstChildNode();
-    }
+    ensureParsed();
+    return super.getFirstChildNode();
   }
 
   @Override
   public TreeElement getLastChildNode() {
-    synchronized (lock) {
-      ensureParsed();
-      return super.getLastChildNode();
-    }
+    ensureParsed();
+    return super.getLastChildNode();
   }
 
   public int copyTo(char[] buffer, int start) {

@@ -190,7 +190,7 @@ public class CodeFormatterFacade {
 
           FormatterEx formatter = FormatterEx.getInstanceEx();
           if (CodeStyleManager.getInstance(project).isSequentialProcessingAllowed()) {
-            formatter.setProgressIndicator(new FormattingProgressIndicatorImpl(project, file, document));
+            formatter.setProgressTask(new FormattingProgressTask(project, file, document));
           }
           formatter.format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);
           for (FormatTextRanges.FormatTextRange range : textRanges) {

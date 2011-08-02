@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.formatting.FormattingProgressIndicatorImpl;
+import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -74,11 +74,11 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return new FutureTask<Boolean>(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        FormattingProgressIndicatorImpl.FORMATTING_CANCELLED_FLAG.set(false);
+        FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
         try {
           TextRange range = myRange == null ? file.getTextRange() : myRange;
           CodeStyleManager.getInstance(myProject).reformatText(file, range.getStartOffset(), range.getEndOffset());
-          return !FormattingProgressIndicatorImpl.FORMATTING_CANCELLED_FLAG.get();
+          return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

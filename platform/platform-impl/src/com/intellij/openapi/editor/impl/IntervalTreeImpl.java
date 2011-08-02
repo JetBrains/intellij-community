@@ -297,6 +297,47 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     return processOverlappingWith(root.getRight(), start, end, processor, modCountBefore, delta);
   }
 
+  public boolean processOverlappingWithOutside(int start, int end, @NotNull Processor<? super T> processor) {
+    try {
+      normalize();
+      l.readLock().lock();
+      checkMax(true);
+      return processOverlappingWithOutside(getRoot(), start, end, processor, modCount, 0);
+    }
+    finally {
+      l.readLock().unlock();
+    }
+  }
+  private boolean processOverlappingWithOutside(IntervalNode root,
+                                                int start,
+                                                int end,
+                                                @NotNull Processor<? super T> processor,
+                                                int modCountBefore,
+                                                int deltaUpToRootExclusive) {
+    if (root == null) {
+      return true;
+    }
+    assert root.isValid();
+
+    int delta = deltaUpToRootExclusive + root.delta;
+    int rootMaxEnd = maxEndOf(root, deltaUpToRootExclusive);
+    int rootStartOffset = root.intervalStart() + delta;
+    int rootEndOffset = root.intervalEnd() + delta;
+
+    if (!processOverlappingWithOutside(root.getLeft(), start, end, processor, modCountBefore, delta)) return false;
+
+    boolean toProcess = rootStartOffset < start || rootEndOffset > end;
+    if (toProcess) {
+      if (!root.processAliveKeys(processor)) return false;
+      if (modCount != modCountBefore) throw new ConcurrentModificationException();
+    }
+
+    if (rootStartOffset >= start && rootMaxEnd <= end) return true; // cant intersect outside
+
+    return processOverlappingWithOutside(root.getRight(), start, end, processor, modCountBefore, delta);
+  }
+
+
   public boolean processOverlappingWith(int offset, @NotNull Processor<? super T> processor) {
     try {
       normalize();
@@ -554,6 +595,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
         insertedNode.addInterval(interval);
       }
       checkMax(true);
+      checkBelongsToTheTree(interval, true);
       return insertedNode;
     }
     finally {

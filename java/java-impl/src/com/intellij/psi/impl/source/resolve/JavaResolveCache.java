@@ -97,36 +97,55 @@ public class JavaResolveCache {
         type = TypeConversionUtil.NULL_TYPE;
       }
       type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, type);
-      if (type instanceof PsiClassReferenceType) {
-        PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
-        myCachedReferencesInPsiTypes.put(reference, type);
-      }
-      if (DebugUtil.DO_EXPENSIVE_CHECKS) {
-        DebugUtil.trackInvalidation(expr, new Processor<PsiElement>() {
-          @Override
-          public boolean process(PsiElement element) {
-            PsiType cached = myCalculatedTypes.get(element);
-            if (cached != null) {
-              LOG.error(element + " is invalid and yet it is still cached: " + cached);
-            }
-
-            PsiType cachedRef = myCachedReferencesInPsiTypes.get(element);
-            if (cachedRef != null) {
-              LOG.error(element + " is invalid and yet it is still cached (inside PsiType): " + cachedRef);
-            }
-            return true;
-          }
-        });
-      }
     }
     if (!type.isValid()) {
       if (expr.isValid()) {
-        LOG.error("Type is invalid: " + type + " (" + type.getClass() + "); expr: '" + expr + "' is valid");
+        PsiJavaCodeReferenceElement refInside = type instanceof PsiClassReferenceType ? ((PsiClassReferenceType)type).getReference() : null;
+        String typeinfo = type + " (" + type.getClass() + ")" + (refInside == null ? "" : "; ref inside: "+refInside + " ("+refInside.getClass()+") valid:"+refInside.isValid());
+        LOG.error("Type is invalid: " + typeinfo + "; expr: '" + expr + "' (" + expr.getClass() + ") is valid");
       }
       else {
         LOG.error("Expression: '"+expr+"' is invalid, must not be used for getType()");
       }
     }
+
+    if (DebugUtil.DO_EXPENSIVE_CHECKS) {
+      if (type instanceof PsiClassReferenceType) {
+        PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
+        myCachedReferencesInPsiTypes.put(reference, type);
+        DebugUtil.trackInvalidation(reference, "Reference inside PsiClassReferenceType was invalidated", new Processor<PsiElement>() {
+          @Override
+          public boolean process(PsiElement element) {
+            PsiType cached = myCalculatedTypes.get(element);
+            if (cached != null) {
+              LOG.error(element + " (inside ref) is invalid and yet it is still cached: " + cached);
+            }
+            PsiType cachedRef = myCachedReferencesInPsiTypes.get(element);
+            if (cachedRef != null) {
+              LOG.error(element + " (inside ref) is invalid and yet it is still cached in ref cache: " + cachedRef);
+            }
+            return true;
+          }
+        });
+
+      }
+      DebugUtil.trackInvalidation(expr, "Expression invalidated", new Processor<PsiElement>() {
+        @Override
+        public boolean process(PsiElement element) {
+          PsiType cached = myCalculatedTypes.get(element);
+          if (cached != null) {
+            LOG.error(element + " is invalid and yet it is still cached: " + cached);
+          }
+
+          PsiType cachedRef = myCachedReferencesInPsiTypes.get(element);
+          if (cachedRef != null) {
+            LOG.error(element + " is invalid and yet it is still cached (inside PsiType): " + cachedRef);
+          }
+          return true;
+        }
+      });
+    }
+
     return type == TypeConversionUtil.NULL_TYPE ? null : type;
   }
 

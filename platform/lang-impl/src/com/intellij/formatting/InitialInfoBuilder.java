@@ -48,7 +48,7 @@ class InitialInfoBuilder {
   private final FormatTextRanges                myAffectedRanges;
   private final int                             myPositionOfInterest;
   @NotNull
-  private final FormattingProgressIndicator     myProgressIndicator;
+  private final FormattingProgressCallback myProgressCallback;
   private final CodeStyleSettings.IndentOptions myOptions;
 
   private final Stack<State> myStates = new Stack<State>();
@@ -65,11 +65,11 @@ class InitialInfoBuilder {
                              final FormatTextRanges affectedRanges,
                              final CodeStyleSettings.IndentOptions options,
                              final int positionOfInterest,
-                             @NotNull FormattingProgressIndicator progressIndicator)
+                             @NotNull FormattingProgressCallback progressCallback)
   {
     myModel = model;
     myAffectedRanges = affectedRanges;
-    myProgressIndicator = progressIndicator;
+    myProgressCallback = progressCallback;
     myCurrentWhiteSpace = new WhiteSpace(0, true);
     myOptions = options;
     myPositionOfInterest = positionOfInterest;
@@ -80,9 +80,9 @@ class InitialInfoBuilder {
                                                                     final FormatTextRanges affectedRanges,
                                                                     final CodeStyleSettings.IndentOptions options,
                                                                     int interestingOffset,
-                                                                    @NotNull FormattingProgressIndicator progressIndicator)
+                                                                    @NotNull FormattingProgressCallback progressCallback)
   {
-    InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, options, interestingOffset, progressIndicator);
+    InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, options, interestingOffset, progressCallback);
     builder.buildFrom(root, 0, null, null, null, true);
     return builder;
   }
@@ -259,7 +259,7 @@ class InitialInfoBuilder {
                                                   Block parentBlock) 
   {
     LeafBlockWrapper result = doProcessSimpleBlock(rootBlock, parent, readOnly, index, parentBlock);
-    myProgressIndicator.afterWrappingBlock(result);
+    myProgressCallback.afterWrappingBlock(result);
     return result;
   }
 

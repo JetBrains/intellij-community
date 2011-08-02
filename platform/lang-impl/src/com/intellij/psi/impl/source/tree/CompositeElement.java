@@ -781,7 +781,8 @@ public class CompositeElement extends TreeElement {
     }
   }
 
-  void createAllChildrenPsi() {
+  // creates PSI and stores to the 'myWrapper', if not created already
+  void createAllChildrenPsiIfNecessary() {
     synchronized (PsiLock.LOCK) { // guard for race condition with getPsi()
       acceptTree(CREATE_CHILDREN_PSI);
     }
@@ -794,6 +795,11 @@ public class CompositeElement extends TreeElement {
     @Override
     public void visitComposite(CompositeElement composite) {
       ProgressManager.checkCanceled(); // we can safely interrupt creating children PSI any moment
+      if (composite.myWrapper != null) {
+        // someone else 've managed to create the PSI in the meantime. Abandon our attempts to cache everything.
+        stopWalking();
+        return;
+      }
       composite.createAndStorePsi();
       super.visitComposite(composite);
     }

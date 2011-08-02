@@ -19,8 +19,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,6 +41,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +82,7 @@ public class DebugUtil {
   }
 
   public static /*final*/ boolean CHECK = false;
-  public static final boolean DO_EXPENSIVE_CHECKS = true;
+  public static final boolean DO_EXPENSIVE_CHECKS = ApplicationManagerEx.getApplicationEx().isInternal();
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = false;
 
   public static String psiTreeToString(@NotNull final PsiElement element, final boolean skipWhitespaces) {
@@ -473,11 +476,25 @@ public class DebugUtil {
     }
   }
 
-  private static final Key<Processor<PsiElement>> TRACK_INVALIDATION_KEY = Key.create("TRACK_INVALIDATION_KEY");
-  public static void trackInvalidation(@NotNull PsiElement element, @NotNull Processor<PsiElement> callback) {
-    final ASTNode node = element.getNode();
-    if (node != null) {
-      node.putUserData(TRACK_INVALIDATION_KEY, callback);
+  private static final Key<List<Pair<Object, Processor<PsiElement>>>> TRACK_INVALIDATION_KEY = Key.create("TRACK_INVALIDATION_KEY");
+  public static void trackInvalidation(@NotNull PsiElement element, @NotNull Object requestor, @NotNull Processor<PsiElement> callback) {
+    synchronized (element) {
+      final ASTNode node = element.getNode();
+      if (node == null) return;
+      List<Pair<Object, Processor<PsiElement>>> callbacks = node.getUserData(TRACK_INVALIDATION_KEY);
+      if (callbacks == null) {
+        callbacks = new SmartList<Pair<Object, Processor<PsiElement>>>();
+        node.putUserData(TRACK_INVALIDATION_KEY, callbacks);
+      }
+      for (int i = 0; i < callbacks.size(); i++) {
+        Pair<Object, Processor<PsiElement>> pair = callbacks.get(i);
+        Object callbackRequestor = pair.first;
+        if (callbackRequestor.equals(requestor)) {
+          callbacks.set(i, Pair.create(requestor, callback));
+          return;
+        }
+      }
+      callbacks.add(Pair.create(requestor, callback));
     }
   }
 
@@ -485,10 +502,13 @@ public class DebugUtil {
     treeElement.acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
       protected void visitNode(TreeElement element) {
-        Processor<PsiElement> callback = element.getUserData(TRACK_INVALIDATION_KEY);
-        if (callback != null) {
-          PsiElement psi = element.getPsi();
-          if (psi != null) callback.process(psi);
+        List<Pair<Object, Processor<PsiElement>>> callbacks = element.getUserData(TRACK_INVALIDATION_KEY);
+        if (callbacks != null) {
+          for (Pair<Object, Processor<PsiElement>> pair : callbacks) {
+            Processor<PsiElement> callback = pair.second;
+            PsiElement psi = element.getPsi();
+            if (psi != null) callback.process(psi);
+          }
         }
       }
     });

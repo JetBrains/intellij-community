@@ -201,7 +201,7 @@ public class UpdateHighlightersUtil {
     MarkupModel markup = document.getMarkupModel(project);
     assertMarkupConsistent(markup, project);
 
-    setHighlightersInRange(project, document, range, colorsScheme, highlights, (MarkupModelEx)markup, group);
+    setHighlightersInRange(project, document, range, colorsScheme, new ArrayList<HighlightInfo>(highlights), (MarkupModelEx)markup, group);
   }
 
   @Deprecated //for teamcity
@@ -217,9 +217,11 @@ public class UpdateHighlightersUtil {
   // set highlights inside startOffset,endOffset but outside range
   static void setHighlightersOutsideRange(@NotNull final Project project,
                                           @NotNull final Document document,
-                                          @NotNull Collection<HighlightInfo> infos,
-                                          @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                          int startOffset, int endOffset,
+                                          @NotNull final List<HighlightInfo> infos,
+                                          @Nullable final EditorColorsScheme colorsScheme,
+                                          // if null global scheme will be used
+                                          final int startOffset,
+                                          final int endOffset,
                                           @NotNull final ProperTextRange range,
                                           final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -230,20 +232,22 @@ public class UpdateHighlightersUtil {
     final MarkupModel markup = document.getMarkupModel(project);
     assertMarkupConsistent(markup, project);
 
-    final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>(infos);
-
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
-    DaemonCodeAnalyzerImpl.processHighlights(document, project, null, startOffset, endOffset, new Processor<HighlightInfo>() {
+    ContainerUtil.quickSort(infos, BY_START_OFFSET_NODUPS);
+
+    DaemonCodeAnalyzerImpl.processHighlightsOverlappingOutside(document, project, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
       @Override
       public boolean process(HighlightInfo info) {
         if (info.group == group) {
           RangeHighlighter highlighter = info.highlighter;
           int hiStart = highlighter.getStartOffset();
           int hiEnd = highlighter.getEndOffset();
-          boolean willBeRemoved = !(hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()) &&
-                                  !range.containsRange(hiStart, hiEnd);
-          if (willBeRemoved) {
+          if (!info.fromInjection && (hiEnd <= startOffset || hiStart>=endOffset)) return true; // injections are oblivious to restricting range
+          boolean toRemove = !(hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()) &&
+                             !range.containsRange(hiStart, hiEnd)
+                             ;
+          if (toRemove) {
             infosToRemove.recycleHighlighter(highlighter);
             info.highlighter = null;
           }
@@ -252,20 +256,19 @@ public class UpdateHighlightersUtil {
       }
     });
 
-    Collections.sort(highlights, BY_START_OFFSET_NODUPS);
     final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>(10);
     final boolean[] changed = {false};
     RangeMarkerTree.sweep(new RangeMarkerTree.Generator<HighlightInfo>(){
       @Override
       public boolean generate(Processor<HighlightInfo> processor) {
-        return ContainerUtil.process(highlights, processor);
+        return ContainerUtil.process(infos, processor);
       }
     }, new MarkupModelEx.SweepProcessor<HighlightInfo>() {
       @Override
       public boolean process(int offset, HighlightInfo info, boolean atStart, Collection<HighlightInfo> overlappingIntervals) {
-        if (!atStart) {
-          return true;
-        }
+        if (!atStart) return true;
+        if (!info.fromInjection && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
+
         if (info.isFileLevelAnnotation && psiFile != null && psiFile.getViewProvider().isPhysical()) {
           addFileLevelHighlight(project, group, info, psiFile);
           changed[0] = true;
@@ -275,7 +278,8 @@ public class UpdateHighlightersUtil {
           return true;
         }
         if (info.getStartOffset() < range.getStartOffset() || info.getEndOffset() > range.getEndOffset()) {
-          createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, (MarkupModelEx)markup, infosToRemove, ranges2markersCache, severityRegistrar);
+          createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, (MarkupModelEx)markup, infosToRemove,
+                                        ranges2markersCache, severityRegistrar);
           changed[0] = true;
         }
         return true;
@@ -296,11 +300,10 @@ public class UpdateHighlightersUtil {
                                      @NotNull final Document document,
                                      @NotNull final TextRange range,
                                      @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                     @NotNull Collection<HighlightInfo> highlightsCo,
+                                     @NotNull final List<HighlightInfo> highlights,
                                      @NotNull final MarkupModelEx markup,
                                      final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>(highlightsCo);
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
@@ -382,7 +385,7 @@ public class UpdateHighlightersUtil {
   }
 
   // return true if changed
-  private static void createOrReuseHighlighterFor(@NotNull final HighlightInfo info,
+  private static RangeHighlighter createOrReuseHighlighterFor(@NotNull final HighlightInfo info,
                                                   @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                                   @NotNull final Document document,
                                                   final int group,
@@ -459,6 +462,7 @@ public class UpdateHighlightersUtil {
                                                                                                "; colorsSheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
                                                                                                "; highlighter:" +
                                                                                                highlighter.getTextAttributes();
+    return highlighter;
   }
 
   private static int getLayer(HighlightInfo info, SeverityRegistrar severityRegistrar) {
