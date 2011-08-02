@@ -29,10 +29,9 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiReferenceProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -246,21 +245,28 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
       if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
       if (psiMethod != null) {
-        final RefElement refMethod = myManager.getReference(psiMethod);
+        final ArrayList<PsiElement> psiParameters = new ArrayList<PsiElement>();
+        final RefElement refMethod = myManager != null ? myManager.getReference(psiMethod) : null;
         if (refMethod != null) {
-          final ArrayList<PsiElement> psiParameters = new ArrayList<PsiElement>();
           for (final RefParameter refParameter : getUnusedParameters((RefMethod)refMethod)) {
             psiParameters.add(refParameter.getElement());
           }
-
-          final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
-          final long startModificationCount = tracker.getModificationCount();
-
-          if (!psiMethod.isValid()) return;
-          removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
-          if (startModificationCount != tracker.getModificationCount()) {
-            myProcessor.ignoreElement(refMethod);
+        }
+        else {
+          final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+          for (PsiParameter parameter : parameters) {
+            if (Comparing.strEqual(parameter.getName(), myHint)) {
+              psiParameters.add(parameter);
+              break;
+            }
           }
+        }
+        final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
+        final long startModificationCount = tracker.getModificationCount();
+
+        removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
+        if (refMethod != null && startModificationCount != tracker.getModificationCount()) {
+          myProcessor.ignoreElement(refMethod);
         }
       }
     }
