@@ -619,6 +619,8 @@ public abstract class GitHandler {
   }
 
   public void runInCurrentThread(@Nullable Runnable postStartAction) {
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread(), "Git process should never start in the dispatch thread.");
+
         final GitVcs vcs = GitVcs.getInstance(myProject);
     if (vcs == null) { return; }
 

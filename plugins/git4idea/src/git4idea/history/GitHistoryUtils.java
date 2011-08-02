@@ -20,10 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -31,6 +28,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionDescription;
+import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
@@ -76,7 +75,6 @@ public class GitHistoryUtils {
    */
   @Nullable
   public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath, @Nullable String branch) throws VcsException {
-    final VirtualFile root = GitUtil.getGitRoot(filePath);
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME);
@@ -95,6 +93,32 @@ public class GitHistoryUtils {
     final GitLogRecord record = parser.parseOneRecord(result);
     record.setUsedHandler(h);
     return new GitRevisionNumber(record.getHash(), record.getDate());
+  }
+
+  @Nullable
+  public static VcsRevisionDescription getCurrentRevisionDescription(final Project project, FilePath filePath, @Nullable String branch) throws VcsException {
+    filePath = getLastCommitName(project, filePath);
+    GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
+    GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, COMMITTER_NAME, SUBJECT, BODY, RAW_BODY);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("-n1", parser.getPretty());
+    if (branch != null && !branch.isEmpty()) {
+      h.addParameters(branch);
+    }
+    h.endOptions();
+    h.addRelativePaths(filePath);
+    String result = h.run();
+    if (result.length() == 0) {
+      return null;
+    }
+    final GitLogRecord record = parser.parseOneRecord(result);
+    record.setUsedHandler(h);
+
+    final String author = Comparing.equal(record.getAuthorName(), record.getCommitterName()) ? record.getAuthorName() :
+                    record.getAuthorName() + " (" + record.getCommitterName() + ")";
+    return new VcsRevisionDescriptionImpl(new GitRevisionNumber(record.getHash(), record.getDate()), record.getDate(), author,
+                                          record.getFullMessage());
   }
 
   /**

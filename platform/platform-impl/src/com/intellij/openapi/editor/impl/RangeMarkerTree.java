@@ -98,22 +98,15 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     if (DEBUG && node.intervals.size() > DUPLICATE_LIMIT) {
       l.readLock().lock();
       try {
-        System.gc();
-        System.gc();
-        System.gc();
-        final StringBuilder msg = new StringBuilder();
-        final AtomicInteger alive = new AtomicInteger();
-        node.processAliveKeys(new Processor<T>() {
-          @Override
-          public boolean process(T t) {
-            msg.append(t).append("\n");
-            alive.incrementAndGet();
-            return true;
+        String msg = errMsg(node);
+        if (msg != null) {
+          System.gc();
+          System.gc();
+          System.gc();
+          msg = errMsg(node);
+          if (msg != null) {
+            LOG.error(msg);
           }
-        });
-        if (alive.get() > DUPLICATE_LIMIT) {
-          msg.insert(0, "Too many range markers (" + alive +") registered at ("+start+","+end+") in "+this+":\n");
-          LOG.error(msg);
         }
       }
       finally {
@@ -121,6 +114,25 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       }
     }
     return node;
+  }
+  private String errMsg(RMNode node) {
+    final StringBuilder msg = new StringBuilder();
+    final AtomicInteger alive = new AtomicInteger();
+    node.processAliveKeys(new Processor<Object>() {
+      @Override
+      public boolean process(Object t) {
+        msg.append(t).append("\n");
+        alive.incrementAndGet();
+        return true;
+      }
+    });
+    if (alive.get() > DUPLICATE_LIMIT) {
+      msg.insert(0, "Too many range markers (" + alive +") registered in "+this+":\n");
+
+      return msg.toString();
+    }
+
+    return null;
   }
 
   @NotNull

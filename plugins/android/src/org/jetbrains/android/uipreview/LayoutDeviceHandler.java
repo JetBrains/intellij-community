@@ -2,6 +2,7 @@ package org.jetbrains.android.uipreview;
 
 import com.android.ide.common.resources.configuration.*;
 import com.android.resources.*;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -36,12 +37,17 @@ class LayoutDeviceHandler extends DefaultHandler {
 
   private final List<LayoutDevice> myDevices = new ArrayList<LayoutDevice>();
   private final StringBuilder myStringBuilder = new StringBuilder();
+  private final LayoutDevice.Type myDeviceType;
 
   private LayoutDevice myCurrentDevice;
   private FolderConfiguration myDefaultConfiguration;
   private FolderConfiguration myCurrentConfiguration;
   private String mySize1;
   private String mySize2;
+
+  public LayoutDeviceHandler(@NotNull LayoutDevice.Type deviceType) {
+    myDeviceType = deviceType;
+  }
 
   public List<LayoutDevice> getDevices() {
     return myDevices;
@@ -52,7 +58,7 @@ class LayoutDeviceHandler extends DefaultHandler {
     if (DEVICE_TAG_NAME.equals(localName)) {
       final String deviceName = attributes.getValue("", NAME_ATTRIBUTE);
       if (deviceName != null) {
-        myCurrentDevice = new LayoutDevice(deviceName);
+        myCurrentDevice = new LayoutDevice(deviceName, myDeviceType);
         myDevices.add(myCurrentDevice);
       }
     }
