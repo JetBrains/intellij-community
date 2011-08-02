@@ -70,6 +70,7 @@ public abstract class CreateResourceDirectoryDialog extends DialogWrapper {
     });
 
     myDeviceConfiguratorPanel.updateAll();
+    setOKActionEnabled(myDirectoryNameTextField.getText().length() > 0);
     init();
   }
 

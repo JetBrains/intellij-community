@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.actions;
 
+import com.android.AndroidConstants;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -106,8 +107,8 @@ public class CreateResourceFileAction extends CreateElementActionBase {
     CreateTypedResourceFileAction createLayoutAction = mySubactions.get("layout");
     CreateResourceDialog dialog = new CreateResourceDialog(project, mySubactions.values(), createLayoutAction) {
       @Override
-      protected InputValidator createValidator(@NotNull String resourceType) {
-        return CreateResourceFileAction.this.createValidator(project, directory, resourceType);
+      protected InputValidator createValidator(@NotNull String subdirName) {
+        return CreateResourceFileAction.this.createValidator(project, directory, subdirName);
       }
     };
     dialog.setTitle(getCommandName());
@@ -120,12 +121,12 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   }
 
   @NotNull
-  private MyInputValidator createValidator(Project project, final PsiDirectory resDir, final String resType) {
-    PsiDirectory resSubdir = resDir.findSubdirectory(resType);
+  private MyInputValidator createValidator(Project project, final PsiDirectory resDir, final String subdirName) {
+    PsiDirectory resSubdir = resDir.findSubdirectory(subdirName);
     if (resSubdir == null) {
       resSubdir = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
         public PsiDirectory compute() {
-          return resDir.createSubdirectory(resType);
+          return resDir.createSubdirectory(subdirName);
         }
       });
     }
@@ -145,7 +146,12 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   }
 
   private CreateTypedResourceFileAction getActionByDir(PsiDirectory directory) {
-    return mySubactions.get(directory.getName());
+    String baseDirName = directory.getName();
+    final int index = baseDirName.indexOf(AndroidConstants.RES_QUALIFIER_SEP);
+    if (index >= 0) {
+      baseDirName = baseDirName.substring(0, index);
+    }
+    return mySubactions.get(baseDirName);
   }
 
   @Override
