@@ -39,7 +39,7 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase {
   private final Map<String, String> myNamesMap = new HashMap<String, String>();
 
   public ComboBoxVisibilityPanel(String name, String[] options, String[] presentableNames) {
-    setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 2, true, false));
+    setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
     myLabel = new JLabel(name);
     add(myLabel);
     myComboBox = new JComboBox(presentableNames);

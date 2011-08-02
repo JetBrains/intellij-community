@@ -71,6 +71,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
                                                    final MoveCallback moveCallback) {
     super(false);
     setTitle(MoveHandler.REFACTORING_NAME);
+    myRootPanel.setBorder(IdeBorderFactory.createRoundedBorder());
     myDirectory = directory;
     myElementsToMove = elementsToMove;
     myMoveCallback = moveCallback;

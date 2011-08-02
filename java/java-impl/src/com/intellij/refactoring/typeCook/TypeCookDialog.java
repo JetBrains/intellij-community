@@ -84,6 +84,7 @@ public class TypeCookDialog extends RefactoringDialog {
 
   protected JComponent createNorthPanel() {
     JPanel optionsPanel = new JPanel(new GridBagLayout());
+    optionsPanel.setBorder(IdeBorderFactory.createRoundedBorder());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
     if (myCbDropCasts.isEnabled()) {
