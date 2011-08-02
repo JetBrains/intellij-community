@@ -302,8 +302,8 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     forwardAction.copyFrom(actionManager.getAction(IdeActions.ACTION_GOTO_FORWARD));
     group.add(forwardAction);
 
-    group.add(actionManager.getAction(IdeActions.ACTION_COMMANDER_SWAP_PANELS));
-    group.add(actionManager.getAction(IdeActions.ACTION_COMMANDER_SYNC_VIEWS));
+    group.add(actionManager.getAction("CommanderSwapPanels"));
+    group.add(actionManager.getAction("CommanderSyncViews"));
 
     return group;
   }
