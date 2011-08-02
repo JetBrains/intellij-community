@@ -361,7 +361,7 @@ class PyDB:
                     if hasattr(t, 'doKill'):
                         t.doKill()
 
-            for tId in self.RUNNING_THREAD_IDS.keys():
+            for tId in list(self.RUNNING_THREAD_IDS.keys()):
                 try:
                     if not DictContains(foundThreads, tId):
                         self.processThreadNotAlive(tId)
