@@ -85,7 +85,7 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   }
 
   @Nullable
-  public DiffRequest init(final int idx) throws VcsException {
+  public DiffRequest init(final int idx) {
     if (idx < 0 || idx > (mySteps.size() - 1)) return null;
     myIndex = idx - 1;
     final DiffRequest result = moveForward();
