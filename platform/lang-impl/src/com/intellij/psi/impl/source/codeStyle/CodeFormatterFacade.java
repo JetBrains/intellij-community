@@ -249,7 +249,7 @@ public class CodeFormatterFacade {
     }
 
     final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-    if (vFile == null || vFile instanceof LightVirtualFile) {
+    if ((vFile == null || vFile instanceof LightVirtualFile) && !ApplicationManager.getApplication().isUnitTestMode()) {
       // we assume that control flow reaches this place when the document is backed by a "virtual" file so any changes made by
       // a formatter affect only PSI and it is out of sync with a document text
       return;
