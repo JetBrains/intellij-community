@@ -57,11 +57,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.text.Normalizer;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuickFixModel {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog");
+  
+  private static final Pattern PATTERN = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
   private JTextField myValue;
   private JComboBox myKey;
@@ -211,6 +215,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
     // suggest property key not existing in this file
     String key = defaultSuggestPropertyKey(value);
+    value = PATTERN.matcher(Normalizer.normalize(value, Normalizer.Form.NFD)).replaceAll("");
     if (key == null) {
       final StringBuilder result = new StringBuilder();
       boolean insertDotBeforeNextWord = false;
