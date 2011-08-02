@@ -114,7 +114,7 @@ public abstract class FormatterEx{
                                        CodeStyleSettings.IndentOptions indentOptions,
                                        TextRange affectedRange);
 
-  public abstract void setProgressIndicator(@NotNull FormattingProgressIndicatorImpl progressIndicator);
+  public abstract void setProgressTask(@NotNull FormattingProgressTask progressIndicator);
   
   public interface IndentInfoStorage {
     void saveIndentInfo(IndentInfo info, int startOffset);

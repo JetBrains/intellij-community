@@ -105,7 +105,7 @@ class FormatProcessor {
 
   private final HashSet<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
   @NotNull
-  private final FormattingProgressIndicator myProgressIndicator;
+  private final FormattingProgressCallback myProgressCallback;
   
   private WhiteSpace                      myLastWhiteSpace;
   private boolean                         myDisposed;
@@ -119,9 +119,9 @@ class FormatProcessor {
                          CodeStyleSettings settings,
                          CodeStyleSettings.IndentOptions indentOptions,
                          @Nullable FormatTextRanges affectedRanges,
-                         @NotNull FormattingProgressIndicator progressIndicator)
+                         @NotNull FormattingProgressCallback progressCallback)
   {
-    this(docModel, rootBlock, settings, indentOptions, affectedRanges, -1, progressIndicator);
+    this(docModel, rootBlock, settings, indentOptions, affectedRanges, -1, progressCallback);
   }
 
   public FormatProcessor(final FormattingDocumentModel docModel,
@@ -130,9 +130,9 @@ class FormatProcessor {
                          CodeStyleSettings.IndentOptions indentOptions,
                          @Nullable FormatTextRanges affectedRanges,
                          int interestingOffset,
-                         @NotNull FormattingProgressIndicator progressIndicator) 
+                         @NotNull FormattingProgressCallback progressCallback) 
   {
-    myProgressIndicator = progressIndicator;
+    myProgressCallback = progressCallback;
     myIndentOption = indentOptions;
     mySettings = settings;
     myDocument = docModel.getDocument();
@@ -1091,7 +1091,7 @@ class FormatProcessor {
         if (myCurrentBlock == null) {
           myCurrentBlock = myLastTokenBlock;
           if (myCurrentBlock != null) {
-            myProgressIndicator.afterProcessingBlock(myCurrentBlock);
+            myProgressCallback.afterProcessingBlock(myCurrentBlock);
           }
           break;
         }
@@ -1197,7 +1197,7 @@ class FormatProcessor {
       super(FormattingStateId.WRAPPING_BLOCKS);
       myModel = model;
       myWrapper = InitialInfoBuilder.prepareToBuildBlocksSequentially(
-        root, model, affectedRanges, myIndentOption, interestingOffset, myProgressIndicator
+        root, model, affectedRanges, myIndentOption, interestingOffset, myProgressCallback
       );
     }
 
@@ -1242,7 +1242,7 @@ class FormatProcessor {
       LeafBlockWrapper blockToProcess = myCurrentBlock;
       processToken();
       if (blockToProcess != null) {
-        myProgressIndicator.afterProcessingBlock(blockToProcess);
+        myProgressCallback.afterProcessingBlock(blockToProcess);
       }
       
       if (myCurrentBlock != null) {
@@ -1298,7 +1298,7 @@ class FormatProcessor {
         myJavaIndentOptions = mySettings.getIndentOptions(StdFileTypes.JAVA);
       }
 
-      myProgressIndicator.beforeApplyingFormatChanges(myBlocksToModify);
+      myProgressCallback.beforeApplyingFormatChanges(myBlocksToModify);
 
       final int blocksToModifyCount = myBlocksToModify.size();
       final boolean bulkReformat = blocksToModifyCount > 50;
@@ -1318,7 +1318,7 @@ class FormatProcessor {
       myShift = replaceWhiteSpace(
         myModel, blockWrapper, myShift, blockWrapper.getWhiteSpace().generateWhiteSpace(myIndentOption), myJavaIndentOptions
       );
-      myProgressIndicator.afterApplyingChange(blockWrapper);
+      myProgressCallback.afterApplyingChange(blockWrapper);
       // block could be gc'd
       blockWrapper.getParent().dispose();
       blockWrapper.dispose();
