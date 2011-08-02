@@ -94,15 +94,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private Set<VirtualFile> myUntrackedFiles = new HashSet<VirtualFile>();
   private final Object LOCK = new Object();
 
-  /**
-   * Creates the GitUntrackedFilesHolder for the specified root and initializes it by scanning the repository for unversioned files.
-   * This is a lengthy procedure.
-   */
-  public static GitUntrackedFilesHolder init(@NotNull VirtualFile root, @NotNull Project project) {
-    return new GitUntrackedFilesHolder(root, project);
-  }
-  
-  private GitUntrackedFilesHolder(@NotNull VirtualFile root, @NotNull Project project) {
+  public GitUntrackedFilesHolder(@NotNull VirtualFile root, @NotNull Project project) {
     myRoot = root;
     myProject = project;
     myRepositoryFiles = GitRepositoryFiles.getInstance(root);
@@ -112,7 +104,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, this);
-    rescan();
   }
 
   @Override
@@ -182,6 +173,19 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     catch (VcsException e) {
       throw new GitExecutionException("Couldn't scan for unversioned files in " + myRoot, e);
     }
+  }
+
+  /**
+   * Asynchronously performs the {@link #rescan()} procedure and marks untracked files as dirty, 
+   * so that the {@link ChangeListManager} updates the status of them.
+   */
+  public void asyncRescan() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        rescan();
+        myDirtyScopeManager.filesDirty(getUntrackedFiles(), null); // make ChangeListManager capture new info
+      }
+    });
   }
 
   /**
