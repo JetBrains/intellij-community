@@ -153,7 +153,7 @@ public abstract class Animator implements Disposable {
             });
           }
         }
-      }, 0, myCycleDuration * 1000 / myTotalFrames, TimeUnit.NANOSECONDS);
+      }, 0, myCycleDuration * 1000 / myTotalFrames, TimeUnit.MICROSECONDS);
     }
   }
 
