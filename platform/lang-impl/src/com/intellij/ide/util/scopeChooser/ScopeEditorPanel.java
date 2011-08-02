@@ -77,6 +77,7 @@ public class ScopeEditorPanel {
   private int myCaretPosition = 0;
   private boolean myTextChanged = false;
   private JPanel myMatchingCountPanel;
+  private JPanel myPositionPanel;
   private PanelProgressIndicator myCurrentProgress;
   private NamedScopesHolder myHolder;
 
@@ -118,11 +119,15 @@ public class ScopeEditorPanel {
 
     myPatternField.addFocusListener(new FocusListener() {
       public void focusGained(FocusEvent e) {
-        myCaretPositionLabel.setVisible(true);
+        if (myErrorMessage != null) {
+          myPositionPanel.setVisible(true);
+          myPanel.revalidate();
+        }
       }
 
       public void focusLost(FocusEvent e) {
-        myCaretPositionLabel.setVisible(false);
+        myPositionPanel.setVisible(false);
+        myPanel.revalidate();
       }
     });
 
@@ -136,6 +141,9 @@ public class ScopeEditorPanel {
     else {
       myCaretPositionLabel.setText("");
     }
+    myPositionPanel.setVisible(myErrorMessage != null);
+    myCaretPositionLabel.setVisible(myErrorMessage != null);
+    myPanel.revalidate();
   }
 
   public JPanel getPanel() {
@@ -158,7 +166,8 @@ public class ScopeEditorPanel {
       myUpdateAlarm.cancelAllRequests();
       myCurrentScope = null;
       try {
-        myCurrentScope = PackageSetFactory.getInstance().compile(myPatternField.getText());
+        final String text = myPatternField.getText();
+        myCurrentScope = StringUtil.isEmpty(text) ? null: PackageSetFactory.getInstance().compile(text);
         myErrorMessage = null;
         myTextChanged = true;
         rebuild(false);
