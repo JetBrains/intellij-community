@@ -3785,11 +3785,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void stopOptimizedScrolling() {
-    myEditorComponent.setOpaque(false);
+    //myEditorComponent.setOpaque(false);
   }
 
   private void startOptimizedScrolling() {
-    myEditorComponent.setOpaque(true);
+    //myEditorComponent.setOpaque(true);
   }
 
   private class CaretCursor {
