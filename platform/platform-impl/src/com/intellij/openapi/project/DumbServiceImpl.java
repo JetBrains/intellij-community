@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -293,7 +294,7 @@ public class DumbServiceImpl extends DumbService {
 
               @Override
               public void finish(@NotNull TaskInfo task) {
-                UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+                UIUtil.invokeLaterIfNeeded(new Runnable() {
                   public void run() {
                     AppIcon appIcon = AppIcon.getInstance();
                     if (appIcon.hideProgress("indexUpdate")) {
@@ -327,11 +328,15 @@ public class DumbServiceImpl extends DumbService {
               }
             });
 
+          final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
+          final Thread self = Thread.currentThread();
           try {
             HeavyProcessLatch.INSTANCE.processStarted();
+            shutdownTracker.registerStopperThread(self);
             runAction(proxy, myAction);
           }
           finally {
+            shutdownTracker.unregisterStopperThread(self);
             HeavyProcessLatch.INSTANCE.processFinished();
           }
         }

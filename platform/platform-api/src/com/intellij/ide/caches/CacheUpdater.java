@@ -16,12 +16,13 @@
 
 package com.intellij.ide.caches;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public interface CacheUpdater {
   int getNumberOfPendingUpdateJobs();
 
-  VirtualFile[] queryNeededFiles();
+  VirtualFile[] queryNeededFiles(ProgressIndicator indicator);
 
   void processFile(FileContent fileContent);
 

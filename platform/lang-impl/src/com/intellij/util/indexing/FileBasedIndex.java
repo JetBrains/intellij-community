@@ -1937,7 +1937,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  public static void iterateIndexableFiles(final ContentIterator processor, Project project) {
+  public static void iterateIndexableFiles(final ContentIterator processor, Project project, ProgressIndicator indicator) {
     if (project.isDisposed()) {
       return;
     }
@@ -1948,7 +1948,6 @@ public class FileBasedIndex implements ApplicationComponent {
     if (project.isDisposed()) {
       return;
     }
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     Set<VirtualFile> visitedRoots = new HashSet<VirtualFile>();
     for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
@@ -1999,6 +1998,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private static void iterateRecursively(@Nullable final VirtualFile root, final ContentIterator processor, ProgressIndicator indicator) {
     if (root != null) {
       if (indicator != null) {
+        indicator.checkCanceled();
         indicator.setText2(root.getPresentableUrl());
       }
 
@@ -2011,7 +2011,8 @@ public class FileBasedIndex implements ApplicationComponent {
             processor.processFile(file);
           }
         }
-      } else {
+      }
+      else {
         processor.processFile(root);
       }
     }

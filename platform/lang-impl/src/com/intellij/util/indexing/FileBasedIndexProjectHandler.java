@@ -25,6 +25,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -105,7 +106,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       return myIndex.getNumberOfPendingInvalidations();
     }
 
-    public VirtualFile[] queryNeededFiles() {
+    public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
       Collection<VirtualFile> files = myIndex.getFilesToUpdate(myProject);
       return VfsUtil.toVirtualFileArray(files);
     }
