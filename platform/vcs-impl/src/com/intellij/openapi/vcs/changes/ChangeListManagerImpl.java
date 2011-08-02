@@ -397,7 +397,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         // update IDEA-level ignored files
         updateIgnoredFiles(dataHolder.getComposite());
       }
-      
+
+      clearCurrentRevisionsCache(invalidated);
       synchronized (myDataLock) {
         // do same modifications to change lists as was done during update + do delayed notifications
         dataHolder.notifyEnd();
@@ -405,7 +406,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myModifier.finishUpdate(dataHolder.getChangeListWorker());
         // update member from copy
         if (takeChanges) {
-          clearCurrentRevisionsCache(invalidated);
           final ChangeListWorker oldWorker = myWorker;
           myWorker = dataHolder.getChangeListWorker();
           myWorker.onAfterWorkerSwitch(oldWorker);
