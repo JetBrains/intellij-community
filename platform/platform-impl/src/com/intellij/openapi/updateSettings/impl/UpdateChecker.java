@@ -118,6 +118,10 @@ public final class UpdateChecker {
   }
 
   private static String getPatchesUrl() {
+    String url = System.getProperty("idea.patches.url");
+    if (url != null) {
+      return url;
+    }
     return StringHolder.PATCHES_URL;
   }
 
