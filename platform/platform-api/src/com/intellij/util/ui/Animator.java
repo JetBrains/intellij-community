@@ -124,6 +124,7 @@ public abstract class Animator implements Disposable {
   }
 
   public void suspend() {
+    myStartTime = -1;
     stopTicker();
   }
 
