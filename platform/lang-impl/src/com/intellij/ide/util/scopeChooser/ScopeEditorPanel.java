@@ -197,11 +197,11 @@ public class ScopeEditorPanel {
     myPackageTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        final boolean recursiveEnabled = isButtonEnabled(true, e.getPaths());
+        final boolean recursiveEnabled = isButtonEnabled(true, e.getPaths(), e);
         includeRec.setEnabled(recursiveEnabled);
         excludeRec.setEnabled(recursiveEnabled);
 
-        final boolean nonRecursiveEnabled = isButtonEnabled(false, e.getPaths());
+        final boolean nonRecursiveEnabled = isButtonEnabled(false, e.getPaths(), e);
         include.setEnabled(nonRecursiveEnabled);
         exclude.setEnabled(nonRecursiveEnabled);
       }
@@ -237,9 +237,10 @@ public class ScopeEditorPanel {
     return buttonsPanel;
   }
 
-  static boolean isButtonEnabled(boolean rec, TreePath[] paths) {
+  static boolean isButtonEnabled(boolean rec, TreePath[] paths, TreeSelectionEvent e) {
     if (paths != null) {
       for (TreePath path : paths) {
+        if (!e.isAddedPath(path)) continue;
         final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
         if (PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createPackageSet(node, rec) != null) {
           return true;
