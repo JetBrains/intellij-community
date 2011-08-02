@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -400,8 +400,7 @@ public class CvsUtil {
   public static boolean filesExistInCvs(File[] files) {
     return allSatisfy(files, new FileCondition() {
       public boolean verify(File file) {
-        return fileIsUnderCvs(file)
-               && !fileIsLocallyAdded(file);
+        return fileIsUnderCvs(file) && !fileIsLocallyAdded(file);
       }
     });
   }
@@ -466,11 +465,23 @@ public class CvsUtil {
     return new File(parent, ".#" + ioFile.getName() + "." + revision);
   }
 
+  private static File getCachedContentFile(final VirtualFile parent, String name, String revision) {
+    final File parentFile = new File(getAdminDir(new File(parent.getPath())), BASE_REVISIONS_DIR);
+    final File storedRevisionFile;
+    if (revision.startsWith("-")) {
+      storedRevisionFile = new File(parentFile, ".#" + name + '.' + revision.substring(1));
+    } else {
+      storedRevisionFile = new File(parentFile, ".#" + name + '.' + revision);
+    }
+    if ((! storedRevisionFile.exists()) || (! storedRevisionFile.isFile())) return null;
+    return storedRevisionFile;
+  }
+
   @Nullable
-  public static byte[] getCachedStoredContent(final VirtualFile file, final String revision) {
+  public static byte[] getCachedStoredContent(final VirtualFile parent, final String name, final String revision) {
     try {
-      File storedRevisionFile = createFromRevisionAndPath(file, revision);
-      if ((storedRevisionFile == null) || (! storedRevisionFile.isFile())) return null;
+      File storedRevisionFile = getCachedContentFile(parent, name, revision);
+      if (storedRevisionFile == null) return null;
       return FileUtil.loadFileBytes(storedRevisionFile);
     }
     catch (IOException e) {
@@ -479,8 +490,29 @@ public class CvsUtil {
     }
   }
 
+  public static boolean restoreFileFromCachedContent(final VirtualFile parent,
+                                                     final String name,
+                                                     final String revision,
+                                                     boolean makeReadOnly) {
+    try {
+      final File cachedContentFile = getCachedContentFile(parent, name, revision);
+      if (cachedContentFile == null) return false;
+      final byte[] content = FileUtil.loadFileBytes(cachedContentFile);
+      final File file = new File(parent.getPath(), name);
+      FileUtil.createIfDoesntExist(file);
+      if (!file.canWrite() && !file.setWritable(true)) return false;
+      FileUtil.writeToFile(file, content);
+      if (makeReadOnly && !file.setWritable(false)) return false;
+      return file.setLastModified(cachedContentFile.lastModified());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return false;
+    }
+  }
+
   public static void storeContentForRevision(final VirtualFile file, final String revision, final byte[] bytes) {
-    File storedRevisionFile = createFromRevisionAndPath(file, revision);
+    final File storedRevisionFile = createFromRevisionAndPath(file, revision);
     if (storedRevisionFile == null) {
       return;
     }
@@ -488,6 +520,7 @@ public class CvsUtil {
     if (storedRevisionFile.isFile()) return;
     try {
       FileUtil.writeToFile(storedRevisionFile, bytes);
+      storedRevisionFile.setLastModified(file.getModificationStamp());
     }
     catch (IOException e) {
       LOG.info(e);
