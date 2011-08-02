@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,23 +26,39 @@ import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
+
 public class UnnecessaryReturnInspection extends BaseInspection {
 
+    @SuppressWarnings("PublicField")
+    public boolean ignoreInThenBranch = false;
+
+    @Override
     @NotNull
     public String getID() {
         return "UnnecessaryReturnStatement";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.return.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message("unnecessary.return.option"),
+                this, "ignoreInThenBranch");
+    }
+
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final boolean isConstructor = ((Boolean)infos[0]).booleanValue();
@@ -54,23 +71,25 @@ public class UnnecessaryReturnInspection extends BaseInspection {
         }
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryReturnVisitor();
-    }
-
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new DeleteUnnecessaryStatementFix("return");
     }
 
-    private static class UnnecessaryReturnVisitor
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryReturnVisitor();
+    }
+
+    private class UnnecessaryReturnVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitReturnStatement(
                 @NotNull PsiReturnStatement statement) {
             super.visitReturnStatement(statement);
-          if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
-            return;
-          }
+            if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
+                return;
+            }
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
             if (method == null) {
@@ -90,9 +109,33 @@ public class UnnecessaryReturnInspection extends BaseInspection {
             if (body == null) {
                 return;
             }
-            if (ControlFlowUtils.blockCompletesWithStatement(body, statement)) {
-                registerStatementError(statement, isConstructor);
+            if (!ControlFlowUtils.blockCompletesWithStatement(body,
+                    statement)) {
+                return;
             }
+            final PsiElement parent = statement.getParent();
+            if (ignoreInThenBranch && isInThenBranch(statement, parent)) {
+                return;
+            }
+            registerStatementError(statement, isConstructor);
+        }
+
+        private boolean isInThenBranch(PsiReturnStatement statement,
+                                       PsiElement parent) {
+            if (!(parent instanceof PsiCodeBlock)) {
+                return false;
+            }
+            final PsiCodeBlock codeBlock = (PsiCodeBlock) parent;
+            final PsiElement grandParent = codeBlock.getParent();
+            final PsiElement greatGrandParent = grandParent.getParent();
+            if (!(greatGrandParent instanceof PsiIfStatement)) {
+                return false;
+            }
+            final PsiIfStatement ifStatement =
+                    (PsiIfStatement) greatGrandParent;
+            final PsiStatement elseBranch = ifStatement.getElseBranch();
+            return elseBranch != null && !PsiTreeUtil.isAncestor(elseBranch,
+                    statement, true);
         }
     }
 }
