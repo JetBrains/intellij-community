@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,20 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.TestUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class UnusedCatchParameterInspection extends BaseInspection {
 
@@ -80,31 +78,7 @@ public class UnusedCatchParameterInspection extends BaseInspection {
         if (namedIgnoreButUsed) {
             return null;
         }
-        return new UnusedCatchParameterFix();
-    }
-
-    private static class UnusedCatchParameterFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "rename.catch.parameter.to.ignored");
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            if (!(element instanceof PsiIdentifier)) {
-                return;
-            }
-            final PsiIdentifier identifier = (PsiIdentifier)element;
-            final PsiElementFactory factory =
-                    JavaPsiFacade.getInstance(project).getElementFactory();
-            final PsiIdentifier newIdentifier =
-                    factory.createIdentifier("ignored");
-            identifier.replace(newIdentifier);
-        }
+        return new RenameFix("ignored");
     }
 
     @Override
@@ -141,8 +115,7 @@ public class UnusedCatchParameterInspection extends BaseInspection {
                 return;
             }
             @NonNls final String parameterName = parameter.getName();
-            final boolean namedIgnore = "ignore".equals(parameterName) ||
-                    "ignored".equals(parameterName);
+            final boolean namedIgnore = parameterName.contains("ignore");
             final PsiCodeBlock block = section.getCatchBlock();
             if (block == null) {
                 return;
