@@ -5,7 +5,7 @@ import org.jetbrains.jps.idea.Facet
 /**
  * @author max
  */
-class Module extends LazyInitializeableObject implements ClasspathItem, Comparable {
+class Module extends LazyInitializeableObject implements ClasspathItem {//}, Comparable {
     Project project;
     String name;
     Sdk sdk;
@@ -23,13 +23,13 @@ class Module extends LazyInitializeableObject implements ClasspathItem, Comparab
     Map<String, String> sourceRootPrefixes = [:]
     Map<String, Library> libraries = [:]
 
-    int compareTo(Object o) {
+    /*int compareTo(Object o) {
         if (o instanceof Module) {
             ((Module) o).name.compareTo(name);
         }
 
         return -1
-    }
+    }*/
 
     def Module(project, name, initializer) {
         this.project = project;

@@ -54,11 +54,17 @@ public class ProjectWrapper {
             this.stream = flags.logStream();
         }
 
-        public <T extends Comparable> void logMany(final PrintStream stream, final Collection<T> list) {
-            final Object[] a = list.toArray();
+        public <T> void logMany(final PrintStream stream, final Collection<T> list) {
+            final String[] a = new String[list.size()];
+            int i = 0;
+
+            for (T e : list) {
+                a[i++] = e.toString();
+            }
+
             Arrays.sort(a);
 
-            for (Object o : a) {
+            for (String o : a) {
                 stream.println(o);
             }
         }

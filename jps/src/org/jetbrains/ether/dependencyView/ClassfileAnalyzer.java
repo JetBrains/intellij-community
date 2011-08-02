@@ -5,6 +5,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.commons.EmptyVisitor;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
+import sun.management.snmp.AdaptorBootstrap;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,6 +21,17 @@ import java.util.Set;
  */
 
 public class ClassfileAnalyzer {
+    private static class Holder<T> {
+        private T x = null;
+
+        public void set (final T x) {
+            this.x = x;
+        }
+
+        public T get () {
+            return x;
+        }
+    }
 
     private static class ClassCrawler extends EmptyVisitor {
 
@@ -179,14 +191,23 @@ public class ClassfileAnalyzer {
         }
 
         @Override
-        public MethodVisitor visitMethod(int access, String n, String desc, String signature, String[] exceptions) {
+        public MethodVisitor visitMethod(final int access, final String n, final String desc, final String signature, final String[] exceptions) {
+            final Holder<Object> defaultValue = new Holder<Object>();
+
             processSignature(signature);
 
             if (notPrivate(access)) {
-                methods.add(new MethodRepr(access, n, signature, desc, exceptions));
+                methods.add(new MethodRepr(access, n, signature, desc, exceptions, null));
             }
 
             return new EmptyVisitor() {
+                @Override
+                public void visitEnd() {
+                    if (notPrivate(access)) {
+                        methods.add(new MethodRepr(access, n, signature, desc, exceptions, defaultValue.get()));
+                    }
+                }
+
                 @Override
                 public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
                     return annotationCrawler;
@@ -194,7 +215,11 @@ public class ClassfileAnalyzer {
 
                 @Override
                 public AnnotationVisitor visitAnnotationDefault() {
-                    return annotationCrawler;
+                    return new EmptyVisitor() {
+                        public void visit(String name, Object value) {
+                            defaultValue.set (value);
+                        }
+                    };
                 }
 
                 @Override
