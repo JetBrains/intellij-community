@@ -51,7 +51,7 @@ public class FormatterImpl extends FormatterEx
 {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
 
-  private FormattingProgressTask myProgressIndicator;
+  private FormattingProgressTask myProgressTask;
   
   private final AtomicInteger myIsDisabledCount = new AtomicInteger();
   private final IndentImpl NONE_INDENT = new IndentImpl(Indent.Type.NONE, false, false);
@@ -99,7 +99,7 @@ public class FormatterImpl extends FormatterEx
     if (!FormatterUtil.FORMATTER_ACTION_NAMES.contains(CommandProcessor.getInstance().getCurrentCommandName())) {
       return;
     }
-    myProgressIndicator = progressIndicator;
+    myProgressTask = progressIndicator;
   }
 
   public void format(final FormattingModel model, final CodeStyleSettings settings,
@@ -151,8 +151,8 @@ public class FormatterImpl extends FormatterEx
   }
 
   @NotNull
-  private FormattingProgressCallback getProgressIndicator() {
-    FormattingProgressCallback result = myProgressIndicator;
+  private FormattingProgressCallback getProgressCallback() {
+    FormattingProgressCallback result = myProgressTask;
     return result == null ? FormattingProgressCallback.EMPTY : result;
   }
   
@@ -165,7 +165,7 @@ public class FormatterImpl extends FormatterEx
       @Override
       protected FormatProcessor buildProcessor() {
         FormatProcessor processor = new FormatProcessor(
-          model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges, getProgressIndicator()
+          model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges, getProgressCallback()
         );
         processor.format(model, true);
         return processor;
@@ -212,7 +212,7 @@ public class FormatterImpl extends FormatterEx
   private void execute(@NotNull SequentialTask task) {
     disableFormatting();
     Application application = ApplicationManager.getApplication();
-    if (myProgressIndicator == null || !application.isDispatchThread() || application.isUnitTestMode()) {
+    if (myProgressTask == null || !application.isDispatchThread() || application.isUnitTestMode()) {
       try {
         task.prepare();
         while (!task.isDone()) {
@@ -221,25 +221,25 @@ public class FormatterImpl extends FormatterEx
       }
       finally {
         enableFormatting();
-        myProgressIndicator = null;
+        myProgressTask = null;
       }
     }
     else {
-      myProgressIndicator.setTask(task);
-      myProgressIndicator.addCallback(FormattingProgressCallback.EventType.SUCCESS, new Runnable() {
+      myProgressTask.setTask(task);
+      myProgressTask.addCallback(FormattingProgressCallback.EventType.SUCCESS, new Runnable() {
         @Override
         public void run() {
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
               // Reset current progress indicator.
-              myProgressIndicator = null;
+              myProgressTask = null;
               enableFormatting();
             }
           });
         }
       });
-      ProgressManager.getInstance().run(myProgressIndicator);
+      ProgressManager.getInstance().run(myProgressTask);
     }
   }
 
