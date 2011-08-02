@@ -490,6 +490,7 @@ public interface Test {
 
   public void testCancellingDuringCalculation() {
     myFixture.configureByText "a.java", """
+class Aaaaaaa {}
 public interface Test {
   <caret>
 }"""
@@ -674,6 +675,14 @@ class Foo {
     myFixture.configureByText("a.java", """ class Foo { { <caret> } } """)
     type 'filinpstr('
     assert myFixture.editor.document.text.contains('filinpstr()')
+  }
+
+  public void testNoAutopopupAfterSpace() {
+    myFixture.configureByText("a.java", """ class Foo { { int newa; <caret> } } """)
+    edt { myFixture.type('new ') }
+    joinAlarm()
+    joinCompletion()
+    assert !lookup
   }
 
   public void testNonFinishedParameterComma() {

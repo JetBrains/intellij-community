@@ -71,7 +71,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
     if (!Character.isLetter(charTyped) && charTyped != '_') {
-      if (CompletionServiceImpl.isPhase(CompletionPhase.EmptyAutoPopup.class)) {
+      if (CompletionServiceImpl.isPhase(CompletionPhase.EmptyAutoPopup.class, CompletionPhase.AutoPopupAlarm.class)) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
       }
       return Result.CONTINUE;
