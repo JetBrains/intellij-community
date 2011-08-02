@@ -19,14 +19,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.diff.DiffMixin;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.*;
+import git4idea.GitContentRevision;
+import git4idea.GitFileRevision;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import gnu.trove.THashSet;
@@ -40,7 +45,7 @@ import java.util.Set;
 /**
  * Git diff provider
  */
-public class GitDiffProvider implements DiffProvider {
+public class GitDiffProvider implements DiffProvider, DiffMixin {
   /**
    * The context project
    */
@@ -80,6 +85,20 @@ public class GitDiffProvider implements DiffProvider {
     }
     try {
       return GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file.getPath()), null);
+    }
+    catch (VcsException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  @Override
+  public VcsRevisionDescription getCurrentRevisionDescription(final VirtualFile file) {
+    if (file.isDirectory()) {
+      return null;
+    }
+    try {
+      return GitHistoryUtils.getCurrentRevisionDescription(myProject, VcsUtil.getFilePath(file.getPath()), null);
     }
     catch (VcsException e) {
       return null;

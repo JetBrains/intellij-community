@@ -21,7 +21,7 @@ import com.intellij.util.ArrayUtil;
 import java.io.IOException;
 import java.util.Date;
 
-public interface VcsFileRevision extends VcsFileContent {
+public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription {
   VcsFileRevision NULL = new VcsFileRevision() {
     public VcsRevisionNumber getRevisionNumber() {
       return VcsRevisionNumber.NULL;
@@ -56,10 +56,5 @@ public interface VcsFileRevision extends VcsFileContent {
     }
   };
 
-  VcsRevisionNumber getRevisionNumber();
   String getBranchName();
-  Date getRevisionDate();
-  String getAuthor();
-  String getCommitMessage();
-
 }
