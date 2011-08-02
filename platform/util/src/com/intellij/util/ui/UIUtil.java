@@ -158,8 +158,7 @@ public class UIUtil {
     }
   }
 
-  public static void fillVerticalGradient(final Component c,
-                                          final Graphics g,
+  public static void fillVerticalGradient(final Graphics g,
                                           final int x,
                                           final int y,
                                           final int width,
@@ -169,10 +168,11 @@ public class UIUtil {
     BufferedImage img = new BufferedImage(10, height, BufferedImage.TYPE_INT_RGB);
     Graphics2D imageGraphics = (Graphics2D)img.getGraphics();
     imageGraphics.setPaint(new GradientPaint(0, 0, top, 0, height, bottom));
-    imageGraphics.fillRect(0, 0, 10, height);
+    imageGraphics.fillRect(0, 0, 50, height);
 
-    for (int i = x; i < x + width; i += 10) {
-      g.drawImage(img, i, y, Math.min(10, width - i), height, null);
+    final Graphics2D g2 = (Graphics2D)g;
+    for (int i = x; i < x + width; i += 50) {
+      g2.drawImage(img, null, i, y);
     }
   }
 
