@@ -17,6 +17,7 @@ package git4idea.checkin;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -211,21 +212,36 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    * @param exceptions the collected exceptions
    */
   public static void showDialog(final Project project, final List<VirtualFile> vcsRoots, final Collection<VcsException> exceptions) {
-    final List<Root> emptyRoots = loadRoots(project, vcsRoots, exceptions, false); // collect roots without fetching - just to show dialog
-    if (!exceptions.isEmpty()) {
-      exceptions.addAll(exceptions);
-      return;
-    }
-    final GitPushActiveBranchesDialog d = new GitPushActiveBranchesDialog(project, vcsRoots, emptyRoots);
-    d.refreshTree(true, null, false); // start initial fetch
-    d.show();
-    if (d.isOK()) {
-      d.rebaseAndPush();
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        final List<Root> emptyRoots =
+          loadRoots(project, vcsRoots, exceptions, false); // collect roots without fetching - just to show dialog
+        if (!exceptions.isEmpty()) {
+          exceptions.addAll(exceptions);
+          return;
+        }
+        final GitPushActiveBranchesDialog dialog = new GitPushActiveBranchesDialog(project, vcsRoots, emptyRoots);
+        dialog.refreshTree(true, null, false); // start initial fetch
 
-    for (VirtualFile root : vcsRoots) {
-      GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL);
-    }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            dialog.show();
+            if (dialog.isOK()) {
+              dialog.rebaseAndPush();
+            }
+
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+              public void run() {
+                for (VirtualFile root : vcsRoots) {
+                  GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL);
+                }
+              }
+            });
+          }
+        });
+      }
+    });
   }
 
   /**
