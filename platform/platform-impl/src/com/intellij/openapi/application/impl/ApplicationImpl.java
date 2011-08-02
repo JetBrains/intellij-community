@@ -674,6 +674,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void exit(final boolean force) {
+    exit(force, true);
+  }
+
+  public void exit(final boolean force, final boolean allowListenersToCancel) {
     if (!force && getDefaultModalityState() != ModalityState.NON_MODAL) {
       return;
     }
@@ -694,7 +698,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
         saveSettings();
 
-        if (!canExit()) {
+        if (!canExit() && allowListenersToCancel) {
           myExitCode = 0;
           return;
         }
