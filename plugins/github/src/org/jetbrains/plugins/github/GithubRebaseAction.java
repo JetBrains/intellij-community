@@ -56,8 +56,7 @@ public class GithubRebaseAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin()) ||
-        project == null || project.isDefault() ||
-        GithubUtil.getGithubBoundRepository(project) == null) {
+        project == null || project.isDefault()) {
       e.getPresentation().setEnabled(false);
       e.getPresentation().setVisible(false);
       return;
