@@ -663,9 +663,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       JPanel scopePanel = new JPanel(new GridBagLayout());
 
       TitledSeparatorWithMnemonic separator = new TitledSeparatorWithMnemonic(SSRBundle.message("search.dialog.scope.label"), myScopeChooserCombo.getComboBox());
-      scopePanel.add(separator, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5,0,0,0), 0, 0));
+      scopePanel.add(separator, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5,0,0,0), 0, 0));
 
-      scopePanel.add(myScopeChooserCombo, new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,10,0,0), 0, 0));
+      scopePanel.add(myScopeChooserCombo, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,10,0,0), 0, 0));
 
       allOptions.add(
         scopePanel,
