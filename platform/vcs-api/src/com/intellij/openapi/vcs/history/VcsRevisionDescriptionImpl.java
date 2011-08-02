@@ -26,15 +26,19 @@ import java.util.Date;
  */
 public class VcsRevisionDescriptionImpl implements VcsRevisionDescription {
   private final VcsRevisionNumber myNumber;
-  private final Date myDate;
-  private final String myAuthor;
-  private final String myMessage;
+  private Date myDate;
+  private String myAuthor;
+  private String myMessage;
 
   public VcsRevisionDescriptionImpl(VcsRevisionNumber number, Date date, String author, String message) {
     myNumber = number;
     myDate = date;
     myAuthor = author;
     myMessage = message;
+  }
+
+  public VcsRevisionDescriptionImpl(VcsRevisionNumber number) {
+    myNumber = number;
   }
 
   @Override
@@ -55,5 +59,17 @@ public class VcsRevisionDescriptionImpl implements VcsRevisionDescription {
   @Override
   public String getCommitMessage() {
     return myMessage;
+  }
+
+  public void setDate(Date date) {
+    myDate = date;
+  }
+
+  public void setAuthor(String author) {
+    myAuthor = author;
+  }
+
+  public void setMessage(String message) {
+    myMessage = message;
   }
 }
