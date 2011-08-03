@@ -119,7 +119,7 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
       lookup.setAdvertisementText(advertisementText);
       lookup.refreshUi();
     }
-    lookup.show();
+    lookup.showLookup();
   }
 
   public void setAdvertisementText(@Nullable String text) {

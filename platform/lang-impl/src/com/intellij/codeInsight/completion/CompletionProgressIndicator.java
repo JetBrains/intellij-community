@@ -340,7 +340,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
 
-      myLookup.show();
+      if (!myLookup.showLookup()) {
+        myLookup.hide();
+        return;
+      }
       justShown = true;
     }
     myLookup.refreshUi();

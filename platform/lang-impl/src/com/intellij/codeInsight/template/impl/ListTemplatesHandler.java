@@ -74,7 +74,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
 
     final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, items, prefix, LookupArranger.DEFAULT);
     lookup.addLookupListener(new MyLookupAdapter(project, editor, null));
-    lookup.show();
+    lookup.showLookup();
   }
 
   private static String computePrefix(TemplateImpl template, String argument) {
@@ -96,7 +96,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     }
 
     lookup.addLookupListener(new MyLookupAdapter(project, editor, template2Argument));
-    lookup.show();
+    lookup.showLookup();
   }
 
   public boolean startInWriteAction() {
