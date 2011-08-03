@@ -18,10 +18,12 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class DjangoTemplateLineBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
+  public static final String ID = "django-line";
+
   private final PyDebuggerEditorsProvider myEditorsProvider = new PyDebuggerEditorsProvider();
 
   public DjangoTemplateLineBreakpointType() {
-    super("django-line", "Django Line Breakpoint");
+    super(ID, "Django Line Breakpoint");
   }
 
   public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull final Project project) {

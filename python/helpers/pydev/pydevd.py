@@ -580,8 +580,6 @@ class PyDB:
                     else:
                         raise NameError(type)
 
-
-
                     self.enable_tracing()
 
                 elif cmd_id == CMD_REMOVE_BREAK:
@@ -598,8 +596,15 @@ class PyDB:
                         try:
                             if type == 'django-line':
                                 del self.django_breakpoints[file][line]
-                            else:
+                            elif type == 'python-line':
                                 del self.breakpoints[file][line] #remove the breakpoint in that line
+                            else:
+                                try:
+                                    del self.django_breakpoints[file][line]
+                                    del self.breakpoints[file][line] #remove the breakpoint in that line
+                                except:
+                                    pass
+
                             if DEBUG_TRACE_BREAKPOINTS > 0:
                                 sys.stderr.write('Removed breakpoint:%s\n' % (file,))
                                 sys.stderr.flush()
