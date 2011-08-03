@@ -12,18 +12,16 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author nik
@@ -76,44 +74,11 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected VirtualFile createFile(final String path, final String text) {
-    return createFile(path, text, false);
+    return VfsTestUtil.createFile(getBaseDir(), path, text);
   }
 
   protected VirtualFile createDir(final String path) {
-    return createFile(path, null, true);
-  }
-
-  private VirtualFile createFile(final String path, final String text, final boolean dir) {
-    return new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(final Result<VirtualFile> result) {
-        try {
-          VirtualFile parent = getBaseDir();
-          assertNotNull(parent);
-          StringTokenizer parents = new StringTokenizer(PathUtil.getParentPath(path), "/");
-          while (parents.hasMoreTokens()) {
-            final String name = parents.nextToken();
-            VirtualFile child = parent.findChild(name);
-            if (child == null || !child.isValid()) {
-              child = parent.createChildDirectory(this, name);
-            }
-            parent = child;
-          }
-          final VirtualFile file;
-          if (dir) {
-            file = parent.createChildDirectory(this, PathUtil.getFileName(path));
-          }
-          else {
-            file = parent.createChildData(this, PathUtil.getFileName(path));
-            VfsUtil.saveText(file, text);
-          }
-          result.setResult(file);
-        }
-        catch (IOException e) {
-          throw new AssertionError(e);
-        }
-      }
-    }.execute().getResultObject();
+    return VfsTestUtil.createDir(getBaseDir(), path);
   }
 
   protected static VirtualFile getJDomJar() {
