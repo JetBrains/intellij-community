@@ -29,6 +29,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,11 +47,11 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   private boolean myHasMarked = false;
   private boolean myEquals;
   protected Color myColor = null;
-  protected final static Color NOT_CHANGED = new Color(0, 0, 0);
+  protected static final Color NOT_CHANGED = new Color(0, 0, 0);
   protected Project myProject;
   private boolean mySorted;
 
-  public PackageDependenciesNode(Project project) {
+  public PackageDependenciesNode(@NotNull Project project) {
     myProject = project;
   }
 
@@ -135,7 +136,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     if (hasUnmarked && !myHasUnmarked || hasMarked && !myHasMarked) {
       myHasUnmarked |= hasUnmarked;
       myHasMarked |= hasMarked;
-      PackageDependenciesNode parent = ((PackageDependenciesNode)getParent());
+      PackageDependenciesNode parent = (PackageDependenciesNode)getParent();
       if (parent != null) {
         parent.updateMarked(myHasUnmarked, myHasMarked);
       }

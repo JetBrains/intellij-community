@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class SafeDeleteFix implements IntentionAction {
   private final PsiElement myElement;
 
-  public SafeDeleteFix(PsiElement element) {
+  public SafeDeleteFix(@NotNull PsiElement element) {
     myElement = element;
   }
 
