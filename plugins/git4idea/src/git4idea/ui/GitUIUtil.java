@@ -29,6 +29,8 @@ import git4idea.GitRemote;
 import git4idea.GitVcs;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,19 +216,16 @@ public class GitUIUtil {
     if (currentBranchLabel != null) {
       final ActionListener listener = new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          try {
-            VirtualFile root = (VirtualFile)gitRootChooser.getSelectedItem();
-            assert root != null : "The root must not be null";
-            GitBranch current = GitBranch.current(project, root);
-            if (current == null) {
-              currentBranchLabel.setText(NO_CURRENT_BRANCH);
-            }
-            else {
-              currentBranchLabel.setText(current.getName());
-            }
+          VirtualFile root = (VirtualFile)gitRootChooser.getSelectedItem();
+          assert root != null : "The root must not be null";
+          GitRepository repo = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+          assert repo != null : "The repository must not be null";
+          GitBranch current = repo.getCurrentBranch();
+          if (current == null) {
+            currentBranchLabel.setText(NO_CURRENT_BRANCH);
           }
-          catch (VcsException ex) {
-            GitVcs.getInstance(project).showErrors(Collections.singletonList(ex), GitBundle.getString("merge.retrieving.branches"));
+          else {
+            currentBranchLabel.setText(current.getName());
           }
         }
       };
@@ -312,13 +311,10 @@ public class GitUIUtil {
    * @param fetchUrl       if true, the fetch url is shown instead of push url
    */
   public static void setupRemotes(final Project project, final VirtualFile root, final JComboBox remoteCombobox, final boolean fetchUrl) {
-    GitBranch gitBranch = null;
-    try {
-      gitBranch = GitBranch.current(project, root);
-    }
-    catch (VcsException ex) {
-      // ignore error
-    }
+    final GitRepository repo = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+    assert repo != null : "GitRepository can't be null for root " + root;
+    GitBranch gitBranch = repo.getCurrentBranch();
+
     final String branch = gitBranch != null ? gitBranch.getName() : null;
     setupRemotes(project, root, branch, remoteCombobox, fetchUrl);
 
