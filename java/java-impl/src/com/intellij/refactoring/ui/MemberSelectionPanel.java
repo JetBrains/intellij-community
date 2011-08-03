@@ -29,11 +29,9 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.TitledBorderWithMnemonic;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -64,14 +62,15 @@ public class MemberSelectionPanel extends JPanel {
         myTable.requestFocus();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_M, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.ALT_DOWN_MASK),
-                              JComponent.WHEN_IN_FOCUSED_WINDOW);
+                           JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
   private static String appendTitledBorderMnemonic(String title) {
     int membersIdx = title.indexOf('M');
     if (membersIdx >= 0) {
       title = title.replaceFirst("M", "&M");
-    } else {
+    }
+    else {
       membersIdx = title.indexOf('m');
       if (membersIdx >= 0) {
         title = title.replaceFirst("m", "&m");
@@ -87,6 +86,4 @@ public class MemberSelectionPanel extends JPanel {
   public MemberSelectionTable getTable() {
     return myTable;
   }
-
-
 }
