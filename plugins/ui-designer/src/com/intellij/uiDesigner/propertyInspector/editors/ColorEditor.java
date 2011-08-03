@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -234,10 +235,11 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
       myDescriptorList.setCellRenderer(new ColorRenderer());
       myDescriptorList.addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
-          ColorDescriptor descriptor = (ColorDescriptor) myDescriptorList.getSelectedValue();
+          ColorDescriptor descriptor = (ColorDescriptor)myDescriptorList.getSelectedValue();
           getColorSelectionModel().setSelectedColor(new ColorDescriptorWrapper(descriptor));
         }
       });
+      new ListSpeedSearch(myDescriptorList);
       add(ScrollPaneFactory.createScrollPane(myDescriptorList), BorderLayout.CENTER);
     }
 
