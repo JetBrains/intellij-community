@@ -150,6 +150,10 @@ public class PlaybackRunner {
       return new AssertFocused(string, line);
     }
 
+    if (actualString.startsWith(CallCommand.PREFIX)) {
+      return new CallCommand(string, line);
+    }
+
     return new AlphaNumericTypeCommand(string, line);
   }
 
@@ -243,6 +247,8 @@ public class PlaybackRunner {
       }
     }, false).run();
   }
+
+
 
 
 }
