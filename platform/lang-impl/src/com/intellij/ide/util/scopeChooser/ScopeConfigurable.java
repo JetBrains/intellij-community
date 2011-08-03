@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,16 +111,16 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
 
   public boolean isModified() {
     if (mySharedCheckbox.isSelected() != myShareScope) return true;
-    final PackageSet currentScope = myPanel.getCurrentScope();
-    return !Comparing.strEqual(myPackageSet, currentScope != null ? currentScope.getText() : null);
+    final String currentScope = myPanel.getPatternText();
+    return !Comparing.strEqual(myPackageSet, currentScope);
   }
 
   public void apply() throws ConfigurationException {
     try {
       myPanel.apply();
       final PackageSet packageSet = myPanel.getCurrentScope();
-      myScope = new NamedScope(myScope.getName(), packageSet);
-      myPackageSet = packageSet != null ? packageSet.getText() : null;
+      myPackageSet = myPanel.getPatternText();
+      myScope = new NamedScope(myScope.getName(), packageSet == null ? new InvalidPackageSet(myPackageSet) : packageSet);
       myShareScope = mySharedCheckbox.isSelected();
     }
     catch (ConfigurationException e) {

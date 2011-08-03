@@ -145,12 +145,13 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
   private static NamedScope readScope(Element setElement){
     String name = setElement.getAttributeValue(NAME_ATT);
-    PackageSet set = null;
+    PackageSet set;
+    final String attributeValue = setElement.getAttributeValue(PATTERN_ATT);
     try {
-      set = PackageSetFactory.getInstance().compile(setElement.getAttributeValue(PATTERN_ATT));
+      set = PackageSetFactory.getInstance().compile(attributeValue);
     }
     catch (ParsingException e) {
-      // Skip damaged set
+      set = new InvalidPackageSet(attributeValue);
     }
     return new NamedScope(name, set);
   }

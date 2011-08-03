@@ -496,14 +496,15 @@ public class ScopeEditorPanel {
   }
 
   public void apply() throws ConfigurationException {
-    if (myCurrentScope == null) {
-      throw new ConfigurationException(IdeBundle.message("error.correct.pattern.syntax.errors.first"));
-    }
   }
 
   public PackageSet getCurrentScope() {
     return myCurrentScope;
   }
+
+  public String getPatternText() {
+     return myPatternField.getText();
+   }
 
   public void reset(PackageSet packageSet, @Nullable Runnable runnable) {
     myCurrentScope = packageSet;
