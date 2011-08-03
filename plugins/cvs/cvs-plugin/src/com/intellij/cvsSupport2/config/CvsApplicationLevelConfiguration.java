@@ -196,6 +196,9 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
         try {
           String line;
           while ((line = reader.readLine()) != null) {
+            if (line.startsWith("/1 ")) {
+              line = line.substring(3);
+            }
             final int sepPosition = line.indexOf(' ');
             if (sepPosition > 0) {
               final String cvsRoot = line.substring(0, sepPosition);
