@@ -169,9 +169,14 @@ public class TreeModelBuilder {
         countFiles(project);
         myFileIndex.iterateContent(new ContentIterator() {
           PackageDependenciesNode lastParent = null;
+          VirtualFile dir = null;
           public boolean processFile(VirtualFile fileOrDir) {
             if (!fileOrDir.isDirectory()) {
+              if (lastParent != null && dir != fileOrDir.getParent()) {
+                lastParent = null;
+              }
               lastParent = buildFileNode(fileOrDir, lastParent);
+              dir = fileOrDir.getParent();
             } else {
               lastParent = null;
             }
