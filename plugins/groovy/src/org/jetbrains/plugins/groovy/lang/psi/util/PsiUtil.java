@@ -1032,7 +1032,7 @@ public class PsiUtil {
     return ((GrListOrMap)firstArg).getNamedArguments();
   }
 
-  public static boolean isExpressionStatement(PsiElement expr) {
+  public static boolean isExpressionStatement(@NotNull PsiElement expr) {
     final PsiElement parent = expr.getParent();
     if (parent instanceof GrControlFlowOwner) return true;
     if (parent instanceof GrExpression ||

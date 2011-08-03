@@ -71,6 +71,9 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   public void testEachMethodForRanges() throws Throwable {doBasicTest();}
   public void testEachMethodForEnumRanges() throws Throwable {doBasicTest();}
 
+  public void testPrintlnSpace() { checkCompletion 'print<caret>', ' ', "print <caret>" }
+  public void testHashCodeSpace() { checkCompletion 'if ("".sub<caret>', ' ', 'if ("".subSequence() <caret>' }
+
   public void testTwoMethodWithSameName() {
     doVariantableTest "fooo", "fooo"
   }

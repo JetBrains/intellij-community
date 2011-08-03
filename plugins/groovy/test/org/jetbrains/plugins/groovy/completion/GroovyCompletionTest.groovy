@@ -20,6 +20,7 @@ package org.jetbrains.plugins.groovy.completion;
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.CodeInsightSettings
 
 /**
  * @author Maxim.Medvedev
@@ -739,6 +740,10 @@ a.<caret>""")
     checkSingleItemCompletion('def foo = "fo<caret>"', 'def foo = "foo<caret>"')
   }
 
+  public void testIfSpace() { checkCompletion 'int iff; if<caret>', ' ', "int iff; if <caret>" }
+
+  public void testIfParenthesis() { checkCompletion 'int iff; if<caret>', '(', "int iff; if (<caret>)" }
+
   public void testShowAccessor() {
     assertNotNull doContainsTest("getFoo", """
 class MyClass {
@@ -758,4 +763,18 @@ while(true) {
 }""")
 
   }
+
+  public void testPreferParametersToClasses() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+
+    try {
+      myFixture.configureByText "a.groovy", "def foo(stryng) { println str<caret> }"
+      myFixture.completeBasic()
+      assert myFixture.lookupElementStrings[0] == 'stryng'
+    }
+    finally {
+      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    }
+  }
+  
 }

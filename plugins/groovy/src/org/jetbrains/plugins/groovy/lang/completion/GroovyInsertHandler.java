@@ -32,12 +32,14 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
 
@@ -91,15 +93,14 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
         }
       }
 
-      PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
-      docManager.commitDocument(document);
-      /*
-      //always use parentheses
+      context.commitDocument();
 
-      PsiFile psiFile = docManager.getPsiFile(document);
-      if (method.getParameterList().getParametersCount() > 0 && isExpressionStatement(psiFile, context.getStartOffset())) {
-        return;
-      }*/
+      if (context.getCompletionChar() == ' ') {
+        GrExpression expr = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(context.getStartOffset()), GrExpression.class);
+        if (expr != null && PsiUtil.isExpressionStatement(expr)) {
+          return;
+        }
+      }
 
       new MethodParenthesesHandler(method, true).handleInsert(context, item);
       return;
