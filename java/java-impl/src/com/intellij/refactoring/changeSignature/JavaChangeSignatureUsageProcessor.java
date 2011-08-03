@@ -895,12 +895,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
         UsageInfo usageInfo = iterator.next();
         PsiElement element = usageInfo.getElement();
-        if (element != null && StdLanguages.JAVA.equals(element.getLanguage())) {
-          if (element instanceof PsiReferenceExpression) {
+        if (element != null) {
+          if (element instanceof PsiQualifiedReference) {
             PsiClass accessObjectClass = null;
-            PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
-            if (qualifier != null) {
-              accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
+            PsiElement qualifier = ((PsiQualifiedReference)element).getQualifier();
+            if (qualifier instanceof PsiExpression) {
+              accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass((PsiExpression)qualifier).getElement();
             }
 
             if (!JavaPsiFacade.getInstance(element.getProject()).getResolveHelper()
