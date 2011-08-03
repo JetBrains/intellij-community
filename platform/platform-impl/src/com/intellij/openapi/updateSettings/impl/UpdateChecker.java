@@ -287,12 +287,11 @@ public final class UpdateChecker {
   }
 
   @NotNull
-  public static CheckForUpdateResult doCheckForUpdates() {
+  public static CheckForUpdateResult doCheckForUpdates(final UpdateSettings settings) {
     ApplicationInfo appInfo = ApplicationInfo.getInstance();
     BuildNumber currentBuild = appInfo.getBuild();
     int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
     final UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl(), getInstallationUID(), null);
-    final UpdateSettings settings = UpdateSettings.getInstance();
     final UpdatesInfo info;
     try {
       info = loader.loadUpdatesInfo();
@@ -309,19 +308,48 @@ public final class UpdateChecker {
   }
 
 
-
   @NotNull
   public static CheckForUpdateResult checkForUpdates() {
+    return checkForUpdates(false);
+  }
+
+  @NotNull
+  public static CheckForUpdateResult checkForUpdates(final boolean disregardIgnoredBuilds) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: auto checkForUpdates()");
     }
 
-    final UpdateSettings settings = UpdateSettings.getInstance();
+    UserUpdateSettings settings = UpdateSettings.getInstance();
+    if (disregardIgnoredBuilds) {
+      settings = new UserUpdateSettings() {
+        @NotNull
+        @Override
+        public List<String> getKnownChannelsIds() {
+          return UpdateSettings.getInstance().getKnownChannelsIds();
+        }
 
-    final CheckForUpdateResult result = doCheckForUpdates();
+        @Override
+        public List<String> getIgnoredBuildNumbers() {
+          return Collections.emptyList();
+        }
+
+        @Override
+        public void setKnownChannelIds(List<String> ids) {
+          UpdateSettings.getInstance().setKnownChannelIds(ids);
+        }
+
+        @NotNull
+        @Override
+        public ChannelStatus getSelectedChannelStatus() {
+          return UpdateSettings.getInstance().getSelectedChannelStatus();
+        }
+      };
+    }
+
+    final CheckForUpdateResult result = doCheckForUpdates(UpdateSettings.getInstance());
 
     if (result.getState() == UpdateStrategy.State.LOADED) {
-      settings.LAST_TIME_CHECKED = System.currentTimeMillis();
+      UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
       settings.setKnownChannelIds(result.getAllChannelsIds());
     }
 
