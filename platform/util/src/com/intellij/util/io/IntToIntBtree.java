@@ -36,7 +36,7 @@ abstract class IntToIntBtree {
   private final byte[] buffer;
   private boolean isLarge = true;
   private final ISimpleStorage storage;
-  private final boolean offloadToSiblingsBeforeSplit = false; // TODO till effective insertion to page
+  private final boolean offloadToSiblingsBeforeSplit = false;
   private boolean indexNodeIsHashTable = true;
   final int metaDataLeafPageLength;
   final int hashPageCapacity;
@@ -461,7 +461,7 @@ abstract class IntToIntBtree {
         parent = new BtreeIndexNodeView(btree);
         parent.setAddress(parentAddress);
         if (btree.offloadToSiblingsBeforeSplit) {
-          if (doOffloadToSiblings(parent)) return parentAddress;
+          if (doOffloadToSiblingsSorted(parent)) return parentAddress;
         }
       }
 
@@ -523,7 +523,7 @@ abstract class IntToIntBtree {
       } else {
         short recordCountInNewNode = (short)(recordCount - maxIndex);
         newIndexNode.setChildrenCount(recordCountInNewNode);
-        
+
         if (btree.isLarge) {
           final int bytesToMove = recordCountInNewNode * INTERIOR_SIZE;
           getBytes(indexToOffset(maxIndex), btree.buffer, 0, bytesToMove);
@@ -596,56 +596,59 @@ abstract class IntToIntBtree {
       return parentAddress;
     }
 
-    private boolean doOffloadToSiblings(BtreeIndexNodeView parent) {
-      int indexInParent = isIndexLeaf() ? parent.search(keyAt(0)) : -1;
-      BtreeIndexNodeView sibling = new BtreeIndexNodeView(btree);
+    private boolean doOffloadToSiblingsSorted(BtreeIndexNodeView parent) {
+      boolean indexLeaf = isIndexLeaf();
+      if (!indexLeaf) return false; // TODO
 
-      if (indexInParent > 0) {
+      int indexInParent = parent.search(keyAt(0));
+
+      if (indexInParent >= 0) {
         if (doSanityCheck) {
           myAssert(parent.keyAt(indexInParent) == keyAt(0));
           myAssert(parent.addressAt(indexInParent + 1) == -address);
         }
 
-        int siblingAddress = parent.addressAt(indexInParent);
-        sibling.setAddress(-siblingAddress);
+        BtreeIndexNodeView sibling = new BtreeIndexNodeView(btree);
+        sibling.setAddress(-parent.addressAt(indexInParent));
 
-        if (!sibling.isFull() && sibling.getChildrenCount() + 1 != sibling.getMaxChildrenCount()) {
+        final int toMove = (sibling.getMaxChildrenCount() - sibling.getChildrenCount()) / 2;
+
+        if (toMove > 0) {
           if (doSanityCheck) {
             sibling.dump("Offloading to left sibling");
             parent.dump("parent before");
           }
 
-          sibling.insert(keyAt(0), addressAt(0));
+          for(int i = 0; i < toMove; ++i) sibling.insert(keyAt(i), addressAt(i));
           if (doSanityCheck) {
             sibling.dump("Left sibling after");
           }
 
-          parent.setKeyAt(indexInParent, keyAt(1));
+          parent.setKeyAt(indexInParent, keyAt(toMove));
 
-          int indexOflastChildToMove = getChildrenCount() - 1;
+          int indexOfLastChildToMove = (int)getChildrenCount() - toMove;
+          btree.movedMembersCount += indexOfLastChildToMove;
+
           if (btree.isLarge) {
-            final int bytesToMove = indexOflastChildToMove * INTERIOR_SIZE;
-            getBytes(indexToOffset(1), btree.buffer, 0, bytesToMove);
+            final int bytesToMove = indexOfLastChildToMove * INTERIOR_SIZE;
+            getBytes(indexToOffset(toMove), btree.buffer, 0, bytesToMove);
             putBytes(indexToOffset(0), btree.buffer, 0, bytesToMove);
           }
           else {
-            for (int i = 0; i < indexOflastChildToMove; ++i) {
-              setAddressAt(i, addressAt(i + 1));
-              setKeyAt(i, keyAt(i + 1));
+            for (int i = 0; i < indexOfLastChildToMove; ++i) {
+              setAddressAt(i, addressAt(i + toMove));
+              setKeyAt(i, keyAt(i + toMove));
             }
           }
 
-          setChildrenCount((short)indexOflastChildToMove);
+          setChildrenCount((short)indexOfLastChildToMove);
         }
         else if (indexInParent + 1 < parent.getChildrenCount()) {
-          insertToRightSibling(parent, indexInParent + 1, sibling);
+          insertToRightSiblingWhenSorted(parent, indexInParent + 1, sibling);
         }
-        // TODO: move members in non leaf level + handle cases below
-      } /*else if (indexInParent == -1) {
-          insertToRightSibling(parent, 0, sibling);
-        } else {
-          int a = 1;
-        }*/
+      } else if (indexInParent == -1) {
+        insertToRightSiblingWhenSorted(parent, 0, new BtreeIndexNodeView(btree));
+      }
 
       if (!isFull()) {
         sync();
@@ -660,19 +663,19 @@ abstract class IntToIntBtree {
       return false;
     }
 
-    private void insertToRightSibling(BtreeIndexNodeView parent, int indexInParent, BtreeIndexNodeView sibling) {
-      int siblingAddress;
-      siblingAddress = parent.addressAt(indexInParent + 1);
-      sibling.setAddress(-siblingAddress);
+    private void insertToRightSiblingWhenSorted(BtreeIndexNodeView parent, int indexInParent, BtreeIndexNodeView sibling) {
+      sibling.setAddress(-parent.addressAt(indexInParent + 1));
+      int toMove = (sibling.getMaxChildrenCount() - sibling.getChildrenCount()) / 2;
 
-      if (!sibling.isFull() && sibling.getChildrenCount() + 1 != sibling.getMaxChildrenCount()) {
+      if (toMove > 0) {
         if (doSanityCheck) {
           sibling.dump("Offloading to right sibling");
           parent.dump("parent before");
         }
 
-        int lastChildIndex = getChildrenCount() - 1;
-        sibling.insert(keyAt(lastChildIndex), addressAt(lastChildIndex));
+        int childrenCount = getChildrenCount();
+        int lastChildIndex = childrenCount - toMove;
+        for(int i = lastChildIndex; i < childrenCount; ++i) sibling.insert(keyAt(i), addressAt(i));
         if (doSanityCheck) {
           sibling.dump("Right sibling after");
         }
@@ -683,6 +686,11 @@ abstract class IntToIntBtree {
 
     private void dump(String s) {
       if (doDump) {
+        immediateDump(s);
+      }
+    }
+
+    private void immediateDump(String s) {
         short maxIndex = getChildrenCount();
         System.out.println(s + " @" + address);
         for(int i = 0; i < maxIndex; ++i) {
@@ -696,7 +704,6 @@ abstract class IntToIntBtree {
           System.out.println();
         }
       }
-    }
 
     private int locate(int valueHC, boolean split) {
       int searched = 0;
