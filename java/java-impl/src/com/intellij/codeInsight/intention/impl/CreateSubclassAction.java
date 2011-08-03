@@ -32,16 +32,15 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSu
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.ModuleUtil;
@@ -49,7 +48,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -61,7 +59,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CreateSubclassAction extends PsiElementBaseIntentionAction {
+public class CreateSubclassAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ImplementAbstractClassAction");
   private String myText = CodeInsightBundle.message("intention.implement.abstract.class.default.text");
   @NonNls private static final String IMPL_SUFFIX = "Impl";
@@ -76,7 +74,11 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
     return CodeInsightBundle.message("intention.implement.abstract.class.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    final CaretModel caretModel = editor.getCaretModel();
+    final int position = caretModel.getOffset();
+    PsiElement element = file.findElementAt(position);
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass ||
         psiClass.hasModifierProperty(PsiModifier.FINAL)) {
