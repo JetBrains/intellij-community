@@ -99,7 +99,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     final String canonicalSandbox = sandboxHome;
 
     //copy license from running instance of idea
-    IdeaLicenseHelper.copyIDEALicencse(sandboxHome, ideaJdk);
+    IdeaLicenseHelper.copyIDEALicense(sandboxHome, ideaJdk);
 
     final JavaCommandLineState state = new JavaCommandLineState(env) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
@@ -121,6 +121,28 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         if (SystemInfo.isMac) {
           vm.defineProperty("idea.smooth.progress", "false");
           vm.defineProperty("apple.laf.useScreenMenuBar", "true");
+        }
+        
+        String buildNumber = IdeaJdk.getBuildNumber(ideaJdk.getHomePath());
+        if (buildNumber != null) {
+          if (buildNumber.startsWith("IC")) {
+            vm.defineProperty("idea.platform.prefix", "Idea");
+          }
+          else if (buildNumber.startsWith("PY")) {
+            vm.defineProperty("idea.platform.prefix", "Python");
+          }
+          else if (buildNumber.startsWith("RM")) {
+            vm.defineProperty("idea.platform.prefix", "Ruby");
+          }
+          else if (buildNumber.startsWith("PS")) {
+            vm.defineProperty("idea.platform.prefix", "PhpStorm");
+          }
+          else if (buildNumber.startsWith("WS")) {
+            vm.defineProperty("idea.platform.prefix", "WebStorm");
+          }
+          else if (buildNumber.startsWith("OC")) {
+            vm.defineProperty("idea.platform.prefix", "CIDR");
+          }
         }
 
         params.setWorkingDirectory(ideaJdk.getHomePath() + File.separator + "bin" + File.separator);
