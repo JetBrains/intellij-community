@@ -16,6 +16,7 @@
 package com.intellij.application.options;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
@@ -35,20 +36,7 @@ public class CommonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
   public String getConfigurableDisplayName() {
-    StringBuilder nameBuilder = new StringBuilder();
-    boolean isFirst = true;
-    for (Language language : LanguageCodeStyleSettingsProvider.getLanguagesWithSharedPreview()) {
-      if (isFirst) {
-        isFirst = false;
-      }
-      else {
-        nameBuilder.append('/');
-      }
-      nameBuilder.append(language.getDisplayName());
-    }
-    if (nameBuilder.length() > 0) nameBuilder.append(' ');
-    nameBuilder.append("Formatting");
-    return nameBuilder.toString();
+    return ApplicationBundle.message("title.other.languages");
   }
 
   @Override
@@ -58,7 +46,7 @@ public class CommonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
   public DisplayPriority getPriority() {
-    return DisplayPriority.KEY_LANGUAGE_SETTINGS;
+    return DisplayPriority.OTHER_SETTINGS;
   }
 
 }
