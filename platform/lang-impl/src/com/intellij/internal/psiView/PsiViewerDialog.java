@@ -241,8 +241,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   protected void init() {
-    initBorders();
-
     initMnemonics();
 
     initTree(myPsiTree);
@@ -545,13 +543,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   private void focusBlockTree() {
     IdeFocusManager.getInstance(myProject).requestFocus(myBlockTree, true);
-  }
-
-  private void initBorders() {
-    //myTextPanel.setBorder(new TitledBorderWithMnemonic("&Text"));
-    //myStructureTreePanel.setBorder(new TitledBorderWithMnemonic("PSI &Structure"));
-    //myReferencesPanel.setBorder(new TitledBorderWithMnemonic("&References"));
-    //myBlockStructurePanel.setBorder(new TitledBorderWithMnemonic("Bloc&k Structure"));
   }
 
   private void initMnemonics() {
