@@ -12,6 +12,7 @@ import java.util.Arrays;
 * Time: 1:34 PM
 */
 abstract class IntToIntBtree {
+  static final int VERSION = 1;
   static final boolean doSanityCheck = false;
   static final boolean doDump = false;
   private static final int ROUND_FACTOR = 1048576;

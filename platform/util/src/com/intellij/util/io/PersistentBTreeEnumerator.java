@@ -62,7 +62,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private final boolean myInlineKeysNoMapping;
 
   private static final int DIRTY_MAGIC = 0xbabe1977;
-  private static final int VERSION = 6;
+  private static final int VERSION = 5 + IntToIntBtree.VERSION;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafc + VERSION + PAGE_SIZE;
   private static Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
 
