@@ -540,7 +540,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     else {
       frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManagerEx.getInstanceEx(), UISettings.getInstance(),
                                DataManager.getInstance(), ApplicationManager.getApplication(), ArrayUtil.EMPTY_STRING_ARRAY);
-      if (myFrameBounds != null) {
+      final Rectangle bounds = ProjectFrameBounds.getInstance(project).getBounds();
+      if (bounds != null) {
+        frame.setBounds(bounds);
+      }
+      else if (myFrameBounds != null) {
         frame.setBounds(myFrameBounds);
       }
       frame.setExtendedState(myFrameExtendedState);
