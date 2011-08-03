@@ -75,7 +75,7 @@ public class CompositeElement extends TreeElement {
       clone.myModificationsCount = 0;
       clone.myWrapper = null;
       for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
-        clone.rawAddChildren((TreeElement)child.clone());
+        clone.rawAddChildrenWithoutNotifications((TreeElement)child.clone());
       }
       clone.clearCaches();
     }
@@ -88,7 +88,7 @@ public class CompositeElement extends TreeElement {
       while(compositeElement != null) {
         compositeElement.clearCaches();
         if (!(compositeElement instanceof PsiElement)) {
-          final PsiElement psi = compositeElement.getPsi();
+          final PsiElement psi = compositeElement.myWrapper;
           if (psi instanceof ASTDelegatePsiElement) {
             ((ASTDelegatePsiElement)psi).subtreeChanged();
           }
@@ -133,7 +133,7 @@ public class CompositeElement extends TreeElement {
 
     myModificationsCount++;
     myHC = -1;
-    
+
     clearRelativeOffsets(rawFirstChild());
   }
 
@@ -231,7 +231,14 @@ public class CompositeElement extends TreeElement {
 
   @NotNull
   public char[] textToCharArray() {
+    int startStamp = myModificationsCount;
+
     final int len = getTextLength();
+
+    if (startStamp != myModificationsCount) {
+      throw new AssertionError("Tree changed while calculating text");
+    }
+
     char[] buffer = new char[len];
     final int endOffset;
     try {
@@ -239,7 +246,7 @@ public class CompositeElement extends TreeElement {
     }
     catch (ArrayIndexOutOfBoundsException e) {
       @NonNls String msg = "Underestimated text length: " + len;
-      msg += diagnoseTextInconsistency(new String(buffer));
+      msg += diagnoseTextInconsistency(new String(buffer), startStamp);
       try {
         int length = AstBufferUtil.toBuffer(this, new char[len], 0);
         msg += ";\n repetition gives success (" + length + ")";
@@ -251,14 +258,16 @@ public class CompositeElement extends TreeElement {
     }
     if (endOffset != len) {
       @NonNls String msg = "len=" + len + ";\n endOffset=" + endOffset;
-      msg += diagnoseTextInconsistency(new String(buffer, 0, endOffset));
+      msg += diagnoseTextInconsistency(new String(buffer, 0, endOffset), startStamp);
       throw new AssertionError(msg);
     }
     return buffer;
   }
 
-  private String diagnoseTextInconsistency(String text) {
-    @NonNls String msg = ";\n buffer=" + text;
+  private String diagnoseTextInconsistency(String text, int startStamp) {
+    @NonNls String msg = "";
+    msg += ";\n changed=" + (startStamp != myModificationsCount);
+    msg += ";\n buffer=" + text;
     msg += ";\n this=" + this;
     int shitStart = textMatches(text, 0);
     msg += ";\n matches until " + shitStart;
@@ -596,6 +605,7 @@ public class CompositeElement extends TreeElement {
 
   void setFirstChildNode(TreeElement firstChild) {
     this.firstChild = firstChild;
+    clearRelativeOffsets(firstChild);
   }
 
   void setLastChildNode(TreeElement lastChild) {
@@ -753,11 +763,17 @@ public class CompositeElement extends TreeElement {
     myWrapper = psi;
   }
 
-  public void rawAddChildren(@NotNull TreeElement first) {
+  public final void rawAddChildren(@NotNull TreeElement first) {
+    rawAddChildrenWithoutNotifications(first);
+
+    subtreeChanged();
+  }
+
+  public void rawAddChildrenWithoutNotifications(TreeElement first) {
     final TreeElement last = getLastChildNode();
     if (last == null){
+      first.rawRemoveUpToWithoutNotifications(null);
       setFirstChildNode(first);
-      first.setTreePrev(null);
       while(true){
         final TreeElement treeNext = first.getTreeNext();
         first.setTreeParent(this);
@@ -768,7 +784,7 @@ public class CompositeElement extends TreeElement {
       first.setTreeParent(this);
     }
     else {
-      last.rawInsertAfterMe(first);
+      last.rawInsertAfterMeWithoutNotifications(first);
     }
 
     DebugUtil.checkTreeStructure(this);

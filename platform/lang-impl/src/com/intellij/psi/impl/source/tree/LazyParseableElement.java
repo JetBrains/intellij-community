@@ -175,7 +175,7 @@ public class LazyParseableElement extends CompositeElement {
       myText = null;
 
       if (parsedNode == null) return;
-      rawAddChildren((TreeElement)parsedNode);
+      rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
 
       //if (getNotCachedLength() != text.length()) {
       //  if (ApplicationManagerEx.getApplicationEx().isInternal()) {
@@ -194,11 +194,11 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   @Override
-  public void rawAddChildren(@NotNull TreeElement first) {
+  public void rawAddChildrenWithoutNotifications(@NotNull TreeElement first) {
     if (myText() != null) {
       LOG.error("Mutating collapsed chameleon");
     }
-    super.rawAddChildren(first);
+    super.rawAddChildrenWithoutNotifications(first);
   }
 
   @Override

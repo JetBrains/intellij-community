@@ -1068,7 +1068,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
           curMarker = marker;
 
           final CompositeElement childNode = createComposite(marker);
-          curNode.rawAddChildren(childNode);
+          curNode.rawAddChildrenWithoutNotifications(childNode);
           curNode = childNode;
 
           item = marker.myFirstChild != null ? marker.myFirstChild : marker.myDoneMarker;
@@ -1080,7 +1080,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
       else if (item instanceof ErrorItem) {
         final CompositeElement errorElement = Factory.createErrorElement(((ErrorItem)item).myMessage);
-        curNode.rawAddChildren(errorElement);
+        curNode.rawAddChildrenWithoutNotifications(errorElement);
       }
       else if (item instanceof DoneMarker) {
         curMarker = (StartMarker)((DoneMarker)item).myStart.myParent;
@@ -1101,7 +1101,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (start < end || myLexTypes[curToken] instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in Python
         final IElementType type = myLexTypes[curToken];
         final TreeElement leaf = createLeaf(type, start, end);
-        curNode.rawAddChildren(leaf);
+        curNode.rawAddChildrenWithoutNotifications(leaf);
       }
       curToken++;
     }
@@ -1113,7 +1113,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     final int start = myLexStarts[startMarker.myLexemeIndex];
     final int end = myLexStarts[startMarker.myDoneMarker.myLexemeIndex];
     final TreeElement leaf = createLeaf(startMarker.myType, start, end);
-    ast.rawAddChildren(leaf);
+    ast.rawAddChildrenWithoutNotifications(leaf);
     return startMarker.myDoneMarker.myLexemeIndex;
   }
 

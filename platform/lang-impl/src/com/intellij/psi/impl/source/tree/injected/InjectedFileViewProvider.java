@@ -47,6 +47,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider {
       return false;
     }
   };
+  private boolean myPatchingLeaves;
 
   InjectedFileViewProvider(@NotNull PsiManager psiManager,
                            @NotNull VirtualFileWindow virtualFile,
@@ -64,6 +65,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider {
   public void rootChanged(PsiFile psiFile) {
     super.rootChanged(psiFile);
     if (!isPhysical()) return; // injected PSI change happened inside reparse; ignore
+    if (myPatchingLeaves) return;
 
     List<PsiLanguageInjectionHost.Shred> shreds;
     synchronized (myLock) {
@@ -170,5 +172,9 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider {
   @Override
   public String toString() {
     return "Injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (isPhysical() ? "" : " nonphysical");
+  }
+
+  public void setPatchingLeaves(boolean patchingLeaves) {
+    myPatchingLeaves = patchingLeaves;
   }
 }
