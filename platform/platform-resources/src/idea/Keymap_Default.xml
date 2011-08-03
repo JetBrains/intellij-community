@@ -721,9 +721,6 @@
   <action id="SmartTypeCompletion">
     <keyboard-shortcut first-keystroke="control shift SPACE"/>
   </action>
-  <action id="CommanderSwapPanels">
-    <keyboard-shortcut first-keystroke="control U"/>
-  </action>
   <action id="ReplaceInPath">
     <keyboard-shortcut first-keystroke="control shift R"/>
   </action>
@@ -735,9 +732,6 @@
   </action>
   <action id="ActivateProjectToolWindow">
     <keyboard-shortcut first-keystroke="alt 1"/>
-  </action>
-  <action id="ActivateCommanderToolWindow">
-    <keyboard-shortcut first-keystroke="alt 2"/>
   </action>
   <action id="ActivateFindToolWindow">
     <keyboard-shortcut first-keystroke="alt 3"/>
@@ -789,9 +783,6 @@
   </action>
   <action id="Debug">
     <keyboard-shortcut first-keystroke="shift F9"/>
-  </action>
-  <action id="CommanderSyncViews">
-    <keyboard-shortcut first-keystroke="alt F6"/>
   </action>
   <action id="EditorIndentSelection">
     <keyboard-shortcut first-keystroke="TAB"/>

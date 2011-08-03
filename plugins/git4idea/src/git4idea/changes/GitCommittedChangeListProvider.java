@@ -258,7 +258,11 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
         return new Pair<CommittedChangeList, FilePath>(commit, filePath);
       }
     }
-    final List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, null, number.asString() + "..");
+    final String afterTime = "--after=" + GitUtil.gitTime(gitCommit.getDate());
+    final List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, null, afterTime);
+    if (history.isEmpty()) {
+      return new Pair<CommittedChangeList, FilePath>(commit, filePath);
+    }
     return new Pair<CommittedChangeList, FilePath>(commit, ((GitFileRevision) history.get(history.size() - 1)).getPath());
   }
 

@@ -32,13 +32,13 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     // Inspired by IDEA-30369
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
     getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
     doTest();
   }
 
   public void testMultipleMethodAnnotationsCommentedInTheMiddle() throws Exception {
     getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 1;
-    getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
 
     // Inspired by IDEA-53942
     doTextTest(
@@ -71,8 +71,8 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
   public void testMethodCallArgumentsAndSmartTabs() throws IncorrectOperationException {
     // Inspired by IDEADEV-20144.
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    getSettings().getIndentOptions(StdFileTypes.JAVA).SMART_TABS = true;
-    getSettings().getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).SMART_TABS = true;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
     doTextTest("class Foo {\n" +
                "    void foo() {\n" +
                "        bar(new Object[] {\n" +

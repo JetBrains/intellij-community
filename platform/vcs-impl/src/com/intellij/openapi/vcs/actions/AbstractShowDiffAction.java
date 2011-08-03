@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
@@ -38,7 +39,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
   protected static void updateDiffAction(final Presentation presentation, final VcsContext vcsContext,
                                          final VcsBackgroundableActions actionKey) {
-    presentation.setEnabled(isEnabled(vcsContext, actionKey));
+    presentation.setEnabled(isEnabled(vcsContext, actionKey) != null);
     presentation.setVisible(isVisible(vcsContext));
   }
 
@@ -60,30 +61,36 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
     return false;
   }
 
-  protected static boolean isEnabled(final VcsContext vcsContext, final VcsBackgroundableActions actionKey) {
-    if (!(isVisible(vcsContext))) return false;
+  @Nullable
+  protected static AbstractVcs isEnabled(final VcsContext vcsContext, @Nullable final VcsBackgroundableActions actionKey) {
+    if (!(isVisible(vcsContext))) return null;
 
     final Project project = vcsContext.getProject();
-    if (project == null) return false;
+    if (project == null) return null;
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
 
     final VirtualFile[] selectedFilePaths = vcsContext.getSelectedFiles();
-    if (selectedFilePaths == null || selectedFilePaths.length != 1) return false;
+    if (selectedFilePaths == null || selectedFilePaths.length != 1) return null;
 
     final VirtualFile selectedFile = selectedFilePaths[0];
-    if (selectedFile.isDirectory()) return false;
+    if (selectedFile.isDirectory()) return null;
 
-    final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl)vcsManager).getBackgroundableActionHandler(actionKey);
-    if (handler.isInProgress(VcsBackgroundableActions.keyFrom(selectedFile))) return false;
+    if (actionKey != null) {
+      final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl)vcsManager).getBackgroundableActionHandler(actionKey);
+      if (handler.isInProgress(VcsBackgroundableActions.keyFrom(selectedFile))) return null;
+    }
 
     final AbstractVcs vcs = vcsManager.getVcsFor(selectedFile);
-    if (vcs == null) return false;
+    if (vcs == null) return null;
 
     final DiffProvider diffProvider = vcs.getDiffProvider();
 
-    if (diffProvider == null) return false;
+    if (diffProvider == null) return null;
 
-    return AbstractVcs.fileInVcsByFileStatus(project, new FilePathImpl(selectedFile)) ;
+    if (AbstractVcs.fileInVcsByFileStatus(project, new FilePathImpl(selectedFile))) {
+      return vcs;
+    }
+    return null;
   }
 
 

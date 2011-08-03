@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.util.continuation.*;
 import com.intellij.util.ui.UIUtil;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 
 /**
@@ -33,14 +34,17 @@ import git4idea.repo.GitRepositoryManager;
 public abstract class GitUpdateLikeProcess {
   public static final String GIT_UPDATING = "Git: updating";
   public static final String REASON = "Local changes are not available until Git update is finished.";
+  
   private final Project myProject;
-  private GeneralSettings myGeneralSettings;
-  private ProjectManagerEx myProjectManager;
+  private final GeneralSettings myGeneralSettings;
+  private final ProjectManagerEx myProjectManager;
+  private final GitRepositoryManager myRepositoryManager;
 
   public GitUpdateLikeProcess(final Project project) {
     myProject = project;
     myGeneralSettings = GeneralSettings.getInstance();
     myProjectManager = ProjectManagerEx.getInstanceEx();
+    myRepositoryManager = GitRepositoryManager.getInstance(project);
   }
 
   public void execute() {
@@ -71,7 +75,6 @@ public abstract class GitUpdateLikeProcess {
         myProjectManager.unblockReloadingProjectOnExternalChanges();
         myGeneralSettings.setSaveOnFrameDeactivation(saveOnFrameDeactivation);
         myGeneralSettings.setSyncOnFrameActivation(syncOnFrameDeactivation);
-        GitRepositoryManager.getInstance(myProject).refreshAllRepositories();
         changeListManager.letGo();
       }
     };
@@ -87,10 +90,24 @@ public abstract class GitUpdateLikeProcess {
         public void run(final ContinuationContext context) {
           runImpl(context);
         }
-      }, returnFlagsBack};
+      },
+      new TaskDescriptor(GIT_UPDATING, Where.POOLED) {
+        @Override
+        public void run(ContinuationContext context) {
+          updateRepositories();
+        }
+      },
+      returnFlagsBack
+    };
     returnFlagsBack.setHaveMagicCure(true);
     initContext.next(next);
     continuation.run(initContext.getList());
+  }
+
+  private void updateRepositories() {
+    for (GitRepository repo: myRepositoryManager.getRepositories()) {
+      repo.update(GitRepository.TrackedTopic.ALL);
+    }
   }
 
   protected abstract void runImpl(ContinuationContext context);

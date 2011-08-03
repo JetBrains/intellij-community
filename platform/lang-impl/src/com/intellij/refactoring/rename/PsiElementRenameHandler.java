@@ -29,6 +29,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -80,6 +81,16 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (element != null && !canRename(project, editor, element)) {
       return;
     }
+
+    if (nameSuggestionContext != null && !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
+      final String message = "Selected element is used from non-project files. These usages won't be renamed. Proceed anyway?";
+      if (ApplicationManager.getApplication().isUnitTestMode()) throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
+      if (Messages.showYesNoDialog(project, message,
+                                   RefactoringBundle.getCannotRefactorMessage(null), Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
+        return;
+      }
+    }
+
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
 
     rename(element, project, nameSuggestionContext, editor);

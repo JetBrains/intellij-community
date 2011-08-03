@@ -81,6 +81,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   public Icon getIcon() {
     return StdFileTypes.JAVA.getIcon();
   }
+  
 
 
   /*private JPanel createNamingPanel() {
@@ -203,85 +204,97 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     return optionGroup.createPanel();
   }*/
 
-  public void reset() {
-    myCbPreferLongerNames.setSelected(mySettings.PREFER_LONGER_NAMES);
+  public void reset(CodeStyleSettings settings) {
+    myCbPreferLongerNames.setSelected(settings.PREFER_LONGER_NAMES);
 
-    myFieldPrefixField.setText(mySettings.FIELD_NAME_PREFIX);
-    myStaticFieldPrefixField.setText(mySettings.STATIC_FIELD_NAME_PREFIX);
-    myParameterPrefixField.setText(mySettings.PARAMETER_NAME_PREFIX);
-    myLocalVariablePrefixField.setText(mySettings.LOCAL_VARIABLE_NAME_PREFIX);
+    myFieldPrefixField.setText(settings.FIELD_NAME_PREFIX);
+    myStaticFieldPrefixField.setText(settings.STATIC_FIELD_NAME_PREFIX);
+    myParameterPrefixField.setText(settings.PARAMETER_NAME_PREFIX);
+    myLocalVariablePrefixField.setText(settings.LOCAL_VARIABLE_NAME_PREFIX);
 
-    myFieldSuffixField.setText(mySettings.FIELD_NAME_SUFFIX);
-    myStaticFieldSuffixField.setText(mySettings.STATIC_FIELD_NAME_SUFFIX);
-    myParameterSuffixField.setText(mySettings.PARAMETER_NAME_SUFFIX);
-    myLocalVariableSuffixField.setText(mySettings.LOCAL_VARIABLE_NAME_SUFFIX);
+    myFieldSuffixField.setText(settings.FIELD_NAME_SUFFIX);
+    myStaticFieldSuffixField.setText(settings.STATIC_FIELD_NAME_SUFFIX);
+    myParameterSuffixField.setText(settings.PARAMETER_NAME_SUFFIX);
+    myLocalVariableSuffixField.setText(settings.LOCAL_VARIABLE_NAME_SUFFIX);
 
-    myCbLineCommentAtFirstColumn.setSelected(mySettings.LINE_COMMENT_AT_FIRST_COLUMN);
-    myCbBlockCommentAtFirstColumn.setSelected(mySettings.BLOCK_COMMENT_AT_FIRST_COLUMN);
+    myCbLineCommentAtFirstColumn.setSelected(settings.LINE_COMMENT_AT_FIRST_COLUMN);
+    myCbBlockCommentAtFirstColumn.setSelected(settings.BLOCK_COMMENT_AT_FIRST_COLUMN);
 
-    myCbGenerateFinalLocals.setSelected(mySettings.GENERATE_FINAL_LOCALS);
-    myCbGenerateFinalParameters.setSelected(mySettings.GENERATE_FINAL_PARAMETERS);
+    myCbGenerateFinalLocals.setSelected(settings.GENERATE_FINAL_LOCALS);
+    myCbGenerateFinalParameters.setSelected(settings.GENERATE_FINAL_PARAMETERS);
     myMembersOrderList.reset(mySettings);
 
-    myCbUseExternalAnnotations.setSelected(mySettings.USE_EXTERNAL_ANNOTATIONS);
-    myInsertOverrideAnnotationCheckBox.setSelected(mySettings.INSERT_OVERRIDE_ANNOTATION);
+    myCbUseExternalAnnotations.setSelected(settings.USE_EXTERNAL_ANNOTATIONS);
+    myInsertOverrideAnnotationCheckBox.setSelected(settings.INSERT_OVERRIDE_ANNOTATION);
   }
 
-  public void apply() {
-    mySettings.PREFER_LONGER_NAMES = myCbPreferLongerNames.isSelected();
+  public void reset() {
+    reset(mySettings);
+  }
 
-    mySettings.FIELD_NAME_PREFIX = myFieldPrefixField.getText().trim();
-    mySettings.STATIC_FIELD_NAME_PREFIX = myStaticFieldPrefixField.getText().trim();
-    mySettings.PARAMETER_NAME_PREFIX = myParameterPrefixField.getText().trim();
-    mySettings.LOCAL_VARIABLE_NAME_PREFIX = myLocalVariablePrefixField.getText().trim();
+  public void apply(CodeStyleSettings settings) {
+    settings.PREFER_LONGER_NAMES = myCbPreferLongerNames.isSelected();
 
-    mySettings.FIELD_NAME_SUFFIX = myFieldSuffixField.getText().trim();
-    mySettings.STATIC_FIELD_NAME_SUFFIX = myStaticFieldSuffixField.getText().trim();
-    mySettings.PARAMETER_NAME_SUFFIX = myParameterSuffixField.getText().trim();
-    mySettings.LOCAL_VARIABLE_NAME_SUFFIX = myLocalVariableSuffixField.getText().trim();
+    settings.FIELD_NAME_PREFIX = myFieldPrefixField.getText().trim();
+    settings.STATIC_FIELD_NAME_PREFIX = myStaticFieldPrefixField.getText().trim();
+    settings.PARAMETER_NAME_PREFIX = myParameterPrefixField.getText().trim();
+    settings.LOCAL_VARIABLE_NAME_PREFIX = myLocalVariablePrefixField.getText().trim();
 
-    mySettings.LINE_COMMENT_AT_FIRST_COLUMN = myCbLineCommentAtFirstColumn.isSelected();
-    mySettings.BLOCK_COMMENT_AT_FIRST_COLUMN = myCbBlockCommentAtFirstColumn.isSelected();
+    settings.FIELD_NAME_SUFFIX = myFieldSuffixField.getText().trim();
+    settings.STATIC_FIELD_NAME_SUFFIX = myStaticFieldSuffixField.getText().trim();
+    settings.PARAMETER_NAME_SUFFIX = myParameterSuffixField.getText().trim();
+    settings.LOCAL_VARIABLE_NAME_SUFFIX = myLocalVariableSuffixField.getText().trim();
 
-    mySettings.GENERATE_FINAL_LOCALS = myCbGenerateFinalLocals.isSelected();
-    mySettings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
+    settings.LINE_COMMENT_AT_FIRST_COLUMN = myCbLineCommentAtFirstColumn.isSelected();
+    settings.BLOCK_COMMENT_AT_FIRST_COLUMN = myCbBlockCommentAtFirstColumn.isSelected();
 
-    mySettings.USE_EXTERNAL_ANNOTATIONS = myCbUseExternalAnnotations.isSelected();
-    mySettings.INSERT_OVERRIDE_ANNOTATION = myInsertOverrideAnnotationCheckBox.isSelected();
+    settings.GENERATE_FINAL_LOCALS = myCbGenerateFinalLocals.isSelected();
+    settings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
 
-    myMembersOrderList.apply(mySettings);
+    settings.USE_EXTERNAL_ANNOTATIONS = myCbUseExternalAnnotations.isSelected();
+    settings.INSERT_OVERRIDE_ANNOTATION = myInsertOverrideAnnotationCheckBox.isSelected();
+
+    myMembersOrderList.apply(settings);
 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }
   }
 
-  public boolean isModified() {
-    boolean isModified = isModified(myCbPreferLongerNames, mySettings.PREFER_LONGER_NAMES);
+  public void apply() {
+    apply(mySettings);
+  }
 
-    isModified |= isModified(myFieldPrefixField, mySettings.FIELD_NAME_PREFIX);
-    isModified |= isModified(myStaticFieldPrefixField, mySettings.STATIC_FIELD_NAME_PREFIX);
-    isModified |= isModified(myParameterPrefixField, mySettings.PARAMETER_NAME_PREFIX);
-    isModified |= isModified(myLocalVariablePrefixField, mySettings.LOCAL_VARIABLE_NAME_PREFIX);
+  public boolean isModified(CodeStyleSettings settings) {
+    boolean isModified = isModified(myCbPreferLongerNames, settings.PREFER_LONGER_NAMES);
 
-    isModified |= isModified(myFieldSuffixField, mySettings.FIELD_NAME_SUFFIX);
-    isModified |= isModified(myStaticFieldSuffixField, mySettings.STATIC_FIELD_NAME_SUFFIX);
-    isModified |= isModified(myParameterSuffixField, mySettings.PARAMETER_NAME_SUFFIX);
-    isModified |= isModified(myLocalVariableSuffixField, mySettings.LOCAL_VARIABLE_NAME_SUFFIX);
+    isModified |= isModified(myFieldPrefixField, settings.FIELD_NAME_PREFIX);
+    isModified |= isModified(myStaticFieldPrefixField, settings.STATIC_FIELD_NAME_PREFIX);
+    isModified |= isModified(myParameterPrefixField, settings.PARAMETER_NAME_PREFIX);
+    isModified |= isModified(myLocalVariablePrefixField, settings.LOCAL_VARIABLE_NAME_PREFIX);
 
-    isModified |= isModified(myCbLineCommentAtFirstColumn, mySettings.LINE_COMMENT_AT_FIRST_COLUMN);
-    isModified |= isModified(myCbBlockCommentAtFirstColumn, mySettings.BLOCK_COMMENT_AT_FIRST_COLUMN);
+    isModified |= isModified(myFieldSuffixField, settings.FIELD_NAME_SUFFIX);
+    isModified |= isModified(myStaticFieldSuffixField, settings.STATIC_FIELD_NAME_SUFFIX);
+    isModified |= isModified(myParameterSuffixField, settings.PARAMETER_NAME_SUFFIX);
+    isModified |= isModified(myLocalVariableSuffixField, settings.LOCAL_VARIABLE_NAME_SUFFIX);
+
+    isModified |= isModified(myCbLineCommentAtFirstColumn, settings.LINE_COMMENT_AT_FIRST_COLUMN);
+    isModified |= isModified(myCbBlockCommentAtFirstColumn, settings.BLOCK_COMMENT_AT_FIRST_COLUMN);
 
 
-    isModified |= isModified(myCbGenerateFinalLocals, mySettings.GENERATE_FINAL_LOCALS);
-    isModified |= isModified(myCbGenerateFinalParameters, mySettings.GENERATE_FINAL_PARAMETERS);
+    isModified |= isModified(myCbGenerateFinalLocals, settings.GENERATE_FINAL_LOCALS);
+    isModified |= isModified(myCbGenerateFinalParameters, settings.GENERATE_FINAL_PARAMETERS);
 
-    isModified |= isModified(myCbUseExternalAnnotations, mySettings.USE_EXTERNAL_ANNOTATIONS);
-    isModified |= isModified(myInsertOverrideAnnotationCheckBox, mySettings.INSERT_OVERRIDE_ANNOTATION);
+    isModified |= isModified(myCbUseExternalAnnotations, settings.USE_EXTERNAL_ANNOTATIONS);
+    isModified |= isModified(myInsertOverrideAnnotationCheckBox, settings.INSERT_OVERRIDE_ANNOTATION);
 
-    isModified |= myMembersOrderList.isModified(mySettings);
+    isModified |= myMembersOrderList.isModified(settings);
 
     return isModified;
+  }
+
+  public boolean isModified() {
+    return isModified(mySettings);
   }
 
   private static boolean isModified(JCheckBox checkBox, boolean value) {

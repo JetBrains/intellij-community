@@ -31,7 +31,7 @@ public abstract class WindowAction extends AnAction implements DumbAware {
   public static final String NO_WINDOW_ACTIONS = "no.window.actions";
 
   protected Window myWindow;
-  private static final JLabel mySizeHelper = new JLabel("W");
+  private static JLabel mySizeHelper = null;
 
   {
     setEnabledInModalContext(true);
@@ -77,9 +77,14 @@ public abstract class WindowAction extends AnAction implements DumbAware {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      if (mySizeHelper == null) {
+        mySizeHelper = new JLabel("W"); // Must be sure to invoke label constructor from EDT thread or it may lead to a deadlock
+      }
+
       int baseValue = myHorizontal ? mySizeHelper.getPreferredSize().width : mySizeHelper.getPreferredSize().height;
 
-      int inc = baseValue * (myHorizontal ? Registry.intValue("ide.windowSystem.hScrollChars") : Registry.intValue("ide.windowSystem.vScrollChars"));
+      int inc = baseValue *
+                (myHorizontal ? Registry.intValue("ide.windowSystem.hScrollChars") : Registry.intValue("ide.windowSystem.vScrollChars"));
       if (!myPositive) {
         inc = -inc;
       }
@@ -87,7 +92,8 @@ public abstract class WindowAction extends AnAction implements DumbAware {
       Rectangle bounds = myWindow.getBounds();
       if (myHorizontal) {
         bounds.width += inc;
-      } else {
+      }
+      else {
         bounds.height += inc;
       }
 

@@ -23,6 +23,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import git4idea.GitBranch;
+import git4idea.branch.GitBranchesCollection;
 import git4idea.status.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * </p>
  * <p>
  *   The GitRepository is updated "externally" by the {@link git4idea.repo.GitRepositoryUpdater}, when correspondent .git service files
- *   change. To force the update procedure call {@link #refresh()}.
+ *   change. To force asynchronous update, it is enough to call {@link VirtualFile#refresh(boolean, boolean) refresh} on the root directory.
+ * </p>
+ * <p>
+ *   To make a synchronous update of the repository call {@link #update(TrackedTopic...)} and specify
+ *   which topics should be updated. Updating requires reading from disk, so updating {@link GitRepository.TrackedTopic.ALL} may take some time.
  * </p>
  * <p>
  *   Other components may subscribe to GitRepository changes via the {@link #GIT_REPO_CHANGE} {@link Topic}
@@ -60,11 +65,13 @@ public final class GitRepository implements Disposable {
 
   private volatile State myState;
   private volatile String myCurrentRevision;
-
   private volatile GitBranch myCurrentBranch;
+  private volatile GitBranchesCollection myBranches = GitBranchesCollection.EMPTY;
+
   private final ReadWriteLock STATE_LOCK = new ReentrantReadWriteLock();
   private final ReadWriteLock CUR_REV_LOCK = new ReentrantReadWriteLock();
   private final ReadWriteLock CUR_BRANCH_LOCK = new ReentrantReadWriteLock();
+  private final ReadWriteLock BRANCHES_LOCK = new ReentrantReadWriteLock();
 
   /**
    * Current state of the repository.
@@ -108,6 +115,11 @@ public final class GitRepository implements Disposable {
         repository.updateCurrentBranch();
       }
     },
+    BRANCHES {
+      @Override void update(GitRepository repository) {
+        repository.updateBranchList();        
+      }
+    },
     ALL_CURRENT {
       @Override void update(GitRepository repository) {
         STATE.update(repository);
@@ -118,6 +130,7 @@ public final class GitRepository implements Disposable {
     ALL {
       @Override void update(GitRepository repository) {
         ALL_CURRENT.update(repository);
+        BRANCHES.update(repository);
       }
     };
 
@@ -137,8 +150,9 @@ public final class GitRepository implements Disposable {
     myGitDir = myRootDir.findChild(".git");
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
     
-    myUntrackedFilesHolder = GitUntrackedFilesHolder.init(rootDir, project);
+    myUntrackedFilesHolder = new GitUntrackedFilesHolder(rootDir, project);
     Disposer.register(this, myUntrackedFilesHolder);
+    myUntrackedFilesHolder.asyncRescan();
 
     myMessageBus = project.getMessageBus();
     update(TrackedTopic.ALL);
@@ -215,19 +229,22 @@ public final class GitRepository implements Disposable {
   public boolean isOnBranch() {
     return getState() != State.DETACHED && getState() != State.REBASING;
   }
+  
+  @NotNull
+  public GitBranchesCollection getBranches() {
+    try {
+      BRANCHES_LOCK.readLock().lock();
+      return myBranches;
+    }
+    finally {
+      BRANCHES_LOCK.readLock().unlock();
+    }
+  }
 
   public void addListener(GitRepositoryChangeListener listener) {
     MessageBusConnection connection = myMessageBus.connect();
     Disposer.register(this, connection);
     connection.subscribe(GIT_REPO_CHANGE, listener);
-  }
-
-  /**
-   * Refreshes the .git directory asynchronously.
-   * Call this method after performing write operations on the Git repository: such as commit, fetch, reset, etc.
-   */
-  public void refresh() {
-    myGitDir.refresh(true, true);
   }
 
   /**
@@ -281,6 +298,18 @@ public final class GitRepository implements Disposable {
       CUR_BRANCH_LOCK.writeLock().unlock();
     }
 
+    notifyListeners();
+  }
+  
+  private void updateBranchList() {
+    GitBranchesCollection branches = myReader.readBranches();
+    try {
+      BRANCHES_LOCK.writeLock().lock();
+      myBranches = branches;
+    }
+    finally {
+      BRANCHES_LOCK.writeLock().unlock();
+    }
     notifyListeners();
   }
 

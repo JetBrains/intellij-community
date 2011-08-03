@@ -2107,7 +2107,18 @@ public class HighlightUtil {
     if (highlightInfo != null) return highlightInfo;
 
     PsiElement refParent = ref.getParent();
-    if (refParent instanceof PsiMethodCallExpression) {
+    PsiElement granny;
+    if (refParent instanceof PsiReferenceExpression && (granny = refParent.getParent()) instanceof PsiMethodCallExpression) {
+      PsiReferenceExpression referenceToMethod = ((PsiMethodCallExpression)granny).getMethodExpression();
+      PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
+      if (qualifierExpression == ref) {
+        PsiElement qualifier = resolved;
+        if (qualifier != null && !(qualifier instanceof PsiClass) && !(qualifier instanceof PsiVariable)) {
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, qualifierExpression, "Qualifier must be an expression");
+        }
+      }
+    }
+    else if (refParent instanceof PsiMethodCallExpression) {
       return null;  // methods checked elsewhere
     }
     if (resolved == null) {

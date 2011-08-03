@@ -75,14 +75,6 @@
           </component>
         </children>
       </scrollpane>
-      <component id="d94f6" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/RefactoringBundle" key="refactoring.extract.method.dialog.signature.preview"/>
-        </properties>
-      </component>
       <scrollpane id="ca3f5" class="com.intellij.ui.components.JBScrollPane">
         <constraints>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="1" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -98,13 +90,27 @@
           </component>
         </children>
       </scrollpane>
-      <component id="4bbe1" class="javax.swing.JLabel">
+      <component id="83be3" class="com.intellij.ui.TitledSeparator">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/RefactoringBundle" key="refactoring.extract.method.dialog.signature.preview"/>
+        </properties>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value=""/>
+        </clientProperties>
+      </component>
+      <component id="fada5" class="com.intellij.ui.TitledSeparator">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/RefactoringBundle" key="refactoring.extract.method.dialog.output.variables"/>
         </properties>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value=""/>
+        </clientProperties>
       </component>
     </children>
   </grid>

@@ -65,10 +65,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.SortedComboBoxModel;
-import com.intellij.ui.TitledBorderWithMnemonic;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
@@ -122,6 +119,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private Tree myBlockTree;
   private JPanel myBlockStructurePanel;
   private JSplitPane myBlockRefSplitPane;
+  private TitledSeparatorWithMnemonic myTextSeparator;
+  private TitledSeparatorWithMnemonic myPsiTreeSeparator;
+  private TitledSeparatorWithMnemonic myRefsSeparator;
+  private TitledSeparatorWithMnemonic myBlockTreeSeparator;
   @Nullable
   private BlockTreeBuilder myBlockTreeBuilder;
   private RangeHighlighter myHighlighter;
@@ -240,7 +241,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   protected void init() {
-    initBorders();
+    initMnemonics();
 
     initTree(myPsiTree);
     final TreeCellRenderer renderer = myPsiTree.getCellRenderer();
@@ -544,11 +545,11 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     IdeFocusManager.getInstance(myProject).requestFocus(myBlockTree, true);
   }
 
-  private void initBorders() {
-    myTextPanel.setBorder(new TitledBorderWithMnemonic("&Text"));
-    myStructureTreePanel.setBorder(new TitledBorderWithMnemonic("PSI &Structure"));
-    myReferencesPanel.setBorder(new TitledBorderWithMnemonic("&References"));
-    myBlockStructurePanel.setBorder(new TitledBorderWithMnemonic("Bloc&k Structure"));
+  private void initMnemonics() {
+    myTextSeparator.setLabelFor(myEditor.getContentComponent());
+    myPsiTreeSeparator.setLabelFor(myPsiTree);
+    myRefsSeparator.setLabelFor(myRefs);
+    myBlockTreeSeparator.setLabelFor(myBlockTree);
   }
 
   private void updateIntersectHighlighter(int highlightStart, int highlightEnd) {

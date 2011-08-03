@@ -222,9 +222,6 @@ public interface IdeActions {
   @NonNls String ACTION_GOTO_TYPE_DECLARATION = "GotoTypeDeclaration";
   @NonNls String ACTION_GOTO_IMPLEMENTATION = "GotoImplementation";
 
-  @NonNls String ACTION_COMMANDER_SYNC_VIEWS = "CommanderSyncViews";
-  @NonNls String ACTION_COMMANDER_SWAP_PANELS = "CommanderSwapPanels";
-
   @NonNls String MODULE_SETTINGS = "ModuleSettings";
 
   @NonNls String GROUP_WELCOME_SCREEN_QUICKSTART = "WelcomeScreen.QuickStart";

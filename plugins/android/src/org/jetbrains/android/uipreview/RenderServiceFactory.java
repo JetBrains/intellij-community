@@ -64,31 +64,6 @@ public class RenderServiceFactory {
     return null;
   }
 
-  public static FolderConfiguration createConfig(int size1,
-                                                 int size2,
-                                                 ScreenSize screenSize,
-                                                 ScreenRatio screenRatio,
-                                                 ScreenOrientation orientation,
-                                                 Density density,
-                                                 TouchScreen touchScreen,
-                                                 KeyboardState keyboardState,
-                                                 Keyboard keyboard,
-                                                 NavigationState navigationState,
-                                                 Navigation navigation) {
-    final FolderConfiguration config = new FolderConfiguration();
-    config.addQualifier(new ScreenSizeQualifier(screenSize));
-    config.addQualifier(new ScreenRatioQualifier(screenRatio));
-    config.addQualifier(new ScreenOrientationQualifier(orientation));
-    config.addQualifier(new PixelDensityQualifier(density));
-    config.addQualifier(new TouchScreenQualifier(touchScreen));
-    config.addQualifier(new KeyboardStateQualifier(keyboardState));
-    config.addQualifier(new TextInputMethodQualifier(keyboard));
-    config.addQualifier(new NavigationStateQualifier(navigationState));
-    config.addQualifier(new NavigationMethodQualifier(navigation));
-    config.addQualifier(new ScreenDimensionQualifier(size1, size2));
-    return config;
-  }
-
   public ResourceResolver createResourceResolver(FolderConfiguration config,
                                                  ResourceRepository projectResources,
                                                  String themeName,
@@ -100,9 +75,11 @@ public class RenderServiceFactory {
 
   public RenderService createService(ResourceResolver resources,
                                      FolderConfiguration config,
+                                     float xdpi,
+                                     float ydpi,
                                      IProjectCallback projectCallback,
                                      int minSdkVersion) {
-    return new RenderService(myLibrary, resources, config, projectCallback, minSdkVersion);
+    return new RenderService(myLibrary, resources, config, xdpi, ydpi, projectCallback, minSdkVersion);
   }
 
   private RenderServiceFactory(@NotNull Map<String, Map<String, Integer>> enumMap) {

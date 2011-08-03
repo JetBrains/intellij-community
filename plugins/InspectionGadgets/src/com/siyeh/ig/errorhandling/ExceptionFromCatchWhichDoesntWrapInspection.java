@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,75 +67,56 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
 
         @Override public void visitThrowStatement(PsiThrowStatement statement) {
             super.visitThrowStatement(statement);
-            if (!isInCatchBlock(statement)) {
-                return;
-            }
-            final PsiExpression exception = statement.getException();
-            if (!(exception instanceof PsiNewExpression)) {
-                return;
-            }
-            final PsiNewExpression newExpression = (PsiNewExpression)exception;
-            final PsiMethod constructor = newExpression.resolveConstructor();
-            if (constructor == null) {
-                return;
-            }
-            final PsiExpressionList argumentList =
-                    newExpression.getArgumentList();
-            if (argumentList == null) {
-                return;
-            }
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (argumentsContainsCatchParameter(arguments)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-
-        private boolean argumentsContainsCatchParameter(
-                PsiExpression[] arguments) {
-            final ReferenceFinder visitor = new ReferenceFinder();
-            for (PsiExpression argument : arguments) {
-                argument.accept(visitor);
-                if (visitor.doArgumentsContainCatchParameter()) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public boolean isInCatchBlock(@NotNull PsiElement element){
             final PsiCatchSection catchSection =
-                    PsiTreeUtil.getParentOfType(element, PsiCatchSection.class,
+                    PsiTreeUtil.getParentOfType(statement, PsiCatchSection.class,
                             true, PsiClass.class);
             if (catchSection == null) {
-                return false;
+                return;
             }
             final PsiParameter parameter = catchSection.getParameter();
             if (parameter == null) {
-                return false;
+                return;
             }
             @NonNls final String parameterName = parameter.getName();
-            return !("ignore".equals(parameterName) ||
-                    "ignored".equals(parameterName));
+            if ("ignore".equals(parameterName) ||
+                    "ignored".equals(parameterName)) {
+                return;
+            }
+            final PsiExpression exception = statement.getException();
+            if (exception == null) {
+                return;
+            }
+            final ReferenceFinder visitor = new ReferenceFinder(parameter);
+            exception.accept(visitor);
+            if (visitor.usesParameter()) {
+                return;
+            }
+            registerStatementError(statement);
         }
     }
 
     private class ReferenceFinder extends JavaRecursiveElementVisitor {
 
         private boolean argumentsContainCatchParameter = false;
+        private final PsiParameter parameter;
+
+        public ReferenceFinder(PsiParameter parameter) {
+            this.parameter = parameter;
+        }
 
         @Override
         public void visitReferenceExpression(
                 PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
-            final PsiElement referent = expression.resolve();
-            if (!(referent instanceof PsiParameter)) {
-                return;
-            }
-            final PsiParameter parameter = (PsiParameter)referent;
-            final PsiElement declarationScope =
-                    parameter.getDeclarationScope();
-            if (!(declarationScope instanceof PsiCatchSection)) {
+            final PsiElement target = expression.resolve();
+            if (!parameter.equals(target)) {
+                if (target instanceof PsiVariable) {
+                    final PsiVariable variable = (PsiVariable) target;
+                    final PsiExpression initializer = variable.getInitializer();
+                    if (initializer != null) {
+                        initializer.accept(this);
+                    }
+                }
                 return;
             }
             if (ignoreGetMessage) {
@@ -149,7 +130,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
             }
         }
 
-        public boolean doArgumentsContainCatchParameter() {
+        public boolean usesParameter() {
             return argumentsContainCatchParameter;
         }
     }

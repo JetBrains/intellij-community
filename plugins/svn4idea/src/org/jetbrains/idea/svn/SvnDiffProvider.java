@@ -19,21 +19,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.diff.DiffMixin;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
+import com.intellij.openapi.vcs.history.VcsRevisionDescription;
+import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
 
-public class SvnDiffProvider implements DiffProvider {
+public class SvnDiffProvider implements DiffProvider, DiffMixin {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnDiffProvider");
+  public static final String COMMIT_MESSAGE = "svn:log";
   private final SvnVcs myVcs;
 
   public SvnDiffProvider(final SvnVcs vcs) {
@@ -44,7 +46,7 @@ public class SvnDiffProvider implements DiffProvider {
     final SVNStatusClient client = myVcs.createStatusClient();
     try {
       final SVNStatus svnStatus = client.doStatus(new File(file.getPresentableUrl()), false, false);
-      if (svnStatus.getRevision().equals(SVNRevision.UNDEFINED) && svnStatus.isCopied()) {
+      if (svnStatus.getCommittedRevision().equals(SVNRevision.UNDEFINED) && svnStatus.isCopied()) {
         return new SvnRevisionNumber(svnStatus.getCopyFromRevision());
       }
       return new SvnRevisionNumber(svnStatus.getRevision());
@@ -53,6 +55,62 @@ public class SvnDiffProvider implements DiffProvider {
       LOG.debug(e);    // most likely the file is unversioned
       return null;
     }
+  }
+
+  @Override
+  public VcsRevisionDescription getCurrentRevisionDescription(VirtualFile file) {
+    File path = new File(file.getPresentableUrl());
+    return getCurrentRevisionDescription(path);
+  }
+
+  private VcsRevisionDescription getCurrentRevisionDescription(File path) {
+    final SVNWCClient client = myVcs.createWCClient();
+    try {
+      final SVNInfo svnInfo = client.doInfo(path, SVNRevision.COMMITTED);
+      
+      if (svnInfo.getCommittedRevision().equals(SVNRevision.UNDEFINED) && ! svnInfo.getCopyFromRevision().equals(SVNRevision.UNDEFINED) &&
+        svnInfo.getCopyFromURL() != null) {
+        SVNURL copyUrl = svnInfo.getCopyFromURL();
+        String localPath = myVcs.getSvnFileUrlMapping().getLocalPath(copyUrl.toString());
+        if (localPath != null) {
+          return getCurrentRevisionDescription(new File(localPath));
+        }
+      }
+      final String message = getProperties(client, path);
+      return new VcsRevisionDescriptionImpl(new SvnRevisionNumber(svnInfo.getCommittedRevision()), svnInfo.getCommittedDate(),
+                                            svnInfo.getAuthor(), message);
+    }
+    catch (SVNException e) {
+      LOG.debug(e);    // most likely the file is unversioned
+      return null;
+    }
+  }
+
+  private String getProperties(SVNWCClient client, File path) throws SVNException {
+    final String[] message = new String[1];
+    client.doGetRevisionProperty(path, null, SVNRevision.COMMITTED, new ISVNPropertyHandler() {
+      @Override
+      public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+        handle(property);
+      }
+
+      @Override
+      public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+        handle(property);
+      }
+
+      @Override
+      public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+        handle(property);
+      }
+
+      private void handle(SVNPropertyData data) {
+        if (COMMIT_MESSAGE.equals(data.getName())) {
+          message[0] = data.getValue().getString();
+        }
+      }
+    });
+    return message[0];
   }
 
   private static ItemLatestState defaultResult() {

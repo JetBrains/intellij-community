@@ -184,6 +184,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     myLexer.start(myText);
     int i = 0;
+    int offset = 0;
     while (true) {
       ProgressManager.checkCanceled();
       IElementType type = myLexer.getTokenType();
@@ -192,7 +193,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (i >= myLexTypes.length - 1) {
         resizeLexemes(i * 3 / 2);
       }
-      myLexStarts[i] = myLexer.getTokenStart();
+      int tokenStart = myLexer.getTokenStart();
+      if (tokenStart < offset) {
+        LOG.error("Token sequence broken: '" + myLexer.getTokenText() + "'");
+      }
+      myLexStarts[i] = offset = tokenStart;
       myLexTypes[i] = type;
       i++;
       myLexer.advance();
@@ -1456,6 +1461,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       catch(NoSuchFieldException e) {
         // IBM J9 does not have the field
         f = null;
+
       }
       ourElementDataField = f;
     }

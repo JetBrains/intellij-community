@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 Bas Leijdekkers
+ * Copyright 2006-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,10 @@ public class StaticMethodOnlyUsedInOneClassInspection
         private final SmartPsiElementPointer<PsiClass> usageClass;
 
         public StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass) {
-            this.usageClass = SmartPointerManager.getInstance(usageClass.getProject()).createSmartPsiElementPointer(usageClass);
+            final SmartPointerManager pointerManager =
+                    SmartPointerManager.getInstance(usageClass.getProject());
+            this.usageClass =
+                    pointerManager.createSmartPsiElementPointer(usageClass);
         }
 
         @NotNull
@@ -101,27 +104,32 @@ public class StaticMethodOnlyUsedInOneClassInspection
             final PsiElement location = descriptor.getPsiElement();
             final PsiMethod method = (PsiMethod)location.getParent();
             final Application application = ApplicationManager.getApplication();
-            application.invokeLater(new Runnable() {
-                public void run() {
-                    final RefactoringActionHandlerFactory factory =
-                            RefactoringActionHandlerFactory.getInstance();
-                    final RefactoringActionHandler moveHandler =
-                            factory.createMoveHandler();
-                    final DataManager dataManager = DataManager.getInstance();
-                    final DataContext dataContext =
-                            new DataContext() {
-
-                                public Object getData(@NonNls String name) {
-                                    if (LangDataKeys.TARGET_PSI_ELEMENT.is(name)) {
-                                        return usageClass.getElement();
-                                    }
-                                    return dataManager.getDataContext().getData(name);
-                                }
-                            };
+            final RefactoringActionHandlerFactory factory =
+                    RefactoringActionHandlerFactory.getInstance();
+            final RefactoringActionHandler moveHandler =
+                    factory.createMoveHandler();
+            final DataManager dataManager = DataManager.getInstance();
+            final DataContext originalContext = dataManager.getDataContext();
+            final DataContext dataContext =
+                    new DataContext() {
+                        @Override public Object getData(@NonNls String name) {
+                            if (LangDataKeys.TARGET_PSI_ELEMENT.is(name)) {
+                                return usageClass.getElement();
+                            }
+                            return originalContext.getData(name);
+                        }
+                    };
+            final Runnable runnable = new Runnable() {
+                @Override public void run() {
                     moveHandler.invoke(project,
                             new PsiElement[]{method}, dataContext);
                 }
-            });
+            };
+            if (application.isUnitTestMode()) {
+                runnable.run();
+            } else {
+                application.invokeLater(runnable, project.getDisposed());
+            }
         }
     }
 
@@ -177,6 +185,7 @@ public class StaticMethodOnlyUsedInOneClassInspection
         private final AtomicReference<PsiClass> foundClass =
                 new AtomicReference<PsiClass>();
 
+        @Override
         public boolean process(PsiReference reference) {
             ProgressManager.checkCanceled();
             final PsiElement element = reference.getElement();
@@ -205,10 +214,13 @@ public class StaticMethodOnlyUsedInOneClassInspection
             final String name = method.getName();
             final GlobalSearchScope scope =
                     GlobalSearchScope.allScope(method.getProject());
-            if (searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator())
-                == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return null;
+            if (searchHelper.isCheapEnoughToSearch(name, scope, null,
+                    progressManager.getProgressIndicator())
+                    == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
+                return null;
+            }
             progressManager.runProcess(new Runnable() {
-                public void run() {
+                @Override public void run() {
                     final Query<PsiReference> query =
                             MethodReferencesSearch.search(method);
                     if (!query.forEach(UsageProcessor.this)) {

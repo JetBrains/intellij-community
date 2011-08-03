@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,11 +93,10 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
   public synchronized Point getLocation(@NotNull String key, Project project) {
     key = realKey(key, project);
 
-    Point point=myKey2Location.get(key);
-    if(point!=null){
-      WindowManager windowManager=WindowManager.getInstance();
-      if(!windowManager.isInsideScreenBounds(point.x,point.y)){
-        point=null;
+    Point point = myKey2Location.get(key);
+    if (point != null) {
+      if (!ScreenUtil.getScreenBounds().contains(point)){
+        point = null;
       }
     }
     if(point!=null){

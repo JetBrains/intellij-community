@@ -135,7 +135,7 @@ public class HighlightInfo implements Segment {
   }
 
   @NotNull
-  private EditorColorsScheme getColorsScheme(@Nullable final EditorColorsScheme customScheme) {
+  private static EditorColorsScheme getColorsScheme(@Nullable final EditorColorsScheme customScheme) {
     if (customScheme != null) {
       return customScheme;
     }
@@ -222,6 +222,7 @@ public class HighlightInfo implements Segment {
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
   private boolean hasHint;
+  public boolean fromInjection;
 
   private GutterIconRenderer gutterIconRenderer;
 

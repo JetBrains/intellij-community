@@ -17,18 +17,22 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author lesya
  */
 public class PostFormatProcessorHelper {
-  public final CodeStyleSettings mySettings;
+  private final CommonCodeStyleSettings mySettings;
   private TextRange myResultTextRange;
 
-  public PostFormatProcessorHelper(final CodeStyleSettings settings) {
+  public PostFormatProcessorHelper(final CommonCodeStyleSettings settings) {
     mySettings = settings;
+  }
+
+  public CommonCodeStyleSettings getSettings() {
+    return mySettings;
   }
 
   public void updateResultRange(final int oldTextLength, final int newTextLength) {

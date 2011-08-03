@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
@@ -52,7 +53,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private PsiElement myParent;
   private int myRole1;
   private int myRole2;
-  private CodeStyleSettings mySettings;
+  private CommonCodeStyleSettings mySettings;
 
   private Spacing myResult;
   private ASTNode myChild1;
@@ -65,7 +66,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private static final ThreadLocal<JavaSpacePropertyProcessor> mySharedProcessorAllocator = new ThreadLocal<JavaSpacePropertyProcessor>();
 
-  private void doInit(final ASTNode child, final CodeStyleSettings settings) {
+  private void doInit(final ASTNode child, final CommonCodeStyleSettings settings) {
     init(child);
     mySettings = settings;
 
@@ -511,7 +512,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override public void visitImportList(PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild1.getElementType()) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild2.getElementType())) {
-      if (myImportHelper == null) myImportHelper = new ImportHelper(mySettings);
+      if (myImportHelper == null) myImportHelper = new ImportHelper(mySettings.getRootSettings());
       int emptyLines = myImportHelper.getEmptyLinesBetween(
         SourceTreeToPsiMap.<PsiImportStatementBase>treeToPsiNotNull(myChild1),
         SourceTreeToPsiMap.<PsiImportStatementBase>treeToPsiNotNull(myChild2)
@@ -1539,7 +1540,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @SuppressWarnings({"ConstantConditions"})
-  public static Spacing getSpacing(ASTNode node, CodeStyleSettings settings) {
+  public static Spacing getSpacing(ASTNode node, CommonCodeStyleSettings settings) {
     JavaSpacePropertyProcessor spacePropertyProcessor = mySharedProcessorAllocator.get();
     try {
       if (spacePropertyProcessor == null) {

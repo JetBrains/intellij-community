@@ -14,7 +14,6 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 class LayoutDevice {
-
   private final String myName;
   private final List<LayoutDeviceConfiguration> myConfigurations = new ArrayList<LayoutDeviceConfiguration>();
 
@@ -22,8 +21,11 @@ class LayoutDevice {
   private float mXDpi = Float.NaN;
   private float mYDpi = Float.NaN;
 
-  LayoutDevice(@NotNull String name) {
+  private final Type myType;
+
+  LayoutDevice(@NotNull String name, @NotNull Type type) {
     myName = name;
+    myType = type;
   }
 
   void saveTo(Document doc, Element parentNode) {
@@ -136,10 +138,12 @@ class LayoutDevice {
     }
   }
 
-  public void addConfig(@NotNull String name, @NotNull FolderConfiguration config) {
+  @NotNull
+  public LayoutDeviceConfiguration addConfig(@NotNull String name, @NotNull FolderConfiguration config) {
     synchronized (myConfigurations) {
-      doAddConfig(name, config);
+      final LayoutDeviceConfiguration newConfig = doAddConfig(name, config);
       seal();
+      return newConfig;
     }
   }
 
@@ -170,14 +174,17 @@ class LayoutDevice {
     }
   }
 
-  private void doAddConfig(@NotNull String name, @NotNull FolderConfiguration config) {
+  @NotNull
+  private LayoutDeviceConfiguration doAddConfig(@NotNull String name, @NotNull FolderConfiguration config) {
     for (LayoutDeviceConfiguration c : myConfigurations) {
       if (c.getName().equals(name)) {
         myConfigurations.remove(c);
         break;
       }
     }
-    myConfigurations.add(new LayoutDeviceConfiguration(name, config));
+    final LayoutDeviceConfiguration newConfiguration = new LayoutDeviceConfiguration(this, name, config);
+    myConfigurations.add(newConfiguration);
+    return newConfiguration;
   }
 
   private void seal() {
@@ -233,5 +240,14 @@ class LayoutDevice {
 
   public float getYDpi() {
     return mYDpi;
+  }
+
+  @NotNull
+  public Type getType() {
+    return myType;
+  }
+
+  static enum Type {
+    PLATFORM, ADD_ON, CUSTOM
   }
 }

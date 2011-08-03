@@ -94,6 +94,10 @@ class DCC {
         <error descr="Method call expected">DCC(1)</error>;
         new DCC(1);
     }
+  {
+    <error descr="Qualifier must be an expression">java</error>.toString();
+  }
+
 }
 
 class ThisExpression {

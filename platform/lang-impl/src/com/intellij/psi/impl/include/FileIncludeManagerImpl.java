@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -61,9 +62,9 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
         @Override
         public boolean process(FileIncludeInfo info) {
           if (compileTimeOnly != info.runtimeOnly) {
-            PsiFileSystemItem virtualFile = resolveFileInclude(info, file);
-            if (virtualFile != null) {
-              files.add(virtualFile.getVirtualFile());
+            PsiFileSystemItem item = resolveFileInclude(info, file);
+            if (item != null) {
+              ContainerUtil.addIfNotNull(files, item.getVirtualFile());
             }
           }
           return true;

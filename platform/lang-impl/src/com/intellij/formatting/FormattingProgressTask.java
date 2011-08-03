@@ -46,7 +46,7 @@ import java.util.Map;
  * @author Denis Zhdanov
  * @since 2/10/11 3:00 PM
  */
-public class FormattingProgressIndicatorImpl extends Task.Modal implements FormattingProgressIndicator {
+public class FormattingProgressTask extends Task.Modal implements FormattingProgressCallback {
 
   /**
    * Holds flag that indicates whether formatting was cancelled by end-user or not.
@@ -58,7 +58,7 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
     }
   };
   
-  private static final Logger LOG = Logger.getInstance("#" + FormattingProgressIndicatorImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + FormattingProgressTask.class.getName());
 
   /**
    * We want to perform formatting by big chunks at EDT. However, there is a possible case that particular formatting iteration
@@ -102,7 +102,7 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
   private int               myBlocksToModifyNumber;
   private int               myModifiedBlocksNumber;
   
-  public FormattingProgressIndicatorImpl(@Nullable Project project, @NotNull PsiFile file, @NotNull Document document) {
+  public FormattingProgressTask(@Nullable Project project, @NotNull PsiFile file, @NotNull Document document) {
     super(project, getTitle(file), true);
     myFile = new WeakReference<VirtualFile>(file.getVirtualFile());
     myDocument = new WeakReference<Document>(document);

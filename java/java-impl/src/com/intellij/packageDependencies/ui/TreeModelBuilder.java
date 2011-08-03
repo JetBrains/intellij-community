@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
@@ -391,10 +392,11 @@ public class TreeModelBuilder {
   }
 
   private PackageDependenciesNode getParentModuleGroup(String [] groupPath, ScopeType scopeType){
-    ModuleGroupNode groupNode = getMap(myModuleGroupNodes, scopeType).get(groupPath[groupPath.length - 1]);
+    final String key = StringUtil.join(groupPath, ",");
+    ModuleGroupNode groupNode = getMap(myModuleGroupNodes, scopeType).get(key);
     if (groupNode == null) {
       groupNode = new ModuleGroupNode(new ModuleGroup(groupPath), myProject);
-      getMap(myModuleGroupNodes, scopeType).put(groupPath[groupPath.length - 1], groupNode);
+      getMap(myModuleGroupNodes, scopeType).put(key, groupNode);
       getRootNode(scopeType).add(groupNode);
     }
     if (groupPath.length > 1) {

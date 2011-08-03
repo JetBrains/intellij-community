@@ -19,6 +19,7 @@ package com.intellij.util.indexing;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -45,10 +46,10 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     return myIndex.getNumberOfPendingInvalidations();
   }
 
-  public VirtualFile[] queryNeededFiles() {
+  public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
     CollectingContentIterator finder = myIndex.createContentIterator();
     long l = System.currentTimeMillis();
-    FileBasedIndex.iterateIndexableFiles(finder, myProject);
+    FileBasedIndex.iterateIndexableFiles(finder, myProject, indicator);
     LOG.info("Indexable files iterated in " + (System.currentTimeMillis() - l) + " ms");
     List<VirtualFile> files = finder.getFiles();
     LOG.info("Unindexed files update started: " + files.size() + " files to update");

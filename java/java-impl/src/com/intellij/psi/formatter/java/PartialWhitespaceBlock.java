@@ -22,6 +22,7 @@ import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,7 +36,7 @@ public class PartialWhitespaceBlock extends SimpleJavaBlock {
                                 final Wrap wrap,
                                 final Alignment alignment,
                                 final Indent indent,
-                                CodeStyleSettings settings) {
+                                CommonCodeStyleSettings settings) {
     super(node, wrap, AlignmentStrategy.wrap(alignment), indent, settings);
     myRange = range;
   }

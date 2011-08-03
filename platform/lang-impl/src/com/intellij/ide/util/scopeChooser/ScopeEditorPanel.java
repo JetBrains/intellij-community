@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.ExpandVetoException;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -77,6 +78,7 @@ public class ScopeEditorPanel {
   private int myCaretPosition = 0;
   private boolean myTextChanged = false;
   private JPanel myMatchingCountPanel;
+  private JPanel myPositionPanel;
   private PanelProgressIndicator myCurrentProgress;
   private NamedScopesHolder myHolder;
 
@@ -118,11 +120,15 @@ public class ScopeEditorPanel {
 
     myPatternField.addFocusListener(new FocusListener() {
       public void focusGained(FocusEvent e) {
-        myCaretPositionLabel.setVisible(true);
+        if (myErrorMessage != null) {
+          myPositionPanel.setVisible(true);
+          myPanel.revalidate();
+        }
       }
 
       public void focusLost(FocusEvent e) {
-        myCaretPositionLabel.setVisible(false);
+        myPositionPanel.setVisible(false);
+        myPanel.revalidate();
       }
     });
 
@@ -136,6 +142,9 @@ public class ScopeEditorPanel {
     else {
       myCaretPositionLabel.setText("");
     }
+    myPositionPanel.setVisible(myErrorMessage != null);
+    myCaretPositionLabel.setVisible(myErrorMessage != null);
+    myPanel.revalidate();
   }
 
   public JPanel getPanel() {
@@ -158,7 +167,8 @@ public class ScopeEditorPanel {
       myUpdateAlarm.cancelAllRequests();
       myCurrentScope = null;
       try {
-        myCurrentScope = PackageSetFactory.getInstance().compile(myPatternField.getText());
+        final String text = myPatternField.getText();
+        myCurrentScope = StringUtil.isEmpty(text) ? null: PackageSetFactory.getInstance().compile(text);
         myErrorMessage = null;
         myTextChanged = true;
         rebuild(false);
@@ -187,11 +197,11 @@ public class ScopeEditorPanel {
     myPackageTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        final boolean recursiveEnabled = isButtonEnabled(true);
+        final boolean recursiveEnabled = isButtonEnabled(true, e.getPaths(), e);
         includeRec.setEnabled(recursiveEnabled);
         excludeRec.setEnabled(recursiveEnabled);
 
-        final boolean nonRecursiveEnabled = isButtonEnabled(false);
+        final boolean nonRecursiveEnabled = isButtonEnabled(false, e.getPaths(), e);
         include.setEnabled(nonRecursiveEnabled);
         exclude.setEnabled(nonRecursiveEnabled);
       }
@@ -227,9 +237,17 @@ public class ScopeEditorPanel {
     return buttonsPanel;
   }
 
-  boolean isButtonEnabled(boolean rec) {
-    final ArrayList<PackageSet> selectedSetsInclude = getSelectedSets(rec);
-    return selectedSetsInclude != null && !selectedSetsInclude.isEmpty();
+  static boolean isButtonEnabled(boolean rec, TreePath[] paths, TreeSelectionEvent e) {
+    if (paths != null) {
+      for (TreePath path : paths) {
+        if (!e.isAddedPath(path)) continue;
+        final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
+        if (PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createPackageSet(node, rec) != null) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private void excludeSelected(boolean recurse) {
@@ -536,7 +554,7 @@ public class ScopeEditorPanel {
         }
 
         setForeground(selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
-        if (!selected && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
+        if (!(selected && hasFocus) && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
           setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
         }
         append(node.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);

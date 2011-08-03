@@ -17,12 +17,14 @@ package com.intellij.ide;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.util.PsiUtil;
@@ -73,6 +75,16 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   public DisplayPriority getDisplayPriority() {
     if (PlatformUtils.isIdea()) return DisplayPriority.KEY_LANGUAGE_SETTINGS;
     return DisplayPriority.LANGUAGE_SETTINGS;
+  }
+
+  @Override
+  public CommonCodeStyleSettings getDefaultCommonSettings() {
+    return new CommonCodeStyleSettings(JavaLanguage.INSTANCE);
+  }
+
+  @Override
+  public boolean usesSharedPreview() {
+    return false;
   }
 
   private static final String GENERAL_CODE_SAMPLE =

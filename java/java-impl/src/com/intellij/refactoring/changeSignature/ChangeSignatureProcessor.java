@@ -148,12 +148,17 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
     Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
-    if (myPrepareSuccessfulSwingThreadCallback != null && !conflictDescriptions.isEmpty()) {
-      ConflictsDialog dialog = prepareConflictsDialog(conflictDescriptions, usagesIn);
-      dialog.show();
-      if (!dialog.isOK()) {
-        if (dialog.isShowConflicts()) prepareSuccessful();
-        return false;
+    if (!conflictDescriptions.isEmpty()) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new ConflictsInTestsException(conflictDescriptions.values());
+      }
+      if (myPrepareSuccessfulSwingThreadCallback != null) {
+        ConflictsDialog dialog = prepareConflictsDialog(conflictDescriptions, usagesIn);
+        dialog.show();
+        if (!dialog.isOK()) {
+          if (dialog.isShowConflicts()) prepareSuccessful();
+          return false;
+        }
       }
     }
 

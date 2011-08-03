@@ -19,6 +19,7 @@ import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DocCommentBlock extends AbstractJavaBlock{
-  public DocCommentBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
+  public DocCommentBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CommonCodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
   }
 

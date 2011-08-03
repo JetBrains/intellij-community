@@ -44,6 +44,7 @@ public interface MarkupModelEx extends MarkupModel {
   void setRangeHighlighterAttributes(@NotNull RangeHighlighter highlighter, TextAttributes textAttributes);
 
   boolean processHighlightsOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
+  boolean processHighlightsOverlappingOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
 
   @NotNull
   Iterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);

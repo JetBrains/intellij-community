@@ -15,11 +15,17 @@
  */
 package com.intellij.cvsSupport2.checkinProject;
 
+import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.actions.RestoreFileAction;
+import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
+import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
+import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -29,60 +35,82 @@ import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.netbeans.lib.cvsclient.admin.Entry;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
  * @author yole
  */
 public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.checkinProject.CvsRollbackEnvironment");
   private final Project myProject;
 
   public CvsRollbackEnvironment(final Project project) {
     myProject = project;
   }
 
-  public void rollbackChanges(List<Change> changes, final List<VcsException> exceptions, @NotNull final RollbackProgressListener listener) {
-
+  public void rollbackChanges(List<Change> changes, final List<VcsException> exceptions,
+                              @NotNull final RollbackProgressListener listener) {
     listener.determinate();
-    CvsRollbacker rollbacker = new CvsRollbacker(myProject);
     for (Change change : changes) {
       final FilePath filePath = ChangesUtil.getFilePath(change);
       listener.accept(change);
-      VirtualFile parent = filePath.getVirtualFileParent();
-      String name = filePath.getName();
+      final VirtualFile parent = filePath.getVirtualFileParent();
+      final String name = filePath.getName();
 
-      try {
-        switch (change.getType()) {
-          case DELETED:
-            rollbacker.rollbackFileDeleting(parent, name);
-            break;
+      switch (change.getType()) {
+        case DELETED:
+          restoreFile(parent, name);
+          break;
 
-          case MODIFICATION:
-            rollbacker.rollbackFileModifying(parent, name);
-            break;
+        case MODIFICATION:
+          restoreFile(parent, name);
+          break;
 
-          case MOVED:
-            rollbacker.rollbackFileCreating(parent, name);
-            break;
+        case MOVED:
+          CvsUtil.removeEntryFor(CvsVfsUtil.getFileFor(parent, name));
+          break;
 
-          case NEW:
-            rollbacker.rollbackFileCreating(parent, name);
-            break;
-        }
-      }
-      catch (IOException e) {
-        exceptions.add(new VcsException(e));
+        case NEW:
+          CvsUtil.removeEntryFor(CvsVfsUtil.getFileFor(parent, name));
+          break;
       }
     }
   }
 
   public void rollbackMissingFileDeletion(List<FilePath> filePaths, final List<VcsException> exceptions,
-                                                        final RollbackProgressListener listener) {
+                                          final RollbackProgressListener listener) {
     final CvsHandler cvsHandler = CommandCvsHandler.createCheckoutFileHandler(filePaths.toArray(new FilePath[filePaths.size()]),
                                                                               CvsConfiguration.getInstance(myProject), null);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(cvsHandler, CvsOperationExecutorCallback.EMPTY);
+  }
+
+  private void restoreFile(final VirtualFile parent, String name) {
+    if (restoreFileFromCache(parent, name)) {
+      return;
+    }
+    try {
+      new RestoreFileAction(parent, name).actionPerformed(new CvsContextAdapter() {
+        public Project getProject() {
+          return myProject;
+        }
+      });
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  private boolean restoreFileFromCache(VirtualFile parent, String name) {
+    final Entry entry = CvsEntriesManager.getInstance().getEntryFor(parent, name);
+    final String revision = entry.getRevision();
+    if (revision == null) {
+      return false;
+    }
+    final boolean makeReadOnly = CvsConfiguration.getInstance(myProject).MAKE_NEW_FILES_READONLY;
+    return CvsUtil.restoreFileFromCachedContent(parent, name, revision, makeReadOnly);
   }
 }

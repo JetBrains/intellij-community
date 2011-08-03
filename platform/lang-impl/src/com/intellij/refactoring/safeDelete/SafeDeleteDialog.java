@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -76,6 +77,7 @@ public class SafeDeleteDialog extends DialogWrapper {
 
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBorder(IdeBorderFactory.createRoundedBorder());
     final GridBagConstraints gbc = new GridBagConstraints();
 
     final String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message("search.for.usages.and.delete.elements"), myElements);

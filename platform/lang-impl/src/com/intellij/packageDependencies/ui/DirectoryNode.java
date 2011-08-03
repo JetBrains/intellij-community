@@ -44,8 +44,7 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   private boolean myCompactPackages = true;
   private String myFQName = null;
-  private VirtualFile myVDirectory;
-  //private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.DirectoryNode");
+  private final VirtualFile myVDirectory;
 
   public DirectoryNode(VirtualFile aDirectory, Project project, boolean compactPackages, boolean showFQName) {
     super(project);

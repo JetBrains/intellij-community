@@ -167,6 +167,20 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   }
 
   public boolean setPanelLanguage(Language language) {
-    return super.setPanelLanguage(Language.findInstance(JavaLanguage.class));
+    return super.setPanelLanguage(null);
+  }
+
+  @Override
+  protected void customizeSettings() {
+    resetDefaultNames();
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(JavaLanguage.INSTANCE);
+    if (provider != null) {
+      provider.customizeSettings(this, getSettingsType());
+    }
+  }
+
+  @Override
+  protected String getTabTitle() {
+    return ApplicationBundle.message("title.javadoc");
   }
 }

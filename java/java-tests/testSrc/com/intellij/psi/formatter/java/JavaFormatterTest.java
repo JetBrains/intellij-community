@@ -39,11 +39,11 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testLabel1() throws Exception {
-    CodeStyleSettings settings = getSettings();
+    CommonCodeStyleSettings settings = getSettings();
 
     settings.LABELED_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    settings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE = true;
-    settings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_SIZE = 0;
+    settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE = true;
+    settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_SIZE = 0;
 
     doTest("Label.java", "Label_after1.java");
   }
@@ -54,20 +54,20 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testNullMethodParameter() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("NullMethodParameter.java", "NullMethodParameter_after.java");
   }
 
   public void testNew() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
+    final CommonCodeStyleSettings settings = getSettings();
+    settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
     doTest("New.java", "New_after.java");
   }
 
   public void testJavaDoc() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.BLANK_LINES_AROUND_FIELD = 1;
     doTest("JavaDoc.java", "JavaDoc_after.java");
   }
@@ -82,8 +82,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testCastInsideElse() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(StdFileTypes.JAVA);
+    final CommonCodeStyleSettings settings = getSettings();
+    final CodeStyleSettings.IndentOptions indentOptions = settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA);
     indentOptions.CONTINUATION_INDENT_SIZE = 2;
     indentOptions.INDENT_SIZE = 2;
     indentOptions.LABEL_INDENT_SIZE = 0;
@@ -95,7 +95,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testAlignMultiLine() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true;
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
     doTest();
@@ -106,7 +106,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testSynchronizedBlock() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false;
     settings.SPACE_WITHIN_SYNCHRONIZED_PARENTHESES = false;
     settings.SPACE_BEFORE_SYNCHRONIZED_LBRACE = false;
@@ -114,8 +114,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testMethodCallInAssignment() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
+    final CommonCodeStyleSettings settings = getSettings();
+    settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
     doTest();
   }
 
@@ -132,7 +132,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testIfElse() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE;
     settings.FOR_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
     settings.WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
@@ -159,7 +159,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testIfBraces() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     settings.KEEP_LINE_BREAKS = false;
@@ -167,7 +167,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testTernaryExpression() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.ALIGN_MULTILINE_TERNARY_OPERATION = true;
     doTest();
 
@@ -177,14 +177,14 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testAlignAssignment() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.ALIGN_MULTILINE_ASSIGNMENT = true;
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
     doTest();
   }
 
   public void testAlignFor() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
     settings.ALIGN_MULTILINE_FOR = true;
     doTest();
@@ -199,7 +199,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testIf() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
     settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
@@ -211,19 +211,19 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void test2() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
 
   public void testBlocks() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.KEEP_LINE_BREAKS = false;
     doTest();
   }
 
   public void testBinaryOperation() throws IncorrectOperationException {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
 
     @NonNls String text = "class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        + ccc + eee + ddd;\n" + "    }\n" + "}";
 
@@ -328,7 +328,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testStringBinaryOperation() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
 
     settings.ALIGN_MULTILINE_ASSIGNMENT = false;
     settings.ALIGN_MULTILINE_BINARY_OPERATION = false;
@@ -354,7 +354,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testBraces() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
 
     @NonNls final String text =
       "class Foo {\n" +
@@ -436,7 +436,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testExtendsList() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.ALIGN_MULTILINE_EXTENDS_LIST = true;
     doTextTest("class A extends B, \n" + "C {}", "class A extends B,\n" + "                C {\n}");
   }
@@ -491,7 +491,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpaceAroundField() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.BLANK_LINES_AROUND_FIELD = 1;
 
     doTextTest("class Foo {\n" +
@@ -517,7 +517,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testArray() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = true;
     settings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true;
     doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{0};\n" + " }\n" + "}",
@@ -633,7 +633,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testDoNotIndentCaseFromSwitch() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.INDENT_CASE_FROM_SWITCH = false;
     doTextTest("class A {\n" + "void foo() {\n" + "switch(a){\n" + "case 1: \n" + "break;\n" + "}\n" + "}\n" + "}", "class A {\n" +
                                                                                                                     "    void foo() {\n" +
@@ -646,7 +646,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testClass2() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.KEEP_FIRST_COLUMN_COMMENT = false;
     doTextTest("class A {\n" + "// comment before\n" + "protected Object a;//  comment after\n" + "}",
                "class A {\n" + "    // comment before\n" + "    protected Object a;//  comment after\n" + "}");
@@ -658,14 +658,14 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testParametersAlignment() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    settings.RIGHT_MARGIN = 140;
+    settings.getRootSettings().RIGHT_MARGIN = 140;
     doTest();
   }
 
   public void testConditionalExpression() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.SPACE_BEFORE_QUEST = true;
     settings.SPACE_AFTER_QUEST = false;
     settings.SPACE_BEFORE_COLON = true;
@@ -781,7 +781,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testLBraceAfterComment() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.KEEP_LINE_BREAKS = false;
     doTextTest("public class Foo {\n" +
                "    public int foo() {\n" +
@@ -803,7 +803,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpaces() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.SPACE_WITHIN_FOR_PARENTHESES = true;
     settings.SPACE_WITHIN_IF_PARENTHESES = true;
     settings.SPACE_WITHIN_METHOD_PARENTHESES = true;
@@ -814,7 +814,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpacesBeforeLBrace() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.SPACE_BEFORE_CLASS_LBRACE = true;
     settings.SPACE_BEFORE_METHOD_LBRACE = true;
     settings.SPACE_BEFORE_IF_LBRACE = true;
@@ -849,7 +849,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testCommentBeforeField() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.KEEP_LINE_BREAKS = false;
     settings.KEEP_FIRST_COLUMN_COMMENT = false;
     settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false;
@@ -859,8 +859,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testLabel() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE = true;
+    final CommonCodeStyleSettings settings = getSettings();
+    settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE = true;
     settings.SPECIAL_ELSE_IF_TREATMENT = true;
     settings.FOR_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     myTextRange = new TextRange(59, 121);
@@ -882,7 +882,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpacesInsideEmptyParentheses() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.SPACE_WITHIN_METHOD_PARENTHESES = true;
     settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
 
@@ -909,7 +909,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   public void testBraceOnNewLineIfWrapped() throws Exception {
     getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
-    getSettings().RIGHT_MARGIN = 35;
+    getSettings().getRootSettings().RIGHT_MARGIN = 35;
     getSettings().ALIGN_MULTILINE_BINARY_OPERATION = true;
 
     doTextTest("class Foo {\n" +
@@ -934,7 +934,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testFirstArgumentWrapping() throws Exception {
-    getSettings().RIGHT_MARGIN = 20;
+    getSettings().getRootSettings().RIGHT_MARGIN = 20;
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1);" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(\n" + "                1);\n" + "    }\n" + "}");
@@ -962,7 +962,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   public void testAssertStatementWrapping() throws Exception {
     getSettings().ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
-    getSettings().RIGHT_MARGIN = 40;
+    getSettings().getRootSettings().RIGHT_MARGIN = 40;
     final JavaPsiFacade facade = getJavaFacade();
     final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
     try {
@@ -1007,9 +1007,9 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   public void testAssertStatementWrapping2() throws Exception {
     getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     getSettings().ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().RIGHT_MARGIN = 37;
+    getSettings().getRootSettings().RIGHT_MARGIN = 37;
 
-    final CodeStyleSettings.IndentOptions options = getSettings().getIndentOptions(StdFileTypes.JAVA);
+    final CodeStyleSettings.IndentOptions options = getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
     options.INDENT_SIZE = 2;
     options.CONTINUATION_INDENT_SIZE = 2;
 
@@ -1048,9 +1048,9 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void test() throws Exception {
-    getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 2;
-    getSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
-    getSettings().RIGHT_MARGIN = 37;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 2;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
+    getSettings().getRootSettings().RIGHT_MARGIN = 37;
     getSettings().ALIGN_MULTILINE_EXTENDS_LIST = true;
 
     getSettings().EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -1087,13 +1087,13 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testLBrace() throws Exception {
     getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    getSettings().RIGHT_MARGIN = 14;
+    getSettings().getRootSettings().RIGHT_MARGIN = 14;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "        \n" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "\n" + "    }\n" + "}");
   }
 
   public void testJavaDocLeadingAsterisksAreDisabled() throws Exception {
-    getSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = false;
+    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = false;
     doTextTest("class Foo {\n" +
                "    /**\n" +
                "     @param i\n" +
@@ -1196,7 +1196,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   public void testArrayInitializerWrapping() throws Exception {
     getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = false;
-    getSettings().RIGHT_MARGIN = 37;
+    getSettings().getRootSettings().RIGHT_MARGIN = 37;
 
     doTextTest("class Foo{\n" +
                "    public int[] i = new int[]{1,2,3,4,5,6,7,8,9};\n" +
@@ -1236,11 +1236,11 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testJavaDocIndentation() throws Exception {
-    getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 2;
-    getSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
-    getSettings().getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 4;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 2;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
+    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 4;
 
-    getSettings().ENABLE_JAVADOC_FORMATTING = false;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = false;
 
     doTextTest("public interface PsiParser {\n" +
                "  /**\n" +
@@ -1539,7 +1539,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     getSettings().KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     getSettings().ELSE_ON_NEW_LINE = false;
-    getSettings().RIGHT_MARGIN = 110;
+    getSettings().getRootSettings().RIGHT_MARGIN = 110;
     getSettings().KEEP_LINE_BREAKS = false;
     doTextTest("class Foo {\n" +
                "    void foo() {\n" +
@@ -1692,7 +1692,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testFormatComments() throws Exception {
-    getSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
     doTextTest("public class Test {\n" + "\n" + "    /**\n" + "     * The s property.\n" + "     */\n" + "    private String s;\n" + "}",
                "public class Test {\n" + "\n" + "    /**\n" + "     * The s property.\n" + "     */\n" + "    private String s;\n" + "}");
 
@@ -1700,7 +1700,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testDoNotWrapLBrace() throws IncorrectOperationException {
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    getSettings().RIGHT_MARGIN = 66;
+    getSettings().getRootSettings().RIGHT_MARGIN = 66;
     doTextTest("public class Test {\n" +
                "    void foo(){\n" +
                "        if (veryLongIdentifier1 == 1 && veryLongIdentifier2 == 2) {\n" +
@@ -1720,7 +1720,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
     getSettings().ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
-    getSettings().RIGHT_MARGIN = 40;
+    getSettings().getRootSettings().RIGHT_MARGIN = 40;
     doTextTest("class Foo {\n" + "    int[] a = new int[]{1,2,0x0052,0x0053,0x0054,0x0054,0x0054};\n" + "}", "class Foo {\n" +
                                                                                                              "    int[] a = new int[]{\n" +
                                                                                                              "            1, 2, 0x0052, 0x0053,\n" +
@@ -1770,7 +1770,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testWrapExtendsList() throws Exception {
-    getSettings().RIGHT_MARGIN = 50;
+    getSettings().getRootSettings().RIGHT_MARGIN = 50;
     getSettings().EXTENDS_LIST_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     getSettings().EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
@@ -1781,7 +1781,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testWrapLongExpression() throws Exception {
-    getSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
     getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ALIGN_MULTILINE_BINARY_OPERATION = true;
     doTextTest("class Foo {\n" +
@@ -1799,7 +1799,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testDoNotWrapCallChainIfParametersWrapped() throws Exception {
-    getSettings().RIGHT_MARGIN = 87;
+    getSettings().getRootSettings().RIGHT_MARGIN = 87;
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
@@ -1833,7 +1833,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testRightMargin_2() throws Exception {
-    getSettings().RIGHT_MARGIN = 65;
+    getSettings().getRootSettings().RIGHT_MARGIN = 65;
     getSettings().ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = true;
     getSettings().KEEP_LINE_BREAKS = false;
@@ -1846,7 +1846,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testRightMargin_3() throws Exception {
-    getSettings().RIGHT_MARGIN = 65;
+    getSettings().getRootSettings().RIGHT_MARGIN = 65;
     getSettings().ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false;
     getSettings().KEEP_LINE_BREAKS = false;
@@ -1971,7 +1971,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testSCR429() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.KEEP_BLANK_LINES_IN_CODE = 2;
     settings.KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
     settings.KEEP_BLANK_LINES_IN_DECLARATIONS = 2;
@@ -1979,9 +1979,9 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testSCR548() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
-    settings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
+    final CommonCodeStyleSettings settings = getSettings();
+    settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+    settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
     doTest();
   }
 
@@ -2030,7 +2030,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
 public void testSCR260() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     settings.KEEP_LINE_BREAKS = false;
@@ -2038,7 +2038,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR114() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     settings.CATCH_ON_NEW_LINE = true;
     doTest();
@@ -2046,40 +2046,40 @@ public void testSCR260() throws Exception {
 
   public void testSCR259() throws Exception {
     myTextRange = new TextRange(36, 60);
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     settings.KEEP_LINE_BREAKS = false;
     doTest();
   }
 
   public void testSCR279() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
     doTest();
   }
 
   public void testSCR395() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     doTest();
   }
 
   public void testSCR11799() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
+    final CommonCodeStyleSettings settings = getSettings();
+    settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
     settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
   }
 
   public void testSCR501() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.KEEP_FIRST_COLUMN_COMMENT = true;
     doTest();
   }
 
   public void testSCR879() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
   }
@@ -2107,8 +2107,8 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR479() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.RIGHT_MARGIN = 80;
+    final CommonCodeStyleSettings settings = getSettings();
+    settings.getRootSettings().RIGHT_MARGIN = 80;
     settings.TERNARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTextTest("public class Foo {\n" +
                "    public static void main(String[] args) {\n" +
@@ -2124,7 +2124,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR190() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.KEEP_LINE_BREAKS = false;
     doTextTest("public class EntityObject \n" +
                "{ \n" +
@@ -2153,7 +2153,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR1535() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
@@ -2176,7 +2176,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR970() throws Exception {
-    final CodeStyleSettings settings = getSettings();
+    final CommonCodeStyleSettings settings = getSettings();
     settings.THROWS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     settings.THROWS_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     settings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -2192,7 +2192,7 @@ public void testSCR260() throws Exception {
   }
 
   public void test1607() throws Exception {
-    getSettings().RIGHT_MARGIN = 30;
+    getSettings().getRootSettings().RIGHT_MARGIN = 30;
     getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     getSettings().ALIGN_MULTILINE_PARAMETERS = true;
@@ -2273,7 +2273,7 @@ public void testSCR260() throws Exception {
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    getSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
 
     getSettings().PREFER_PARAMETERS_WRAP = true;
 
@@ -2394,7 +2394,7 @@ public void testSCR260() throws Exception {
   }
 
   public void test1980() throws Exception {
-    getSettings().RIGHT_MARGIN = 144;
+    getSettings().getRootSettings().RIGHT_MARGIN = 144;
     getSettings().TERNARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().ALIGN_MULTILINE_TERNARY_OPERATION = true;
@@ -2525,7 +2525,7 @@ public void testSCR260() throws Exception {
     public void testSCRIDEA_4783() throws IncorrectOperationException {
     getSettings().ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
 
     doTextTest("class Foo{\n" +
                "    void foo() {\n" +
@@ -2657,7 +2657,7 @@ public void testSCR260() throws Exception {
       doTextTest("class Foo {\n" + "    void foo() {\n" + "        while(true) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        while (true) foo();\n" + "    }\n" + "}");
 
-      getSettings().RIGHT_MARGIN = 17;
+      getSettings().getRootSettings().RIGHT_MARGIN = 17;
 
       doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a) foo();\n" + "        else bar();\n" + "    }\n" + "}",
                  "class Foo {\n" +
@@ -2669,7 +2669,7 @@ public void testSCR260() throws Exception {
                  "    }\n" +
                  "}");
 
-      getSettings().RIGHT_MARGIN = 30;
+      getSettings().getRootSettings().RIGHT_MARGIN = 30;
 
       doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int i = 0; i < 10; i++) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" +
@@ -2679,12 +2679,12 @@ public void testSCR260() throws Exception {
                  "    }\n" +
                  "}");
 
-      getSettings().RIGHT_MARGIN = 32;
+      getSettings().getRootSettings().RIGHT_MARGIN = 32;
       doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        for (int var : vars)\n" + "            foo();\n" + "    }\n" + "}");
 
 
-      getSettings().RIGHT_MARGIN = 12;
+      getSettings().getRootSettings().RIGHT_MARGIN = 12;
       doTextTest("class Foo {\n" + "    void foo() {\n" + "        do foo(); while (true);\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                  "    void foo() {\n" +
                                                                                                                  "        do\n" +
@@ -2693,7 +2693,7 @@ public void testSCR260() throws Exception {
                                                                                                                  "    }\n" +
                                                                                                                  "}");
 
-      getSettings().RIGHT_MARGIN = 23;
+      getSettings().getRootSettings().RIGHT_MARGIN = 23;
 
       doTextTest("class Foo {\n" + "    void foo() {\n" + "        while(true) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        while (true)\n" + "            foo();\n" + "    }\n" + "}");
@@ -2707,7 +2707,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR3115() throws Exception {
-    final CodeStyleSettings.IndentOptions indentOptions = getSettings().getIndentOptions(StdFileTypes.JAVA);
+    final CodeStyleSettings.IndentOptions indentOptions = getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
     indentOptions.USE_TAB_CHARACTER = true;
     indentOptions.SMART_TABS = true;
 
@@ -2731,7 +2731,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testIDEADEV_6239() throws Exception {
-    getSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
     doTextTest("public class Test {\n" +
                "\n" +
                "    /**\n" +
@@ -2809,7 +2809,7 @@ public void testSCR260() throws Exception {
 
   public void testIDEADEV_12836() throws IncorrectOperationException {
     getSettings().SPECIAL_ELSE_IF_TREATMENT = true;
-    getSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
     doTextTest("class Foo {\n" +
                "void foo(){\n" +
                "if (true){\n" +
@@ -2888,7 +2888,7 @@ public void testSCR260() throws Exception {
   public void testIDEADEV_23551() throws IncorrectOperationException {
     getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
 
-    getSettings().RIGHT_MARGIN = 60;
+    getSettings().getRootSettings().RIGHT_MARGIN = 60;
     doTextTest("public class Wrapping {\n" +
                "public static void sample() {\n" +
                "System.out.println(\".\" + File.separator + \"..\" + File.separator + \"some-directory-name\" + File.separator + \"more-file-name\");\n" +

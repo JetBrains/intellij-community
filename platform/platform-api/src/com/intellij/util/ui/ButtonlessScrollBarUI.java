@@ -99,6 +99,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private void resetAnimator() {
     myAnimator.reset();
     if (scrollbar != null && scrollbar.getValueIsAdjusting() || myMouseIsOverThumb) {
+      myAnimator.suspend();
       myAnimationColorShift = 40;
     }
     else {

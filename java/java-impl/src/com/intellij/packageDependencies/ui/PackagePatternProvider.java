@@ -27,9 +27,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import org.jetbrains.annotations.NonNls;
@@ -91,9 +92,9 @@ public class PackagePatternProvider extends PatternDialectProvider {
       if (recursively) return null;
       FileNode fNode = (FileNode)node;
       final PsiElement element = fNode.getPsiElement();
-      StringBuffer buf = new StringBuffer(20);
-      if (element instanceof PsiJavaFile) {
-        final PsiJavaFile javaFile = (PsiJavaFile)element;
+      final StringBuilder buf = new StringBuilder(20);
+      if (element instanceof PsiClassOwner) {
+        final PsiClassOwner javaFile = (PsiClassOwner)element;
         String packageName = javaFile.getPackageName();
         buf.append(packageName);
         if (buf.length() > 0) {
@@ -101,9 +102,13 @@ public class PackagePatternProvider extends PatternDialectProvider {
         }
         final VirtualFile virtualFile = javaFile.getVirtualFile();
         LOG.assertTrue(virtualFile != null);
-        buf.append(virtualFile.getNameWithoutExtension());
+        final String name = virtualFile.getNameWithoutExtension();
+        if (!JavaPsiFacade.getInstance(element.getProject()).getNameHelper().isIdentifier(name)) return null;
+        buf.append(name);
       }
-      if (buf.length() > 0) return new PatternPackageSet(buf.toString(), scope, getModulePattern(node));
+      if (buf.length() > 0) {
+        return new PatternPackageSet(buf.toString(), scope, getModulePattern(node));
+      }
     }
     else if (node instanceof GeneralGroupNode) {
       return new PatternPackageSet("*..*", scope, null);

@@ -22,12 +22,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
- * Defines common interface for formatting-aware progress indicator.
+ * Defines common interface for receiving events about formatting progress.
  * 
  * @author Denis Zhdanov
  * @since 2/10/11 3:38 PM
  */
-public interface FormattingProgressIndicator {
+public interface FormattingProgressCallback {
 
   enum EventType { SUCCESS, CANCEL }
 
@@ -90,9 +90,9 @@ public interface FormattingProgressIndicator {
   boolean addCallback(@NotNull EventType eventType, @NotNull Runnable callback);
   
   /**
-   * <a hrep="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link FormattingProgressIndicator}. 
+   * <a hrep="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link FormattingProgressCallback}. 
    */
-  FormattingProgressIndicator EMPTY = new FormattingProgressIndicator() {
+  FormattingProgressCallback EMPTY = new FormattingProgressCallback() {
     @Override
     public void afterWrappingBlock(@NotNull LeafBlockWrapper wrapped) {
     }

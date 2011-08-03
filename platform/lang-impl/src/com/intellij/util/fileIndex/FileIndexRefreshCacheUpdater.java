@@ -19,6 +19,7 @@ package com.intellij.util.fileIndex;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.*;
@@ -70,7 +71,7 @@ public class FileIndexRefreshCacheUpdater extends VirtualFileAdapter implements 
     return 0;
   }
 
-  public VirtualFile[] queryNeededFiles() {
+  public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
     return VfsUtil.toVirtualFileArray(myChangedFiles);
   }
 

@@ -131,7 +131,9 @@ public class CodeStyleImportsPanel extends JPanel {
     myNamesCountField = new JTextField(3);
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(new JLabel(ApplicationBundle.message("editbox.class.count.to.use.import.with.star")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
-    panel.add(myClassCountField, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 1, 0, 0), 0, 0));
+    panel.add(myClassCountField,
+              new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                     new Insets(0, 1, 0, 0), 0, 0));
     panel.add(new JLabel(ApplicationBundle.message("editbox.names.count.to.use.static.import.with.star")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
     panel.add(myNamesCountField, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 1, 0, 0), 0, 0));
 
@@ -576,7 +578,7 @@ public class CodeStyleImportsPanel extends JPanel {
   private void updateButtons(){
     int selectedImport = myImportLayoutTable.getSelectedRow();
     myMoveUpButton.setEnabled(selectedImport >= 1);
-    myMoveDownButton.setEnabled(selectedImport < myImportLayoutTable.getRowCount()-1);
+    myMoveDownButton.setEnabled(selectedImport < myImportLayoutTable.getRowCount() - 1);
     PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
     boolean canRemove =  entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
     myRemovePackageFromImportLayoutButton.setEnabled(canRemove);
@@ -590,18 +592,18 @@ public class CodeStyleImportsPanel extends JPanel {
     return ScrollPaneFactory.createScrollPane(myImportLayoutTable);
   }
 
-  public void reset() {
-    myCbUseFQClassNames.setSelected(mySettings.USE_FQ_CLASS_NAMES);
-    myCbUseFQClassNamesInJavaDoc.setSelected(mySettings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
-    myCbUseSingleClassImports.setSelected(mySettings.USE_SINGLE_CLASS_IMPORTS);
-    myCbInsertInnerClassImports.setSelected(mySettings.INSERT_INNER_CLASS_IMPORTS);
-    myClassCountField.setText(Integer.toString(mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND));
-    myNamesCountField.setText(Integer.toString(mySettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND));
+  public void reset(CodeStyleSettings settings) {
+    myCbUseFQClassNames.setSelected(settings.USE_FQ_CLASS_NAMES);
+    myCbUseFQClassNamesInJavaDoc.setSelected(settings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
+    myCbUseSingleClassImports.setSelected(settings.USE_SINGLE_CLASS_IMPORTS);
+    myCbInsertInnerClassImports.setSelected(settings.INSERT_INNER_CLASS_IMPORTS);
+    myClassCountField.setText(Integer.toString(settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND));
+    myNamesCountField.setText(Integer.toString(settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND));
 
-    myImportLayoutList.copyFrom(mySettings.IMPORT_LAYOUT_TABLE);
-    myPackageList.copyFrom(mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    myImportLayoutList.copyFrom(settings.IMPORT_LAYOUT_TABLE);
+    myPackageList.copyFrom(settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
     
-    myCbLayoutStaticImportsSeparately.setSelected(mySettings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
+    myCbLayoutStaticImportsSeparately.setSelected(settings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
 
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableDataChanged();
@@ -616,7 +618,7 @@ public class CodeStyleImportsPanel extends JPanel {
       myPackageTable.getSelectionModel().setSelectionInterval(0, 0);
     }
 
-    if (mySettings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST) {
+    if (settings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST) {
       myJspImportCommaSeparated.doClick();
     }
     else {
@@ -625,34 +627,42 @@ public class CodeStyleImportsPanel extends JPanel {
     updateButtons();
   }
 
-  public void apply() {
+  public void reset() {
+    reset(mySettings);
+  }
+
+  public void apply(CodeStyleSettings settings) {
     stopTableEditing();
 
-    mySettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = areStaticImportsEnabled();
-    mySettings.USE_FQ_CLASS_NAMES = myCbUseFQClassNames.isSelected();
-    mySettings.USE_FQ_CLASS_NAMES_IN_JAVADOC = myCbUseFQClassNamesInJavaDoc.isSelected();
-    mySettings.USE_SINGLE_CLASS_IMPORTS = myCbUseSingleClassImports.isSelected();
-    mySettings.INSERT_INNER_CLASS_IMPORTS = myCbInsertInnerClassImports.isSelected();
+    settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = areStaticImportsEnabled();
+    settings.USE_FQ_CLASS_NAMES = myCbUseFQClassNames.isSelected();
+    settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = myCbUseFQClassNamesInJavaDoc.isSelected();
+    settings.USE_SINGLE_CLASS_IMPORTS = myCbUseSingleClassImports.isSelected();
+    settings.INSERT_INNER_CLASS_IMPORTS = myCbInsertInnerClassImports.isSelected();
     try{
-      mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myClassCountField.getText());
+      settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myClassCountField.getText());
     }
     catch(NumberFormatException e){
       //just a bad number
     }
     try{
-      mySettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myNamesCountField.getText());
+      settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myNamesCountField.getText());
     }
     catch(NumberFormatException e){
       //just a bad number
     }
 
     myImportLayoutList.removeEmptyPackages();
-    mySettings.IMPORT_LAYOUT_TABLE.copyFrom(myImportLayoutList);
+    settings.IMPORT_LAYOUT_TABLE.copyFrom(myImportLayoutList);
 
     myPackageList.removeEmptyPackages();
-    mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(myPackageList);
+    settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(myPackageList);
 
-    mySettings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = myJspImportCommaSeparated.isSelected();
+    settings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = myJspImportCommaSeparated.isSelected();
+  }
+  
+  public void apply() {
+    apply(mySettings);
   }
 
 
@@ -661,21 +671,25 @@ public class CodeStyleImportsPanel extends JPanel {
     TableUtil.stopEditing(myPackageTable);
   }
 
-  public boolean isModified() {
+  public boolean isModified(CodeStyleSettings settings) {
     boolean
-    isModified  = isModified(myCbLayoutStaticImportsSeparately, mySettings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
-    isModified |= isModified(myCbUseFQClassNames, mySettings.USE_FQ_CLASS_NAMES);
-    isModified |= isModified(myCbUseFQClassNamesInJavaDoc, mySettings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
-    isModified |= isModified(myCbUseSingleClassImports, mySettings.USE_SINGLE_CLASS_IMPORTS);
-    isModified |= isModified(myCbInsertInnerClassImports, mySettings.INSERT_INNER_CLASS_IMPORTS);
-    isModified |= isModified(myClassCountField, mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND);
-    isModified |= isModified(myNamesCountField, mySettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND);
+    isModified  = isModified(myCbLayoutStaticImportsSeparately, settings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
+    isModified |= isModified(myCbUseFQClassNames, settings.USE_FQ_CLASS_NAMES);
+    isModified |= isModified(myCbUseFQClassNamesInJavaDoc, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
+    isModified |= isModified(myCbUseSingleClassImports, settings.USE_SINGLE_CLASS_IMPORTS);
+    isModified |= isModified(myCbInsertInnerClassImports, settings.INSERT_INNER_CLASS_IMPORTS);
+    isModified |= isModified(myClassCountField, settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND);
+    isModified |= isModified(myNamesCountField, settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND);
 
-    isModified |= isModified(myImportLayoutList, mySettings.IMPORT_LAYOUT_TABLE);
-    isModified |= isModified(myPackageList, mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
-    isModified |= mySettings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST != myJspImportCommaSeparated.isSelected();
+    isModified |= isModified(myImportLayoutList, settings.IMPORT_LAYOUT_TABLE);
+    isModified |= isModified(myPackageList, settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    isModified |= settings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST != myJspImportCommaSeparated.isSelected();
 
     return isModified;
+  }
+  
+  public boolean isModified() {
+    return isModified(mySettings);
   }
 
   private static boolean isModified(JTextField textField, int value) {

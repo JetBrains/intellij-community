@@ -234,6 +234,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return myHighlighterTree.processOverlappingWith(start, end, processor);
   }
 
+  @Override
+  public boolean processHighlightsOverlappingOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
+    return myHighlighterTree.processOverlappingWithOutside(start, end, processor);
+  }
+
   @NotNull
   public Iterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
     return myHighlighterTree.overlappingIterator(startOffset, endOffset);

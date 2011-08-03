@@ -21,6 +21,7 @@
    <reference id="Compare.SameVersion"/>
    <reference id="IntegrateFiles"/>  -->
       <reference ref="Annotate"/>
+      <reference ref="Show.Current.Revision"/>
       <reference ref="Compare.SameVersion"/>
       <reference ref="Compare.LastVersion"/>
       <reference ref="Compare.Selected"/>

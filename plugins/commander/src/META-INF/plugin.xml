@@ -18,9 +18,11 @@
   <actions>
     <action id="CommanderSyncViews" class="com.intellij.ide.actions.SyncViewsAction" icon="/actions/syncPanels.png">
       <add-to-group group-id="PairFileActions" anchor="first"/>
+      <keyboard-shortcut first-keystroke="alt F6" keymap="$default"/>
     </action>
     <action id="CommanderSwapPanels" class="com.intellij.ide.actions.SwapPanelsAction" icon="/actions/swapPanels.png">
       <add-to-group group-id="PairFileActions" anchor="first"/>
+      <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
     </action>
 
     <group id="ImagesCommanderActions1" text="Images Commander Actions (1)">

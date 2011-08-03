@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.formatting.alignment.AlignmentStrategy;
@@ -45,7 +46,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
                         final Wrap wrap,
                         final Alignment alignment,
                         final Indent indent,
-                        final CodeStyleSettings settings) {
+                        final CommonCodeStyleSettings settings) {
     super(node, wrap, getAlignmentStrategy(alignment, node, settings), indent, settings);
     if (isSwitchCodeBlock() && !settings.INDENT_CASE_FROM_SWITCH) {
       myChildrenIndent = 0;
@@ -63,7 +64,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
    * @param baseNode      base AST node
    * @return              alignment strategy to use for the given node
    */
-  private static AlignmentStrategy getAlignmentStrategy(Alignment alignment, ASTNode baseNode, @NotNull CodeStyleSettings settings) {
+  private static AlignmentStrategy getAlignmentStrategy(Alignment alignment, ASTNode baseNode, @NotNull CommonCodeStyleSettings settings) {
     if (baseNode.getElementType() != JavaElementType.CLASS || !settings.ALIGN_MULTILINE_EXTENDS_LIST) {
       return AlignmentStrategy.wrap(alignment);
     }

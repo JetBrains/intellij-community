@@ -69,6 +69,7 @@
       <action id="Subversion.MarkTreeResolved" class="org.jetbrains.idea.svn.actions.MarkTreeConflictResolvedAction"/>
       <action id="Subversion.Clenaup" class="org.jetbrains.idea.svn.actions.CleanupAction"/>
       <separator/>
+      <reference id="Show.Current.Revision"/>
       <reference id="Compare.SameVersion" text="Compare with BASE revision"/>
       <reference id="Compare.LastVersion" text="Compare with revision at HEAD"/>
       <reference id="Compare.Selected"/>

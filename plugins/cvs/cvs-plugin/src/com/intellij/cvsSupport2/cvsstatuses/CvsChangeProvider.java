@@ -401,7 +401,9 @@ public class CvsChangeProvider implements ChangeProvider {
 
   @Nullable
   public byte[] getLastUpToDateContentFor(@NotNull final VirtualFile f) {
-    Entry entry = myEntriesManager.getEntryFor(f.getParent(), f.getName());
+    final VirtualFile parent = f.getParent();
+    final String name = f.getName();
+    Entry entry = myEntriesManager.getEntryFor(parent, name);
     if (entry != null && entry.isResultOfMerge()) {
       // try created by VCS during merge
       byte[] content = CvsUtil.getStoredContentForFile(f, entry.getRevision());
@@ -409,7 +411,7 @@ public class CvsChangeProvider implements ChangeProvider {
         return content;
       }
       // try cached by IDEA in CVS dir
-      return CvsUtil.getCachedStoredContent(f, entry.getRevision());
+      return CvsUtil.getCachedStoredContent(parent, name, entry.getRevision());
     }
     final long upToDateTimestamp = getUpToDateTimeForFile(f);
     FileRevisionTimestampComparator c = new FileRevisionTimestampComparator() {
@@ -420,7 +422,7 @@ public class CvsChangeProvider implements ChangeProvider {
     byte[] localHistoryContent = LocalHistory.getInstance().getByteContent(f, c);
     if (localHistoryContent == null) {
       if (entry != null && CvsUtil.haveCachedContent(f, entry.getRevision())) {
-        return CvsUtil.getCachedStoredContent(f, entry.getRevision());
+        return CvsUtil.getCachedStoredContent(parent, name, entry.getRevision());
       }
     }
     return localHistoryContent;
@@ -555,13 +557,13 @@ public class CvsChangeProvider implements ChangeProvider {
         result = getLastUpToDateContentFor(virtualFile);
       }
       if (result == null) {
-        String createVersionFile = null;
+        String revision = null;
         final GetFileContentOperation operation;
         if (virtualFile != null) {
           // todo maybe refactor where data lives
           Entry entry = myEntriesManager.getEntryFor(virtualFile.getParent(), virtualFile.getName());
           if (entry != null) {
-            createVersionFile = entry.getRevision();
+            revision = entry.getRevision();
           }
 
           operation = GetFileContentOperation.createForFile(virtualFile, SimpleRevision.createForTheSameVersionOf(virtualFile));
@@ -573,9 +575,9 @@ public class CvsChangeProvider implements ChangeProvider {
         CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
         result = operation.tryGetFileBytes();
 
-        if (result != null && createVersionFile != null) {
+        if (result != null && revision != null) {
           // cache in CVS area to reduce remote requests number (old revisions are deleted)
-          CvsUtil.storeContentForRevision(virtualFile, createVersionFile, result);
+          CvsUtil.storeContentForRevision(virtualFile, revision, result);
         }
       }
       return result;

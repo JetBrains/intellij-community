@@ -173,10 +173,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
 
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+    JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, -4, 0, true, false));
     final JPanel methodPanel = new JPanel(new BorderLayout());
     final JPanel typePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
-    final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 2, true, false));
+    final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
 
     final DocumentListener documentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent event) {

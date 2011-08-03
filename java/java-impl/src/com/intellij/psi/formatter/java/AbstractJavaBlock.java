@@ -77,7 +77,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     JavaElementType.MODIFIER_LIST, JavaElementType.TYPE, JavaTokenType.IDENTIFIER, JavaTokenType.EQ
   ));
 
-  protected final CodeStyleSettings mySettings;
+  protected final CommonCodeStyleSettings mySettings;
   protected final CodeStyleSettings.IndentOptions myIndentSettings;
   private final Indent myIndent;
   protected Indent myChildIndent;
@@ -94,24 +94,24 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private final AlignmentInColumnsHelper myAlignmentInColumnsHelper;
 
   protected AbstractJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent,
-                              final CodeStyleSettings settings)
+                              final CommonCodeStyleSettings settings)
   {
     this(node, wrap, indent, settings, JavaWrapManager.INSTANCE, AlignmentStrategy.wrap(alignment), AlignmentInColumnsHelper.INSTANCE);
   }
 
   protected AbstractJavaBlock(final ASTNode node, final Wrap wrap, final AlignmentStrategy alignmentStrategy, final Indent indent,
-                              final CodeStyleSettings settings)
+                              final CommonCodeStyleSettings settings)
   {
     this(node, wrap, indent, settings, JavaWrapManager.INSTANCE, alignmentStrategy, AlignmentInColumnsHelper.INSTANCE);
   }
 
   protected AbstractJavaBlock(final ASTNode node, final Wrap wrap, final Indent indent,
-                              final CodeStyleSettings settings, final JavaWrapManager wrapManager,
+                              final CommonCodeStyleSettings settings, final JavaWrapManager wrapManager,
                               @NotNull final AlignmentStrategy alignmentStrategy, AlignmentInColumnsHelper alignmentInColumnsHelper)
   {
     super(node, wrap, createBlockAlignment(alignmentStrategy, node));
     mySettings = settings;
-    myIndentSettings = settings.getIndentOptions(StdFileTypes.JAVA);
+    myIndentSettings = settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA);
     myIndent = indent;
     myWrapManager = wrapManager;
     myAlignmentStrategy = alignmentStrategy;
@@ -129,7 +129,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
   
   public static Block createJavaBlock(final ASTNode child,
-                                      final CodeStyleSettings settings,
+                                      final CommonCodeStyleSettings settings,
                                       final Indent indent,
                                       Wrap wrap,
                                       Alignment alignment) {
@@ -137,7 +137,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   public static Block createJavaBlock(final ASTNode child,
-                                      final CodeStyleSettings settings,
+                                      final CommonCodeStyleSettings settings,
                                       final Indent indent,
                                       Wrap wrap,
                                       @NotNull AlignmentStrategy alignmentStrategy) {
@@ -145,13 +145,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   public static Block createJavaBlock(final ASTNode child,
-                                      final CodeStyleSettings settings,
+                                      final CommonCodeStyleSettings settings,
                                       final Indent indent,
                                       Wrap wrap,
                                       AlignmentStrategy alignmentStrategy,
                                       int startOffset
                                      ) {
-    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings.getIndentOptions(StdFileTypes.JAVA)) : indent;
+    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA)) : indent;
     final IElementType elementType = child.getElementType();
     Alignment alignment = alignmentStrategy.getAlignment(elementType);
 
@@ -221,8 +221,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
            || elementType == JavaElementType.FOREACH_STATEMENT;
   }
 
-  public static Block createJavaBlock(final ASTNode child, final CodeStyleSettings settings) {
-    return createJavaBlock(child, settings, getDefaultSubtreeIndent(child, settings.getIndentOptions(StdFileTypes.JAVA)),
+  public static Block createJavaBlock(final ASTNode child, final CommonCodeStyleSettings settings) {
+    return createJavaBlock(child, settings, getDefaultSubtreeIndent(child, settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA)),
                            null, AlignmentStrategy.getNullStrategy());
   }
 
@@ -1346,7 +1346,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return getChildIndent(myNode, myIndentSettings);
   }
 
-  public CodeStyleSettings getSettings() {
+  public CommonCodeStyleSettings getSettings() {
     return mySettings;
   }
 

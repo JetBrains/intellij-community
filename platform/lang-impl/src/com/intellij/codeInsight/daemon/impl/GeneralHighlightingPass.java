@@ -62,6 +62,7 @@ import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -84,7 +85,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private final ProperTextRange myPriorityRange;
   private final Editor myEditor;
 
-  private final Collection<HighlightInfo> myHighlights = new ArrayList<HighlightInfo>();
+  private final List<HighlightInfo> myHighlights = new ArrayList<HighlightInfo>();
 
   protected volatile boolean myHasErrorElement;
   private volatile boolean myErrorFound;
@@ -201,23 +202,26 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         public void run() {
           // all infos for the "injected fragment for the host which is inside" are indeed inside
           // but some of the infos for the "injected fragment for the host which is outside" can be still inside
-          THashSet<HighlightInfo> injectedResult = new THashSet<HighlightInfo>();
+          Set<HighlightInfo> injectedResult = new THashSet<HighlightInfo>();
           if (!addInjectedPsiHighlights(injected, progress, Collections.synchronizedSet(injectedResult))) throw new ProcessCanceledException();
+          final List<HighlightInfo> injectionsOutside = new ArrayList<HighlightInfo>(gotHighlights.size());
 
-          //if (!addInjectedPsiHighlights(injectedOutside, progress, result)) throw new ProcessCanceledException();
-          final List<HighlightInfo> toApplyOutside = new ArrayList<HighlightInfo>(gotHighlights.size());
-
-          for (HighlightInfo info : injectedResult) {
+          Set<HighlightInfo> result;
+          synchronized (injectedResult) {
+          // sync here because all writes happened in another thread
+            result = injectedResult;
+          }
+          for (HighlightInfo info : result) {
             if (myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset())) {
               gotHighlights.add(info);
             }
             else {
               // nonconditionally apply injected results regardless whether they are in myStartOffset,myEndOffset
-              toApplyOutside.add(info);
+              injectionsOutside.add(info);
             }
           }
 
-          if (outsideResult.isEmpty() && toApplyOutside.isEmpty()) {
+          if (outsideResult.isEmpty() && injectionsOutside.isEmpty()) {
             return;  // apply only result (by default apply command) and only within inside
           }
 
@@ -236,9 +240,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                 MarkupModel markupModel = myDocument.getMarkupModel(myProject);
 
                 UpdateHighlightersUtil.setHighlightersInRange(myProject, myDocument, priorityIntersection, getColorsScheme(), toApplyInside,
-                                                              (MarkupModelEx)markupModel, Pass.UPDATE_ALL);
+                                                                (MarkupModelEx)markupModel, Pass.UPDATE_ALL);
                 if (myEditor != null) {
-                  new ShowAutoImportPass(myProject, myFile, myEditor).applyInformationToEditor();
+                    new ShowAutoImportPass(myProject, myFile, myEditor).applyInformationToEditor();
                 }
               }
             });
@@ -247,33 +251,19 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           myApplyCommand = new Runnable() {
             @Override
             public void run() {
-              final List<HighlightInfo> insideInfos = new ArrayList<HighlightInfo>(gotHighlights.size());
-
               ProperTextRange range = new ProperTextRange(myStartOffset, myEndOffset);
 
+              List<HighlightInfo> toApply = new ArrayList<HighlightInfo>();
               for (HighlightInfo info : gotHighlights) {
                 if (!range.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
-                if (myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset())) {
-                  insideInfos.add(info);
-                }
-                else {
-                  toApplyOutside.add(info);
-                }
-              }
-
-              //toApply.addAll(injectedOutsideInfos);
-
-              /*
-              if (!insideInfos.isEmpty()) {
-                // some one has reported highlights inside range while running annotators for outside range - bad, bad annotator!
-                for (HighlightInfo info : insideInfos) {
+                if (!myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset())) {
                   toApply.add(info);
                 }
               }
-              */
+              toApply.addAll(injectionsOutside);
 
-              UpdateHighlightersUtil.setHighlightersOutsideRange(myProject, myDocument, toApplyOutside, getColorsScheme(),
-                                                                         myStartOffset, myEndOffset, myPriorityRange, Pass.UPDATE_ALL);
+              UpdateHighlightersUtil.setHighlightersOutsideRange(myProject, myDocument, toApply, getColorsScheme(),
+                                                                 myStartOffset, myEndOffset, myPriorityRange, Pass.UPDATE_ALL);
             }
           };
         }
@@ -349,6 +339,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           if (textRange.isEmpty()) continue;
           String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, textRange, null, desc, injectedAttributes);
+          info.fromInjection = true;
           outInfos.add(info);
         }
 
@@ -367,6 +358,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           final int startOffset = info.startOffset;
           final TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
           if (fixedTextRange == null) {
+            info.fromInjection = true;
             outInfos.add(info);
           }
           else {
@@ -374,6 +366,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                                 fixedTextRange.getStartOffset(), fixedTextRange.getEndOffset(),
                                 info.description, info.toolTip, info.type.getSeverity(null), info.isAfterEndOfLine, null, false);
+            patched.fromInjection = true;
             outInfos.add(patched);
           }
         }
@@ -449,6 +442,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           }
         }
       }
+      patched.fromInjection = true;
       out.add(patched);
     }
   }
@@ -509,7 +503,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       for(TextAttributesKey key:keys) {
         TextAttributes attrs2 = myGlobalScheme.getAttributes(key);
         if (attrs2 != null) {
-          attributes = attributes != null ? TextAttributes.merge(attributes, attrs2):attrs2;
+          attributes = attributes == null ? attrs2 : TextAttributes.merge(attributes, attrs2);
         }
       }
       TextAttributes forcedAttributes;
@@ -563,6 +557,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     final Runnable action = new Runnable() {
       public void run() {
+        //noinspection unchecked
         for (List<PsiElement> elements : new List[]{elements1, elements2}) {
           int nextLimit = chunkSize;
           for (int i = 0; i < elements.size(); i++) {
@@ -601,16 +596,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                 }
                 myErrorFound = true;
               }
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                public void run() {
-                  if (progress.isCanceled()) return;
-
-                  final EditorColorsScheme colorsScheme = getColorsScheme();
-                  UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, 0,
-                                                                             myDocument.getTextLength(),
-                                                                             info, colorsScheme, Pass.UPDATE_ALL, ranges2markersCache);
-                }
-              });
+              myTransferToEDTQueue.offer(Pair.create(info, progress));
             }
           }
           advanceProgress(elements.size() - (nextLimit-chunkSize));
@@ -621,6 +607,23 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     analyzeByVisitors(progress, visitors, action, 0);
   }
+
+  private final TransferToEDTQueue<Pair<HighlightInfo,ProgressIndicator>> myTransferToEDTQueue
+    = new TransferToEDTQueue<Pair<HighlightInfo,ProgressIndicator>>("Apply highlighting results", new Processor<Pair<HighlightInfo,ProgressIndicator>>() {
+    @Override
+    public boolean process(Pair<HighlightInfo,ProgressIndicator> pair) {
+      ProgressIndicator indicator = pair.getSecond();
+      if (indicator.isCanceled()) {
+        return false;
+      }
+      HighlightInfo info = pair.getFirst();
+      final EditorColorsScheme colorsScheme = getColorsScheme();
+      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, myStartOffset, myEndOffset,
+                                                                 info, colorsScheme, Pass.UPDATE_ALL, ranges2markersCache);
+
+      return true;
+    }
+  }, myProject.getDisposed(), 200);
 
   private void analyzeByVisitors(final ProgressIndicator progress, final HighlightVisitor[] visitors, final Runnable action, final int i) {
     if (i == visitors.length) {

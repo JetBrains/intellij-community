@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.openapi.editor.impl;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicLong;
  * Low-contention counter.
  * Repeated calls to {@link #next()} return numbers which are unique across all calling threads, and which are increasing over calls within one thread.
  */
-public class DistributedCounter {
+public class StripedIDGenerator {
   private static final int CHUNK_SIZE = 1000;
   private final AtomicLong nextChunkStart = new AtomicLong();
-  // must not ne static
+  // must not be static since we might want to have several instances of this class
   private final ThreadLocal<NextPair> localCounter = new ThreadLocal<NextPair>();
   private static class NextPair {
     long nextId;

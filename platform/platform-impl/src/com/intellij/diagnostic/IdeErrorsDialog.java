@@ -198,10 +198,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myCredentialsPane.setVisible(true);
       String userName = ErrorReportConfigurable.getInstance().ITN_LOGIN;
       if (StringUtil.isEmpty(userName)) {
-        myCredentialsLabel.setText("Submit report anonymously");
+        myCredentialsLabel.setText(DiagnosticBundle.message("diagnostic.error.report.submit.error.anonymously"));
       }
       else {
-        myCredentialsLabel.setText("Submit report as " + userName);
+        myCredentialsLabel.setText(DiagnosticBundle.message("diagnostic.error.report.submit.report.as", userName));
       }
     }
     else {
@@ -349,7 +349,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myMoreInfoPane);
     scrollPane.setPreferredSize(new Dimension(100, 50));
     final LabeledComponent<JScrollPane> labeledComponent =
-      LabeledComponent.create(scrollPane, "Additional information (steps to reproduce, what were you doing when the exception occurred):");
+      LabeledComponent.create(scrollPane, DiagnosticBundle.message("diagnostic.error.report.additional.info.label"));
     labeledComponent.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
     infoPanel.add(labeledComponent, BorderLayout.SOUTH);
 
@@ -370,14 +370,15 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     JPanel controlsPane = new JPanel(new BorderLayout());
 
     myCredentialsPane = Box.createHorizontalBox();
-    myCredentialsLabel = new JLabel("Submit report anonymously");
+    myCredentialsLabel = new JLabel(DiagnosticBundle.message("diagnostic.error.report.submit.error.anonymously"));
     myCredentialsPane.add(myCredentialsLabel);
     myCredentialsPane.add(Box.createHorizontalGlue());
-    JButton specifyCredentialsButton = new JButton("Use JetBrains Account");
+    JButton specifyCredentialsButton = new JButton(DiagnosticBundle.message("diagnostic.error.report.use.jetbrains.account.button.label"));
     specifyCredentialsButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         new JetBrainsAccountDialog(getRootPane()).show();
+        updateCredentialsPane();
       }
     });
     myCredentialsPane.add(specifyCredentialsButton);
@@ -528,7 +529,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class ShutdownAction extends AbstractAction {
     public ShutdownAction() {
-      super(ApplicationManager.getApplication().isRestartCapable() ? "Restart" : DiagnosticBundle.message("error.list.shutdown.action"));
+      super(ApplicationManager.getApplication().isRestartCapable() ? DiagnosticBundle.message("error.list.restart.action") : DiagnosticBundle.message("error.list.shutdown.action"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -715,6 +716,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     public AnalyzeAction(AnAction analyze) {
       super(analyze.getTemplatePresentation().getText());
+      putValue(Action.MNEMONIC_KEY, analyze.getTemplatePresentation().getMnemonic());
       myAnalyze = analyze;
     }
 
@@ -769,11 +771,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       PluginId pluginId = getSelectedPluginId();
       if (pluginId != null) {
         setEnabled(true);
-        putValue(NAME, "Disable " + PluginsFacade.INSTANCE.getPlugin(pluginId).getName());
+        putValue(NAME, DiagnosticBundle.message("error.list.disable.plugin.0", PluginsFacade.INSTANCE.getPlugin(pluginId).getName()));
       }
       else {
         setEnabled(false);
-        putValue(NAME, "Disable plugin");
+        putValue(NAME, DiagnosticBundle.message("error.list.disable.plugin"));
       }
     }
 

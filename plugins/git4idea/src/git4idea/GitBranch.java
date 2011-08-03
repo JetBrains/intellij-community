@@ -125,6 +125,11 @@ public class GitBranch extends GitReference {
    * @param project a project
    * @param root    vcs root
    * @return the current branch or null if there is no current branch or if specific commit has been checked out.
+   * @deprecated Prefer {@link git4idea.repo.GitRepository#getCurrentBranch()} that caches the current branch value,
+   *             and for updating reads it from disk instead of spawning a Git process.
+   *             Note however, that {@link git4idea.repo.GitRepository#getCurrentBranch()} is updated asynchronously.
+   *             If you need to be absolutely sure, that you've got the right value at the moment,
+   *             call {@link git4idea.repo.GitRepository#update(git4idea.repo.GitRepository.TrackedTopic...)} before querying.
    * @throws VcsException if there is a problem running git
    */
   @Nullable
@@ -134,7 +139,12 @@ public class GitBranch extends GitReference {
 
   /**
    * List branches for the git root as strings.
-   * @see #list(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile, boolean, boolean, java.util.Collection, String) 
+   * @deprecated Prefer {@link git4idea.repo.GitRepository#getBranches()} that caches branches,
+   *             and for updating reads them from disk instead of spawning a Git process.
+   *             Note however, that {@link git4idea.repo.GitRepository#getBranches()} is updated asynchronously.
+   *             If you need to be absolutely sure, that you've got the right value at the moment,
+   *             call {@link git4idea.repo.GitRepository#update(git4idea.repo.GitRepository.TrackedTopic...)} before querying.
+   * @see #list(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile, boolean, boolean, java.util.Collection, String)
    */
   @Nullable
   public static GitBranch listAsStrings(final Project project, final VirtualFile root, final boolean remote, final boolean local,
@@ -149,6 +159,11 @@ public class GitBranch extends GitReference {
 
   /**
    * List branches in the repository. Supply a Collection to this method, and it will be filled by branches.
+   * @deprecated Prefer {@link git4idea.repo.GitRepository#getBranches()} that caches branches,
+   *             and for updating reads them from disk instead of spawning a Git process.
+   *             Note however, that {@link git4idea.repo.GitRepository#getBranches()} is updated asynchronously.
+   *             If you need to be absolutely sure, that you've got the right value at the moment,
+   *             call {@link git4idea.repo.GitRepository#update(git4idea.repo.GitRepository.TrackedTopic...)} before querying.
    * @param project          the context project
    * @param root             the git root
    * @param localWanted      should local branches be collected.

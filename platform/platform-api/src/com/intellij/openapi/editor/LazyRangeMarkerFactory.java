@@ -188,7 +188,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
       offset = lineStart;
       int col = 0;
       while (offset < lineEnd && col < column) {
-        col += (docText.charAt(offset) == '\t' ? tabSize : 1);
+        col += docText.charAt(offset) == '\t' ? tabSize : 1;
         offset++;
       }
     }

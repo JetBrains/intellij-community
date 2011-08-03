@@ -125,15 +125,6 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
   }
 
   /**
-   * Asynchronously refreshes all {@link GitRepository GitRepositories}.
-   */
-  public void refreshAllRepositories() {
-    for (GitRepository repository : getRepositories()) {
-      repository.refresh();
-    }
-  }
-
-  /**
    * Synchronously updates the specified information about Git repository under the given root.
    * @param root   root directory of the Git repository.
    * @param topics TrackedTopics that are to be updated.

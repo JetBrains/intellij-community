@@ -190,7 +190,6 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     final JLabel nameLabel = new JLabel();
     nameLabel.setText(RefactoringBundle.message("changeSignature.name.prompt"));
     namePanel.add(nameLabel);
-    namePanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 0));
     namePanel.add(myNameField);
     nameLabel.setLabelFor(myNameField);
 

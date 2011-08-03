@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,16 @@ import java.awt.*;
  */
 public class ScreenUtil {
   private ScreenUtil() {
+  }
+  
+  public static Rectangle getScreenBounds() {
+    Rectangle screenBounds = new Rectangle();
+    final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    final GraphicsDevice[] devices = env.getScreenDevices();
+    for (final GraphicsDevice device : devices) {
+      screenBounds = screenBounds.union(device.getDefaultConfiguration().getBounds());
+    }
+    return screenBounds;
   }
 
   public static Rectangle getScreenRectangle(Point p) {

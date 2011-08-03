@@ -16,15 +16,23 @@
 
 package org.jetbrains.android.actions;
 
+import com.android.ide.common.resources.configuration.FolderConfiguration;
+import com.android.resources.ResourceFolderType;
 import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.android.uipreview.DeviceConfiguratorPanel;
+import org.jetbrains.android.uipreview.InvalidOptionValueException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Map;
 
@@ -41,9 +49,13 @@ public abstract class CreateResourceDialog extends DialogWrapper {
   private JPanel myPanel;
   private JLabel myUpDownHint;
   private JLabel myResTypeLabel;
+  private JPanel myDeviceConfiguratorWrapper;
+  private JBLabel myErrorLabel;
+  private JTextField myDirectoryNameTextField;
   private InputValidator myValidator;
 
   private final Map<String, CreateTypedResourceFileAction> myResType2ActionMap = new HashMap<String, CreateTypedResourceFileAction>();
+  private final DeviceConfiguratorPanel myDeviceConfiguratorPanel;
 
   public CreateResourceDialog(Project project, Collection<CreateTypedResourceFileAction> actions, CreateTypedResourceFileAction selected) {
     super(project);
@@ -57,16 +69,59 @@ public abstract class CreateResourceDialog extends DialogWrapper {
       myResType2ActionMap.put(resType, action);
       myResourceTypeCombo.addItem(action.toString(), null, resType);
     }
+
+    myDeviceConfiguratorPanel = new DeviceConfiguratorPanel(null) {
+      @Override
+      public void applyEditors() {
+        try {
+          doApplyEditors();
+          final FolderConfiguration config = myDeviceConfiguratorPanel.getConfiguration();
+          final CreateTypedResourceFileAction selectedAction = getSelectedAction();
+          myErrorLabel.setText("");
+          myDirectoryNameTextField.setText("");
+          if (selectedAction != null) {
+            final String resTypeStr = selectedAction.getResourceType();
+            if (resTypeStr != null) {
+              final ResourceFolderType resFolderType = ResourceFolderType.getTypeByName(resTypeStr);
+              if (resFolderType != null) {
+                myDirectoryNameTextField.setText(config.getFolderName(resFolderType));
+              }
+            }
+          }
+        }
+        catch (InvalidOptionValueException e) {
+          myErrorLabel.setText("<html><body><font color=\"red\">" + e.getMessage() + "</font></body></html>");
+          myDirectoryNameTextField.setText("");
+        }
+        setOKActionEnabled(myDirectoryNameTextField.getText().length() > 0);
+      }
+    };
+
+    myResourceTypeCombo.getComboBox().addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myDeviceConfiguratorPanel.applyEditors();
+      }
+    });
+
+    myDeviceConfiguratorPanel.updateAll();
+    myDeviceConfiguratorWrapper.add(myDeviceConfiguratorPanel, BorderLayout.CENTER);
+    setOKActionEnabled(myDirectoryNameTextField.getText().length() > 0);
+
     init();
   }
 
-  protected abstract InputValidator createValidator(@NotNull String resourceType);
+  protected abstract InputValidator createValidator(@NotNull String subdirName);
 
   @Override
   protected void doOKAction() {
     String fileName = myFileNameField.getText();
     assert getSelectedAction() != null;
-    myValidator = createValidator(getSelectedAction().getResourceType());
+
+    final String subdirName = myDirectoryNameTextField.getText();
+    assert subdirName != null && subdirName.length() > 0;
+
+    myValidator = createValidator(subdirName);
     if (myValidator.checkInput(fileName) && myValidator.canClose(fileName)) {
       super.doOKAction();
     }

@@ -80,8 +80,9 @@ class LayoutDeviceManager {
     return null;
   }
 
+  @NotNull
   public LayoutDevice addUserDevice(@NotNull String name, float xdpi, float ydpi) {
-    final LayoutDevice device = new LayoutDevice(name);
+    final LayoutDevice device = new LayoutDevice(name, LayoutDevice.Type.CUSTOM);
     device.setXDpi(xdpi);
     device.setYDpi(ydpi);
     myUserLayoutDevices.add(device);
@@ -95,12 +96,13 @@ class LayoutDeviceManager {
     }
   }
 
+  @NotNull
   public LayoutDevice replaceUserDevice(@NotNull LayoutDevice device, @NotNull String newName, float newXDpi, float newYDpi) {
     if (device.getName().equals(newName) && device.getXDpi() == newXDpi && device.getYDpi() == newYDpi) {
       return device;
     }
 
-    final LayoutDevice newDevice = new LayoutDevice(newName);
+    final LayoutDevice newDevice = new LayoutDevice(newName, LayoutDevice.Type.CUSTOM);
     newDevice.setXDpi(newXDpi);
     newDevice.setYDpi(newYDpi);
 
@@ -113,24 +115,28 @@ class LayoutDeviceManager {
     return newDevice;
   }
 
-  public void addUserConfiguration(@NotNull LayoutDevice device,
-                                   @NotNull String configurationName,
-                                   @NotNull FolderConfiguration configuration) {
+  @Nullable
+  public LayoutDeviceConfiguration addUserConfiguration(@NotNull LayoutDevice device,
+                                                        @NotNull String configurationName,
+                                                        @NotNull FolderConfiguration configuration) {
     if (myUserLayoutDevices.contains(device)) {
-      device.addConfig(configurationName, configuration);
+      return device.addConfig(configurationName, configuration);
     }
+    return null;
   }
 
-  public void replaceUserConfiguration(@NotNull LayoutDevice device,
-                                       @Nullable String oldConfigurationName,
-                                       @NotNull String newConfigurationName,
-                                       @NotNull FolderConfiguration configuration) {
+  @Nullable
+  public LayoutDeviceConfiguration replaceUserConfiguration(@NotNull LayoutDevice device,
+                                                            @Nullable String oldConfigurationName,
+                                                            @NotNull String newConfigurationName,
+                                                            @NotNull FolderConfiguration configuration) {
     if (myUserLayoutDevices.contains(device)) {
       if (oldConfigurationName != null && !oldConfigurationName.equals(newConfigurationName)) {
         device.removeConfig(oldConfigurationName);
       }
-      device.addConfig(newConfigurationName, configuration);
+      return device.addConfig(newConfigurationName, configuration);
     }
+    return null;
   }
 
   public void removeUserConfiguration(LayoutDevice device, String configName) {
@@ -161,10 +167,11 @@ class LayoutDeviceManager {
     loadDefaultLayoutDevices(sdk.getLocation());
 
     try {
+      myUserLayoutDevices.clear();
       final String userFolder = AndroidLocation.getFolder();
       final File deviceXmlFile = new File(userFolder, SdkConstants.FN_DEVICES_XML);
       if (deviceXmlFile.isFile()) {
-        parseLayoutDevices(deviceXmlFile, myUserLayoutDevices);
+        parseLayoutDevices(deviceXmlFile, myUserLayoutDevices, LayoutDevice.Type.CUSTOM);
       }
     }
     catch (AndroidLocationException e) {
@@ -173,7 +180,7 @@ class LayoutDeviceManager {
   }
 
   private void parseAddOnLayoutDevice(File deviceXml) {
-    parseLayoutDevices(deviceXml, myAddOnLayoutDevices);
+    parseLayoutDevices(deviceXml, myAddOnLayoutDevices, LayoutDevice.Type.ADD_ON);
   }
 
   private void sealAddonLayoutDevices() {
@@ -195,7 +202,7 @@ class LayoutDeviceManager {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private void parseLayoutDevices(File deviceXml, List<LayoutDevice> list) {
+  private void parseLayoutDevices(File deviceXml, List<LayoutDevice> list, LayoutDevice.Type deviceType) {
     try {
       final Source source = new StreamSource(new FileReader(deviceXml));
       final MyErrorHandler errorHandler = new MyErrorHandler();
@@ -203,7 +210,7 @@ class LayoutDeviceManager {
       validator.validate(source);
 
       if (!errorHandler.foundError()) {
-        final LayoutDeviceHandler handler = new LayoutDeviceHandler();
+        final LayoutDeviceHandler handler = new LayoutDeviceHandler(deviceType);
         final SAXParser parser = myParserFactory.newSAXParser();
         parser.parse(new InputSource(new FileInputStream(deviceXml)), handler);
         list.addAll(handler.getDevices());
@@ -240,7 +247,7 @@ class LayoutDeviceManager {
     if (toolsFolder.isDirectory()) {
       File deviceXml = new File(toolsFolder, SdkConstants.FN_DEVICES_XML);
       if (deviceXml.isFile()) {
-        parseLayoutDevices(deviceXml, devices);
+        parseLayoutDevices(deviceXml, devices, LayoutDevice.Type.PLATFORM);
       }
     }
     myDefaultLayoutDevices = Collections.unmodifiableList(devices);

@@ -39,6 +39,7 @@ import com.intellij.refactoring.ui.ClassNameReferenceEditor;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
@@ -155,6 +156,9 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   private void createUIComponents() {
+    myMainPanel = new JPanel();
+    myMainPanel.setBorder(IdeBorderFactory.createRoundedBorder());
+
     myWithBrowseButtonReference = createPackageChooser();
     myClassPackageChooser = createPackageChooser();
 
