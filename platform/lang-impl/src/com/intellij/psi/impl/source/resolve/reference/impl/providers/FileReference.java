@@ -144,7 +144,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
   protected ResolveResult[] innerResolve(boolean caseSensitive) {
     final String referenceText = getText();
-    if (referenceText.isEmpty()) {
+    if (referenceText.isEmpty() && myIndex == 0) {
       return new ResolveResult[] { new PsiElementResolveResult(getElement().getContainingFile())};
     }
     final Collection<PsiFileSystemItem> contexts = getContexts();
