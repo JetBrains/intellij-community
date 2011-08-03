@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +29,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
+import git4idea.config.GitVcsApplicationSettings;
+import git4idea.config.GitVersion;
+import git4idea.i18n.GitBundle;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
@@ -388,4 +392,24 @@ public class GithubUtil {
         }
       });
   }
+
+  public static boolean testGitExecutable(final Project project) {
+    final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
+    final String executable = settings.getPathToGit();
+    final GitVersion version;
+    try {
+      version = GitVersion.identifyVersion(executable);
+    } catch (Exception e) {
+      Messages.showErrorDialog(project, e.getMessage(), GitBundle.getString("find.git.error.title"));
+      return false;
+    }
+
+    if (!version.isSupported()) {
+      Messages.showWarningDialog(project, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
+                                 GitBundle.getString("find.git.success.title"));
+      return false;
+    }
+    return true;
+  }
+
 }

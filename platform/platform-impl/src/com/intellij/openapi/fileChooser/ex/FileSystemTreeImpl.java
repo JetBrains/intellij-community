@@ -462,15 +462,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
         final VirtualFile virtualFile = fileDescriptor.getFile();
         if (virtualFile != null) {
           if (myTreeBuilder.getTreeStructure().isToBuildChildrenInBackground(virtualFile)) {
-            virtualFile.refresh(true, false, new Runnable() {
-              @Override
-              public void run() {
-                if (myTreeBuilder.isDisposed()) return;
-                if (myTreeBuilder.getUi().getExpandedElements().contains(fileDescriptor)) {
-                  myTreeBuilder.queueUpdateFrom(new FileElement(virtualFile, virtualFile.getName()), false);
-                }
-              }
-            }, ModalityState.stateForComponent(myTree));
+            virtualFile.refresh(true, false, null, ModalityState.stateForComponent(myTree));
           } else {
             virtualFile.refresh(false, false, null, ModalityState.stateForComponent(myTree));
           }

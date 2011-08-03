@@ -41,7 +41,7 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
     final String name = ((PsiVariable)refElement).getName();
     if (name == null) return;
 
-    final SearchScope scope = refElement.getUseScope();
+    final SearchScope scope = p.getEffectiveSearchScope();
     if (!(scope instanceof LocalSearchScope)) return;
 
     PsiTreeUtil.processElements(new PsiElementProcessor() {

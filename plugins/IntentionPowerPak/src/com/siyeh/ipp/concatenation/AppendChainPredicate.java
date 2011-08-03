@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ class AppendChainPredicate implements PsiElementPredicate{
         if(!AppendUtil.isAppendCall(element)){
             return false;
         }
-	    final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
+        final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         final PsiExpression qualifier =
@@ -41,16 +41,16 @@ class AppendChainPredicate implements PsiElementPredicate{
         if(parent instanceof PsiExpressionStatement){
             return true;
         }
-	    final PsiElement grandParent = parent.getParent();
-	    if (parent instanceof PsiLocalVariable &&
+        final PsiElement grandParent = parent.getParent();
+        if (parent instanceof PsiLocalVariable &&
                 grandParent instanceof PsiDeclarationStatement) {
-		    final PsiDeclarationStatement declarationStatement =
-				    (PsiDeclarationStatement)grandParent;
-		    if (declarationStatement.getDeclaredElements().length == 1) {
-			    return true;
-		    }
-	    }
-	    return parent instanceof PsiAssignmentExpression &&
+            final PsiDeclarationStatement declarationStatement =
+                    (PsiDeclarationStatement)grandParent;
+            if (declarationStatement.getDeclaredElements().length == 1) {
+                return true;
+            }
+        }
+        return parent instanceof PsiAssignmentExpression &&
                 grandParent instanceof PsiExpressionStatement;
     }
 }

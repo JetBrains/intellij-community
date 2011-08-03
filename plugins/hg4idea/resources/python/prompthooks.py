@@ -176,8 +176,12 @@ def find_user_password(self, realm, authuri):
                 return self.readauthtoken(authuri)
         else:
             def read_hgrc_authtoken(ui, authuri):
-                # hg 1.8
-                from mercurial.url import readauthforuri
+                try:
+                    # hg 1.8
+                    from mercurial.url import readauthforuri
+                except ImportError:
+                    # hg 1.9: readauthforuri moved to httpconnection
+                    from mercurial.httpconnection import readauthforuri
                 res = readauthforuri(self.ui, authuri)
                 if res:
                     group, auth = res

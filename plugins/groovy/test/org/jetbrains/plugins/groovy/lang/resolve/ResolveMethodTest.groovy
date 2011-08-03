@@ -703,4 +703,8 @@ class Zoo {
     assertInstanceOf ref.resolve(), GrGdkMethod
   }
 
+  public void testCategory() {
+    assertNotNull resolve("a.groovy")
+  }
+
 }

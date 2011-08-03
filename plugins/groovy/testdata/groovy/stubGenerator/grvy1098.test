@@ -1,21 +1,21 @@
-class A {
+class Grvy1098 {
   static final def TEST
 }
 
-class B extends A {
+class B extends Grvy1098 {
   static final def TEST
 }
 -----
-public class A extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class Grvy1098 extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
 public static final java.lang.Object getTEST() {
 return null;
 }
 
-public groovy.lang.MetaClass getMetaClass() {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -23,23 +23,23 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 
 private static final java.lang.Object TEST = null;
 }
 ---
-public class B extends A implements groovy.lang.GroovyObject {
-public groovy.lang.MetaClass getMetaClass() {
+public class B extends Grvy1098 implements groovy.lang.GroovyObject {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -47,11 +47,11 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 

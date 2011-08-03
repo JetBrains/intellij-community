@@ -17,6 +17,7 @@ package org.intellij.lang.xpath.xslt.quickfix;
 
 import com.intellij.ide.DataManager;
 import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,10 +26,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.xslt.psi.XsltElement;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.jetbrains.annotations.NotNull;
 
 public class RenameVariableFix extends AbstractFix {
     private final XsltElement myElement;
@@ -49,10 +49,20 @@ public class RenameVariableFix extends AbstractFix {
         return myElement.isValid();
     }
 
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        RefactoringActionHandlerFactory.getInstance().createRenameHandler().invoke(project, new PsiElement[]{ myElement },
-                DataManager.getInstance().getDataContext());
+  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        RefactoringActionHandlerFactory.getInstance().createRenameHandler().invoke(project, new PsiElement[]{myElement},
+                                                                                   DataManager.getInstance().getDataContext());
+      }
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
     }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+    }
+  }
 
     protected boolean requiresEditor() {
         return false;

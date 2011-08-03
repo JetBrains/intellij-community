@@ -470,7 +470,16 @@ public abstract class BaseRefactoringProcessor {
       testRun();
     }
     else {
-      doRun();
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            doRun();
+          }
+        }, myProject.getDisposed());
+      } else {
+        doRun();
+      }
     }
   }
 

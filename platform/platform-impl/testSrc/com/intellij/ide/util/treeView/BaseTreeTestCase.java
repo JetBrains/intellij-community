@@ -107,7 +107,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       throw new Exception(myCancelRequest);
     }
 
-    if (myCancelRequest == null && !myReadyRequest) {
+    if (myCancelRequest == null && !myReadyRequest && !getBuilder().isDisposed()) {
       Assert.assertTrue(getBuilder().getUi().getNodeActions().isEmpty());
     }
 

@@ -58,6 +58,9 @@ public class PsiTypeLookupItem extends LookupItem {
     if (!braces.isEmpty()) {
       context.getDocument().insertString(tail, braces);
       editor.getCaretModel().moveToOffset(tail + 1);
+      if (context.getCompletionChar() == '[') {
+        context.setAddCompletionChar(false);
+      }
     } else {
       editor.getCaretModel().moveToOffset(tail);
     }

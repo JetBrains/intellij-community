@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.util.EventListener;
 
@@ -36,6 +37,8 @@ public abstract class CopyPasteManager {
   public abstract void addContentChangedListener(ContentChangedListener listener, Disposable parentDisposable);
 
   public abstract void removeContentChangedListener(ContentChangedListener listener);
+
+  public abstract boolean isDataFlavorAvailable(@NotNull DataFlavor flavor);
 
   public abstract Transferable getContents();
 

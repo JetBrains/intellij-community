@@ -30,9 +30,11 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -44,6 +46,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,14 +244,21 @@ public class CodeFormatterFacade {
   private void wrapLongLinesIfNecessary(@NotNull PsiFile file, @Nullable final Document document, final int startOffset,
                                         final int endOffset)
   {
-    if (!mySettings.WRAP_LONG_LINES || file.getViewProvider().isLockedByPsiOperations()) {
+    if (!mySettings.WRAP_LONG_LINES || file.getViewProvider().isLockedByPsiOperations() || document == null) {
+      return;
+    }
+
+    final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
+    if ((vFile == null || vFile instanceof LightVirtualFile) && !ApplicationManager.getApplication().isUnitTestMode()) {
+      // we assume that control flow reaches this place when the document is backed by a "virtual" file so any changes made by
+      // a formatter affect only PSI and it is out of sync with a document text
       return;
     }
 
     Editor editor = PsiUtilBase.findEditor(file);
     EditorFactory editorFactory = null;
     if (editor == null) {
-      if (document == null || !ApplicationManager.getApplication().isDispatchThread()) {
+      if (!ApplicationManager.getApplication().isDispatchThread()) {
         return;
       }
       editorFactory = EditorFactory.getInstance();
@@ -264,10 +274,8 @@ public class CodeFormatterFacade {
       });
     }
     finally {
-      if (document != null) {
-        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
-        if (documentManager.isUncommited(document)) documentManager.commitDocument(document);
-      }
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+      if (documentManager.isUncommited(document)) documentManager.commitDocument(document);
       if (editorFactory != null) {
         editorFactory.releaseEditor(editor);
       }

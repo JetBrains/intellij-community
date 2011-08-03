@@ -19,19 +19,17 @@ package com.intellij.xdebugger.breakpoints;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Collections;
 
 /**
  * Implement this class to support new type of line breakpoints. An implementation should be registered in a plugin.xml:
@@ -73,11 +71,6 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
   public String getDisplayText(final XLineBreakpoint<P> breakpoint) {
     return XDebuggerBundle.message("xbreakpoint.default.display.text", breakpoint.getLine() + 1, breakpoint.getPresentableFilePath());
-  }
-
-  @NotNull  
-  public Icon getDisabledDependentIcon() {
-    return DebuggerIcons.DISABLED_DEPENDENT_BREAKPOINT_ICON;
   }
 
   @NotNull

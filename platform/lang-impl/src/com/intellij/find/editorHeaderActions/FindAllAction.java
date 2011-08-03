@@ -51,7 +51,7 @@ public class FindAllAction extends EditorHeaderAction implements DumbAware {
       String text = getEditorSearchComponent().getTextInField();
       if (StringUtil.isEmpty(text)) return;
       realModel.setStringToFind(text);
-      FindUtil.findAll(project, editor, realModel);
+      FindUtil.findAllAndShow(project, editor, realModel);
     }
   }
 }

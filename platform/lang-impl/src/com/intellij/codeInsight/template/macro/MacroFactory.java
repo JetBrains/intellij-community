@@ -21,10 +21,13 @@ import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
-import java.util.Hashtable;
+import java.util.HashMap;
 
 public class MacroFactory {
-  private static Hashtable<String,Macro> myMacroTable = null;
+  private static HashMap<String,Macro> myMacroTable = null;
+
+  private MacroFactory() {
+  }
 
   public static Macro createMacro(@NonNls String name) {
     if(myMacroTable == null) {
@@ -44,13 +47,16 @@ public class MacroFactory {
   }
 
   private static void init() {
-    myMacroTable = new Hashtable<String, Macro>();
+    myMacroTable = new HashMap<String, Macro>();
 
     for(Macro macro: Extensions.getExtensions(Macro.EP_NAME)) {
-      register(macro);
+      myMacroTable.put(macro.getName(), macro);
     }
   }
 
+  /**
+   * @deprecated use com.intellij.liveTemplateMacro extension point instead
+   */
   public static void register(Macro macro) {
     if (myMacroTable == null) init();
     myMacroTable.put(macro.getName(), macro);

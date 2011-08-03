@@ -39,10 +39,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -62,6 +59,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -280,13 +278,21 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
           }
           writer.println("-sourcepath");
           final PathsList pathsList = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getSourcePathsList();
-          final String sourcePath = StringUtil.join(pathsList.getPathList(), new Function<String, String>() {
-            @Override
-            public String fun(String path) {
-              return FileUtil.toSystemIndependentName(path);
+          final List<VirtualFile> files = pathsList.getRootDirs();
+          final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+          final StringBuilder sourcePath = new StringBuilder();
+          boolean start = true;
+          for (VirtualFile file : files) {
+            if (!myGenerationOptions.isIncludeTestSource() && fileIndex.isInTestSourceContent(file)) continue;
+            if (start) {
+              start = false;
             }
-          }, File.pathSeparator);
-          writer.println(GeneralCommandLine.quote(sourcePath));
+            else {
+              sourcePath.append(File.pathSeparator);
+            }
+            sourcePath.append(file.getPath());
+          }
+          writer.println(GeneralCommandLine.quote(sourcePath.toString()));
         }
         finally {
           writer.close();

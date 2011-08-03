@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -471,14 +472,14 @@ public class CustomizableActionsPanel {
         else if (userObject instanceof String) {
           String actionId = (String)userObject;
           AnAction action = ActionManager.getInstance().getAction(actionId);
-          setText(action != null ? action.getTemplatePresentation().getText() : actionId);
+          String name = action != null ? action.getTemplatePresentation().getText() : null;
+          setText(!StringUtil.isEmptyOrSpaces(name) ? name : actionId);
           if (action != null) {
             Icon actionIcon = action.getTemplatePresentation().getIcon();
             if (actionIcon != null) {
               icon = actionIcon;
             }
           }
-
         }
         else if (userObject instanceof Pair) {
           String actionId = (String)((Pair)userObject).first;

@@ -21,6 +21,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -66,6 +67,11 @@ public class RandomAccessDataFile implements Forceable {
     }
   }
 
+  @NotNull
+  public File getFile() {
+    return myFile;
+  }
+
   public void put(long addr, byte[] bytes, int off, int len) {
     assertNotDisposed();
 
@@ -97,7 +103,7 @@ public class RandomAccessDataFile implements Forceable {
     ourCache.releaseChannel(myFile);
   }
 
-  private RandomAccessFile getFile() throws FileNotFoundException {
+  private RandomAccessFile getRandomAccessFile() throws FileNotFoundException {
     return ourCache.getChannel(myFile);
   }
 
@@ -166,7 +172,7 @@ public class RandomAccessDataFile implements Forceable {
     long res;
 
     try {
-      res = getFile().length();
+      res = getRandomAccessFile().length();
     }
     catch (IOException e) {
       return 0;
@@ -221,7 +227,7 @@ public class RandomAccessDataFile implements Forceable {
 
   void loadPage(final Page page) {
     try {
-      final RandomAccessFile file = getFile();
+      final RandomAccessFile file = getRandomAccessFile();
       try {
         synchronized (file) {
           seek(file, page.getOffset());
@@ -260,7 +266,7 @@ public class RandomAccessDataFile implements Forceable {
       length = (int)(mySize - fileOffset);
     }
 
-    final RandomAccessFile file = getFile();
+    final RandomAccessFile file = getRandomAccessFile();
     try {
       synchronized (file) {
         seek(file, fileOffset);

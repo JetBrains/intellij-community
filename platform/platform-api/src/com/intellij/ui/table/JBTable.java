@@ -191,6 +191,21 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         }
         super.paint(g);
       }
+
+      @Override
+      public String getToolTipText(final MouseEvent event) {
+        final TableModel model = getModel();
+        if (model instanceof SortableColumnModel) {
+          final int i = columnAtPoint(event.getPoint());
+          final int infoIndex = i >= 0 ? convertColumnIndexToModel(i) : -1;
+          final ColumnInfo[] columnInfos = ((SortableColumnModel)model).getColumnInfos();
+          final String tooltipText = infoIndex >= 0 && infoIndex < columnInfos.length ? columnInfos[infoIndex].getTooltipText() : null;
+          if (tooltipText != null) {
+            return tooltipText;
+          }
+        }
+        return super.getToolTipText(event);
+      }
     };
   }
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="<error>aba</error>">
+          package="aba">
     <<error>permission</error>/>
     <permission android:name="a"/>
     <application android:icon="@drawable/picture1">

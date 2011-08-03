@@ -487,21 +487,8 @@ public class NameUtil {
         return null;
       }
 
-      int nextStart = NameUtil.nextWord(name, nameIndex);
       if (isWordSeparator(name.charAt(nameIndex))) {
-        assert nextStart - nameIndex == 1 : "'" + name + "'" + nameIndex + " " + nextStart;
-        char p = myPattern[patternIndex];
-        if (isWordSeparator(p)) {
-          if (myOptions != MatchingCaseSensitivity.NONE &&
-              nameIndex == 0 && name.length() > 1 && patternIndex + 1 < myPattern.length &&
-              isWordSeparator(name.charAt(1)) && !isWordSeparator(myPattern[patternIndex + 1])) {
-            return null;
-          }
-
-          return matchName(name, patternIndex + 1, nextStart);
-        }
-
-        return matchName(name, patternIndex, nextStart);
+        return skipSeparators(name, patternIndex, nameIndex);
       }
 
       if (StringUtil.toLowerCase(name.charAt(nameIndex)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
@@ -511,14 +498,22 @@ public class NameUtil {
         return null;
       }
 
+      if (myOptions == MatchingCaseSensitivity.ALL && name.charAt(nameIndex) != myPattern[patternIndex]) {
+        return null;
+      }
+
+      int nextStart = NameUtil.nextWord(name, nameIndex);
+
       boolean uppers = isWordStart(myPattern[patternIndex]);
 
       int i = 1;
       while (true) {
         if (patternIndex + i == myPattern.length) {
+          //end of pattern reached, the last word matches
           return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
         }
         if (i + nameIndex == nextStart) {
+          //whole word match
           break;
         }
         char p = myPattern[patternIndex + i];
@@ -539,10 +534,12 @@ public class NameUtil {
       }
       // there's more in the pattern, but no more words
       if (nextStart == name.length()) {
-        if (patternIndex + i == myPattern.length - 1 &&
-            ' ' == myPattern[patternIndex + i] &&
-            (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length())) {
-          return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
+        if (patternIndex + i == myPattern.length - 1) {
+          char last = myPattern[patternIndex + i];
+          if (' ' == last && (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length()) ||
+              '*' == last) {
+            return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
+          }
         }
 
         return null;
@@ -562,6 +559,23 @@ public class NameUtil {
       return null;
     }
 
+    private FList<TextRange> skipSeparators(String name, int patternIndex, int nameIndex) {
+      int nextStart = NameUtil.nextWord(name, nameIndex);
+      assert nextStart - nameIndex == 1 : "'" + name + "'" + nameIndex + " " + nextStart;
+      char p = myPattern[patternIndex];
+      if (isWordSeparator(p)) {
+        if (myOptions != MatchingCaseSensitivity.NONE &&
+            nameIndex == 0 && name.length() > 1 && patternIndex + 1 < myPattern.length &&
+            isWordSeparator(name.charAt(1)) && !isWordSeparator(myPattern[patternIndex + 1])) {
+          return null;
+        }
+
+        return matchName(name, patternIndex + 1, nextStart);
+      }
+
+      return matchName(name, patternIndex, nextStart);
+    }
+
     @Nullable
     private FList<TextRange> skipChars(String name, int patternIndex, int nameIndex, boolean maySkipNextChar) {
       while ('*' == myPattern[patternIndex]) {
@@ -572,6 +586,7 @@ public class NameUtil {
       }
 
       String nextChar = String.valueOf(myPattern[patternIndex]);
+      boolean wordStart = isWordStart(myPattern[patternIndex]);
 
       int fromIndex = nameIndex;
       while (true) {
@@ -579,6 +594,11 @@ public class NameUtil {
         if (next < 0) {
           break;
         }
+        if (wordStart && next > 0 && next != nextWord(name, next - 1)) {
+          fromIndex = next + 1;
+          continue;
+        }
+
         FList<TextRange> ranges = matchName(name, patternIndex, next);
         if (ranges != null) {
           return ranges;

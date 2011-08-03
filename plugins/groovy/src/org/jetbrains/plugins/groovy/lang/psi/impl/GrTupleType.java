@@ -49,6 +49,12 @@ public class GrTupleType extends GrLiteralClassType {
   }
 
   @NotNull
+  @Override
+  public PsiClassType rawType() {
+    return new GrTupleType(RAW_PARAMETERS, myFacade, getResolveScope(), getLanguageLevel());
+  }
+
+  @NotNull
   public String getClassName() {
     return StringUtil.getShortName(getJavaClassName());
   }

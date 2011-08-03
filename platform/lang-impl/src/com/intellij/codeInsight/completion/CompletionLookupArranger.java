@@ -67,12 +67,15 @@ public class CompletionLookupArranger extends LookupArranger {
     final int count = Math.min(lookupImpl.getPreferredItemsCount(), lookupImpl.getList().getSelectedIndex());
     for (int i = 0; i < count; i++) {
       final LookupElement element = items.get(i);
-      StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, element, myLocation);
-      if (info != null && info != StatisticsInfo.EMPTY && manager.getUseCount(info) == 0) {
-        manager.incUseCount(new StatisticsInfo(composeContextWithValue(info), item == element ? SELECTED : IGNORED));
+      StatisticsInfo baseInfo = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, element, myLocation);
+      if (baseInfo != null && baseInfo != StatisticsInfo.EMPTY && manager.getUseCount(baseInfo) == 0) {
+        manager.incUseCount(new StatisticsInfo(composeContextWithValue(baseInfo), IGNORED));
       }
     }
-
+    StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, myLocation);
+    if (info != null && info != StatisticsInfo.EMPTY) {
+      manager.incUseCount(new StatisticsInfo(composeContextWithValue(info), SELECTED));
+    }
   }
 
   public int suggestPreselectedItem(List<LookupElement> sorted) {

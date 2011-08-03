@@ -1,14 +1,14 @@
-class b {
+class BExtends {
 }
-class a extends b {
+class AExtends extends BExtends {
 }
 -----
-public class b extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-public groovy.lang.MetaClass getMetaClass() {
+public class BExtends extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -16,22 +16,22 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 
 }
 ---
-public class a extends b implements groovy.lang.GroovyObject {
-public groovy.lang.MetaClass getMetaClass() {
+public class AExtends extends BExtends implements groovy.lang.GroovyObject {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -39,11 +39,11 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 

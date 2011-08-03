@@ -15,7 +15,6 @@
  */
 package com.intellij.uiDesigner;
 
-import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.PasteProvider;
@@ -40,8 +39,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -207,26 +204,25 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   @Nullable
   private static String getSerializedComponents() {
     try {
-      final CopyPasteManagerEx copyPasteManager = CopyPasteManagerEx.getInstanceEx();
+      final CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
       if (!copyPasteManager.isDataFlavorAvailable(ourDataFlavor)) {
         return null;
       }
+
       final Transferable content = copyPasteManager.getContents();
-      final Object transferData;
-      try {
-        transferData = content.getTransferData(ourDataFlavor);
-      } catch (UnsupportedFlavorException e) {
-        return null;
-      } catch (IOException e) {
+      if (content == null) {
         return null;
       }
 
+      final Object transferData = content.getTransferData(ourDataFlavor);
       if (!(transferData instanceof SerializedComponentData)) {
         return null;
       }
-      final SerializedComponentData dataProxy = (SerializedComponentData) transferData;
+
+      final SerializedComponentData dataProxy = (SerializedComponentData)transferData;
       return dataProxy.getSerializedComponents();
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       return null;
     }
   }

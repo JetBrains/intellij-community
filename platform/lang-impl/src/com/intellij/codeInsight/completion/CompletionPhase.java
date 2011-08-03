@@ -89,7 +89,6 @@ public abstract class CompletionPhase implements Disposable {
   }
   public static class BgCalculation extends CompletionPhase {
     boolean modifiersChanged = false;
-    volatile boolean focusLookupWhenDone = false;
 
     public BgCalculation(final CompletionProgressIndicator indicator) {
       super(indicator);
@@ -108,11 +107,9 @@ public abstract class CompletionPhase implements Disposable {
     }
   }
   public static class ItemsCalculated extends CompletionPhase {
-    public final boolean focusLookup;
 
-    public ItemsCalculated(CompletionProgressIndicator indicator, boolean focusLookup) {
+    public ItemsCalculated(CompletionProgressIndicator indicator) {
       super(indicator);
-      this.focusLookup = focusLookup;
     }
 
     @Override
@@ -322,7 +319,7 @@ public abstract class CompletionPhase implements Disposable {
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
       CompletionServiceImpl.setCompletionPhase(NoCompletion);
-      return time;
+      return time + 1;
     }
   }
 

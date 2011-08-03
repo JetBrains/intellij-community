@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,17 +36,17 @@ import java.beans.PropertyChangeListener;
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
   private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
+
   private DataContext myDataContext;
 
-  protected ComboBoxAction() {
-  }
+  protected ComboBoxAction() { }
 
-  public void actionPerformed(AnActionEvent e) {}
+  public void actionPerformed(AnActionEvent e) { }
 
   public JComponent createCustomComponent(Presentation presentation) {
-    JPanel panel=new JPanel(new GridBagLayout());
+    JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = new ComboBoxButton(presentation);
-    panel.add(button, new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,3,0,3),0,0));
+    panel.add(button, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 3, 0, 3), 0, 0));
     return panel;
   }
 
@@ -76,11 +78,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
+
       setModel(new MyButtonModel());
       setHorizontalAlignment(LEFT);
       setFocusable(false);
       Insets margins = getMargin();
       setMargin(new Insets(margins.top, 2, margins.bottom, 2));
+
       addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
@@ -106,7 +110,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       Runnable onDispose = new Runnable() {
         public void run() {
           // give button chance to handle action listener
-          SwingUtilities.invokeLater(new Runnable() {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
             public void run() {
               myForcePressed = false;
             }
@@ -120,19 +124,24 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       popup.showUnderneathOf(this);
     }
 
+    @Nullable
+    @Override
+    public String getToolTipText() {
+      return myForcePressed ? null : super.getToolTipText();
+    }
+
     protected ListPopup createPopup(Runnable onDispose) {
       DefaultActionGroup group = createPopupActionGroup(this);
 
-      DataContext context = myDataContext == null ? DataManager.getInstance().getDataContext() : myDataContext;
+      DataContext context = myDataContext == null ? DataManager.getInstance().getDataContext(this) : myDataContext;
       myDataContext = null;
-      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, context,
-                                                                                  JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
-                                                                                  onDispose,
-                                                                                  getMaxRows());
+      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+        null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, onDispose, getMaxRows());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
       return popup;
     }
 
+    @Override
     public void removeNotify() {
       if (myButtonSynchronizer != null) {
         myPresentation.removePropertyChangeListener(myButtonSynchronizer);
@@ -141,6 +150,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       super.removeNotify();
     }
 
+    @Override
     public void addNotify() {
       super.addNotify();
       if (myButtonSynchronizer == null) {
@@ -163,11 +173,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setToolTipText(tooltip.length() > 0 ? tooltip : null);
     }
 
+    @Override
     public void updateUI() {
       super.updateUI();
-      if(UIUtil.isMotifLookAndFeel()){
+      if (UIUtil.isMotifLookAndFeel()) {
         setBorder(BorderFactory.createEtchedBorder());
-      }else{
+      }
+      else if (!UIUtil.isUnderGTKLookAndFeel()) {
         setBorder(UIUtil.getButtonBorder());
       }
     }
@@ -202,7 +214,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
     }
 
-
     @Override
     public Insets getInsets() {
       final Insets insets = super.getInsets();
@@ -228,24 +239,21 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public Dimension getPreferredSize() {
-      int width = super.getPreferredSize().width;
-
-      final String text = getText();
-      if ((text == null || text.trim().length() == 0) && getIcon() == null) {
-        width = 10 + ARROW_ICON.getIconWidth();
-      }
-
+      final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
+      final int width = isEmpty ? 10 + ARROW_ICON.getIconWidth() : super.getPreferredSize().width;
       return new Dimension(width, UIUtil.isUnderNimbusLookAndFeel() ? 24 : 21);
     }
 
-    public final void paint(Graphics g) {
-      super.paint(g);
-      Dimension size = getSize();
-      String text = getText();
-      boolean isEmpty = getIcon() == null && (text == null || text.trim().length() == 0);
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+
+      final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
+      final Dimension size = getSize();
       final Insets insets = super.getInsets();
       final Icon icon = isEnabled() ? ARROW_ICON : DISABLED_ARROW_ICON;
-      int x = isEmpty ? (size.width - icon.getIconWidth())/2: size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
+      int x = isEmpty ? (size.width - icon.getIconWidth()) / 2
+                      : size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
       icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
     }
 

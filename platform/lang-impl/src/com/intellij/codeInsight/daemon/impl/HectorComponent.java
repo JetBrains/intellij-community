@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.plaf.basic.BasicSliderUI;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -82,6 +83,7 @@ public class HectorComponent extends JPanel {
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> languages = viewProvider.getLanguages();
     for (Language language : languages) {
+      @SuppressWarnings("UseOfObsoleteCollectionType")
       final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
       sliderLabels.put(1, new JLabel(EditorBundle.message("hector.none.slider.label")));
       sliderLabels.put(2, new JLabel(EditorBundle.message("hector.syntax.slider.label")));
@@ -90,9 +92,13 @@ public class HectorComponent extends JPanel {
       }
 
       final JSlider slider = new JSlider(SwingConstants.VERTICAL, 1, notInLibrary ? 3 : 2, 1);
+      if (UIUtil.isUnderGTKLookAndFeel()) {
+        // default GTK+ slider UI is way too ugly
+        slider.putClientProperty("Slider.paintThumbArrowShape", true);
+        slider.setUI(new BasicSliderUI(slider));
+      }
       slider.setLabelTable(sliderLabels);
-      final boolean value = true;
-      UIUtil.setSliderIsFilled(slider, value);
+      UIUtil.setSliderIsFilled(slider, true);
       slider.setPaintLabels(true);
       slider.setSnapToTicks(true);
       slider.addChangeListener(new ChangeListener() {
@@ -104,12 +110,12 @@ public class HectorComponent extends JPanel {
           }
         }
       });
+
       final PsiFile psiRoot = viewProvider.getPsi(language);
+      assert psiRoot != null : "No root in " + viewProvider + " for " + language;
       slider.setValue(getValue(HighlightLevelUtil.shouldHighlight(psiRoot), HighlightLevelUtil.shouldInspect(psiRoot)));
       mySliders.put(language, slider);
     }
-
-    final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
                                                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
@@ -249,6 +255,7 @@ public class HectorComponent extends JPanel {
     for (Language language : mySliders.keySet()) {
       JSlider slider = mySliders.get(language);
       PsiElement root = viewProvider.getPsi(language);
+      assert root != null : "No root in " + viewProvider + " for " + language;
       int value = slider.getValue();
       if (value == 1) {
         HighlightLevelUtil.forceRootHighlighting(root, FileHighlighingSetting.SKIP_HIGHLIGHTING);
@@ -269,7 +276,7 @@ public class HectorComponent extends JPanel {
     for (Language language : mySliders.keySet()) {
       JSlider slider = mySliders.get(language);
       final PsiFile root = viewProvider.getPsi(language);
-      if (getValue(HighlightLevelUtil.shouldHighlight(root), HighlightLevelUtil.shouldInspect(root)) != slider.getValue()) {
+      if (root != null && getValue(HighlightLevelUtil.shouldHighlight(root), HighlightLevelUtil.shouldInspect(root)) != slider.getValue()) {
         return true;
       }
     }

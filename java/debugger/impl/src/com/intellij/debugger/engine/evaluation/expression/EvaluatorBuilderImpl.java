@@ -938,17 +938,31 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (psiMethod != null) {
         // handle autoboxing
         final PsiParameter[] declaredParams = psiMethod.getParameterList().getParameters();
-        for (int i = 0, parametersLength = declaredParams.length; i < parametersLength; i++) {
-          if (i >= argExpressions.length) {
-            break; // actual arguments count is less than number of declared params 
-          }
-          final PsiType declaredParamType = declaredParams[i].getType();
-          PsiType substituted = resolveResult.getSubstitutor().substitute(declaredParamType);
-          final PsiType actualArgType = argExpressions[i].getType();
-          if (TypeConversionUtil.boxingConversionApplicable(substituted, actualArgType)) {
-            final Evaluator argEval = argumentEvaluators.get(i);
-            argumentEvaluators.set(i, substituted instanceof PsiPrimitiveType
-                                      ? new UnBoxingEvaluator(argEval) : new BoxingEvaluator(argEval));
+        if (declaredParams.length > 0) {
+          final int paramCount = Math.max(declaredParams.length, argExpressions.length);
+          PsiType varargType = null;
+          for (int idx = 0; idx < paramCount; idx++) {
+            if (idx >= argExpressions.length) {
+              break; // actual arguments count is less than number of declared params
+            }
+            PsiType declaredParamType;
+            if (idx < declaredParams.length) {
+              declaredParamType = resolveResult.getSubstitutor().substitute(declaredParams[idx].getType());
+              if (declaredParamType instanceof PsiEllipsisType) {
+                declaredParamType = varargType = ((PsiEllipsisType)declaredParamType).getComponentType();
+              }
+            }
+            else if (varargType != null) {
+              declaredParamType = varargType;
+            }
+            else {
+              break;
+            }
+            final PsiType actualArgType = argExpressions[idx].getType();
+            if (TypeConversionUtil.boxingConversionApplicable(declaredParamType, actualArgType)) {
+              final Evaluator argEval = argumentEvaluators.get(idx);
+              argumentEvaluators.set(idx, declaredParamType instanceof PsiPrimitiveType ? new UnBoxingEvaluator(argEval) : new BoxingEvaluator(argEval));
+            }
           }
         }
       }

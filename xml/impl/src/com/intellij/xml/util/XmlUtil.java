@@ -671,7 +671,7 @@ public class XmlUtil {
       return true;
     }
 
-    private boolean processXInclude(final boolean deepFlag, final boolean wideFlag, final XmlTag xincludeTag) {
+    private boolean processXInclude(final boolean deepFlag, final boolean wideFlag, @NotNull final XmlTag xincludeTag) {
 
       final PsiElement[] inclusion = CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, KEY_RESOLVED_XINCLUDE, new CachedValueProvider<PsiElement[]>() {
           public Result<PsiElement[]> compute() {

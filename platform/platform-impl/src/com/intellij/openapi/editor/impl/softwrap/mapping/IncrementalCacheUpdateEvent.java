@@ -16,6 +16,8 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,11 +96,19 @@ class IncrementalCacheUpdateEvent {
    * This method allows to do that, i.e. it's assumed that current cache update event will be used within the cache that is
    * bound to the given document and normalizes 'new offsets' if necessary when the document is really changed.
    * 
-   * @param document    document which change caused current cache update event construction
+   * @param document      document which change caused current cache update event construction
+   * @param foldingModel  fold model to use
    */
-  public void updateNewOffsetsIfNecessary(@NotNull Document document) {
+  public void updateNewOffsetsIfNecessary(@NotNull Document document, @NotNull FoldingModel foldingModel) {
     myNewStartOffset = getLineStartOffset(myNewExactStartOffset, document);
     myNewEndOffset = getLineEndOffset(myNewExactEndOffset, document);
+    for (
+      FoldRegion region = foldingModel.getCollapsedRegionAtOffset(myNewEndOffset);
+      region != null;
+      region = foldingModel.getCollapsedRegionAtOffset(myNewEndOffset))
+    {
+      myNewEndOffset = getLineEndOffset(region.getEndOffset(), document);
+    }
     myNewLogicalLinesDiff = document.getLineNumber(myNewExactEndOffset) - document.getLineNumber(myNewExactStartOffset);
   }
 

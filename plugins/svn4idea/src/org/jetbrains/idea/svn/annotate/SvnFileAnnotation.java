@@ -239,9 +239,9 @@ public class SvnFileAnnotation implements FileAnnotation {
     }
     final LineInfo info = myInfos.get(lineNumber);
     if (info == null) return null;
-    SvnFileRevision svnRevision = myRevisionMap.get(info.getRevision());
-    if (svnRevision != null) {
-      return svnRevision.getRevisionNumber();
+    final long revision = info.getRevision();
+    if (revision >= 0) {
+      return new SvnRevisionNumber(SVNRevision.create(revision));
     }
     return null;
   }
@@ -310,9 +310,10 @@ public class SvnFileAnnotation implements FileAnnotation {
     @Override
     protected void showAffectedPaths(int lineNum) {
       if (lineNum >= 0 && lineNum < myInfos.size()) {
-        SvnFileRevision svnRevision = myRevisionMap.get(getRevision(lineNum));
-        if (svnRevision != null) {
-          ShowAllAffectedGenericAction.showSubmittedFiles(myVcs.getProject(), svnRevision.getRevisionNumber(), myFile, myVcs.getKeyInstanceMethod());
+        final long revision = getRevision(lineNum);
+        if (revision >= 0) {
+          ShowAllAffectedGenericAction.showSubmittedFiles(myVcs.getProject(), new SvnRevisionNumber(SVNRevision.create(revision)),
+                                                          myFile, myVcs.getKeyInstanceMethod());
         }
       }
     }

@@ -17,6 +17,7 @@
 package com.intellij.openapi.paths;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
@@ -46,6 +47,9 @@ public class StaticPathReferenceProvider extends PathReferenceProviderBase {
                                   final @NotNull List<PsiReference> references,
                                   final boolean soft) {
 
+    if (StringUtil.isEmpty(text)) {
+      return true;
+    }
     FileReferenceSet set = new FileReferenceSet(text, psiElement, offset, null, true, myEndingSlashNotAllowed, mySuitableFileTypes) {
       protected boolean isUrlEncoded() {
         return true;

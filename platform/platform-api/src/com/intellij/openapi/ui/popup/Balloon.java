@@ -45,6 +45,8 @@ public interface Balloon extends Disposable {
 
   void hide();
 
+  void setAnimationEnabled(boolean enabled);
+
   boolean wasFadedIn();
   boolean wasFadedOut();
 

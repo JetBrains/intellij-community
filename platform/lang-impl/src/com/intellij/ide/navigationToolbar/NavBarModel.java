@@ -228,6 +228,7 @@ public class NavBarModel {
         final PsiElement parent = modelExtension.getParent(el);
         if (parent != null) {
           traverseToRoot(parent, roots, model);
+          break;
         }
       }
     }

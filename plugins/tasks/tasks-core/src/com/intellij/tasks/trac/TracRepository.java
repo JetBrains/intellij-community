@@ -21,7 +21,6 @@ import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.LocalTaskImpl;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.xmlrpc.CommonsXmlRpcTransport;
@@ -43,6 +42,7 @@ import java.util.*;
 public class TracRepository extends BaseRepositoryImpl {
 
   private String myDefaultSearch = "status!=closed&owner={username}&summary~={query}";
+  private Boolean myMaxSupported;
 
   @Override
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
@@ -52,28 +52,47 @@ public class TracRepository extends BaseRepositoryImpl {
 
   private Task[] getIssues(String query, int max, final Transport transport) throws Exception {
     final XmlRpcClient client = getRpcClient();
+
+    Vector<Object> result = null;
     String search = myDefaultSearch + "&max=" + max;
+    if (myMaxSupported == null) {
+      try {
+        result = runQuery(query, transport, client, search);
+        myMaxSupported = true;
+      }
+      catch (XmlRpcException e) {
+        if (e.getMessage().contains("Unknown column 't.max'")) {
+          myMaxSupported = false;
+        }
+        else throw e;
+      }
+    }
+    if (!myMaxSupported) {
+      search = myDefaultSearch;
+    }
+    if (result == null) {
+      result = runQuery(query, transport, client, search);
+    }
+
+    if (result == null) throw new Exception("Cannot connect to " + getUrl());
+
+    ArrayList<Task> tasks = new ArrayList<Task>(max);
+    int min = Math.min(max, result.size());
+    for (int i = 0; i < min; i++) {
+      Task task = getTask((Integer)result.get(i), client, transport);
+      ContainerUtil.addIfNotNull(tasks, task);
+    }
+    return tasks.toArray(new Task[tasks.size()]);
+  }
+
+  private Vector<Object> runQuery(String query, Transport transport, XmlRpcClient client, String search)
+    throws XmlRpcException, IOException {
     if (query != null) {
       search = search.replace("{query}", query);
     }
     search = search.replace("{username}", getUsername());
     XmlRpcRequest request = new XmlRpcRequest("ticket.query", new Vector<Object>(Arrays.asList(search)));
-    Vector<Object> result = (Vector<Object>)client.execute(request, transport);
-
-    if (result == null) throw new Exception("Cannot connect to " + getUrl());
-
-    List<Task> tasks = ContainerUtil.mapNotNull(result, new NullableFunction<Object, Task>() {
-      @Override
-      public Task fun(Object o) {
-        try {
-          return getTask((Integer)o, client, transport);
-        }
-        catch (Exception e) {
-          return null;
-        }
-      }
-    });
-    return tasks.toArray(new Task[tasks.size()]);
+    return (Vector<Object>)client.execute(request, transport);
   }
 
   private XmlRpcClient getRpcClient() throws MalformedURLException {

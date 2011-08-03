@@ -17,6 +17,9 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.RevealFileAction;
+import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -157,24 +160,24 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         
         List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), REVERSE_PATCH);
         PatchWriter.writePatches(myProject, fileName, patches);
+        final String message;
         if (binaryCount == 0) {
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-            public void run() {
-              Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.success.confirmation", file.getPath()),
-                                       VcsBundle.message("create.patch.commit.action.title"));
-            }
-          }, null, myProject);
+          message = VcsBundle.message("create.patch.success.confirmation", file.getPath());
         }
         else {
-          final int binaryCount1 = binaryCount;
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-            public void run() {
-              Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.partial.success.confirmation", file.getPath(),
-                                                                    binaryCount1),
-                                       VcsBundle.message("create.patch.commit.action.title"));
-            }
-          }, null, myProject);
+          message = VcsBundle.message("create.patch.partial.success.confirmation", file.getPath(),
+                                      binaryCount);
         }
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+          public void run() {
+            if (Messages.showDialog(myProject, message,
+                                    VcsBundle.message("create.patch.commit.action.title"),
+                                    new String[]{RevealFileAction.getActionName(), IdeBundle.message("action.close")},
+                                    0, Messages.getInformationIcon()) == 0) {
+              ShowFilePathAction.open(file, file);
+            }
+          }
+        }, null, myProject);
       }
       catch (final Exception ex) {
         LOG.info(ex);

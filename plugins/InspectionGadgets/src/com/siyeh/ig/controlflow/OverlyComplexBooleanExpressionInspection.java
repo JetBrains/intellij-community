@@ -17,12 +17,12 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractMethodFix;
-import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +90,7 @@ public class OverlyComplexBooleanExpressionInspection
         formatter.setParseIntegerOnly(true);
         m_termLimitTextField.setValue(Integer.valueOf(m_limit));
         m_termLimitTextField.setColumns(4);
-        FormattedTextFieldMacFix.apply(m_termLimitTextField);
+        UIUtil.fixFormattedField(m_termLimitTextField);
         final Document document = m_termLimitTextField.getDocument();
         document.addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {

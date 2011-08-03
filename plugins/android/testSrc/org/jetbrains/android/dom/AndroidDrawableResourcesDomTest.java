@@ -213,6 +213,26 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
     doTestCompletionVariants(getTestName(true) + ".xml", "gradient", "solid", "size", "stroke", "padding", "corners");
   }
 
+  public void testAnimationListHighlighting1() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testAnimationListHighlighting2() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testAnimationListCompletion1() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testAnimationListCompletion2() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testAnimationListCompletion3() throws Throwable {
+    doTestCompletion();
+  }
+
   public void testIncorrectRootTag() throws Throwable {
     doTestHighlighting();
   }

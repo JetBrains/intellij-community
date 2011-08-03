@@ -71,9 +71,6 @@ public class PropertyExpander {
               break;
             }
           }
-          if (propertyValueExpander.hasPropertiesToExpand()) {
-            propertyValueExpander.acceptProvider(provider);
-          }
         }
         final String propValue = propertyValueExpander.getResult();
         myResolver.replace(propValue);

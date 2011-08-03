@@ -35,28 +35,31 @@ public class ProperTextRange extends TextRange {
     assert range.getStartOffset() >= 0 : "Negative start offset: " + range;
   }
 
-  @NotNull
-  @Override
-  public TextRange cutOut(@NotNull TextRange subRange) {
-    TextRange range = super.cutOut(subRange);
-    assertProperRange(range);
-    return range;
+  public static void assertProperRange(@NotNull TextRange range, Object message) throws AssertionError {
+    assert range.getStartOffset() <= range.getEndOffset() : "Invalid range specified: " + range + "; "+message;
+    assert range.getStartOffset() >= 0 : "Negative start offset: " + range +  "; "+message;
   }
 
   @NotNull
   @Override
-  public TextRange shiftRight(int delta) {
-    TextRange range = super.shiftRight(delta);
-    assertProperRange(range);
-    return range;
+  public ProperTextRange cutOut(@NotNull TextRange subRange) {
+    assert subRange.getStartOffset() <= getLength() : subRange + "; this="+this;
+    assert subRange.getEndOffset() <= getLength() : subRange + "; this="+this;
+    return new ProperTextRange(getStartOffset() + subRange.getStartOffset(), Math.min(getEndOffset(), getStartOffset() + subRange.getEndOffset()));
   }
 
   @NotNull
   @Override
-  public TextRange grown(int lengthDelta) {
-    TextRange range = super.grown(lengthDelta);
-    assertProperRange(range);
-    return range;
+  public ProperTextRange shiftRight(int delta) {
+    if (delta == 0) return this;
+    return new ProperTextRange(getStartOffset() + delta, getEndOffset() + delta);
+  }
+
+  @NotNull
+  @Override
+  public ProperTextRange grown(int lengthDelta) {
+    if (lengthDelta == 0) return this;
+    return new ProperTextRange(getStartOffset(), getEndOffset() + lengthDelta);
   }
 
   @Override
@@ -78,5 +81,15 @@ public class ProperTextRange extends TextRange {
   @NotNull
   public static ProperTextRange create(@NotNull Segment segment) {
     return new ProperTextRange(segment.getStartOffset(), segment.getEndOffset());
+  }
+
+  @NotNull
+  public static ProperTextRange create(int startOffset, int endOffset) {
+    return new ProperTextRange(startOffset, endOffset);
+  }
+
+  @NotNull
+  public static ProperTextRange from(int offset, int length) {
+    return new ProperTextRange(offset, offset + length);
   }
 }

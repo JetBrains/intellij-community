@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -904,8 +905,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, POLY_RESOLVER, false, incomplete);
   }
 
-  public void processVariants(Consumer<Object> consumer) {
-    CompleteReferenceExpression.processVariants(consumer, this);
+  @Override
+  public void processVariants(PrefixMatcher matcher, Consumer<Object> consumer) {
+    CompleteReferenceExpression.processVariants(matcher, consumer, this);
   }
 
   @NotNull

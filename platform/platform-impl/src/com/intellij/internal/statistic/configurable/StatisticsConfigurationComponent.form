@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <font style="1"/>
-          <text value="Help improve IntelliJ IDEA by sending anonymous usage statistics to JetBrains"/>
+          <text value="Help improve our products by sending anonymous usage statistics to JetBrains"/>
         </properties>
       </component>
       <grid id="2f6db" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

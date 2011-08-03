@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -29,11 +30,13 @@ import java.util.List;
 
 public class MakeAppendChainIntoAppendSequenceIntention extends Intention {
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new AppendChainPredicate();
     }
 
+    @Override
     public void processIntention(PsiElement element)
             throws IncorrectOperationException {
         final PsiExpression call = (PsiExpression)element;
@@ -105,7 +108,9 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention {
         }
         builder.append('}');
         final PsiManager manager = element.getManager();
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        final Project project = manager.getProject();
+        final PsiElementFactory factory =
+                JavaPsiFacade.getElementFactory(project);
         final PsiElement appendStatementParent = appendStatement.getParent();
         final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
         final PsiCodeBlock codeBlock =

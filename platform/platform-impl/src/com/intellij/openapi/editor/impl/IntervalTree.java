@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: cdr
  */
-public interface IntervalTree<T extends Interval> extends Iterable<T> {
+public interface IntervalTree<T extends Interval> {
   boolean process(@NotNull Processor<? super T> processor);
   boolean processOverlappingWith(int start, int end, @NotNull Processor<? super T> processor);
   boolean processOverlappingWith(int offset, @NotNull Processor<? super T> processor);

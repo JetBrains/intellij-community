@@ -77,7 +77,6 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     catch (Throwable e) {
       LocalHistoryLog.LOG.warn("cannot create storage, in-memory  implementation will be used", e);
       storage = new InMemoryChangeListStorage();
-      ChangeListStorageImpl.notifyUser("Local History storage file cannot be created. In-memory storage will be used.");
     }
     myChangeList = new ChangeList(storage);
     myVcs = new LocalHistoryFacade(myChangeList);

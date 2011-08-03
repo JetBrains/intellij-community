@@ -11,7 +11,7 @@
 # ---------------------------------------------------------------------
 if [ -z "$IDEA_JDK" ]; then
   IDEA_JDK=$JDK_HOME
-  if [ -z "$IDEA_JDK" -a -e "$JAVA_HOME/lib/tools.jar" ]; then
+  if [ -z "$IDEA_JDK" -a -f "$JAVA_HOME/lib/tools.jar" ]; then
     IDEA_JDK=$JAVA_HOME
   fi
   if [ -z "$IDEA_JDK" ]; then
@@ -19,7 +19,7 @@ if [ -z "$IDEA_JDK" ]; then
     JAVA_BIN_PATH=`which java`
     if [ -n "$JAVA_BIN_PATH" ]; then
       JAVA_LOCATION=`readlink -f $JAVA_BIN_PATH | xargs dirname | xargs dirname | xargs dirname`
-      if [ -x "$JAVA_LOCATION/bin/java" -a -e "$JAVA_LOCATION/lib/tools.jar" ]; then
+      if [ -x "$JAVA_LOCATION/bin/java" -a -f "$JAVA_LOCATION/lib/tools.jar" ]; then
         IDEA_JDK=$JAVA_LOCATION
       fi
     fi

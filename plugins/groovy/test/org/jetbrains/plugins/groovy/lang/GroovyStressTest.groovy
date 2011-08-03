@@ -7,11 +7,12 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 
- /**
+/**
  * @author peter
  */
 class GroovyStressTest extends LightCodeInsightFixtureTestCase {
@@ -99,6 +100,33 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
       text = "foo$i { $text }"
     }
     myFixture.configureByText("a.groovy", text)
+    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
+  }
+
+  public void testDeeplyNestedClosuresInGenericCalls() {
+    String text = "println it"
+    for (i in 1..10) {
+      text = "foo(it) { $text }"
+    }
+    myFixture.configureByText("a.groovy", "def <T> foo(T t, Closure cl) {}\n" + text)
+    myFixture.enableInspections(new MissingReturnInspection())
+    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
+
+  }
+
+  public void testDeeplyNestedClosuresInGenericCalls2() {
+    String text = "println it"
+    for (i in 1..10) {
+      text = "foo(it) { $text }"
+    }
+    myFixture.configureByText("a.groovy", "def <T> foo(T t, Closure<T> cl) {}\n" + text)
+    myFixture.enableInspections(new MissingReturnInspection())
+    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
+
+  }
+
+  public void testManyAnnotatedScriptVariables() {
+    myFixture.configureByText("a.groovy", (0..100).collect { "@Anno String i$it = null" }.join("\n"))
     IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
   }
 

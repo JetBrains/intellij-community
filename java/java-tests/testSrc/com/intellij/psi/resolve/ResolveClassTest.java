@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
 
 public class ResolveClassTest extends ResolveTestCase {
@@ -152,6 +153,31 @@ public class ResolveClassTest extends ResolveTestCase {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertNull(target);
+  }
+
+  public void testStaticImportInTheSameClass() throws Exception {
+    PsiReference ref = configure();
+    long start = System.currentTimeMillis();
+    assertNull(ref.resolve());
+    PlatformTestUtil.assertTiming("exponent?", 20000, System.currentTimeMillis() - start);
+  }
+
+  public void testStaticImportNetwork() throws Exception {
+    PsiReference ref = configure();
+    int count = 20;
+
+    String imports = "";
+    for (int i = 0; i < count; i++) {
+      imports += "import static Foo" + i + ".*;\n";
+    }
+
+    for (int i = 0; i < count; i++) {
+      createFile(myModule, "Foo" + i + ".java", imports + "class Foo" + i + " extends Bar1, Bar2, Bar3 {}");
+    }
+
+    long start = System.currentTimeMillis();
+    assertNull(ref.resolve());
+    PlatformTestUtil.assertTiming("exponent?", 20000, System.currentTimeMillis() - start);
   }
 
   @SuppressWarnings({"ConstantConditions"})

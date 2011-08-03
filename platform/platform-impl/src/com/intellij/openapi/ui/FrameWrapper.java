@@ -31,6 +31,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -301,6 +302,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
 
       MouseGestureManager.getInstance().add(this);
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
     }
 
     @Override

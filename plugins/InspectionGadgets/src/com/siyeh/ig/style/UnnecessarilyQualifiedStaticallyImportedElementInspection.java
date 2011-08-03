@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -88,7 +89,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
                 PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
             final PsiElement qualifier = reference.getQualifier();
-            if (!(qualifier instanceof PsiReferenceExpression)) {
+            if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
                 return;
             }
             final PsiElement parent = reference.getParent();
@@ -103,8 +104,8 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
                 return;
             }
             final PsiMember member = (PsiMember) target;
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) qualifier;
+            final PsiJavaCodeReferenceElement referenceExpression =
+                    (PsiJavaCodeReferenceElement) qualifier;
             final PsiElement qualifierTarget = referenceExpression.resolve();
             if (!(qualifierTarget instanceof PsiClass)) {
                 return;
@@ -112,7 +113,53 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
             if (!ImportUtils.isStaticallyImported(member, reference)) {
                 return;
             }
+            if (!isReferenceCorrectWithoutQualifier(reference, member)) {
+                return;
+            }
             registerError(qualifier, member);
+        }
+
+        private static boolean isReferenceCorrectWithoutQualifier(
+                PsiJavaCodeReferenceElement reference, PsiMember member) {
+            final String referenceName = reference.getReferenceName();
+            if (referenceName == null) {
+                return false;
+            }
+            final Project project = reference.getProject();
+            final JavaPsiFacade psiFacade =
+                    JavaPsiFacade.getInstance(project);
+            final PsiResolveHelper resolveHelper =
+                    psiFacade.getResolveHelper();
+            if (member instanceof PsiMethod) {
+                final PsiElementFactory factory = psiFacade.getElementFactory();
+                final PsiExpression expression =
+                        factory.createExpressionFromText(referenceName + "()",
+                                reference);
+                final CandidateInfo[] methodCandidates =
+                        resolveHelper.getReferencedMethodCandidates(
+                                (PsiCallExpression) expression, false);
+                for (CandidateInfo methodCandidate : methodCandidates) {
+                    if (!(methodCandidate.getCurrentFileResolveScope()
+                            instanceof PsiImportStaticStatement)) {
+                        return false;
+                    }
+                }
+            } else if (member instanceof PsiField) {
+                final PsiVariable variable =
+                        resolveHelper.resolveAccessibleReferencedVariable(
+                                referenceName, reference);
+                if (!member.equals(variable)) {
+                    return false;
+                }
+            } else if (member instanceof PsiClass) {
+                final PsiClass aClass =
+                        resolveHelper.resolveReferencedClass(referenceName,
+                                reference);
+                if (!member.equals(aClass)) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

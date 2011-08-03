@@ -63,7 +63,8 @@ public class AndroidModulesComboBox extends JComboBox {
     final Module[] modules = moduleManager.getModules();
     List<Module> result = new ArrayList<Module>();
     for (Module module : modules) {
-      if (AndroidFacet.getInstance(module) != null) {
+      final AndroidFacet facet = AndroidFacet.getInstance(module);
+      if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
         result.add(module);
       }
     }

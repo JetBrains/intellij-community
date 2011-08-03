@@ -178,7 +178,7 @@ public class ShowFilePathAction extends AnAction {
   public static void open(final File ioFile, File toSelect) {
     try {
       if (SystemInfo.isWindows || SystemInfo.isMac) {
-        final String path = toSelect == null ? ioFile.getAbsolutePath() : toSelect.exists() ? toSelect.getAbsolutePath() : ioFile.getAbsolutePath();
+        final String path = toSelect == null ? ioFile.getCanonicalPath() : toSelect.exists() ? toSelect.getCanonicalPath() : ioFile.getCanonicalPath();
         final Runtime runtime = Runtime.getRuntime();
 
         String[] args;
@@ -191,7 +191,12 @@ public class ShowFilePathAction extends AnAction {
 
           args = new String[] {"osascript", "-e", script};
         } else {
-          args = new String[] {"explorer", String.format("/select,\"%s\"", path)};
+          if (path.indexOf(' ') >= 0) {
+            args = new String[]{"explorer", String.format("/select,\"%s\"", path.substring(0, path.indexOf(' '))), 
+              String.format("\"%s\"", path.substring(path.indexOf(' ') + 1))};
+          } else {
+            args = new String[]{"explorer", String.format("/select,\"%s\"", path)};
+          }
         }
 
         runtime.exec(args);
@@ -200,10 +205,10 @@ public class ShowFilePathAction extends AnAction {
         Desktop.getDesktop().open(ioFile);
       }
       else if (SystemInfo.isGnome) {
-        Runtime.getRuntime().exec(new String[]{"gnome-open", ioFile.getAbsolutePath()});
+        Runtime.getRuntime().exec(new String[]{"gnome-open", ioFile.getCanonicalPath()});
       }
       else if (SystemInfo.isKDE) {
-        Runtime.getRuntime().exec(new String[]{"kfmclient", "exec", ioFile.getAbsolutePath()});
+        Runtime.getRuntime().exec(new String[]{"kfmclient", "exec", ioFile.getCanonicalPath()});
       }
       else {
         Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");

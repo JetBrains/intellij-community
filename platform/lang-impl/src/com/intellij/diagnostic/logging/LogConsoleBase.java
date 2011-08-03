@@ -50,6 +50,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -73,6 +74,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private ActionGroup myActions;
   private final boolean myBuildInActions;
   private LogFilterModel myModel;
+
+  private final List<LogConsoleListener> myListeners = new ArrayList<LogConsoleListener>();
 
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
     public void filter() {
@@ -285,6 +288,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private void stopRunning(boolean checkActive) {
+    if (!checkActive) {
+      fireLoggingWillBeStopped();
+    }
+
     if (myReaderThread != null && myReaderThread.myReader != null) {
       if (!checkActive) {
         myReaderThread.stopRunning();
@@ -478,6 +485,16 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   public void writeToConsole(String text, Key outputType) {
     myProcessHandler.notifyTextAvailable(text, outputType);
+  }
+
+  public void addListener(LogConsoleListener listener) {
+    myListeners.add(listener);
+  }
+
+  private void fireLoggingWillBeStopped() {
+    for (LogConsoleListener listener : myListeners) {
+      listener.loggingWillBeStopped();
+    }
   }
 
   private static class LightProcessHandler extends ProcessHandler {

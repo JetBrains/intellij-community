@@ -454,6 +454,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
 
     final Boolean[] result = new Boolean[1];
     result[0] = false;
+    final ProgressIndicator finalProgressIndicator = progressIndicator;
     new GitUpdateLikeProcess(myProject) {
       @Override
       protected void runImpl(ContinuationContext context) {
@@ -462,7 +463,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
           saver.saveLocalChanges(rootsToReorder);
 
           try {
-            GitRebaser rebaser = new GitRebaser(myProject);
+            GitRebaser rebaser = new GitRebaser(myProject, finalProgressIndicator);
             for (Map.Entry<VirtualFile, List<String>> rootToCommits: rebaseInfo.reorderedCommits.entrySet()) {
               final VirtualFile root = rootToCommits.getKey();
               GitBranch b = GitBranch.current(myProject, root);

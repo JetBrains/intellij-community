@@ -21,6 +21,7 @@ package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RandomAccessDataFile;
 import gnu.trove.TIntArrayList;
@@ -30,6 +31,8 @@ import java.io.IOException;
 import java.text.MessageFormat;
 
 public abstract class AbstractRecordsTable implements Disposable, Forceable {
+  private static final Logger LOG = Logger.getInstance("com.intellij.util.io.storage.AbstractRecordsTable");
+
   private static final int HEADER_MAGIC_OFFSET = 0;
   private static final int HEADER_VERSION_OFFSET = 4;
   protected static final int DEFAULT_HEADER_SIZE = 8;
@@ -83,7 +86,8 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
 
     if (myFreeRecordsList.isEmpty()) {
       int result = getRecordsCount() + 1;
-      cleanRecord(result);
+      doCleanRecord(result);
+      LOG.assertTrue(getRecordsCount() == result, "Failed to correctly allocate new record in: " + myStorage.getFile());
       return result;
     }
     else {
@@ -119,7 +123,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     return result;
   }
 
-  private void cleanRecord(int record) {
+  private void doCleanRecord(int record) {
     myStorage.put(getOffset(record, 0), getZeros(), 0, getRecordSize());
   }
 
@@ -156,8 +160,9 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
   }
 
   public void deleteRecord(final int record) throws IOException {
+    markDirty();
     ensureFreeRecordsScanned();
-    cleanRecord(record);
+    doCleanRecord(record);
     setSize(record, -1);
     myFreeRecordsList.add(record);
   }

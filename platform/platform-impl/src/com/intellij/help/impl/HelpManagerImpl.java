@@ -49,6 +49,7 @@ public class HelpManagerImpl extends HelpManager {
         myHelpSet = createHelpSet();
       }
       catch (Exception ex) {
+        LOG.info("Failed to create help set", ex);
         // Ignore, will fallback to use web help
       }
     }
@@ -91,14 +92,18 @@ public class HelpManagerImpl extends HelpManager {
       for (IdeaPluginDescriptor pluginDescriptor : pluginDescriptors) {
         HelpSetPath[] sets = pluginDescriptor.getHelpSets();
         for (HelpSetPath hsPath : sets) {
-          URL hsURL =
-            new URL("jar:file:///" + pluginDescriptor.getPath().getAbsolutePath() + "/help/" + hsPath.getFile() + "!" + hsPath.getPath());
+          final String url = "jar:file:///" + pluginDescriptor.getPath().getAbsolutePath() + "/help/" + hsPath.getFile() +
+                             "!" + hsPath.getPath();
           try {
+            URL hsURL = new URL(url);
             HelpSet pluginHelpSet = new HelpSet(null, hsURL);
             helpSet.add(pluginHelpSet);
           }
           catch (HelpSetException e) {
             LOG.error(e);
+          }
+          catch (Exception e) {
+            LOG.info("Error adding plugin help url " + url, e);
           }
         }
       }
@@ -106,6 +111,7 @@ public class HelpManagerImpl extends HelpManager {
       return helpSet;
     }
     catch (Exception ee) {
+      LOG.info("Failed to create help set", ee);
       return null;
     }
   }

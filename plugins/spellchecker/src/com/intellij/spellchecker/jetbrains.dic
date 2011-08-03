@@ -225,6 +225,7 @@ nomaxvalue
 nominvalue
 nomonitoring
 nonatomic
+noninfingement
 nonschema
 noorder
 noparallel
@@ -281,6 +282,7 @@ progressbar
 readonly
 readwrite
 rect
+redistributions
 refactor
 refactored
 refactoring
@@ -340,6 +342,7 @@ startup
 stateful
 stmt
 stylesheet
+sublicense
 subpackage
 subpartition
 subpartitions
@@ -408,6 +411,7 @@ workflow
 wsdl
 xcode
 xcodeproj
+xhtml
 xmlschema
 xmlschemas
 xmltype

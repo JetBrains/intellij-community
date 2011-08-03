@@ -27,6 +27,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessAdapter;
@@ -35,6 +36,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -46,6 +48,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
+import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
 import org.jetbrains.android.sdk.AndroidSdkImpl;
@@ -105,6 +108,9 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   private volatile boolean myApplicationDeployed = false;
 
+  private ConsoleView myConsole;
+  private Runnable myRestarter;
+
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
   }
@@ -115,6 +121,10 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   public boolean isDebugMode() {
     return myDebugMode;
+  }
+
+  public void setRestarter(Runnable restarter) {
+    myRestarter = restarter;
   }
 
   private static void runInDispatchedThread(Runnable r, boolean blocking) {
@@ -144,6 +154,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     else {
       console = attachConsole();
     }
+    myConsole = console;
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         start();
@@ -357,14 +368,14 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
           chooseAvd();
         }
         if (myAvdName != null) {
-          myFacet.launchEmulator(myAvdName, myCommandLine);
+          myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
         }
         else if (getProcessHandler().isStartNotified()) {
           getProcessHandler().destroyProcess();
         }
       }
       else {
-        myFacet.launchEmulator(myAvdName, myCommandLine);
+        myFacet.launchEmulator(myAvdName, myCommandLine, getProcessHandler());
       }
     }
   }
@@ -552,8 +563,24 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   private boolean checkDdms() {
     AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
-    if (myDebugMode && bridge != null && AndroidUtils.isDdmsCorrupted(bridge)) {
+    if (myDebugMode && bridge != null && AndroidUtils.canDdmsBeCorrupted(bridge)) {
       message(AndroidBundle.message("ddms.corrupted.error"), STDERR);
+      if (myConsole != null && myRestarter != null) {
+        final Runnable r = myRestarter;
+        myConsole.printHyperlink(AndroidBundle.message("restart.adb.fix.text"), new HyperlinkInfo() {
+          @Override
+          public void navigate(Project project) {
+            AndroidEnableDdmsAction.setDdmsEnabled(project, false);
+            AndroidEnableDdmsAction.setDdmsEnabled(project, true);
+            final ProcessHandler processHandler = getProcessHandler();
+            if (!processHandler.isProcessTerminated()) {
+              processHandler.destroyProcess();
+            }
+            r.run();
+          }
+        });
+        myConsole.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
+      }
       return false;
     }
     return true;

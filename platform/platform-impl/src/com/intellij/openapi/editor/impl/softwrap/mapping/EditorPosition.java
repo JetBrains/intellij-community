@@ -95,6 +95,27 @@ class EditorPosition implements Cloneable {
     return new VisualPosition(visualLine, visualColumn);
   }
 
+  /**
+   * Asks current position to change its state assuming that it should point to the start of the next visual line.
+   * 
+   * @param softWrapAware     flag that indicates if state update should check if current visual line ends with soft wrap
+   */
+  public void onNewLine(boolean softWrapAware) {
+    if (!softWrapAware || myEditor.getSoftWrapModel().getSoftWrap(offset) == null) {
+      onNewLine();
+      return;
+    }
+    
+    softWrapLinesCurrent++;
+    softWrapColumnDiff = -logicalColumn - foldingColumnDiff;
+    visualLine++;
+    visualColumn = 0;
+    x = 0;
+  }
+
+  /**
+   * Similar as {@link #onNewLine(boolean)} with <code>'false'</code> argument.
+   */
   public void onNewLine() {
     softWrapLinesBefore += softWrapLinesCurrent;
     softWrapLinesCurrent = 0;

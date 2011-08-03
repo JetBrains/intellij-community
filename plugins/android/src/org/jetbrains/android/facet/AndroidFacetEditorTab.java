@@ -169,8 +169,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       public void actionPerformed(ActionEvent e) {
         boolean lib = myIsLibraryProjectCheckbox.isSelected();
         myAssetsFolderField.setEnabled(!lib);
-        myAidlGenPathField.setEnabled(!lib);
-        myGenerateIdlWhenChanged.setEnabled(!lib);
       }
     });
 
@@ -654,6 +652,9 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myResOverlayList.setModel(new CollectionListModel(items));
 
     updateAptPanel();
+
+    final boolean lib = myConfiguration.LIBRARY_PROJECT;
+    myAssetsFolderField.setEnabled(!lib);
   }
 
   @Nullable

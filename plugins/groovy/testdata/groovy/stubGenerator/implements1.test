@@ -1,17 +1,17 @@
-class A implements Comparable {
-   def int compare(A anotherA) {}
+class Implements1 implements Comparable {
+   def int compare(Implements1 anotherA) {}
 }
 -----
-public class A extends groovy.lang.GroovyObjectSupport implements java.lang.Comparable, groovy.lang.GroovyObject {
-public int compare(A anotherA) {
+public class Implements1 extends groovy.lang.GroovyObjectSupport implements java.lang.Comparable, groovy.lang.GroovyObject {
+public int compare(Implements1 anotherA) {
 return 0;
 }
 
-public groovy.lang.MetaClass getMetaClass() {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -19,11 +19,11 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 

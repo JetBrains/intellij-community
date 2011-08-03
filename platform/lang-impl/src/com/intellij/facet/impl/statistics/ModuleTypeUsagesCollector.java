@@ -21,11 +21,11 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
 
 public class ModuleTypeUsagesCollector extends AbstractApplicationUsagesCollector {
@@ -40,17 +40,15 @@ public class ModuleTypeUsagesCollector extends AbstractApplicationUsagesCollecto
 
   @NotNull
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
-    final Map<String, UsageDescriptor> type2descriptor = new HashMap<String, UsageDescriptor>();
+    Set<String> modulesTypes = new HashSet<String>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      String typeId = module.getModuleType().getId();
-      UsageDescriptor descriptor = type2descriptor.get(typeId);
-      if (descriptor != null) {
-        descriptor.setValue(descriptor.getValue() + 1);
-      }
-      else {
-        type2descriptor.put(typeId, new UsageDescriptor(typeId, 1));
-      }
+      modulesTypes.add(module.getModuleType().getId());
     }
-    return new HashSet<UsageDescriptor>(type2descriptor.values());
+    return ContainerUtil.map2Set(modulesTypes, new Function<String, UsageDescriptor>() {
+      @Override
+      public UsageDescriptor fun(String moduleType) {
+        return new UsageDescriptor(moduleType, 1);
+      }
+    });
   }
 }

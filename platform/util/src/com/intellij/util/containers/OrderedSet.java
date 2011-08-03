@@ -15,32 +15,27 @@
  */
 package com.intellij.util.containers;
 
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.util.*;
 
-public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
-  private final Set<T> myHashSet;
-  private final List<T> myElements;
+public class OrderedSet<T> extends AbstractList<T> implements Set<T>, RandomAccess {
+  private final OpenTHashSet<T> myHashSet;
+  private final ArrayList<T> myElements;
 
   public OrderedSet(TObjectHashingStrategy<T> hashingStrategy) {
-    myHashSet = new THashSet<T>(hashingStrategy);
+    myHashSet = new OpenTHashSet<T>(hashingStrategy);
     myElements = new ArrayList<T>();
   }
 
   public OrderedSet(TObjectHashingStrategy<T> hashingStrategy, int capacity) {
-    myHashSet = new THashSet<T>(capacity, hashingStrategy);
+    myHashSet = new OpenTHashSet<T>(capacity, hashingStrategy);
     myElements = new ArrayList<T>(capacity);
   }
 
   public OrderedSet() {
-    myHashSet = new THashSet<T>();
+    myHashSet = new OpenTHashSet<T>();
     myElements = new ArrayList<T>();
-  }
-
-  public Iterator<T> iterator() {
-    return new MyIterator();
   }
 
   public int size() {
@@ -93,25 +88,6 @@ public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
     }
   }
 
-  private class MyIterator implements Iterator<T> {
-    private final Iterator<T> myIterator = myElements.iterator();
-    private T myLastObject;
-
-    public boolean hasNext() {
-      return myIterator.hasNext();
-    }
-
-    public T next() {
-      return myLastObject = myIterator.next();
-    }
-
-    public void remove() {
-      myIterator.remove();
-      myHashSet.remove(myLastObject);
-    }
-  }
-
-
   public boolean addAll(final int index, final Collection<? extends T> c) {
     throw new UnsupportedOperationException();
   }
@@ -139,11 +115,13 @@ public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
   }
 
   public int indexOf(final Object o) {
-    return myElements.indexOf(o);
+    final int index = myHashSet.index((T)o);
+    return index >= 0? myElements.indexOf(myHashSet.get(index)) : -1;
   }
 
   public int lastIndexOf(final Object o) {
-    return myElements.lastIndexOf(o);
+    final int index = myHashSet.index((T)o);
+    return index >= 0 ? myElements.lastIndexOf(myHashSet.get(index)) : -1;
   }
 
   public ListIterator<T> listIterator() {
@@ -152,9 +130,5 @@ public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
 
   public ListIterator<T> listIterator(final int index) {
     return myElements.listIterator(index);
-  }
-
-  public List<T> subList(final int fromIndex, final int toIndex) {
-    return myElements.subList(fromIndex, toIndex);
   }
 }

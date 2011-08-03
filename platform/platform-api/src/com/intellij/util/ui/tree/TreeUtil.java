@@ -28,6 +28,7 @@ import com.intellij.util.Range;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTreeUI;
@@ -40,6 +41,7 @@ import java.util.List;
 
 public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
+  private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
 
   private TreeUtil() {}
 
@@ -539,8 +541,31 @@ public final class TreeUtil {
                   tree.scrollRectToVisible(b1);  
                 }
               });  
+              callback.setDone();
             } else {
               tree.scrollRectToVisible(b1);
+
+              Long ts = (Long)tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
+              if (ts == null) {
+                ts = new Long(0);
+              }
+              ts = ts.longValue() + 1;
+              tree.putClientProperty(TREE_UTIL_SCROLL_TIME_STAMP, ts);
+
+              final long targetValue = ts.longValue();
+
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  Long actual = (Long)tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
+                  if (actual == null || targetValue < actual.longValue()) return;
+
+                  if (!tree.getVisibleRect().contains(b1)) {
+                    tree.scrollRectToVisible(b1);
+                  }
+                  callback.setDone();
+                }
+              });
             }
           }
           callback.setDone();

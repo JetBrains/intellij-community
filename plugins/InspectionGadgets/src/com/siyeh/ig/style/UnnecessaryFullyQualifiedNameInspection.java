@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
     public String buildErrorString(Object... infos){
         final boolean inSameFile = ((Boolean) infos[0]).booleanValue();
         if (inSameFile) {
-            return InspectionGadgetsBundle.message("" +
+            return InspectionGadgetsBundle.message(
                     "unnecessary.fully.qualified.name.problem.descriptor2");
         }
         return InspectionGadgetsBundle.message(

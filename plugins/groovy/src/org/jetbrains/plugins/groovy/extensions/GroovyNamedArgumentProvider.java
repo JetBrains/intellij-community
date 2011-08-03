@@ -160,6 +160,12 @@ public abstract class GroovyNamedArgumentProvider {
       }
 
       @Override
+      public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+        if (element == myNavigationElement) return getElement();
+        return super.bindToElement(element);
+      }
+
+      @Override
       public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
         final PsiElement resolved = resolve();
 

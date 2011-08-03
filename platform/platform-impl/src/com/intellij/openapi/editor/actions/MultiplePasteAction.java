@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
@@ -71,7 +72,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       }
 
       protected void removeContentAt(final Transferable content) {
-        ((CopyPasteManagerEx)CopyPasteManager.getInstance()).removeContent(content);
+        CopyPasteManagerEx.getInstanceEx().removeContent(content);
       }
     };
 
@@ -79,12 +80,12 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       chooser.show();
     }
     else {
-      chooser.close(ContentChooser.CANCEL_EXIT_CODE);
+      chooser.close(DialogWrapper.CANCEL_EXIT_CODE);
     }
 
     if (chooser.isOK()) {
       final int selectedIndex = chooser.getSelectedIndex();
-      ((CopyPasteManagerEx)CopyPasteManager.getInstance()).moveContentTopStackTop(chooser.getAllContents().get(selectedIndex));
+      CopyPasteManagerEx.getInstanceEx().moveContentTopStackTop(chooser.getAllContents().get(selectedIndex));
 
       if (editor != null) {
           if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){

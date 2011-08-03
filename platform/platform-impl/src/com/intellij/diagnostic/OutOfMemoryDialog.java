@@ -18,6 +18,7 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.components.JBLabel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,13 +35,13 @@ public class OutOfMemoryDialog extends DialogWrapper {
   private JLabel myMessageLabel;
   private JTextField myHeapSizeField;
   private JTextField myPermGenSizeField;
-  private JLabel myHeapCurrentValueLabel;
-  private JLabel myPermGenCurrentValueLabel;
+  private JBLabel myHeapCurrentValueLabel;
+  private JBLabel myPermGenCurrentValueLabel;
   private JLabel myHeapSizeLabel;
   private JLabel myPermGenSizeLabel;
   private JLabel myHeapUnitsLabel;
   private JLabel myPermGenUnitsLabel;
-  private JLabel mySettingsFileHintLabel;
+  private JBLabel mySettingsFileHintLabel;
   private final Action myIgnoreAction;
   private final Action myShutdownAction;
 

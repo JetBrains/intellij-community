@@ -25,6 +25,9 @@ import com.android.sdklib.SdkManager;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.CommonBundle;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
@@ -318,7 +321,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return myAvdManager;
   }
 
-  public void launchEmulator(@Nullable final String avdName, @NotNull final String commands) {
+  public void launchEmulator(@Nullable final String avdName, @NotNull final String commands, @Nullable ProcessHandler handler) {
     AndroidPlatform platform = getConfiguration().getAndroidPlatform();
     if (platform != null) {
       final String emulatorPath = platform.getSdk().getLocation() + File.separator + AndroidUtils.toolPath(EMULATOR);
@@ -328,13 +331,16 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
         commandLine.addParameter("-avd");
         commandLine.addParameter(avdName);
       }
-      String[] params = commands.split("\\s+");
+      String[] params = ParametersList.parse(commands);
       for (String s : params) {
         if (s.length() > 0) {
           commandLine.addParameter(s);
         }
       }
-      AndroidUtils.runExternalToolInSeparateThread(getModule().getProject(), commandLine);
+      if (handler != null) {
+        handler.notifyTextAvailable(commandLine.getCommandLineString() + '\n', ProcessOutputTypes.STDOUT);
+      }
+      AndroidUtils.runExternalToolInSeparateThread(getModule().getProject(), commandLine, handler);
     }
   }
 

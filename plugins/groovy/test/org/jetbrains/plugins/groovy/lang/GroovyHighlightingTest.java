@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspe
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyLabeledStatementInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection;
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection;
@@ -406,4 +407,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testAnotherCurrying(){
     doTest(new GroovyAssignabilityCheckInspection());
   }
+
+  public void testDelegatedMethodIsImplemented() {
+    doTest();
+  }
+
 }

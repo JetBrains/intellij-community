@@ -39,6 +39,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("KEEP_SIMPLE_METHODS_IN_ONE_LINE", ApplicationBundle.message("wrapping.keep.simple.methods.in.one.line"), WRAPPING_KEEP);
     addOption("KEEP_SIMPLE_CLASSES_IN_ONE_LINE", ApplicationBundle.message("wrapping.keep.simple.classes.in.one.line"), WRAPPING_KEEP);
 
+    addOption("WRAP_LONG_LINES", ApplicationBundle.message("wrapping.long.lines"), null);
+
     addOption("CLASS_BRACE_STYLE", ApplicationBundle.message("wrapping.brace.placement.class.declaration"), WRAPPING_BRACES, BRACE_PLACEMENT_OPTIONS, BRACE_PLACEMENT_VALUES);
     addOption("METHOD_BRACE_STYLE", ApplicationBundle.message("wrapping.brace.placement.method.declaration"), WRAPPING_BRACES, BRACE_PLACEMENT_OPTIONS, BRACE_PLACEMENT_VALUES);
     addOption("BRACE_STYLE", ApplicationBundle.message("wrapping.brace.placement.other"), WRAPPING_BRACES, BRACE_PLACEMENT_OPTIONS, BRACE_PLACEMENT_VALUES);
@@ -126,6 +128,5 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("PARAMETER_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.parameters.annotation"), WRAP_OPTIONS, WRAP_VALUES);
     addOption("VARIABLE_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.local.variables.annotation"), WRAP_OPTIONS, WRAP_VALUES);
     addOption("ENUM_CONSTANTS_WRAP", ApplicationBundle.message("wrapping.enum.constants"), WRAP_OPTIONS, WRAP_VALUES);
-    addOption("WRAP_LONG_LINES", ApplicationBundle.message("wrapping.long.lines"), null);
   }
 }

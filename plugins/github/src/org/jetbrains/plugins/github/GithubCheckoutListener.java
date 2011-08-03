@@ -25,7 +25,7 @@ import java.util.Arrays;
 public class GithubCheckoutListener implements CheckoutListener {
   @Override
   public boolean processCheckedOutDirectory(Project project, File directory) {
-    return true;
+    return false;
   }
 
   @Override

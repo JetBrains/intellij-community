@@ -17,6 +17,7 @@
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +37,8 @@ public interface FrameworkSupportModel extends UserDataHolder {
   boolean isFrameworkSelected(@NotNull @NonNls String providerId);
 
   void addFrameworkListener(@NotNull FrameworkSupportModelListener listener);
+
+  void addFrameworkListener(@NotNull FrameworkSupportModelListener listener, @NotNull Disposable parentDisposable);
 
   void removeFrameworkListener(@NotNull FrameworkSupportModelListener listener);
 

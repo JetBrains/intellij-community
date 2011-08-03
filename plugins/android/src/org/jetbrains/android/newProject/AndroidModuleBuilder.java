@@ -239,7 +239,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
         @Override
         public void run() {
           final Project project = module.getProject();
-          AndroidUtils.runExternalTool(project, commandLine, true);
+          AndroidUtils.runExternalTool(project, commandLine, true, null);
 
           StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
             public void run() {
@@ -346,7 +346,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       }
 
       Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
-      properties.setProperty("TARGET", "android-" + platform.getTarget().getVersion().getApiString());
+      properties.setProperty("TARGET", platform.getTarget().hashString());
       AndroidFileTemplateProvider.createFromTemplate(project, contentRoot, "default.properties", FN_DEFAULT_PROPERTIES, properties);
     }
     catch (Exception e) {

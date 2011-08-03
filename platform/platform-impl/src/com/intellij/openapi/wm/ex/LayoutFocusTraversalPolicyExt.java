@@ -125,6 +125,20 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
     return getComponentBeforeImpl(focusCycleRoot, aComponent);
   }
 
+  @Override
+  public Component getInitialComponent(JInternalFrame frame) {
+    if (myNoDefaultComponent) return null;
+
+    return super.getInitialComponent(frame);
+  }
+
+  @Override
+  public Component getInitialComponent(Window window) {
+    if (myNoDefaultComponent) return null;
+
+    return super.getInitialComponent(window);
+  }
+
   protected Component getComponentBeforeImpl(final Container focusCycleRoot, final Component aComponent) {
     return super.getComponentBefore(focusCycleRoot, aComponent);
   }

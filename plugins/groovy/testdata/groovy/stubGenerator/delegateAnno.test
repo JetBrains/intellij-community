@@ -16,11 +16,11 @@ public java.lang.Object foo() ;
 }
 ---
 public class Doo extends groovy.lang.GroovyObjectSupport implements java.io.Serializable, groovy.lang.GroovyObject {
-public groovy.lang.MetaClass getMetaClass() {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -28,11 +28,11 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 
@@ -55,11 +55,11 @@ public void run() {
 return ;
 }
 
-public groovy.lang.MetaClass getMetaClass() {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -67,11 +67,11 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 

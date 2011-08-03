@@ -41,4 +41,8 @@ public class UnusedMethodParameterTest extends InspectionTestCase {
   public void testEntryPointUnusedParameter() throws Exception {
     doTest("unusedMethodParameter/" + getTestName(true), myTool, true, true);
   }
+
+  public void testAppMainUnusedParams() throws Exception {
+    doTest();
+  }
 }

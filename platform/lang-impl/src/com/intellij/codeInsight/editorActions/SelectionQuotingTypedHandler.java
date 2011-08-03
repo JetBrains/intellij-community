@@ -17,17 +17,15 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public Result checkAutoPopup(char c, Project project, Editor editor, PsiFile psiFile) {
-    myReplacedTextRange = null;
     // TODO[oleg] provide adequate API not to use this hack
     // beforeCharTyped always works with removed selection
-    if(CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED &&
-      editor.getSelectionModel().hasSelection()
-       && isDelimiter(c)) {
+    if(CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED &&  editor.getSelectionModel().hasSelection() && isDelimiter(c)) {
       String selectedText = editor.getSelectionModel().getSelectedText();
-      if (selectedText.length() <= 1) {
+      if (selectedText.length() < 1) {
         return super.checkAutoPopup(c, project, editor, psiFile);
       }
-      if (isDelimiter(selectedText.charAt(0)) && selectedText.charAt(selectedText.length()-1) == getMatchingDelimiter(selectedText.charAt(0))) {
+      if (selectedText.length() > 1 && isDelimiter(selectedText.charAt(0)) &&
+          selectedText.charAt(selectedText.length()-1) == getMatchingDelimiter(selectedText.charAt(0))) {
         selectedText = selectedText.substring(1, selectedText.length()-1);
       }
       char c2 = getMatchingDelimiter(c);
@@ -40,7 +38,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
     return super.checkAutoPopup(c, project, editor, psiFile);
   }
 
-  private static char getMatchingDelimiter(char c) {
+  private static char getMatchingDelimiter(final char c) {
     char c2 = c;
     if (c == '(') c2 = ')';
     if (c == '[') c2 = ']';
@@ -49,14 +47,17 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
     return c2;
   }
 
-  private static boolean isDelimiter(char c) {
+  private static boolean isDelimiter(final char c) {
     return c == '(' || c == '{' || c == '[' || c == '<' || c == '"' || c == '\'';
   }
 
   public Result beforeCharTyped(final char charTyped, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
     // TODO[oleg] remove this hack when API changes
     if (myReplacedTextRange != null) {
-      editor.getSelectionModel().setSelection(myReplacedTextRange.getStartOffset(), myReplacedTextRange.getEndOffset());
+      if (myReplacedTextRange.getEndOffset() <= editor.getDocument().getTextLength()) {
+        editor.getSelectionModel().setSelection(myReplacedTextRange.getStartOffset(), myReplacedTextRange.getEndOffset());
+      }
+      myReplacedTextRange = null;
       return Result.STOP;
     }
     return Result.CONTINUE;

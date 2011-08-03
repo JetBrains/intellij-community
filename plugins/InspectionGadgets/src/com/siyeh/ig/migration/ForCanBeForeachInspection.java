@@ -1079,9 +1079,6 @@ public class ForCanBeForeachInspection extends BaseInspection{
             return false;
         }
         final PsiVariable variable = (PsiVariable)declaredElement;
-        if(variable == null){
-            return false;
-        }
         if(!TypeUtils.variableHasTypeOrSubtype(variable,
                 CommonClassNames.JAVA_UTIL_ITERATOR,
                 "java.util.ListIterator")){
@@ -1147,10 +1144,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
         if(calculateCallsToIteratorNext(iteratorName, body) != 1){
             return false;
         }
-        if(isIteratorRemoveCalled(iteratorName, body)){
-            return false;
-        }
-        if(isIteratorHasNextCalled(iteratorName, body)){
+        if(isIteratorMethodCalled(iteratorName, body)){
             return false;
         }
         return !VariableAccessUtils.variableIsReturned(variable, body) &&
@@ -1170,20 +1164,12 @@ public class ForCanBeForeachInspection extends BaseInspection{
         return visitor.getNumCallsToIteratorNext();
     }
 
-    private static boolean isIteratorRemoveCalled(String iteratorName,
+    private static boolean isIteratorMethodCalled(String iteratorName,
                                                   PsiStatement body){
-        final IteratorRemoveVisitor visitor =
-                new IteratorRemoveVisitor(iteratorName);
+        final IteratorMethodCallVisitor visitor =
+                new IteratorMethodCallVisitor(iteratorName);
         body.accept(visitor);
-        return visitor.isRemoveCalled();
-    }
-
-    private static boolean isIteratorHasNextCalled(String iteratorName,
-                                                   PsiStatement body){
-        final IteratorHasNextVisitor visitor =
-                new IteratorHasNextVisitor(iteratorName);
-        body.accept(visitor);
-        return visitor.isHasNextCalled();
+        return visitor.isMethodCalled();
     }
 
     private static boolean isHasNext(PsiExpression condition, String iterator){
@@ -1428,31 +1414,31 @@ public class ForCanBeForeachInspection extends BaseInspection{
         }
     }
 
-    private static class IteratorRemoveVisitor
+    private static class IteratorMethodCallVisitor
             extends JavaRecursiveElementVisitor{
-        private boolean removeCalled = false;
+        private boolean methodCalled = false;
         private final String iteratorName;
 
-        IteratorRemoveVisitor(String iteratorName){
+        IteratorMethodCallVisitor(String iteratorName){
             this.iteratorName = iteratorName;
         }
 
         @Override public void visitElement(@NotNull PsiElement element){
-            if(!removeCalled){
+            if(!methodCalled){
                 super.visitElement(element);
             }
         }
 
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
-            if(removeCalled){
+            if(methodCalled){
                 return;
             }
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String name = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.REMOVE.equals(name)){
+            if(HardcodedMethodConstants.NEXT.equals(name)){
                 return;
             }
             final PsiExpression qualifier =
@@ -1460,56 +1446,13 @@ public class ForCanBeForeachInspection extends BaseInspection{
             if(qualifier != null){
                 final String qualifierText = qualifier.getText();
                 if(iteratorName.equals(qualifierText)){
-                    removeCalled = true;
+                    methodCalled = true;
                 }
             }
         }
 
-        public boolean isRemoveCalled(){
-            return removeCalled;
-        }
-    }
-
-    private static class IteratorHasNextVisitor
-            extends JavaRecursiveElementVisitor{
-
-        private boolean hasNextCalled = false;
-        private final String iteratorName;
-
-        IteratorHasNextVisitor(String iteratorName){
-            this.iteratorName = iteratorName;
-        }
-
-        @Override public void visitElement(@NotNull PsiElement element){
-            if(!hasNextCalled){
-                super.visitElement(element);
-            }
-        }
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
-            if(hasNextCalled){
-                return;
-            }
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String name = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.HAS_NEXT.equals(name)){
-                return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if(qualifier != null){
-                final String qualifierText = qualifier.getText();
-                if(iteratorName.equals(qualifierText)){
-                    hasNextCalled = true;
-                }
-            }
-        }
-
-        public boolean isHasNextCalled(){
-            return hasNextCalled;
+        public boolean isMethodCalled(){
+            return methodCalled;
         }
     }
 

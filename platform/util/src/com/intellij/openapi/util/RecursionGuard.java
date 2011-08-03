@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -24,15 +25,28 @@ import java.util.List;
  *
  * @author peter
 */
-public interface RecursionGuard {
+public abstract class RecursionGuard {
+
+  /**
+   * See {@link #doPreventingRecursion(Object, boolean, Computable)} with memoization disabled
+   */
+  @SuppressWarnings("JavaDoc")
+  @Deprecated
+  @Nullable
+  public <T> T doPreventingRecursion(@NotNull Object key, Computable<T> computation) {
+    return doPreventingRecursion(key, false, computation);
+  }
 
   /**
    * @param key an id of the computation. Is stored internally to ensure that a recursive calls with the same key won't lead to endless recursion.
+   * @param memoize whether the result of the computation may me cached thread-locally until the last currently active doPreventingRecursion call
+   *                completes. May be used to speedup things when recursion re-entrance happens: otherwise nothing would be cached at all and
+   *                in some cases exponential performance may be observed.
    * @param computation a piece of code to compute.
    * @return the result of the computation or null if we're entering a computation with this key on this thread recursively,
    */
   @Nullable
-  <T> T doPreventingRecursion(Object key, Computable<T> computation);
+  public abstract <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation);
 
   /**
    * Used in pair with {@link com.intellij.openapi.util.RecursionGuard.StackStamp#mayCacheNow()} to ensure that cached are only the reliable values,
@@ -51,12 +65,12 @@ public interface RecursionGuard {
 
    * @return an object representing the current stack state, managed by {@link RecursionManager}
    */
-  StackStamp markStack();
+  public abstract StackStamp markStack();
 
   /**
    * @return the current thread-local stack of keys passed to {@link #doPreventingRecursion(Object, Computable)}
    */
-  List<Object> currentStack();
+  public abstract List<Object> currentStack();
 
   /**
    * Makes {@link com.intellij.openapi.util.RecursionGuard.StackStamp#mayCacheNow()} return false for all stamps created since a computation with
@@ -65,15 +79,21 @@ public interface RecursionGuard {
    * Used to prevent caching of results that are non-reliable NOT due to recursion prevention: for example, too deep recursion
    * ({@link #currentStack()} may help in determining the recursion depth)
    *
+   * Also disables thread-local memoization (see the second parameter of {@link #doPreventingRecursion(Object, boolean, Computable)}.
+   *
    * @param since the id of a computation whose result is safe to cache whilst for more nested ones it's not.
    */
-  void prohibitResultCaching(Object since);
+  public abstract void prohibitResultCaching(Object since);
 
-  interface StackStamp {
+  public interface StackStamp {
 
     /**
      * @return whether a computation that started at the moment of this {@link StackStamp} instance creation does not depend on any re-entrant recursive
-     * results. When such non-reliable results exist in the thread's call stack, returns false, otherwise true
+     * results. When such non-reliable results exist in the thread's call stack, returns false, otherwise true.
+     * If you use this with {@link RecursionGuard#doPreventingRecursion(Object, Computable)}, then the
+     * {@link com.intellij.openapi.util.RecursionGuard#markStack()}+{@link #mayCacheNow()} should be outside of recursion prevention call. Otherwise
+     * even the outer recursive computation result won't be cached.
+     *
      */
     boolean mayCacheNow();
   }

@@ -84,7 +84,8 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
                                   String name,
                                   @NotNull AndroidFacetConfiguration configuration,
                                   @Nullable Facet underlyingFacet) {
-    setupAndroidPlatformInNeccessary(module);
+    // DO NOT COMMIT MODULE-ROOT MODELS HERE!
+    // modules are not initialized yet, so some data may be lost
 
     return new AndroidFacet(module, name, configuration);
   }

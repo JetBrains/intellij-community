@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>FinalMethodInFinalClass.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'final' method in 'final' class</problem_class>
+    <description>Method declared &lt;code&gt;final&lt;/code&gt; in 'final' class #loc</description>
+  </problem>
+  
+</problems>

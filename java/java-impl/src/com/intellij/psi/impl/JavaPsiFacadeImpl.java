@@ -465,7 +465,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       Set<String> names = null;
       for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
         for (PsiFile file : dir.getFiles()) {
-          if (file instanceof PsiClassOwner) {
+          FileViewProvider viewProvider = file.getViewProvider();
+          if (file instanceof PsiClassOwner && file == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
             final Set<String> inFile;
             if (file instanceof PsiClassOwnerEx) {
               inFile = ((PsiClassOwnerEx)file).getClassNames();

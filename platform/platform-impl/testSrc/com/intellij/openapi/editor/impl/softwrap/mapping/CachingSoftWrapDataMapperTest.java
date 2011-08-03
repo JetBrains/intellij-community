@@ -111,9 +111,7 @@ public class CachingSoftWrapDataMapperTest {
     
   @Before
   public void setUp() {
-    myMockery = new JUnit4Mockery() {{
-      setImposteriser(ClassImposteriser.INSTANCE);
-    }};
+    myMockery = new JUnit4Mockery();
 
     myEditor = myMockery.mock(EditorEx.class);
     myDocument = myMockery.mock(Document.class);
@@ -161,6 +159,12 @@ public class CachingSoftWrapDataMapperTest {
 
       // Soft wraps.
       allowing(myEditor).getSoftWrapModel(); will(returnValue(mySoftWrapModel));
+      allowing(mySoftWrapModel).getSoftWrap(with(any(int.class))); will(new CustomAction("getSoftWrap") {
+        @Override
+        public Object invoke(Invocation invocation) throws Throwable {
+          return getSoftWrap((Integer)invocation.getParameter(0));
+        }
+      });
 
       // Folding.
       allowing(myEditor).getFoldingModel();will(returnValue(myFoldingModel));
@@ -463,6 +467,11 @@ public class CachingSoftWrapDataMapperTest {
     }
   }
 
+  @Nullable
+  private SoftWrap getSoftWrap(int offset) {
+    return myStorage.getSoftWrap(offset);
+  }
+  
   @Nullable
   private FoldRegion getCollapsedFoldRegion(int offset) {
     for (FoldRegion region : myFoldRegions) {

@@ -1,8 +1,8 @@
-interface Foo {
+interface DefInInterface {
   def bar
 }
 -----
-public interface Foo {
+public interface DefInInterface {
 public static final java.lang.Object bar = null;
 }
 ---

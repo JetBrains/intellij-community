@@ -44,6 +44,12 @@ public class CvsElementComparator implements Comparator<DefaultMutableTreeNode> 
     } else if (!(node2 instanceof CvsElement)) {
       return -1;
     }
-    return ((CvsElement)node1).getName().compareToIgnoreCase(((CvsElement)node2).getName());
+    final String name1 = ((CvsElement)node1).getName();
+    final String name2 = ((CvsElement)node2).getName();
+    final int result = name1.compareToIgnoreCase(name2);
+    if (result != 0) {
+      return result;
+    }
+    return name1.compareTo(name2);
   }
 }

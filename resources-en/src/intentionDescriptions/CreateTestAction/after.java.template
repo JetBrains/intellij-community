@@ -1,0 +1,9 @@
+public class Foo {
+  public void doSomething() {
+  }
+}
+public class FooTest extends TestCase {
+  public void testDoSomething() {
+    <spot>//To change body of implemented methods use File | Settings | File Templates.</spot>
+  }
+}

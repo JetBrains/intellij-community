@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -41,8 +40,6 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.dialogs.SelectIgnorePatternsToRemoveOnDeleteDialog;
-import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -94,8 +91,6 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       myDst = dst;
     }
   }
-
-  private final Map<Project, Map<String, IgnoredFileInfo>> myIgnoredInfo = new HashMap<Project, Map<String, IgnoredFileInfo>>();
 
   private final List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
   private final List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
@@ -348,17 +343,10 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
         status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED ||
         status.getContentsStatus() == SVNStatusType.STATUS_MISSING ||
-        status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL) {
+        status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL ||
+        status.getContentsStatus() == SVNStatusType.STATUS_IGNORED) {
       return false;
-    } else if (status.getContentsStatus() == SVNStatusType.STATUS_IGNORED) {
-      if (vcs != null && file.getParent() != null) {
-        if (! isUndoOrRedo(vcs.getProject())) {
-          putIgnoreInfo(file, vcs, ioFile);
-        }
-      }
-      return false;
-    }
-    else if (status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
+    } else if (status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
       if (isUndo(vcs)) {
         moveToUndoStorage(file);
       }
@@ -382,29 +370,6 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         }
       }
       return false;
-    }
-  }
-
-  private void putIgnoreInfo(VirtualFile file, SvnVcs vcs, File ioFile) {
-    final String key = file.getParent().getPresentableUrl();
-    Map<String, IgnoredFileInfo> map = myIgnoredInfo.get(vcs.getProject());
-    if (map != null) {
-      final IgnoredFileInfo info = map.get(key);
-      if (info != null) {
-        info.addFileName(file.getName());
-        return;
-      }
-    }
-    final Set<String> existingPatterns = SvnPropertyService.getIgnoreStringsUnder(vcs, file.getParent());
-    if (existingPatterns != null) {
-      if (map == null) {
-        map = new HashMap<String, IgnoredFileInfo>();
-        myIgnoredInfo.put(vcs.getProject(), map);
-      }
-      final File parentIo = ioFile.getParentFile();
-      final IgnoredFileInfo info = new IgnoredFileInfo(parentIo, existingPatterns);
-      info.addFileName(file.getName());
-      map.put(key, info);
     }
   }
 
@@ -501,7 +466,6 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   void commandStarted(final Project project) {
     myUndoingMove = false;
     myMoveExceptions.remove(project);
-    myIgnoredInfo.remove(project);
   }
 
   public void commandFinished(CommandEvent event) {
@@ -524,60 +488,11 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       AbstractVcsHelper.getInstance(project).showErrors(exceptionList, SvnBundle.message("move.files.errors.title"));
     }
 
-    dealWithIgnorePatterns(project);
-
     if (!myFilesToRefresh.isEmpty()) {
       refreshFiles(project);
     }
   }
   
-  private void dealWithIgnorePatterns(Project project) {
-    final Map<String, IgnoredFileInfo> map = myIgnoredInfo.get(project);
-    if (map != null) {
-      final SvnVcs vcs = SvnVcs.getInstance(project);
-      final ProgressManager progressManager = ProgressManager.getInstance();
-      final Runnable prepare = new Runnable() {
-        public void run() {
-          for (Iterator<String> iterator = map.keySet().iterator(); iterator.hasNext();) {
-            final String key = iterator.next();
-            final IgnoredFileInfo info = map.get(key);
-            info.calculatePatterns(vcs);
-            if (info.getPatterns().isEmpty()) {
-              iterator.remove();
-            }
-          }
-        }
-      };
-      progressManager.runProcessWithProgressSynchronously(prepare, SvnBundle.message("gather.ignore.patterns.info.progress.title"), false, project);
-      if (map.isEmpty()) return;
-
-      final SelectIgnorePatternsToRemoveOnDeleteDialog dialog = new SelectIgnorePatternsToRemoveOnDeleteDialog(project, map);
-      dialog.show();
-      final Collection<IgnoredFileInfo> result = dialog.getResult();
-      if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE && ! result.isEmpty()) {
-        final List<VcsException> exceptions = new ArrayList<VcsException>(0);
-
-        final Runnable deletePatterns = new Runnable() {
-          public void run() {
-            for (IgnoredFileInfo info : result) {
-              try {
-                info.getOldPatterns().removeAll(info.getPatterns());
-                SvnPropertyService.setIgnores(vcs, info.getOldPatterns(), info.getFile());
-              }
-              catch (SVNException e) {
-                exceptions.add(new VcsException(e));
-              }
-            }
-          }
-        };
-        progressManager.runProcessWithProgressSynchronously(deletePatterns, "Removing selected 'svn:ignore' patterns", false, project);
-        if (! exceptions.isEmpty()) {
-          AbstractVcsHelper.getInstance(project).showErrors(exceptions, SvnBundle.message("remove.ignore.patterns.errors.title"));
-        }
-      }
-    }
-  }
-
   private void refreshFiles(final Project project) {
     final List<VirtualFile> toRefreshFiles = new ArrayList<VirtualFile>();
     final List<VirtualFile> toRefreshDirs = new ArrayList<VirtualFile>();

@@ -1,27 +1,27 @@
-class Foo {
-  def Foo(String... s) {}
+class Vararags {
+  def Vararags(String... s) {}
   def foo(String... s) {}
 }
 
-class Derived {
-  def Derived(String... s) {
+class DerivedVarargs {
+  def DerivedVarargs(String... s) {
     super(s)
   }
 }
 -----
-public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-public Foo(java.lang.String... s) {
+public class Vararags extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public Vararags(java.lang.String... s) {
 
 }
 public java.lang.Object foo(java.lang.String... s) {
 return null;
 }
 
-public groovy.lang.MetaClass getMetaClass() {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -29,25 +29,25 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 
 }
 ---
-public class Derived extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-public Derived(java.lang.String... s) {
+public class DerivedVarargs extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public DerivedVarargs(java.lang.String... s) {
 super();
 }
-public groovy.lang.MetaClass getMetaClass() {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -55,11 +55,11 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 

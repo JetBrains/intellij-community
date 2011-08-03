@@ -17,7 +17,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
@@ -51,6 +50,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
@@ -82,7 +82,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -313,15 +312,15 @@ public class FileBasedIndex implements ApplicationComponent {
       });
       //FileUtil.createIfDoesntExist(workInProgressFile);
       saveRegisteredIndices(myIndices.keySet());
-      myFlushingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+      myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
         int lastModCount = 0;
         public void run() {
-          if (lastModCount == myLocalModCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
-            flushAllIndices();
+          if (lastModCount == myLocalModCount) {
+            flushAllIndices(lastModCount);
           }
           lastModCount = myLocalModCount;
         }
-      }, 5000, 5000, TimeUnit.MILLISECONDS);
+      });
 
     }
   }
@@ -611,11 +610,14 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void flushAllIndices() {
+  private void flushAllIndices(final long modCount) {
+    if (HeavyProcessLatch.INSTANCE.isRunning()) {
+      return;
+    }
     IndexingStamp.flushCache();
     for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
-      if (HeavyProcessLatch.INSTANCE.isRunning()) {
-        return;
+      if (HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount) {
+        return; // do not interfere with 'main' jobs
       }
       try {
         final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
@@ -1923,7 +1925,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  public static void iterateIndexableFiles(final ContentIterator processor, Project project) {
+  public static void iterateIndexableFiles(final ContentIterator processor, Project project, ProgressIndicator indicator) {
     if (project.isDisposed()) {
       return;
     }
@@ -1934,7 +1936,6 @@ public class FileBasedIndex implements ApplicationComponent {
     if (project.isDisposed()) {
       return;
     }
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     Set<VirtualFile> visitedRoots = new HashSet<VirtualFile>();
     for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
@@ -1985,6 +1986,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private static void iterateRecursively(@Nullable final VirtualFile root, final ContentIterator processor, ProgressIndicator indicator) {
     if (root != null) {
       if (indicator != null) {
+        indicator.checkCanceled();
         indicator.setText2(root.getPresentableUrl());
       }
 
@@ -1997,7 +1999,8 @@ public class FileBasedIndex implements ApplicationComponent {
             processor.processFile(file);
           }
         }
-      } else {
+      }
+      else {
         processor.processFile(root);
       }
     }

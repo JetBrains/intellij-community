@@ -48,7 +48,7 @@ public class CacheUpdateSession {
         indicator.checkCanceled();
         try {
           jobsCount += each.getNumberOfPendingUpdateJobs();
-          List<VirtualFile> updaterFiles = Arrays.asList(each.queryNeededFiles());
+          List<VirtualFile> updaterFiles = Arrays.asList(each.queryNeededFiles(indicator));
           processedUpdaters.add(each);
           myFilesToUpdate.addAll(updaterFiles);
           myUpdatersWithFiles.add(Pair.create(each, (Collection<VirtualFile>)new THashSet<VirtualFile>(updaterFiles)));

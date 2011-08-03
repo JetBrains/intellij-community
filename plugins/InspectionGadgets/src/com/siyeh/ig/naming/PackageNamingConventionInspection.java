@@ -24,11 +24,11 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ui.RegExFormatter;
+import com.intellij.util.ui.RegExInputVerifier;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import com.siyeh.ig.RegExFormatter;
-import com.siyeh.ig.RegExInputVerifier;
-import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,13 +133,13 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
         minLengthField.setFont(panelFont);
         minLengthField.setValue(m_minLength);
         minLengthField.setColumns(2);
-        FormattedTextFieldMacFix.apply(minLengthField);
+        UIUtil.fixFormattedField(minLengthField);
 
         final JFormattedTextField maxLengthField = new JFormattedTextField(formatter);
         maxLengthField.setFont(panelFont);
         maxLengthField.setValue(m_maxLength);
         maxLengthField.setColumns(2);
-        FormattedTextFieldMacFix.apply(maxLengthField);
+        UIUtil.fixFormattedField(maxLengthField);
 
         final JFormattedTextField regexField = new JFormattedTextField(new RegExFormatter());
         regexField.setFont(panelFont);
@@ -147,7 +147,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
         regexField.setColumns(REGEX_COLUMN_COUNT);
         regexField.setInputVerifier(new RegExInputVerifier());
         regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
-        FormattedTextFieldMacFix.apply(regexField);
+        UIUtil.fixFormattedField(regexField);
         final DocumentListener listener = new DocumentAdapter() {
             public void textChanged(DocumentEvent e) {
                 try {

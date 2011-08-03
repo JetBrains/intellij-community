@@ -919,6 +919,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest '\n'
   }
 
+  public void testPrimitiveArrayWithRBrace() throws Throwable { doTest '[' }
+
   public void testSuggestMembersOfStaticallyImportedClasses() throws Exception {
     myFixture.addClass("""package foo;
     public class Foo {

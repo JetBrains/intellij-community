@@ -101,6 +101,7 @@
     </action>
     <action id="EditorIndentSelection">
       <keyboard-shortcut first-keystroke="shift alt RIGHT" />
+      <keyboard-shortcut first-keystroke="TAB"/>
     </action>
     <action id="EditorMoveToPageBottom">
       <keyboard-shortcut first-keystroke="shift alt PAGE_DOWN" />
@@ -120,6 +121,7 @@
     </action>
     <action id="EditorUnindentSelection">
       <keyboard-shortcut first-keystroke="shift alt LEFT" />
+      <keyboard-shortcut first-keystroke="shift TAB"/>
     </action>
     <action id="EvaluateExpression">
       <keyboard-shortcut first-keystroke="control F9" />

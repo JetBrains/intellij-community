@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.ex;
 
-import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -31,7 +30,7 @@ import java.util.Iterator;
 /**
  * @author max
  */
-public interface MarkupModelEx extends MarkupModel, Iterable<RangeHighlighterEx> {
+public interface MarkupModelEx extends MarkupModel {
   void dispose();
 
   RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
@@ -43,17 +42,18 @@ public interface MarkupModelEx extends MarkupModel, Iterable<RangeHighlighterEx>
   void setRangeHighlighterAttributes(@NotNull RangeHighlighter highlighter, TextAttributes textAttributes);
 
   boolean processHighlightsOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
+
   @NotNull
-  Iterator<RangeHighlighterEx> iteratorFrom(@NotNull Interval interval);
+  Iterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
   RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
-                                                          int endOffset,
-                                                          int layer,
-                                                          TextAttributes textAttributes,
-                                                          @NotNull HighlighterTargetArea targetArea,
-                                                          boolean isPersistent,
-                                                          Consumer<RangeHighlighterEx> changeAttributesAction);
+                                                            int endOffset,
+                                                            int layer,
+                                                            TextAttributes textAttributes,
+                                                            @NotNull HighlighterTargetArea targetArea,
+                                                            boolean isPersistent,
+                                                            Consumer<RangeHighlighterEx> changeAttributesAction);
 
   // runs change attributes action and fires highlighterChanged event if there were changes
   void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<RangeHighlighterEx> changeAttributesAction);

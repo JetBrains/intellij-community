@@ -40,7 +40,7 @@ public class GithubLoginDialog extends DialogWrapper {
 
   @Override
   protected String getHelpId() {
-    return "github";
+    return "login_to_github";
   }
 
   @Override

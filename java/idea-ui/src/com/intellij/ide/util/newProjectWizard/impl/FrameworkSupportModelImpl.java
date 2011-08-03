@@ -20,6 +20,7 @@ import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
@@ -63,6 +64,11 @@ public class FrameworkSupportModelImpl extends UserDataHolderBase implements Fra
 
   public void addFrameworkListener(@NotNull final FrameworkSupportModelListener listener) {
     myDispatcher.addListener(listener);
+  }
+
+  @Override
+  public void addFrameworkListener(@NotNull final FrameworkSupportModelListener listener, @NotNull Disposable parentDisposable) {
+    myDispatcher.addListener(listener, parentDisposable);
   }
 
   public void removeFrameworkListener(@NotNull final FrameworkSupportModelListener listener) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     return myClassLoader.doDefineClass(className, patchedData);
   }
 
-  private byte[] getVerifiedPatchedData(final AsmCodeGenerator codeGenerator) {
+  private static byte[] getVerifiedPatchedData(final AsmCodeGenerator codeGenerator) {
     byte[] patchedData = codeGenerator.getPatchedData();
     FormErrorInfo[] errors = codeGenerator.getErrors();
     FormErrorInfo[] warnings = codeGenerator.getWarnings();
@@ -303,9 +303,12 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   public void testMethodCallInSuper() throws Exception {
-    Class cls = loadAndPatchClass("TestMethodCallInSuper.form", "MethodCallInSuperTest");
-    JDialog instance = (JDialog) cls.newInstance();
-    assertEquals(1, instance.getContentPane().getComponentCount());
+    // todo[yole] make this test work in headless
+    if (!GraphicsEnvironment.isHeadless()) {
+      Class cls = loadAndPatchClass("TestMethodCallInSuper.form", "MethodCallInSuperTest");
+      JDialog instance = (JDialog) cls.newInstance();
+      assertEquals(1, instance.getContentPane().getComponentCount());
+    }
   }
 
   public void testClientProp() throws Exception {  // IDEA-46372
@@ -335,6 +338,7 @@ public class AsmCodeGeneratorTest extends TestCase {
 
     final Class mainClass = myClassLoader.doDefineClass("Main", mainPatchedData);
     Object instance = mainClass.newInstance();
+    assert instance != null : mainClass;
   }
 
   private static class MyClassLoader extends ClassLoader {

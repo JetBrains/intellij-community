@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
@@ -67,7 +68,7 @@ public class FocusTrackback {
   private boolean myForcedRestore;
 
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
-    this(requestor, parent instanceof Window ? (Window)parent : SwingUtilities.getWindowAncestor(parent), mustBeShown);
+    this(requestor, parent == null || parent instanceof Window ? (Window)parent : SwingUtilities.getWindowAncestor(parent), mustBeShown);
   }
 
   public FocusTrackback(@NotNull Object requestor, Window parent, boolean mustBeShown) {
@@ -90,6 +91,21 @@ public class FocusTrackback {
 
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     setLocalFocusOwner(manager.getPermanentFocusOwner());
+
+    final IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
+    if (myLocalFocusOwner == null && fm.isFocusBeingTransferred()) {
+      if (index > 0) {
+        int eachIndex = index - 1;
+        while (eachIndex > 0) {
+          final FocusTrackback each = stack.get(eachIndex);
+          if (!each.isConsumed() && each.myLocalFocusOwner != null) {
+            setLocalFocusOwner(each.myLocalFocusOwner);
+            break;
+          }
+          eachIndex--;
+        }
+      }
+    }
 
     if (index == 0) {
       setFocusOwner(manager.getPermanentFocusOwner());
@@ -193,9 +209,23 @@ public class FocusTrackback {
 
     if (project != null && !project.isDisposed()) {
       final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
+      cleanParentWindow();
+      final Project finalProject = project;
       focusManager.requestFocus(new MyFocusCommand(), myForcedRestore).doWhenProcessed(new Runnable() {
         public void run() {
           dispose();
+        }
+      }).doWhenRejected(new Runnable() {
+        @Override
+        public void run() {
+          focusManager.doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(finalProject) {
+            @Override
+            public void run() {
+              if (UIUtil.isMeaninglessFocusOwner(focusManager.getFocusOwner())) {
+                focusManager.requestDefaultFocus(false);
+              }
+            }
+          });
         }
       });
     }
@@ -211,13 +241,14 @@ public class FocusTrackback {
     }
   }
 
-  private void _restoreFocus() {
+  private ActionCallback _restoreFocus() {
     final List<FocusTrackback> stack = getCleanStack();
 
-    if (!stack.contains(this)) return;
+    if (!stack.contains(this)) return new ActionCallback.Rejected();
 
     Component toFocus = queryToFocus(stack, this, true);
 
+    final ActionCallback result = new ActionCallback();
     if (toFocus != null) {
       final Component ownerBySwing = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       if (ownerBySwing != null) {
@@ -231,14 +262,22 @@ public class FocusTrackback {
         final Window to = toFocus instanceof Window ? (Window) toFocus : SwingUtilities.getWindowAncestor(toFocus);
         if (to != null && UIUtil.findUltimateParent(to) == UIUtil.findUltimateParent(myParentWindow)) {  // IDEADEV-34537
           toFocus.requestFocus();
+          result.setDone();
         }
       } else {
         toFocus.requestFocus();
+        result.setDone();
       }
+    }
+
+    if (!result.isDone()) {
+      result.setRejected();
     }
 
     stack.remove(this);
     dispose();
+
+    return result;
   }
 
   private static Component queryToFocus(final List<FocusTrackback> stack, final FocusTrackback trackback, boolean mustBeLastInStack) {
@@ -248,7 +287,7 @@ public class FocusTrackback {
     if (trackback.myLocalFocusOwner != null) {
       toFocus = trackback.myLocalFocusOwner;
 
-      if (!toFocus.isShowing()) {
+      if (UIUtil.isMeaninglessFocusOwner(toFocus)) {
         toFocus = null;
       }
     }
@@ -488,17 +527,11 @@ public class FocusTrackback {
 
   private class MyFocusCommand extends FocusCommand {
     public ActionCallback run() {
-      _restoreFocus();
-      return new ActionCallback.Done();
-    }
-
-    @Override
-    public boolean isExpired() {
-      return isConsumed();
+      return _restoreFocus();
     }
 
     public String toString() {
-      return "focus trackback";
+      return "focus trackback requestor";
     }
   }
 }

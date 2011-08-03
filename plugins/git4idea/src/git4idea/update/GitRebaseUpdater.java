@@ -47,7 +47,7 @@ public class GitRebaseUpdater extends GitUpdater {
                           ProgressIndicator progressIndicator,
                           UpdatedFiles updatedFiles) {
     super(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
-    myRebaser = new GitRebaser(myProject);
+    myRebaser = new GitRebaser(myProject, myProgressIndicator);
   }
 
   @Override public boolean isSaveNeeded() {

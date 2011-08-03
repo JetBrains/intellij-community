@@ -488,8 +488,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private void flushNow() {
     final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
     myIdleRequests.clear();
-    for (Runnable each : all) {
-      flushRequest(each);
+    for (int i = 0; i < all.length; i++) {
+      flushRequest(all[i]);
+      if (isFocusBeingTransferred()) {
+        for (int j = i + 1; j < all.length; j++) {
+          myIdleRequests.add(all[j]);
+        }
+        break;
+      }
     }
   }
 
@@ -644,7 +650,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       result =  isFocusBeingTransferred() ? null : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     }
 
-    final boolean meaninglessOwner = result instanceof JFrame || result instanceof JDialog || result instanceof JWindow || result instanceof JRootPane;
+    final boolean meaninglessOwner = UIUtil.isMeaninglessFocusOwner(result);
     if ((result == null && !isFocusBeingTransferred()) || meaninglessOwner) {
       final Component permOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
       if (permOwner != null) {

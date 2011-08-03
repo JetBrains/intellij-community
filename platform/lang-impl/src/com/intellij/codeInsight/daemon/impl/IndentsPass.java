@@ -357,7 +357,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
       else {
         int startLine = line;
-        while (line < lineIndents.length && lineIndents[line] == -1) {
+        while (line < lineIndents.length && lineIndents[line] < 0) {
           //noinspection AssignmentToForLoopParameter
           line++;
         }

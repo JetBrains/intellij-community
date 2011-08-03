@@ -167,6 +167,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
           node.setParent(null);
           node.setLeft(null);
           node.setRight(null);
+          node.setValid(true);
           assert node.intervalStart() == startOffset;
           assert node.intervalEnd() == endOffset;
         }
@@ -176,13 +177,19 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
           if (keys.isEmpty()) continue; // collected away
 
           RangeMarkerImpl marker = null;
-          for (Getable<T> key : keys) {
+          for (int i = keys.size() - 1; i >= 0; i--) {
+            Getable<T> key = keys.get(i);
             marker = (RangeMarkerImpl)key.get();
-            if (marker != null) break;
+            if (marker != null) {
+              if (!marker.isValid()) {
+                // marker can become invalid on its own, e.g. FoldRegion
+                node.removeIntervalInternal(i);
+                continue;
+              }
+              break;
+            }
           }
-          if (marker == null) continue;
-          marker.setValid(true);
-          //marker.myNode = null;
+          if (marker == null) continue; // node remains removed from the tree
           marker.documentChanged(e);
           if (marker.isValid()) {
             RMNode insertedNode = (RMNode)findOrInsert(node);
@@ -196,6 +203,9 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
               }
             }
             assert marker.isValid();
+          }
+          else {
+            node.setValid(false);
           }
         }
       }

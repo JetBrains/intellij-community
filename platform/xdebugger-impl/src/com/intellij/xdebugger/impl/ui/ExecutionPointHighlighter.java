@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -41,16 +42,18 @@ public class ExecutionPointHighlighter {
   private XSourcePosition mySourcePosition;
   private OpenFileDescriptor myOpenFileDescriptor;
   private boolean myUseSelection;
+  private GutterIconRenderer myGutterIconRenderer;
 
   public ExecutionPointHighlighter(final Project project) {
     myProject = project;
   }
 
-  public void show(final @NotNull XSourcePosition position, final boolean useSelection) {
+  public void show(final @NotNull XSourcePosition position, final boolean useSelection,
+                   @Nullable final GutterIconRenderer gutterIconRenderer) {
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
         if (!myProject.isDisposed()) {
-          doShow(position, useSelection);
+          doShow(position, useSelection, gutterIconRenderer);
         }
       }
     });
@@ -76,16 +79,28 @@ public class ExecutionPointHighlighter {
   }
 
   public void update() {
-    show(mySourcePosition, myUseSelection);
+    show(mySourcePosition, myUseSelection, myGutterIconRenderer);
   }
 
-  private void doShow(@NotNull XSourcePosition position, final boolean useSelection) {
+  public void updateGutterIcon(@NotNull final GutterIconRenderer renderer) {
+    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+      @Override
+      public void run() {
+        if (myRangeHighlighter != null && myGutterIconRenderer != null) {
+          myRangeHighlighter.setGutterIconRenderer(renderer);
+        }
+      }
+    });
+  }
+
+  private void doShow(@NotNull XSourcePosition position, final boolean useSelection, @Nullable GutterIconRenderer renderer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     removeHighlighter();
 
     mySourcePosition = position;
     myEditor = openEditor();
     myUseSelection = useSelection;
+    myGutterIconRenderer = renderer;
     if (myEditor != null) {
       addHighlighter();
     }
@@ -137,5 +152,6 @@ public class ExecutionPointHighlighter {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     myRangeHighlighter = myEditor.getMarkupModel().addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
                                                                       scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES));
+    myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
   }
 }

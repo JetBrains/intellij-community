@@ -624,6 +624,12 @@ public class CommonCodeStyleSettings {
    */
   public boolean SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = false;
 
+  /**
+   * '@SuppressWarnings({"unchecked"})
+   * or
+   * '@SuppressWarnings( {"unchecked"})
+   */
+  public boolean SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = false;
 
   public boolean SPACE_BEFORE_ELSE_KEYWORD = true;
   public boolean SPACE_BEFORE_WHILE_KEYWORD = true;

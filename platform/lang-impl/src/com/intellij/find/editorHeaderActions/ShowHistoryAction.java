@@ -7,9 +7,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 /**
@@ -22,7 +20,7 @@ import java.util.ArrayList;
 public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
   private JComponent myTextField;
 
-  public ShowHistoryAction(JComponent textField, EditorSearchComponent editorSearchComponent) {
+  public ShowHistoryAction(final JComponent textField, EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent);
     myTextField = textField;
     getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/search.png"));
@@ -36,9 +34,15 @@ public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
     }
     shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK), null));
 
-    registerCustomShortcutSet(
-      new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
-      myTextField);
+    registerCustomShortcutSet(new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])), myTextField);
+    textField.registerKeyboardAction(new ActionListener() {
+                                       @Override
+                                       public void actionPerformed(ActionEvent actionEvent) {
+                                         if (getEditorSearchComponent().getTextInField().isEmpty()) {
+                                           getEditorSearchComponent().showHistory(false, myTextField);
+                                         }
+                                       }
+                                     }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_FOCUSED);
   }
 
   public void actionPerformed(final AnActionEvent e) {

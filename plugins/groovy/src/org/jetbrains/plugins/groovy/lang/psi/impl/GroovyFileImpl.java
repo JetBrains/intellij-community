@@ -146,15 +146,17 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
         return isImplicitlyImported(element, expectedName) || super.execute(element, state);
       }
     };
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     GrImportStatement[] importStatements = getImportStatements();
     if (!processImports(state, lastParent, place, importProcessor, importStatements, false)) return false;
+    if (!processDeclarationsInPackage(processor, state, lastParent, place, facade, getPackageName())) return false;
+    if (!processImports(state, lastParent, place, importProcessor, importStatements, true)) return false;
 
     if (processClasses && !processImplicitImports(processor, state, lastParent, place)) {
       return false;
     }
 
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PACKAGE)) {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
       if (expectedName != null) {
         final PsiPackage pkg = facade.findPackage(expectedName);
         if (pkg != null && !processor.execute(pkg, state)) {
@@ -170,8 +172,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
         }
       }
     }
-
-    if (!processImports(state, lastParent, place, importProcessor, importStatements, true)) return false;
 
     if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
       if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter(), state)) return false;
@@ -239,21 +239,29 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
 
     for (final String implicitlyImported : getImplicitlyImportedPackages()) {
-      PsiPackage aPackage = facade.findPackage(implicitlyImported);
-      if (aPackage != null && !aPackage.processDeclarations(new DelegatingScopeProcessor(processor) {
-        @Override
-        public boolean execute(PsiElement element, ResolveState state) {
-          if (element instanceof PsiPackage) return true;
-          return super.execute(element, state);
-        }
-      }, state, lastParent, place)) {
-        return false;
-      }
+      if (!processDeclarationsInPackage(processor, state, lastParent, place, facade, implicitlyImported)) return false;
     }
 
     for (String implicitlyImportedClass : IMPLICITLY_IMPORTED_CLASSES) {
       PsiClass clazz = facade.findClass(implicitlyImportedClass, getResolveScope());
       if (clazz != null && !ResolveUtil.processElement(processor, clazz, state)) return false;
+    }
+    return true;
+  }
+
+  private boolean processDeclarationsInPackage(final PsiScopeProcessor processor,
+                                               ResolveState state,
+                                               PsiElement lastParent,
+                                               PsiElement place, JavaPsiFacade facade, String implicitlyImported) {
+    PsiPackage aPackage = facade.findPackage(implicitlyImported);
+    if (aPackage != null && !aPackage.processDeclarations(new DelegatingScopeProcessor(processor) {
+      @Override
+      public boolean execute(PsiElement element, ResolveState state) {
+        if (element instanceof PsiPackage) return true;
+        return super.execute(element, state);
+      }
+    }, state, lastParent, place)) {
+      return false;
     }
     return true;
   }

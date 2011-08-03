@@ -23,6 +23,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -30,7 +31,9 @@ import java.awt.*;
 import java.awt.image.VolatileImage;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673
@@ -55,7 +58,12 @@ public class IdeRepaintManager extends RepaintManager {
       try {
         Field volMapField = RepaintManager.class.getDeclaredField(FAULTY_FIELD_NAME);
         volMapField.setAccessible(true);
-        myImagesMap = (Map<GraphicsConfiguration, VolatileImage>)volMapField.get(this);
+        myImagesMap = new WeakHashMap<GraphicsConfiguration, VolatileImage>();
+        Map<GraphicsConfiguration, VolatileImage> map =
+          (Map<GraphicsConfiguration, VolatileImage>)volMapField.get(this);
+        if (map != null) {
+          myImagesMap.putAll(map);
+        }
       }
       catch (Exception e) {
         LOG.error(e);
@@ -64,10 +72,37 @@ public class IdeRepaintManager extends RepaintManager {
 
     if (myImagesMap.size() > 3) {
       for (VolatileImage image : myImagesMap.values()) {
-        image.flush();
+        if (image != null) {
+          image.flush();
+        }
       }
       myImagesMap.clear();
     }
+  }
+
+  @Override
+  public void validateInvalidComponents() {
+    if (Registry.is("ide.debugMode")) {
+      try {
+        Field invalids = getClass().getSuperclass().getDeclaredField("invalidComponents");
+        invalids.setAccessible(true);
+        ArrayList invalidComponents = (ArrayList)invalids.get(this);
+        if (invalidComponents != null) {
+          for (Object each : invalidComponents) {
+            if (each instanceof Component) {
+              if (SwingUtilities.getWindowAncestor((Component)each) == null) {
+                System.out.println("Invalid component without peer: " + each);
+              }
+            }
+          }
+        }
+      }
+      catch (Exception e) {
+        Thread.dumpStack();
+      }
+    }
+
+    super.validateInvalidComponents();
   }
 
   @Override

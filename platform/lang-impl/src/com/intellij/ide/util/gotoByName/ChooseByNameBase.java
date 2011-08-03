@@ -627,7 +627,7 @@ public abstract class ChooseByNameBase {
   }
 
   protected static boolean isToFixLostTyping() {
-    return Registry.is("actionSystem.fixLostTyping");
+    return false;
   }
 
   private synchronized void ensureNamesLoaded(boolean checkboxState) {

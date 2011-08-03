@@ -149,6 +149,7 @@ public class AbstractPopup implements JBPopup {
   private boolean myMayBeParent;
   private AbstractPopup.SpeedSearchKeyListener mySearchKeyListener;
   private JLabel myAdComponent;
+  private boolean myDisposed;
 
 
   AbstractPopup() {
@@ -728,9 +729,6 @@ public class AbstractPopup implements JBPopup {
     if (myFocusable) {
       window.setFocusableWindowState(true);
       window.setFocusable(true);
-      if (myRequestFocus) {
-        window.requestFocusInWindow();
-      }
     }
 
     myWindow = updateMaskAndAlpha(window);
@@ -763,20 +761,7 @@ public class AbstractPopup implements JBPopup {
 
         afterShow();
 
-        final ActionCallback result = new ActionCallback();
-
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myFocusable && myRequestFocus && myFocusTrackback != null) {
-              myFocusTrackback.cleanParentWindow();
-            }
-
-            result.setDone();
-          }
-        });
-
-        return result;
+        return new ActionCallback.Done();
       }
     }, true);
   }
@@ -1002,6 +987,11 @@ public class AbstractPopup implements JBPopup {
 
 
   public void dispose() {
+    if (myDisposed) {
+      return;
+    }
+    myDisposed = true;
+
     Disposer.dispose(this, false);
 
     assert ApplicationManager.getApplication().isDispatchThread();

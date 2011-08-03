@@ -250,6 +250,11 @@ public class MismatchedCollectionQueryUpdateInspection
             if(collectionQueryCalled(variable, context)){
                 return true;
             }
+            final PsiExpression initializer = variable.getInitializer();
+            if(initializer != null &&
+                    !isEmptyCollectionInitializer(initializer)){
+                return true;
+            }
             return collectionQueriedByAssignment(variable, context);
         }
 

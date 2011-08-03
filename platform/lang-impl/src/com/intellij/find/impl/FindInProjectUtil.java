@@ -375,12 +375,15 @@ public class FindInProjectUtil {
 
       if (fastWords.getFirst() && canOptimizeForFastWordSearch(findModel)) return filesForFastWordSearch;
 
+      final SearchScope customScope = findModel.getCustomScope();
+
       class EnumContentIterator implements ContentIterator {
         final List<PsiFile> myFiles = new ArrayList<PsiFile>(filesForFastWordSearch);
         final PsiManager psiManager = PsiManager.getInstance(project);
 
         public boolean processFile(VirtualFile virtualFile) {
-          if (!virtualFile.isDirectory() && (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) ) {
+          if (!virtualFile.isDirectory() && (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches())
+              && (!(customScope instanceof GlobalSearchScope) || ((GlobalSearchScope)customScope).contains(virtualFile))) {
             final PsiFile psiFile = psiManager.findFile(virtualFile);
             if (psiFile != null && !filesForFastWordSearch.contains(psiFile)) {
               myFiles.add(psiFile);
@@ -397,7 +400,6 @@ public class FindInProjectUtil {
 
       if (psiDirectory == null) {
         boolean success = fileIndex.iterateContent(iterator);
-        SearchScope customScope = findModel.getCustomScope();
         if (success && customScope instanceof GlobalSearchScope && ((GlobalSearchScope)customScope).isSearchInLibraries()) {
           OrderEnumerator enumerator = module == null ? OrderEnumerator.orderEntries(project) : OrderEnumerator.orderEntries(module);
           final VirtualFile[] librarySources = enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();

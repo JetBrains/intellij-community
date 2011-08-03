@@ -195,7 +195,7 @@ public class GitUtil {
       parsed = Long.parseLong(value.trim());
       return new Date(parsed * 1000);
     } catch (NumberFormatException e) {
-      LOG.error("Error parsing timestamp from " + value, e);
+      LOG.info("Error parsing timestamp from " + value, e);
       return new Date();
     }
   }
@@ -255,7 +255,7 @@ public class GitUtil {
     while (root != null && (!root.exists() || !root.isDirectory() || !new File(root, ".git").exists())) {
       root = root.getParentFile();
     }
-    return LocalFileSystem.getInstance().findFileByIoFile(root);
+    return root == null ? null : LocalFileSystem.getInstance().findFileByIoFile(root);
   }
 
   /**

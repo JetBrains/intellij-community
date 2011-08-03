@@ -170,7 +170,7 @@ public class ReferenceExpressionCompletionContributor {
         final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
         assert item != null;
         final PsiMethod method = (PsiMethod)lookupElement.getObject();
-        if (SmartCompletionDecorator.hasUnboundTypeParams(method)) {
+        if (SmartCompletionDecorator.hasUnboundTypeParams(method, parameters.getExpectedType())) {
           item.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, parameters.getExpectedType()));
         }
       }

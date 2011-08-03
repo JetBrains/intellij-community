@@ -18,11 +18,11 @@ package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.ui.DebuggerIcons;
-import com.intellij.xdebugger.XDebuggerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Implement this class to support new type of breakpoints. An implementation should be registered in a plugin.xml:
@@ -98,6 +98,11 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   @NotNull
   public Icon getDisabledIcon() {
     return DebuggerIcons.DISABLED_BREAKPOINT_ICON;
+  }
+
+  @NotNull
+  public Icon getDisabledDependentIcon() {
+    return DebuggerIcons.DISABLED_DEPENDENT_BREAKPOINT_ICON;
   }
 
   public abstract String getDisplayText(B breakpoint);

@@ -71,7 +71,7 @@ public class JavaCharFilter extends CharFilter {
       }
       return Result.HIDE_LOOKUP;
     }
-    if (c == ',' && o instanceof PsiVariable) {
+    if ((c == ',' || c == '=') && o instanceof PsiVariable) {
       int lookupStart = ((LookupImpl)lookup).getLookupStart();
       String name = ((PsiVariable)o).getName();
       if (lookupStart >= 0 && name != null && name.equals(lookup.itemPattern(item))) {

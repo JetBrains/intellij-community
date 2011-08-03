@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,9 +31,9 @@ import java.beans.PropertyChangeSupport;
  * @see AnAction
  * @see ActionPlaces
  */
-
 public final class Presentation implements Cloneable {
-  private THashMap myUserMap;
+  private THashMap<String, Object> myUserMap;
+
   /**
    * Defines tool tip for button at tool bar or text for element at menu
    * value: String
@@ -115,32 +116,30 @@ public final class Presentation implements Cloneable {
     return myText;
   }
 
-  public void setText(String text, boolean mayContainMnemonic){
+  public void setText(String text, boolean mayContainMnemonic) {
     int oldMnemonic = myMnemonic;
     int oldDisplayedMnemonicIndex = myDisplayedMnemonicIndex;
     String oldText = myText;
     myMnemonic = 0;
     myDisplayedMnemonicIndex = -1;
 
-    if (text != null){
+    if (text != null) {
 
       if (text.indexOf(UIUtil.MNEMONIC) >= 0) {
         text = text.replace(UIUtil.MNEMONIC, '&');
       }
 
-      if (mayContainMnemonic){
-        StringBuffer plainText = new StringBuffer();
-        for(int i = 0; i < text.length(); i++){
+      if (mayContainMnemonic) {
+        StringBuilder plainText = new StringBuilder();
+        for (int i = 0; i < text.length(); i++) {
           char ch = text.charAt(i);
-          if (myMnemonic == 0 && (ch == '_' || ch == '&')){
+          if (myMnemonic == 0 && (ch == '_' || ch == '&')) {
+            //noinspection AssignmentToForLoopParameter
             i++;
-            if (i >= text.length()){
-              break;
-            }
+            if (i >= text.length()) break;
             ch = text.charAt(i);
-            if (ch != '_' && ch != '&'){
-              // Mnemonic is case insensitive.
-              myMnemonic = Character.toUpperCase(ch);
+            if (ch != '_' && ch != '&') {
+              myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
               myDisplayedMnemonicIndex = i - 1;
             }
           }
@@ -148,19 +147,19 @@ public final class Presentation implements Cloneable {
         }
         myText = plainText.toString();
       }
-      else{
+      else {
         myText = text;
       }
     }
-    else{
+    else {
       myText = null;
     }
 
     myChangeSupport.firePropertyChange(PROP_TEXT, oldText, myText);
-    if (myMnemonic != oldMnemonic){
+    if (myMnemonic != oldMnemonic) {
       myChangeSupport.firePropertyChange(PROP_MNEMONIC_KEY, new Integer(oldMnemonic), new Integer(myMnemonic));
     }
-    if (myDisplayedMnemonicIndex != oldDisplayedMnemonicIndex){
+    if (myDisplayedMnemonicIndex != oldDisplayedMnemonicIndex) {
       myChangeSupport.firePropertyChange(PROP_MNEMONIC_INDEX, new Integer(oldDisplayedMnemonicIndex), new Integer(myDisplayedMnemonicIndex));
     }
   }
@@ -306,19 +305,21 @@ public final class Presentation implements Cloneable {
     setEnabled(presentation.isEnabled());
   }
 
-  public Object getClientProperty(@NonNls String key){
-    if(myUserMap==null){
+  @Nullable
+  public Object getClientProperty(@NonNls @NotNull String key) {
+    if (myUserMap == null) {
       return null;
-    }else{
+    }
+    else {
       return myUserMap.get(key);
     }
   }
 
-  public void putClientProperty(@NonNls String key, Object value){
-    if(myUserMap==null){
-      myUserMap=new THashMap(1);
+  public void putClientProperty(@NonNls @NotNull String key, @Nullable Object value) {
+    if (myUserMap == null) {
+      myUserMap = new THashMap<String, Object>(1);
     }
-    Object oldValue = myUserMap.put(key,value);
+    Object oldValue = myUserMap.put(key, value);
     myChangeSupport.firePropertyChange(key, oldValue, value);
   }
 

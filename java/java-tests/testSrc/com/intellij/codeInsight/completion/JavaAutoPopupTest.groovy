@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
+import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -33,7 +35,6 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 
 /**
  * @author peter
@@ -436,7 +437,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
   }
 
-  void testArrows(boolean cycleScrolling, boolean lookupAbove, int indexDown, indexUp) {
+  void testArrows(boolean cycleScrolling, boolean lookupAbove, int indexDown, int indexUp) {
     testArrow true, cycleScrolling, lookupAbove, indexUp
     testArrow false, cycleScrolling, lookupAbove, indexDown
   }
@@ -637,8 +638,8 @@ public interface Test {
   public void testTemplateSelectionByComma() {
     myFixture.configureByText("a.java", """
 class Foo {
-    int ITER = 2;
     int itea = 2;
+    int itera = 2;
 
     {
         it<caret>
@@ -646,9 +647,9 @@ class Foo {
 }
 """)
     type 'e'
-    assertOrderedEquals myFixture.lookupElementStrings, "itea"
+    assertOrderedEquals myFixture.lookupElementStrings, "itea", "itera"
     type 'r'
-    assertOrderedEquals myFixture.lookupElementStrings, "iter", "ITER", "Iterable", "Iterator"
+    assertOrderedEquals myFixture.lookupElementStrings, "iter", "itera"
     type ','
     assert !lookup
     assert myFixture.editor.document.text.contains('iter,')
@@ -670,9 +671,15 @@ class Foo {
   }
 
   public void testNewClassParenthesis() {
-    myFixture.configureByText("a.java", """ class Foo { { new <caret> } } """)
-    type 'fil('
-    assert myFixture.editor.document.text.contains('new File()')
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    try {
+      myFixture.configureByText("a.java", """ class Foo { { new <caret> } } """)
+      type 'fil('
+      assert myFixture.editor.document.text.contains('new File()')
+    }
+    finally {
+      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    }
   }
 
   public void testUnknownMethodParenthesis() {
@@ -691,6 +698,18 @@ class Foo {
     myFixture.configureByText("a.java", """ class Foo { void foo(int aaa, int aaaaa) { foo(<caret>) } } """)
     type 'aaa,'
     assert myFixture.editor.document.text.contains('foo(aaa,)')
+  }
+
+  public void testNonFinishedVariableEq() {
+    myFixture.configureByText("a.java", """ class Foo { void foo(int aaa, int aaaaa) { <caret> } } """)
+    type 'a='
+    assert myFixture.editor.document.text.contains('aaa = ')
+  }
+
+  public void testFinishedVariableEq() {
+    myFixture.configureByText("a.java", """ class Foo { void foo(int aaa, int aaaaa) { <caret> } } """)
+    type 'aaa='
+    assert myFixture.editor.document.text.contains('aaa=')
   }
 
   public void testCompletionWhenLiveTemplateAreNotSufficient() {
@@ -772,6 +791,31 @@ public class UTest {
 }""")
     type 'ew'
     assert myFixture.lookupElementStrings == ['new', 'nextWord']
+  }
+
+  public void testNoClassesInUnqualifiedImports() {
+    myFixture.addClass("package xxxxx; public class Xxxxxxxxx {}")
+    myFixture.configureByText 'a.java', 'package foo; import <caret>'
+    type 'xxx'
+    assert !lookup
+  }
+
+  public void testSamePrefixIgnoreCase() {
+    myFixture.addClass("package xxxxx; public class SYSTEM_EXCEPTION {}")
+    myFixture.configureByText "a.java", "class Foo { S<caret> }"
+    type 'Ystem'
+    assert 'java.lang.System' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[0]).qualifiedName
+    assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[1]).qualifiedName
+  }
+
+  public void testSamePrefixIgnoreCase2() {
+    myFixture.addClass("package xxxxx; public class SYSTEM_EXCEPTION {}")
+    myFixture.addClass("package xxxxx; public class SYstem {}")
+    myFixture.configureByText "a.java", "class Foo { S<caret> }"
+    type 'Ystem'
+    assert 'xxxxx.SYstem' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[0]).qualifiedName
+    assert 'java.lang.System' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[1]).qualifiedName
+    assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[2]).qualifiedName
   }
 
 

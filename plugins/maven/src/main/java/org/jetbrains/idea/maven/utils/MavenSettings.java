@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenSettings implements SearchableConfigurable.Parent {
+  public static final String DISPLAY_NAME = "Maven";
+
   private final Project myProject;
   private final Configurable myConfigurable;
   private final List<Configurable> myChildren;
@@ -104,7 +106,7 @@ public class MavenSettings implements SearchableConfigurable.Parent {
 
   @Nls
   public String getDisplayName() {
-    return "Maven";
+    return DISPLAY_NAME;
   }
 
   public Icon getIcon() {

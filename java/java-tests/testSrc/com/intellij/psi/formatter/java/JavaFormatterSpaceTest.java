@@ -33,7 +33,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
   public void testSpaceBeforeAnnotationParamArray() {
     // Inspired by IDEA-24329
-    getSettings().SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true;
+    getSettings().SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = true;
 
     String text =
       "@SuppressWarnings( {\"ALL\"})\n" +
@@ -355,5 +355,48 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = false;
     doMethodTest("try (R r =  null) { }",
                  "try (R r=null) { }");
+  }
+
+  public void testBetweenMethodCallArguments() throws Exception {
+    // Inspired by IDEA-71823
+    getSettings().SPACE_AFTER_COMMA = false;
+    
+    doMethodTest(
+      "foo(1, 2, 3);",
+      "foo(1,2,3);"
+    );
+  }
+
+  public void testBeforeAnonymousClassConstructor() throws Exception {
+    // Inspired by IDEA-72321.
+    getSettings().SPACE_BEFORE_METHOD_CALL_PARENTHESES = true;
+    
+    doMethodTest(
+      "actions.add(new Action(this) {\n" +
+      "    public void run() {\n" +
+      "    }\n" +
+      "});",
+      "actions.add (new Action (this) {\n" +
+      "    public void run() {\n" +
+      "    }\n" +
+      "});"
+    );
+  }
+
+  public void testBeforeAnnotationArrayInitializer() throws Exception {
+    // Inspired by IDEA-72317
+    getSettings().SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = false;
+    getSettings().SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = true;
+    
+    doClassTest(
+      "@SuppressWarnings({\"HardCodedStringLiteral\"})\n" +
+      "void test() {\n" +
+      "    int[] data = new int[] {1, 2, 3};\n" +
+      "}",
+      "@SuppressWarnings( {\"HardCodedStringLiteral\"})\n" +
+      "void test() {\n" +
+      "    int[] data = new int[]{1, 2, 3};\n" +
+      "}"
+    );
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -120,12 +121,19 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
                 return null;
             }
             final String arrayText = iteratedValue.getText();
-            @NonNls final StringBuilder buffer =
-                    new StringBuilder("java.util.Collections.addAll(");
-            buffer.append(collectionText);
-            buffer.append(',');
-            buffer.append(arrayText);
-            buffer.append(");");
+            @NonNls final StringBuilder buffer = new StringBuilder();
+            if (PsiUtil.isLanguageLevel5OrHigher(foreachStatement)) {
+                buffer.append("java.util.Collections.addAll(");
+                buffer.append(collectionText);
+                buffer.append(',');
+                buffer.append(arrayText);
+                buffer.append(");");
+            } else {
+                buffer.append(collectionText);
+                buffer.append(".addAll(java.util.Arrays.asList(");
+                buffer.append(arrayText);
+                buffer.append("));");
+            }
             return buffer.toString();
         }
 
@@ -191,7 +199,8 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
                 return null;
             }
             if (fromOffsetText.equals("0") &&
-                    toOffsetText.equals(arrayText + ".length")) {
+                    toOffsetText.equals(arrayText + ".length") &&
+                    PsiUtil.isLanguageLevel5OrHigher(forStatement)) {
                 @NonNls final StringBuilder buffer =
                         new StringBuilder("java.util.Collections.addAll(");
                 buffer.append(collectionText);

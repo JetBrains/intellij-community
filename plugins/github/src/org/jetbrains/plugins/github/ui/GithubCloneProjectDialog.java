@@ -5,13 +5,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.plugins.github.RepositoryInfo;
 import org.jetbrains.plugins.github.UnknownRepositoryInfo;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -19,7 +17,7 @@ import java.util.List;
  */
 public class GithubCloneProjectDialog extends DialogWrapper {
 
-  private static final java.util.regex.Pattern PATTERN = java.util.regex.Pattern.compile("[\\w\\d-_]+/[\\w\\d-_]+");
+  private static final java.util.regex.Pattern PATTERN = java.util.regex.Pattern.compile("[\\w\\d-_\\.]+/[\\w\\d-_\\.]+");
   private GithubCloneProjectPane myGithubCloneProjectPane;
   private HashMap<String, RepositoryInfo> myRepositoryInfoHashMap;
 

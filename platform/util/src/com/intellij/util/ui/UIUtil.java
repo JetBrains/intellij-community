@@ -87,7 +87,8 @@ public class UIUtil {
   // accessed only from EDT
   private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
 
-  @NonNls public static final String CENTER_TOOLTIP = "ToCenterTooltip";
+  @NonNls public static final String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
+  @NonNls public static final String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
 
   private static final String ROOT_PANE = "JRootPane.future";
 
@@ -1566,6 +1567,21 @@ public class UIUtil {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static void fixFormattedField(JFormattedTextField field) {
+    if (SystemInfo.isMac) {
+      final Toolkit toolkit = Toolkit.getDefaultToolkit();
+      final int commandKeyMask = toolkit.getMenuShortcutKeyMask();
+      final InputMap inputMap = field.getInputMap();
+      final KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, commandKeyMask);
+      inputMap.put(copyKeyStroke, "copy-to-clipboard");
+      final KeyStroke pasteKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_V, commandKeyMask);
+      inputMap.put(pasteKeyStroke, "paste-from-clipboard");
+      final KeyStroke cutKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_X, commandKeyMask);
+      inputMap.put(cutKeyStroke, "cut-to-clipboard");
+    }
+  }
+
   public static class MacTreeUI extends BasicTreeUI {
     public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
 
@@ -1959,6 +1975,12 @@ public class UIUtil {
 
   public static void setFutureRootPane(JComponent c, JRootPane pane) {
     c.putClientProperty(ROOT_PANE, new WeakReference<JRootPane>(pane));
+  }
+
+  public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
+    if (c == null || !c.isShowing()) return true;
+
+    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane;
   }
 
 }

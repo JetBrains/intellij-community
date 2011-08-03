@@ -1,25 +1,25 @@
-class MyClass {
-    MyClass(int i) {
+class Grvy908 {
+    Grvy908(int i) {
         this('something')
     }
 
-    MyClass(Object o) {
+    Grvy908(Object o) {
 
     }
 }
 -----
-public class MyClass extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-public MyClass(int i) {
+public class Grvy908 extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public Grvy908(int i) {
 this((java.lang.Object)null);
 }
-public MyClass(java.lang.Object o) {
+public Grvy908(java.lang.Object o) {
 
 }
-public groovy.lang.MetaClass getMetaClass() {
+public java.lang.Object getProperty(java.lang.String property) {
 return null;
 }
 
-public void setMetaClass(groovy.lang.MetaClass mc) {
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
 return ;
 }
 
@@ -27,11 +27,11 @@ public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object arg
 return null;
 }
 
-public java.lang.Object getProperty(java.lang.String propertyName) {
+public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
 
-public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
 return ;
 }
 

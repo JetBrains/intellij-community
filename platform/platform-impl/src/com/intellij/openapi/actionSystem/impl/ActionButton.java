@@ -70,7 +70,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
     myMinimumButtonSize = minimumSize;
 
-    putClientProperty(UIUtil.CENTER_TOOLTIP, Boolean.TRUE);
+    putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
   }
 
   public void setNoIconsInPopup(boolean noIconsInPopup) {

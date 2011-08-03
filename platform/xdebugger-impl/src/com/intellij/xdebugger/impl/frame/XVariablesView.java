@@ -75,7 +75,8 @@ public class XVariablesView extends XDebugViewBase {
     }
     else {
       tree.setSourcePosition(null);
-      tree.setRoot(MessageTreeNode.createInfoMessage(tree, null, mySession.getDebugProcess().getCurrentStateMessage()), true);
+      String message = !mySession.isStopped() && mySession.isPaused() ? "Frame is not available" : mySession.getDebugProcess().getCurrentStateMessage();
+      tree.setRoot(MessageTreeNode.createInfoMessage(tree, null, message), true);
     }
   }
 

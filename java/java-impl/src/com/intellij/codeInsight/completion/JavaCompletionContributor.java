@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
@@ -29,6 +30,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
@@ -40,6 +42,7 @@ import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -335,13 +338,26 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static boolean shouldRunClassNameCompletion(CompletionResultSet result, CompletionParameters parameters) {
+    if (!mayShowAllClasses(parameters)) {
+      return false;
+    }
+
     PsiElement position = parameters.getPosition();
     final PsiElement parent = position.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return false;
     if (((PsiJavaCodeReferenceElement)parent).getQualifier() != null) return false;
-    
+
+    if (parent instanceof PsiJavaCodeReferenceElementImpl &&
+        ((PsiJavaCodeReferenceElementImpl)parent).getKind() == PsiJavaCodeReferenceElementImpl.PACKAGE_NAME_KIND) {
+      return false;
+    }
+
     PsiElement grand = parent.getParent();
     if (grand instanceof PsiSwitchLabelStatement) {
+      return false;
+    }
+
+    if (psiElement().inside(PsiImportStatement.class).accepts(parent)) {
       return false;
     }
 
@@ -352,7 +368,22 @@ public class JavaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    return StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.isRelaxedMatching();
+    return mayStartClassName(result, parameters.isRelaxedMatching());
+  }
+
+  public static boolean mayShowAllClasses(CompletionParameters parameters) {
+    return Registry.is("show.all.classes.on.first.completion") || parameters.getInvocationCount() >= 2;
+  }
+
+  public static boolean mayStartClassName(CompletionResultSet result, final boolean relaxedMatching) {
+    String prefix = result.getPrefixMatcher().getPrefix();
+    if (StringUtil.isEmpty(prefix)) {
+      return false;
+    }
+
+    return StringUtil.isCapitalized(prefix) ||
+           relaxedMatching ||
+           CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE == CodeInsightSettings.NONE;
   }
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,

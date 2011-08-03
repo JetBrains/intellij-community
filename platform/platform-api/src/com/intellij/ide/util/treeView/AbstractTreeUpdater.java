@@ -102,6 +102,13 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   /**
    * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object)}
    */
+  public synchronized void requeue(@NotNull TreeUpdatePass toAdd) {
+    addSubtreeToUpdate(toAdd.setUpdateStamp(-1));
+  }
+
+  /**
+   * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object)}
+   */
   public synchronized void addSubtreeToUpdate(@NotNull TreeUpdatePass toAdd) {
     if (myReleaseRequested) return;
 
@@ -109,7 +116,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     
     final AbstractTreeUi ui = myTreeBuilder.getUi();
 
-    if (ui.isUpdatingNow(toAdd.getNode())) {
+    if (ui.isUpdatingChildrenNow(toAdd.getNode())) {
       toAdd.expire();
     }
     else {
@@ -134,6 +141,14 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
             passInQueue.expire();
           }
         }
+      }
+    }
+
+
+    if (toAdd.getUpdateStamp() >= 0) {
+      Object element = ui.getElementFor(toAdd.getNode());
+      if (!ui.isParentLoadingInBackground(element) && !ui.isParentUpdatingChildrenNow(toAdd.getNode())) {
+        toAdd.setUpdateStamp(-1);
       }
     }
 

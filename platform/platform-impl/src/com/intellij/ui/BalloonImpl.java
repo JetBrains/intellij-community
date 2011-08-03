@@ -157,6 +157,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   private int myPositionChangeXShift;
   private int myPositionChangeYShift;
 
+  private boolean myAnimationEnabled = true;
+
   public boolean isInsideBalloon(MouseEvent me) {
     return isInside(new RelativePoint(me));
   }
@@ -468,7 +470,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     if (myAnimator != null) {
       Disposer.dispose(myAnimator);
     }
-    myAnimator = new Animator("Balloon", 10, myAnimationCycle, false, 0, 1, forward) {
+    myAnimator = new Animator("Balloon", 10, myAnimationEnabled ? myAnimationCycle : 0, false, 0, 1, forward) {
       public void paintNow(final float frame, final float totalFrames, final float cycle) {
         if (myComp == null || myComp.getParent() == null) return;
         myComp.setAlpha(frame / totalFrames);
@@ -1295,5 +1297,10 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   public RelativePoint getShowingPoint() {
     Point p = myPosition.getShiftedPoint(myTargetPoint, myCalloutshift * -1);
     return new RelativePoint(myLayeredPane, p);
+  }
+
+  @Override
+  public void setAnimationEnabled(boolean enabled) {
+    myAnimationEnabled = enabled;
   }
 }

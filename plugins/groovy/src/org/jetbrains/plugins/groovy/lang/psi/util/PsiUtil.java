@@ -31,6 +31,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -231,6 +232,9 @@ public class PsiUtil {
       if (type == null) {
         result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(expression));
       } else {
+        if (stopAt == expression) {
+          type = TypeConversionUtil.erasure(type);
+        }
         result.add(type);
       }
       if (stopAt == expression) {
@@ -241,6 +245,9 @@ public class PsiUtil {
     for (GrClosableBlock closure : closures) {
       PsiType closureType = closure.getType();
       if (closureType != null) {
+        if (stopAt == closure) {
+          closureType = TypeConversionUtil.erasure(closureType);
+        }
         result.add(closureType);
       }
       if (stopAt == closure) {

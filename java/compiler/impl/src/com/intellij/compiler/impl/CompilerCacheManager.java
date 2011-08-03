@@ -24,6 +24,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,10 +32,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -173,10 +171,17 @@ public class CompilerCacheManager implements ProjectComponent {
   }
 
   public void clearCaches(final CompileContext context) {
+    //todo[nik] remove. This is temporary workaround for IDEA-70441. Artifacts outputs aren't cleaned on rebuild so we shouldn't remove
+    // cache file for artifacts compiler, otherwise obsolete files from artifacts outputs won't be removed on next build
+    ArtifactsCompiler artifactsCompiler = ArtifactsCompiler.getInstance(myProject);
+    File artifactsCompilerCache = artifactsCompiler != null ? GenericCompilerRunner.getGenericCompilerCacheDir(myProject, artifactsCompiler) : null;
+
     flushCaches();
     final File[] children = myCachesRoot.listFiles();
     if (children != null) {
       for (final File child : children) {
+        if (child.equals(artifactsCompilerCache)) continue;
+
         final boolean deleteOk = FileUtil.delete(child);
         if (!deleteOk) {
           context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("compiler.error.failed.to.delete", child.getPath()), null, -1, -1);

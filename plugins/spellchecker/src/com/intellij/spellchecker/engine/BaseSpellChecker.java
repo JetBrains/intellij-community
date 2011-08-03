@@ -53,8 +53,10 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   private AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false); 
   private List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = new CopyOnWriteArrayList<Pair<Loader, Consumer<Dictionary>>>();
-  
-  public BaseSpellChecker() {
+  private Project myProject;
+
+  public BaseSpellChecker(final Project project) {
+    myProject = project;
   }
 
 
@@ -118,7 +120,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       public void run() {
         LOG.debug("Loading " + loader.getName());
         ProgressManager.getInstance()
-          .run(new Task.Backgroundable(null,"Loading spellchecker dictionary...", false,
+          .run(new Task.Backgroundable(myProject,"Loading spellchecker dictionary...", false,
                                        new PerformInBackgroundOption() {
                                          @Override
                                          public boolean shouldStartInBackground() {

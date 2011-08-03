@@ -23,6 +23,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -118,14 +119,15 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
   protected InspectionGadgetsFix buildFix(final Object... infos) {
     return new InspectionGadgetsFix() {
       @Override
-      protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
         final PsiElement element = descriptor.getPsiElement();
         final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
         if (method != null) {
           PsiType type = (PsiType)infos[1];
           if (type == null) type = method.getReturnType();
+          final PsiType finalType = type;
           final ChangeSignatureProcessor csp =
-            new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), type, new ParameterInfoImpl[0]);
+            new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), finalType, new ParameterInfoImpl[0]);
           csp.run();
         } else {
           final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);

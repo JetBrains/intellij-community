@@ -19,6 +19,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -148,6 +149,14 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     if (branch.startsWith("origin/")){
       branch = branch.substring(7);
     }
-    BrowserUtil.launchBrowser("https://github.com/" + repoInfo + "/blob/" + branch + path.substring(rootPath.length()));
+
+    final StringBuilder builder = new StringBuilder();
+    builder.append("https://github.com/").append(repoInfo).append("/blob/").append(branch).append(path.substring(rootPath.length()));
+    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    if (editor != null){
+      final int line = editor.getCaretModel().getLogicalPosition().line;
+      builder.append("#L").append(line);
+    }
+    BrowserUtil.launchBrowser(builder.toString());
   }
 }

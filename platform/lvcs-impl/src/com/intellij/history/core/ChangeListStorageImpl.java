@@ -18,10 +18,6 @@ package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.actions.ShowFilePathAction;
-import com.intellij.notification.*;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -31,7 +27,6 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -43,15 +38,16 @@ public class ChangeListStorageImpl implements ChangeListStorage {
 
   private final File myStorageDir;
   private LocalHistoryStorage myStorage;
+  private long myLastId;
 
   private boolean isCompletelyBroken = false;
 
   public ChangeListStorageImpl(File storageDir) throws IOException {
     myStorageDir = storageDir;
-    myStorage = createStorage(myStorageDir);
+    initStorage(myStorageDir);
   }
 
-  private static LocalHistoryStorage createStorage(File storageDir) throws IOException {
+  private synchronized void initStorage(File storageDir) throws IOException {
     String path = storageDir.getPath() + "/" + STORAGE_FILE;
 
     LocalHistoryStorage result = new LocalHistoryStorage(path);
@@ -75,7 +71,9 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       result.setVersion(VERSION);
       result.setFSTimestamp(fsTimestamp);
     }
-    return result;
+
+    myLastId = result.getLastId();
+    myStorage = result;
   }
 
   private static long getVFSTimestamp() {
@@ -104,41 +102,12 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     myStorage.dispose();
     try {
       FileUtil.delete(myStorageDir);
-      myStorage = createStorage(myStorageDir);
+      initStorage(myStorageDir);
     }
     catch (Throwable ex) {
       LocalHistoryLog.LOG.warn("cannot recreate storage", ex);
       isCompletelyBroken = true;
     }
-
-    notifyUser("Local History storage file has become corrupted and was rebuilt.");
-  }
-
-  public static void notifyUser(String message) {
-    final String logFile = PathManager.getLogPath();
-
-    Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                              "Local History is broken",
-                                              message + "<br>" +
-                                              "<br>" +
-                                              "Please create a <a href=\"url\">YouTrack issue</><br>" +
-                                              "and attach log files from <a href=\"file\">" + logFile,
-                                              NotificationType.ERROR,
-                                              new NotificationListener() {
-                                                @Override
-                                                public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                            @NotNull HyperlinkEvent event) {
-                                                  if ("url".equals(event.getDescription())) {
-                                                    BrowserUtil.launchBrowser("http://youtrack.jetbrains.net/issues/#newissue=yes");
-                                                  }
-                                                  else {
-                                                    File file = new File(logFile);
-                                                    ShowFilePathAction.open(file, new File(logFile));
-                                                  }
-                                                }
-                                              }),
-                             NotificationDisplayType.STICKY_BALLOON,
-                             null);
   }
 
   public synchronized void close() {
@@ -146,15 +115,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   public synchronized long nextId() {
-    if (isCompletelyBroken) return 0;
-
-    try {
-      return myStorage.nextId();
-    }
-    catch (Throwable e) {
-      handleError(e);
-      return myStorage.nextId();
-    }
+    return ++myLastId;
   }
 
   @Nullable
@@ -189,13 +150,14 @@ public class ChangeListStorageImpl implements ChangeListStorage {
 
     try {
       int id = myStorage.createNextRecord();
-      AbstractStorage.StorageDataOutput out = myStorage.writeStream(id);
+      AbstractStorage.StorageDataOutput out = myStorage.writeStream(id, true);
       try {
         changeSet.write(out);
       }
       finally {
         out.close();
       }
+      myStorage.setLastId(myLastId);
       myStorage.force();
     }
     catch (IOException e) {
@@ -209,14 +171,16 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     TIntHashSet recursionGuard = new TIntHashSet(1000);
 
     try {
-      int eachBlockId = findFirstObsoleteBlock(period, intervalBetweenActivities, recursionGuard);
+      int firstObsoleteId = findFirstObsoleteBlock(period, intervalBetweenActivities, recursionGuard);
+      if (firstObsoleteId == 0) return;
+
+      int eachBlockId = firstObsoleteId;
 
       while (eachBlockId != 0) {
         processor.consume(doReadBlock(eachBlockId).changeSet);
-        int toDelete = eachBlockId;
         eachBlockId = doReadPrevSafely(eachBlockId, recursionGuard);
-        myStorage.deleteRecord(toDelete);
       }
+      myStorage.deleteRecordsUpTo(firstObsoleteId);
       myStorage.force();
     }
     catch (IOException e) {

@@ -86,16 +86,8 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   private static boolean isProjectDirectory(final VirtualFile virtualFile) {
     // the root directory of any drive is never an IDEA project
     if (virtualFile.getParent() == null) return false;
-    if (virtualFile.isDirectory() && virtualFile.isValid()) {
-      final VirtualFile[] children = virtualFile.getChildren();
-      if (children == null) return false;
-      for (VirtualFile file : children) {
-        if (file.getName().equals(Project.DIRECTORY_STORE_FOLDER)) return true;
-        if (isIprFile(file)) {
-          return true;
-        }
-      }
-    }
+    // NOTE: For performance reasons, it's very important not to iterate through all of the children here.
+    if (virtualFile.isDirectory() && virtualFile.isValid() && virtualFile.findChild(Project.DIRECTORY_STORE_FOLDER) != null) return true;
     return false;
   }
 }

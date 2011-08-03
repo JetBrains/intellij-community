@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -219,32 +220,41 @@ public class Utils{
     doUpdate(anAction, event1, presentation);
   }
 
-
   public static void fillMenu(@NotNull final ActionGroup group,
                               final JComponent component,
-                              boolean enableMnemonics,
+                              final boolean enableMnemonics,
                               final PresentationFactory presentationFactory,
-                              DataContext context,
+                              final DataContext context,
                               final String place,
-                              boolean isWindowMenu,
+                              final boolean isWindowMenu,
                               final boolean mayDataContextBeInvalid){
     final ActionCallback menuBuilt = new ActionCallback();
 
-    ArrayList<AnAction> list = new ArrayList<AnAction>();
+    final ArrayList<AnAction> list = new ArrayList<AnAction>();
     expandActionGroup(group, list, presentationFactory, context, place, ActionManager.getInstance());
 
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
-
     final ArrayList<Component> children = new ArrayList<Component>();
 
-    for (int i = 0; i < list.size(); i++) {
-      AnAction action = list.get(i);
+    for (int i = 0, size = list.size(); i < size; i++) {
+      final AnAction action = list.get(i);
       if (action instanceof Separator) {
-        if (i > 0 && i < list.size() - 1) {
-          component.add(new JPopupMenu.Separator());
+        if (i > 0 && i < size - 1) {
+          component.add(new JPopupMenu.Separator() {
+            @Override
+            public Insets getInsets() {
+              final Insets insets = super.getInsets();
+              final boolean fix = UIUtil.isUnderGTKLookAndFeel() &&
+                                  getBorder() != null &&
+                                  insets.top + insets.bottom == 0;
+              return fix ? new Insets(2, insets.left, 3, insets.right) : insets;  // workaround for Sun bug #6636964
+            }
+          });
         }
       }
-      else if (action instanceof ActionGroup && !(((ActionGroup)action).canBePerformed(context) && !hasVisibleChildren((ActionGroup)action, presentationFactory, context, place))) {
+      else if (action instanceof ActionGroup &&
+               !(((ActionGroup)action).canBePerformed(context) &&
+                 !hasVisibleChildren((ActionGroup)action, presentationFactory, context, place))) {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics);
         component.add(menu);
         children.add(menu);
@@ -266,6 +276,7 @@ public class Utils{
     }
 
     if (fixMacScreenMenu) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           for (Component each : children) {
@@ -276,10 +287,10 @@ public class Utils{
           menuBuilt.setDone();
         }
       });
-    } else {
+    }
+    else {
       menuBuilt.setDone();
     }
-
 
     menuBuilt.doWhenDone(new Runnable() {
       public void run() {

@@ -29,8 +29,10 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiReferenceProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -70,6 +72,8 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
       if ((refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) && refMethod.getDerivedMethods().isEmpty()) return null;
 
       if (RefUtil.isEntryPoint(refMethod)) return null;
+
+      if (refMethod.isAppMain()) return null;
 
       final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
 
@@ -252,8 +256,8 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
           final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
           final long startModificationCount = tracker.getModificationCount();
 
+          if (!psiMethod.isValid()) return;
           removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
-
           if (startModificationCount != tracker.getModificationCount()) {
             myProcessor.ignoreElement(refMethod);
           }

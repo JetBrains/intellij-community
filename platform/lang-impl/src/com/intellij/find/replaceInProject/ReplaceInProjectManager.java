@@ -220,7 +220,7 @@ public class ReplaceInProjectManager {
       if (result == FindManager.PromptResult.OK) {
         Runnable runnable = new Runnable() {
           public void run() {
-            doReplace(replaceContext, usage);
+            doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet());
             replaceContext.getUsageView().removeUsage(usage);
           }
         };
@@ -248,7 +248,7 @@ public class ReplaceInProjectManager {
               if (!otherPsiFile.equals(psiFile)) {
                 break;
               }
-              doReplace(replaceContext, usage);
+              doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet());
               replaceContext.getUsageView().removeUsage(usage);
             }
             if (j == usages.length) {
@@ -296,7 +296,7 @@ public class ReplaceInProjectManager {
 
   private void doReplace(final ReplaceContext replaceContext, Collection<Usage> usages) {
     for (final Usage usage : usages) {
-      doReplace(replaceContext, usage);
+      doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet());
     }
     reportNumberReplacedOccurences(myProject, usages.size());
   }
@@ -307,10 +307,10 @@ public class ReplaceInProjectManager {
     }
   }
 
-  private void doReplace(final ReplaceContext replaceContext, final Usage usage) {
+  public void doReplace(@NotNull final Usage usage, @NotNull final FindModel findModel, @NotNull final Set<Usage> excludedSet) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        if (replaceContext.getExcludedSet().contains(usage)) {
+        if (excludedSet.contains(usage)) {
           return;
         }
 
@@ -330,14 +330,14 @@ public class ReplaceInProjectManager {
             }
             FindManager findManager = FindManager.getInstance(myProject);
             final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
-            FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, replaceContext.getFindModel());
+            FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, findModel);
             if (!findResult.isStringFound()) {
               return true;
             }
             String stringToReplace = null;
             try {
               stringToReplace =
-                findManager.getStringToReplace(foundString.toString(), replaceContext.getFindModel(), textOffset, document.getText());
+                findManager.getStringToReplace(foundString.toString(), findModel, textOffset, document.getText());
             }
             catch (FindManager.MalformedReplacementStringException e) {
               Messages.showErrorDialog(myProject, e.getMessage(), FindBundle.message("find.replace.invalid.replacement.string.title"));
