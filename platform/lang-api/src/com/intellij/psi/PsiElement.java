@@ -418,7 +418,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param value the user data object to attach.
    * @see #getCopyableUserData(com.intellij.openapi.util.Key)
    */
-  <T> void putCopyableUserData(Key<T> key, T value);
+  <T> void putCopyableUserData(Key<T> key, @Nullable T value);
 
   /**
    * Passes the declarations contained in this PSI element and its children
