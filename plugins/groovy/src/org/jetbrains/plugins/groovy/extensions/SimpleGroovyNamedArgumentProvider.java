@@ -107,7 +107,7 @@ public class SimpleGroovyNamedArgumentProvider {
           String name = st.nextToken();
 
           Object oldValue = res.put(name, descriptor);
-          assert oldValue == null;
+          assert oldValue == null : "Duplicated attribute name: " + name;
         }
       }
 
