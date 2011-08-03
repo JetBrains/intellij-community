@@ -2,6 +2,7 @@ package com.intellij.tasks.pivotal;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
@@ -129,6 +130,10 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     if (summary == null) {
       return null;
     }
+    final String type = element.getChildText("story_type");
+    if (type == null) {
+      return null;
+    }
     final boolean isClosed = "accepted".equals(element.getChildText("state")) ||
                              "delivered".equals(element.getChildText("state")) ||
                              "finished".equals(element.getChildText("state"));
@@ -178,13 +183,13 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
       @Override
       public Icon getIcon() {
-        return PivotalTrackerRepositoryType.ICON;
+        return IconLoader.getIcon(getCustomIcon(), LocalTask.class);
       }
 
       @NotNull
       @Override
       public TaskType getType() {
-        return TaskType.BUG;
+        return TaskType.OTHER;
       }
 
       @Override
@@ -210,6 +215,12 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
       @Override
       public String getPresentableName() {
         return getId() + ": " + getSummary();
+      }
+
+      @NotNull
+      @Override
+      public String getCustomIcon() {
+        return "/icons/pivotal/" + type + ".png";
       }
     };
   }

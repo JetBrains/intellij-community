@@ -60,6 +60,7 @@ public class LocalTaskImpl extends LocalTask {
   private Comment[] myComments = new Comment[0];
   private String myAssociatedChangelistId;
   private String myPresentableName;
+  private String myCustomIcon;
 
   /** for serialization */
   public LocalTaskImpl() {    
@@ -148,6 +149,7 @@ public class LocalTaskImpl extends LocalTask {
     myType = issue.getType();
     myDescription = issue.getDescription();
     myComments = issue.getComments();
+    myCustomIcon = issue.getCustomIcon();
   }
 
   public void setId(String id) {
@@ -208,6 +210,10 @@ public class LocalTaskImpl extends LocalTask {
 
   @Override
   public Icon getIcon() {
+    final String customIcon = getCustomIcon();
+    if (customIcon != null) {
+      return IconLoader.getIcon(customIcon, LocalTask.class);
+    }
     switch (myType) {
       case BUG:
         return BUG_ICON;
@@ -243,5 +249,9 @@ public class LocalTaskImpl extends LocalTask {
   @Override
   public String getPresentableName() {
     return myPresentableName != null ? myPresentableName : toString();
+  }
+
+  public String getCustomIcon() {
+    return myCustomIcon;
   }
 }

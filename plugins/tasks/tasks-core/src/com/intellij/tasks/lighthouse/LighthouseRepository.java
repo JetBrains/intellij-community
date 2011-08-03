@@ -2,7 +2,6 @@ package com.intellij.tasks.lighthouse;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
@@ -198,6 +197,11 @@ public class LighthouseRepository extends BaseRepositoryImpl {
       @Override
       public String getPresentableName() {
         return getId() + ": " + getSummary();
+      }
+
+      @Override
+      public String getCustomIcon() {
+        return null;
       }
     };
   }
