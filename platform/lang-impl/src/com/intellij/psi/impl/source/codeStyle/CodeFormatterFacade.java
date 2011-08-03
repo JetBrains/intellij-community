@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +49,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -241,7 +243,7 @@ public class CodeFormatterFacade {
    * @param startOffset start offset of the first line to check for wrapping (inclusive)
    * @param endOffset   end offset of the first line to check for wrapping (exclusive)
    */
-  private void wrapLongLinesIfNecessary(@NotNull PsiFile file, @Nullable final Document document, final int startOffset,
+  private void wrapLongLinesIfNecessary(@NotNull final PsiFile file, @Nullable final Document document, final int startOffset,
                                         final int endOffset)
   {
     if (!mySettings.WRAP_LONG_LINES || file.getViewProvider().isLockedByPsiOperations() || document == null) {
@@ -269,7 +271,13 @@ public class CodeFormatterFacade {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          doWrapLongLinesIfNecessary(editorToUse, editorToUse.getDocument(), startOffset, endOffset);
+          final CaretModel caretModel = editorToUse.getCaretModel();
+          final int caretOffset = caretModel.getOffset();
+          final RangeMarker caretMarker = editorToUse.getDocument().createRangeMarker(caretOffset, caretOffset);
+          doWrapLongLinesIfNecessary(editorToUse, file.getProject(), editorToUse.getDocument(), startOffset, endOffset);
+          if (caretMarker.isValid() && caretModel.getOffset() != caretMarker.getStartOffset()) {
+            caretModel.moveToOffset(caretMarker.getStartOffset());
+          } 
         }
       });
     }
@@ -282,7 +290,8 @@ public class CodeFormatterFacade {
     }
   }
 
-  private void doWrapLongLinesIfNecessary(@NotNull final Editor editor, @NotNull Document document, int startOffset, int endOffset) {
+  private void doWrapLongLinesIfNecessary(@NotNull final Editor editor, @NotNull final Project project, @NotNull Document document, 
+                                          int startOffset, int endOffset) {
     // Normalization.
     int startOffsetToUse = Math.min(document.getTextLength(), Math.max(0, startOffset));
     int endOffsetToUse = Math.min(document.getTextLength(), Math.max(0, endOffset));
@@ -388,7 +397,21 @@ public class CodeFormatterFacade {
         continue;
       }
       editor.getCaretModel().moveToOffset(wrapOffset);
-      final DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
+      
+      // There is a possible case that formatting is performed from project view and editor is not opened yet. The problem is that
+      // its data context doesn't contain information about project then. So, we explicitly support that here (see IDEA-72791).
+      final DataContext baseDataContext = DataManager.getInstance().getDataContext(editor.getComponent());
+      final DataContext dataContext = new DataContext() {
+        @Override
+        public Object getData(@NonNls String dataId) {
+          Object result = baseDataContext.getData(dataId);
+          if (result == null && PlatformDataKeys.PROJECT.is(dataId)) {
+            result = project;
+          } 
+          return result;
+        }
+      };
+      
 
       SelectionModel selectionModel = editor.getSelectionModel();
       int startSelectionOffset = 0;
