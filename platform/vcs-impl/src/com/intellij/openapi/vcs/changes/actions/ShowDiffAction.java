@@ -19,7 +19,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.external.BinaryDiffTool;
@@ -202,22 +201,18 @@ public class ShowDiffAction extends AnAction implements DumbAware {
             }), newIndex, context);
   }
 
-  public static void showDiffForChange(final Change[] changes, final int index, final Project project, @NotNull final ShowDiffUIContext context) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        final Change selected = index >= 0 ? changes[index] : null;
-        if (isBinaryDiff(project, changes, index)) {
-          showBinaryDiff(project, changes[index]);
-          return;
-        }
-        showDiffForChange(Arrays.asList(changes), new Condition<Change>() {
-          @Override
-          public boolean value(final Change change) {
-            return selected == null ? false : selected.equals(change);
-          }
-        }, project, context);
-      }
-    });
+  public static void showDiffForChange(final Change[] changes, int index, final Project project, @NotNull ShowDiffUIContext context) {
+    final Change selected = index >= 0 ? changes[index] : null;
+    if (isBinaryDiff(project, changes, index)) {
+      showBinaryDiff(project, changes[index]);
+      return;
+    }
+    showDiffForChange(Arrays.asList(changes), new Condition<Change>() {
+                        @Override
+                        public boolean value(final Change change) {
+                          return selected == null ? false : selected.equals(change);
+                        }
+                      }, project, context);
   }
 
   private static FileContent createBinaryFileContent(final Project project, final ContentRevision contentRevision, final String fileName)
@@ -265,19 +260,11 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     try {
       final SimpleDiffRequest request = createBinaryDiffRequest(project, change);
       if (DiffManager.getInstance().getDiffTool().canShow(request)) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override public void run() {
-            DiffManager.getInstance().getDiffTool().show(request);
-          }
-        });
+        DiffManager.getInstance().getDiffTool().show(request);
       }
     }
-    catch (final VcsException e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override public void run() {
-          Messages.showWarningDialog(e.getMessage(), "Show Diff");
-        }
-      });
+    catch (VcsException e) {
+      Messages.showWarningDialog(e.getMessage(), "Show Diff");
     }
   }
 
@@ -302,35 +289,26 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     return isBinaryChange(change) && (change.getAfterRevision() == null || BinaryDiffTool.canShow(project, change.getVirtualFile()));
   }
 
-  public static void showDiffImpl(final Project project, List<DiffRequestPresentable> changeList, final int index, @NotNull final ShowDiffUIContext context) {
+  public static void showDiffImpl(final Project project, List<DiffRequestPresentable> changeList, int index, @NotNull final ShowDiffUIContext context) {
     final ChangeDiffRequest request = new ChangeDiffRequest(project, changeList, context.getActionsFactory(), context.isShowFrame());
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
+    final DiffRequest simpleRequest;
     try {
       request.quickCheckHaveStuff();
-
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final DiffRequest simpleRequest = request.init(index);
-
-          if (simpleRequest != null) {
-            final DiffNavigationContext navigationContext = context.getDiffNavigationContext();
-            if (navigationContext != null) {
-              simpleRequest.passForDataContext(DiffTool.SCROLL_TO_LINE, navigationContext);
-            }
-            tool.show(simpleRequest);
-          }
-        }
-      });
+      simpleRequest = request.init(index);
     }
-    catch (final VcsException e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override public void run() {
-          Messages.showWarningDialog(e.getMessage(), "Show Diff");
-        }
-      });
+    catch (VcsException e) {
+      Messages.showWarningDialog(e.getMessage(), "Show Diff");
+      return;
     }
 
+    if (simpleRequest != null) {
+      final DiffNavigationContext navigationContext = context.getDiffNavigationContext();
+      if (navigationContext != null) {
+        simpleRequest.passForDataContext(DiffTool.SCROLL_TO_LINE, navigationContext);
+      }
+      tool.show(simpleRequest);
+    }
   }
 
   private static boolean directoryOrBinary(final Change change) {
