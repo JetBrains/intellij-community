@@ -1,4 +1,4 @@
-// "Change signature of 'Inner2()' to 'Inner2(CoolTest.Inner1)'" "true"
+// "Add Inner1 as 1 parameter to method Inner2" "true"
 class CoolTest {
 class Inner1 {}
 

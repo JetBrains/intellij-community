@@ -1,4 +1,4 @@
-// "Change signature of 'f(String)' to 'f(int)'" "false"
+// "Add int as 1 parameter to method f" "false"
 public class Foo {
     void foo(Bar f) {
         f.f<caret>(2);

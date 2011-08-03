@@ -25,7 +25,9 @@ import com.intellij.ide.util.scopeChooser.GroupByScopeTypeAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClassOwner;
@@ -92,22 +94,19 @@ public class PackagePatternProvider extends PatternDialectProvider {
       if (recursively) return null;
       FileNode fNode = (FileNode)node;
       final PsiElement element = fNode.getPsiElement();
-      final StringBuilder buf = new StringBuilder(20);
+      String qName = null;
       if (element instanceof PsiClassOwner) {
         final PsiClassOwner javaFile = (PsiClassOwner)element;
-        String packageName = javaFile.getPackageName();
-        buf.append(packageName);
-        if (buf.length() > 0) {
-          buf.append('.');
-        }
         final VirtualFile virtualFile = javaFile.getVirtualFile();
         LOG.assertTrue(virtualFile != null);
+        final String packageName =
+          ProjectRootManager.getInstance(element.getProject()).getFileIndex().getPackageNameByDirectory(virtualFile.getParent());
         final String name = virtualFile.getNameWithoutExtension();
         if (!JavaPsiFacade.getInstance(element.getProject()).getNameHelper().isIdentifier(name)) return null;
-        buf.append(name);
+        qName = StringUtil.getQualifiedName(packageName, name);
       }
-      if (buf.length() > 0) {
-        return new PatternPackageSet(buf.toString(), scope, getModulePattern(node));
+      if (qName != null) {
+        return new PatternPackageSet(qName, scope, getModulePattern(node));
       }
     }
     else if (node instanceof GeneralGroupNode) {

@@ -96,7 +96,9 @@ public class MakeStaticUtil {
           qualifier.resolve() : PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (refElement instanceof PsiClass) {
         if (isPartOf((PsiClass) refElement, containingClass)) {
-          classRefs.add(new InternalUsageInfo(element, refElement));
+          if (!(originalMember instanceof PsiClass && isPartOf((PsiClass)refElement, (PsiClass)originalMember))) {
+            classRefs.add(new InternalUsageInfo(element, refElement));
+          }
         }
       }
     }

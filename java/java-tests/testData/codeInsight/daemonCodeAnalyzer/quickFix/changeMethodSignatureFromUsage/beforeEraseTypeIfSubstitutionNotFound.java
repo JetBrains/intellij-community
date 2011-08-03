@@ -1,4 +1,4 @@
-// "Change signature of 'Bar(String)' to 'Bar(Foo<TypeParamName>, String)'" "true"
+// "Add Foo<TypeParamName> as 1 parameter to method Bar" "true"
  public class Bar {
      Bar(String args) {
 

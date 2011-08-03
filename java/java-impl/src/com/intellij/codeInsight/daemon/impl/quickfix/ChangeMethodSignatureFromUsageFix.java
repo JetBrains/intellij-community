@@ -99,32 +99,28 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
 
   @Nullable
   private String getShortText() {
-    if (myNewParametersInfo.length > 4 || myTargetMethod.getParameterList().getParametersCount() > 4) {
+    final StringBuilder buf = new StringBuilder();
+    final HashSet<ParameterInfoImpl> newParams = new HashSet<ParameterInfoImpl>();
+    final HashSet<ParameterInfoImpl> removedParams = new HashSet<ParameterInfoImpl>();
+    final HashSet<ParameterInfoImpl> changedParams = new HashSet<ParameterInfoImpl>();
+    getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor, buf, newParams, removedParams, changedParams);
 
-      final StringBuilder buf = new StringBuilder();
-      final HashSet<ParameterInfoImpl> newParams = new HashSet<ParameterInfoImpl>();
-      final HashSet<ParameterInfoImpl> removedParams = new HashSet<ParameterInfoImpl>();
-      final HashSet<ParameterInfoImpl> changedParams = new HashSet<ParameterInfoImpl>();
-      getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor, buf, newParams, removedParams, changedParams);
-
-      final String targetMethodName = myTargetMethod.getName();
-      if (myTargetMethod.getContainingClass().findMethodsByName(targetMethodName, true).length == 1) {
-        if (newParams.size() == 1) {
-          final ParameterInfoImpl p = newParams.iterator().next();
-          return "Add " + p.getTypeText() + " as " + (ArrayUtil.find(myNewParametersInfo, p) + 1) + "nd parameter to method " + targetMethodName;
-        }
-        if (removedParams.size() == 1) {
-          final ParameterInfoImpl p = removedParams.iterator().next();
-          return "Remove " + (p.getOldIndex() + 1) + "nd parameter from method " + targetMethodName;
-        }
-        if (changedParams.size() == 1) {
-          final ParameterInfoImpl p = changedParams.iterator().next();
-          return "Change " + (p.getOldIndex() + 1)+ "nd parameter type of method " +targetMethodName + " from " + myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText() + " to " + p.getTypeText();
-        }
+    final String targetMethodName = myTargetMethod.getName();
+    if (myTargetMethod.getContainingClass().findMethodsByName(targetMethodName, true).length == 1) {
+      if (newParams.size() == 1) {
+        final ParameterInfoImpl p = newParams.iterator().next();
+        return "Add " + p.getTypeText() + " as " + (ArrayUtil.find(myNewParametersInfo, p) + 1) + " parameter to method " + targetMethodName;
       }
-      return "<html> Change signature of " + targetMethodName + "(" + buf.toString() + ")</html>";
+      if (removedParams.size() == 1) {
+        final ParameterInfoImpl p = removedParams.iterator().next();
+        return "Remove " + (p.getOldIndex() + 1) + " parameter from method " + targetMethodName;
+      }
+      if (changedParams.size() == 1) {
+        final ParameterInfoImpl p = changedParams.iterator().next();
+        return "Change " + (p.getOldIndex() + 1)+ " parameter of method " +targetMethodName + " from " + myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText() + " to " + p.getTypeText();
+      }
     }
-    return null;
+    return "<html> Change signature of " + targetMethodName + "(" + buf.toString() + ")</html>";
   }
 
   private static String formatTypesList(ParameterInfoImpl[] infos, PsiElement context) {

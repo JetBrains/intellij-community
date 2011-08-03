@@ -1,4 +1,4 @@
-// "Change signature of 'f(int)' to 'f()'" "true"
+// "Remove 1 parameter from method f" "true"
 class A {
     void f(int i) {}
     public void foo() {

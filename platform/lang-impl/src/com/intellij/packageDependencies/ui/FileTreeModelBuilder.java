@@ -528,10 +528,15 @@ public class FileTreeModelBuilder {
 
   private class MyContentIterator implements ContentIterator {
     PackageDependenciesNode lastParent = null;
+    VirtualFile dir;
 
     public boolean processFile(VirtualFile fileOrDir) {
       if (!fileOrDir.isDirectory()) {
+        if (lastParent != null && dir != fileOrDir.getParent()) {
+          lastParent = null;
+        }
         lastParent = buildFileNode(fileOrDir, lastParent);
+        dir = fileOrDir.getParent();
       } else {
         lastParent = null;
       }

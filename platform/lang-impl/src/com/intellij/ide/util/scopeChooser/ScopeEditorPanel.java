@@ -382,12 +382,14 @@ public class ScopeEditorPanel {
           public void run() {
             myIsInUpdate = true;
             if (updateText) {
-              final String text = myCurrentScope != null ? myCurrentScope.getText() : "";
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  myPatternField.setText(text);
-                }
-              });
+              final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
+              if (text != null) {
+                SwingUtilities.invokeLater(new Runnable() {
+                  public void run() {
+                    myPatternField.setText(text);
+                  }
+                });
+              }
             }
             try {
               if (!myProject.isDisposed()) {
@@ -494,14 +496,15 @@ public class ScopeEditorPanel {
   }
 
   public void apply() throws ConfigurationException {
-    if (myCurrentScope == null) {
-      throw new ConfigurationException(IdeBundle.message("error.correct.pattern.syntax.errors.first"));
-    }
   }
 
   public PackageSet getCurrentScope() {
     return myCurrentScope;
   }
+
+  public String getPatternText() {
+     return myPatternField.getText();
+   }
 
   public void reset(PackageSet packageSet, @Nullable Runnable runnable) {
     myCurrentScope = packageSet;
