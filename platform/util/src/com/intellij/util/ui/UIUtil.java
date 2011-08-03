@@ -165,7 +165,7 @@ public class UIUtil {
                                           final int height,
                                           final Color top,
                                           final Color bottom) {
-    BufferedImage img = new BufferedImage(10, height, BufferedImage.TYPE_INT_RGB);
+    BufferedImage img = new BufferedImage(50, height, BufferedImage.TYPE_INT_RGB);
     Graphics2D imageGraphics = (Graphics2D)img.getGraphics();
     imageGraphics.setPaint(new GradientPaint(0, 0, top, 0, height, bottom));
     imageGraphics.fillRect(0, 0, 50, height);
