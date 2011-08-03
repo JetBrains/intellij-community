@@ -35,7 +35,6 @@ import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
 import org.netbeans.lib.cvsclient.connection.UnknownUserException;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -83,13 +82,11 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
       try {
         connection.open(new StreamLogger());
         mySettings.setOffline(false);
-      } catch (AuthenticationException e) {
-        if (e instanceof UnknownUserException) {
-          throw new SolveableAuthenticationException(e.getMessage(), e);
-        } else {
-          throw e;
-        }
-      } finally {
+      }
+      catch (UnknownUserException e) {
+        throw new SolveableAuthenticationException(e.getMessage(), e);
+      }
+      finally {
         try {
           connection.close();
         }
@@ -104,10 +101,11 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
       final String cvsRoot = mySettings.getCvsRootAsString();
       final String password = requestForPassword(cvsRoot);
       if (password == null) return false;
-      removeAllPasswordsForThisCvsRootFromPasswordFile(cvsRoot);
       try {
+        removeAllPasswordsForThisCvsRootFromPasswordFile(cvsRoot);
         storePassword(cvsRoot, password);
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         showConnectionErrorMessage(myProject, CvsBundle.message("error.message.cannot.store.password", e.getLocalizedMessage()));
         return false;
       }
@@ -123,43 +121,15 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
 
   // TODO do release password ! when opening a connection and there's a problem with authorization
 
-  private static ArrayList<String> readConfigurationNotMatchedWith(String cvsRoot, File passFile) {
-    FileInputStream input;
-    try {
-      input = new FileInputStream(passFile);
-    } catch (FileNotFoundException e) {
-      return new ArrayList<String>();
-    }
-
-    BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-    ArrayList<String> result = new ArrayList<String>();
-    try {
-      String line;
-      while ((line = reader.readLine()) != null) {
-        if (line.indexOf(cvsRoot) == -1) result.add(line);
-      }
-    } catch (IOException ex) {
-      // ignore
-    } finally {
-      try {
-        reader.close();
-      } catch (IOException e) {
-        // ignore
-      }
-    }
-    return result;
-  }
-
-  private static void removeAllPasswordsForThisCvsRootFromPasswordFile(String cvsRoot) {
+  private static void removeAllPasswordsForThisCvsRootFromPasswordFile(String cvsRoot) throws IOException {
     File passFile = getPassFile();
-    if (passFile == null) return;
     if (!passFile.isFile()) return;
 
-    ArrayList<String> lines = readConfigurationNotMatchedWith(cvsRoot, passFile);
-
+    List<String> lines = CvsFileUtil.readLinesFrom(passFile, cvsRoot);
     try {
       CvsFileUtil.storeLines(lines, passFile);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       LOG.error(e);
     }
   }
@@ -176,19 +146,22 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
   private static String getPassword(String config) {
     File passFile = getPassFile();
     try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(passFile)));
+      BufferedReader reader =
+        new BufferedReader(new InputStreamReader(new FileInputStream(passFile), CvsApplicationLevelConfiguration.getCharset()));
       try {
         return findPasswordIn(reader, config);
-      } finally {
+      }
+      finally {
         reader.close();
       }
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       return null;
     }
   }
 
   private static File getPassFile() {
-    return new File(CvsApplicationLevelConfiguration.getInstance().getPathToPassFile());
+    return CvsApplicationLevelConfiguration.getInstance().getPassFile();
   }
 
   @Nullable

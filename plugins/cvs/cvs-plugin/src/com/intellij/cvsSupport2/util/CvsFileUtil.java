@@ -48,6 +48,22 @@ public class CvsFileUtil {
     }
   }
 
+  public static List<String> readLinesFrom(File file, String cvsRootToSkip) throws IOException {
+    FileUtil.createIfDoesntExist(file);
+    ArrayList<String> result = new ArrayList<String>();
+    BufferedReader reader =
+      new BufferedReader(new InputStreamReader(new FileInputStream(file), CvsApplicationLevelConfiguration.getCharset()));
+    try {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        if (!line.contains(cvsRootToSkip)) result.add(line);
+      }
+      return result;
+    } finally {
+      reader.close();
+    }
+  }
+
   private static String getLineSeparatorFor(File file) {
     VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(file);
     if (virtualFile != null) {
@@ -59,18 +75,14 @@ public class CvsFileUtil {
   }
 
   public static void storeLines(List<String> lines, File file) throws IOException {
-
     String separator = getLineSeparatorFor(file);
-
     FileUtil.createIfDoesntExist(file);
-
     if (!file.canWrite()) {
       new FileReadOnlyHandler().setFileReadOnly(file, false);
     }
 
     Writer writer =
       new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(file)), CvsApplicationLevelConfiguration.getCharset());
-
     try {
       for (final String line : lines) {
         writer.write(line);

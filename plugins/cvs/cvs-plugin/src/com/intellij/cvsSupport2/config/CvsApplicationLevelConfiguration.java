@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -60,7 +60,6 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
   @NonNls public static final String DEFAULT = "Default";
 
   public boolean DO_OUTPUT = false;
-  @NonNls private static final String USER_HOME_PROPERTY = "user.home";
   public boolean SEND_ENVIRONMENT_VARIABLES_TO_SERVER = false;
 
   public CvsApplicationLevelConfiguration() {
@@ -79,8 +78,7 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    for (Iterator each = element.getChildren(CONFIGURATION_ELEMENT_NAME).iterator(); each.hasNext();) {
-      Element child = (Element)each.next();
+    for (Element child : (Iterable<Element>)element.getChildren(CONFIGURATION_ELEMENT_NAME)) {
       CONFIGURATIONS.add(createConfigurationOn(child));
     }
 
@@ -89,13 +87,11 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
     }
 
     updateConfigurations();
-
   }
 
-  private boolean encodingExists(String encoding) {
+  private static boolean encodingExists(String encoding) {
     final Charset[] availableCharsets = CharsetToolkit.getAvailableCharsets();
-    for (int i = 0; i < availableCharsets.length; i++) {
-      Charset availableCharset = availableCharsets[i];
+    for (Charset availableCharset : availableCharsets) {
       if (availableCharset.name().equals(encoding)) {
         return true;
       }
@@ -105,12 +101,12 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
-    for (Iterator each = CONFIGURATIONS.iterator(); each.hasNext();) {
-      createConfigurationElement((CvsRootConfiguration)each.next(), element);
+    for (CvsRootConfiguration configuration : CONFIGURATIONS) {
+      createConfigurationElement(configuration, element);
     }
   }
 
-  private void createConfigurationElement(CvsRootConfiguration configuration, Element element)
+  private static void createConfigurationElement(CvsRootConfiguration configuration, Element element)
     throws WriteExternalException {
     Element child = new Element(CONFIGURATION_ELEMENT_NAME);
     configuration.writeExternal(child);
@@ -123,18 +119,13 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
     return config;
   }
 
-  @NonNls private String defaultPathToPassFile() {
-    return "$userdir" + "/.cvspass";
-  }
-
   private boolean passFileExists() {
     if (PATH_TO_PASSWORD_FILE == null) return false;
     return new File(convertToIOFilePath(PATH_TO_PASSWORD_FILE)).isFile();
   }
 
   public static String convertToIOFilePath(String presentation) {
-    String userHome = System.getProperty(USER_HOME_PROPERTY);
-    userHome = userHome.replace(File.separatorChar, '/');
+    String userHome = SystemProperties.getUserHome().replace(File.separatorChar, '/');
     presentation = presentation.replace(File.separatorChar, '/');
     try {
       String result = StringUtil.replace(presentation, "$userdir", userHome);
@@ -142,25 +133,24 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
       return result;
     }
     catch (Exception ex) {
-      LOG.error("userHome = " + userHome + ", presenation = " + presentation);
+      LOG.error("userHome = " + userHome + ", presentation = " + presentation);
       return "";
     }
   }
 
-  public String getPathToPassFile() {
-    return convertToIOFilePath(getPathToPassFilePresentation());
+  public File getPassFile() {
+    return new File(convertToIOFilePath(getPathToPassFilePresentation()));
   }
 
   public String getPathToPassFilePresentation() {
     if (!passFileExists()) {
-      PATH_TO_PASSWORD_FILE = defaultPathToPassFile();
+      PATH_TO_PASSWORD_FILE = "$userdir" + "/.cvspass";
     }
     return PATH_TO_PASSWORD_FILE;
   }
 
   public CvsRootConfiguration getConfigurationForCvsRoot(String root) {
-    for (Iterator each = CONFIGURATIONS.iterator(); each.hasNext();) {
-      CvsRootConfiguration cvsRootConfiguration = (CvsRootConfiguration)each.next();
+    for (CvsRootConfiguration cvsRootConfiguration : CONFIGURATIONS) {
       if (cvsRootConfiguration.getCvsRootAsString().equals(root)) {
         return cvsRootConfiguration;
       }
@@ -189,30 +179,29 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
   }
 
   private void updateConfigurations() {
-    final File passFile = new File(getPathToPassFile());
-    if (passFile.isFile()) {
+    final File passFile = getPassFile();
+    if (!passFile.isFile()) {
+      return;
+    }
+    try {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(passFile)));
       try {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(passFile)));
-        try {
-          String line;
-          while ((line = reader.readLine()) != null) {
-            if (line.startsWith("/1 ")) {
-              line = line.substring(3);
-            }
-            final int sepPosition = line.indexOf(' ');
-            if (sepPosition > 0) {
-              final String cvsRoot = line.substring(0, sepPosition);
-              tryToAddNewRoot(cvsRoot);
-            }
+        String line;
+        while ((line = reader.readLine()) != null) {
+          if (line.startsWith("/1 ")) {
+            line = line.substring(3);
           }
-
-        } finally {
-          reader.close();
+          final int sepPosition = line.indexOf(' ');
+          if (sepPosition > 0) {
+            final String cvsRoot = line.substring(0, sepPosition);
+            tryToAddNewRoot(cvsRoot);
+          }
         }
-      } catch (IOException e) {
-        //ignore
+      } finally {
+        reader.close();
       }
-
+    } catch (IOException e) {
+      //ignore
     }
   }
 
