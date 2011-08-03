@@ -28,6 +28,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -51,10 +52,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -313,12 +311,12 @@ public class OverrideImplementUtil {
     // probably, it's better to reformat the whole method - it can go from other style sources
     final Project project = method.getProject();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    boolean keepBreaks = settings.KEEP_LINE_BREAKS;
-    settings.KEEP_LINE_BREAKS = false;
+    CommonCodeStyleSettings javaSettings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE);
+    boolean keepBreaks = javaSettings.KEEP_LINE_BREAKS;
+    javaSettings.KEEP_LINE_BREAKS = false;
     result = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
     result = (PsiMethod)codeStyleManager.reformat(result);
-    settings.KEEP_LINE_BREAKS = keepBreaks;
+    javaSettings.KEEP_LINE_BREAKS = keepBreaks;
     return result;
   }
 
