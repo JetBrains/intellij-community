@@ -382,12 +382,14 @@ public class ScopeEditorPanel {
           public void run() {
             myIsInUpdate = true;
             if (updateText) {
-              final String text = myCurrentScope != null ? myCurrentScope.getText() : "";
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  myPatternField.setText(text);
-                }
-              });
+              final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
+              if (text != null) {
+                SwingUtilities.invokeLater(new Runnable() {
+                  public void run() {
+                    myPatternField.setText(text);
+                  }
+                });
+              }
             }
             try {
               if (!myProject.isDisposed()) {
