@@ -148,7 +148,7 @@ public class ClassUtil {
           super.visitClass(aClass);
           return;
         }
-        if (aClass.getQualifiedName() == null && Comparing.strEqual(name, aClass.getName())) {
+        if (Comparing.strEqual(name, aClass.getName())) {
           myCurrentIdx++;
           if (myCurrentIdx == idx || idx == -1) {
             result[0] = aClass;
