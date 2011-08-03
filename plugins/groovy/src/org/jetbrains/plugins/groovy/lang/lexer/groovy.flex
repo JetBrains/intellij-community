@@ -370,6 +370,9 @@ mGSTRING_LITERAL = \"\"
                                                if (br.equals(mLBRACK)) yybegin(IN_TRIPLE_GSTRING);
                                                if (br.equals(mDIV)) yybegin(IN_REGEX);
                                              }
+                                             while (!braceCount.isEmpty() && mLCURLY != braceCount.peek()) {
+                                               braceCount.pop();
+                                             }
                                              if (!braceCount.isEmpty() && mLCURLY == braceCount.peek()) {
                                                braceCount.pop();
                                              }
@@ -633,7 +636,11 @@ mGSTRING_LITERAL = \"\"
 
 <YYINITIAL> {
 
-"}"                                       {  if (!braceCount.isEmpty() && mLCURLY == braceCount.peek()) {
+"}"                                       {
+                                             while (!braceCount.isEmpty() && mLCURLY != braceCount.peek()) {
+                                               braceCount.pop();
+                                             }
+                                             if (!braceCount.isEmpty() && mLCURLY == braceCount.peek()) {
                                                braceCount.pop();
                                              }
                                              return(mRCURLY);  }

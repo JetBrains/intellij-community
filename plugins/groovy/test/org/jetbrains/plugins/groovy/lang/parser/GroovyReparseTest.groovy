@@ -171,5 +171,19 @@ def foo() {
 }""", ";"
   }
 
+  public void testMultilineToNormalString() {
+    checkReparse '''
+class a {
+  def foo() {
+    bar(""<caret>aaa")
+  }
+
+  def bar() {
+    zoo()
+  }
+}
+''', '\b'
+  }
+
 
 }

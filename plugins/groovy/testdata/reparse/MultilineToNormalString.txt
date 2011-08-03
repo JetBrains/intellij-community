@@ -1,0 +1,141 @@
+Groovy script
+  PsiElement(new line)('\n')
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('foo')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          Method call
+            Reference expression
+              PsiElement(identifier)('bar')
+            Arguments
+              PsiElement(()('(')
+              Literal
+                PsiElement(Gstring)('""')
+              PsiErrorElement:',' or ')' expected
+                <empty list>
+              Reference expression
+                PsiElement(identifier)('aaa')
+              PsiErrorElement:',' or ')' expected
+                <empty list>
+              Compound Gstring
+                PsiElement(Gstring begin)('"')
+                PsiElement(Gstring content)(')')
+                PsiErrorElement:String end expected
+                  <empty list>
+              PsiElement(new line)('\n  ')
+              PsiErrorElement:',' or ')' expected
+                <empty list>
+          PsiElement(})('}')
+      PsiElement(new line)('\n\n  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('bar')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          Method call
+            Reference expression
+              PsiElement(identifier)('zoo')
+            Arguments
+              PsiElement(()('(')
+              PsiElement())(')')
+          PsiElement(new line)('\n  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')
+---
+Groovy script
+  PsiElement(new line)('\n')
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('foo')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          Method call
+            Reference expression
+              PsiElement(identifier)('bar')
+            Arguments
+              PsiElement(()('(')
+              Literal
+                PsiElement(Gstring)('"aaa"')
+              PsiElement())(')')
+          PsiElement(new line)('\n  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n\n  ')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('bar')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        Throw clause
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          Method call
+            Reference expression
+              PsiElement(identifier)('zoo')
+            Arguments
+              PsiElement(()('(')
+              PsiElement())(')')
+          PsiElement(new line)('\n  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')
