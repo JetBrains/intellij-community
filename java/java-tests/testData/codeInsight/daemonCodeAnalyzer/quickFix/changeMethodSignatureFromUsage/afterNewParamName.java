@@ -1,4 +1,4 @@
-// "Change signature of 'f(String)' to 'f(int, String)'" "true"
+// "Add int as 1 parameter to method f" "true"
  public class S {
      void f(int i, String args) {
 

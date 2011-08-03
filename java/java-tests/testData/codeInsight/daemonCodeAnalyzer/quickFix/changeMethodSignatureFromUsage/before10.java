@@ -1,4 +1,4 @@
-// "Change signature of 'set(List<T>)' to 'set(List<T>, String)'" "true"
+// "Add String as 2 parameter to method set" "true"
 import java.util.List;
 
 public class X<T> {
