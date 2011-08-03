@@ -51,6 +51,7 @@ public class DetectedFrameworksComponent {
     myTree = new DetectedFrameworksTree(context, GroupByOption.TYPE) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
+        super.onNodeStateChanged(node);
         updateOptionsPanel();
       }
     };

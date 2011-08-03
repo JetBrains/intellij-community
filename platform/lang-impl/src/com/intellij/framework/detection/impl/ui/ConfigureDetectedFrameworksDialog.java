@@ -31,7 +31,7 @@ public class ConfigureDetectedFrameworksDialog extends DialogWrapper {
   private final DetectedFrameworksComponent myComponent;
   private final Project myProject;
 
-  public ConfigureDetectedFrameworksDialog(Project project, List<DetectedFrameworkDescription> descriptions) {
+  public ConfigureDetectedFrameworksDialog(Project project, List<? extends DetectedFrameworkDescription> descriptions) {
     super(project, true);
     myProject = project;
     setTitle("Setup Frameworks");

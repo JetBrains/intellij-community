@@ -19,10 +19,14 @@ import com.intellij.facet.*;
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -31,6 +35,7 @@ import java.util.Set;
  * @author nik
  */
 public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C extends FacetConfiguration> extends DetectedFrameworkDescription {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.FacetBasedDetectedFrameworkDescription");
   private final FacetBasedFrameworkDetector<F, C> myDetector;
   private final C myConfiguration;
   private final Set<VirtualFile> myRelatedFiles;
@@ -57,6 +62,12 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
     return myFrameworkType;
   }
 
+  @Override
+  public FrameworkType getUnderlyingType() {
+    final FacetTypeId<?> underlyingTypeId = myFacetType.getUnderlyingFacetType();
+    return underlyingTypeId != null ? createFrameworkType(FacetTypeRegistry.getInstance().findFacetType(underlyingTypeId)) : null;
+  }
+
   @NotNull
   @Override
   public Collection<? extends VirtualFile> getRelatedFiles() {
@@ -75,12 +86,62 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
 
   protected abstract String getModuleName();
 
-  protected void doConfigure(ModifiableModelsProvider modifiableModelsProvider, final Module module) {
+  @Override
+  public boolean canSetupFramework(@NotNull Collection<? extends DetectedFrameworkDescription> allDetectedFrameworks) {
+    final FacetTypeId<?> underlyingId = myFacetType.getUnderlyingFacetType();
+    if (underlyingId == null) {
+      return true;
+    }
+
+    final Collection<? extends Facet> facets = getExistentFacets(underlyingId);
+    for (Facet facet : facets) {
+      if (myDetector.isSuitableUnderlyingFacetConfiguration(facet.getConfiguration(), myConfiguration, myRelatedFiles)) {
+        return true;
+      }
+    }
+    for (DetectedFrameworkDescription framework : allDetectedFrameworks) {
+      if (framework instanceof FacetBasedDetectedFrameworkDescription<?, ?>) {
+        final FacetBasedDetectedFrameworkDescription<?, ?> description = (FacetBasedDetectedFrameworkDescription<?, ?>)framework;
+        if (underlyingId.equals(description.myFacetType.getId()) &&
+            myDetector.isSuitableUnderlyingFacetConfiguration(description.getConfiguration(), myConfiguration, myRelatedFiles)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  protected abstract Collection<? extends Facet> getExistentFacets(FacetTypeId<?> underlyingFacetType);
+
+  protected void doSetup(ModifiableModelsProvider modifiableModelsProvider, final Module module) {
     final ModifiableFacetModel model = modifiableModelsProvider.getFacetModifiableModel(module);
-    final F facet = FacetManager.getInstance(module).createFacet(myFacetType, myFacetType.getDefaultFacetName(), myConfiguration, null);
+    final String name = UniqueNameGenerator.generateUniqueName(myFacetType.getDefaultFacetName(), new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return FacetManager.getInstance(module).findFacet(myFacetType.getId(), s) == null;
+      }
+    });
+    final F facet = FacetManager.getInstance(module).createFacet(myFacetType, name, myConfiguration,
+                                                                 findUnderlyingFacet(module));
     model.addFacet(facet);
     modifiableModelsProvider.commitFacetModifiableModel(module, model);
     myDetector.setupFacet(facet);
+  }
+
+  @Nullable
+  private Facet findUnderlyingFacet(Module module) {
+    final FacetTypeId<?> underlyingTypeId = myFacetType.getUnderlyingFacetType();
+    if (underlyingTypeId == null) return null;
+
+    final Collection<? extends Facet> parentFacets = FacetManager.getInstance(module).getFacetsByType(underlyingTypeId);
+    for (Facet facet : parentFacets) {
+      if (myDetector.isSuitableUnderlyingFacetConfiguration(facet.getConfiguration(), myConfiguration, myRelatedFiles)) {
+        return facet;
+      }
+    }
+    LOG.error("Cannot find suitable underlying facet in " + parentFacets);
+    return null;
   }
 
   @Override

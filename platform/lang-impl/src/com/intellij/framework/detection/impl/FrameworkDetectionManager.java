@@ -26,9 +26,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -36,8 +34,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -222,7 +218,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
   private void showSetupFrameworksDialog(Notification notification) {
     IdentityHashMap<DetectedFrameworkDescription, Integer> frameworksToId = new IdentityHashMap<DetectedFrameworkDescription, Integer>();
-    List<DetectedFrameworkDescription> descriptions = getValidDetectedFrameworks(frameworksToId);
+    List<? extends DetectedFrameworkDescription> descriptions = getValidDetectedFrameworks(frameworksToId);
     if (descriptions.isEmpty()) {
       Messages.showInfoMessage(myProject, "No frameworks are detected", "Framework Detection");
       return;
@@ -232,21 +228,14 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
     if (dialog.isOK()) {
       notification.expire();
       List<DetectedFrameworkDescription> selected = dialog.getSelectedFrameworks();
-      AccessToken token = WriteAction.start();
-      try {
-        final PlatformModifiableModelsProvider provider = new PlatformModifiableModelsProvider();
-        for (DetectedFrameworkDescription description : selected) {
-          description.configureFramework(provider, new DefaultModulesProvider(myProject));
-          myDetectedFrameworksData.putExistentFrameworkFiles(frameworksToId.get(description), description.getRelatedFiles());
-        }
-      }
-      finally {
-        token.finish();
+      FrameworkDetectionUtil.setupFrameworks(selected, myProject);
+      for (DetectedFrameworkDescription description : selected) {
+        myDetectedFrameworksData.putExistentFrameworkFiles(frameworksToId.get(description), description.getRelatedFiles());
       }
     }
   }
 
-  private List<DetectedFrameworkDescription> getValidDetectedFrameworks(IdentityHashMap<DetectedFrameworkDescription, Integer> frameworksToId) {
+  private List<? extends DetectedFrameworkDescription> getValidDetectedFrameworks(IdentityHashMap<DetectedFrameworkDescription, Integer> frameworksToId) {
     final MultiMap<Integer,DetectedFrameworkDescription> frameworksMap = myDetectedFrameworksData.getDetectedFrameworks();
     List<DetectedFrameworkDescription> descriptions = new ArrayList<DetectedFrameworkDescription>();
     final FileBasedIndex index = FileBasedIndex.getInstance();
@@ -277,7 +266,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
         frameworksToId.put(framework, id);
       }
     }
-    return descriptions;
+    return FrameworkDetectionUtil.removeDisabled(descriptions);
   }
 
   @TestOnly
@@ -287,7 +276,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
   }
 
   @TestOnly
-  public List<DetectedFrameworkDescription> getDetectedFrameworks() {
+  public List<? extends DetectedFrameworkDescription> getDetectedFrameworks() {
     return getValidDetectedFrameworks(new IdentityHashMap<DetectedFrameworkDescription, Integer>());
   }
 

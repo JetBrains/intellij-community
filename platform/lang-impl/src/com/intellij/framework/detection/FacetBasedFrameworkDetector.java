@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -52,5 +53,9 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
   @Override
   public FrameworkType getFrameworkType() {
     return new FrameworkType(getFacetType().getStringId(), getFacetType().getPresentableName(), getFacetType().getIcon());
+  }
+
+  public boolean isSuitableUnderlyingFacetConfiguration(FacetConfiguration underlying, C configuration, Set<VirtualFile> files) {
+    return true;
   }
 }

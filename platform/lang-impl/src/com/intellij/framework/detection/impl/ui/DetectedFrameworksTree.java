@@ -18,6 +18,7 @@ package com.intellij.framework.detection.impl.ui;
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.FrameworkDetectionContext;
+import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckboxTree;
@@ -27,18 +28,16 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
  */
 public class DetectedFrameworksTree extends CheckboxTree {
-  private List<DetectedFrameworkDescription> myDetectedFrameworks;
+  private List<? extends DetectedFrameworkDescription> myDetectedFrameworks;
   private final FrameworkDetectionContext myContext;
   private DetectedFrameworksComponent.GroupByOption myGroupByOption;
 
@@ -50,7 +49,7 @@ public class DetectedFrameworksTree extends CheckboxTree {
     setRootVisible(false);
   }
 
-  private void createNodesGroupedByDirectory(CheckedTreeNode root, final List<DetectedFrameworkDescription> frameworks) {
+  private void createNodesGroupedByDirectory(CheckedTreeNode root, final List<? extends DetectedFrameworkDescription> frameworks) {
     Map<VirtualFile, FrameworkDirectoryNode> nodes = new HashMap<VirtualFile, FrameworkDirectoryNode>();
     List<DetectedFrameworkNode> externalNodes = new ArrayList<DetectedFrameworkNode>();
     for (DetectedFrameworkDescription framework : frameworks) {
@@ -93,6 +92,18 @@ public class DetectedFrameworksTree extends CheckboxTree {
     });
   }
 
+  @Override
+  protected void onNodeStateChanged(CheckedTreeNode node) {
+    final List<DetectedFrameworkDescription> checked = Arrays.asList(getCheckedNodes(DetectedFrameworkDescription.class, null));
+    final List<DetectedFrameworkDescription> disabled = FrameworkDetectionUtil.getDisabledDescriptions(checked);
+    for (DetectedFrameworkDescription description : disabled) {
+      final DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject(getRoot(), description);
+      if (treeNode instanceof CheckedTreeNode) {
+        ((CheckedTreeNode)treeNode).setChecked(false);
+      }
+    }
+  }
+
   private static FrameworkDirectoryNode collapseDirectoryNode(FrameworkDirectoryNode node) {
     if (node.getChildCount() == 1) {
       final TreeNode child = node.getChildAt(0);
@@ -129,7 +140,7 @@ public class DetectedFrameworksTree extends CheckboxTree {
     return newNode;
   }
 
-  private void createNodesGroupedByType(CheckedTreeNode root, final List<DetectedFrameworkDescription> frameworks) {
+  private void createNodesGroupedByType(CheckedTreeNode root, final List<? extends DetectedFrameworkDescription> frameworks) {
     Map<FrameworkType, FrameworkTypeNode> groupNodes = new HashMap<FrameworkType, FrameworkTypeNode>();
     for (DetectedFrameworkDescription framework : frameworks) {
       final FrameworkType type = framework.getFrameworkType();
@@ -155,7 +166,7 @@ public class DetectedFrameworksTree extends CheckboxTree {
     }
   }
 
-  public void rebuildTree(final List<DetectedFrameworkDescription> frameworks) {
+  public void rebuildTree(final List<? extends DetectedFrameworkDescription> frameworks) {
     final CheckedTreeNode root = getRoot();
     root.removeAllChildren();
     if (myGroupByOption == DetectedFrameworksComponent.GroupByOption.TYPE) {

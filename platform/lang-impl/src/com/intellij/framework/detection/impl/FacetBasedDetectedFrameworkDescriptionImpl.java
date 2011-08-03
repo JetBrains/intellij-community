@@ -17,15 +17,17 @@ package com.intellij.framework.detection.impl;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetTypeId;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
-import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -46,7 +48,12 @@ public class FacetBasedDetectedFrameworkDescriptionImpl<F extends Facet, C exten
   }
 
   @Override
-  public void configureFramework(ModifiableModelsProvider modifiableModelsProvider, ModulesProvider modulesProvider) {
-    doConfigure(modifiableModelsProvider, myModule);
+  public void setupFramework(@NotNull ModifiableModelsProvider modifiableModelsProvider, @NotNull ModulesProvider modulesProvider) {
+    doSetup(modifiableModelsProvider, myModule);
+  }
+
+  @NotNull
+  protected Collection<? extends Facet> getExistentFacets(FacetTypeId<?> underlyingFacetType) {
+    return FacetManager.getInstance(myModule).getFacetsByType(underlyingFacetType);
   }
 }

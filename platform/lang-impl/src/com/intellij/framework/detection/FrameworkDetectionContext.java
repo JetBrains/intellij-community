@@ -36,7 +36,4 @@ public interface FrameworkDetectionContext {
   <F extends Facet, C extends FacetConfiguration>
   List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetBasedFrameworkDetector<F, C> detector,
                                                                                @NotNull Collection<VirtualFile> files);
-
-  abstract class FacetConfigurationCreator<F extends Facet, C extends FacetConfiguration> {
-  }
 }

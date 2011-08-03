@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -36,7 +37,16 @@ public abstract class DetectedFrameworkDescription {
   @NotNull
   public abstract String getSetupDescription();
 
-  public abstract void configureFramework(ModifiableModelsProvider modifiableModelsProvider, ModulesProvider modulesProvider);
+  @Nullable
+  public FrameworkType getUnderlyingType() {
+    return null;
+  }
+
+  public boolean canSetupFramework(@NotNull Collection<? extends DetectedFrameworkDescription> allDetectedFrameworks) {
+    return true;
+  }
+
+  public abstract void setupFramework(@NotNull ModifiableModelsProvider modifiableModelsProvider, @NotNull ModulesProvider modulesProvider);
 
   public abstract boolean equals(Object obj);
 

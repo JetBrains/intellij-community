@@ -17,15 +17,19 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.FacetTypeId;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.impl.FacetBasedDetectedFrameworkDescription;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -49,9 +53,14 @@ public class FacetBasedDetectedFrameworkDescriptionInWizard<F extends Facet, C e
   }
 
   @Override
-  public void configureFramework(ModifiableModelsProvider modifiableModelsProvider, ModulesProvider modulesProvider) {
+  public void setupFramework(@NotNull ModifiableModelsProvider modifiableModelsProvider, @NotNull ModulesProvider modulesProvider) {
     Module module = modulesProvider.getModule(getModuleName());
     LOG.assertTrue(module != null, getModuleName());
-    doConfigure(modifiableModelsProvider, module);
+    doSetup(modifiableModelsProvider, module);
+  }
+
+  @NotNull
+  protected Collection<? extends Facet> getExistentFacets(FacetTypeId<?> underlyingFacetType) {
+    return Collections.emptyList();
   }
 }

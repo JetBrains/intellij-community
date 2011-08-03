@@ -21,6 +21,7 @@ import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.framework.detection.impl.FrameworkDetectionProcessor;
+import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
 import com.intellij.framework.detection.impl.ui.DetectedFrameworksComponent;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
@@ -30,8 +31,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +44,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<List<DetectedFrameworkDescription>>
+public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<List<? extends DetectedFrameworkDescription>>
   implements ProjectFromSourcesBuilder.ProjectConfigurationUpdater {
   private final Icon myIcon;
   private List<File> myLastRoots = null;
@@ -89,7 +88,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
     return myMainPanel;
   }
 
-  protected List<DetectedFrameworkDescription> calculate() {
+  protected List<? extends DetectedFrameworkDescription> calculate() {
     myLastRoots = getRoots();
 
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -113,7 +112,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
     return roots;
   }
 
-  protected void onFinished(final List<DetectedFrameworkDescription> result, final boolean canceled) {
+  protected void onFinished(final List<? extends DetectedFrameworkDescription> result, final boolean canceled) {
     myDetectedFrameworksComponent.getTree().rebuildTree(result);
     if (result.isEmpty()) {
       myFrameworksDetectedLabel.setText(ProjectBundle.message("label.text.no.frameworks.detected"));
@@ -137,10 +136,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
   }
 
   public void updateProject(@NotNull Project project) {
-    final PlatformModifiableModelsProvider modelsProvider = new PlatformModifiableModelsProvider();
-    for (DetectedFrameworkDescription description : myDetectedFrameworksComponent.getSelectedFrameworks()) {
-      description.configureFramework(modelsProvider, new DefaultModulesProvider(project));
-    }
+    FrameworkDetectionUtil.setupFrameworks(myDetectedFrameworksComponent.getSelectedFrameworks(), project);
     myDetectedFrameworksComponent.processUncheckedNodes(DetectionExcludesConfiguration.getInstance(project));
   }
 }
