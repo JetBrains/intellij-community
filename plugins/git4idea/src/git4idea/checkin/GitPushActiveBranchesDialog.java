@@ -212,37 +212,55 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    * @param exceptions the collected exceptions
    */
   public static void showDialog(final Project project, final List<VirtualFile> vcsRoots, final Collection<VcsException> exceptions) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        final List<Root> emptyRoots =
-          loadRoots(project, vcsRoots, exceptions, false); // collect roots without fetching - just to show dialog
-        if (!exceptions.isEmpty()) {
-          exceptions.addAll(exceptions);
-          return;
-        }
-        final GitPushActiveBranchesDialog dialog = new GitPushActiveBranchesDialog(project, vcsRoots, emptyRoots);
-        dialog.refreshTree(true, null, false); // start initial fetch
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            dialog.show();
-            if (dialog.isOK()) {
-              dialog.rebaseAndPush();
-            }
-
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              public void run() {
-                for (VirtualFile root : vcsRoots) {
-                  GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL);
-                }
-              }
-            });
-          }
-        });
-      }
-    });
+    new DialogInitTask(project, vcsRoots, exceptions).queue();
   }
+
+  private static class DialogInitTask extends Task.Backgroundable {
+    private final Project myProject;
+    private final List<VirtualFile> myVcsRoots;
+    private final Collection<VcsException> myExceptions;
+    private GitPushActiveBranchesDialog myDialog;
+
+    public DialogInitTask(Project project, List<VirtualFile> vcsRoots, Collection<VcsException> exceptions) {
+      super(project, "Collection information for push", false);
+      myProject = project;
+      myVcsRoots = vcsRoots;
+      myExceptions = exceptions;
+    }
+
+    @Override public void run(@NotNull ProgressIndicator indicator) {
+      final List<Root> emptyRoots =
+        loadRoots(myProject, myVcsRoots, myExceptions, false); // collect roots without fetching - just to show dialog
+      if (!myExceptions.isEmpty()) {
+        myExceptions.addAll(myExceptions);
+        return;
+      }
+      myDialog = new GitPushActiveBranchesDialog(myProject, myVcsRoots, emptyRoots);
+      myDialog.refreshTree(true, null, false); // start initial fetch
+
+      indicator.stop(); // if indicator is not stopped, the progress would be displayed all the time the dialog is displayed.
+    }
+
+    @Override
+    public void onSuccess() {
+      if (myDialog != null) {
+        myDialog.show();
+        if (myDialog.isOK()) {
+          myDialog.rebaseAndPush();
+        }
+      }
+
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          for (VirtualFile root : myVcsRoots) {
+            GitRepositoryManager.getInstance(myProject).updateRepository(root, GitRepository.TrackedTopic.ALL);
+          }
+        }
+      });
+    }
+  }
+
 
   /**
    * This is called when "Rebase and Push" button (default button) is pressed.
@@ -1074,4 +1092,5 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       return string.toString();
     }
   }
+
 }
