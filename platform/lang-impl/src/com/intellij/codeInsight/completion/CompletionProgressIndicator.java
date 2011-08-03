@@ -602,7 +602,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void scheduleRestart() {
-    if (isAutopopupCompletion() && (!myProcessingDelayedActions || hideAutopopupIfMeaningless())) {
+    if (isAutopopupCompletion() && (!myLookup.isShown() || hideAutopopupIfMeaningless())) {
       AutoPopupController.getInstance(getProject()).scheduleAutoPopup(myEditor, null);
       return;
     }
