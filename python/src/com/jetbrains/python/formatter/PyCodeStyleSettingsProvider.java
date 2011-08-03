@@ -24,7 +24,7 @@ public class PyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, "Python") {
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
-        return new PyCodeStyleMainPanel(settings);
+        return new PyCodeStyleMainPanel(getCurrentSettings(), settings);
       }
 
       public String getHelpTopic() {

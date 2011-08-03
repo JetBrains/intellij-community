@@ -9,8 +9,8 @@ import com.jetbrains.python.PythonLanguage;
  * @author Rustam Vishnyakov
  */
 public class PyCodeStyleMainPanel extends MultiTabCodeStyleAbstractPanel {
-  protected PyCodeStyleMainPanel(CodeStyleSettings settings) {
-    super(settings);
+  protected PyCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+    super(currentSettings, settings);
   }
 
   @Override
