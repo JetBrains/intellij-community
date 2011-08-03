@@ -74,7 +74,7 @@ public class IdeaLicenseHelper {
     return null;
   }
 
-  public static void copyIDEALicencse(final String sandboxHome, Sdk jdk){
+  public static void copyIDEALicense(final String sandboxHome, Sdk jdk){
     if (isIDEALicenseInSandbox(sandboxHome + File.separator + CONFIG_DIR_NAME, sandboxHome + File.separator + "system", jdk.getHomePath() + File.separator + "bin") == null){
       final File ideaLicense = isIDEALicenseInSandbox(PathManager.getConfigPath(), PathManager.getSystemPath(), PathManager.getBinPath());
       if (ideaLicense != null){

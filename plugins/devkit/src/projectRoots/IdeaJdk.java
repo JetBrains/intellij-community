@@ -150,16 +150,24 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     if (new File(sdkHome, "lib/rubymine.jar").exists()) {
       productName = "RubyMine ";
     }
+    else if (new File(sdkHome, "lib/pycharm.jar").exists()) {
+      productName = "PyCharm ";
+    }
+    else if (new File(sdkHome, "lib/webide.jar").exists()) {
+      productName = "WebStorm/PhpStorm ";
+    }
+    else if (new File(sdkHome, "lib/webide.jar").exists()) {
+      productName = "WebStorm/PhpStorm ";
+    }
     else {
       productName = "IDEA ";
-
     }
     String buildNumber = getBuildNumber(sdkHome);
     return productName + (buildNumber != null ? buildNumber : "");
   }
 
   @Nullable
-  private static String getBuildNumber(String ideaHome) {
+  public static String getBuildNumber(String ideaHome) {
     try {
       @NonNls final String buildTxt = "/build.txt";
       return FileUtil.loadFile(new File(ideaHome + buildTxt)).trim();
