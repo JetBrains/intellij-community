@@ -73,12 +73,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   }
 
   private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex, VirtualFile projectBaseDir){
-    if (myModulePattern != null) {
-      final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
-      return myFilePattern.matcher(VfsUtil.getRelativePath(virtualFile, contentRoot, '/')).matches();
-    } else {
-      return myFilePattern.matcher(getRelativePath(virtualFile, fileIndex, true, projectBaseDir)).matches();
-    }
+    return myFilePattern.matcher(getRelativePath(virtualFile, fileIndex, true, projectBaseDir)).matches();
   }
 
   public static boolean matchesModule(final Pattern moduleGroupPattern,
@@ -191,6 +186,10 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
                                        final ProjectFileIndex index,
                                        final boolean useFQName,
                                        VirtualFile projectBaseDir) {
+    final VirtualFile contentRootForFile = index.getContentRootForFile(virtualFile);
+    if (contentRootForFile != null) {
+      return VfsUtil.getRelativePath(virtualFile, contentRootForFile, '/');
+    }
     final Module module = index.getModuleForFile(virtualFile);
     if (module != null) {
       if (projectBaseDir != null) {
@@ -201,10 +200,6 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
       }
       return virtualFile.getPath();
     } else {
-      final VirtualFile contentRootForFile = index.getContentRootForFile(virtualFile);
-      if (contentRootForFile != null) {
-        return VfsUtil.getRelativePath(virtualFile, contentRootForFile, '/');
-      }
       return getLibRelativePath(virtualFile, index);
     }
   }

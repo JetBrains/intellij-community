@@ -294,11 +294,9 @@ public class GitRootTracker implements VcsListener {
           myNotification = new Notification(GIT_INVALID_ROOTS_ID, GitBundle.getString("root.tracker.message.title"),
                                             GitBundle.getString("root.tracker.message"), NotificationType.ERROR,
                                             new NotificationListener() {
-                                              public void hyperlinkUpdate(@NotNull Notification notification,
+                                              public void hyperlinkUpdate(@NotNull final Notification notification,
                                                                           @NotNull HyperlinkEvent event) {
-                                                if (fixRoots()) {
-                                                  notification.expire();
-                                                }
+                                                    fixRoots(notification);
                                               }
                                             });
 
@@ -346,97 +344,113 @@ public class GitRootTracker implements VcsListener {
 
   /**
    * Fix mapped roots
-   *
-   * @return true if roots now in the correct state
+   * @param notification Expires the notification if roots are in the correct state after fix.
    */
-  boolean fixRoots() {
-    final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(myVcsManager.getDirectoryMappings());
-    final HashSet<String> mapped = new HashSet<String>();
-    final HashSet<String> removed = new HashSet<String>();
-    final HashSet<String> added = new HashSet<String>();
-    final VirtualFile baseDir = myProject.getBaseDir();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        for (Iterator<VcsDirectoryMapping> i = vcsDirectoryMappings.iterator(); i.hasNext();) {
-          VcsDirectoryMapping m = i.next();
-          String vcsName = myVcs.getName();
-          if (!vcsName.equals(m.getVcs())) {
-            continue;
-          }
-          String path = m.getDirectory();
-          if (path.length() == 0 && baseDir != null) {
-            path = baseDir.getPath();
-          }
-          VirtualFile file = lookupFile(path);
-          if (file != null && !mapped.add(file.getPath())) {
-            // eliminate duplicates
-            i.remove();
-            continue;
-          }
-          final VirtualFile actual = GitUtil.gitRootOrNull(file);
-          if (file == null || actual == null) {
-            removed.add(path);
-          }
-          else if (actual != file) {
-            removed.add(path);
-            added.add(actual.getPath());
-          }
-        }
-        for (String m : mapped) {
-          VirtualFile file = lookupFile(m);
-          if (file == null) {
-            continue;
-          }
-          addSubroots(file, added, mapped);
-          if (removed.contains(m)) {
-            continue;
-          }
-          VirtualFile root = GitUtil.gitRootOrNull(file);
-          assert root != null;
-          for (String o : mapped) {
-            // the mapped collection is not modified here, so order is being kept
-            if (o.equals(m) || removed.contains(o)) {
-              continue;
+  private void fixRoots(final Notification notification) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override public void run() {
+        final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(myVcsManager.getDirectoryMappings());
+        final HashSet<String> mapped = new HashSet<String>();
+        final HashSet<String> removed = new HashSet<String>();
+        final HashSet<String> added = new HashSet<String>();
+
+        collectRoots(vcsDirectoryMappings, mapped, removed, added);
+
+        final VirtualFile baseDir = myProject.getBaseDir();
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override public void run() {
+            if (added.isEmpty() && removed.isEmpty()) {
+              Messages.showInfoMessage(myProject, GitBundle.message("fix.roots.valid.message"), GitBundle.message("fix.roots.valid.title"));
+              notification.expire();
+              return;
             }
-            if (o.startsWith(m)) {
-              VirtualFile otherFile = lookupFile(m);
-              assert otherFile != null;
-              VirtualFile otherRoot = GitUtil.gitRootOrNull(otherFile);
-              assert otherRoot != null;
-              if (otherRoot == root) {
-                removed.add(o);
-              }
-              else if (otherFile != otherRoot) {
-                added.add(otherRoot.getPath());
-                removed.add(o);
+            GitFixRootsDialog d = new GitFixRootsDialog(myProject, mapped, added, removed);
+            d.show();
+            if (!d.isOK()) {
+              return;
+            }
+
+            for (Iterator<VcsDirectoryMapping> i = vcsDirectoryMappings.iterator(); i.hasNext(); ) {
+              VcsDirectoryMapping m = i.next();
+              String path = m.getDirectory();
+              if (removed.contains(path) || (path.length() == 0 && baseDir != null && removed.contains(baseDir.getPath()))) {
+                i.remove();
               }
             }
+            for (String a : added) {
+              vcsDirectoryMappings.add(new VcsDirectoryMapping(a, myVcs.getName()));
+            }
+            myVcsManager.setDirectoryMappings(vcsDirectoryMappings);
+            myVcsManager.updateActiveVcss();
+            notification.expire();
           }
-        }
+        });
       }
     });
-    if (added.isEmpty() && removed.isEmpty()) {
-      Messages.showInfoMessage(myProject, GitBundle.message("fix.roots.valid.message"), GitBundle.message("fix.roots.valid.title"));
-      return true;
-    }
-    GitFixRootsDialog d = new GitFixRootsDialog(myProject, mapped, added, removed);
-    d.show();
-    if (!d.isOK()) {
-      return false;
-    }
+  }
+
+  private void collectRoots(List<VcsDirectoryMapping> vcsDirectoryMappings,
+                                   HashSet<String> mapped,
+                                   HashSet<String> removed,
+                                   HashSet<String> added) {
+    final VirtualFile baseDir = myProject.getBaseDir();
     for (Iterator<VcsDirectoryMapping> i = vcsDirectoryMappings.iterator(); i.hasNext();) {
       VcsDirectoryMapping m = i.next();
+      String vcsName = myVcs.getName();
+      if (!vcsName.equals(m.getVcs())) {
+        continue;
+      }
       String path = m.getDirectory();
-      if (removed.contains(path) || (path.length() == 0 && baseDir != null && removed.contains(baseDir.getPath()))) {
+      if (path.length() == 0 && baseDir != null) {
+        path = baseDir.getPath();
+      }
+      VirtualFile file = lookupFile(path);
+      if (file != null && !mapped.add(file.getPath())) {
+        // eliminate duplicates
         i.remove();
+        continue;
+      }
+      final VirtualFile actual = GitUtil.gitRootOrNull(file);
+      if (file == null || actual == null) {
+        removed.add(path);
+      }
+      else if (actual != file) {
+        removed.add(path);
+        added.add(actual.getPath());
       }
     }
-    for (String a : added) {
-      vcsDirectoryMappings.add(new VcsDirectoryMapping(a, myVcs.getName()));
+    for (String m : mapped) {
+      VirtualFile file = lookupFile(m);
+      if (file == null) {
+        continue;
+      }
+      addSubroots(file, added, mapped);
+      if (removed.contains(m)) {
+        continue;
+      }
+      VirtualFile root = GitUtil.gitRootOrNull(file);
+      assert root != null;
+      for (String o : mapped) {
+        // the mapped collection is not modified here, so order is being kept
+        if (o.equals(m) || removed.contains(o)) {
+          continue;
+        }
+        if (o.startsWith(m)) {
+          VirtualFile otherFile = lookupFile(m);
+          assert otherFile != null;
+          VirtualFile otherRoot = GitUtil.gitRootOrNull(otherFile);
+          assert otherRoot != null;
+          if (otherRoot == root) {
+            removed.add(o);
+          }
+          else if (otherFile != otherRoot) {
+            added.add(otherRoot.getPath());
+            removed.add(o);
+          }
+        }
+      }
     }
-    myVcsManager.setDirectoryMappings(vcsDirectoryMappings);
-    myVcsManager.updateActiveVcss();
-    return true;
   }
 
   /**

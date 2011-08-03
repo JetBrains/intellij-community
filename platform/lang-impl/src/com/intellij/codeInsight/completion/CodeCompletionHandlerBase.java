@@ -501,7 +501,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final Project project = hostFile.getProject();
 
     if (autopopup) {
-      final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false, hostEditor);
+      final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(true, hostEditor);
       CompletionServiceImpl.setCompletionPhase(phase);
 
       CompletionAutoPopupHandler.runLaterWithCommitted(project, hostDocument, new Runnable() {

@@ -16,18 +16,17 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
 import java.util.concurrent.atomic.AtomicBoolean
-import com.intellij.openapi.application.ApplicationManager
 
 /**
  * @author peter
@@ -58,17 +57,12 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
     for (i in 0..<s.size()) {
       final c = s.charAt(i)
       myFixture.type(c)
-      joinAlarm() // for the autopopup handler's alarm, or the restartCompletion's invokeLater
+      joinAutopopup() // for the autopopup handler's alarm, or the restartCompletion's invokeLater
       joinCompletion()
     }
   }
 
   protected void joinCompletion() {
-    joinCommit() // file copy commit in background
-
-    def controller = AutoPopupController.getInstance(getProject())
-    controller.executePendingRequests();
-
     for (i in 0.1000) {
       if (i==999) {
         printThreadDump()
@@ -85,7 +79,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
         l = LookupManager.getInstance(project).activeLookup
       }
       if (!l || !l.calculating) {
-        joinAlarm() // for invokeLater in CompletionProgressIndicator.stop()
+        edt {} // for invokeLater in CompletionProgressIndicator.stop()
         return
       }
       Thread.sleep(10)
@@ -94,21 +88,30 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
     fail("Too long completion")
   }
 
-  private def joinCommit() {
+  protected def joinCommit() {
     final AtomicBoolean committed = new AtomicBoolean()
     edt {
       PsiDocumentManager.getInstance(project).cancelAndRunWhenAllCommitted("wait for all comm") {
         ApplicationManager.application.invokeLater { committed.set(true) }
       }
     }
+    def start = System.currentTimeMillis()
     while (!committed.get()) {
+      if (System.currentTimeMillis() - start >= 10000) {
+        fail('too long waiting for a document to be committed')
+      }
       UIUtil.pump();
     }
   }
 
-  protected void joinAlarm() {
-    joinCommit()
-    edt { PlatformTestUtil.waitForAlarm(CodeInsightSettings.instance.AUTO_LOOKUP_DELAY)}
+  protected void joinAutopopup() {
+    joinAlarm();
+    joinCommit() // physical document commit
+    joinCommit() // file copy commit in background
+  }
+
+  protected def joinAlarm() {
+    AutoPopupController.getInstance(getProject()).executePendingRequests()
   }
 
   @Override protected void runTest() {

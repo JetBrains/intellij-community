@@ -226,6 +226,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
 
         String documentText = documentWindow.getText();
         assert outChars.toString().equals(parsedNode.getText()) : exceptionContext("Before patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'"+outChars+"'");
+
+        viewProvider.setPatchingLeaves(true);
         try {
           patchLeafs(parsedNode, escapers, place);
         }
@@ -235,10 +237,13 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         catch (RuntimeException e) {
           throw new RuntimeException(exceptionContext("Patch error"), e);
         }
+        finally {
+          viewProvider.setPatchingLeaves(false);
+        }
         assert parsedNode.getText().equals(documentText) : exceptionContext("After patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'"+outChars+"'");
 
         virtualFile.setContent(null, documentWindow.getText(), false);
-        
+
         cacheEverything(place, documentWindow, viewProvider, psiFile, pointer);
 
         PsiFile cachedPsiFile = documentManager.getCachedPsiFile(documentWindow);

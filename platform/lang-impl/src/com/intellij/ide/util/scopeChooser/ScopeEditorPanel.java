@@ -559,7 +559,7 @@ public class ScopeEditorPanel {
         }
         append(node.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         final String locationString = node.getComment();
-        if (locationString != null) {
+        if (!StringUtil.isEmpty(locationString)) {
           append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }

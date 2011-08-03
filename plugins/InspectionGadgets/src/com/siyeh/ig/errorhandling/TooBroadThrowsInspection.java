@@ -47,29 +47,33 @@ public class TooBroadThrowsInspection extends BaseInspection {
                 "overly.broad.throws.clause.display.name");
     }
 
-    @Override @NotNull
+    @Override
+    @NotNull
     protected String buildErrorString(Object... infos) {
-        final List<PsiClass> typesMasked = (List<PsiClass>)infos[0];
-        String typesMaskedString = typesMasked.get(0).getName();
+        final List<SmartTypePointer> typesMasked = (List<SmartTypePointer>)infos[0];
+        final PsiType type = typesMasked.get(0).getType();
+        String typesMaskedString = type != null ? type.getPresentableText() : "";
         if (typesMasked.size() == 1) {
             return InspectionGadgetsBundle.message(
-                    "overly.broad.throws.clause.problem.descriptor1",
-                    typesMaskedString);
-        } else {
+              "overly.broad.throws.clause.problem.descriptor1",
+              typesMaskedString);
+        }
+        else {
             final int lastTypeIndex = typesMasked.size() - 1;
             for (int i = 1; i < lastTypeIndex; i++) {
-                typesMaskedString += ", ";
-                typesMaskedString += typesMasked.get(i).getName();
+                final PsiType psiType = typesMasked.get(i).getType();
+                if (psiType != null) {
+                  typesMaskedString += ", ";
+                  typesMaskedString += psiType.getPresentableText();
+                }
             }
-            final String lastTypeString =
-                    typesMasked.get(lastTypeIndex).getName();
-            return InspectionGadgetsBundle.message(
-                    "overly.broad.throws.clause.problem.descriptor2",
-                    typesMaskedString, lastTypeString);
+            final PsiType psiType = typesMasked.get(lastTypeIndex).getType();
+            final String lastTypeString = psiType != null ? psiType.getPresentableText() : "";
+            return InspectionGadgetsBundle.message("overly.broad.throws.clause.problem.descriptor2", typesMaskedString, lastTypeString);
         }
     }
 
-    @Override
+  @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message("too.broad.catch.option"),
@@ -79,23 +83,21 @@ public class TooBroadThrowsInspection extends BaseInspection {
     @NotNull
     @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        final Collection<PsiClass> maskedExceptions =
-                (Collection<PsiClass>)infos[0];
+        final Collection<SmartTypePointer> maskedExceptions =
+                (Collection<SmartTypePointer>)infos[0];
         final Boolean originalNeeded = (Boolean) infos[1];
         return new AddThrowsClauseFix(maskedExceptions,
                 originalNeeded.booleanValue());
     }
 
     private static class AddThrowsClauseFix extends InspectionGadgetsFix {
-        private final Collection<SmartPsiElementPointer<PsiClass>> types;
+
+        private final Collection<SmartTypePointer> types;
         private final boolean originalNeeded;
 
-        AddThrowsClauseFix(@NotNull Collection<PsiClass> classes,
+        AddThrowsClauseFix(Collection<SmartTypePointer> types,
                            boolean originalNeeded) {
-            types = new ArrayList<SmartPsiElementPointer<PsiClass>>();
-          for (PsiClass type : classes) {
-            types.add(SmartPointerManager.getInstance(type.getProject()).createSmartPsiElementPointer(type));
-          }
+            this.types = types;
             this.originalNeeded = originalNeeded;
         }
 
@@ -124,12 +126,13 @@ public class TooBroadThrowsInspection extends BaseInspection {
             if (!originalNeeded) {
                 element.delete();
             }
-            for (SmartPsiElementPointer<PsiClass> type : types) {
-              PsiClass aClass = type.getElement();
-              if (aClass == null) continue;
-              final PsiJavaCodeReferenceElement referenceElement =
-                        factory.createReferenceExpression(aClass);
+            for (SmartTypePointer type : types) {
+              final PsiType psiType = type.getType();
+              if (psiType instanceof PsiClassType) {
+                final PsiJavaCodeReferenceElement referenceElement =
+                          factory.createReferenceElementByType((PsiClassType)psiType);
                 referenceList.add(referenceElement);
+              }
             }
         }
     }
@@ -172,14 +175,12 @@ public class TooBroadThrowsInspection extends BaseInspection {
                         continue;
                     }
                 }
-                final List<PsiClass> exceptionsMasked = new ArrayList<PsiClass>();
-                for (PsiClassType exceptionThrown : exceptionsThrown) {
+                final List<SmartTypePointer> exceptionsMasked = new ArrayList();
+              final SmartTypePointerManager pointerManager = SmartTypePointerManager.getInstance(body.getProject());
+              for (PsiClassType exceptionThrown : exceptionsThrown) {
                     if (referencedException.isAssignableFrom(exceptionThrown) &&
                             !exceptionsDeclared.contains(exceptionThrown)) {
-                      PsiClass aClass = exceptionThrown.resolve();
-                      if (aClass != null) {
-                        exceptionsMasked.add(aClass);
-                      }
+                        exceptionsMasked.add(pointerManager.createSmartTypePointer(exceptionThrown));
                     }
                 }
                 if (!exceptionsMasked.isEmpty()) {

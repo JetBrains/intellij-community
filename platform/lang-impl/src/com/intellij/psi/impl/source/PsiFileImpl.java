@@ -323,7 +323,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final CompositeElement xxx = ASTFactory.composite(myElementType);
       assert xxx instanceof FileElement : "BUMM";
       treeElement = (FileElement)xxx;
-      treeElement.rawAddChildren(contentLeaf);
+      treeElement.rawAddChildrenWithoutNotifications(contentLeaf);
     }
 
     if (CacheUtil.isCopy(this)) {

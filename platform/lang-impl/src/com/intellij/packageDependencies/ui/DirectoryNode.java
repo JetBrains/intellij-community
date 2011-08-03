@@ -16,6 +16,7 @@
 
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -44,13 +45,17 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   private boolean myCompactPackages = true;
   private String myFQName = null;
-  private VirtualFile myVDirectory;
-  //private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.DirectoryNode");
+  private final VirtualFile myVDirectory;
 
-  public DirectoryNode(VirtualFile aDirectory, Project project, boolean compactPackages, boolean showFQName) {
+  public DirectoryNode(VirtualFile aDirectory,
+                       Project project,
+                       boolean compactPackages,
+                       boolean showFQName,
+                       VirtualFile baseDir, final VirtualFile[] contentRoots) {
     super(project);
     myVDirectory = aDirectory;
-    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+    final ProjectFileIndex index = projectRootManager.getFileIndex();
     String dirName = aDirectory.getName();
     if (showFQName) {
       final VirtualFile contentRoot = index.getContentRootForFile(myVDirectory);
@@ -75,6 +80,20 @@ public class DirectoryNode extends PackageDependenciesNode {
         myFQName = FilePatternPackageSet.getLibRelativePath(myVDirectory, index);
       }
       dirName = myFQName;
+    } else {
+      if (contentRoots.length > 1 && ProjectRootsUtil.isModuleContentRoot(myVDirectory, project)) {
+        if (baseDir != null) {
+          if (myVDirectory != baseDir) {
+            if (VfsUtil.isAncestor(baseDir, myVDirectory, false)) {
+              dirName = VfsUtil.getRelativePath(myVDirectory, baseDir, '/');
+            } else {
+              dirName = myVDirectory.getPresentableUrl();
+            }
+          }
+        } else {
+          dirName = myVDirectory.getPresentableUrl();
+        }
+      }
     }
     myDirName = dirName;
     myCompactPackages = compactPackages;
@@ -108,7 +127,6 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public String getFQName() {
-    final StringBuffer buf = new StringBuffer();
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     VirtualFile directory = myVDirectory;
     VirtualFile contentRoot = index.getContentRootForFile(directory);
@@ -118,11 +136,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     if (contentRoot == null) {
       return "";
     }
-    while (directory != null && contentRoot != directory) {
-      buf.insert(0, directory.getName() + "/");
-      directory = directory.getParent();
-    }
-    return buf.toString();
+    return VfsUtil.getRelativePath(directory, contentRoot, '/');
   }
 
   public PsiElement getPsiElement() {

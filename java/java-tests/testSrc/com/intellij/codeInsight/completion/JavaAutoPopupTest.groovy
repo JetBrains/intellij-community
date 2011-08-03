@@ -312,14 +312,14 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       }
       """)
       edt { myFixture.type 'A' }
-      joinAlarm() // completion started
+      joinAutopopup() // completion started
       boolean tooQuick = false
       edt {
         tooQuick = lookup == null
         myFixture.type 'IO'
       }
-      joinAlarm() //I
-      joinAlarm() //O
+      joinAutopopup() //I
+      joinAutopopup() //O
       joinCompletion()
       assert lookup
       assert 'ArrayIndexOutOfBoundsException' in myFixture.lookupElementStrings
@@ -490,11 +490,12 @@ public interface Test {
 
   public void testCancellingDuringCalculation() {
     myFixture.configureByText "a.java", """
+class Aaaaaaa {}
 public interface Test {
   <caret>
 }"""
     edt { myFixture.type 'A' }
-    joinAlarm()
+    joinAutopopup()
     def first = lookup
     assert first
     edt {
@@ -502,9 +503,9 @@ public interface Test {
       lookup.hide()
       myFixture.type 'a'
     }
-    joinAlarm()
-    joinAlarm()
-    joinAlarm()
+    joinAutopopup()
+    joinAutopopup()
+    joinAutopopup()
     assert lookup != first
   }
 
@@ -518,25 +519,24 @@ public interface Test {
   }
 
   public void testDuringCompletionMustFinish() {
+    registerLongCompletionContributor()
+
+    edt { myFixture.addFileToProject 'directory/foo.txt', '' }
+    myFixture.configureByText "a.java", 'public interface Test { RuntiExce<caret>xxx }'
+    myFixture.completeBasic()
+    while (!lookup.items) {
+      Thread.sleep(10)
+      edt { lookup.refreshUi() }
+    }
+    edt { myFixture.type '\t' }
+    myFixture.checkResult 'public interface Test { RuntimeException<caret>x }'
+  }
+
+  private def registerLongCompletionContributor() {
     def ep = Extensions.rootArea.getExtensionPoint("com.intellij.completion.contributor")
     def bean = new CompletionContributorEP(language: 'JAVA', implementationClass: LongReplacementOffsetContributor.name)
     ep.registerExtension(bean, LoadingOrder.LAST)
-
-    try {
-      edt { myFixture.addFileToProject 'directory/foo.txt', '' }
-      myFixture.configureByText "a.java", 'public interface Test { RuntiExce<caret>xxx }'
-      myFixture.completeBasic()
-      while (!lookup.items) {
-        Thread.sleep(10)
-        edt { lookup.refreshUi() }
-      }
-      edt { myFixture.type '\t' }
-      myFixture.checkResult 'public interface Test { RuntimeException<caret>x }'
-    }
-    finally {
-      ep.unregisterExtension(bean)
-    }
-
+    disposeOnTearDown({ ep.unregisterExtension(bean) } as Disposable)
   }
 
   public void testLeftRightMovements() {
@@ -562,7 +562,7 @@ public interface Test {
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
-    joinAlarm()
+    joinAutopopup()
     joinCompletion()
     assert lookup.items.size() > 3
 
@@ -594,7 +594,7 @@ public interface Test {
         wca.execute()
         assert 'x' == another.document.text
       }
-      joinAlarm()
+      joinAutopopup()
       joinCompletion()
       LookupImpl l1 = LookupManager.getActiveLookup(another)
       if (l1) {
@@ -674,6 +674,92 @@ class Foo {
     myFixture.configureByText("a.java", """ class Foo { { <caret> } } """)
     type 'filinpstr('
     assert myFixture.editor.document.text.contains('filinpstr()')
+  }
+
+  public void testNoAutopopupAfterSpace() {
+    myFixture.configureByText("a.java", """ class Foo { { int newa; <caret> } } """)
+    edt { myFixture.type('new ') }
+    joinAutopopup()
+    joinCompletion()
+    assert !lookup
+  }
+
+  public void testRestartAndTypingDuringCopyCommit() {
+    registerLongCompletionContributor()
+
+    myFixture.configureByText("a.java", """ class Foo { { int newa; <caret> } } """)
+    myFixture.type 'n'
+    joinAutopopup()
+    myFixture.type 'e'
+    joinCommit() // original commit
+    myFixture.type 'w'
+    joinAutopopup()
+    joinCompletion()
+    myFixture.type '\n'
+    myFixture.checkResult(" class Foo { { int newa; new <caret>} } ")
+    assert !lookup
+  }
+
+  private void joinSomething(int degree) {
+    if (degree == 0) return
+    joinAlarm()
+    if (degree == 1) return
+    joinCommit()
+    if (degree == 2) return
+    joinCommit()
+    if (degree == 3) return
+    edt {}
+    if (degree == 4) return
+    joinCompletion()
+  }
+
+  public void testEveryPossibleWayToTypeIf() {
+    def src = "class Foo { { int ifa; <caret> } }"
+    def result = "class Foo { { int ifa; if <caret> } }"
+    int actions = 5
+
+    for (a1 in 0..actions) {
+      for (a2 in 0..actions) {
+        myFixture.configureByText("$a1 $a2 .java", src)
+        myFixture.type 'i'
+        joinSomething(a1)
+        myFixture.type 'f'
+        joinSomething(a2)
+        myFixture.type ' '
+
+        joinAutopopup()
+        joinCompletion()
+        myFixture.checkResult(result)
+        assert !lookup
+      }
+    }
+
+    for (a1 in 0..actions) {
+      myFixture.configureByText("$a1 if .java", src)
+      edt { myFixture.type 'if' }
+      joinSomething(a1)
+
+      myFixture.type ' '
+
+      joinAutopopup()
+      joinCompletion()
+      myFixture.checkResult(result)
+      assert !lookup
+    }
+
+    for (a1 in 0..actions) {
+      myFixture.configureByText("$a1 if .java", src)
+      myFixture.type 'i'
+      joinSomething(a1)
+
+      edt { myFixture.type 'f ' }
+
+      joinAutopopup()
+      joinCompletion()
+      myFixture.checkResult(result)
+      assert !lookup
+    }
+
   }
 
   public void testNonFinishedParameterComma() {

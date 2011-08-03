@@ -303,6 +303,9 @@ class GitRepositoryReader {
   private GitBranchesCollection readPackedBranches() {
     final Set<GitBranch> localBranches = new HashSet<GitBranch>();
     final Set<GitBranch> remoteBranches = new HashSet<GitBranch>();
+    if (!myPackedRefsFile.exists()) {
+      return GitBranchesCollection.EMPTY;
+    }
     final String content = tryLoadFile(myPackedRefsFile);
     
     for (String line : content.split("\n")) {
@@ -354,6 +357,7 @@ class GitRepositoryReader {
     throw new GitRepoStateException("Invalid format of the .git/HEAD file: \n" + headContent);
   }
 
+  @NotNull
   private static String tryLoadFile(final File file) {
     return tryOrThrow(new Callable<String>() {
       @Override

@@ -264,8 +264,13 @@ public class GroovyCompletionContributor extends CompletionContributor {
         result.addElement(LookupElementBuilder.create("if").setBold().setInsertHandler(new InsertHandler<LookupElement>() {
           @Override
           public void handleInsert(InsertionContext context, LookupElement item) {
-            TailTypes.IF_LPARENTH.processTail(context.getEditor(), context.getTailOffset());
-          }
+            if (context.getCompletionChar() != ' ') {
+              TailTypes.IF_LPARENTH.processTail(context.getEditor(), context.getTailOffset());
+            }
+            if (context.getCompletionChar() == '(') {
+              context.setAddCompletionChar(false);
+            }
+            }
         }));
       }
     });

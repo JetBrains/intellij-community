@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
@@ -177,6 +178,9 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     if (type == NotificationDisplayType.TOOL_WINDOW &&
         (toolWindowId == null || project == null || !Arrays.asList(ToolWindowManager.getInstance(project).getToolWindowIds()).contains(toolWindowId))) {
       type = NotificationDisplayType.BALLOON;
+    }
+    if (type == NotificationDisplayType.BALLOON && ProjectManager.getInstance().getOpenProjects().length == 0) {
+      type = NotificationDisplayType.STICKY_BALLOON;
     }
 
     switch (type) {

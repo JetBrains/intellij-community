@@ -289,6 +289,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     
     myProject = project;
     if (project != null) {
+      ProjectFrameBounds.getInstance(project);   // make sure the service is initialized and its state will be saved
       if (myRootPane != null) {
         myRootPane.installNorthComponents(project);
       }

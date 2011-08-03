@@ -28,6 +28,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class TreeElement extends ElementBase implements ASTNode, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
@@ -227,6 +228,9 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       }
       setTreePrev(firstNew);
       firstNew.setTreeNext(this);
+      if (p != null) {
+        p.subtreeChanged();
+      }
     }
     else anchorPrev.rawInsertAfterMe(firstNew);
 
@@ -234,7 +238,16 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   public void rawInsertAfterMe(@NotNull TreeElement firstNew) {
-    firstNew.rawRemoveUpToLast();
+    rawInsertAfterMeWithoutNotifications(firstNew);
+
+    final CompositeElement parent = getTreeParent();
+    if (parent != null) {
+      parent.subtreeChanged();
+    }
+  }
+
+  protected final void rawInsertAfterMeWithoutNotifications(TreeElement firstNew) {
+    firstNew.rawRemoveUpToWithoutNotifications(null);
     final CompositeElement p = getTreeParent();
     final TreeElement treeNext = getTreeNext();
     firstNew.setTreePrev(this);
@@ -288,12 +301,17 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
 
   public void rawReplaceWithList(TreeElement firstNew) {
     if (firstNew != null){
-      rawInsertAfterMe(firstNew);
+      rawInsertAfterMeWithoutNotifications(firstNew);
     }
     rawRemove();
   }
 
   protected void invalidate() {
+    CompositeElement parent = getTreeParent();
+    if (parent != null) {
+      parent.subtreeChanged();
+    }
+
     // invalidate replaced element
     setTreeNext(null);
     setTreePrev(null);
@@ -306,7 +324,18 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   // remove nodes from this[including] to end[excluding] from the parent
-  public void rawRemoveUpTo(TreeElement end) {
+  public void rawRemoveUpTo(@Nullable TreeElement end) {
+    CompositeElement parent = getTreeParent();
+
+    rawRemoveUpToWithoutNotifications(end);
+
+    if (parent != null) {
+      parent.subtreeChanged();
+    }
+  }
+
+  // remove nodes from this[including] to end[excluding] from the parent
+  protected final void rawRemoveUpToWithoutNotifications(TreeElement end) {
     if(this == end) return;
 
     final CompositeElement parent = getTreeParent();

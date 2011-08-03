@@ -31,11 +31,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.beans.Introspector;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 class BeanBinding implements Binding {
@@ -208,6 +210,17 @@ class BeanBinding implements Binding {
 
     accessors = Lists.newArrayList();
 
+    if (aClass != Rectangle.class) {   // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
+      collectPropertyAccessors(aClass, accessors);
+    }
+    collectFieldAccessors(aClass, accessors);
+
+    ourAccessorCache.put(aClass, new SoftReference<List<Accessor>>(accessors));
+
+    return accessors;
+  }
+
+  private static void collectPropertyAccessors(Class<?> aClass, List<Accessor> accessors) {
     final Map<String, Pair<Method, Method>> candidates = Maps.newTreeMap();  // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) continue;
@@ -230,7 +243,9 @@ class BeanBinding implements Binding {
         accessors.add(new PropertyAccessor(candidate.getKey(), methods.first.getReturnType(), methods.first, methods.second));
       }
     }
+  }
 
+  private static void collectFieldAccessors(Class<?> aClass, List<Accessor> accessors) {
     for (Field field : aClass.getFields()) {
       final int modifiers = field.getModifiers();
       if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) &&
@@ -239,10 +254,6 @@ class BeanBinding implements Binding {
         accessors.add(new FieldAccessor(field));
       }
     }
-
-    ourAccessorCache.put(aClass, new SoftReference<List<Accessor>>(accessors));
-
-    return accessors;
   }
 
   @Nullable

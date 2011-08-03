@@ -144,13 +144,8 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
   protected ResolveResult[] innerResolve(boolean caseSensitive) {
     final String referenceText = getText();
-    final TextRange range = getRangeInElement();
-    if (range.isEmpty()) {
-      final PsiElement element = getElement();
-      final String s = element.getText();
-      if (s.length() > range.getEndOffset() && s.charAt(range.getEndOffset()) == '#') {
-        return new ResolveResult[] { new PsiElementResolveResult(element.getContainingFile())};
-      }
+    if (referenceText.isEmpty() && myIndex == 0) {
+      return new ResolveResult[] { new PsiElementResolveResult(getElement().getContainingFile())};
     }
     final Collection<PsiFileSystemItem> contexts = getContexts();
     final Collection<ResolveResult> result = new THashSet<ResolveResult>(RESOLVE_RESULT_HASHING_STRATEGY);
@@ -400,6 +395,9 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
   public PsiElement bindToElement(@NotNull final PsiElement element, final boolean absolute) throws IncorrectOperationException {
     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element, should be instanceof PsiFileSystemItem: " + element);
+
+    // handle empty reference that resolves to current file
+    if (getCanonicalText().isEmpty() && element == getElement().getContainingFile()) return getElement();
 
     final PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)element;
     VirtualFile dstVFile = fileSystemItem.getVirtualFile();

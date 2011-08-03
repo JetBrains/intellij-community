@@ -222,7 +222,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     private GitPushActiveBranchesDialog myDialog;
 
     public DialogInitTask(Project project, List<VirtualFile> vcsRoots, Collection<VcsException> exceptions) {
-      super(project, "Collection information for push", false);
+      super(project, "Collecting information for push", false);
       myProject = project;
       myVcsRoots = vcsRoots;
       myExceptions = exceptions;

@@ -39,6 +39,10 @@ public class Main {
 
   public static void main(final String[] args) {
     if (installPatch()) {
+      try {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      }
+      catch (Exception ignore) { }
       JOptionPane.showMessageDialog(null, "The application cannot start right away since some critical files have been changed, " +
                                           "please restart it manually.");
       return;

@@ -75,9 +75,13 @@ public class FileTreeModelBuilder {
   private int myMarkedFileCount = 0;
 
   private JTree myTree;
+  protected final VirtualFile myBaseDir;
+  protected VirtualFile[] myContentRoots;
 
   public FileTreeModelBuilder(Project project, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
+    myBaseDir = myProject.getBaseDir();
+    myContentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
     final boolean multiModuleProject = ModuleManager.getInstance(myProject).getModules().length > 1;
     myShowModules = settings.UI_SHOW_MODULES && multiModuleProject;
     myFlattenPackages = settings.UI_FLATTEN_PACKAGES;
@@ -434,7 +438,8 @@ public class FileTreeModelBuilder {
     final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(virtualFile);
     final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
 
-    directoryNode = new DirectoryNode(virtualFile, myProject, myCompactEmptyMiddlePackages, myFlattenPackages);
+    directoryNode = new DirectoryNode(virtualFile, myProject, myCompactEmptyMiddlePackages, myFlattenPackages, myBaseDir,
+                                      myContentRoots);
     myModuleDirNodes.put(virtualFile, (DirectoryNode)directoryNode);
 
     final VirtualFile directory = virtualFile.getParent();

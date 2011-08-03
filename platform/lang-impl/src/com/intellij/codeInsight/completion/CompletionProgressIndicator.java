@@ -340,7 +340,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
 
-      myLookup.show();
+      if (!myLookup.showLookup()) {
+        myLookup.hide();
+        return;
+      }
       justShown = true;
     }
     myLookup.refreshUi();
@@ -599,7 +602,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void scheduleRestart() {
-    if (isAutopopupCompletion() && hideAutopopupIfMeaningless()) {
+    if (isAutopopupCompletion() && (!myLookup.isShown() || hideAutopopupIfMeaningless())) {
       AutoPopupController.getInstance(getProject()).scheduleAutoPopup(myEditor, null);
       return;
     }

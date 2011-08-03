@@ -113,7 +113,7 @@ public class LookupManagerImpl extends LookupManager {
     }
 
     final LookupImpl lookup = createLookup(editor, items, prefix, arranger);
-    lookup.show();
+    lookup.showLookup();
     return lookup;
   }
 

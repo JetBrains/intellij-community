@@ -24,12 +24,12 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrPropertyForCompletion;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.Set;
 
@@ -64,7 +64,7 @@ public class GrKindWeigher extends CompletionWeigher {
     final GrReferenceElement parent = (GrReferenceElement)position.getParent();
 
     if (parent.getQualifier() == null) {
-      if (o instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable)o)) return NotQualifiedKind.aLocal;
+      if (o instanceof GrVariable && !(o instanceof GrField)) return NotQualifiedKind.aLocal;
       if (o instanceof PsiClass) return NotQualifiedKind.aClass;
       if (o instanceof PsiPackage) return NotQualifiedKind.aPackage;
       if (isLightElement(o)) return NotQualifiedKind.anImplicitGroovyMethod;

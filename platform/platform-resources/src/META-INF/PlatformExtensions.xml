@@ -224,4 +224,6 @@
   <toolWindow id="Event Log" anchor="bottom" secondary="true"
               factoryClass="com.intellij.notification.EventLog$FactoryItself"/>
 
+  <projectService serviceInterface="com.intellij.openapi.wm.impl.ProjectFrameBounds"
+                  serviceImplementation="com.intellij.openapi.wm.impl.ProjectFrameBounds"/>
 </extensions>
