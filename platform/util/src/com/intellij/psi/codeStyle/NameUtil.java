@@ -16,16 +16,11 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
-import org.apache.oro.text.regex.MalformedPatternException;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.Perl5Compiler;
-import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -359,102 +354,21 @@ public class NameUtil {
 
   public static com.intellij.util.text.Matcher buildCompletionMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
     MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true), options);
+    return buildMatcher(pattern, options);
   }
 
   public static com.intellij.util.text.Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
     MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower), options);
+    return buildMatcher(pattern, options);
   }
 
   public static com.intellij.util.text.Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
     MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false), options);
+    return buildMatcher(pattern, options);
   }
 
-  public static boolean isUseMinusculeHumpMatcher() {
-    return Registry.is("minuscule.humps.matching");
-  }
-
-  private static com.intellij.util.text.Matcher buildMatcher(final String pattern, String regexp, MatchingCaseSensitivity options) {
-    return isUseMinusculeHumpMatcher() ? new MinusculeMatcher(pattern, options) : new OptimizedMatcher(pattern, regexp);
-  }
-
-  private static class OptimizedMatcher implements com.intellij.util.text.Matcher {
-    private final char[] myPreparedPattern;
-    private final boolean myEnsureFirstSymbolsMatch;
-    private final Perl5Matcher myMatcher;
-    private final Pattern myPattern;
-
-    public OptimizedMatcher(String pattern, String regexp) {
-      myPreparedPattern = preparePattern(pattern).toCharArray();
-      myEnsureFirstSymbolsMatch = pattern.length() > 0 && Character.isLetterOrDigit(pattern.charAt(0));
-      try {
-        myPattern = new Perl5Compiler().compile(regexp);
-      }
-      catch (MalformedPatternException e) {
-        throw new RuntimeException(e);
-      }
-      myMatcher = new Perl5Matcher();
-    }
-
-    public boolean matches(String name) {
-      if (!prefilter(name, myPreparedPattern)) {
-        return false;
-      }
-
-      try {
-        return myMatcher.matches(name, myPattern);
-      }
-      catch (ArrayIndexOutOfBoundsException e) {
-        throw new RuntimeException("Name=" + name + "; pattern=" + myPattern.getPattern() , e);
-      }
-    }
-
-    private static String preparePattern(String pattern) {
-      StringBuilder builder = new StringBuilder();
-      for (int i = 0; i < pattern.length(); i++) {
-        char c = pattern.charAt(i);
-        if (Character.isLetterOrDigit(c)) {
-          builder.append(StringUtil.toLowerCase(c));
-        }
-      }
-      return builder.toString();
-    }
-
-    /*
-     * Don't try regexp matcher on names, which do not contain all the alphanumerics from the pattern in pattern's original order.
-     */
-    private boolean prefilter(String name, char[] pattern) {
-      int patternIndex = 0;
-      int nameIndex = 0;
-
-      int patternLen = pattern.length;
-      int nameLen = name.length();
-
-      if (myEnsureFirstSymbolsMatch) {
-        while (nameIndex < nameLen && name.charAt(nameIndex) == '_') {
-          nameIndex++;
-        }
-
-        if (patternLen == 0 || nameIndex >= nameLen) return false;
-        if (StringUtil.toLowerCase(name.charAt(nameIndex)) != pattern[0]) return false;
-
-        nameIndex++;
-        patternIndex++;
-      }
-
-      while (patternIndex < patternLen) {
-        char c = pattern[patternIndex++];
-
-        while (true) {
-          if (nameIndex >= nameLen) return false;
-          if (StringUtil.toLowerCase(name.charAt(nameIndex++)) == c) break;
-        }
-      }
-
-      return true;
-    }
+  private static com.intellij.util.text.Matcher buildMatcher(final String pattern, MatchingCaseSensitivity options) {
+    return new MinusculeMatcher(pattern, options);
   }
 
   public enum MatchingCaseSensitivity {
