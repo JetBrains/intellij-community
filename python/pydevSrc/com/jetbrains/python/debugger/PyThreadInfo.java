@@ -43,11 +43,12 @@ public class PyThreadInfo {
     return myName;
   }
 
+  @Nullable
   public String getMessage() {
     return myMessage;
   }
 
-  public void setMessage(String message) {
+  public void setMessage(@Nullable String message) {
     this.myMessage = message;
   }
 
