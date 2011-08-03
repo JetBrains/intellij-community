@@ -4,19 +4,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.Comment;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskType;
+import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.PutMethod;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +106,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
       url += "&limit=" + encodeUrl(String.valueOf(max));
     }
     LOG.info("Getting all the stories with url: " + url);
-    final HttpMethod method = doREST(url, false);
+    final HttpMethod method = doREST(url, HTTPMethod.GET);
     final InputStream stream = method.getResponseBodyAsStream();
     final Element element = new SAXBuilder(false).build(stream).getRootElement();
 
@@ -224,11 +223,12 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     return null;
   }
 
-  private HttpMethod doREST(final String request, final boolean post) throws Exception {
+  private HttpMethod doREST(final String request, final HTTPMethod type) throws Exception {
     final HttpClient client = getHttpClient();
     client.getParams().setContentCharset("UTF-8");
     final String uri = getUrl() + request;
-    final HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
+    final HttpMethod method = type == HTTPMethod.POST ? new PostMethod(uri) :
+                              type == HTTPMethod.PUT ? new PutMethod(uri) : new GetMethod(uri);
     configureHttpMethod(method);
     client.executeMethod(method);
     return method;
@@ -240,7 +240,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     if (realId == null) return null;
     final String url = API_URL + "/projects/" + myProjectId + "/stories/" + realId;
     LOG.info("Retrieving issue by id: " + url);
-    final HttpMethod method = doREST(url, false);
+    final HttpMethod method = doREST(url, HTTPMethod.GET);
     final InputStream stream = method.getResponseBodyAsStream();
     final Element element = new SAXBuilder(false).build(stream).getRootElement();
     return element.getName().equals("story") ? createIssue(element) : null;
@@ -319,6 +319,24 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   public void setCommitMessageFormat(final String commitMessageFormat) {
     myCommitMessageFormat = commitMessageFormat;
+  }
+
+  @Override
+  public void setTaskState(Task task, TaskState state) throws Exception {
+    if (state != TaskState.IN_PROGRESS) super.setTaskState(task, state);
+    final String realId = getRealId(task.getId());
+    if (realId == null) return;
+    String url = API_URL + "/projects/" + myProjectId + "/stories/" + realId;
+    url +="?" + encodeUrl("story[current_state]") + "=" + encodeUrl("started");
+    LOG.info("Updating issue state by id: " + url);
+    final HttpMethod method = doREST(url, HTTPMethod.PUT);
+    final InputStream stream = method.getResponseBodyAsStream();
+    final Element element = new SAXBuilder(false).build(stream).getRootElement();
+    final Task story = element.getName().equals("story") ? createIssue(element) : null;
+    if (story == null) {
+      throw new Exception("Error setting state for: " + url + ", HTTP status code: " + method.getStatusCode() +
+                                "\n" + element.getText());
+    }
   }
 
   @Override

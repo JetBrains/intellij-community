@@ -42,7 +42,7 @@ public class PivotalTrackerRepositoryType extends BaseRepositoryType<PivotalTrac
 
   @Override
   public EnumSet<TaskState> getPossibleTaskStates() {
-    return EnumSet.of(TaskState.SUBMITTED, TaskState.OPEN, TaskState.RESOLVED, TaskState.OTHER);
+    return EnumSet.of(TaskState.SUBMITTED, TaskState.OPEN, TaskState.RESOLVED, TaskState.OTHER, TaskState.IN_PROGRESS);
   }
 
   @NotNull
