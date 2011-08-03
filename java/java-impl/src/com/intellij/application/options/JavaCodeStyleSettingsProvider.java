@@ -29,9 +29,9 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @NotNull
   @Override
   public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
-    return new CodeStyleAbstractConfigurable(settings, originalSettings, "Java") {
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, "Java") {      
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
-        return new JavaCodeStyleMainPanel(settings);
+        return new JavaCodeStyleMainPanel(getCurrentSettings(), settings);
       }
       public String getHelpTopic() {
         return null;

@@ -39,9 +39,8 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
   private JPanel myPanel;
   private JTabbedPane myTabbedPane;
 
-
-  protected MultiTabCodeStyleAbstractPanel(CodeStyleSettings settings) {
-    super(settings);
+  protected MultiTabCodeStyleAbstractPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+    super(currentSettings, settings);
   }
 
   protected void initTabs(CodeStyleSettings settings) {
@@ -240,4 +239,5 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
       provider.customizeSettings(panel, panel.getSettingsType());
     }
   }
+  
 }

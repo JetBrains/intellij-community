@@ -88,8 +88,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private boolean myShowsPreviewHighlighters;
   private boolean mySkipPreviewHighlighting;
   private LanguageSelector myLanguageSelector;
-
+  private final CodeStyleSettings myCurrentSettings;
+  
   protected CodeStyleAbstractPanel(CodeStyleSettings settings) {
+    this(null, settings);
+  }
+
+  protected CodeStyleAbstractPanel(@Nullable CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+    myCurrentSettings = currentSettings;
     mySettings = settings;
     myEditor = createEditor();
 
@@ -613,6 +619,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   public boolean setPanelLanguage(Language language) {
     return false;
+  }
+  
+  protected CodeStyleSettings getCurrentSettings() {
+    return myCurrentSettings;
   }
 
 }

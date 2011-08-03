@@ -35,7 +35,7 @@ public class CommonCodeStyleSettingsConfigurable extends CodeStyleAbstractConfig
 
   @Override
   protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
-    return new MyCodeStylePanel(settings);
+    return new MyCodeStylePanel(getCurrentSettings(), settings);
   }
 
   @Override
@@ -48,8 +48,8 @@ public class CommonCodeStyleSettingsConfigurable extends CodeStyleAbstractConfig
     private CodeStyleBlankLinesPanel myBlankLinesPanel;
     private WrappingAndBracesPanel myWrappingAndBracesPanel;
 
-    protected MyCodeStylePanel(CodeStyleSettings settings) {
-      super(settings);
+    protected MyCodeStylePanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+      super(currentSettings, settings);
     }
 
     @Override
