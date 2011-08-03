@@ -189,7 +189,12 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
   }
 
   @Override
-  public int[] getAllDetectorIds() {
-    return myDetectorIds.getValues();
+  public Collection<Integer> getAllDetectorIds() {
+    final int[] ids = myDetectorIds.getValues();
+    final List<Integer> result = new ArrayList<Integer>();
+    for (int id : ids) {
+      result.add(id);
+    }
+    return result;
   }
 }

@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Set;
 
@@ -45,8 +44,11 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
     myConfiguration = configuration;
     myRelatedFiles = files;
     myFacetType = detector.getFacetType();
-    final Icon icon = myFacetType.getIcon();
-    myFrameworkType = new FrameworkType(myFacetType.getStringId(), myFacetType.getPresentableName(), icon);
+    myFrameworkType = createFrameworkType(myFacetType);
+  }
+
+  public static FrameworkType createFrameworkType(final FacetType<?, ?> facetType) {
+    return new FrameworkType(facetType.getStringId(), facetType.getPresentableName(), facetType.getIcon());
   }
 
   @NotNull
@@ -59,6 +61,10 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
   @Override
   public Collection<? extends VirtualFile> getRelatedFiles() {
     return myRelatedFiles;
+  }
+
+  public C getConfiguration() {
+    return myConfiguration;
   }
 
   @NotNull

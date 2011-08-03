@@ -109,8 +109,8 @@ public class DetectedFrameworksData {
     return myDetectedFrameworks;
   }
 
-  public List<? extends DetectedFrameworkDescription> updateFrameworksList(Integer detectorId,
-                                                                           List<? extends DetectedFrameworkDescription> frameworks) {
+  public Collection<? extends DetectedFrameworkDescription> updateFrameworksList(Integer detectorId,
+                                                                                 Collection<? extends DetectedFrameworkDescription> frameworks) {
     final Collection<DetectedFrameworkDescription> oldFrameworks = myDetectedFrameworks.remove(detectorId);
     myDetectedFrameworks.putValues(detectorId, frameworks);
     if (oldFrameworks != null) {

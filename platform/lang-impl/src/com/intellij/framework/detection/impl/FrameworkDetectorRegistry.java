@@ -50,5 +50,5 @@ public abstract class FrameworkDetectorRegistry {
   @NotNull
   public abstract Collection<Integer> getDetectorIds(@NotNull FileType fileType);
 
-  public abstract int[] getAllDetectorIds();
+  public abstract Collection<Integer> getAllDetectorIds();
 }
