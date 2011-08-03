@@ -16,7 +16,6 @@
 
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -33,10 +32,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class FileNode extends PackageDependenciesNode {
-  private PsiFile myFile;
   private final VirtualFile myVFile;
   private final boolean myMarked;
-  private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.FileNode");
 
   public FileNode(VirtualFile file, Project project, boolean marked) {
     super(project);
@@ -125,9 +122,6 @@ public class FileNode extends PackageDependenciesNode {
 
   @Nullable
   private PsiFile getFile() {
-    if (myFile == null) {
-      myFile = PsiManager.getInstance(myProject).findFile(myVFile);
-    }
-    return myFile;
+    return PsiManager.getInstance(myProject).findFile(myVFile);
   }
 }
