@@ -89,7 +89,7 @@ public class TaskCompletionContributor extends CompletionContributor {
                                                   : AutoCompletionPolicy.NEVER_AUTOCOMPLETE;
 
     for (final Task task : items) {
-      LookupElementBuilder builder = LookupElementBuilder.create(task.getId())
+      LookupElementBuilder builder = LookupElementBuilder.create(task, task.getId())
         .setIcon(task.getIcon())
         .addLookupString(task.getSummary())
         .setTailText(" " + task.getSummary(), true)

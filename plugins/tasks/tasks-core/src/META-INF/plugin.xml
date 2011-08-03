@@ -95,6 +95,8 @@
     <applicationService serviceInterface="com.intellij.tasks.config.RecentTaskRepositories"
                     serviceImplementation="com.intellij.tasks.config.RecentTaskRepositories"/>
 
+    <lang.documentationProvider language="TEXT" implementationClass="com.intellij.tasks.doc.TaskDocumentationProvider"/>
+
     <!--context providers-->
     <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
