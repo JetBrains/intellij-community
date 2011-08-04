@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.dupLocator.JSDuplicatesProfile;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -255,20 +256,7 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
   @NotNull
   @Override
   public Language getLanguage(PsiElement element) {
-    return getLanguageForElement(element);
-  }
-
-  public static Language getLanguageForElement(PsiElement element) {
-    if (element.getLanguage() instanceof JavascriptLanguage && !(element instanceof JSFile)) {
-      PsiFile file = element.getContainingFile();
-      if (file instanceof JSFile) {
-        Language fileLanguage = file.getLanguage();
-        if (fileLanguage instanceof JSLanguageDialect) {
-          return fileLanguage;
-        }
-      }
-    }
-    return element.getLanguage();
+    return JSDuplicatesProfile.getLanguageForElement(element);
   }
 
   @Override

@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.extenders;
 
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.dupLocator.JSDuplicatesProfile;
 import com.intellij.lang.Language;
 import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.JavaScriptCodeContextType;
@@ -8,7 +9,6 @@ import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.JSStructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public class JSStructuralSearchProfile2 extends StructuralSearchProfileBase {
   @NotNull
   @Override
   public Language getLanguage(PsiElement element) {
-    return JSStructuralSearchProfile.getLanguageForElement(element);
+    return JSDuplicatesProfile.getLanguageForElement(element);
   }
 
   @Override

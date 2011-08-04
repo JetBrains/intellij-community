@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.dupLocator.JSDuplicatesProfile;
 import com.intellij.lang.Language;
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.lang.javascript.JavascriptLanguage;
@@ -39,7 +40,7 @@ public class JSMatchingStrategy extends JSElementVisitor implements MatchingStra
     if (element instanceof JSFile) {
       result = true;
     }
-    if (JSStructuralSearchProfile.getLanguageForElement(element) != myLanguage) {
+    if (JSDuplicatesProfile.getLanguageForElement(element) != myLanguage) {
       result = false;
     }
   }
