@@ -34,4 +34,15 @@ public abstract class Comment {
 
   @Nullable
   public abstract Date getDate();
+
+  public void appendTo(StringBuilder builder) {
+    builder.append("<hr>");
+    if (getAuthor() != null) {
+      builder.append("<b>Author:</b> ").append(getAuthor()).append("<br>");
+    }
+    if (getDate() != null) {
+      builder.append("<b>Date:</b> ").append(getDate()).append("<br>");
+    }
+    builder.append(getText()).append("<br>");
+  }
 }

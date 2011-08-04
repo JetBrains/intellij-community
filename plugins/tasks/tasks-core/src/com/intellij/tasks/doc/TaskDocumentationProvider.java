@@ -59,21 +59,10 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
       builder.append("<b>Description:</b><br>").append(task.getDescription());
     }
     for (Comment comment : task.getComments()) {
-      addComment(builder, comment);
+      comment.appendTo(builder);
     }
     builder.append("</html>");
     return builder.toString();
-  }
-
-  private static void addComment(final StringBuilder builder, final Comment comment) {
-    builder.append("<hr>");
-    if (comment.getAuthor() != null) {
-      builder.append("<b>Author:</b> ").append(comment.getAuthor()).append("<br>");
-    }
-    if (comment.getDate() != null) {
-      builder.append("<b>Date:</b> ").append(comment.getDate()).append("<br>");
-    }
-    builder.append(comment.getText()).append("<br>");
   }
 
   @Override
