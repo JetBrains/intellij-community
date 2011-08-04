@@ -38,7 +38,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
@@ -104,12 +107,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(Object action) {
-        documentCommitThread.disable(action);
+        documentCommitThread.disable("Write action started: "+ action);
       }
 
       @Override
       public void writeActionFinished(Object action) {
-        documentCommitThread.enable(action);
+        documentCommitThread.enable("Write action finished: "+action);
       }
     }, myProject);
     documentCommitThread.enable("project open");
@@ -336,13 +339,15 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       }
     }
     finally {
+      myDocumentCommitThread.log("in PDI.finishDoc: ",document, synchronously, success, myUncommittedDocuments);
       if (success) {
         myUncommittedDocuments.remove(document);
-
+        myDocumentCommitThread.log("in PDI.finishDoc: removed doc",document, synchronously, success, myUncommittedDocuments);
         ((DocumentImpl)document).normalizeRangeMarkers();
         InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
       }
       myIsCommitInProgress = false;
+      myDocumentCommitThread.log("in PDI.finishDoc: exit",document, synchronously, success, myUncommittedDocuments);
     }
 
     if (success) {
@@ -559,7 +564,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       if (file == null) continue;
 
       if (file.isPhysical() && mySmartPointerManager != null) { // mock tests
-        SmartPointerManagerImpl.fastenBelts(file, event.getOffset(), null);
+        mySmartPointerManager.fastenBelts(file, event.getOffset(), null);
       }
 
       final TextBlock textBlock = getTextBlock(file);
@@ -598,7 +603,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     for (PsiFile file : files) {
       if (file == null || file instanceof PsiFileImpl && ((PsiFileImpl)file).getTreeElement() == null) continue;
       if (mySmartPointerManager != null) { // mock tests
-        SmartPointerManagerImpl.unfastenBelts(file, event.getOffset());
+        mySmartPointerManager.unfastenBelts(file, event.getOffset());
       }
       final TextBlock textBlock = getTextBlock(file);
       if (textBlock.isLocked()) continue;

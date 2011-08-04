@@ -15,35 +15,41 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
-public class WeakList<T> extends AbstractList<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.WeakList");
-  private final WeakReferenceArray<T> myArray;
-
+/**
+ * Implementation of the {@link List} interface which:
+ * <ul>
+ *   <li>Stores elements using weak semantics (see {@link java.lang.ref.WeakReference})</li>
+ *   <li>Automatically reclaims storage for garbage collected elements</li>
+ *   <li>Is thread safe</li>
+ * </ul>
+ */
+public class WeakList<T> extends UnsafeWeakList<T> {
   public WeakList() {
     this(new WeakReferenceArray<T>());
   }
 
   // For testing only
-  WeakList(WeakReferenceArray<T> array) {
-    myArray = array;
+  WeakList(@NotNull WeakReferenceArray<T> array) {
+    super(array);
   }
 
   public T get(int index) {
     synchronized (myArray) {
-      return myArray.get(index);
+      return super.get(index);
     }
   }
 
   public boolean add(T element) {
     synchronized (myArray) {
-      tryReduceCapacity(-1);
-      myArray.add(element);
+      return super.add(element);
     }
-    return true;
   }
 
   @Override
@@ -55,24 +61,19 @@ public class WeakList<T> extends AbstractList<T> {
 
   public boolean addIfAbsent(T element) {
     synchronized (myArray) {
-      tryReduceCapacity(-1);
-      if (contains(element)) return false;
-      myArray.add(element);
+      return super.addIfAbsent(element);
     }
-    return true;
   }
 
   public void add(int index, T element) {
     synchronized (myArray) {
-      tryReduceCapacity(-1);
-      myArray.add(index, element);
+      super.add(index, element);
     }
   }
 
   public T remove(int index) {
     synchronized (myArray) {
-      tryReduceCapacity(-1);
-      return myArray.remove(index);
+      return super.remove(index);
     }
   }
 
@@ -84,7 +85,7 @@ public class WeakList<T> extends AbstractList<T> {
   }
 
   public Iterator<T> iterator() {
-    return new MyIterator();
+    return new MySyncIterator();
   }
 
   public int size() {
@@ -101,85 +102,16 @@ public class WeakList<T> extends AbstractList<T> {
     }
   }
 
-  private int tryReduceCapacity(int trackIndex) {
-    modCount++;
-    if (canReduceCapacity()) {
-      return myArray.reduceCapacity(trackIndex);
-    }
-    else {
-      return propablyCompress(trackIndex);
-    }
-  }
-
-  private int myCompressCountdown = 10;
-  private int propablyCompress(int trackIndex) {
-    myCompressCountdown--;
-    if (myCompressCountdown > 0) return trackIndex;
-    int newIndex = myArray.compress(trackIndex);
-    myCompressCountdown = myArray.size() + 10;
-    return newIndex;
-  }
-
-  private boolean canReduceCapacity() {
-    return WeakReferenceArray.MINIMUM_CAPACITY*2 < myArray.getCapacity() &&
-           myArray.getCapacity() > myArray.getAliveCount()*3;
-  }
-
-  private class MyIterator implements Iterator<T> {
-    private int myNextIndex = -1;
-    private int myCurrentIndex = -1;
-    private T myNextElement = null;
-    private int myModCount = modCount;
-
-    public MyIterator() {
-      findNext();
-    }
-
-    private void findNext() {
+  private class MySyncIterator extends MyIterator {
+    protected void findNext() {
       synchronized (myArray) {
-        myNextElement = null;
-        while (myNextElement == null) {
-          myNextIndex = myArray.nextValid(myNextIndex);
-          if (myNextIndex >= myArray.size()) {
-            myNextIndex = -1;
-            myNextElement = null;
-            return;
-          }
-          myNextElement = myArray.get(myNextIndex);
-        }
+        super.findNext();
       }
-    }
-
-    public boolean hasNext() {
-      return myNextElement != null;
-    }
-
-    public T next() {
-      if (modCount != myModCount) throw new ConcurrentModificationException();
-      if (myNextElement == null) throw new NoSuchElementException();
-      T element = myNextElement;
-      myCurrentIndex = myNextIndex;
-      findNext();
-      return element;
     }
 
     public void remove() {
       synchronized (myArray) {
-        if (myCurrentIndex == -1) throw new IllegalStateException();
-        myArray.remove(myCurrentIndex);
-        final int removedIndex = myCurrentIndex;
-        int newIndex = tryReduceCapacity(myNextIndex);
-        myCurrentIndex = -1;
-        myModCount = modCount;
-        if (!hasNext()) return;
-        if (newIndex < 0) {
-          LOG.error(" was: " + myNextIndex +
-                    " got: " + newIndex +
-                    " size: " + myArray.size() +
-                    " current: " + removedIndex);
-        }
-        myNextIndex = newIndex;
-        LOG.assertTrue(myArray.get(myNextIndex) == myNextElement);
+        super.remove();
       }
     }
   }

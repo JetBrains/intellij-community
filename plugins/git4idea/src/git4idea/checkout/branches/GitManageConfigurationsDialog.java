@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.Nullable;

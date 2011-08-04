@@ -59,4 +59,9 @@ public class TitledSeparator extends JPanel {
   public void setTitleFont(Font font) {
     myLabel.setFont(font);
   }
+
+  public Font getTitleFont() {
+    return myLabel.getFont();
+  }
+
 }

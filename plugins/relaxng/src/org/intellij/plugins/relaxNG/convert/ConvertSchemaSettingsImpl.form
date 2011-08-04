@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myRoot" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="496" height="223"/>
+      <xy x="20" y="20" width="496" height="234"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -20,7 +20,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
         <border type="none" title="Output Type"/>
         <children>
@@ -65,7 +65,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
         <border type="none" title="Output Options"/>
         <children>
@@ -132,7 +132,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
         <border type="none" title="Output Destination"/>
         <children>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,9 +243,8 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
 
   public CvsRepository createCvsRepository() {
     CvsConnectionSettings settings = createSettings();
-
-    return new CvsRepository(settings.getCvsRootAsString(), settings.METHOD.getName(), settings.USER, settings.HOST, settings.REPOSITORY,
-                             settings.PORT, DATE_OR_REVISION_SETTINGS);
+    return new CvsRepository(settings.getCvsRootAsString(), (settings.METHOD == null) ? "" : settings.METHOD.getName(), settings.USER,
+                             settings.HOST, settings.REPOSITORY, settings.PORT, DATE_OR_REVISION_SETTINGS);
 
   }
 

@@ -7,7 +7,7 @@
     </constraints>
     <properties/>
     <clientProperties>
-      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
     </clientProperties>
     <border type="none" title="DTD Input"/>
     <children>
@@ -135,7 +135,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
         <border type="none" title="Namespace Settings"/>
         <children>

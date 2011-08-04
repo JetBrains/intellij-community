@@ -124,6 +124,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testLeaveCommentsWhenExpressionExtracted() throws Exception {
+    doTest();
+  }
+
   public void testSCR15815() throws Exception {
     doTest();
   }

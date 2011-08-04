@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -402,7 +403,7 @@ public class CodeFormatterFacade {
       // There is a possible case that formatting is performed from project view and editor is not opened yet. The problem is that
       // its data context doesn't contain information about project then. So, we explicitly support that here (see IDEA-72791).
       final DataContext baseDataContext = DataManager.getInstance().getDataContext(editor.getComponent());
-      final DataContext dataContext = new DataContext() {
+      final DataContext dataContext = new DelegatingDataContext(baseDataContext) {
         @Override
         public Object getData(@NonNls String dataId) {
           Object result = baseDataContext.getData(dataId);
@@ -459,6 +460,39 @@ public class CodeFormatterFacade {
 
       // We know that number of lines is just increased, hence, update the data accordingly.
       maxLine++;
+    }
+  }
+  
+  private static class DelegatingDataContext implements DataContext, UserDataHolder {
+    
+    private final DataContext myDataContextDelegate;
+    private final UserDataHolder myDataHolderDelegate;
+
+    DelegatingDataContext(DataContext delegate) {
+      myDataContextDelegate = delegate;
+      if (delegate instanceof UserDataHolder) {
+        myDataHolderDelegate = (UserDataHolder)delegate;
+      }
+      else {
+        myDataHolderDelegate = null;
+      }
+    }
+
+    @Override
+    public Object getData(@NonNls String dataId) {
+      return myDataContextDelegate.getData(dataId);
+    }
+
+    @Override
+    public <T> T getUserData(@NotNull Key<T> key) {
+      return myDataHolderDelegate == null ? null : myDataHolderDelegate.getUserData(key);
+    }
+
+    @Override
+    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+      if (myDataHolderDelegate != null) {
+        myDataHolderDelegate.putUserData(key, value);
+      }
     }
   }
 }

@@ -20,11 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.ui.HighlightableCellRenderer;
 import com.intellij.ui.table.ItemsProvider;
 import com.intellij.ui.table.SelectionProvider;
-import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
-import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
-import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import com.intellij.util.Function;
+import com.intellij.ui.treeStructure.treetable.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
@@ -37,6 +33,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -143,12 +140,14 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
   }
 
   public Collection getSelection() {
-    TreePath[] selectionPaths = getTree().getSelectionPaths();
-    return selectionPaths == null ? Collections.emptyList() : ContainerUtil.map(selectionPaths, new Function<TreePath, Object>() {
-      public Object fun(final TreePath s) {
-        return s.getLastPathComponent();
-      }
-    });
+    final int[] rows = getSelectedRows();
+    if (rows == null) return Collections.emptyList();
+    final TreeTableTree tree = getTree();
+    ArrayList result = new ArrayList();
+    for (int row : rows) {
+      result.add(tree.getPathForRow(row).getLastPathComponent());
+    }
+    return result;
   }
 
   public void addSelection(Object item) {
