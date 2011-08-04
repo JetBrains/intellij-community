@@ -101,7 +101,7 @@ public class ConfigUI extends JPanel {
         // UI Layout - Settings
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent("Settings"));
+        panel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent("Settings"));
         Container innerPanel = Box.createHorizontalBox();
         innerPanel.add(fullyQualifiedName);
         innerPanel.add(Box.createHorizontalGlue());
@@ -138,7 +138,7 @@ public class ConfigUI extends JPanel {
         }
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent("When method already exists"));
+        panel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent("When method already exists"));
         for (JRadioButton anInitialValueForReplaceDialog : initialValueForReplaceDialog) {
             panel.add(anInitialValueForReplaceDialog);
         }
@@ -156,7 +156,7 @@ public class ConfigUI extends JPanel {
         }
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent("Where to insert?"));
+        panel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent("Where to insert?"));
         for (JRadioButton anInitialValueForNewMethodDialog : initialValueForNewMethodDialog) {
             panel.add(anInitialValueForNewMethodDialog);
         }
@@ -167,7 +167,7 @@ public class ConfigUI extends JPanel {
         // UI Layout - Exclude fields
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent("Exclude"));
+        panel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent("Exclude"));
         innerPanel = Box.createHorizontalBox();
         innerPanel.add(filterConstant);
         innerPanel.add(Box.createHorizontalGlue());

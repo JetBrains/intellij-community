@@ -93,6 +93,14 @@ public class PsiUtil {
   }
 
   @Nullable
+  public static String getMethodName(GrMethodCall methodCall) {
+    GrExpression invokedExpression = methodCall.getInvokedExpression();
+    if (!(invokedExpression instanceof GrReferenceExpression)) return null;
+
+    return ((GrReferenceExpression)invokedExpression).getReferenceName();
+  }
+
+  @Nullable
   public static String getQualifiedReferenceText(GrCodeReferenceElement referenceElement) {
     StringBuilder builder = new StringBuilder();
     if (!appendName(referenceElement, builder)) return null;

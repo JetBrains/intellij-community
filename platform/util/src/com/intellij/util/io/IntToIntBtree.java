@@ -36,10 +36,14 @@ abstract class IntToIntBtree {
   private final byte[] buffer;
   private boolean isLarge = true;
   private final ISimpleStorage storage;
-  private final boolean offloadToSiblingsBeforeSplit = false;
+  private final boolean offloadToSiblingsBeforeSplit = hasCachedMappings;
   private boolean indexNodeIsHashTable = true;
   final int metaDataLeafPageLength;
   final int hashPageCapacity;
+
+  private static final boolean hasCachedMappings = false;
+  private TIntIntHashMap myCachedMappings;
+  private final int myCachedMappingsSize;
 
   public IntToIntBtree(int _pageSize, int rootAddress, ISimpleStorage _storage, boolean initial) {
     pageSize = _pageSize;
@@ -84,6 +88,13 @@ abstract class IntToIntBtree {
     if (initial) {
       root.setIndexLeaf(true);
       root.sync();
+    }
+
+    if (hasCachedMappings) {
+      myCachedMappings = new TIntIntHashMap(myCachedMappingsSize = 4 * maxLeafNodes);
+    } else {
+      myCachedMappings = null;
+      myCachedMappingsSize = -1;
     }
   }
 
@@ -144,6 +155,12 @@ abstract class IntToIntBtree {
   }
 
   public @Nullable Integer get(int key) {
+    if (hasCachedMappings) {
+      if (myCachedMappings.containsKey(key)) {
+        return myCachedMappings.get(key);
+      }
+    }
+
     BtreeIndexNodeView currentIndexNode = new BtreeIndexNodeView(this);
     currentIndexNode.setAddress(root.address);
     int index = currentIndexNode.locate(key, false);
@@ -153,6 +170,15 @@ abstract class IntToIntBtree {
   }
 
   public void put(int key, int value) {
+    if (hasCachedMappings) {
+      myCachedMappings.put(key, value);
+      if (myCachedMappings.size() == myCachedMappingsSize) flushCachedMappings();
+    } else {
+      doPut(key, value);
+    }
+  }
+
+  private void doPut(int key, int value) {
     BtreeIndexNodeView currentIndexNode = new BtreeIndexNodeView(this);
     currentIndexNode.setAddress(root.address);
     int index = currentIndexNode.locate(key, true);
@@ -186,10 +212,24 @@ abstract class IntToIntBtree {
     int usedPercent2 = (int)((count * 100L) / leafNodesCapacity2);
     IOStatistics.dump("pagecount:" + pagesCount + ", height:" + height + ", movedMembers:"+movedMembersCount +
                       ", hash steps:" + maxStepsSearchedInHash + ", avg search in hash:" + (hashSearchRequests != 0 ? totalHashStepsSearched / hashSearchRequests:0) +
-                      ", leaf pages used:" + usedPercent + "%, leaf pages used if max children: " + usedPercent2 + "%" );
+                      ", leaf pages used:" + usedPercent + "%, leaf pages used if sorted: " + usedPercent2 + "%" );
+  }
+
+  private void flushCachedMappings() {
+    if (hasCachedMappings) {
+      int[] keys = myCachedMappings.keys();
+      Arrays.sort(keys);
+      for(int key:keys) doPut(key, myCachedMappings.get(key));
+      myCachedMappings.clear();
+    }
+  }
+
+  void cleanupOnClose() {
+    myCachedMappings = null;
   }
 
   void doFlush() {
+    flushCachedMappings();
   }
 
   static void myAssert(boolean b) {
@@ -528,12 +568,12 @@ abstract class IntToIntBtree {
 
         boolean defaultSplit = true;
 
-        //if (keys[keys.length - 1] < newValue && btree.height <= 3 && false) {
+        //if (keys[keys.length - 1] < newValue && btree.height <= 3) {  // optimization for adding element to last block
         //  btree.root.setAddress(btree.root.address);
         //  if (btree.height == 2 && btree.root.search(keys[0]) == btree.root.getChildrenCount() - 1) {
         //    defaultSplit = false;
         //  } else if (btree.height == 3 &&
-        //             btree.root.search(keys[0]) == -btree.root.getChildrenCount() &&
+        //             btree.root.search(keys[0]) == -btree.root.getChildrenCount() - 1 &&
         //             parent.search(keys[0]) == parent.getChildrenCount() - 1
         //            ) {
         //    defaultSplit = false;
@@ -1063,7 +1103,8 @@ abstract class IntToIntBtree {
     }
 
     private final int hash(int val) {
-      return val * 0x278DDE6D;
+      //return val * 0x278DDE6D;
+      return val;
     }
 
     static final int STATE_MASK = 0x3;

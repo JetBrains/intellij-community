@@ -119,7 +119,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     private JPanel createTagsPanel(String[] tags, Options options) {
       JPanel panel = new JPanel(new GridBagLayout());
-      panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+      panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
         InspectionsBundle.message("inspection.javadoc.required.tags.option.title")),
                                                          BorderFactory.createEmptyBorder(0, 3, 3, 3)));
 
@@ -167,7 +167,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     private JPanel createScopePanel(final String[] modifiers, final Options options) {
       JPanel panel = new JPanel(new BorderLayout());
-      panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+      panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
         InspectionsBundle.message("inspection.scope.for.title")),
                                                          BorderFactory.createEmptyBorder(0, 3, 3, 3)));
 

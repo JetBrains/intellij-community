@@ -88,9 +88,17 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private boolean myShowsPreviewHighlighters;
   private boolean mySkipPreviewHighlighting;
   private LanguageSelector myLanguageSelector;
-
+  private final CodeStyleSettings myCurrentSettings;
+  private final Language myDefaultLanguage;
+  
   protected CodeStyleAbstractPanel(CodeStyleSettings settings) {
+    this(null, null, settings);
+  }
+
+  protected CodeStyleAbstractPanel(@Nullable Language defaultLanguage, @Nullable CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+    myCurrentSettings = currentSettings;
     mySettings = settings;
+    myDefaultLanguage = defaultLanguage;
     myEditor = createEditor();
 
     if (myEditor != null) {
@@ -382,6 +390,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     editor.setHighlighter(createHighlighter(scheme));
   }
 
+  @Nullable
   protected abstract EditorHighlighter createHighlighter(final EditorColorsScheme scheme);
 
   @NotNull
@@ -414,6 +423,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   public abstract boolean isModified(CodeStyleSettings settings);
 
+  @Nullable
   public abstract JComponent getPanel();
 
   public void dispose() {
@@ -594,7 +604,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
    */
   @Nullable
   public Language getDefaultLanguage()  {
-    return null;
+    return myDefaultLanguage;
   }
   
   public void setLanguageSelector(LanguageSelector langSelector) {
@@ -613,6 +623,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   public boolean setPanelLanguage(Language language) {
     return false;
+  }
+  
+  protected CodeStyleSettings getCurrentSettings() {
+    return myCurrentSettings;
   }
 
 }

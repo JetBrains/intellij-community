@@ -15,21 +15,18 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class JavaCodeStyleMainPanel extends MultiTabCodeStyleAbstractPanel {
-  protected JavaCodeStyleMainPanel(CodeStyleSettings settings) {
-    super(settings);
-  }
+public class JavaCodeStyleMainPanel extends MultiTabLanguageCodeStylePanel {
 
-  @Override
-  public Language getDefaultLanguage() {
-    return JavaLanguage.INSTANCE;
+  protected JavaCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+    super(JavaLanguage.INSTANCE, currentSettings, settings);
   }
 
   @Override
@@ -37,6 +34,11 @@ public class JavaCodeStyleMainPanel extends MultiTabCodeStyleAbstractPanel {
     super.initTabs(settings);
     addTab(new JavaDocFormattingPanel(settings));
     addTab(new CodeStyleImportsPanelWrapper(settings));
-    addTab(new CodeStyleGenerationWrapper(settings));
+    for (CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
+      if (provider.getLanguage() == JavaLanguage.INSTANCE && !provider.hasSettingsPage()) {
+        createTab(provider);
+      }
+    }
   }
+
 }

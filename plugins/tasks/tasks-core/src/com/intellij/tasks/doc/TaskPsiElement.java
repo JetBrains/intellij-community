@@ -57,4 +57,9 @@ public class TaskPsiElement extends FakePsiElement {
   public PsiFile getContainingFile() {
     return PsiFileFactory.getInstance(getProject()).createFileFromText("foo.txt", "");
   }
+
+  @Override
+  public String getName() {
+    return myTask.getPresentableName();
+  }
 }

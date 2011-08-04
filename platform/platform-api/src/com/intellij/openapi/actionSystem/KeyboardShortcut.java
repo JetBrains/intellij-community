@@ -85,4 +85,15 @@ public final class KeyboardShortcut extends Shortcut {
     assert keyStroke != null : "Can't create key stroke for " + s;
     return new KeyboardShortcut(keyStroke, null);
   }
+
+  @Override
+  public String toString() {
+    if (myFirstKeyStroke != null && mySecondKeyStroke == null) {
+      return "[" + myFirstKeyStroke + "]";
+    } else if (myFirstKeyStroke != null && mySecondKeyStroke != null) {
+      return "[" + myFirstKeyStroke + "]+["+ mySecondKeyStroke +"]";
+    } else {
+      return "[]";
+    }
+  }
 }

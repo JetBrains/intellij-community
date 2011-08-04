@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
+import com.intellij.tasks.impl.SimpleComment;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HTTPMethod;
@@ -27,6 +28,7 @@ import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -134,6 +136,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     if (type == null) {
       return null;
     }
+    final Comment[] comments = parseComments(element.getChild("notes"));
     final boolean isClosed = "accepted".equals(element.getChildText("state")) ||
                              "delivered".equals(element.getChildText("state")) ||
                              "finished".equals(element.getChildText("state"));
@@ -178,7 +181,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public Comment[] getComments() {
-        return new Comment[0];
+        return comments;
       }
 
       @Override
@@ -223,6 +226,25 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
         return "/icons/pivotal/" + type + ".png";
       }
     };
+  }
+
+  private static Comment[] parseComments(Element notes) {
+    if (notes == null) return Comment.EMPTY_ARRAY;
+    final List<Comment> result = new ArrayList<Comment>();
+    //noinspection unchecked
+    for (Element note : (List<Element>)notes.getChildren("note")) {
+      final String text = note.getChildText("text");
+      if (text == null) continue;
+      final Ref<Date> date = new Ref<Date>();
+      try {
+        date.set(parseDate(note, "noted_at"));
+      } catch (ParseException e) {
+        LOG.warn(e);
+      }
+      final String author = note.getChildText("author");
+      result.add(new SimpleComment(date.get(), author, text));
+    }
+    return result.toArray(new Comment[result.size()]);
   }
 
   @Nullable

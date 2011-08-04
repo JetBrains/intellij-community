@@ -201,7 +201,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myExpression = null;
     if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
       final PsiExpression expression = (PsiExpression)myElements[0];
-      if (expression.getParent() instanceof PsiExpressionStatement) {
+      if (expression instanceof PsiAssignmentExpression && expression.getParent() instanceof PsiExpressionStatement) {
         myElements[0] = expression.getParent();
       }
       else {

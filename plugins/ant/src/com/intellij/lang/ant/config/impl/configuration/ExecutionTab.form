@@ -3,7 +3,7 @@
   <grid id="81309" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="6" left="6" bottom="6" right="6"/>
     <constraints>
-      <xy x="78" y="8" width="425" height="245"/>
+      <xy x="78" y="8" width="425" height="252"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -15,7 +15,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
         <border type="etched" title-resource-bundle="messages/AntBundle" title-key="run.execution.tab.run.with.ant.border"/>
         <children>

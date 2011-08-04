@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myRootPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="488" height="476"/>
+      <xy x="20" y="20" width="519" height="476"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -23,15 +23,6 @@
           </component>
         </children>
       </scrollpane>
-      <component id="39006" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <labelFor value="1ca7c"/>
-          <text value="&amp;Branch Configurations"/>
-        </properties>
-      </component>
       <grid id="f0a1f" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
@@ -39,7 +30,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
         </clientProperties>
         <border type="etched" title="Branch Information"/>
         <children>
@@ -104,7 +95,7 @@
       <grid id="e0ed5" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -143,6 +134,15 @@
           </component>
         </children>
       </grid>
+      <component id="8198" class="com.intellij.ui.TitledSeparatorWithMnemonic">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="1ca7c"/>
+          <text value="&amp;Branch Configurations"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>

@@ -102,4 +102,9 @@ public final class MouseShortcut extends Shortcut {
   public boolean startsWith(final Shortcut sc) {
     return equals(sc);
   }
+
+  @Override
+  public String toString() {
+    return "button=" + myButton + " clickCount=" + myClickCount + " modifiers=" + myModifiers;
+  }
 }

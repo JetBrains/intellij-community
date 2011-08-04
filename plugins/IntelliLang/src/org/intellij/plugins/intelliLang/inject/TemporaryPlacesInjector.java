@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +25,6 @@ import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -50,7 +50,7 @@ public class TemporaryPlacesInjector implements MultiHostInjector {
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
     final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
-    final PsiLanguageInjectionHost originalHost = PsiUtilBase.getOriginalElement(host, host.getClass());
+    final PsiLanguageInjectionHost originalHost = CompletionUtil.getOriginalElement(host);
     final List<TemporaryPlacesRegistry.TemporaryPlace> list = myRegistry.getTempInjectionsSafe(originalHost);
     if (list.isEmpty()) return;
     final ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);

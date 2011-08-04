@@ -98,11 +98,11 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
     PsiExpression[] operands = expression.getOperands();
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
-      operand.accept(this);
       if (i != 0) {
         PsiJavaToken token = expression.getTokenBeforeOperand(operand);
         myBuf.append(" ").append(token.getText()).append(" ");
       }
+      operand.accept(this);
     }
   }
 

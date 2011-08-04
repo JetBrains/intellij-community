@@ -23,6 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
@@ -75,8 +77,11 @@ public abstract class AbstractInplaceIntroduceTest extends LightCodeInsightTestC
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       final MyIntroduceHandler introduceFieldHandler = createIntroduceHandler();
-      final PsiExpression expression =
+      PsiExpression expression =
         PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
+      if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) {
+        expression = (PsiExpression)expression.getParent();
+      }
       if (expression != null) {
         introduceFieldHandler.invokeImpl(getProject(), expression, getEditor());
       } else {

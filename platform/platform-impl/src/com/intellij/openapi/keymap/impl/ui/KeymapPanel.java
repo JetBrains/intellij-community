@@ -234,15 +234,15 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     myShortcutsList.setCellRenderer(new ShortcutListRenderer());
 
     JComponent separator = SeparatorFactory.createSeparator(KeyMapBundle.message("shortcuts.keymap.label"), myShortcutsList);
-    panel.add(separator, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 8), 0, 0));
+    panel.add(separator, new GridBagConstraints(0,0,2,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myShortcutsList);
     scrollPane.setPreferredSize(new Dimension(160, 200));
-    panel.add(scrollPane, new GridBagConstraints(1,1,1,1,1,1,GridBagConstraints.WEST,GridBagConstraints.BOTH, new Insets(0, 0, 0, 2), 0, 0));
+    panel.add(scrollPane, new GridBagConstraints(0,1,1,1,1,1,GridBagConstraints.WEST,GridBagConstraints.BOTH, new Insets(0, 0, 0, 2), 0, 0));
 
     panel.add(
       createShortcutsButtonsPanel(),
-      new GridBagConstraints(2,1,1,1,0,0,GridBagConstraints.NORTH,GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0)
+      new GridBagConstraints(1,1,1,1,0,0,GridBagConstraints.NORTH,GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0)
     );
 
     myActionsTree.addTreeSelectionListener(

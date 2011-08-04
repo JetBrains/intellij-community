@@ -51,7 +51,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
   }
 
   protected void init(final T settings) {
-    myVersionNumberPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(getChangeNumberTitle()));
+    myVersionNumberPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(getChangeNumberTitle()));
     installCheckBoxesListeners();
     initValues(settings);
     updateAllEnabled(null);
