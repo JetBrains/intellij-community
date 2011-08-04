@@ -116,6 +116,9 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     if (expression == null) {
       expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiExpression.class);
     }
+    if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) {
+      expression = (PsiExpression)expression.getParent();
+    }
     return expression != null && expression.isValid() && expression.getText().equals(exprText) ? expression : null;
   }
 
