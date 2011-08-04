@@ -16,13 +16,19 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.*;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,15 +38,16 @@ import java.util.List;
 /**
  * @author Rustam Vishnyakov
  */
-public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPanel {
+
+public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPanel {
 
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;
   private JTabbedPane myTabbedPane;
 
-  protected MultiTabCodeStyleAbstractPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
-    super(currentSettings, settings);
+  protected MultiTabLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+    super(language, currentSettings, settings);
   }
 
   protected void initTabs(CodeStyleSettings settings) {
@@ -64,7 +71,7 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
     assert !myTabs.isEmpty();
   }
 
-  protected void addTab(CodeStyleAbstractPanel tab) {
+  protected final void addTab(CodeStyleAbstractPanel tab) {
     myTabs.add(tab);
     tab.setShouldUpdatePreview(true);
     addPanelToWatch(tab.getPanel());
@@ -74,8 +81,19 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
     }
   }
 
+  private void addTab(Configurable configurable) {
+    ConfigurableWrapper wrapper = new ConfigurableWrapper(configurable, getSettings());
+    addTab(wrapper);
+  }
+
+  protected final void createTab(CodeStyleSettingsProvider provider) {
+    if (provider.hasSettingsPage()) return;
+    Configurable configurable = provider.createSettingsPage(getCurrentSettings(), getSettings());
+    addTab(configurable);
+  }
+
   @Override
-  public void setModel(CodeStyleSchemesModel model) {
+  public final void setModel(CodeStyleSchemesModel model) {
     super.setModel(model);
     ensureTabs();
     for (CodeStyleAbstractPanel tab : myTabs) {
@@ -174,7 +192,7 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
 
     public MySpacesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(MultiTabCodeStyleAbstractPanel.this.getDefaultLanguage());
+      setPanelLanguage(MultiTabLanguageCodeStylePanel.this.getDefaultLanguage());
     }
 
     @Override
@@ -198,7 +216,7 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
 
     public MyBlankLinesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(MultiTabCodeStyleAbstractPanel.this.getDefaultLanguage());
+      setPanelLanguage(MultiTabLanguageCodeStylePanel.this.getDefaultLanguage());
     }
 
     @Override
@@ -218,7 +236,7 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
 
     public MyWrappingAndBracesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(MultiTabCodeStyleAbstractPanel.this.getDefaultLanguage());
+      setPanelLanguage(MultiTabLanguageCodeStylePanel.this.getDefaultLanguage());
     }
 
     @Override
@@ -239,5 +257,72 @@ public abstract class MultiTabCodeStyleAbstractPanel extends CodeStyleAbstractPa
       provider.customizeSettings(panel, panel.getSettingsType());
     }
   }
-  
+
+
+  //========================================================================================================================================
+
+  private static class ConfigurableWrapper extends CodeStyleAbstractPanel {
+
+    private Configurable myConfigurable;
+
+    public ConfigurableWrapper(@NotNull Configurable configurable, CodeStyleSettings settings) {
+      super(settings);
+      myConfigurable = configurable;
+    }
+
+    @Override
+    protected int getRightMargin() {
+      return 0;
+    }
+
+    @Nullable
+    @Override
+    protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+      return null;
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @NotNull
+    @Override
+    protected FileType getFileType() {
+      Language language = getDefaultLanguage();
+      return language != null ? language.getAssociatedFileType() : FileTypes.PLAIN_TEXT;
+    }
+
+    @Override
+    protected String getTabTitle() {
+      return myConfigurable.getDisplayName();
+    }
+
+    @Override
+    protected String getPreviewText() {
+      return null;
+    }
+
+    @Override
+    public void apply(CodeStyleSettings settings) {
+      try {
+        myConfigurable.apply();
+      }
+      catch (ConfigurationException e) {
+        // Ignore
+      }
+    }
+
+    @Override
+    public boolean isModified(CodeStyleSettings settings) {
+      return myConfigurable.isModified();
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPanel() {
+      return myConfigurable.createComponent();
+    }
+
+    @Override
+    protected void resetImpl(CodeStyleSettings settings) {
+      myConfigurable.reset();
+    }
+  }
 }

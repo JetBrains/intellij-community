@@ -15,6 +15,8 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.options.Configurable;
@@ -39,5 +41,15 @@ public class GenerationSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.CODE_SETTINGS;
+  }
+
+  @Override
+  public boolean hasSettingsPage() {
+    return false;
+  }
+
+  @Override
+  public Language getLanguage() {
+    return JavaLanguage.INSTANCE;
   }
 }
