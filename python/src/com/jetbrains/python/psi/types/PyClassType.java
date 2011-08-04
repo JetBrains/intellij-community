@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
@@ -52,7 +53,7 @@ public class PyClassType extends UserDataHolderBase implements PyType {
    * @param is_definition whether this type describes an instance or a definition of the class.
    */
   public PyClassType(@Nullable PyClass source, boolean is_definition) {
-    myClass = source != null ? PsiUtilBase.getOriginalElement(source, PyClass.class) : null;
+    myClass = source != null ? CompletionUtil.getOriginalElement(source) : null;
     myIsDefinition = is_definition;
   }
 
@@ -260,7 +261,7 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   private void addOwnClassMembers(PyExpression expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
     PyClass containingClass = PsiTreeUtil.getParentOfType(expressionHook, PyClass.class);
     if (containingClass != null) {
-      containingClass = PsiUtilBase.getOriginalElement(containingClass, PyClass.class);
+      containingClass = CompletionUtil.getOriginalElement(containingClass);
     }
     boolean withinOurClass = containingClass == getPyClass();
 
