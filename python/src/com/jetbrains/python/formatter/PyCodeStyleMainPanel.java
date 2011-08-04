@@ -1,20 +1,15 @@
 package com.jetbrains.python.formatter;
 
-import com.intellij.application.options.MultiTabCodeStyleAbstractPanel;
-import com.intellij.lang.Language;
+import com.intellij.application.options.MultiTabLanguageCodeStylePanel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.jetbrains.python.PythonLanguage;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class PyCodeStyleMainPanel extends MultiTabCodeStyleAbstractPanel {
+public class PyCodeStyleMainPanel extends MultiTabLanguageCodeStylePanel {
   protected PyCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
-    super(currentSettings, settings);
+    super(PythonLanguage.getInstance(), currentSettings, settings);
   }
 
-  @Override
-  public Language getDefaultLanguage() {
-    return PythonLanguage.getInstance();
-  }
 }
