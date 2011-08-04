@@ -45,6 +45,7 @@ import java.util.Map;
  */
 public class SimpleColoredComponent extends JComponent implements Accessible {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
+  public static final Color STYLE_SEARCH_MATCH_BACKGROUND = new Color(250, 250, 250, 140);
 
   private final ArrayList<String> myFragments;
   private final ArrayList<SimpleTextAttributes> myAttributes;
@@ -439,7 +440,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
       if (!attributes.isSearchMatch()) {
         if (shouldDrawMacShadow()) {
-          g.setColor(new Color(250, 250, 250, 140));
+          g.setColor(STYLE_SEARCH_MATCH_BACKGROUND);
           g.drawString(fragment, xOffset, textBaseline + 1);
         }
         

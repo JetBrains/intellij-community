@@ -41,7 +41,6 @@ import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
@@ -60,6 +59,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MyLayeredPane;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -75,6 +75,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.AsyncProcessIcon;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +92,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
+public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
   @NonNls private static final String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
@@ -115,12 +116,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private Computable<ModalityState> myStateForUpdate;
 
   private final Alarm mySpareTimeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
+  @Nullable
+  private final Alarm myHeavyAlarm;
 
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
   private final ArrayList<AnAction> customActions = new ArrayList<AnAction>();
   private final ConsoleBuffer myBuffer = new ConsoleBuffer();
   private boolean myUpdateFoldingsEnabled = true;
   private EditorHyperlinkSupport myHyperlinks;
+  private AsyncProcessIcon myAsyncProcessIcon;
+  private JLayeredPane myJLayeredPane;
+  private JPanel myMainPanel;
 
   @TestOnly
   public Editor getEditor() {
@@ -272,7 +278,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   protected ConsoleViewImpl(final Project project, GlobalSearchScope searchScope, boolean viewer, FileType fileType,
                             @NotNull final ConsoleState initialState) {
-    super(new BorderLayout());
     isViewer = viewer;
     myState = initialState;
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
@@ -288,6 +293,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       for (Filter filter : filters) {
         myPredefinedMessageFilter.addFilter(filter);
       }
+    }
+    if (myPredefinedMessageFilter.isAnyHeavy()) {
+      myHeavyAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this);
+    } else {
+      myHeavyAlarm = null;
     }
 
     Disposer.register(project, this);
@@ -368,17 +378,34 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           }
         },
         100,
-        ModalityState.stateForComponent(this)
+        ModalityState.stateForComponent(myJLayeredPane)
       );
     }
   }
 
+  public void addToolbar(JComponent component, String constraint) {
+    myMainPanel.add(component, constraint);
+  }
+
   public JComponent getComponent() {
+    myJLayeredPane = new MyLayeredPane();
+    myJLayeredPane.setLayout(new BorderLayout());
     if (myEditor == null) {
       myEditor = createEditor();
       myHyperlinks = new EditorHyperlinkSupport(myEditor, myProject);
       requestFlushImmediately();
-      add(createCenterComponent(), BorderLayout.CENTER);
+      myMainPanel = new JPanel(new BorderLayout());
+      myMainPanel.add(createCenterComponent(), BorderLayout.CENTER);
+      myJLayeredPane.add(myMainPanel, BorderLayout.CENTER, JLayeredPane.DEFAULT_LAYER);
+
+      myAsyncProcessIcon = new AsyncProcessIcon(toString()).setUseMask(false);
+      myAsyncProcessIcon.setOpaque(false);
+      myAsyncProcessIcon.setPaintPassiveIcon(false);
+      myAsyncProcessIcon.suspend();
+      /*JPanel wrapper = new JPanel(new BorderLayout());
+      wrapper.add(myAsyncProcessIcon, BorderLayout.NORTH);
+      wrapper.setOpaque(false);*/
+      myJLayeredPane.add(myAsyncProcessIcon, BorderLayout.NORTH, JLayeredPane.DRAG_LAYER);
 
       myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
@@ -412,7 +439,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       });
     }
-    return this;
+    return myJLayeredPane;
   }
 
   protected JComponent createCenterComponent() {
@@ -476,7 +503,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private ModalityState getStateForUpdate() {
-    return myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(this);
+    return myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(myJLayeredPane);
   }
 
   private void requestFlushImmediately() {
@@ -789,6 +816,46 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (canHighlightHyperlinks) {
       myHyperlinks.highlightHyperlinks(myCustomFilter, myPredefinedMessageFilter, line1, endLine);
     }
+    if (myPredefinedMessageFilter.isAnyHeavy()) {
+      final Document document = getEditor().getDocument();
+      final int startLine = Math.max(0, line1);
+      for (int line = startLine; line <= endLine; line++) {
+        int endOffset = document.getLineEndOffset(line);
+        if (endOffset < document.getTextLength()) {
+          endOffset++; // add '\n'
+        }
+        final String lineText = EditorHyperlinkSupport.getLineText(document, line, true);
+        assert myHeavyAlarm != null;
+        final int finalEndOffset = endOffset;
+        final int finalLine = line;
+        myAsyncProcessIcon.resume();
+        myHeavyAlarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            myPredefinedMessageFilter.applyHeavyFilter(lineText, finalEndOffset, finalLine, new Consumer<FilterMixin.AdditionalHighlight>() {
+              @Override
+              public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
+                SwingUtilities.invokeLater(
+                  new Runnable() {
+                    @Override
+                    public void run() {
+                      myFlushAlarm.addRequest(new Runnable() {
+                        @Override
+                        public void run() {
+                          myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
+                        }
+                      }, 0);
+                    }
+                  });
+              }
+            });
+            if (myHeavyAlarm.getActiveRequestCount() == 0) {
+              myAsyncProcessIcon.suspend();
+            }
+          }
+        }, 0);
+      }
+    }
     if (myUpdateFoldingsEnabled) {
       updateFoldings(line1, endLine, true);
     }
@@ -1066,7 +1133,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         s = (String)content.getTransferData(DataFlavor.stringFlavor);
       }
       catch (Exception e) {
-        consoleView.getToolkit().beep();
+        consoleView.getComponent().getToolkit().beep();
       }
       if (s == null) return;
       Editor editor = consoleView.myEditor;
@@ -1279,6 +1346,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     consoleActions[1] = nextAction;
     consoleActions[2] = switchSoftWrapsAction;
     consoleActions[3] = autoScrollToTheEndAction;
+    //consoleActions[4] = new ShowRecentlyChanged();
     for (int i = 0; i < customActions.size(); ++i) {
       consoleActions[i + 4] = customActions.get(i);
     }

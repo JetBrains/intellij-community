@@ -89,7 +89,8 @@ public class ThreadDumpPanel extends JPanel {
     });
     toolbarActions.add(new CopyToClipboardAction(threadDump, project));
     toolbarActions.add(new SortThreadsAction());
-    add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions,false).getComponent(), BorderLayout.WEST);
+    //toolbarActions.add(new ShowRecentlyChanged());
+    add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false).getComponent(), BorderLayout.WEST);
 
     final Splitter splitter = new Splitter(false, 0.3f);
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myThreadList));
