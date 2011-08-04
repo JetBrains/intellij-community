@@ -29,8 +29,6 @@ public abstract class FacetAutodetectingManager {
     return project.getComponent(FacetAutodetectingManager.class);
   }
 
-  public abstract void disableAutodetectionInDirs(@NotNull Module module, @NotNull String... dirUrls);
-
   public abstract void disableAutodetectionInFiles(@NotNull FacetType type, @NotNull Module module, @NotNull String... fileUrls);
 
   public abstract void disableAutodetectionInModule(FacetType type, Module module);

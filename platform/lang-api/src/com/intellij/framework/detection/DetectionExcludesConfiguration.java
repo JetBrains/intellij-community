@@ -22,8 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 /**
  * @author nik
  */
@@ -34,7 +32,5 @@ public abstract class DetectionExcludesConfiguration {
 
   public abstract void addExcludedFramework(@NotNull FrameworkType type);
   public abstract void addExcludedFile(@NotNull VirtualFile file, @Nullable FrameworkType type);
-
-  public abstract void removeExcluded(@NotNull Collection<VirtualFile> files,
-                                      final FrameworkType frameworkType);
+  public abstract void addExcludedUrl(@NotNull String url, @Nullable FrameworkType type);
 }

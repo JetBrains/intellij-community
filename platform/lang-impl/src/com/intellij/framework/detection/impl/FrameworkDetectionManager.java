@@ -21,6 +21,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetector;
+import com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl;
 import com.intellij.framework.detection.impl.ui.ConfigureDetectedFrameworksDialog;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -202,7 +203,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       return Collections.emptyList();
     }
 
-    excludesConfiguration.removeExcluded(filesToProcess, detector.getFrameworkType());
+    ((DetectionExcludesConfigurationImpl)excludesConfiguration).removeExcluded(filesToProcess, detector.getFrameworkType());
     if (LOG.isDebugEnabled()) {
       LOG.debug("Detector '" + detector.getDetectorId() + "': " + acceptedFiles.size() + " accepted files, " + filesToProcess.size() + " files to process");
     }

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.FactoryMap;
@@ -96,6 +97,22 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     container.add(file);
   }
 
+  @Override
+  public void addExcludedUrl(@NotNull String url, @Nullable FrameworkType type) {
+    final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+    if (file != null) {
+      addExcludedFile(file, type);
+      return;
+    }
+
+    convert();
+    final String typeId = type != null ? type.getId() : null;
+    if (typeId != null && myExcludedFrameworks.contains(typeId)) {
+      return;
+    }
+    myExcludedFiles.get(typeId).add(url);
+  }
+
   private void convert() {
     ensureOldSettingsLoaded();
     markAsConverted();
@@ -138,7 +155,6 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     }
   }
 
-  @Override
   public void removeExcluded(@NotNull Collection<VirtualFile> files, final FrameworkType frameworkType) {
     ensureOldSettingsLoaded();
     if (myExcludedFrameworks.contains(frameworkType.getId())) {

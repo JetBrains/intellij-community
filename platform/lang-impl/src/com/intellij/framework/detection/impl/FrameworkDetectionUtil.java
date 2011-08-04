@@ -15,13 +15,18 @@
  */
 package com.intellij.framework.detection.impl;
 
+import com.intellij.facet.FacetType;
+import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
+import com.intellij.framework.detection.FacetBasedFrameworkDetector;
+import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +36,17 @@ import java.util.List;
  */
 public class FrameworkDetectionUtil {
   private FrameworkDetectionUtil() {
+  }
+
+  @Nullable
+  public static FrameworkType findFrameworkTypeForFacetDetector(@NotNull FacetType<?, ?> facetType) {
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
+      if (detector instanceof FacetBasedFrameworkDetector<?, ?> &&
+          ((FacetBasedFrameworkDetector)detector).getFacetType().equals(facetType)) {
+        return detector.getFrameworkType();
+      }
+    }
+    return null;
   }
 
   public static List<DetectedFrameworkDescription> getDisabledDescriptions(@NotNull List<? extends DetectedFrameworkDescription> allDescriptions) {
