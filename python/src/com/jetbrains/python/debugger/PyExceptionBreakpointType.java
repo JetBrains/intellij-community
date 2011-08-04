@@ -169,7 +169,7 @@ public class PyExceptionBreakpointType
       innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
       innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
       panel.add(innerPanel, BorderLayout.NORTH);
-      panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent("Notifications"));
+      panel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent("Notifications"));
 
       ActionListener listener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
