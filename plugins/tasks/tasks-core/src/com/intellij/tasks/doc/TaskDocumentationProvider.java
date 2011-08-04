@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
+import com.petebevin.markdown.MarkdownProcessor;
 
 import java.util.Collections;
 import java.util.List;
@@ -57,7 +58,8 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
     }
     final String description = task.getDescription();
     if (description != null) {
-      builder.append("<b>Description:</b><br>").append(description.replace("\n", "<br>"));
+      final MarkdownProcessor processor = new MarkdownProcessor();
+      builder.append("<b>Description:</b><br>").append(processor.markdown(description));
     }
     for (Comment comment : task.getComments()) {
       comment.appendTo(builder);
