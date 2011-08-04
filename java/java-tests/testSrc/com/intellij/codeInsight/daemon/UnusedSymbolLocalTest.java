@@ -3,11 +3,13 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 
+import java.util.Calendar;
 import java.util.Collection;
 
 public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
@@ -21,6 +23,7 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
   public void testInnerClass() throws Exception { doTest(); }
   public void testInnerUsesSelf() throws Exception { doTest(); }
   public void testLocalClass() throws Exception { doTest(); }
+  @Bombed(day = 5, month = Calendar.AUGUST)
   public void testInjectedAnno() throws Exception { doTest(); }
 
   public void testChangeInsideCodeBlock() throws Exception {
