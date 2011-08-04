@@ -201,54 +201,5 @@ public class PlaybackRunner {
     }
   }
 
-  public static void main(String[] args) {
-    final JFrame frame = new JFrame();
-    frame.getContentPane().setLayout(new BorderLayout());
-    final JPanel content = new JPanel(new BorderLayout());
-    frame.getContentPane().add(content, BorderLayout.CENTER);
-
-    final JTextArea textArea = new JTextArea();
-    content.add(textArea, BorderLayout.CENTER);
-
-    frame.setBounds(300, 300, 300, 300);
-    frame.show();
-
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        textArea.requestFocus();
-        start();
-      }
-    });
-  }
-  
-  private static void start() {
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
-      public boolean dispatchKeyEvent(KeyEvent e) {
-        switch (e.getID()) {
-          case KeyEvent.KEY_PRESSED:
-            break;
-          case KeyEvent.KEY_RELEASED:
-            break;
-          case KeyEvent.KEY_TYPED:
-            break;
-        }
-
-        return false;
-      }
-    });
-
-    new PlaybackRunner("%type", new StatusCallback() {
-      public void error(String text, int currentLine) {
-        System.out.println("Error: " + currentLine + " " + text);
-      }
-
-      public void message(String text, int currentLine) {
-        System.out.println(currentLine + " " + text);
-      }
-    }, false).run();
-  }
-
-
-
 
 }
