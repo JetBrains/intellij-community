@@ -778,7 +778,7 @@ public class ProjectWrapper {
         }
     }
 
-    private ProjectWrapper(final GantBinding binding, final String prjDir, final String setupScript, final Map<String, String> pathVariables) {
+    private ProjectWrapper(final GantBinding binding, final String prjDir, final String setupScript, final Map<String, String> pathVariables, final boolean loadHistory) {
         dependencyMapping = new Mappings(this);
         backendCallback = dependencyMapping.getCallback();
         affectedFiles = new HashSet<StringCache.S>();
@@ -808,7 +808,7 @@ public class ProjectWrapper {
             myLibraries.put(l.getName(), new LibraryWrapper(l));
         }
 
-        myHistory = loadSnapshot(dependencyMapping, affectedFiles);
+        myHistory = loadHistory ? loadSnapshot(dependencyMapping, affectedFiles) : null;
     }
 
     private ProjectWrapper(final BufferedReader r, final Mappings mappings, final Set<StringCache.S> affected) {
@@ -928,12 +928,12 @@ public class ProjectWrapper {
         }
     }
 
-    public static ProjectWrapper load(final String path, final String setupScript) {
-        return new ProjectWrapper(null, path, setupScript, null);
+    public static ProjectWrapper load(final String path, final String setupScript, final boolean loadHistory) {
+        return new ProjectWrapper(null, path, setupScript, null, loadHistory);
     }
 
-    public static ProjectWrapper load(final GantBinding binding, final String path, final String setupScript, final Map<String, String> pathVariables) {
-        return new ProjectWrapper(binding, path, setupScript, pathVariables);
+    public static ProjectWrapper load(final GantBinding binding, final String path, final String setupScript, final Map<String, String> pathVariables, final boolean loadHistory) {
+        return new ProjectWrapper(binding, path, setupScript, pathVariables, loadHistory);
     }
 
     public void report(final String module) {
@@ -990,6 +990,8 @@ public class ProjectWrapper {
         return myProject;
     }
 
+    enum BuildStatus {FAILURE, INCREMENTAL, CONSERVATIVE}
+
     class BusyBeaver {
         final ProjectBuilder builder;
         final Set<StringCache.S> compiledFiles = new HashSet<StringCache.S>();
@@ -999,7 +1001,7 @@ public class ProjectWrapper {
             this.builder = builder;
         }
 
-        boolean iterativeCompile(final ModuleChunk chunk, final boolean tests, final Set<StringCache.S> sources, final Set<StringCache.S> outdated, final Set<StringCache.S> removed, final Flags flags) {
+        BuildStatus iterativeCompile(final ModuleChunk chunk, final boolean tests, final Set<StringCache.S> sources, final Set<StringCache.S> outdated, final Set<StringCache.S> removed, final Flags flags) {
             final Collection<StringCache.S> filesToCompile = DefaultGroovyMethods.intersect(affectedFiles, sources);
             final Set<StringCache.S> safeFiles = new HashSet<StringCache.S>();
 
@@ -1078,32 +1080,49 @@ public class ProjectWrapper {
                     }
                 }.log();
 
-                builder.buildChunk(chunk, tests, filesToCompile, deltaBackend, ProjectWrapper.this);
+                boolean buildException = false;
 
-                compiledFiles.addAll(filesToCompile);
-                affectedFiles.removeAll(filesToCompile);
-
-                final boolean incremental = dependencyMapping.differentiate(delta, removed, compiledFiles, affectedFiles, safeFiles);
-
-                dependencyMapping.integrate(delta, removed);
-
-                if (!incremental) {
-                    affectedFiles.addAll(sources);
-                    iterativeCompile(chunk, tests, sources, null, null, flags);
-                    return false;
+                try {
+                    builder.buildChunk(chunk, tests, filesToCompile, deltaBackend, ProjectWrapper.this);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    buildException = true;
                 }
 
-                return iterativeCompile(chunk, tests, sources, null, null, flags);
+                if (! buildException) {
+                    compiledFiles.addAll(filesToCompile);
+                    affectedFiles.removeAll(filesToCompile);
+
+                    final boolean incremental = dependencyMapping.differentiate(delta, removed, compiledFiles, affectedFiles, safeFiles);
+
+                    dependencyMapping.integrate(delta, removed);
+
+                    if (!incremental) {
+                        affectedFiles.addAll(sources);
+                        final BuildStatus result = iterativeCompile(chunk, tests, sources, null, null, flags);
+
+                        if (result == BuildStatus.FAILURE) {
+                            return result;
+                        }
+
+                        return BuildStatus.CONSERVATIVE;
+                    }
+
+                    return iterativeCompile(chunk, tests, sources, null, null, flags);
+                }
+                else {
+                    return BuildStatus.FAILURE;
+                }
             } else {
                 for (Module m : chunk.getElements()) {
                     Reporter.reportBuildSuccess(m, tests);
                 }
             }
 
-            return true;
+            return BuildStatus.INCREMENTAL;
         }
 
-        public void build(final Collection<Module> modules, final boolean tests, final Flags flags) {
+        public BuildStatus build(final Collection<Module> modules, final boolean tests, final Flags flags) {
             boolean incremental = flags.incremental();
             final List<ModuleChunk> chunks = myProject.getChunks(tests);
 
@@ -1111,10 +1130,11 @@ public class ProjectWrapper {
                 final Set<Module> chunkModules = c.getElements();
 
                 if (!DefaultGroovyMethods.intersect(modules, chunkModules).isEmpty()) {
+                    final Set<StringCache.S> removedSources = new HashSet<StringCache.S>();
+
                     if (incremental) {
                         final Set<StringCache.S> chunkSources = new HashSet<StringCache.S>();
                         final Set<StringCache.S> outdatedSources = new HashSet<StringCache.S>();
-                        final Set<StringCache.S> removedSources = new HashSet<StringCache.S>();
 
                         for (Module m : chunkModules) {
                             final ModuleWrapper mw = getModule(m.getName());
@@ -1123,8 +1143,19 @@ public class ProjectWrapper {
                             removedSources.addAll(tests ? mw.getRemovedTests() : mw.getRemovedSources());
                         }
 
-                        incremental = iterativeCompile(c, tests, chunkSources, outdatedSources, removedSources, flags);
+                        final BuildStatus result = iterativeCompile(c, tests, chunkSources, outdatedSources, removedSources, flags);
+
+                        incremental = result == BuildStatus.INCREMENTAL;
+
+                        if (result == BuildStatus.FAILURE) {
+                            return result;
+                        }
                     } else {
+                        for (Module m : chunkModules) {
+                            final ModuleWrapper mw = getModule(m.getName());
+                            removedSources.addAll(tests ? mw.getRemovedTests() : mw.getRemovedSources());
+                        }
+
                         final Set<Module> toClean = new HashSet<Module>();
 
                         for (Module m : chunkModules) {
@@ -1138,19 +1169,36 @@ public class ProjectWrapper {
                             cleared.addAll(toClean);
                         }
 
-                        builder.buildChunk(c, tests, null, backendCallback, ProjectWrapper.this);
+                        final Mappings delta = new Mappings(ProjectWrapper.this);
+                        final Callbacks.Backend deltaCallback = delta.getCallback();
+
+                        try {
+                        builder.buildChunk(c, tests, null, deltaCallback, ProjectWrapper.this);
+                        }
+                        catch (Exception e) {
+                            e.printStackTrace();
+                            return BuildStatus.FAILURE;
+                        }
 
                         for (Module m : c.getElements()) {
                             final ModuleWrapper module = getModule(m.getName());
                             affectedFiles.removeAll(tests ? module.getTests() : module.getSources());
                         }
+
+                        dependencyMapping.integrate(delta, removedSources);
                     }
                 }
             }
+
+        return BuildStatus.INCREMENTAL;
         }
     }
 
     private void makeModules(final Collection<Module> initial, final Flags flags) {
+        if (myHistory == null) {
+            clean();
+        }
+
         new Logger(flags) {
             @Override
             public void log(final PrintStream stream) {
@@ -1284,7 +1332,7 @@ public class ProjectWrapper {
 
         builder.buildStart();
 
-        beaver.build(modules, false, flags);
+        final BuildStatus result = beaver.build(modules, false, flags);
 
         if (flags.tests()) {
             beaver.build(modules, true, flags);

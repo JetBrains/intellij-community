@@ -16,6 +16,9 @@ public abstract class ProtoMember extends Proto {
     public final TypeRepr.AbstractType type;
     public final Object value;
 
+    private boolean valueAdded = false;
+    private boolean valueRemoved = false;
+
     protected ProtoMember(final int access, final String signature, final StringCache.S name, final TypeRepr.AbstractType t, final Object value) {
         super(access, signature, name);
         this.type = t;
@@ -94,7 +97,12 @@ public abstract class ProtoMember extends Proto {
                 break;
 
             case 2:
+                valueRemoved = true;
+                diff |= Difference.VALUE;
+                break;
+
             case 1:
+                valueAdded = true;
                 diff |= Difference.VALUE;
                 break;
 

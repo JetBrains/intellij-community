@@ -206,7 +206,7 @@ public class Main {
             switch (getAction()) {
                 case CLEAN:
                     System.out.println("Cleaning project \"" + prj + "\"");
-                    project = ProjectWrapper.load(prj, getScript());
+                    project = ProjectWrapper.load(prj, getScript(), false);
 
                     project.clean();
                     project.save();
@@ -215,7 +215,7 @@ public class Main {
 
                 case REBUILD:
                     System.out.println("Rebuilding project \"" + prj + "\"");
-                    project = ProjectWrapper.load(prj, getScript());
+                    project = ProjectWrapper.load(prj, getScript(), false);
                     project.rebuild();
                     project.save();
                     saved = true;
@@ -227,13 +227,13 @@ public class Main {
                     if (make instanceof Options.Value) {
                         final String module = ((Options.Value) make).get();
                         System.out.println("Making module \"" + module + "\" in project \"" + prj + "\"");
-                        project = ProjectWrapper.load(prj, getScript());
+                        project = ProjectWrapper.load(prj, getScript(), true);
                         project.makeModule(module, getFlags ());
                         project.save();
                         saved = true;
                     } else if (make instanceof Options.Switch) {
                         System.out.println("Making all modules in project \"" + prj + "\"");
-                        project = ProjectWrapper.load(prj, getScript());
+                        project = ProjectWrapper.load(prj, getScript(), true);
                         project.makeModule(null, getFlags ());
                         project.save();
                         saved = true;
@@ -245,14 +245,14 @@ public class Main {
             final Options.Argument inspect = doInspect();
 
             if (inspect instanceof Options.Switch) {
-                project = ProjectWrapper.load(prj, getScript());
+                project = ProjectWrapper.load(prj, getScript(), true);
                 project.report();
                 if (doSave()) {
                     project.save();
                     saved = true;
                 }
             } else if (inspect instanceof Options.Value) {
-                project = ProjectWrapper.load(prj, getScript());
+                project = ProjectWrapper.load(prj, getScript(), true);
                 project.report(((Options.Value) inspect).get());
                 if (doSave()) {
                     project.save();
@@ -261,7 +261,7 @@ public class Main {
             }
 
             if (doSave() && !saved) {
-                project = ProjectWrapper.load(prj, getScript());
+                project = ProjectWrapper.load(prj, getScript(), true);
                 project.save();
             }
         }

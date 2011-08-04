@@ -30,7 +30,7 @@ abstract class JpsBuildTestCase extends TestCase {
     def protected buildAll(String projectPath, Map<String, String> pathVariables, Closure initProject) {
         def binding = new GantBinding()
         binding.includeTool << Jps
-        ProjectWrapper pw = ProjectWrapper.load(binding, projectPath, null, pathVariables)
+        ProjectWrapper pw = ProjectWrapper.load(binding, projectPath, null, pathVariables, false)
         Project project = pw.getProject()
         def target = FileUtil.createTempDirectory("targetDir")
         project.targetFolder = target.absolutePath

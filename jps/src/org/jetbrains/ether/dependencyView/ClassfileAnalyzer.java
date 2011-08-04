@@ -7,10 +7,8 @@ import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import sun.management.snmp.AdaptorBootstrap;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.lang.annotation.ElementType;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,43 +22,72 @@ public class ClassfileAnalyzer {
     private static class Holder<T> {
         private T x = null;
 
-        public void set (final T x) {
+        public void set(final T x) {
             this.x = x;
         }
 
-        public T get () {
+        public T get() {
             return x;
         }
     }
 
     private static class ClassCrawler extends EmptyVisitor {
+        private class AnnotationCrawler implements AnnotationVisitor {
+            private final TypeRepr.ClassType type;
+            private final ElementType target;
+
+            private final Set<StringCache.S> usedArguments = new HashSet<StringCache.S>();
+
+            private AnnotationCrawler(final TypeRepr.ClassType type, final ElementType target) {
+                this.type = type;
+                this.target = target;
+                annotationTargets.put(type, target);
+            }
+
+            private String getMethodDescr (final Object value) {
+                if (value instanceof Type) {
+                    return "()Ljava/lang/Class;";
+                }
+
+                final String s = "()L" + Type.getType(value.getClass()).getInternalName() + ";";
+
+                return s;
+            }
+
+            public void visit(String name, Object value) {
+                usages.add(UsageRepr.createMethodUsage(name, type.className.value, getMethodDescr(value)));
+                usedArguments.add(StringCache.get(name));
+            }
+
+            public void visitEnum(String name, String desc, String value) {
+                usages.add(UsageRepr.createMethodUsage(name, type.className.value, "()" + desc));
+                usedArguments.add(StringCache.get(name));
+            }
+
+            public AnnotationVisitor visitAnnotation(String name, String desc) {
+                return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), target);
+            }
+
+            public AnnotationVisitor visitArray(String name) {
+                usedArguments.add(StringCache.get(name));
+                return this;
+            }
+
+            public void visitEnd() {
+                final Set<StringCache.S> s = annotationArguments.get(type);
+
+                if (s == null) {
+                    annotationArguments.put(type, usedArguments);
+                } else {
+                    s.retainAll(usedArguments);
+                }
+            }
+        }
 
         private void processSignature(final String sig) {
             if (sig != null)
                 new SignatureReader(sig).accept(signatureCrawler);
         }
-
-        private final AnnotationVisitor annotationCrawler = new AnnotationVisitor() {
-            public void visit(final String name, final Object value) {
-                return;
-            }
-
-            public void visitEnum(String name, String desc, String value) {
-                return;
-            }
-
-            public AnnotationVisitor visitAnnotation(String name, String desc) {
-                return annotationCrawler;
-            }
-
-            public AnnotationVisitor visitArray(String name) {
-                return annotationCrawler;
-            }
-
-            public void visitEnd() {
-
-            }
-        };
 
         private final SignatureVisitor signatureCrawler = new SignatureVisitor() {
             public void visitFormalTypeParameter(String name) {
@@ -137,6 +164,15 @@ public class ClassfileAnalyzer {
         final List<String> nestedClasses = new ArrayList<String>();
         final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
 
+        private static FoxyMap.CollectionConstructor<ElementType> elementTypeSetConstructor = new FoxyMap.CollectionConstructor<ElementType>() {
+            public Collection<ElementType> create() {
+                return new HashSet<ElementType>();
+            }
+        };
+
+        final Map<TypeRepr.ClassType, Set<StringCache.S>> annotationArguments = new HashMap<TypeRepr.ClassType, Set<StringCache.S>>();
+        final FoxyMap<TypeRepr.ClassType, ElementType> annotationTargets = new FoxyMap<TypeRepr.ClassType, ElementType>(elementTypeSetConstructor);
+
         public ClassCrawler(final StringCache.S fn) {
             fileName = fn;
         }
@@ -170,8 +206,18 @@ public class ClassfileAnalyzer {
         }
 
         @Override
+        public void visitEnd() {
+            for (TypeRepr.ClassType type : annotationTargets.keySet()) {
+                final Collection<ElementType> targets = annotationTargets.foxyGet(type);
+                final Set<StringCache.S> usedArguments = annotationArguments.get(type);
+
+                usages.add(UsageRepr.createAnnotationUsage(type, usedArguments, targets));
+            }
+        }
+
+        @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-            return annotationCrawler;
+            return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), ElementType.TYPE);
         }
 
         @Override
@@ -187,7 +233,12 @@ public class ClassfileAnalyzer {
                 fields.add(new FieldRepr(access, n, desc, signature, value));
             }
 
-            return null;
+            return new EmptyVisitor() {
+                @Override
+                public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+                    return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), ElementType.FIELD);
+                }
+            };
         }
 
         @Override
@@ -195,10 +246,6 @@ public class ClassfileAnalyzer {
             final Holder<Object> defaultValue = new Holder<Object>();
 
             processSignature(signature);
-
-            if (notPrivate(access)) {
-                methods.add(new MethodRepr(access, n, signature, desc, exceptions, null));
-            }
 
             return new EmptyVisitor() {
                 @Override
@@ -210,21 +257,21 @@ public class ClassfileAnalyzer {
 
                 @Override
                 public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-                    return annotationCrawler;
+                    return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), n.equals("<init>") ? ElementType.CONSTRUCTOR : ElementType.METHOD);
                 }
 
                 @Override
                 public AnnotationVisitor visitAnnotationDefault() {
                     return new EmptyVisitor() {
                         public void visit(String name, Object value) {
-                            defaultValue.set (value);
+                            defaultValue.set(value);
                         }
                     };
                 }
 
                 @Override
                 public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
-                    return annotationCrawler;
+                    return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), ElementType.PARAMETER);
                 }
 
                 @Override

@@ -5,10 +5,8 @@ import org.objectweb.asm.Type;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.annotation.ElementType;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,10 +21,10 @@ public class UsageRepr {
     private final static Map<Usage, Usage> map = new HashMap<Usage, Usage>();
 
     private static Usage getUsage(final Usage u) {
-        final Usage r = map.get (u);
+        final Usage r = map.get(u);
 
         if (r == null) {
-            map.put (u, u);
+            map.put(u, u);
             return u;
         }
 
@@ -34,7 +32,7 @@ public class UsageRepr {
     }
 
     public static abstract class Usage implements RW.Writable {
-        public abstract StringCache.S getOwner ();
+        public abstract StringCache.S getOwner();
     }
 
     public static abstract class FMUsage extends Usage {
@@ -42,7 +40,7 @@ public class UsageRepr {
         public final StringCache.S owner;
 
         @Override
-        public StringCache.S getOwner () {
+        public StringCache.S getOwner() {
             return owner;
         }
 
@@ -55,13 +53,13 @@ public class UsageRepr {
     public static class FieldUsage extends FMUsage {
         public final TypeRepr.AbstractType type;
 
-        private FieldUsage (final String n, final String o, final String d) {
-            super (n, o);
-            type = TypeRepr.getType (d);
+        private FieldUsage(final String n, final String o, final String d) {
+            super(n, o);
+            type = TypeRepr.getType(d);
         }
 
-         private FieldUsage(final BufferedReader r) {
-            super (RW.readString(r), RW.readString(r));
+        private FieldUsage(final BufferedReader r) {
+            super(RW.readString(r), RW.readString(r));
             type = TypeRepr.reader.read(r);
         }
 
@@ -92,15 +90,15 @@ public class UsageRepr {
         public final TypeRepr.AbstractType[] argumentTypes;
         public final TypeRepr.AbstractType returnType;
 
-        private MethodUsage (final String n, final String o, final String d) {
-            super (n, o);
-            argumentTypes = TypeRepr.getType (Type.getArgumentTypes(d));
-            returnType = TypeRepr.getType (Type.getReturnType(d));
+        private MethodUsage(final String n, final String o, final String d) {
+            super(n, o);
+            argumentTypes = TypeRepr.getType(Type.getArgumentTypes(d));
+            returnType = TypeRepr.getType(Type.getReturnType(d));
         }
 
-         private MethodUsage (final BufferedReader r) {
-            super (RW.readString(r), RW.readString(r));
-            argumentTypes = RW.readMany(r, TypeRepr.reader, new ArrayList<TypeRepr.AbstractType> ()).toArray(dummyAbstractType);
+        private MethodUsage(final BufferedReader r) {
+            super(RW.readString(r), RW.readString(r));
+            argumentTypes = RW.readMany(r, TypeRepr.reader, new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
             returnType = TypeRepr.reader.read(r);
         }
 
@@ -125,9 +123,9 @@ public class UsageRepr {
             if (owner != null ? !owner.equals(that.owner) : that.owner != null) return false;
 
             return Arrays.equals(argumentTypes, that.argumentTypes) &&
-                   returnType.equals(that.returnType) &&
-                   name.equals(that.name) &&
-                   owner.equals(that.owner);
+                    returnType.equals(that.returnType) &&
+                    name.equals(that.name) &&
+                    owner.equals(that.owner);
         }
 
         @Override
@@ -144,21 +142,21 @@ public class UsageRepr {
             return className;
         }
 
-        private ClassUsage (final String n) {
-            className = StringCache.get (n);
+        private ClassUsage(final String n) {
+            className = StringCache.get(n);
         }
 
-        private ClassUsage (final StringCache.S n) {
+        private ClassUsage(final StringCache.S n) {
             className = n;
         }
 
-        private ClassUsage (final BufferedReader r) {
-            className = StringCache.get (RW.readString(r));
+        private ClassUsage(final BufferedReader r) {
+            className = StringCache.get(RW.readString(r));
         }
 
-        public void write(BufferedWriter w) {
-            RW.writeln (w, "classUsage");
-            RW.writeln (w, className.value);
+        public void write(final BufferedWriter w) {
+            RW.writeln(w, "classUsage");
+            RW.writeln(w, className.value);
         }
 
         @Override
@@ -177,6 +175,70 @@ public class UsageRepr {
         }
     }
 
+    public static class AnnotationUsage extends Usage {
+        final TypeRepr.ClassType type;
+        final Collection<StringCache.S> usedArguments;
+        final Collection<ElementType> targets;
+
+        private AnnotationUsage(final TypeRepr.ClassType type, final Collection<StringCache.S> usedArguments, final Collection<ElementType> targets) {
+            this.type = type;
+            this.usedArguments = usedArguments;
+            this.targets = targets;
+        }
+
+        private AnnotationUsage(final BufferedReader r) {
+            type = (TypeRepr.ClassType) TypeRepr.reader.read(r);
+            usedArguments = RW.readMany(r, StringCache.reader, new HashSet<StringCache.S>());
+            targets = RW.readMany(r, new RW.Reader<ElementType>() {
+                public ElementType read(final BufferedReader r) {
+                    return ElementType.valueOf(RW.readString(r));
+                }
+            }, new HashSet<ElementType>());
+        }
+
+        @Override
+        public StringCache.S getOwner() {
+            return type.className;
+        }
+
+        public void write(final BufferedWriter w) {
+            RW.writeln(w, "annotationUsage");
+            type.write(w);
+            RW.writeln(w, usedArguments);
+            RW.writeln(w, targets, new RW.ToWritable<ElementType> () {
+                public RW.Writable convert(final ElementType x) {
+                    return new RW.Writable () {
+                        public void write(final BufferedWriter w) {
+                            RW.writeln(w, x.toString());
+                        }
+                    };
+                }
+            });
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            AnnotationUsage that = (AnnotationUsage) o;
+
+            if (usedArguments != null ? !usedArguments.equals(that.usedArguments) : that.usedArguments != null) return false;
+            if (targets != null ? !targets.equals(that.targets) : that.targets != null) return false;
+            if (type != null ? !type.equals(that.type) : that.type != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = type != null ? type.hashCode() : 0;
+            result = 31 * result + (usedArguments != null ? usedArguments.hashCode() : 0);
+            result = 31 * result + (targets != null ? targets.hashCode() : 0);
+            return result;
+        }
+    }
+
     public static Usage createFieldUsage(final String name, final String owner, final String descr) {
         return getUsage(new FieldUsage(name, owner, descr));
     }
@@ -186,11 +248,15 @@ public class UsageRepr {
     }
 
     public static Usage createClassUsage(final String name) {
-        return getUsage(new ClassUsage (name));
+        return getUsage(new ClassUsage(name));
     }
 
     public static Usage createClassUsage(final StringCache.S name) {
-        return getUsage(new ClassUsage (name));
+        return getUsage(new ClassUsage(name));
+    }
+
+    public static Usage createAnnotationUsage(final TypeRepr.ClassType type, final Collection<StringCache.S> usedArguments, final Collection<ElementType> targets) {
+        return getUsage(new AnnotationUsage(type, usedArguments, targets));
     }
 
     public static RW.Reader<Usage> reader = new RW.Reader<Usage>() {
@@ -198,13 +264,12 @@ public class UsageRepr {
             final String tag = RW.readString(r);
 
             if (tag.equals("classUsage")) {
-                return getUsage(new ClassUsage (r));
-            }
-            else if (tag.equals("fieldUsage")) {
+                return getUsage(new ClassUsage(r));
+            } else if (tag.equals("fieldUsage")) {
                 return getUsage(new FieldUsage(r));
-            }
-
-            return getUsage(new MethodUsage(r));
+            } else if (tag.equals("methodUsage")) {
+                return getUsage(new MethodUsage(r));
+            } else return getUsage(new AnnotationUsage(r));
         }
     };
 }

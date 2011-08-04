@@ -95,6 +95,7 @@ public class FoxyMap<K, V> implements Map<K, Object> {
 
     public void putAll(Map<? extends K, ? extends Object> m) {
         for (Entry<? extends K, ? extends Object> e : m.entrySet()) {
+            remove(e.getKey());
             put(e.getKey(), e.getValue());
         }
     }
