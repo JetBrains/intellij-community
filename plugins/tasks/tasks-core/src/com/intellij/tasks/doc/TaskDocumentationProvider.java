@@ -20,6 +20,7 @@ import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 
 import java.util.Collections;
@@ -57,8 +58,18 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
     if (task.getDescription() != null) {
       builder.append("<b>Description:</b><br>").append(task.getDescription());
     }
+    for (Comment comment : task.getComments()) {
+      addComment(builder, comment);
+    }
     builder.append("</html>");
     return builder.toString();
+  }
+
+  private static void addComment(final StringBuilder builder, final Comment comment) {
+    builder.append("<hr>");
+    builder.append("<b>Author:</b> ").append(comment.getAuthor()).append("<br>");
+    builder.append("<b>Date:</b> ").append(comment.getDate()).append("<br>");
+    builder.append(comment.getText()).append("<br>");
   }
 
   @Override
