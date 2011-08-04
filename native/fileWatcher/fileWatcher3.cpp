@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -310,6 +310,15 @@ void PrintChangeInfo(char *rootPath, FILE_NOTIFY_INFORMATION *info)
 	LeaveCriticalSection(&csOutput);
 }
 
+void PrintEverythingChangedUnderRoot(char *rootPath)
+{
+	EnterCriticalSection(&csOutput);
+	puts("RECDIRTY");
+	puts(rootPath);
+	fflush(stdout);
+	LeaveCriticalSection(&csOutput);
+}
+
 DWORD WINAPI WatcherThread(void *param)
 {
 	WatchRootInfo *info = (WatchRootInfo *) param;
@@ -353,13 +362,30 @@ DWORD WINAPI WatcherThread(void *param)
 		}
 		if (rc == WAIT_OBJECT_0+1)
 		{
-			FILE_NOTIFY_INFORMATION *info = (FILE_NOTIFY_INFORMATION *) buffer;
-			while(true) 
+			DWORD dwBytesReturned;
+			if(!GetOverlappedResult(hRootDir, &overlapped, &dwBytesReturned, FALSE))
 			{
-				PrintChangeInfo(rootPath, info);
-				if (!info->NextEntryOffset)
+				info->bFailed = true;
+				break;
+			}
+
+			if (dwBytesReturned == 0)
+			{
+				// don't send dirty too much, everything is changed anyway
+				if (WaitForSingleObject(info->hStopEvent, 500) == WAIT_OBJECT_0)
 					break;
-				info = (FILE_NOTIFY_INFORMATION *) ((char *) info + info->NextEntryOffset);
+
+				// Got a buffer overflow => current changes lost => send RECDIRTY on root
+				PrintEverythingChangedUnderRoot(rootPath);
+			} else {
+				FILE_NOTIFY_INFORMATION *info = (FILE_NOTIFY_INFORMATION *) buffer;
+				while(true) 
+				{
+					PrintChangeInfo(rootPath, info);
+					if (!info->NextEntryOffset)
+						break;
+					info = (FILE_NOTIFY_INFORMATION *) ((char *) info + info->NextEntryOffset);
+				}
 			}
 		}
 	}
