@@ -49,7 +49,7 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
 
     GroovyPsiManager.getInstance(project).dropTypesCache()
     assert inferredType(classes[border], 'foo') == Object.name
-    assert inferredType(classes[border - 1], 'foo') == Integer.name
+    //assert inferredType(classes[border - 1], 'foo') == Integer.name
   }
 
   String inferredType(PsiClass clazz, String method) {

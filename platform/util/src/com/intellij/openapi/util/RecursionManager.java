@@ -87,32 +87,14 @@ public class RecursionManager {
           return null;
         }
 
-        if (memoize) {
-          SoftReference reference = ourIntermediateCache.get().get(realKey);
-          if (reference != null) {
-            Object o = reference.get();
-            if (o != null) {
-              //noinspection unchecked
-              return o == NULL ? null : (T)o;
-            }
-          }
-        }
-
         if (progressMap.isEmpty() && ourStamp.get() != 0) {
           throw new AssertionError("Non-zero stamp with empty stack: " + ourStamp.get());
         }
 
         progressMap.put(realKey, ourStamp.get());
-        int startStamp = ourMemoizationStamp.get();
 
         try {
-          T result = computation.compute();
-
-          if (memoize && ourMemoizationStamp.get() == startStamp) {
-            ourIntermediateCache.get().put(realKey, new SoftReference<Object>(result == null ? NULL : result));
-          }
-
-          return result;
+          return computation.compute();
         }
         finally {
           Integer value = progressMap.remove(realKey);
@@ -123,7 +105,8 @@ public class RecursionManager {
           else if (progressMap.isEmpty()) {
             ourIntermediateCache.get().clear();
             throw new AssertionError("Non-zero stamp for empty progress map: " + key + ", " + value);
-          } else {
+          }
+          else {
             checkZero();
           }
         }
@@ -131,11 +114,10 @@ public class RecursionManager {
 
       @Override
       public StackStamp markStack() {
-        final Integer stamp = ourStamp.get();
         return new StackStamp() {
           @Override
           public boolean mayCacheNow() {
-            return Comparing.equal(stamp, ourStamp.get());
+            return true;
           }
         };
       }
