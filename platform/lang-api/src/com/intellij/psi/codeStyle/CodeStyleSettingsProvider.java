@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,8 @@ public abstract class CodeStyleSettingsProvider {
    */
   @Nullable
   public String getConfigurableDisplayName() {
-    return null;
+    Language lang = getLanguage();
+    return lang == null ? null : lang.getDisplayName();
   }
 
   public boolean hasSettingsPage() {
@@ -53,4 +55,17 @@ public abstract class CodeStyleSettingsProvider {
   public DisplayPriority getPriority() {
     return DisplayPriority.LANGUAGE_SETTINGS;
   }
+
+  /**
+   * Specifies a language this provider applies to. If the language is not null, its display name will
+   * be used as a configurable name by default if <code>getConfigurableDisplayName()</code> is not
+   * overridden.
+   * 
+   * @return null by default.
+   */
+  @Nullable
+  public Language getLanguage() {
+    return null;
+  }
+
 }

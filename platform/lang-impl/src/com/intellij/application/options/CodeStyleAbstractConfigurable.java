@@ -103,4 +103,8 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
   public Set<String> processListOptions() {
     return myPanel.processListOptions();
   }
+
+  protected CodeStyleSettings getCurrentSettings() {
+    return mySettings;
+  }
 }

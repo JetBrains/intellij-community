@@ -43,7 +43,7 @@ public class OpenTaskInBrowserAction extends BaseTaskAction {
     if (project == null || !TaskManager.getManager(project).getActiveTask().isIssue()) {
       presentation.setText(getTemplatePresentation().getText());
     } else {
-      presentation.setText("Open " + TaskManager.getManager(project).getActiveTask().getId() + " In _Browser");
+      presentation.setText("Open '" + TaskManager.getManager(project).getActiveTask().getPresentableName() + "' In _Browser");
     }
   }
 

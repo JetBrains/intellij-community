@@ -17,6 +17,8 @@ public class SimpleGroovyNamedArgumentProvider {
   public static final ExtensionPointName<SimpleGroovyNamedArgumentProvider> EP_NAME =
     new ExtensionPointName<SimpleGroovyNamedArgumentProvider>("org.intellij.groovy.namedArguments");
 
+  private static final String ATTR_NAMES_DELIMITER = " \t\n\r,;";
+
   @Attribute("class")
   public String className;
 
@@ -63,37 +65,33 @@ public class SimpleGroovyNamedArgumentProvider {
     @Attribute("name")
     public String name;
 
+    @Attribute("attrNames")
+    public String attrNames;
+
     @Attribute("showFirst")
     public Boolean isFirst;
 
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false)
-    public Argument[] arguments;
-
-    @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false)
-    public Arguments[] argumentLists;
+    //public Arguments[] arguments;
+    public Arguments[] myArguments;
 
     public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getArgumentsMap() {
       Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> res =
         new HashMap<String, GroovyNamedArgumentProvider.ArgumentDescriptor>();
 
-      if (arguments != null) {
-        for (Argument argument : arguments) {
-          String name = argument.name.trim();
-          assert name.length() > 0;
+      if (myArguments != null) {
+        for (Arguments arguments : myArguments) {
+          GroovyNamedArgumentProvider.ArgumentDescriptor descriptor = getDescriptor(isFirst, arguments.isFirst, arguments.type);
 
-          Object oldValue = res.put(name, getDescriptor(argument.isFirst, isFirst, argument.type));
-          assert oldValue == null;
-        }
-      }
+          assert StringUtil.isEmptyOrSpaces(arguments.names) != StringUtil.isEmptyOrSpaces(arguments.text);
 
-      if (argumentLists != null) {
-        for (Arguments arguments : argumentLists) {
-          GroovyNamedArgumentProvider.ArgumentDescriptor descriptor = getDescriptor(arguments.isFirst, isFirst, arguments.type);
+          String names = arguments.names;
+          if (StringUtil.isEmptyOrSpaces(names)) {
+            names = arguments.text;
+          }
 
-          assert !StringUtil.isEmptyOrSpaces(arguments.text);
-          for (StringTokenizer st = new StringTokenizer(arguments.text, " \t\n\r,;"); st.hasMoreTokens(); ) {
+          for (StringTokenizer st = new StringTokenizer(names, ATTR_NAMES_DELIMITER); st.hasMoreTokens(); ) {
             String name = st.nextToken();
 
             Object oldValue = res.put(name, descriptor);
@@ -102,12 +100,23 @@ public class SimpleGroovyNamedArgumentProvider {
         }
       }
 
+      if (!StringUtil.isEmptyOrSpaces(attrNames)) {
+        GroovyNamedArgumentProvider.ArgumentDescriptor descriptor = getDescriptor(isFirst, null, null);
+
+        for (StringTokenizer st = new StringTokenizer(attrNames, ATTR_NAMES_DELIMITER); st.hasMoreTokens(); ) {
+          String name = st.nextToken();
+
+          Object oldValue = res.put(name, descriptor);
+          assert oldValue == null : "Duplicated attribute name: " + name;
+        }
+      }
+
       return res;
     }
 
-    private static GroovyNamedArgumentProvider.ArgumentDescriptor getDescriptor(Boolean methodFirstFlag,
-                                                                                Boolean attrFirstFlag,
-                                                                                String type) {
+    private static GroovyNamedArgumentProvider.ArgumentDescriptor getDescriptor(@Nullable Boolean methodFirstFlag,
+                                                                                @Nullable Boolean attrFirstFlag,
+                                                                                @Nullable String type) {
       Boolean objShowFirst = attrFirstFlag;
       if (objShowFirst == null) {
         objShowFirst = methodFirstFlag;
@@ -137,19 +146,10 @@ public class SimpleGroovyNamedArgumentProvider {
     @Attribute("showFirst")
     public Boolean isFirst;
 
+    @Attribute("names")
+    public String names;
+
     @Text
     public String text;
-  }
-
-  @Tag("attr")
-  public static class Argument {
-    @Attribute("type")
-    public String type;
-
-    @Attribute("showFirst")
-    public Boolean isFirst;
-
-    @Attribute("name")
-    public String name;
   }
 }
