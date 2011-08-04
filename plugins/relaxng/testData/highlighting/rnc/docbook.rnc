@@ -4378,7 +4378,7 @@ div {
     ## A specification of the limits of a time interval
     "dcmiperiod"
     | 
-      ## W3C Encoding rules for dates and times—a profile based on ISO 8601
+      ## W3C Encoding rules for dates and times - a profile based on ISO 8601
       "w3c-dtf"
   db.bibliocoverage.temporal-enum.attribute =
     
