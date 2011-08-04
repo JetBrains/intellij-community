@@ -339,15 +339,15 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       }
     }
     finally {
-      //myDocumentCommitThread.log("in PDI.finishDoc: ",document, synchronously, success, myUncommittedDocuments);
+      myDocumentCommitThread.log("in PDI.finishDoc: ",document, synchronously, success, myUncommittedDocuments);
       if (success) {
         myUncommittedDocuments.remove(document);
-        //myDocumentCommitThread.log("in PDI.finishDoc: removed doc",document, synchronously, success, myUncommittedDocuments);
+        myDocumentCommitThread.log("in PDI.finishDoc: removed doc",document, synchronously, success, myUncommittedDocuments);
         ((DocumentImpl)document).normalizeRangeMarkers();
         InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
       }
       myIsCommitInProgress = false;
-      //myDocumentCommitThread.log("in PDI.finishDoc: exit",document, synchronously, success, myUncommittedDocuments);
+      myDocumentCommitThread.log("in PDI.finishDoc: exit",document, synchronously, success, myUncommittedDocuments);
     }
 
     if (success) {
