@@ -68,14 +68,17 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
 
   @Nullable
   private static ModuleDescriptor findDescriptorByFile(List<ModuleDescriptor> descriptors, File file) {
+    ModuleDescriptor result = null;
+    File nearestRoot = null;
     for (ModuleDescriptor descriptor : descriptors) {
       for (File root : descriptor.getContentRoots()) {
-        if (FileUtil.isAncestor(root, file, false)) {
-          return descriptor;
+        if (FileUtil.isAncestor(root, file, false) && (nearestRoot == null || FileUtil.isAncestor(nearestRoot, root, true))) {
+          result = descriptor;
+          nearestRoot = root;
         }
       }
     }
-    return null;
+    return result;
   }
 
   public VirtualFile getBaseDir() {

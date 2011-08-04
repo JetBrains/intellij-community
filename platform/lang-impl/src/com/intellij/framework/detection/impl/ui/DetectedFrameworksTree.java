@@ -85,7 +85,10 @@ public class DetectedFrameworksTree extends CheckboxTree {
       @Override
       public boolean accept(Object node) {
         if (node instanceof DetectedFrameworkTreeNodeBase) {
-          consumer.consume((DetectedFrameworkTreeNodeBase)node);
+          final DetectedFrameworkTreeNodeBase frameworkNode = (DetectedFrameworkTreeNodeBase)node;
+          if (!frameworkNode.isChecked()) {
+            consumer.consume(frameworkNode);
+          }
         }
         return true;
       }
