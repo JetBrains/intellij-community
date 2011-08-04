@@ -25,6 +25,8 @@ import java.util.Date;
  */
 public abstract class Comment {
 
+  public static final Comment[] EMPTY_ARRAY = new Comment[0];
+
   public abstract String getText();
 
   @Nullable

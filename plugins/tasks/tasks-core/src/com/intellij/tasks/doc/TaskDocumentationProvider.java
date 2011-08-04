@@ -67,8 +67,12 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
 
   private static void addComment(final StringBuilder builder, final Comment comment) {
     builder.append("<hr>");
-    builder.append("<b>Author:</b> ").append(comment.getAuthor()).append("<br>");
-    builder.append("<b>Date:</b> ").append(comment.getDate()).append("<br>");
+    if (comment.getAuthor() != null) {
+      builder.append("<b>Author:</b> ").append(comment.getAuthor()).append("<br>");
+    }
+    if (comment.getDate() != null) {
+      builder.append("<b>Date:</b> ").append(comment.getDate()).append("<br>");
+    }
     builder.append(comment.getText()).append("<br>");
   }
 
