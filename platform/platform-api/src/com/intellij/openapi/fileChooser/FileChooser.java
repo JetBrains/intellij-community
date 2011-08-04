@@ -66,8 +66,29 @@ public class FileChooser {
                                                 @Nullable final VirtualFile toSelect,
                                                 @NotNull final Consumer<VirtualFile[]> onChosenCallback
   ) {
+    chooseFilesWithSlideEffect(descriptor, project, null, toSelect, onChosenCallback);
+  }
+
+  /**
+   * Shows file/folder open dialog, allows user to choose files/folders and then passes result to callback in EDT.
+   * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
+   * @param descriptor File chooser descriptor
+   * @param project project
+   * @param parent parent component
+   * @param toSelect file to preselect
+   * @param onChosenCallback Callback will be invoked after user have closed dialog
+   */
+  public static void chooseFilesWithSlideEffect(@NotNull final FileChooserDescriptor descriptor,
+                                                @Nullable final Project project,
+                                                @Nullable final Component parent,
+                                                @Nullable final VirtualFile toSelect,
+                                                @NotNull final Consumer<VirtualFile[]> onChosenCallback
+  ) {
     if (SystemInfo.isMac && NATIVE_MAC_FILE_CHOOSER_ENABLED) descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED, Boolean.TRUE);
-    final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
+    final FileChooserFactory factory = FileChooserFactory.getInstance();
+    final FileChooserDialog dialog = parent != null
+                                     ? factory.createFileChooser(descriptor, parent)
+                                     : factory.createFileChooser(descriptor, project);
     if (dialog instanceof MacFileChooserDialog) {
       ((MacFileChooserDialog)dialog).chooseWithSheet(toSelect, project, new MacFileChooserDialog.MacFileChooserCallback() {
         public void onChosen(@NotNull final VirtualFile[] files) {
