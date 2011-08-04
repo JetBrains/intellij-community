@@ -878,6 +878,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               continue NextName;
             }
             run = run.getNextSibling();
+            if (scope instanceof PsiMethod) {//do not check next member for param name conflict
+              break;
+            }
           }
 
         }
