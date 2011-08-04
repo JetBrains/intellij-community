@@ -79,7 +79,7 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     public boolean promptForPassword() {
       if (! mySshChecked) {
         mySshChecked = true;
-        return SshConnectionUtil.promptForPassword(mySshSettings, myStringRepsentation);
+        return SshConnectionUtil.promptForPassword(mySshSettings, getCvsRootAsString());
       }
       return myWorker.promptForPassword();
     }

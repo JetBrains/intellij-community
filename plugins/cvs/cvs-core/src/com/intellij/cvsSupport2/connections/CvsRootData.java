@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Comparing;
  * author: lesya
  */
 public class CvsRootData implements CvsSettings{
-  protected final String myStringRepsentation;
+  private final String myStringRepresentation;
   public CvsMethod METHOD = null;
   public String HOST = "";
   public String USER = "";
@@ -32,13 +32,12 @@ public class CvsRootData implements CvsSettings{
   public String PROXY_PORT = null;
   public boolean CONTAINS_PROXY_INFO = false;
 
-
-  public CvsRootData(String stringRepsentation) {
-    myStringRepsentation = stringRepsentation;
+  public CvsRootData(String stringRepresentation) {
+    myStringRepresentation = stringRepresentation;
   }
 
   public String getCvsRootAsString() {
-    return myStringRepsentation;
+    return myStringRepresentation;
   }
 
   public boolean equals(Object object) {
@@ -56,7 +55,6 @@ public class CvsRootData implements CvsSettings{
     int methodHashCode = METHOD == null ? 0 : METHOD.hashCode();
     return methodHashCode ^ HOST.hashCode() ^ USER.hashCode() ^ REPOSITORY.hashCode() ^ PORT;
   }
-
 
   public void setPassword(String password) {
     PASSWORD = password;
