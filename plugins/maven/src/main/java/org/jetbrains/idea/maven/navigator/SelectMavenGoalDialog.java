@@ -27,16 +27,12 @@ public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
   public SelectMavenGoalDialog(Project project, final String projectPath, final String goal, String title) {
     super(project, title, MavenProjectsStructure.GoalNode.class, new NodeSelector() {
       public boolean shouldSelect(SimpleNode node) {
-        if (projectPath == null || goal == null) return false;
-
         if (node instanceof MavenProjectsStructure.GoalNode) {
           MavenProjectsStructure.GoalNode eachGoalNode = (MavenProjectsStructure.GoalNode)node;
           String goalNodeProjectPath = eachGoalNode.getProjectPath();
-          String goalNodeGoal = eachGoalNode.getGoal();
-
-          if (goalNodeProjectPath == null || goalNodeGoal == null) return false;
-
-          return FileUtil.pathsEqual(goalNodeProjectPath, projectPath) && goal.equals(goalNodeGoal);
+          return goalNodeProjectPath != null && projectPath != null
+                 && FileUtil.pathsEqual(goalNodeProjectPath, projectPath)
+                 && Comparing.equal(eachGoalNode.getGoal(), goal);
         }
         return false;
       }
