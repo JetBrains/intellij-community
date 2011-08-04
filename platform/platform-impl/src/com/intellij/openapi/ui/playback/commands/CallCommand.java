@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.playback.PlaybackCallFacade;
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
@@ -60,8 +61,9 @@ public class CallCommand extends AbstractCommand {
     final String methodName = cmd.substring(0, open);
     String [] args = cmd.substring(open + 1, close).split(",");
     final boolean noArgs = args.length == 1 && args[0].length() == 0;
-    Class[] types = noArgs ? new Class[0] : new Class[args.length];
-    for (int i = 0; i < types.length; i++) {
+    Class[] types = noArgs ? new Class[1] : new Class[args.length + 1];
+    types[0] = PlaybackContext.class;
+    for (int i = 1; i < types.length; i++) {
       types[i] = String.class;
     }
 
@@ -72,7 +74,15 @@ public class CallCommand extends AbstractCommand {
        cb.error("Method " + methodName + " must return AsyncResult object", getLine());
        return new ActionCallback.Rejected();
      }
-     AsyncResult result = (AsyncResult<String>)m.invoke(null, args);
+     
+     Object[] actualArgs = noArgs ? new Object[1] : new Object[args.length + 1];
+     actualArgs[0] = new PlaybackContext(cb, getLine());
+      for (int i = 1; i < actualArgs.length; i++) {
+        actualArgs[i] = args[i - 1];
+      }
+
+
+     AsyncResult result = (AsyncResult<String>)m.invoke(null, actualArgs);
      if (result == null) {
        cb.error("Method " + methodName + " must return AsyncResult object, but was null", getLine());
        return new ActionCallback.Done();
@@ -105,5 +115,10 @@ public class CallCommand extends AbstractCommand {
       cb.error("IllegalAccessException while executing command: " + cmd, getLine());
     }
     return cmdResult;
+  }
+
+  @Override
+  protected boolean isAwtThread() {
+    return true;
   }
 }
