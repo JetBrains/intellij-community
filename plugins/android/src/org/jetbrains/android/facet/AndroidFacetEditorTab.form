@@ -114,10 +114,10 @@
                   <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
-                <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.facet.settings.res.overlay.panel.title"/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
                 </clientProperties>
+                <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.facet.settings.res.overlay.panel.title"/>
                 <children>
                   <component id="de3b3" class="com.intellij.ui.components.JBList" binding="myResOverlayList">
                     <constraints>
@@ -177,10 +177,10 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
-                <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apk.settings.title"/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
                 </clientProperties>
+                <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apk.settings.title"/>
                 <children>
                   <component id="d83b5" class="javax.swing.JRadioButton" binding="myUseAptResDirectoryFromPathRadio">
                     <constraints>
@@ -239,10 +239,10 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
-                <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.aidl.settings.title"/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
                 </clientProperties>
+                <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.aidl.settings.title"/>
                 <children>
                   <component id="1d0b4" class="javax.swing.JLabel" binding="myAidlGenPathLabel">
                     <constraints>
@@ -274,10 +274,10 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
-                <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apt.settings.title"/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
                 </clientProperties>
+                <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apt.settings.title"/>
                 <children>
                   <grid id="1f282" binding="myAaptCompilerPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>

@@ -47,6 +47,16 @@ public class InplaceIntroduceParameterTest extends AbstractInplaceIntroduceTest 
     });
   }
 
+  public void testReplaceAllMethodCalls() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
+        inplaceIntroducePopup.setReplaceAllOccurrences(true);
+        type("string");
+      }
+    });
+  }
+
   @Override
   protected String getBasePath() {
     return BASE_PATH;

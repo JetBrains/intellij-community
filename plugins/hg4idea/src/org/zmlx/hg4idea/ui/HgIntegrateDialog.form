@@ -15,9 +15,9 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
-        <border type="none" title="Merge with:"/>
+        <border type="none" title="Merge with"/>
         <children>
           <component id="99075" class="javax.swing.JRadioButton" binding="branchOption">
             <constraints>

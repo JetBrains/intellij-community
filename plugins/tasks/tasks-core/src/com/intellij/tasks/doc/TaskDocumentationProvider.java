@@ -20,7 +20,9 @@ import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
+import com.petebevin.markdown.MarkdownProcessor;
 
 import java.util.Collections;
 import java.util.List;
@@ -54,8 +56,13 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
     if (task.getUpdated() != null) {
       builder.append("<b>Updated at:</b> ").append(task.getUpdated()).append("<br>");
     }
-    if (task.getDescription() != null) {
-      builder.append("<b>Description:</b><br>").append(task.getDescription());
+    final String description = task.getDescription();
+    if (description != null) {
+      final MarkdownProcessor processor = new MarkdownProcessor();
+      builder.append("<b>Description:</b><br>").append(processor.markdown(description));
+    }
+    for (Comment comment : task.getComments()) {
+      comment.appendTo(builder);
     }
     builder.append("</html>");
     return builder.toString();

@@ -143,7 +143,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
                              : UIDesignerBundle.message("title.column.properties", myIndex));
         myLeftRadioButton.setText(row ? UIDesignerBundle.message("alignment.top") : UIDesignerBundle.message("alignment.left"));
         myRightRadioButton.setText(row ? UIDesignerBundle.message("alignment.bottom") : UIDesignerBundle.message("alignment.right"));
-        mySizePanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(myIsRow
+        mySizePanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(myIsRow
                                                                                 ? UIDesignerBundle.message("title.height")
                                                                                 : UIDesignerBundle.message("title.width")));
 

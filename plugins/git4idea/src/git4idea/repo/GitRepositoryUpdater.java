@@ -69,7 +69,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       String filePath = GitFileUtils.stripFileProtocolPrefix(file.getPath());
       if (myRepositoryFiles.isHeadFile(filePath)) {
         headChanged = true;
-      } else if (myRepositoryFiles.isBranchFile(filePath)) {
+      } else if (myRepositoryFiles.isBranchFile(filePath) || myRepositoryFiles.isRemoteBranchFile(filePath)) {
         branchFileChanged = true;
       } else if (myRepositoryFiles.isPackedRefs(filePath)) {
         packedRefsChanged = true;
@@ -84,6 +84,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     boolean updateCurrentBranch = false;
     boolean updateCurrentRevision = false;
     boolean updateState = false;
+    boolean updateBranches = false;
     if (headChanged) {
       updateCurrentBranch = true;
       updateCurrentRevision = true;
@@ -91,9 +92,14 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     }
     if (branchFileChanged) {
       updateCurrentRevision = true;
+      updateBranches = true;
     }
     if (rebaseFileChanged || mergeFileChanged) {
       updateState = true;
+    }
+    if (packedRefsChanged) {
+      updateCurrentBranch = true;
+      updateBranches = true;
     }
 
     // update GitRepository on pooled thread, because it requires reading from disk and parsing data.
@@ -115,6 +121,13 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           myRepository.update(GitRepository.TrackedTopic.STATE);
+        }
+      });
+    }
+    if (updateBranches) {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          myRepository.update(GitRepository.TrackedTopic.BRANCHES);
         }
       });
     }

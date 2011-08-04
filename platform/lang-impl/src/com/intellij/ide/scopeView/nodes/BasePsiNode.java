@@ -34,15 +34,16 @@ import java.awt.*;
  * Date: 30-Jan-2006
  */
 public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
-  private SmartPsiElementPointer myPsiElementPointer = null;
-  private PsiFile myFile = null;
+  private final SmartPsiElementPointer myPsiElementPointer;
 
   public BasePsiNode(final T element) {
     super(element.getProject());
     if (element.isValid()) {
-      myPsiElementPointer = SmartPointerManager.getInstance(element.getProject()).createLazyPointer(element);
-      myFile = element.getContainingFile();
-    }   
+      myPsiElementPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
+    }
+    else {
+      myPsiElementPointer = null;
+    }
   }
 
   @Nullable
@@ -67,8 +68,8 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
 
   @Nullable
   public Color getColor() {
-    if (myColor == null && myFile != null) {
-      myColor = FileStatusManager.getInstance(myFile.getProject()).getStatus(myFile.getVirtualFile()).getColor();
+    if (myColor == null && getContainingFile() != null) {
+      myColor = FileStatusManager.getInstance(myProject).getStatus(myPsiElementPointer.getVirtualFile()).getColor();
       if (myColor == null) {
         myColor = NOT_CHANGED;
       }
@@ -104,7 +105,7 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
   }
 
   public PsiFile getContainingFile() {
-    return myFile;
+    return myPsiElementPointer.getContainingFile();
   }
 
   public boolean isValid() {

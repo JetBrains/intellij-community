@@ -14,12 +14,12 @@
           <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
+        </clientProperties>
         <border type="etched" title-resource-bundle="org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle" title-key="method.border.title">
           <color color="-16777216"/>
         </border>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
-</clientProperties>
         <children>
           <component id="76fe4" class="com.intellij.ui.EditorTextField" binding="myNameField" custom-create="true">
             <constraints>
@@ -27,6 +27,7 @@
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
+            <properties/>
           </component>
           <component id="94f13" class="javax.swing.JLabel" binding="myNameLabel">
             <constraints>
@@ -52,10 +53,10 @@
           <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
+        </clientProperties>
         <border type="etched" title-resource-bundle="org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle" title-key="signature.preview.border.title"/>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
-</clientProperties>
         <children>
           <component id="703ba" class="javax.swing.JTextArea" binding="mySignatureArea">
             <constraints>

@@ -65,9 +65,9 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
-        <border type="none" title="Jar files from libraries:"/>
+        <border type="none" title="Jar files from libraries"/>
         <children>
           <component id="f9a17" class="javax.swing.JRadioButton" binding="myExtractJarsRadioButton">
             <constraints>

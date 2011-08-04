@@ -49,7 +49,7 @@
                   <text resource-bundle="messages/UIDesignerBundle" key="font.chooser.size"/>
                 </properties>
               </component>
-              <scrollpane class="com.intellij.ui.components.JBScrollPane" id="9b2dc">
+              <scrollpane id="9b2dc" class="com.intellij.ui.components.JBScrollPane">
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -65,7 +65,7 @@
                   </component>
                 </children>
               </scrollpane>
-              <scrollpane class="com.intellij.ui.components.JBScrollPane" id="4dbe5">
+              <scrollpane id="4dbe5" class="com.intellij.ui.components.JBScrollPane">
                 <constraints>
                   <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -81,7 +81,7 @@
                   </component>
                 </children>
               </scrollpane>
-              <scrollpane class="com.intellij.ui.components.JBScrollPane" id="d7122">
+              <scrollpane id="d7122" class="com.intellij.ui.components.JBScrollPane">
                 <constraints>
                   <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -135,7 +135,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <scrollpane class="com.intellij.ui.components.JBScrollPane" id="c1ffd">
+              <scrollpane id="c1ffd" class="com.intellij.ui.components.JBScrollPane">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -160,10 +160,10 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
+        </clientProperties>
         <border type="none" title-resource-bundle="messages/UIDesignerBundle" title-key="font.chooser.preview.text"/>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
-</clientProperties>
         <children>
           <component id="4b9a" class="javax.swing.JLabel" binding="myPreviewTextLabel">
             <constraints>

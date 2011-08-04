@@ -34,6 +34,7 @@ public class GitRepositoryFiles {
   private final String myRebaseMergePath;
   private final String myPackedRefsPath;
   private final String myRefsHeadsDirPath;
+  private final String myRefsRemotesDirPath;
 
   public static GitRepositoryFiles getInstance(@NotNull VirtualFile root) {
     // maybe will be cached later to store a single GitRepositoryFiles for a root. 
@@ -58,6 +59,7 @@ public class GitRepositoryFiles {
     myRebaseMergePath = gitDirPath + "/rebase-merge";
     myPackedRefsPath = gitDirPath + "/packed-refs";
     myRefsHeadsDirPath = gitDirPath + "/refs/heads";
+    myRefsRemotesDirPath = gitDirPath + "/refs/remotes";
   }
 
   /**
@@ -79,6 +81,13 @@ public class GitRepositoryFiles {
    */
   public boolean isBranchFile(String filePath) {
     return filePath.startsWith(myRefsHeadsDirPath);
+  }
+
+  /**
+   * Any file in .git/refs/remotes, i.e. a remote branch reference file.
+   */
+  public boolean isRemoteBranchFile(String filePath) {
+    return filePath.startsWith(myRefsRemotesDirPath);
   }
 
   /**

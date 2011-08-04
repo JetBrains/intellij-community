@@ -9,11 +9,15 @@ import com.intellij.lang.java.JavaRefactoringSupportProvider;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author ven
@@ -48,6 +52,16 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
 
   public void testRenameParamIncomplete() throws Exception {
     doTest("_i");
+  }
+
+  public void testRenameParamUniqueName() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    PsiElement element = TargetElementUtilBase
+      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    assertNotNull(element);
+    final HashSet<String> result = new HashSet<String>();
+    new JavaNameSuggestionProvider().getSuggestedNames(element, getFile(), result);
+    assertTrue(result.toString(), result.contains("window"));
   }
 
   private void doTest(final String newName) throws Exception {
