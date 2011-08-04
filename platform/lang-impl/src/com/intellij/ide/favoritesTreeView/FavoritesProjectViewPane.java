@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
 
     final String subId = getSubId();
     LOG.assertTrue(subId != null, getSubIds());
-    myViewPanel = new FavoritesTreeViewPanel(myProject, null, subId);
+    myViewPanel = new FavoritesTreeViewPanel(myProject, null);
     myTree = myViewPanel.getTree();
     setTreeBuilder(myViewPanel.getBuilder());
     myTreeStructure = myViewPanel.getFavoritesTreeStructure();

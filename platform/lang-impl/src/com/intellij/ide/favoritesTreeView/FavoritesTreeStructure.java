@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,38 +18,32 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * User: anna
- * Date: Feb 15, 2005
+ * @author Konstantin Bulenkov
  */
 public class FavoritesTreeStructure extends ProjectTreeStructure {
-  private final FavoritesManager myFavoritesManager;
-  private final String myListName;
-
-  public FavoritesTreeStructure(Project project, @NotNull final String name) {
+  public FavoritesTreeStructure(Project project) {
     super(project, FavoritesProjectViewPane.ID);
-    myListName = name;
-    myFavoritesManager = FavoritesManager.getInstance(project);
   }
 
   protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
-    return new FavoritesRootNode();
+    return new FavoritesRootNode(project);
   }
 
   public void rootsChanged() {
@@ -57,49 +51,40 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   }
 
 
-  //for tests only
-  @NotNull public Collection<AbstractTreeNode> getFavoritesRoots() {
-    Collection<Pair<AbstractUrl, String>> urls = myFavoritesManager.getFavoritesListRootUrls(myListName);
-    if (urls == null) return Collections.emptyList();
-    return createFavoritesRoots(urls);
-  }
-
   public Object[] getChildElements(Object element) {
-    if (!(element instanceof AbstractTreeNode)) {
+    if (! (element instanceof AbstractTreeNode)) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
-    final AbstractTreeNode favoritesTreeElement = (AbstractTreeNode)element;
+    
+    final AbstractTreeNode favTreeElement = (AbstractTreeNode)element;
     try {
-      if (element != getRootElement()) {
-        return super.getChildElements(favoritesTreeElement);
-      }
-      Set<AbstractTreeNode> result = new HashSet<AbstractTreeNode>();
-      for (AbstractTreeNode<?> abstractTreeNode : getFavoritesRoots()) {
-        final Object val = abstractTreeNode.getValue();
-        if (val == null) {
-          continue;
-        }
-        if (val instanceof PsiElement && !((PsiElement)val).isValid()) {
-          continue;
-        }
-        if (val instanceof SmartPsiElementPointer && ((SmartPsiElementPointer)val).getElement() == null) {
-          continue;
-        }
-        boolean isInvalid = false;
+      if (!(element instanceof FavoritesListNode)) {
+        return super.getChildElements(favTreeElement);
+      }      
+    
+      final Set<AbstractTreeNode> result = new HashSet<AbstractTreeNode>();
+      for (AbstractTreeNode<?> abstractTreeNode : FavoritesListNode.getFavoritesRoots(myProject, ((FavoritesListNode)element).getName())) {
+        final Object value = abstractTreeNode.getValue();
+
+        if (value == null) continue;
+        if (value instanceof PsiElement && !((PsiElement)value).isValid())  continue;
+        if (value instanceof SmartPsiElementPointer && ((SmartPsiElementPointer)value).getElement() == null)  continue;
+
+        boolean invalid = false;
         for(FavoriteNodeProvider nodeProvider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
-          if (nodeProvider.isInvalidElement(val)) {
-            isInvalid = true;
+          if (nodeProvider.isInvalidElement(value)) {
+            invalid = true;
             break;
           }
         }
-        if (isInvalid) continue;
+        if (invalid) continue;
 
         result.add(abstractTreeNode);
       }
       //myFavoritesRoots = result;
-      if (result.isEmpty()) {
-        result.add(getEmptyScreen());
-      }
+      //if (result.isEmpty()) {
+      //  result.add(getEmptyScreen());
+      //}
       return ArrayUtil.toObjectArray(result);
     }
     catch (Exception e) {
@@ -138,48 +123,5 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     return new FavoritesTreeNodeDescriptor(myProject, parentDescriptor, (AbstractTreeNode)element);
-  }
-
-  @NotNull private Collection<AbstractTreeNode> createFavoritesRoots(@NotNull Collection<Pair<AbstractUrl, String>> urls) {
-    List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    for (Pair<AbstractUrl, String> pair : urls) {
-      AbstractUrl abstractUrl = pair.getFirst();
-      final Object[] path = abstractUrl.createPath(myProject);
-      if (path == null || path.length < 1 || path[0] == null) {
-        continue;
-      }
-      try {
-        String className = pair.getSecond();
-        Class<? extends AbstractTreeNode> nodeClass = (Class<? extends AbstractTreeNode>)Class.forName(className);
-        AbstractTreeNode node = ProjectViewNode.createTreeNode(nodeClass, myProject, path[path.length - 1], this);
-        result.add(node);
-      }
-      catch (Exception e) {
-      }
-    }
-    return result;
-  }
-
-  private class FavoritesRootNode extends AbstractTreeNode<String> {
-    private Collection<AbstractTreeNode> myFavoritesRoots;
-
-    public FavoritesRootNode() {
-      super(FavoritesTreeStructure.this.myProject, "");
-    }
-
-    @NotNull
-    public Collection<AbstractTreeNode> getChildren() {
-      if (myFavoritesRoots == null) {
-        myFavoritesRoots = getFavoritesRoots();
-      }
-      return myFavoritesRoots;
-    }
-
-    public void rootsChanged() {
-      myFavoritesRoots = null;
-    }
-
-    public void update(final PresentationData presentation) {
-    }
   }
 }

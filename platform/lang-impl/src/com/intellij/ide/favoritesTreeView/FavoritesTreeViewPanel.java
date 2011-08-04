@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction;
+import com.intellij.ide.favoritesTreeView.actions.DeleteFromFavoritesAction;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
@@ -49,15 +51,13 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,19 +72,14 @@ import java.util.Arrays;
 import java.util.List;
 
 public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
-  @NonNls public static final String ABSTRACT_TREE_NODE_TRANSFERABLE = "AbstractTransferable";
-
   private final FavoritesTreeStructure myFavoritesTreeStructure;
   private FavoritesViewTreeBuilder myBuilder;
   private final CopyPasteDelegator myCopyPasteDelegator;
   private final MouseListener myTreePopupHandler;
 
   public static final DataKey<FavoritesTreeNodeDescriptor[]> CONTEXT_FAVORITES_ROOTS_DATA_KEY = DataKey.create("FavoritesRoot");
-  @Deprecated public static final String CONTEXT_FAVORITES_ROOTS = CONTEXT_FAVORITES_ROOTS_DATA_KEY.getName();
 
   public static final DataKey<String> FAVORITES_LIST_NAME_DATA_KEY = DataKey.create("FavoritesListName");
-  @Deprecated public static final String FAVORITES_LIST_NAME = FAVORITES_LIST_NAME_DATA_KEY.getName();
-
   protected Project myProject;
   private final String myHelpId;
   protected DnDAwareTree myTree;
@@ -92,21 +87,19 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
 
-  private String myListName;
   private final IdeView myIdeView = new MyIdeView();
 
-  public FavoritesTreeViewPanel(Project project, String helpId, @NotNull String name) {
+  public FavoritesTreeViewPanel(Project project, String helpId) {
     super(new BorderLayout());
     myProject = project;
     myHelpId = helpId;
-    myListName = name;
 
-    myFavoritesTreeStructure = new FavoritesTreeStructure(project, myListName);
+    myFavoritesTreeStructure = new FavoritesTreeStructure(project);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myFavoritesTreeStructure.getRootElement());
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
     myTree = new DnDAwareTree(treeModel);
-    myBuilder = new FavoritesViewTreeBuilder(myProject, myTree, treeModel, myFavoritesTreeStructure, myListName);
+    myBuilder = new FavoritesViewTreeBuilder(myProject, myTree, treeModel, myFavoritesTreeStructure);
 
     TreeUtil.installActions(myTree);
     UIUtil.setLineStyleAngled(myTree);
@@ -136,7 +129,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
             if (locationString != null && locationString.length() > 0) {
               append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
             }
-            else if (node.getParent() != null && node.getParent().getParent() == null) {
+            else if (node.getParent() != null && node.getParent().getParent() != null && node.getParent().getParent().getParent() == null) {
               final String location = favoritesTreeNodeDescriptor.getLocation();
               if (location != null && location.length() > 0) {
                 append(" (" + location + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
@@ -146,9 +139,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         }
       }
     });
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     myTreePopupHandler = CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionPlaces.FAVORITES_VIEW_POPUP);
-    add(scrollPane, BorderLayout.CENTER);
     //add(createActionsToolbar(), BorderLayout.NORTH);
 
     EditSourceOnDoubleClickHandler.install(myTree);
@@ -159,6 +150,33 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         return getSelectedPsiElements();
       }
     };
+
+    final JPanel panel = ToolbarDecorator.createDecorator(myTree)
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          AddNewFavoritesListAction.doAddNewFavoritesList(myProject);
+        }
+      })
+      .setAddActionName("New Favorites List")
+      .disableRemoveAction()
+      .disableDownAction()
+      .disableUpAction()
+      .addExtraAction(new DeleteFromFavoritesAction() {
+        {
+          getTemplatePresentation().setIcon(PlatformIcons.DELETE_ICON);
+        }
+
+        @Override
+        public ShortcutSet getShortcut() {
+          return CustomShortcutSet.fromString("DELETE");
+        }
+      })
+      .setLineBorder(0, 0, 0, 0)
+      .createPanel();
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(0));
+    add(panel, BorderLayout.CENTER);
+    setBorder(IdeBorderFactory.createEmptyBorder(0));
   }
 
   public void selectElement(final Object selector, final VirtualFile file, final boolean requestFocus) {
@@ -172,14 +190,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   public DnDAwareTree getTree() {
     return myTree;
-  }
-
-  public String getName() {
-    return myListName;
-  }
-
-  public void setName(String name) {
-    myListName = name;
   }
 
   @NotNull
@@ -298,14 +308,21 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = getSelectedNodeDescriptors();
       for (FavoritesTreeNodeDescriptor selectedNodeDescriptor : selectedNodeDescriptors) {
         FavoritesTreeNodeDescriptor root = selectedNodeDescriptor.getFavoritesRoot();
-        if (root != null && !(root.getElement().getValue() instanceof String)) {
-          result.add(root);
+        if (root != null && root.getElement() instanceof FavoritesListNode) {
+          result.add(selectedNodeDescriptor);
         }
       }
       return result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
     }
     if (FAVORITES_LIST_NAME_DATA_KEY.is(dataId)) {
-      return myListName;
+      final FavoritesTreeNodeDescriptor[] descriptors = getSelectedNodeDescriptors();
+      if (descriptors.length == 1) {
+        final AbstractTreeNode node = descriptors[0].getElement();
+        if (node instanceof FavoritesListNode) {
+          return node.getValue();
+        }
+      }
+      return null;
     }
     FavoritesTreeNodeDescriptor[] descriptors = getSelectedNodeDescriptors();
     if (descriptors.length > 0) {

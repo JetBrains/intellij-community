@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,15 +52,12 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private final FileStatusListener myFileStatusListener;
   private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
   private final FavoritesManager.FavoritesListener myFavoritesListener;
-  private final String myListName;
 
   public FavoritesViewTreeBuilder(Project project,
                                   JTree tree,
                                   DefaultTreeModel treeModel,
-                                  ProjectAbstractTreeStructureBase treeStructure,
-                                  final String name) {
+                                  ProjectAbstractTreeStructureBase treeStructure) {
     super(project, tree, treeModel, treeStructure, null);
-    myListName = name;
     final MessageBusConnection connection = myProject.getMessageBus().connect(this);
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
       protected DefaultMutableTreeNode getRootNode() {
@@ -99,9 +96,9 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
     myFavoritesListener = new FavoritesManager.FavoritesListener() {
       public void rootsChanged(String listName) {
-        if (myListName.equals(listName)) {
+        //if (myListName.equals(listName)) { //todo[kb]: add optimizations?
           updateFromRoot();
-        }
+        //}
       }
 
       public void listAdded(String listName) {
