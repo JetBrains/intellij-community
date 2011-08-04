@@ -229,7 +229,11 @@ public class CompletionUtil {
 
   @Nullable
   private static Integer translateOffset(int offset, DocumentEvent event) {
-    if (event.getOffset() < offset && offset < event.getNewLength()) {
+    if (event.getOffset() < offset && offset < event.getOffset() + event.getNewLength()) {
+      if (event.getOldLength() == 0) {
+        return event.getOffset();
+      }
+
       return null;
     }
 
@@ -255,24 +259,24 @@ public class CompletionUtil {
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
     final PsiFile file = psi.getContainingFile();
     if (file != null && file != file.getOriginalFile()) {
+      TextRange range = psi.getTextRange();
+      Integer start = range.getStartOffset();
+      Integer end = range.getEndOffset();
       final Document document = file.getViewProvider().getDocument();
       if (document != null) {
         final List<DocumentEvent> translator = document.getUserData(RANGE_TRANSLATION);
         if (translator != null) {
-          TextRange range = psi.getTextRange();
-          Integer start = range.getStartOffset();
-          Integer end = range.getEndOffset();
           for (DocumentEvent event : translator) {
-            start = translateOffset(range.getStartOffset(), event);
-            end = translateOffset(range.getEndOffset(), event);
+            start = translateOffset(start, event);
+            end = translateOffset(end, event);
             if (start == null || end == null) {
               return null;
             }
           }
-
-          return (T)PsiTreeUtil.findElementOfClassAtRange(file.getOriginalFile(), start, end, psi.getClass());
         }
       }
+      //noinspection unchecked
+      return (T)PsiTreeUtil.findElementOfClassAtRange(file.getOriginalFile(), start, end, psi.getClass());
     }
 
     return psi;
