@@ -152,8 +152,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   protected void doClose() throws IOException {
-    storeVars(true);
     super.doClose();
+    btree.cleanupOnClose();
   }
 
   private int allocEmptyPage(int pageStart) {
@@ -303,7 +303,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       int newValueId = writeData(value, valueHC);
       ++valuesCount;
 
-      if (valuesCount % 20000 == 0 && IOStatistics.DEBUG) {
+      if (valuesCount % 25000 == 0 && IOStatistics.DEBUG) {
         IOStatistics.dump("Index " +
                           myFile +
                           ", values " +
@@ -396,12 +396,13 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   protected void setupRecord(int hashCode, final int dataOffset, final byte[] buf) {
-    Bits.putInt(buf, 0, dataOffset);
+    if (!myInlineKeysNoMapping) Bits.putInt(buf, 0, dataOffset);
   }
 
   @Override
   protected void doFlush() throws IOException {
     btree.doFlush();
+    storeVars(true);
     super.doFlush();
   }
 }
