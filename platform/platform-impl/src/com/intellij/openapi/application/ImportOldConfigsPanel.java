@@ -66,7 +66,9 @@ public class ImportOldConfigsPanel extends JDialog {
     final String productName = namesInfo.getProductName().equals("IDEA") ? namesInfo.getFullProductName() : namesInfo.getProductName();
     mySuggestLabel.setText(ApplicationBundle.message("label.you.can.import", productName));
     myRbDoNotImport.setText(ApplicationBundle.message("radio.do.not.import", productName));
-    myHomeLabel.setText(ApplicationBundle.message("editbox.installation.home", productName));
+    myHomeLabel.setText(ApplicationBundle.message(!SystemInfo.isMac ? "editbox.installation.home"
+                                                                    : "editbox.installation.home.mac",
+                                                  productName));
 
     myRbImport.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
@@ -158,7 +160,7 @@ public class ImportOldConfigsPanel extends JDialog {
 
   private static String findPreviousInstallationMac(String productName) {
     //noinspection HardCodedStringLiteral
-    final String mostProbable = "/Applications/" + productName;
+    final String mostProbable = "/Applications/" + productName + ".app";
     if (new File(mostProbable).exists()) {
       return mostProbable;
     }
