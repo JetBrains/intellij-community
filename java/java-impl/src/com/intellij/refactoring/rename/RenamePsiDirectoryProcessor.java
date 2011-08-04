@@ -15,11 +15,14 @@
  */
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -28,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author yole
@@ -35,6 +39,19 @@ import java.util.Collection;
 public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof PsiDirectory;
+  }
+
+  @Override
+  public RenameDialog createRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+    return new RenameWithOptionalReferencesDialog(project, element, nameSuggestionContext, editor) {
+      protected boolean getSearchForReferences() {
+        return RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY;
+      }
+
+      protected void setSearchForReferences(boolean value) {
+        RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
+      }
+    };
   }
 
   public void renameElement(final PsiElement element,
@@ -68,6 +85,9 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
   @NotNull
   @Override
   public Collection<PsiReference> findReferences(PsiElement element) {
+    if (!RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY) {
+      return Collections.emptyList();
+    }
     return ReferencesSearch.search(element).findAll();
   }
 

@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,13 +29,13 @@ import java.awt.*;
 /**
  * @author yole
  */
-public class RenameFileDialog extends RenameDialog {
+public abstract class RenameWithOptionalReferencesDialog extends RenameDialog {
   private JCheckBox myCbSearchForReferences;
 
-  public RenameFileDialog(@NotNull Project project,
-                          @NotNull PsiElement psiElement,
-                          @Nullable PsiElement nameSuggestionContext,
-                          Editor editor) {
+  public RenameWithOptionalReferencesDialog(@NotNull Project project,
+                                            @NotNull PsiElement psiElement,
+                                            @Nullable PsiElement nameSuggestionContext,
+                                            Editor editor) {
     super(project, psiElement, nameSuggestionContext, editor);
   }
 
@@ -49,7 +48,7 @@ public class RenameFileDialog extends RenameDialog {
     gbConstraints.weightx = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
     myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
-    myCbSearchForReferences.setSelected(RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE);
+    myCbSearchForReferences.setSelected(getSearchForReferences());
     panel.add(myCbSearchForReferences, gbConstraints);
 
     super.createCheckboxes(panel, gbConstraints);
@@ -57,7 +56,11 @@ public class RenameFileDialog extends RenameDialog {
 
   @Override
   protected void doAction() {
-    RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
+    setSearchForReferences(myCbSearchForReferences.isSelected());
     super.doAction();
   }
+
+  protected abstract boolean getSearchForReferences();
+
+  protected abstract void setSearchForReferences(boolean value);
 }
