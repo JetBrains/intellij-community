@@ -135,7 +135,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     mainPanel.setLayout(new BorderLayout());
 
     JPanel initializationPanel = new JPanel();
-    initializationPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(RefactoringBundle.message("initialize.in.border.title")));
+    initializationPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(RefactoringBundle.message("initialize.in.border.title")));
     initializationPanel.setLayout(new BoxLayout(initializationPanel, BoxLayout.Y_AXIS));
 
 

@@ -41,7 +41,7 @@
         <constraints border-constraint="Center"/>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
         </clientProperties>
         <border type="etched" title="Options"/>
         <children>

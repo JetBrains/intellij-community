@@ -49,7 +49,7 @@ public class EditInstanceFiltersDialog extends DialogWrapper{
 
     myInstanceFilterEditor = new InstanceFilterEditor(myProject);
     myInstanceFilterEditor.setPreferredSize(new Dimension(400, 200));
-    myInstanceFilterEditor.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(
+    myInstanceFilterEditor.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
       DebuggerBundle.message("instance.filters.dialog.instance.filters.group")));
     mainPanel.add(myInstanceFilterEditor);
 

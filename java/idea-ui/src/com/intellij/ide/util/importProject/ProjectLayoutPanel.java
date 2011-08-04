@@ -79,7 +79,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     final Splitter splitter = new Splitter(false);
 
     final JScrollPane entriesPane = ScrollPaneFactory.createScrollPane(myEntriesChooser);
-    entriesPane.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(getEntriesChooserTitle()));
+    entriesPane.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent(getEntriesChooserTitle()));
     splitter.setFirstComponent(entriesPane);
 
     final JScrollPane depsPane = ScrollPaneFactory.createScrollPane(myDependenciesList);

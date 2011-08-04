@@ -20,9 +20,9 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
         </clientProperties>
-        <border type="none" title="Files with conflicts:"/>
+        <border type="none" title="Files with conflicts"/>
         <children>
           <component id="38043" class="com.intellij.ui.components.JBList" binding="conflictsList">
             <constraints>

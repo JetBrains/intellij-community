@@ -48,10 +48,10 @@ public class OutputEditor extends ModuleElementsEditor {
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
     panel.add(myCompilerOutputEditor.createComponentImpl(), gc);
     final JPanel javadocPanel = (JPanel)myJavadocEditor.createComponentImpl();
-    javadocPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(myJavadocEditor.getDisplayName()));
+    javadocPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent(myJavadocEditor.getDisplayName()));
     panel.add(javadocPanel, gc);
     final JPanel annotationsPanel = (JPanel)myAnnotationsEditor.createComponentImpl();
-    annotationsPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(myAnnotationsEditor.getDisplayName()));
+    annotationsPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent(myAnnotationsEditor.getDisplayName()));
     panel.add(annotationsPanel, gc);
     panel.add(Box.createVerticalBox(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.CENTER,
                                                               GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0));

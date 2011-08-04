@@ -206,7 +206,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         myEditors.put(vcs, editor);
 
         JPanel wrapperPane = new JPanel(new BorderLayout());
-        wrapperPane.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(vcs.getDisplayName()));
+        wrapperPane.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(vcs.getDisplayName()));
         final JCheckBox checkBox = new JCheckBox(VcsBundle.message("composite.change.provider.include.vcs.checkbox", vcs.getDisplayName()), true);
         checkBox.addActionListener(new ActionListener() {
           public void actionPerformed(final ActionEvent e) {

@@ -70,7 +70,7 @@ public final class GroovyDocGenerationPanel extends JPanel {
 
     JScrollPane packagesScrollPane = ScrollPaneFactory.createScrollPane(myPackagesList);
     myPackagesPanel.setLayout(new BorderLayout());
-    myPackagesPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent("Source packages"));
+    myPackagesPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent("Source packages"));
 
     myActionToolbar = ActionManager.getInstance().createActionToolbar("GroovyDoc", getActionGroup(), true);
     myPackagesPanel.add(myActionToolbar.getComponent(), BorderLayout.NORTH);
