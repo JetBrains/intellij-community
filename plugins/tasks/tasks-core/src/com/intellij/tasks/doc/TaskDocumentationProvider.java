@@ -55,8 +55,9 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
     if (task.getUpdated() != null) {
       builder.append("<b>Updated at:</b> ").append(task.getUpdated()).append("<br>");
     }
-    if (task.getDescription() != null) {
-      builder.append("<b>Description:</b><br>").append(task.getDescription());
+    final String description = task.getDescription();
+    if (description != null) {
+      builder.append("<b>Description:</b><br>").append(description.replace("\n", "<br>"));
     }
     for (Comment comment : task.getComments()) {
       comment.appendTo(builder);

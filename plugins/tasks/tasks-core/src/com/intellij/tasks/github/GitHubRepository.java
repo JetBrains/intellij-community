@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.InputStream;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -42,7 +43,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
   private String myRepoAuthor;
   private String myRepoName;
 
-  private static final String GITHUB_HOST = "https://github.com";
+  public static final String GITHUB_HOST = "https://github.com";
 
   {
     setUrl(GITHUB_HOST);
@@ -95,7 +96,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
     @SuppressWarnings({"unchecked"}) List<Object> children = getIssues(query);
     List<Task> taskList = ContainerUtil.mapNotNull(children, new NullableFunction<Object, Task>() {
       public Task fun(Object o) {
-        return createIssue((Element)o);
+        return createIssue((Element)o, false);
       }
     });
 
@@ -110,7 +111,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
   private List getIssues(String query) throws Exception {
     String url;
     if (!StringUtil.isEmpty(query)) {
-      url = buildUrl("/search/") + "/open";
+      url = buildUrl("/search/") + "/open/";
       url += encodeUrl(query);
     } else {
       url = buildUrl("/list/") + "/open";
@@ -129,7 +130,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
   }
 
   @Nullable
-  private Task createIssue(final Element element) {
+  private Task createIssue(final Element element, boolean parseComments) {
     final String id = element.getChildText("number");
     if (id == null) {
       return null;
@@ -180,7 +181,12 @@ public class GitHubRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public Comment[] getComments() {
-        return new Comment[0];
+        try {
+          return fetchComments(id);
+        } catch (Exception e) {
+          LOG.warn("Error fetching comments for " + id, e);
+        }
+        return Comment.EMPTY_ARRAY;
       }
 
       @Override
@@ -226,6 +232,33 @@ public class GitHubRepository extends BaseRepositoryImpl {
     };
   }
 
+  private Comment[] fetchComments(final String id) throws Exception {
+    final String url = buildUrl("/comments/") + "/" + id;
+    final HttpMethod method = doREST(url, false);
+    final InputStream stream = method.getResponseBodyAsStream();
+    final Element element = new SAXBuilder(false).build(stream).getRootElement();
+    return element.getName().equals("comments") ? createComments(element) : Comment.EMPTY_ARRAY;
+  }
+
+  private static Comment[] createComments(final Element element) {
+    final List<Comment> comments = new ArrayList<Comment>();
+    //noinspection unchecked
+    for (Element comment : (List<Element>)element.getChildren("comment")) {
+      final String text = comment.getChildText("body");
+      if (text == null) continue;
+      final String author = comment.getChildText("user");
+      final String gravatarId = comment.getChildText("gravatar-id");
+      final Ref<Date> date = new Ref<Date>();
+      try {
+        date.set(PivotalTrackerRepository.parseDate(comment, "created-at"));
+      } catch (ParseException e) {
+        LOG.warn(e);
+      }
+      comments.add(new GitHubComment(date.get(), author, text, gravatarId));
+    }
+    return comments.toArray(new Comment[comments.size()]);
+  }
+
   @Nullable
   private String getRealId(String id) {
     final String start = myRepoName + "-";
@@ -245,7 +278,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
     HttpMethod method = doREST(buildUrl("/show/") + "/" + realId, false);
     InputStream stream = method.getResponseBodyAsStream();
     Element element = new SAXBuilder(false).build(stream).getRootElement();
-    return element.getName().equals("issue") ? createIssue(element) : null;
+    return element.getName().equals("issue") ? createIssue(element, true) : null;
   }
 
   private String buildUrl(final String start) {
