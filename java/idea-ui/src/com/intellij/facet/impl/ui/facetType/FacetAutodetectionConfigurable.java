@@ -16,8 +16,8 @@
 package com.intellij.facet.impl.ui.facetType;
 
 import com.intellij.facet.FacetType;
-import com.intellij.facet.impl.autodetecting.DisabledAutodetectionByTypeElement;
-import com.intellij.facet.impl.autodetecting.DisabledAutodetectionInModuleElement;
+import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionByTypeElement;
+import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionInModuleElement;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl;
 import com.intellij.openapi.actionSystem.CommonShortcuts;

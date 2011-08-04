@@ -17,11 +17,12 @@ package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
-import com.intellij.framework.detection.FrameworkDetector;
+import com.intellij.framework.detection.impl.exclude.old.OldFacetDetectionExcludesConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,9 +50,12 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
          implements PersistentStateComponent<ExcludesConfigurationState>, Disposable {
   private Map<String, VirtualFilePointerContainer> myExcludedFiles;
   private Set<String> myExcludedFrameworks;
+  private final Project myProject;
   private VirtualFilePointerManager myPointerManager;
+  private boolean myConverted;
 
-  public DetectionExcludesConfigurationImpl(VirtualFilePointerManager pointerManager) {
+  public DetectionExcludesConfigurationImpl(Project project, VirtualFilePointerManager pointerManager) {
+    myProject = project;
     myPointerManager = pointerManager;
     myExcludedFrameworks = new HashSet<String>();
     myExcludedFiles = new FactoryMap<String, VirtualFilePointerContainer>() {
@@ -64,6 +68,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
 
   @Override
   public void addExcludedFramework(@NotNull FrameworkType type) {
+    convert();
     myExcludedFrameworks.add(type.getId());
     final VirtualFilePointerContainer container = myExcludedFiles.remove(type.getId());
     if (container != null) {
@@ -71,22 +76,9 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     }
   }
 
-  private boolean isFileExcluded(@NotNull VirtualFile file, @Nullable String typeId) {
-    if (myExcludedFiles.containsKey(typeId) && isUnder(file, myExcludedFiles.get(typeId))) return true;
-    return typeId != null && myExcludedFiles.containsKey(null) && isUnder(file, myExcludedFiles.get(null));
-  }
-
-  private static boolean isUnder(VirtualFile file, final VirtualFilePointerContainer container) {
-    for (VirtualFile excludedFile : container.getFiles()) {
-      if (VfsUtil.isAncestor(excludedFile, file, false)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   public void addExcludedFile(@NotNull VirtualFile file, @Nullable FrameworkType type) {
+    convert();
     final String typeId = type != null ? type.getId() : null;
     if (typeId != null && myExcludedFrameworks.contains(typeId) || isFileExcluded(file, typeId)) {
       return;
@@ -104,6 +96,40 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     container.add(file);
   }
 
+  private void convert() {
+    ensureOldSettingsLoaded();
+    markAsConverted();
+  }
+
+  private void markAsConverted() {
+    myConverted = true;
+    OldFacetDetectionExcludesConfiguration.getInstance(myProject).loadState(null);
+  }
+
+  private void ensureOldSettingsLoaded() {
+    if (!myConverted) {
+      final OldFacetDetectionExcludesConfiguration oldConfiguration = OldFacetDetectionExcludesConfiguration.getInstance(myProject);
+      final ExcludesConfigurationState oldState = oldConfiguration.convert();
+      if (oldState != null) {
+        doLoadState(oldState);
+      }
+    }
+  }
+
+  private boolean isFileExcluded(@NotNull VirtualFile file, @Nullable String typeId) {
+    if (myExcludedFiles.containsKey(typeId) && isUnder(file, myExcludedFiles.get(typeId))) return true;
+    return typeId != null && myExcludedFiles.containsKey(null) && isUnder(file, myExcludedFiles.get(null));
+  }
+
+  private static boolean isUnder(VirtualFile file, final VirtualFilePointerContainer container) {
+    for (VirtualFile excludedFile : container.getFiles()) {
+      if (VfsUtil.isAncestor(excludedFile, file, false)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void removeDescendants(VirtualFile file, VirtualFilePointerContainer container) {
     for (VirtualFile virtualFile : container.getFiles()) {
       if (VfsUtil.isAncestor(file, virtualFile, false)) {
@@ -113,8 +139,9 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
   }
 
   @Override
-  public void removeExcluded(@NotNull Collection<VirtualFile> files, @NotNull FrameworkDetector detector) {
-    if (myExcludedFrameworks.contains(detector.getFrameworkType().getId())) {
+  public void removeExcluded(@NotNull Collection<VirtualFile> files, final FrameworkType frameworkType) {
+    ensureOldSettingsLoaded();
+    if (myExcludedFrameworks.contains(frameworkType.getId())) {
       files.clear();
       return;
     }
@@ -122,14 +149,18 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     final Iterator<VirtualFile> iterator = files.iterator();
     while (iterator.hasNext()) {
       VirtualFile file = iterator.next();
-      if (isFileExcluded(file, detector.getFrameworkType().getId())) {
+      if (isFileExcluded(file, frameworkType.getId())) {
         iterator.remove();
       }
     }
   }
 
-  @Override
-  public ExcludesConfigurationState getState() {
+  @Nullable
+  public ExcludesConfigurationState getActualState() {
+    if (myExcludedFiles.isEmpty() && myExcludedFrameworks.isEmpty()) {
+      return null;
+    }
+
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
     state.getFrameworkTypes().addAll(myExcludedFrameworks);
     Collections.sort(state.getFrameworkTypes());
@@ -149,15 +180,30 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     return state;
   }
 
+  @Override @Nullable
+  public ExcludesConfigurationState getState() {
+    if (!myConverted) return null;
+    return getActualState();
+  }
+
   @Override
-  public void loadState(ExcludesConfigurationState state) {
+  public void loadState(@Nullable ExcludesConfigurationState state) {
+    doLoadState(state);
+    if (!myExcludedFiles.isEmpty() || !myExcludedFrameworks.isEmpty()) {
+      markAsConverted();
+    }
+  }
+
+  private void doLoadState(@Nullable ExcludesConfigurationState state) {
     myExcludedFrameworks.clear();
-    myExcludedFrameworks.addAll(state.getFrameworkTypes());
     for (VirtualFilePointerContainer container : myExcludedFiles.values()) {
       container.clear();
     }
-    for (ExcludedFileState fileState : state.getFiles()) {
-      myExcludedFiles.get(fileState.getFrameworkType()).add(fileState.getUrl());
+    if (state != null) {
+      myExcludedFrameworks.addAll(state.getFrameworkTypes());
+      for (ExcludedFileState fileState : state.getFiles()) {
+        myExcludedFiles.get(fileState.getFrameworkType()).add(fileState.getUrl());
+      }
     }
   }
 

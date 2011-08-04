@@ -205,6 +205,7 @@
   <fileBasedIndex implementation="com.intellij.framework.detection.impl.FrameworkDetectionIndex"/>
   <projectService serviceInterface="com.intellij.framework.detection.DetectionExcludesConfiguration"
                   serviceImplementation="com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl"/>
+  <projectService serviceImplementation="com.intellij.framework.detection.impl.exclude.old.OldFacetDetectionExcludesConfiguration"/>
 
   <projectService serviceInterface="com.intellij.codeInsight.AutoPopupController"
                   serviceImplementation="com.intellij.codeInsight.AutoPopupController"/>

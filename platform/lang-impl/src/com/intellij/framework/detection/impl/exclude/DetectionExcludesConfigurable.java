@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -205,7 +206,7 @@ public class DetectionExcludesConfigurable implements Configurable {
 
   @Override
   public boolean isModified() {
-    return !computeState().equals(myConfiguration.getState());
+    return !Comparing.equal(computeState(), myConfiguration.getActualState());
   }
 
   @Override
@@ -213,7 +214,11 @@ public class DetectionExcludesConfigurable implements Configurable {
     myConfiguration.loadState(computeState());
   }
 
+  @Nullable
   private ExcludesConfigurationState computeState() {
+    if (myModel.getItems().isEmpty()) {
+      return null;
+    }
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
     for (ExcludeListItem item : myModel.getItems()) {
       final String url = item.getFileUrl();
@@ -231,20 +236,22 @@ public class DetectionExcludesConfigurable implements Configurable {
   @Override
   public void reset() {
     myModel.clear();
-    final ExcludesConfigurationState state = myConfiguration.getState();
-    for (String typeId : state.getFrameworkTypes()) {
-      final FrameworkType frameworkType = FrameworkDetectorRegistry.getInstance().findFrameworkType(typeId);
-      myModel.add(frameworkType != null ? new ValidExcludeListItem(frameworkType, null) : new InvalidExcludeListItem(typeId, null));
-    }
-    for (ExcludedFileState fileState : state.getFiles()) {
-      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(fileState.getUrl());
-      final String typeId = fileState.getFrameworkType();
-      if (typeId == null) {
-        myModel.add(file != null ? new ValidExcludeListItem(null, file) : new InvalidExcludeListItem(null, fileState.getUrl()));
-      }
-      else {
+    final ExcludesConfigurationState state = myConfiguration.getActualState();
+    if (state != null) {
+      for (String typeId : state.getFrameworkTypes()) {
         final FrameworkType frameworkType = FrameworkDetectorRegistry.getInstance().findFrameworkType(typeId);
-        myModel.add(frameworkType != null && file != null? new ValidExcludeListItem(frameworkType, file) : new InvalidExcludeListItem(typeId, fileState.getUrl()));
+        myModel.add(frameworkType != null ? new ValidExcludeListItem(frameworkType, null) : new InvalidExcludeListItem(typeId, null));
+      }
+      for (ExcludedFileState fileState : state.getFiles()) {
+        VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(fileState.getUrl());
+        final String typeId = fileState.getFrameworkType();
+        if (typeId == null) {
+          myModel.add(file != null ? new ValidExcludeListItem(null, file) : new InvalidExcludeListItem(null, fileState.getUrl()));
+        }
+        else {
+          final FrameworkType frameworkType = FrameworkDetectorRegistry.getInstance().findFrameworkType(typeId);
+          myModel.add(frameworkType != null && file != null? new ValidExcludeListItem(frameworkType, file) : new InvalidExcludeListItem(typeId, fileState.getUrl()));
+        }
       }
     }
   }

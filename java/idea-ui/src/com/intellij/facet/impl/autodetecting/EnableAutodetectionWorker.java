@@ -16,6 +16,8 @@
 package com.intellij.facet.impl.autodetecting;
 
 import com.intellij.facet.FacetType;
+import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionByTypeElement;
+import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionInModuleElement;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;

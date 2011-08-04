@@ -25,12 +25,11 @@ import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
 import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
 import com.intellij.facet.pointers.FacetPointersManager;
+import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionByTypeElement;
+import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionInfo;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -52,16 +51,7 @@ import java.util.*;
 /**
  * @author nik
  */
-@State(
-  name = FacetAutodetectingManagerImpl.COMPONENT_NAME,
-  storages = {
-    @Storage(
-      file = "$PROJECT_FILE$"
-    )
-  }
-)
-public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager implements AutodetectionFilter, ProjectComponent, PersistentStateComponent<DisabledAutodetectionInfo> {
-  @NonNls public static final String COMPONENT_NAME = "FacetAutodetectingManager";
+public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager implements AutodetectionFilter, ProjectComponent {
   private final MultiValuesMap<FileType, FacetDetectorWrapper> myDetectors = new MultiValuesMap<FileType, FacetDetectorWrapper>();
   private final Map<String, FacetDetector<?,?>> myId2Detector = new HashMap<String, FacetDetector<?,?>>();
   private final Project myProject;
@@ -108,7 +98,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   @NonNls
   @NotNull
   public String getComponentName() {
-    return COMPONENT_NAME;
+    return "OldFacetAutodetectingManagerImpl";
   }
 
   public void initComponent() {
@@ -143,14 +133,6 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   @Nullable
   public DisabledAutodetectionByTypeElement getDisabledAutodetectionState(@NotNull FacetType<?,?> type) {
     return myDisabledAutodetectionInfo.findElement(type.getStringId());
-  }
-
-  public DisabledAutodetectionInfo getState() {
-    return myDisabledAutodetectionInfo;
-  }
-
-  public void loadState(final DisabledAutodetectionInfo state) {
-    myDisabledAutodetectionInfo = state;
   }
 
   public void processFile(FileContent fileContent) {
@@ -231,10 +213,6 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     }
   }
 
-  public boolean hasDetectors(@NotNull FacetType<?, ?> facetType) {
-    return myFacetTypesWithDetectors.contains(facetType);
-  }
-
   public void redetectFacets() {
     myEnableAutodetectionWorker.redetectFacets();
   }
@@ -298,29 +276,19 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void disableAutodetectionInModule(final FacetType type, final Module module) {
-    getState().addDisabled(type.getStringId(), module.getName());
-  }
-
-  public void disableAutodetectionInProject() {
-    for (FacetType facetType : FacetTypeRegistry.getInstance().getFacetTypes()) {
-      disableAutodetectionInProject(facetType);
-    }
-  }
-
-  public void disableAutodetectionInProject(final FacetType type) {
-    getState().addDisabled(type.getStringId());
+    myDisabledAutodetectionInfo.addDisabled(type.getStringId(), module.getName());
   }
 
   public void disableAutodetectionInDirs(@NotNull Module module, @NotNull String... dirUrls) {
     for (FacetType<?, ?> facetType : myFacetTypesWithDetectors) {
       for (String dirUrl : dirUrls) {
-        getState().addDisabled(facetType.getStringId(), module.getName(), dirUrl, true);
+        myDisabledAutodetectionInfo.addDisabled(facetType.getStringId(), module.getName(), dirUrl, true);
       }
     }
   }
 
   public void disableAutodetectionInFiles(@NotNull final FacetType type, @NotNull final Module module, @NotNull final String... fileUrls) {
-    getState().addDisabled(type.getStringId(), module.getName(), fileUrls);
+    myDisabledAutodetectionInfo.addDisabled(type.getStringId(), module.getName(), fileUrls);
   }
 
   public void setDisabledAutodetectionState(final @NotNull FacetType<?, ?> facetType, final @Nullable DisabledAutodetectionByTypeElement element) {

@@ -202,7 +202,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       return Collections.emptyList();
     }
 
-    excludesConfiguration.removeExcluded(filesToProcess, detector);
+    excludesConfiguration.removeExcluded(filesToProcess, detector.getFrameworkType());
     if (LOG.isDebugEnabled()) {
       LOG.debug("Detector '" + detector.getDetectorId() + "': " + acceptedFiles.size() + " accepted files, " + filesToProcess.size() + " files to process");
     }

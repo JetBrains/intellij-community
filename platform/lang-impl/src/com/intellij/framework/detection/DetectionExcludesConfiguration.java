@@ -35,5 +35,6 @@ public abstract class DetectionExcludesConfiguration {
   public abstract void addExcludedFramework(@NotNull FrameworkType type);
   public abstract void addExcludedFile(@NotNull VirtualFile file, @Nullable FrameworkType type);
 
-  public abstract void removeExcluded(@NotNull Collection<VirtualFile> files, @NotNull FrameworkDetector detector);
+  public abstract void removeExcluded(@NotNull Collection<VirtualFile> files,
+                                      final FrameworkType frameworkType);
 }

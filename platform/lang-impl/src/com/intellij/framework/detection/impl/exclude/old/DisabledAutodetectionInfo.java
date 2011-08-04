@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.facet.impl.autodetecting;
+package com.intellij.framework.detection.impl.exclude.old;
 
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
