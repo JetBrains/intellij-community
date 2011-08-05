@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -76,11 +77,11 @@ public class EditScopesDialog extends SingleConfigurableEditor {
   }
 
 
-  public static EditScopesDialog editConfigurable(final Project project, final Runnable advancedInitialization){
+  public static EditScopesDialog editConfigurable(final Project project, @Nullable final Runnable advancedInitialization){
     return editConfigurable(project, advancedInitialization, false);
   }
 
-  public static EditScopesDialog editConfigurable(final Project project, final Runnable advancedInitialization, final boolean checkShared){
+  public static EditScopesDialog editConfigurable(final Project project, @Nullable final Runnable advancedInitialization, final boolean checkShared){
     final EditScopesDialog dialog = new EditScopesDialog(project, checkShared);
     if (advancedInitialization != null) {
       advancedInitialization.run();
