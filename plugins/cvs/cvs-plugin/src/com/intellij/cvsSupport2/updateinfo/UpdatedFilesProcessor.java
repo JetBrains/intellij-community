@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsMessages.FileMessage;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,19 +35,22 @@ import java.io.File;
 public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.updateinfo.UpdatedFilesProcessor");
 
-  private final Project myProject;
   private final UpdatedFiles myUpdatedFiles;
 
-  public UpdatedFilesProcessor(Project project, UpdatedFiles updatedFiles) {
-    myProject = project;
+  public UpdatedFilesProcessor(UpdatedFiles updatedFiles) {
     myUpdatedFiles = updatedFiles;
   }
 
   public void addFileMessage(FileMessage message) {
     String path = message.getFileAbsolutePath();
     VirtualFile virtualFile = getVirtualFileFor(path);
-    FileGroup collection = getCollectionFor(message.getType(), virtualFile);
-    LOG.assertTrue(collection != null, String.valueOf(message.getType()));
+    final int messageType = message.getType();
+    if (virtualFile != null && messageType == FileMessage.NOT_IN_REPOSITORY &&
+        FileTypeManager.getInstance().isFileIgnored(virtualFile)) {
+      return;
+    }
+    FileGroup collection = getCollectionFor(messageType, virtualFile);
+    LOG.assertTrue(collection != null, String.valueOf(messageType));
     final CvsRevisionNumber revision = message.getRevision();
     collection.add(path, CvsVcs2.getKey(), revision);
   }
