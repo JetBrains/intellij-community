@@ -183,7 +183,7 @@ public abstract class PassExecutorService implements Disposable {
       }
     }
 
-    log(updateProgress, null, "---------------------starting------------------------ " + threadsToStartCountdown.get());
+    log(updateProgress, null, "---------------------starting------------------------ " + threadsToStartCountdown.get(), freePasses);
 
     for (ScheduledPass dependentPass : dependentPasses) {
       mySubmittedPasses.put(dependentPass, JobImpl.NULL_JOB);
@@ -383,6 +383,11 @@ public abstract class PassExecutorService implements Disposable {
           }
         }
       }
+    }
+
+    @Override
+    public String toString() {
+      return "SP: " + myPass;
     }
   }
 

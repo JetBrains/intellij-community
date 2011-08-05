@@ -171,8 +171,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
 
   private final StringBuilder log = new StringBuilder();
   void log(@NonNls String msg, Document document, boolean synchronously, @NonNls Object... args) {
-    if (true) return;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (debug()) {
       String s = (SwingUtilities.isEventDispatchThread() ? "    " : "") +
         msg + (synchronously ? " (sync)" : "") +
                  (document == null ? "" : "; Document: " + System.identityHashCode(document) +
@@ -190,6 +189,10 @@ public class DocumentCommitThread implements Runnable, Disposable {
         }
       }
     }
+  }
+
+  private static boolean debug() {
+    return false;
   }
 
   @TestOnly
