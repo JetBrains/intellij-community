@@ -18,10 +18,6 @@
 
   <project-components>
     <component>
-      <interface-class>com.intellij.facet.impl.autodetecting.FacetAutodetectingManager</interface-class>
-      <implementation-class>com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.framework.detection.impl.FrameworkDetectionManager</implementation-class>
     </component>
     <component>

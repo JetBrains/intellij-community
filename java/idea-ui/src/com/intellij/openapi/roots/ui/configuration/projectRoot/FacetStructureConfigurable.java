@@ -19,8 +19,6 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeRegistry;
-import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
-import com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl;
 import com.intellij.facet.impl.invalid.InvalidFacetManager;
 import com.intellij.facet.impl.invalid.InvalidFacetType;
 import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
@@ -149,9 +147,6 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     super.apply();
     for (FacetTypeEditor editor : myFacetTypeEditors.values()) {
       editor.apply();
-    }
-    if (!myProject.isDefault()) {
-      ((FacetAutodetectingManagerImpl)FacetAutodetectingManager.getInstance(myProject)).redetectFacets();
     }
   }
 
