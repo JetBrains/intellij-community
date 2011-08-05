@@ -188,7 +188,7 @@
     <action id="ActivateProjectToolWindow">
       <keyboard-shortcut first-keystroke="meta 1"/>
     </action>
-    <action id="ActivateCommanderToolWindow">
+    <action id="ActivateFavoritesToolWindow">
       <keyboard-shortcut first-keystroke="meta 2"/>
     </action>
     <action id="ActivateFindToolWindow">
