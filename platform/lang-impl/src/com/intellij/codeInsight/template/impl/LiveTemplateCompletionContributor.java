@@ -54,10 +54,9 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         final TemplateImpl template = findApplicableTemplate(file, offset, prefix);
         if (template != null) {
           result.addElement(new LiveTemplateLookupElement(template));
-        } else {
-          for (final TemplateImpl possible : listApplicableTemplates(file, offset)) {
-            result.restartCompletionOnPrefixChange(possible.getKey());
-          }
+        }
+        for (final TemplateImpl possible : listApplicableTemplates(file, offset)) {
+          result.restartCompletionOnPrefixChange(possible.getKey());
         }
 
       }

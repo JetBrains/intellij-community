@@ -174,13 +174,13 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   private static int showShutDownIDEADialog() {
     String message = IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName());
     String title = IdeBundle.message("title.plugins.changed");
-    return Messages.showDialog(message, title, new String[]{"Shut Down", POSTPONE},0,0,Messages.getQuestionIcon());
+    return Messages.showYesNoDialog(message, title, "Shut Down", POSTPONE,Messages.getQuestionIcon());
   }
 
   public static int showRestartIDEADialog() {
     String message = IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName());
     String title = IdeBundle.message("title.plugins.changed");
-    return Messages.showDialog(message, title, new String[]{"Restart", POSTPONE},0,0,Messages.getQuestionIcon());
+    return Messages.showYesNoDialog(message, title, "Restart", POSTPONE, Messages.getQuestionIcon());
   }
 
   public boolean isModified() {

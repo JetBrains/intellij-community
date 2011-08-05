@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
@@ -274,7 +275,9 @@ public class EventLog implements Notifications {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          console.doPrintNotification(notification);
+          if (!ShutDownTracker.isShutdownHookRunning()) {
+            console.doPrintNotification(notification);
+          }
         }
       });
     }

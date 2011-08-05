@@ -24,8 +24,10 @@ import java.awt.*;
 
 /**
  * author: lesya
+ * 
+ * @deprecated use one of {@link com.intellij.openapi.ui.Messages} methods instead.
  */
-
+@Deprecated
 public abstract class OptionsDialog extends DialogWrapper  {
 
   protected final Project myProject;

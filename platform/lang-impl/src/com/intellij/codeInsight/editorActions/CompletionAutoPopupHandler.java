@@ -24,6 +24,7 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler");
   public static volatile boolean ourTestingAutopopup = false;
 
   @Override
@@ -88,13 +90,18 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   public static void invokeCompletion(CompletionType completionType,
                                       boolean autopopup,
                                       Project project, Editor editor, int time) {
+    if (editor.isDisposed()) return;
+    
     // retrieve the injected file from scratch since our typing might have destroyed the old one completely
     Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument());
     if (file == null) return;
 
     PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
+      LOG.error("Non-committed document");
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }
     Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
     try {
       new CodeCompletionHandlerBase(completionType, false, autopopup).invokeCompletion(project, newEditor, time, false);

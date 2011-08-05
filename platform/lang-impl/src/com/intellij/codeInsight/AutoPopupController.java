@@ -22,6 +22,8 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -97,15 +99,18 @@ public class AutoPopupController implements Disposable {
       return;
     }
 
+    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+    boolean shouldBeFast = lookup != null && lookup.isShown();
+
     final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
-      currentCompletion.closeAndFinish(true);
+      currentCompletion.closeAndFinish(false);
     }
 
     final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false, editor);
     CompletionServiceImpl.setCompletionPhase(phase);
 
-    addRequest(new Runnable() {
+    Runnable request = new Runnable() {
       @Override
       public void run() {
         CompletionAutoPopupHandler.runLaterWithCommitted(myProject, editor.getDocument(), new Runnable() {
@@ -120,7 +125,12 @@ public class AutoPopupController implements Disposable {
           }
         });
       }
-    }, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
+    };
+    if (shouldBeFast) {
+      request.run();
+    } else {
+      addRequest(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
+    }
   }
 
   @TestOnly

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -28,6 +29,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -48,15 +50,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.CommitToPsiFileAction;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -500,9 +500,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final Project project = hostFile.getProject();
 
-    if (autopopup) {
+    if (!invokedExplicitly) {
       final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(true, hostEditor);
       CompletionServiceImpl.setCompletionPhase(phase);
+
+      ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+        @Override
+        public void beforeWriteActionStart(Object action) {
+          if (!(action instanceof Class) || !CommitToPsiFileAction.class.isAssignableFrom((Class)action)) {
+            AutoPopupController.getInstance(project).scheduleAutoPopup(hostEditor, Condition.TRUE);
+          }
+        }
+      }, phase);
 
       CompletionAutoPopupHandler.runLaterWithCommitted(project, hostDocument, new Runnable() {
         @Override
@@ -634,7 +643,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   public static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
-  protected PsiFile createFileCopy(PsiFile file) {
+  private static PsiFile createFileCopy(PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (file.isPhysical() && virtualFile != null && virtualFile.getFileSystem() == LocalFileSystem.getInstance()
         // must not cache injected file copy, since it does not reflect changes in host document

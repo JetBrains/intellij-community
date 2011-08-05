@@ -59,6 +59,12 @@ public class RecursionManager {
       return 0;
     }
   };
+  private static final ThreadLocal<Integer> ourDepth = new ThreadLocal<Integer>() {
+    @Override
+    protected Integer initialValue() {
+      return 0;
+    }
+  };
   private static final ThreadLocal<LinkedHashMap<MyKey, Integer>> ourProgress = new ThreadLocal<LinkedHashMap<MyKey, Integer>>() {
     @Override
     protected LinkedHashMap<MyKey, Integer> initialValue() {
@@ -91,6 +97,9 @@ public class RecursionManager {
         if (memoize) {
           SoftReference reference = ourIntermediateCache.get().get(realKey);
           if (reference != null) {
+            if (ourDepth.get() == 0) {
+              throw new AssertionError("Memoized values with empty stack");
+            }
             Object o = reference.get();
             if (o != null) {
               //noinspection unchecked
@@ -103,7 +112,13 @@ public class RecursionManager {
           throw new AssertionError("Non-zero stamp with empty stack: " + ourStamp.get());
         }
 
+        checkDepth("1");
+
         progressMap.put(realKey, ourStamp.get());
+        ourDepth.set(ourDepth.get() + 1);
+
+        checkDepth("2");
+
         int startStamp = ourMemoizationStamp.get();
 
         try {
@@ -116,10 +131,13 @@ public class RecursionManager {
           return result;
         }
         finally {
+          ourDepth.set(ourDepth.get() - 1);
           Integer value = progressMap.remove(realKey);
+
           if (value == null) {
             throw new AssertionError(key + " has changed its equals/hashCode");
           }
+
           ourStamp.set(value);
           if (value == 0) {
             ourIntermediateCache.get().clear();
@@ -130,6 +148,8 @@ public class RecursionManager {
           } else {
             checkZero();
           }
+
+          checkDepth("3");
         }
       }
 
@@ -158,10 +178,11 @@ public class RecursionManager {
 
       @Override
       public void prohibitResultCaching(Object since) {
-        ourMemoizationStamp.set(_prohibitResultCaching(since));
+        _prohibitResultCaching(since);
+        ourMemoizationStamp.set(ourMemoizationStamp.get() + 1);
       }
 
-      private int _prohibitResultCaching(Object since) {
+      private void _prohibitResultCaching(Object since) {
         int stamp = ourStamp.get() + 1;
         ourStamp.set(stamp);
 
@@ -178,10 +199,16 @@ public class RecursionManager {
         }
 
         checkZero();
-
-        return stamp;
       }
     };
+  }
+
+  private static void checkDepth(String s) {
+    LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
+    if (ourDepth.get() != progressMap.size()) {
+      ourDepth.set(progressMap.size());
+      throw new AssertionError("Inconsistent depth " + s);
+    }
   }
 
   private static void checkZero() {

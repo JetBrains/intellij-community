@@ -128,14 +128,12 @@ public class ProjectUtil {
   public static Project openProject(final String path, Project projectToClose, boolean forceOpenInNewFrame) {
     File file = new File(path);
     if (!file.exists()) {
-      Messages.showMessageDialog(IdeBundle.message("error.project.file.does.not.exist", path), CommonBundle.getErrorTitle(),
-                                 Messages.getErrorIcon());
+      Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", path), CommonBundle.getErrorTitle());
       return null;
     }
 
     if (file.isDirectory() && !new File(file, com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
-      Messages.showMessageDialog(IdeBundle.message("error.project.file.does.not.exist", new File(file, com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).getPath()), CommonBundle.getErrorTitle(),
-                                 Messages.getErrorIcon());
+      Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", new File(file, com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).getPath()), CommonBundle.getErrorTitle());
       return null;
     }
 
@@ -182,10 +180,12 @@ public class ProjectUtil {
   public static int confirmOpenNewProject() {
     final GeneralSettings settings = GeneralSettings.getInstance();
     if (settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
-      return Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.open.project"),
-                                 new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe"),
-                                       CommonBundle.getCancelButtonText()}, 1, 0, Messages.getQuestionIcon(),
-                                  new ProjectNewWindowDoNotAskOption());
+      return Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
+                                            IdeBundle.message("title.open.project"),
+                                            IdeBundle.message("button.newframe"),
+                                            IdeBundle.message("button.existingframe"), 
+                                            CommonBundle.getCancelButtonText(), Messages.getQuestionIcon(), 
+                                            new ProjectNewWindowDoNotAskOption());
     } else {
       return settings.getConfirmOpenNewProject();
     }

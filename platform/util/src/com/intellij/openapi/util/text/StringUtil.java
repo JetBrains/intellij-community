@@ -221,6 +221,14 @@ public class StringUtil {
     return Character.toLowerCase(a);
   }
 
+  public static String stripHtml(String html, boolean convertBreaks) {
+    if (convertBreaks) {
+      html = html.replaceAll("<br/?>", "\n");
+    }
+    
+    return html.replaceAll("<(.|\n)*?>", "");
+  }
+  
   @Nullable
   public static String toLowerCase(@Nullable final String str) {
     return str == null ? null : str.toLowerCase();
