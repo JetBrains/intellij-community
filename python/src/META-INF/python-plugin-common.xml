@@ -335,6 +335,7 @@
                     serviceImplementation="com.jetbrains.django.model.DjangoTagLibrary"/>
 
     <facetType implementation="com.jetbrains.django.facet.DjangoFacetType"/>
+    <framework.detector implementation="com.jetbrains.django.facet.DjangoFrameworkDetector"/>
 
     <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
@@ -422,6 +423,7 @@
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
+    <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>
 
     <configurationType implementation="com.jetbrains.appengine.run.AppEngineServerRunConfigurationType"/>
 
@@ -445,6 +447,7 @@
 
     <!-- Buildout -->
     <facetType implementation="com.jetbrains.python.buildout.BuildoutFacetType"/>
+    <framework.detector implementation="com.jetbrains.python.buildout.BuildoutFrameworkDetector"/>
 
     <lang.parserDefinition language="BuildoutCfg" implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgParserDefinition"/>
     <fileTypeFactory implementation="com.jetbrains.python.buildout.config.BuildoutCfgFileTypeFactory"/>
