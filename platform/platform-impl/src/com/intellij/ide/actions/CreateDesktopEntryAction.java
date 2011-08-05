@@ -47,7 +47,6 @@ import java.io.InputStreamReader;
 public class CreateDesktopEntryAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateDesktopEntryAction");
 
-  private static final String VENDOR_PREFIX = "jetbrains-";
   private static final int MIN_ICON_SIZE = 32;
 
   @Override
@@ -144,7 +143,7 @@ public class CreateDesktopEntryAction extends AnAction {
     content = StringUtil.replace(content, "$ICON$", iconPath);
     content = StringUtil.replace(content, "$WM_CLASS$", wmClass);
 
-    final String entryName = VENDOR_PREFIX + wmClass + ".desktop";
+    final String entryName = wmClass + ".desktop";
     final File entryFile = new File(FileUtil.getTempDirectory(), entryName);
     FileUtil.writeToFile(entryFile, content);
 

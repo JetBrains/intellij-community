@@ -36,6 +36,8 @@ import java.util.List;
  * @author yole
  */
 public class AppUIUtil {
+  private static final String VENDOR_PREFIX = "jetbrains-";
+
   private AppUIUtil() { }
 
   public static void updateFrameIcon(final Frame frame) {
@@ -83,8 +85,8 @@ public class AppUIUtil {
   }
 
   public static String getFrameClass() {
-    final String name = ApplicationNamesInfo.getInstance().getProductName();
-    final String wmClass = StringUtil.replaceChar(name.toLowerCase(), ' ', '-');
+    final String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
+    final String wmClass = VENDOR_PREFIX + StringUtil.replaceChar(name, ' ', '-');
     return PlatformUtils.isCommunity() ? wmClass + "-ce" : wmClass;
   }
 }
