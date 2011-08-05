@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.spock.SpockUtils;
 
 /**
  * @author Maxim.Medvedev
@@ -61,8 +62,12 @@ public class GroovyLabeledStatementInspection extends BaseInspection {
     @Override
     public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
       super.visitLabeledStatement(labeledStatement);
+
       final String name = labeledStatement.getLabelName();
       if (ResolveUtil.resolveLabeledStatement(name, labeledStatement, true) != null) {
+
+        if (SpockUtils.isInSpockTest(labeledStatement)) return;
+
         registerError(labeledStatement.getLabel(), name);
       }
     }
