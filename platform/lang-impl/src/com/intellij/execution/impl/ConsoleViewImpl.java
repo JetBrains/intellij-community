@@ -439,7 +439,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
         }
       });
     }
-    return myJLayeredPane;
+    return myMainPanel;
   }
 
   protected JComponent createCenterComponent() {
