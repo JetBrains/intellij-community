@@ -37,6 +37,7 @@
     <frameworkSupport implementation="com.intellij.appengine.facet.AppEngineSupportProvider"/>
     <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
     <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
+    <framework.detector implementation="com.intellij.appengine.facet.AppEngineFrameworkDetector"/>
     <compiler implementation="com.intellij.appengine.enhancement.EnhancerCompiler"/>
 
     <xml.schemaProvider implementation="com.intellij.appengine.descriptor.AppEngineWebSchemaProvider"/>
