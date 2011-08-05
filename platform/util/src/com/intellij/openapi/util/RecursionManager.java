@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -46,6 +47,7 @@ import java.util.Map;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class RecursionManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.RecursionManager");
   private static final Object NULL = new Object();
   private static final ThreadLocal<Integer> ourStamp = new ThreadLocal<Integer>() {
     @Override
@@ -114,10 +116,16 @@ public class RecursionManager {
 
         checkDepth("1");
 
+        int sizeBefore = progressMap.size();
         progressMap.put(realKey, ourStamp.get());
         ourDepth.set(ourDepth.get() + 1);
 
         checkDepth("2");
+
+        int sizeAfter = progressMap.size();
+        if (sizeAfter != sizeBefore + 1) {
+          LOG.error("Key doesn't lead to the map size increase: " + sizeBefore + " " + sizeAfter + " " + key);
+        }
 
         int startStamp = ourMemoizationStamp.get();
 
@@ -131,8 +139,16 @@ public class RecursionManager {
           return result;
         }
         finally {
+          if (sizeAfter != progressMap.size()) {
+            LOG.error("Map size changed: " + progressMap.size() + " " + sizeAfter + " " + key);
+          }
+          
           ourDepth.set(ourDepth.get() - 1);
           Integer value = progressMap.remove(realKey);
+
+          if (sizeBefore != progressMap.size()) {
+            LOG.error("Map size doesn't decrease: " + progressMap.size() + " " + sizeBefore + " " + key);
+          }
 
           if (value == null) {
             throw new AssertionError(key + " has changed its equals/hashCode");
