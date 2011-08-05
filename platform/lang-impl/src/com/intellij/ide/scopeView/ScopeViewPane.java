@@ -73,8 +73,10 @@ public class ScopeViewPane extends AbstractProjectViewPane {
         refreshProjectViewAlarm.addRequest(new Runnable(){
           public void run() {
             if (myProject.isDisposed()) return;
+            String subId = getSubId();
             myProjectView.removeProjectPane(ScopeViewPane.this);
             myProjectView.addProjectPane(ScopeViewPane.this);
+            myProjectView.changeView(getId(), subId);
           }
         },10);
       }
