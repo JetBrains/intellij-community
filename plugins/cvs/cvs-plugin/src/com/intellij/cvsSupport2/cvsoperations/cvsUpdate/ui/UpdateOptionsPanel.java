@@ -21,6 +21,8 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnVirtualFiles;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
 import com.intellij.cvsSupport2.ui.ChangeKeywordSubstitutionPanel;
+import com.intellij.openapi.options.CancelledConfigurationException;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -125,7 +127,7 @@ public class UpdateOptionsPanel {
     }
   }
 
-  public void apply() {
+  public void apply() throws ConfigurationException {
     CvsConfiguration configuration = CvsConfiguration.getInstance(myProject);
 
     configuration.CLEAN_COPY = false;
@@ -134,6 +136,8 @@ public class UpdateOptionsPanel {
         CvsBundle.message("confirmation.clean.copy"),
         CvsBundle.message("confirmation.title.clean.copy"), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
         configuration.CLEAN_COPY = true;
+      } else {
+        throw new CancelledConfigurationException();
       }
     }
 
