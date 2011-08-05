@@ -1420,6 +1420,15 @@
       </xs:complexContent>
     </xs:complexType>
   </xs:element>
+  <xs:element name="figcaption">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="xhtml:figcaption.inner">
+          <xs:attributeGroup ref="xhtml:figcaption.attrs"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
   <xs:attributeGroup name="legend.attrs">
     <xs:attributeGroup ref="common.attrs"/>
   </xs:attributeGroup>
@@ -1573,6 +1582,13 @@
   <xs:complexType name="blockquote.inner" mixed="true">
     <xs:group ref="common.inner.flow"/>
   </xs:complexType>
+
+  <xs:complexType name="figcaption.inner" mixed="true">
+    <xs:group ref="common.inner.flow"/>
+  </xs:complexType>
+  <xs:attributeGroup name="figcaption.attrs">
+    <xs:attributeGroup ref="common.attrs"/>
+  </xs:attributeGroup>
 
   <!-- ##################################################################### -->
   <xs:element name="section">
@@ -2236,6 +2252,14 @@
       <xs:sequence>
         <xs:group ref="common.inner.flow"/>
         <xs:element minOccurs="0" ref="xhtml:legend"/>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:element ref="xhtml:figcaption"/>
+        <xs:group ref="common.inner.flow"/>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:group ref="common.inner.flow"/>
+        <xs:element minOccurs="0" ref="xhtml:figcaption"/>
       </xs:sequence>
     </xs:choice>
   </xs:complexType>
