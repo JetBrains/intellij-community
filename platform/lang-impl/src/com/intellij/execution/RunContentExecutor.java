@@ -36,6 +36,7 @@ public class RunContentExecutor {
   private Runnable myRerun;
   private Runnable myAfterCompletion;
   private String myTitle = "Output";
+  private String myHelpId = null;
 
   public RunContentExecutor(Project project, ProcessHandler process) {
     myProject = project;
@@ -62,6 +63,11 @@ public class RunContentExecutor {
     return this;
   }
 
+  public RunContentExecutor withHelpId(String helpId) {
+    myHelpId = helpId;
+    return this;
+  }
+
   private ConsoleView createConsole(Project project, ProcessHandler processHandler) {
     TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     for (Filter filter : myFilterList) {
@@ -76,6 +82,9 @@ public class RunContentExecutor {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ConsoleView view = createConsole(myProject, myProcess);
+    if (myHelpId != null) {
+      view.setHelpId(myHelpId);
+    }
     Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
     DefaultActionGroup actions = new DefaultActionGroup();
 
@@ -104,7 +113,7 @@ public class RunContentExecutor {
     myProcess.startNotify();
   }
 
-  private static JComponent createConsolePanel(ConsoleView view,   ActionGroup actions) {
+  private static JComponent createConsolePanel(ConsoleView view, ActionGroup actions) {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
     panel.add(view.getComponent(), BorderLayout.CENTER);
