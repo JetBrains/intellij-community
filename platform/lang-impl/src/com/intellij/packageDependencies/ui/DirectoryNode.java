@@ -75,6 +75,10 @@ public class DirectoryNode extends PackageDependenciesNode {
             myFQName = VfsUtil.getRelativePath(myVDirectory, contentRoot, '/');
           }
         }
+
+        if (contentRoots.length > 1 && ProjectRootsUtil.isModuleContentRoot(myVDirectory, project)) {
+          myFQName = getContentRootName(baseDir, myFQName);
+        }
       }
       else {
         myFQName = FilePatternPackageSet.getLibRelativePath(myVDirectory, index);
@@ -82,21 +86,26 @@ public class DirectoryNode extends PackageDependenciesNode {
       dirName = myFQName;
     } else {
       if (contentRoots.length > 1 && ProjectRootsUtil.isModuleContentRoot(myVDirectory, project)) {
-        if (baseDir != null) {
-          if (myVDirectory != baseDir) {
-            if (VfsUtil.isAncestor(baseDir, myVDirectory, false)) {
-              dirName = VfsUtil.getRelativePath(myVDirectory, baseDir, '/');
-            } else {
-              dirName = myVDirectory.getPresentableUrl();
-            }
-          }
-        } else {
-          dirName = myVDirectory.getPresentableUrl();
-        }
+        dirName = getContentRootName(baseDir, dirName);
       }
     }
     myDirName = dirName;
     myCompactPackages = compactPackages;
+  }
+
+  private String getContentRootName(final VirtualFile baseDir, final String dirName) {
+    if (baseDir != null) {
+      if (myVDirectory != baseDir) {
+        if (VfsUtil.isAncestor(baseDir, myVDirectory, false)) {
+          return VfsUtil.getRelativePath(myVDirectory, baseDir, '/');
+        } else {
+          return myVDirectory.getPresentableUrl();
+        }
+      }
+    } else {
+      return myVDirectory.getPresentableUrl();
+    }
+    return dirName;
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
