@@ -17,6 +17,7 @@ package com.intellij.xml.util.documentation;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -38,6 +39,12 @@ public class HtmlDescriptorsTable {
 
   @NonNls
   public static final String HTML5TABLE_RESOURCE_NAME = "html5table.xml";
+
+  @NonNls
+  private static final String MATHML_RESOURCE_NAME = "mathmltable.xml";
+
+  @NonNls
+  private static final String SVG_RESOURCE_NAME = "svgtable.xml";
 
   @NonNls
   public static final String TAG_ELEMENT_NAME = "tag";
@@ -75,11 +82,15 @@ public class HtmlDescriptorsTable {
 
   static {
     try {
-      List<String> htmlTagNames = new ArrayList<String>();
+      Set<String> htmlTagNames = new HashSet<String>();
 
       loadHtmlElements(HTMLTABLE_RESOURCE_NAME, htmlTagNames);
 
       loadHtmlElements(HTML5TABLE_RESOURCE_NAME, htmlTagNames);
+
+      loadHtmlElements(MATHML_RESOURCE_NAME, htmlTagNames);
+
+      loadHtmlElements(SVG_RESOURCE_NAME, htmlTagNames);
 
       ourHtmlTagNames = ArrayUtil.toStringArray(htmlTagNames);
 
@@ -89,7 +100,7 @@ public class HtmlDescriptorsTable {
     }
   }
 
-  private static void loadHtmlElements(final String resourceName, List<String> htmlTagNames) throws JDOMException, IOException {
+  private static void loadHtmlElements(final String resourceName, Collection<String> htmlTagNames) throws JDOMException, IOException {
     final Document document = JDOMUtil.loadDocument(HtmlDescriptorsTable.class.getResourceAsStream(resourceName));
     final List elements = document.getRootElement().getChildren(TAG_ELEMENT_NAME);
     final String baseHtmlExtDocUrl = document.getRootElement().getAttribute(BASE_HELP_REF_ATTR).getValue();

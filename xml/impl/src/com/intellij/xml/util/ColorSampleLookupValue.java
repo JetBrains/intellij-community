@@ -152,6 +152,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
                                                      "  \t  \tgold \t#ffd700 \t255,215,0\n" +
                                                      "  \t  \tgoldenrod \t#daa520 \t218,165,32\n" +
                                                      "  \t  \tgray \t#808080 \t128,128,128\n" +
+                                                     "  \t  \tgrey \t#808080 \t128,128,128\n" +
                                                      "  \t  \tgreen \t#008000 \t0,128,0\n" +
                                                      "  \t  \tgreenyellow \t#adff2f \t173,255,47\n" +
                                                      "  \t  \thoneydew \t#f0fff0 \t240,255,240\n" +

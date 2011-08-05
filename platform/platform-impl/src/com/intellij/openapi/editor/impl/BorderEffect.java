@@ -16,13 +16,14 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
 
@@ -50,29 +51,12 @@ public class BorderEffect {
                               }
                             };
 
-  public BorderEffect(EditorImpl editor, Graphics graphics) {
+  public BorderEffect(EditorImpl editor, Graphics graphics, int clipStartOffset, int clipEndOffset) {
     myEditor = editor;
     myGraphics = graphics;
-    Rectangle clipBounds = myGraphics.getClipBounds();
-    myStartOffset = yToLineStartOffset(editor, clipBounds.y);
-    myEndOffset = yToLineStartOffset(editor, clipBounds.y + clipBounds.height + editor.getLineHeight());
+    myStartOffset = clipStartOffset;
+    myEndOffset = clipEndOffset;
     myRange = new TextRange(myStartOffset, myEndOffset);
-  }
-
-  private static int yToLineStartOffset(EditorImpl editor, int y) {
-    Point point = new Point(0, y);
-    LogicalPosition logicalStart = editor.xyToLogicalPosition(point);
-    return editor.logicalPositionToOffset(logicalStart);
-  }
-
-  public void paintHighlighters(RangeHighlighter[] highlighterList) {
-    for (RangeHighlighter aHighlighterList : highlighterList) {
-      RangeHighlighterEx rangeHighlighter = (RangeHighlighterEx)aHighlighterList;
-      if (rangeHighlighter.isValid()) {
-        TextAttributes textAttributes = rangeHighlighter.getTextAttributes();
-        if (isBorder(textAttributes) && intersectsRange(rangeHighlighter)) paintBorder(rangeHighlighter);
-      }
-    }
   }
 
   private static boolean isBorder(TextAttributes textAttributes) {
@@ -81,11 +65,11 @@ public class BorderEffect {
            (EffectType.BOXED == textAttributes.getEffectType() || EffectType.ROUNDED_BOX == textAttributes.getEffectType());
   }
 
-  private void paintBorder(RangeHighlighterEx rangeHighlighter) {
-    paintBorder(rangeHighlighter.getTextAttributes().getEffectColor(),
+  private void paintBorder(RangeHighlighterEx rangeHighlighter, TextAttributes textAttributes) {
+    paintBorder(textAttributes.getEffectColor(),
                 rangeHighlighter.getAffectedAreaStartOffset(),
                 rangeHighlighter.getAffectedAreaEndOffset(),
-                rangeHighlighter.getTextAttributes().getEffectType());
+                textAttributes.getEffectType());
   }
 
   private void paintBorder(Color color, int startOffset, int endOffset, EffectType effectType) {
@@ -97,9 +81,22 @@ public class BorderEffect {
            myRange.contains(rangeHighlighter.getAffectedAreaEndOffset());
   }
 
+  public void paintHighlighters(MarkupModelEx markupModel) {
+    markupModel.processHighlightsOverlappingWith(myStartOffset, myEndOffset, new Processor<RangeHighlighterEx>() {
+      @Override
+      public boolean process(RangeHighlighterEx rangeHighlighter) {
+        TextAttributes textAttributes = rangeHighlighter.getTextAttributes();
+        if (isBorder(textAttributes) && intersectsRange(rangeHighlighter)) {
+          paintBorder(rangeHighlighter, textAttributes);
+        }
+        return true;
+      }
+    });
+  }
+
   public void paintHighlighters(EditorHighlighter highlighter) {
     int startOffset = startOfLineByOffset(myStartOffset);
-    if (0 > startOffset || startOffset >= myEditor.getDocument().getTextLength()) return;
+    if (startOffset < 0 || startOffset >= myEditor.getDocument().getTextLength()) return;
     RangeIterator iterator = new RangeIterator(new FoldingOrNewLineGaps(myEditor), SAME_COLOR_BOXES,
                                                highlighter.createIterator(startOffset),
                                                BOX_FILTER);
@@ -112,7 +109,7 @@ public class BorderEffect {
   }
 
   private int startOfLineByOffset(int offset) {
-    int line = myEditor.offsetToLogicalPosition(offset).line;
+    int line = myEditor.offsetToLogicalLine(offset);
     if (line >= myEditor.getDocument().getLineCount()) return -1;
     return myEditor.getDocument().getLineStartOffset(line);
   }

@@ -299,7 +299,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         moveToOffset(softWrapOffset);
       }
       else {
-        int line = myEditor.offsetToVisualPosition(softWrapOffset - 1).line;
+        int line = myEditor.offsetToVisualLine(softWrapOffset - 1);
         moveToVisualPosition(new VisualPosition(line, EditorUtil.getLastVisualLineColumnNumber(myEditor, line)));
       }
     }

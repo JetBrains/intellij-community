@@ -100,7 +100,8 @@ class DaemonListeners implements Disposable {
   public DaemonListeners(@NotNull Project project, @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer, @NotNull EditorTracker editorTracker) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
-    LOG.assertTrue(((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE), "Daemon listeners already initialized for the project "+myProject);
+    boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE);
+    LOG.assertTrue(replaced, "Daemon listeners already initialized for the project "+myProject);
 
     MessageBus messageBus = myProject.getMessageBus();
     myDaemonEventPublisher = messageBus.syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC);
@@ -272,8 +273,8 @@ class DaemonListeners implements Disposable {
   }
 
   static boolean isUnderIgnoredAction(@Nullable Object action) {
-    if (action instanceof DocumentRunnable.IgnoreDocumentRunnable) return true;
-    return ApplicationManager.getApplication().hasWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
+    return action instanceof DocumentRunnable.IgnoreDocumentRunnable ||
+           ApplicationManager.getApplication().hasWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
   }
 
   private boolean worthBothering(final Document document, Project project) {
@@ -285,7 +286,8 @@ class DaemonListeners implements Disposable {
   }
 
   public void dispose() {
-    LOG.assertTrue(((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, Boolean.TRUE, Boolean.FALSE), "Daemon listeners already disposed for the project "+myProject);
+    boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, Boolean.TRUE, Boolean.FALSE);
+    LOG.assertTrue(replaced, "Daemon listeners already disposed for the project "+myProject);
   }
 
   boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {

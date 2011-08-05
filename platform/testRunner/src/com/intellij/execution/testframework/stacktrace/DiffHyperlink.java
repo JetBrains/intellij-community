@@ -38,13 +38,22 @@ public class DiffHyperlink implements Printable {
   protected final String myExpected;
   protected final String myActual;
   protected final String myFilePath;
+  private boolean myPrintOneLine;
   private final HyperlinkInfo myDiffHyperlink = new DiffHyperlinkInfo();
 
 
   public DiffHyperlink(final String expected, final String actual, final String filePath) {
+    this(expected, actual, filePath, true);
+  }
+
+  public DiffHyperlink(final String expected,
+                       final String actual,
+                       final String filePath,
+                       boolean printOneLine) {
     myExpected = expected;
     myActual = actual;
     myFilePath = filePath == null ? null : filePath.replace(File.separatorChar, '/');
+    myPrintOneLine = printOneLine;
   }
 
   public void openDiff(final Project project) {
@@ -81,7 +90,7 @@ public class DiffHyperlink implements Printable {
   }
 
   public void printOn(final Printer printer) {
-    if (!hasMoreThanOneLine(myActual) && !hasMoreThanOneLine(myExpected)) {
+    if (!hasMoreThanOneLine(myActual) && !hasMoreThanOneLine(myExpected) && myPrintOneLine) {
       printer.print(NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
       printer.print(ExecutionBundle.message("diff.content.expected.for.file.title"), ConsoleViewContentType.SYSTEM_OUTPUT);
       printer.print(myExpected + NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);

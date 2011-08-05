@@ -706,15 +706,23 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private Runnable createUpdateRunnable() {
     return new Runnable() {
       public void run() {
+        PassExecutorService.log(myUpdateProgress, null, "Update Runnable. myUpdateByTimerEnabled:",myUpdateByTimerEnabled," something disposed:",PowerSaveMode.isEnabled() || myDisposed || !myProject.isInitialized()," activeEditors:",myProject.isDisposed() ? null : myDaemonListeners.getSelectedEditors());
         if (!myUpdateByTimerEnabled) return;
         if (PowerSaveMode.isEnabled()) return;
         if (myDisposed || !myProject.isInitialized()) return;
+        ApplicationManager.getApplication().assertIsDispatchThread();
+
         final Collection<FileEditor> activeEditors = myDaemonListeners.getSelectedEditors();
         if (activeEditors.isEmpty()) return;
         Editor active = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
 
         Runnable runnable = new Runnable() {
           public void run() {
+            ApplicationManager.getApplication().assertIsDispatchThread();
+            if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+              // makes no sense to start from within write action, will cancel anyway
+              ApplicationManager.getApplication().invokeLater(this, myProject.getDisposed());
+            }
             Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.size());
             for (FileEditor fileEditor : activeEditors) {
               BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();

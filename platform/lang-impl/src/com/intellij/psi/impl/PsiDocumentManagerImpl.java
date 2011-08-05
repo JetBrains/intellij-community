@@ -410,6 +410,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       List<Object> keys = new ArrayList<Object>(actionsWhenAllDocumentsAreCommitted.keySet());
       for (Object key : keys) {
         Runnable action = actionsWhenAllDocumentsAreCommitted.remove(key);
+        myDocumentCommitThread.log("Running after commit runnable: ",document, false, key, action);
         action.run();
       }
     }

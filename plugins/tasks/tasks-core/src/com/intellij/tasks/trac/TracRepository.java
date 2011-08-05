@@ -58,10 +58,12 @@ public class TracRepository extends BaseRepositoryImpl {
     if (myMaxSupported == null) {
       try {
         result = runQuery(query, transport, client, search);
-        myMaxSupported = true;
+        if (result != null) {
+          myMaxSupported = true;
+        }
       }
       catch (XmlRpcException e) {
-        if (e.getMessage().contains("Unknown column 't.max'")) {
+        if (e.getMessage().contains("t.max")) {
           myMaxSupported = false;
         }
         else throw e;

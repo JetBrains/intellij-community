@@ -165,10 +165,12 @@ public class ScopeEditorPanel {
   private void onTextChange() {
     if (!myIsInUpdate) {
       myUpdateAlarm.cancelAllRequests();
-      myCurrentScope = null;
+      final String text = myPatternField.getText();
+      myCurrentScope = new InvalidPackageSet(text);
       try {
-        final String text = myPatternField.getText();
-        myCurrentScope = StringUtil.isEmpty(text) ? null: PackageSetFactory.getInstance().compile(text);
+        if (!StringUtil.isEmpty(text)) {
+          myCurrentScope = PackageSetFactory.getInstance().compile(text);
+        }
         myErrorMessage = null;
         myTextChanged = true;
         rebuild(false);
@@ -178,9 +180,25 @@ public class ScopeEditorPanel {
         showErrorMessage();
       }
     }
-    else {
+    else if (!invalidScopeInside(myCurrentScope)){
       myErrorMessage = null;
     }
+  }
+
+  private static boolean invalidScopeInside(PackageSet currentScope) {
+    if (currentScope instanceof InvalidPackageSet) return true;
+    if (currentScope instanceof UnionPackageSet) {
+      if (invalidScopeInside(((UnionPackageSet)currentScope).getFirstSet())) return true;
+      if (invalidScopeInside(((UnionPackageSet)currentScope).getSecondSet())) return true;
+    }
+    if (currentScope instanceof IntersectionPackageSet) {
+      if (invalidScopeInside(((IntersectionPackageSet)currentScope).getFirstSet())) return true;
+      if (invalidScopeInside(((IntersectionPackageSet)currentScope).getSecondSet())) return true;
+    }
+    if (currentScope instanceof ComplementPackageSet) {
+      return invalidScopeInside(((ComplementPackageSet)currentScope).getComplementarySet());
+    }
+    return false;
   }
 
   private void showErrorMessage() {
@@ -256,7 +274,10 @@ public class ScopeEditorPanel {
     for (PackageSet set : selected) {
       if (myCurrentScope == null) {
         myCurrentScope = new ComplementPackageSet(set);
-      } else {
+      } else if (myCurrentScope instanceof InvalidPackageSet) {
+        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? new ComplementPackageSet(set) : new IntersectionPackageSet(myCurrentScope, new ComplementPackageSet(set));
+      }
+      else {
         final boolean[] append = {true};
         final PackageSet simplifiedScope = processComplementaryScope(myCurrentScope, set, false, append);
         if (!append[0]) {
@@ -276,6 +297,9 @@ public class ScopeEditorPanel {
     for (PackageSet set : selected) {
       if (myCurrentScope == null) {
         myCurrentScope = set;
+      }
+      else if (myCurrentScope instanceof InvalidPackageSet) {
+        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? set : new UnionPackageSet(myCurrentScope, set);
       }
       else {
         final boolean[] append = {true};
@@ -383,13 +407,11 @@ public class ScopeEditorPanel {
             myIsInUpdate = true;
             if (updateText) {
               final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
-              if (text != null) {
-                SwingUtilities.invokeLater(new Runnable() {
-                  public void run() {
-                    myPatternField.setText(text);
-                  }
-                });
-              }
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  myPatternField.setText(text);
+                }
+              });
             }
             try {
               if (!myProject.isDisposed()) {

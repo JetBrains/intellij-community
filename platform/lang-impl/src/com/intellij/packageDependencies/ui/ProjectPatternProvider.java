@@ -93,7 +93,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       String pattern = ((DirectoryNode)node).getFQName();
       if (pattern != null) {
         if (pattern.length() > 0) {
-          pattern += recursively ? "/*" : "*";
+          pattern += recursively ? "//*" : "/*";
         }
         else {
           pattern += recursively ? "*/" : "*";
