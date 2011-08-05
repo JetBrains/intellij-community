@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,6 @@ public class IgnoreFileAction extends AnAction {
 
   public IgnoreFileAction() {
     myVisibility.canBePerformedOnSeveralFiles();
-    myVisibility.addCondition(ActionOnSelectedElement.FILES_HAVE_PARENT_UNDER_CVS);
     myVisibility.addCondition(ActionOnSelectedElement.FILES_ARENT_UNDER_CVS);
     myVisibility.addCondition(ActionOnSelectedElement.FILES_ARE_NOT_IGNORED);
   }
