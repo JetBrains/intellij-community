@@ -344,6 +344,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                              myPresentation.getScopeText());
 
               if (notFoundActions == null || notFoundActions.isEmpty()) {
+                //noinspection SSBasedInspection
                 ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
                                                                          XmlStringUtil.escapeString(message),
                                                                          IconLoader.getIcon("/actions/find.png"), null);
