@@ -26,7 +26,15 @@ import java.awt.*;
 public class ScreenUtil {
   private ScreenUtil() {
   }
-  
+
+  public static boolean isVisible(Rectangle bounds) {
+    final Rectangle intersection = getScreenBounds().intersection(bounds);
+    final int sq1 = intersection.width * intersection.height;
+    final int sq2 = bounds.width * bounds.height;
+    if (sq1 == 0 || sq2 == 0) return false;
+    return (double)sq1 / (double)sq2 > 0.1;
+  }
+
   public static Rectangle getScreenBounds() {
     Rectangle screenBounds = new Rectangle();
     final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
