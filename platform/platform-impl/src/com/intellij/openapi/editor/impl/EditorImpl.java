@@ -74,6 +74,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
@@ -1603,39 +1604,41 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     if (myProject != null && myProject.isDisposed()) return;
 
-    paintBackgrounds(g, clip);
+    VisualPosition clipStartVisualPos = xyToVisualPosition(new Point(0, clip.y));
+    LogicalPosition clipStartPosition = visualToLogicalPosition(clipStartVisualPos);
+    int clipStartOffset = logicalPositionToOffset(clipStartPosition);
+    LogicalPosition clipEndPosition = xyToLogicalPosition(new Point(0, clip.y + clip.height + getLineHeight()));
+    int clipEndOffset = logicalPositionToOffset(clipEndPosition);
+    paintBackgrounds(g, clip, clipStartPosition, clipStartVisualPos, clipStartOffset, clipEndOffset);
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
-    paintCustomRenderers((Graphics2D)g, clip);
-    final MarkupModel docMarkup = myDocument.getMarkupModel(myProject);
-    paintLineMarkersSeparators(g, clip, docMarkup);
-    paintLineMarkersSeparators(g, clip, myMarkupModel);
-    paintText(g, clip);
+    paintCustomRenderers((Graphics2D)g, clipStartOffset, clipEndOffset);
+    MarkupModelEx docMarkup = (MarkupModelEx)myDocument.getMarkupModel(myProject);
+    paintLineMarkersSeparators(g, clip, docMarkup, clipStartOffset, clipEndOffset);
+    paintLineMarkersSeparators(g, clip, myMarkupModel, clipStartOffset, clipEndOffset);
+    paintText(g, clip, clipStartPosition, clipStartOffset, clipEndOffset);
     paintPlaceholderText(g, clip);
-    paintSegmentHighlightersBorderAndAfterEndOfLine(g, clip);
-    BorderEffect borderEffect = new BorderEffect(this, g);
+    paintSegmentHighlightersBorderAndAfterEndOfLine(g, clip, clipStartOffset, clipEndOffset, docMarkup);
+    BorderEffect borderEffect = new BorderEffect(this, g, clipStartOffset, clipEndOffset);
     borderEffect.paintHighlighters(getHighlighter());
-    borderEffect.paintHighlighters(docMarkup.getAllHighlighters());
-    borderEffect.paintHighlighters(getMarkupModel().getAllHighlighters());
+    borderEffect.paintHighlighters(docMarkup);
+    borderEffect.paintHighlighters(myMarkupModel);
     paintCaretCursor(g);
     
     paintComposedTextDecoration((Graphics2D)g);
   }
 
-  private void paintCustomRenderers(Graphics2D g, Rectangle clip) {
-    MarkupModel mm = myMarkupModel;
-
-    int clipStartOffset = logicalPositionToOffset(xyToLogicalPosition(new Point(0, clip.y)));
-    int clipEndOffset = logicalPositionToOffset(xyToLogicalPosition(new Point(0, clip.y + clip.height + getLineHeight())));
-
-    for (RangeHighlighter highlighter : mm.getAllHighlighters()) {
-      if (highlighter.isValid()) {
+  private void paintCustomRenderers(final Graphics2D g, final int clipStartOffset, final int clipEndOffset) {
+    myMarkupModel.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
+      @Override
+      public boolean process(RangeHighlighterEx highlighter) {
         final CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
-        if (customRenderer != null && clipStartOffset < highlighter.getEndOffset() && clipEndOffset > highlighter.getStartOffset()) {
-          customRenderer.paint(this, highlighter, g);
+        if (customRenderer != null && clipStartOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < clipEndOffset) {
+          customRenderer.paint(EditorImpl.this, highlighter, g);
         }
+        return true;
       }
-    }
+    });
   }
 
   public IndentsModel getIndentsModel() {
@@ -1736,72 +1739,73 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void paintSegmentHighlightersBorderAndAfterEndOfLine(Graphics g, Rectangle clip) {
+  private void paintSegmentHighlightersBorderAndAfterEndOfLine(final Graphics g,
+                                                               Rectangle clip,
+                                                               int clipStartOffset,
+                                                               int clipEndOffset, MarkupModelEx docMarkup) {
     if (myDocument.getLineCount() == 0) return;
-    int startLine = yPositionToVisibleLine(clip.y);
-    int endLine = yPositionToVisibleLine(clip.y + clip.height) + 1;
+    final int startLine = yPositionToVisibleLine(clip.y);
+    final int endLine = yPositionToVisibleLine(clip.y + clip.height) + 1;
 
-    final MarkupModel docMarkup = myDocument.getMarkupModel(myProject);
-    RangeHighlighter[] segmentHighlighters = docMarkup.getAllHighlighters();
-    for (RangeHighlighter segmentHighlighter : segmentHighlighters) {
-      paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighter, startLine, endLine);
-    }
-
-    segmentHighlighters = getMarkupModel().getAllHighlighters();
-    for (RangeHighlighter segmentHighlighter : segmentHighlighters) {
-      paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighter, startLine, endLine);
-    }
+    Processor<RangeHighlighterEx> paintProcessor = new Processor<RangeHighlighterEx>() {
+      @Override
+      public boolean process(RangeHighlighterEx highlighter) {
+        paintSegmentHighlighterAfterEndOfLine(g, highlighter, startLine, endLine);
+        return true;
+      }
+    };
+    docMarkup.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, paintProcessor);
+    myMarkupModel.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, paintProcessor);
   }
 
   private void paintSegmentHighlighterAfterEndOfLine(Graphics g,
                                                      RangeHighlighterEx segmentHighlighter,
                                                      int startLine,
                                                      int endLine) {
-    if (!segmentHighlighter.isValid()) {
+    if (!segmentHighlighter.isAfterEndOfLine()) {
       return;
     }
-    if (segmentHighlighter.isAfterEndOfLine()) {
-      int startOffset = segmentHighlighter.getStartOffset();
-      int visibleStartLine = offsetToVisualLine(startOffset);
+    int startOffset = segmentHighlighter.getStartOffset();
+    int visibleStartLine = offsetToVisualLine(startOffset);
 
-      if (!getFoldingModel().isOffsetCollapsed(startOffset)) {
-        if (visibleStartLine >= startLine && visibleStartLine <= endLine) {
-          int logStartLine = offsetToLogicalLine(startOffset);
-          if (logStartLine >= myDocument.getLineCount()) {
-            return;
-          }
-          LogicalPosition logPosition = offsetToLogicalPosition(myDocument.getLineEndOffset(logStartLine));
-          Point end = logicalPositionToXY(logPosition);
-          int charWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);
-          int lineHeight = getLineHeight();
-          TextAttributes attributes = segmentHighlighter.getTextAttributes();
-          if (attributes != null && getBackgroundColor(attributes) != null) {
-            g.setColor(getBackgroundColor(attributes));
-            g.fillRect(end.x, end.y, charWidth, lineHeight);
-          }
-          if (attributes != null && attributes.getEffectColor() != null) {
-            int y = visibleLineToY(visibleStartLine) + getLineHeight() - getDescent() + 1;
-            g.setColor(attributes.getEffectColor());
-            if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
-              drawWave(g, end.x, end.x + charWidth - 1, y);
-            }
-            else if (attributes.getEffectType() == EffectType.BOLD_DOTTED_LINE) {
-              final int dottedAt = SystemInfo.isMac ? y - 1 : y;
-              UIUtil.drawBoldDottedLine((Graphics2D)g, end.x, end.x + charWidth - 1, dottedAt,
-                                        getBackgroundColor(attributes), attributes.getEffectColor(), false);
-            }
-            else if (attributes.getEffectType() == EffectType.STRIKEOUT) {
-              int y1 = y - getCharHeight() / 2 - 1;
-              UIUtil.drawLine(g, end.x, y1, end.x + charWidth - 1, y1);
-            }
-            else if (attributes.getEffectType() == EffectType.BOLD_LINE_UNDERSCORE) {
-              UIUtil.drawLine(g, end.x, y - 1, end.x + charWidth - 1, y - 1);
-              UIUtil.drawLine(g, end.x, y, end.x + charWidth - 1, y);
-            }
-            else if (attributes.getEffectType() != EffectType.BOXED) {
-              UIUtil.drawLine(g, end.x, y, end.x + charWidth - 1, y);
-            }
-          }
+    if (getFoldingModel().isOffsetCollapsed(startOffset)) {
+      return;
+    }
+    if (visibleStartLine >= startLine && visibleStartLine <= endLine) {
+      int logStartLine = offsetToLogicalLine(startOffset);
+      if (logStartLine >= myDocument.getLineCount()) {
+        return;
+      }
+      LogicalPosition logPosition = offsetToLogicalPosition(myDocument.getLineEndOffset(logStartLine));
+      Point end = logicalPositionToXY(logPosition);
+      int charWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);
+      int lineHeight = getLineHeight();
+      TextAttributes attributes = segmentHighlighter.getTextAttributes();
+      if (attributes != null && getBackgroundColor(attributes) != null) {
+        g.setColor(getBackgroundColor(attributes));
+        g.fillRect(end.x, end.y, charWidth, lineHeight);
+      }
+      if (attributes != null && attributes.getEffectColor() != null) {
+        int y = visibleLineToY(visibleStartLine) + getLineHeight() - getDescent() + 1;
+        g.setColor(attributes.getEffectColor());
+        if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
+          drawWave(g, end.x, end.x + charWidth - 1, y);
+        }
+        else if (attributes.getEffectType() == EffectType.BOLD_DOTTED_LINE) {
+          final int dottedAt = SystemInfo.isMac ? y - 1 : y;
+          UIUtil.drawBoldDottedLine((Graphics2D)g, end.x, end.x + charWidth - 1, dottedAt,
+                                    getBackgroundColor(attributes), attributes.getEffectColor(), false);
+        }
+        else if (attributes.getEffectType() == EffectType.STRIKEOUT) {
+          int y1 = y - getCharHeight() / 2 - 1;
+          UIUtil.drawLine(g, end.x, y1, end.x + charWidth - 1, y1);
+        }
+        else if (attributes.getEffectType() == EffectType.BOLD_LINE_UNDERSCORE) {
+          UIUtil.drawLine(g, end.x, y - 1, end.x + charWidth - 1, y - 1);
+          UIUtil.drawLine(g, end.x, y, end.x + charWidth - 1, y);
+        }
+        else if (attributes.getEffectType() != EffectType.BOXED) {
+          UIUtil.drawLine(g, end.x, y, end.x + charWidth - 1, y);
         }
       }
     }
@@ -1824,26 +1828,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return width;
   }
 
-  @SuppressWarnings({"StatementWithEmptyBody"})
-  private void paintBackgrounds(Graphics g, Rectangle clip) {
+  private void paintBackgrounds(Graphics g,
+                                Rectangle clip,
+                                LogicalPosition clipStartPosition,
+                                VisualPosition clipStartVisualPos,
+                                int clipStartOffset, int clipEndOffset) {
     Color defaultBackground = getBackgroundColor();
     g.setColor(defaultBackground);
     g.fillRect(clip.x, clip.y, clip.width, clip.height);
 
     int lineHeight = getLineHeight();
 
-    int visibleLine = clip.y / lineHeight;
-
-    VisualPosition visualPosition = xyToVisualPosition(new Point(0, clip.y));
-    LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
+    int visibleLine = yPositionToVisibleLine(clip.y);
 
     Point position = new Point(0, visibleLine * lineHeight);
-    if (visualPosition.line == 0 && myPrefixText != null) {
+    if (clipStartVisualPos.line == 0 && myPrefixText != null) {
       position.x = drawBackground(g, myPrefixAttributes.getBackgroundColor(), new String(myPrefixText), position, myPrefixAttributes.getFontType(),
                                   defaultBackground, clip);
     }
 
-    if (logicalPosition.line >= myDocument.getLineCount() || logicalPosition.line < 0) {
+    if (clipStartPosition.line >= myDocument.getLineCount() || clipStartPosition.line < 0) {
       if (position.x > 0) flushBackground(g, clip);
       return;
     }
@@ -1852,10 +1856,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myLastBackgroundColor = null;
     
     boolean locateBeforeSoftWrap = !SoftWrapHelper.isCaretAfterSoftWrap(this);
-    int start = logicalPositionToOffset(logicalPosition);
-    VisualPosition endVisualPosition = xyToVisualPosition(new Point(0, clip.y + clip.height + getLineHeight()));
-    LogicalPosition endLogicalPosition = visualToLogicalPosition(endVisualPosition);
-    int end = logicalPositionToOffset(endLogicalPosition);
+    int start = clipStartOffset;
+    int end = clipEndOffset;
     getSoftWrapModel().registerSoftWrapsIfNecessary();
     IterationState iterationState = new IterationState(this, start, end, isPaintSelection());
 
@@ -2266,7 +2268,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myDocument.createLineIterator();
   }
 
-  private void paintText(Graphics g, Rectangle clip) {
+  private void paintText(Graphics g,
+                         Rectangle clip,
+                         LogicalPosition clipStartPosition,
+                         int clipStartOffset, int clipEndOffset) {
     myCurrentFontType = null;
     myLastCache = null;
     final int plainSpaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);
@@ -2285,11 +2290,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // visual line in order to use it for further processing. As soon as necessary number of visual lines is skipped, logical
     // position is expected to be set to null as an indication that no soft wrap-introduced visual lines should be skipped on
     // current painting iteration.
-    Ref<LogicalPosition> logicalPosition = new Ref<LogicalPosition>(xyToLogicalPosition(new Point(0, clip.y)));
-    LogicalPosition endLogicalPosition = xyToLogicalPosition(new Point(0, clip.y + clip.height + getLineHeight()));
+    Ref<LogicalPosition> logicalPosition = new Ref<LogicalPosition>(clipStartPosition);
     int startLine = logicalPosition.get().line;
-    int start = logicalPositionToOffset(logicalPosition.get());
-    int end = logicalPositionToOffset(endLogicalPosition);
+    int start = clipStartOffset;
 
     Point position = new Point(0, visibleLine * lineHeight);
     if (startLine == 0 && myPrefixText != null) {
@@ -2302,7 +2305,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    IterationState iterationState = new IterationState(this, start, end, isPaintSelection());
+    IterationState iterationState = new IterationState(this, start, clipEndOffset, isPaintSelection());
     LineIterator lIterator = createLineIterator();
     lIterator.start(start);
     if (lIterator.atEnd()) {
@@ -2507,58 +2510,63 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCaretCursor.paint(g);
   }
 
-  private void paintLineMarkersSeparators(Graphics g, Rectangle clip, MarkupModel markupModel) {
-    if (markupModel == null) return;
-    RangeHighlighter[] lineMarkers = markupModel.getAllHighlighters();
-    for (RangeHighlighter lineMarker : lineMarkers) {
-      paintLineMarkerSeparator(lineMarker, clip, g);
-    }
+  private void paintLineMarkersSeparators(final Graphics g,
+                                          final Rectangle clip,
+                                          @NotNull MarkupModelEx markupModel,
+                                          int clipStartOffset,
+                                          int clipEndOffset) {
+    markupModel.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
+      @Override
+      public boolean process(RangeHighlighterEx lineMarker) {
+        paintLineMarkerSeparator(lineMarker, clip, g);
+        return true;
+      }
+    });
   }
 
   private void paintLineMarkerSeparator(RangeHighlighter marker, Rectangle clip, Graphics g) {
-    if (!marker.isValid()) {
+    Color separatorColor = marker.getLineSeparatorColor();
+    if (separatorColor == null) {
       return;
     }
-    Color separatorColor = marker.getLineSeparatorColor();
-    if (separatorColor != null) {
-      int line = marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP ? marker.getDocument()
-        .getLineNumber(marker.getStartOffset()) : marker.getDocument().getLineNumber(marker.getEndOffset());
-      if (line < 0 || line >= myDocument.getLineCount()) {
-        return;
-      }
+    int line = marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP ? marker.getDocument()
+      .getLineNumber(marker.getStartOffset()) : marker.getDocument().getLineNumber(marker.getEndOffset());
+    if (line < 0 || line >= myDocument.getLineCount()) {
+      return;
+    }
 
-      // There is a possible case that particular logical line occupies more than one visual line (because of soft wraps processing),
-      // hence, we need to consider that during calculating 'y' position for the last visual line used for the target logical
-      // line representation.
-      int y;
-      SeparatorPlacement placement = marker.getLineSeparatorPlacement();
-      if (placement == SeparatorPlacement.TOP) {
-        y = visibleLineToY(logicalToVisualLine(line));
+    // There is a possible case that particular logical line occupies more than one visual line (because of soft wraps processing),
+    // hence, we need to consider that during calculating 'y' position for the last visual line used for the target logical
+    // line representation.
+    int y;
+    SeparatorPlacement placement = marker.getLineSeparatorPlacement();
+    if (placement == SeparatorPlacement.TOP) {
+      y = visibleLineToY(logicalToVisualLine(line));
+    }
+    else {
+      if (line + 1 >= myDocument.getLineCount()) {
+        y = visibleLineToY(offsetToVisualLine(myDocument.getTextLength()));
       }
       else {
-        if (line + 1 >= myDocument.getLineCount()) {
-          y = visibleLineToY(offsetToVisualLine(myDocument.getTextLength()));
-        }
-        else {
-          y = logicalLineToY(line + 1);
-        }
+        y = logicalLineToY(line + 1);
       }
+    }
 
-      if (y < clip.y || y > clip.y + clip.height) return;
+    if (y < clip.y || y > clip.y + clip.height) return;
 
-      int endShift = clip.x + clip.width;
-      g.setColor(separatorColor);
+    int endShift = clip.x + clip.width;
+    g.setColor(separatorColor);
 
-      if (mySettings.isRightMarginShown() && myScheme.getColor(EditorColors.RIGHT_MARGIN_COLOR) != null) {
-        endShift = Math.min(endShift, mySettings.getRightMargin(myProject) * EditorUtil.getSpaceWidth(Font.PLAIN, this));
-      }
+    if (mySettings.isRightMarginShown() && myScheme.getColor(EditorColors.RIGHT_MARGIN_COLOR) != null) {
+      endShift = Math.min(endShift, mySettings.getRightMargin(myProject) * EditorUtil.getSpaceWidth(Font.PLAIN, this));
+    }
 
-      final LineSeparatorRenderer lineSeparatorRenderer = marker.getLineSeparatorRenderer();
-      if (lineSeparatorRenderer != null) {
-        lineSeparatorRenderer.drawLine(g, 0, endShift, y - 1);
-      } else {
-        UIUtil.drawLine(g, 0, y - 1, endShift, y - 1);
-      }
+    final LineSeparatorRenderer lineSeparatorRenderer = marker.getLineSeparatorRenderer();
+    if (lineSeparatorRenderer != null) {
+      lineSeparatorRenderer.drawLine(g, 0, endShift, y - 1);
+    }
+    else {
+      UIUtil.drawLine(g, 0, y - 1, endShift, y - 1);
     }
   }
 
@@ -3281,7 +3289,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return new LogicalPosition(line, column);
   }
 
-  private int offsetToLogicalLine(int offset) {
+  int offsetToLogicalLine(int offset) {
     return offsetToLogicalLine(offset, true);
   }
 
