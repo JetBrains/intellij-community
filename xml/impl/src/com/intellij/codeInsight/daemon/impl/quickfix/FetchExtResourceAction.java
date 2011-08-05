@@ -15,9 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.javaee.ExternalResourceManagerImpl;
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -25,18 +24,20 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.WatchedRootsProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.WatchedRootsProvider;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
@@ -44,12 +45,11 @@ import com.intellij.util.net.NetUtils;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -120,81 +120,43 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     }
   }
 
-  static class FetchingResourceProblemRuntimeWrapper extends RuntimeException {
-    FetchingResourceProblemRuntimeWrapper(FetchingResourceIOException cause) {
-      super(cause);
-    }
-  }
-
-  protected void doInvoke(final PsiFile file, final int offset, final String uri, final Editor editor) throws IncorrectOperationException {
+  protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
     final String url = findUrl(file, offset, uri);
     final Project project = file.getProject();
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          while(true) {
-            try {
-              final ProgressWindow[] result = new ProgressWindow[1];
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
 
-              ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-                public void run() {
-                  final ProgressWindow progressWindow = new ProgressWindow(true, project);
-                  progressWindow.setTitle(XmlBundle.message("fetching.resource.title"));
-                  result[0] = progressWindow;
-                }
-              }, ModalityState.defaultModalityState());
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, XmlBundle.message("fetching.resource.title")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        while (true) {
+          try {
+            HttpConfigurable.getInstance().prepareURL(url);
+            fetchDtd(project, uri, url, indicator);
+            return;
+          }
+          catch (IOException ex) {
+            LOG.info(ex);
+            @SuppressWarnings("InstanceofCatchParameter")
+            String problemUrl = ex instanceof FetchingResourceIOException ? ((FetchingResourceIOException)ex).url : url; 
+            String message = XmlBundle.message("error.fetching.title");
 
-
-              ProgressManager.getInstance().runProcess(new Runnable() {
-                  public void run() {
-                    try {
-                      HttpConfigurable.getInstance().prepareURL(url);
-                      fetchDtd(project, uri, url);
-                    }
-                    catch (IOException ex) {
-                      FetchingResourceIOException exceptionDescribingIOProblem;
-
-                      if (ex instanceof FetchingResourceIOException) {
-                        exceptionDescribingIOProblem = (FetchingResourceIOException)ex;
-                      } else {
-                        exceptionDescribingIOProblem = new FetchingResourceIOException(ex, url);
-                      }
-
-                      throw new FetchingResourceProblemRuntimeWrapper(exceptionDescribingIOProblem);
-                    }
-
-                  }
-                }, result[0]);
+            if (!url.equals(problemUrl)) {
+              message = XmlBundle.message("error.fetching.dependent.resource.title");
             }
-            catch (FetchingResourceProblemRuntimeWrapper e) {
-              String message = XmlBundle.message("error.fetching.title");
-              FetchingResourceIOException ioproblem = (FetchingResourceIOException)e.getCause();
 
-              if (!url.equals(ioproblem.url)) {
-                message = XmlBundle.message("error.fetching.dependent.resource.title");
-              }
-
-              final IOException cause = (IOException)ioproblem.getCause();
-              LOG.info(cause);
-              if (!IOExceptionDialog.showErrorDialog(message,
-                XmlBundle.message("error.fetching.resource", ioproblem.url))
-              ) {
-                break; // cancel fetching
-              }
-              else {
-                continue;  // try another time
-              }
+            if (!IOExceptionDialog.showErrorDialog(message, XmlBundle.message("error.fetching.resource", problemUrl))) {
+              break; // cancel fetching
             }
-            break; // success fetching
           }
         }
-      });
-    }
+      }
+    });
   }
 
-  private void fetchDtd(final Project project, final String dtdUrl, final String url) throws IOException {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+  private void fetchDtd(final Project project, final String dtdUrl, final String url, final ProgressIndicator indicator) throws IOException {
 
     final String extResourcesPath = getExternalResourcesPath();
     final File extResources = new File(extResourcesPath);
@@ -205,17 +167,14 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     final PsiManager psiManager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
-        Runnable action = new Runnable() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(
               extResources.getAbsolutePath().replace(File.separatorChar, '/'));
             LOG.assertTrue(vFile != null);
-            PsiDirectory directory = psiManager.findDirectory(vFile);
-            directory.getFiles();
             if (!alreadyExists) LocalFileSystem.getInstance().addRootToWatch(vFile.getPath(), true);
           }
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
+        });
       }
     }, indicator.getModalityState());
 
@@ -234,16 +193,16 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                ExternalResourceManagerImpl.getInstance().addResource(dtdUrl, resPath);
+                ExternalResourceManager.getInstance().addResource(dtdUrl, resPath);
                 VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(resPath.replace(File.separatorChar, '/'));
 
                 Set<String> linksToProcess = new HashSet<String>();
                 Set<String> processedLinks = new HashSet<String>();
-                Map<String,String> baseUrls = new HashMap<String, String>();
+                Map<String, String> baseUrls = new HashMap<String, String>();
                 VirtualFile contextFile = virtualFile;
-                linksToProcess.addAll( extractEmbeddedFileReferences(virtualFile, null, psiManager) );
+                linksToProcess.addAll(extractEmbeddedFileReferences(virtualFile, null, psiManager));
 
-                while(!linksToProcess.isEmpty()) {
+                while (!linksToProcess.isEmpty()) {
                   String s = linksToProcess.iterator().next();
                   linksToProcess.remove(s);
                   processedLinks.add(s);
@@ -252,7 +211,8 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
                   String resourceUrl;
                   if (absoluteUrl) {
                     resourceUrl = s;
-                  } else {
+                  }
+                  else {
                     String baseUrl = baseUrls.get(s);
                     if (baseUrl == null) baseUrl = url;
 
@@ -277,12 +237,12 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
                   downloadedResources.add(resourcePath);
 
                   if (absoluteUrl) {
-                    ExternalResourceManagerImpl.getInstance().addResource(s, resourcePath);
+                    ExternalResourceManager.getInstance().addResource(s, resourcePath);
                     resourceUrls.add(s);
                   }
 
                   final List<String> newLinks = extractEmbeddedFileReferences(virtualFile, contextFile, psiManager);
-                  for(String u:newLinks) {
+                  for (String u : newLinks) {
                     baseUrls.put(u, resourceUrl);
                     if (!processedLinks.contains(u)) linksToProcess.add(u);
                   }
@@ -296,7 +256,6 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     } catch(IOException ex) {
       nestedException[0] = ex;
     }
-
     if (nestedException[0]!=null) {
       cleanup(resourceUrls,downloadedResources);
       throw nestedException[0];
@@ -308,33 +267,25 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   }
 
   private void cleanup(final List<String> resourceUrls, final List<String> downloadedResources) {
-    try {
-      GuiUtils.invokeAndWait(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              for (String resourcesUrl : resourceUrls) {
-                ExternalResourceManagerImpl.getInstance().removeResource(resourcesUrl);
-              }
-
-              for (String downloadedResource : downloadedResources) {
-                try {
-                  LocalFileSystem.getInstance().findFileByIoFile(new File(downloadedResource)).delete(this);
-                }
-                catch (IOException ex) {
-                }
-              }
-            }
-          });
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        for (String resourcesUrl : resourceUrls) {
+          ExternalResourceManager.getInstance().removeResource(resourcesUrl);
         }
-      });
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
+
+        for (String downloadedResource : downloadedResources) {
+          VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(downloadedResource));
+          if (virtualFile != null) {
+            try {
+              virtualFile.delete(this);
+            }
+            catch (IOException ignore) {
+
+            }
+          }
+        }
+      }
+    });
   }
 
   @Nullable
@@ -342,7 +293,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
                               final String resourceUrl,
                               final Project project,
                               String extResourcesPath,
-                              String refname) throws IOException {
+                              @Nullable String refname) throws IOException {
     SwingUtilities.invokeLater(
       new Runnable() {
         public void run() {
@@ -356,8 +307,8 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
     if (!ApplicationManager.getApplication().isUnitTestMode() &&
           result.contentType != null &&
-          result.contentType.indexOf(HTML_MIME) != -1 &&
-          (new String(result.bytes)).indexOf("<html") != -1) {
+          result.contentType.contains(HTML_MIME) &&
+          new String(result.bytes).contains("<html")) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showMessageDialog(project,
@@ -475,7 +426,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     return result;
   }
 
-  public static List<String> extractEmbeddedFileReferences(VirtualFile vFile, VirtualFile contextVFile, PsiManager psiManager) {
+  public static List<String> extractEmbeddedFileReferences(VirtualFile vFile, @Nullable VirtualFile contextVFile, PsiManager psiManager) {
     PsiFile file = psiManager.findFile(vFile);
 
     if (file instanceof XmlFile) {
@@ -499,7 +450,6 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
       urlConnection.addRequestProperty("accept","text/xml,application/xml,text/html,*/*");
       int contentLength = urlConnection.getContentLength();
-      int bytesRead = 0;
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       InputStream in = urlConnection.getInputStream();

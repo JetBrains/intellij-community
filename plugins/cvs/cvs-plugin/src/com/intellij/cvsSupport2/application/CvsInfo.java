@@ -295,8 +295,8 @@ public class CvsInfo {
         public ThreeState silentLogin(boolean forceCheck) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              new VcsBalloonProblemNotifier(project, CvsBundle.message("message.error.invalid.cvs.root", myStringRepsentation),
-                                                    MessageType.ERROR).run();
+              new VcsBalloonProblemNotifier(project, CvsBundle.message("message.error.invalid.cvs.root", getCvsRootAsString()),
+                                            MessageType.ERROR).run();
             }
           });
           return ThreeState.NO;

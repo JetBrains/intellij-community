@@ -284,7 +284,7 @@ public class CompositePrintable implements Printable, Disposable {
               }
               if (!printed) {
                 if (line.startsWith(HYPERLINK)) {
-                  new DiffHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader)).printOn(printer);
+                  new DiffHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), false).printOn(printer);
                 }
                 else {
                   printer.print(line, myLastSelected != null ? myLastSelected : ConsoleViewContentType.NORMAL_OUTPUT);

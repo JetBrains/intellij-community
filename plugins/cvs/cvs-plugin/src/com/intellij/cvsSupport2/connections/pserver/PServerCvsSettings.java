@@ -38,7 +38,7 @@ public class PServerCvsSettings extends CvsConnectionSettings {
 
   protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
     if (PASSWORD == null) {
-      PASSWORD = PServerLoginProvider.getInstance().getScrambledPasswordForCvsRoot(myStringRepsentation);
+      PASSWORD = PServerLoginProvider.getInstance().getScrambledPasswordForCvsRoot(getCvsRootAsString());
     }
 
     return CvsConnectionUtil.createPServerConnection(this, cvsRootConfiguration.PROXY_SETTINGS, getTimeoutMillis());

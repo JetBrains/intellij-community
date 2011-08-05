@@ -108,8 +108,10 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return result;
   }
 
+  @NotNull
   public Collection<Pair<AbstractUrl, String>> getFavoritesListRootUrls(@NotNull String name) {
-    return myName2FavoritesRoots.get(name);
+    final LinkedHashSet<Pair<AbstractUrl, String>> pairs = myName2FavoritesRoots.get(name);
+    return pairs == null ? Collections.<Pair<AbstractUrl,String>>emptyList() : pairs;
   }
 
   public synchronized boolean addRoots(@NotNull String name, Module moduleContext, @NotNull Object elements) {

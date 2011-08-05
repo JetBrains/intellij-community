@@ -68,7 +68,7 @@ public class SshConnectionSettings extends CvsConnectionSettings {
   }
 
   public CvsLoginWorkerImpl getLoginWorker(ModalityContext executor, Project project) {
-    return new MyLoginWorker(project, executor, myStringRepsentation, this);
+    return new MyLoginWorker(project, executor, getCvsRootAsString(), this);
   }
 
   private class MyLoginWorker extends CvsLoginWorkerImpl<SshConnectionSettings> {
@@ -82,9 +82,9 @@ public class SshConnectionSettings extends CvsConnectionSettings {
     @Override
     protected void clearOldCredentials() {
       if (getSshConfiguration().USE_PPK) {
-        SSHPasswordProviderImpl.getInstance().removePPKPasswordFor(myStringRepsentation);
+        SSHPasswordProviderImpl.getInstance().removePPKPasswordFor(getCvsRootAsString());
       } else {
-        SSHPasswordProviderImpl.getInstance().removePasswordFor(myStringRepsentation);
+        SSHPasswordProviderImpl.getInstance().removePasswordFor(getCvsRootAsString());
       }
     }
 

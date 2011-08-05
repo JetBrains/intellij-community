@@ -22,7 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +52,6 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     myScope = scope;
     myShareScope = shareScope;
     myProject = project;
-    final PackageSet packageSet = scope.getValue();
-    myPackageSet = packageSet != null ? packageSet.getText() : null;
     mySharedCheckbox = new JCheckBox(IdeBundle.message("share.scope.checkbox.title"), shareScope);
     myPanel = new ScopeEditorPanel(project, getHolder());
     myIcon = getHolder(myShareScope).getIcon();
@@ -111,16 +112,16 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
 
   public boolean isModified() {
     if (mySharedCheckbox.isSelected() != myShareScope) return true;
-    final String currentScope = myPanel.getPatternText();
-    return !Comparing.strEqual(myPackageSet, currentScope);
+    final PackageSet currentScope = myPanel.getCurrentScope();
+    return !Comparing.strEqual(myPackageSet, currentScope != null ? currentScope.getText() : null);
   }
 
   public void apply() throws ConfigurationException {
     try {
       myPanel.apply();
       final PackageSet packageSet = myPanel.getCurrentScope();
-      myPackageSet = myPanel.getPatternText();
-      myScope = new NamedScope(myScope.getName(), packageSet == null ? new InvalidPackageSet(myPackageSet) : packageSet);
+      myScope = new NamedScope(myScope.getName(), packageSet);
+      myPackageSet = packageSet != null ? packageSet.getText() : null;
       myShareScope = mySharedCheckbox.isSelected();
     }
     catch (ConfigurationException e) {
@@ -131,6 +132,8 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
   public void reset() {
     mySharedCheckbox.setSelected(myShareScope);
     myPanel.reset(myScope.getValue(), null);
+    final PackageSet packageSet = myScope.getValue();
+    myPackageSet = packageSet != null ? packageSet.getText() : null;
   }
 
   public void disposeUIResources() {

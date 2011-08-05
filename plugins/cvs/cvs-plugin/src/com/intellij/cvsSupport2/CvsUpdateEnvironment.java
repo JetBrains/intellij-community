@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,6 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
   private static class CvsSequentialUpdateContext implements SequentialUpdatesContext {
     private final UpdateSettingsOnCvsConfiguration myConfiguration;
     private final String myUpdateTagName;
-    private final static String error = "merge.wasnt.started.only.update.was.performed";
 
     private CvsSequentialUpdateContext(final UpdateSettingsOnCvsConfiguration configuration, final String tagName) {
       myUpdateTagName = tagName;
@@ -90,8 +89,8 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     }
   }
 
-  private UpdateSettingsOnCvsConfiguration createSettingsAndUpdateContext(final CvsConfiguration cvsConfiguration,
-                                                                          @NotNull final Ref<SequentialUpdatesContext> contextRef) {
+  private static UpdateSettingsOnCvsConfiguration createSettingsAndUpdateContext(final CvsConfiguration cvsConfiguration,
+                                                                                 @NotNull final Ref<SequentialUpdatesContext> contextRef) {
     if (contextRef.get() != null) {
       final CvsSequentialUpdateContext cvsContext = (CvsSequentialUpdateContext) contextRef.get();
       contextRef.set(null);
@@ -130,7 +129,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     try {
       final UpdateSettingsOnCvsConfiguration updateSettings = createSettingsAndUpdateContext(cvsConfiguration, contextRef);
       final UpdateHandler handler = CommandCvsHandler.createUpdateHandler(contentRoots, updateSettings, myProject, updatedFiles);
-      handler.addCvsListener(new UpdatedFilesProcessor(myProject, updatedFiles));
+      handler.addCvsListener(new UpdatedFilesProcessor(updatedFiles));
       CvsOperationExecutor cvsOperationExecutor = new CvsOperationExecutor(true, myProject, ModalityState.defaultModalityState());
       cvsOperationExecutor.setShowErrors(false);
       cvsOperationExecutor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);

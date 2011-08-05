@@ -733,6 +733,9 @@
   <action id="ActivateProjectToolWindow">
     <keyboard-shortcut first-keystroke="alt 1"/>
   </action>
+  <action id="ActivateFavoritesToolWindow">
+    <keyboard-shortcut first-keystroke="alt 2"/>
+  </action>
   <action id="ActivateFindToolWindow">
     <keyboard-shortcut first-keystroke="alt 3"/>
   </action>
@@ -748,7 +751,7 @@
   <action id="ActivateStructureToolWindow">
     <keyboard-shortcut first-keystroke="alt 7"/>
   </action>
-  <action id="ActivateFavoritesToolWindow">
+  <action id="ActivateHierarchyToolWindow">
     <keyboard-shortcut first-keystroke="alt 8"/>
   </action>
   <action id="ActivateChangesToolWindow">
