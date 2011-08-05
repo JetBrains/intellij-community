@@ -23,7 +23,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -271,8 +270,11 @@ public class FileStructureDialog extends DialogWrapper {
         if (builder != null) {
           final AbstractTreeNode parentNode = builder.getParentNode();
           final Object value = parentNode.getValue();
-          if (value instanceof PsiTreeElementBase) {
-            currentParent = ((PsiTreeElementBase) value).getValue();
+          if (value instanceof StructureViewTreeElement) {
+            final Object elementValue = ((StructureViewTreeElement)value).getValue();
+            if (elementValue instanceof PsiElement) {
+              currentParent = (PsiElement) elementValue;
+            }
           }
         }
         myTreeActionsOwner.setFilterIncluded(fileStructureFilter, !chkFilter.isSelected());
