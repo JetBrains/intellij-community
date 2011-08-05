@@ -25,6 +25,7 @@ import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +70,7 @@ public class SymbolTable {
       }
       myTrie = new PersistentStringEnumerator(file);
     }
-    catch (PersistentStringEnumerator.CorruptedException e) {
+    catch (PersistentEnumerator.CorruptedException e) {
       throw new CacheCorruptedException(CompilerBundle.message("error.compiler.caches.corrupted"), e);
     }
     catch (IOException e) {
