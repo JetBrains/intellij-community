@@ -253,7 +253,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  private static class HaveGotErrorException extends RuntimeException {
+  public static class HaveGotErrorException extends RuntimeException {
     private final HighlightInfo myHighlightInfo;
     private final boolean myHasErrorElement;
 
