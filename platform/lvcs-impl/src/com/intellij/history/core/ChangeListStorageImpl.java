@@ -165,8 +165,6 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       prevId = id == -1 ? myStorage.getLastRecord() : doReadPrevSafely(id, recursionGuard);
       if (prevId == 0) return null;
 
-      if (true) throw new IOException("Test");
-
       return doReadBlock(prevId);
     }
     catch (Throwable e) {
