@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -135,14 +135,19 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     AbstractUrl url = createUrlByElement(element, myProject);
     if (url == null) return false;
     Collection<Pair<AbstractUrl, String>> list = getFavoritesListRootUrls(name);
+    Pair<AbstractUrl, String> found = null;
     for (Pair<AbstractUrl, String> pair : list) {
       if (url.equals(pair.getFirst())) {
-        list.remove(pair);
+        found = pair;
         break;
       }
     }
-    fireListeners.rootsChanged(name);
-    return true;
+    if (found != null) {
+      list.remove(found);
+      fireListeners.rootsChanged(name);
+      return true;
+    }
+    return false;
   }
 
   public synchronized boolean renameFavoritesList(@NotNull String oldName, @NotNull String newName) {
@@ -216,7 +221,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     
     ourAbstractUrlProviders.add(new ModuleGroupUrl(null));
 
-    ourAbstractUrlProviders.add(new PsiFileUrl(null, null));
+    ourAbstractUrlProviders.add(new PsiFileUrl(null));
     ourAbstractUrlProviders.add(new LibraryModuleGroupUrl(null));
     ourAbstractUrlProviders.add(new NamedLibraryUrl(null, null));
   }
@@ -380,8 +385,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
         if (module == null) return;
         AbstractUrl childUrl = null;
         if (child instanceof PsiFile) {
-          childUrl =
-            new PsiFileUrl(((PsiDirectory)newParent).getVirtualFile().getUrl() + "/" + ((PsiFile)child).getName(), module.getName());
+          childUrl = new PsiFileUrl(((PsiDirectory)newParent).getVirtualFile().getUrl() + "/" + ((PsiFile)child).getName());
         }
         else if (child instanceof PsiDirectory) {
           childUrl =
@@ -418,7 +422,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
           final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
           if (module == null) return;
           final String url = ((PsiDirectory)psiElement.getParent()).getVirtualFile().getUrl() + "/" + event.getNewValue();
-          final AbstractUrl childUrl = psiElement instanceof PsiFile ? new PsiFileUrl(url, module.getName()) : new DirectoryUrl(url, module.getName());
+          final AbstractUrl childUrl = psiElement instanceof PsiFile ? new PsiFileUrl(url) : new DirectoryUrl(url, module.getName());
           for (String listName : myName2FavoritesRoots.keySet()) {
             final LinkedHashSet<Pair<AbstractUrl, String>> roots = myName2FavoritesRoots.get(listName);
             final LinkedHashSet<Pair<AbstractUrl, String>> newRoots = new LinkedHashSet<Pair<AbstractUrl, String>>();

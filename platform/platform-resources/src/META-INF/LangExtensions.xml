@@ -582,6 +582,8 @@
               factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
   <toolWindow id="Structure" anchor="left" icon="/general/toolWindowStructure.png" secondary="true"
               factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
+  <toolWindow id="Favorites" anchor="left" icon="/general/toolWindowFavorites.png" secondary="true"
+                factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory"/>
 
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
@@ -600,7 +602,7 @@
   <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
                       serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
 
-  <projectViewPane implementation="com.intellij.ide.favoritesTreeView.FavoritesProjectViewPane"/>
+  <!--<projectViewPane implementation="com.intellij.ide.favoritesTreeView.FavoritesProjectViewPane"/>-->
   <projectViewPane implementation="com.intellij.ide.scopeView.ScopeViewPane"/>
 
   <fileIconProvider implementation="com.intellij.openapi.fileTypes.impl.NativeFileIconProvider"/>

@@ -78,7 +78,6 @@
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoCloneContributor"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
-    <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gradle.GradlePositionManager"/>
 
     <mapContentProvider implementation="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperMapContentProvider"/>
     <referenceTypeEnhancer implementation="org.jetbrains.plugins.groovy.configSlurper.GroovyMapValueTypeEhancer"/>
@@ -89,7 +88,6 @@
     <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
 
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector" />
-    <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gradle.GradleScriptTypeDetector"/>
 
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovySourceCodeNamedArgumentProvider" order="last"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyConstructorNamedArgumentProvider"/>
@@ -137,16 +135,13 @@
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
 
     <projectConfigurable instance="org.jetbrains.plugins.groovy.gant.GantConfigurable"/>
-    <projectConfigurable instance="org.jetbrains.plugins.groovy.gradle.GradleConfigurable"/>
 
     <library.creator implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryCreator"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gpp.GppLibraryPresentationProvider" order="first"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gant.GantLibraryPresentationProvider" order="last"/>
-    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gradle.GradleLibraryPresentationProvider" order="last"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings" serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.gradle.GradleSettings" serviceImplementation="org.jetbrains.plugins.groovy.gradle.GradleSettings"/>
 
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
@@ -331,7 +326,6 @@
 
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.gant.GantClassFinder"/>
-    <java.elementFinder implementation="org.jetbrains.plugins.groovy.gradle.GradleClassFinder"/>
     <java.shortNamesCache implementation="org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager"

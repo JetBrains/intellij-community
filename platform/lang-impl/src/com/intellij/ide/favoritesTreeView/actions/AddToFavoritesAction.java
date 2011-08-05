@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ public class AddToFavoritesAction extends AnAction {
     //on psi elements
     if (object instanceof PsiElement[]) {
       for (PsiElement psiElement : (PsiElement[])object) {
-        addPsiElementNode(psiElement, project, result, favoritesConfig, moduleContext);
+        addPsiElementNode(psiElement, project, result, favoritesConfig);
       }
       return result;
     }
@@ -166,7 +166,7 @@ public class AddToFavoritesAction extends AnAction {
           }
         }
       }
-      addPsiElementNode((PsiElement)object, project, result, favoritesConfig, containingModule);
+      addPsiElementNode((PsiElement)object, project, result, favoritesConfig);
       return result;
     }
 
@@ -177,8 +177,7 @@ public class AddToFavoritesAction extends AnAction {
         addPsiElementNode(element,
                           project,
                           result,
-                          favoritesConfig,
-                          moduleContext);
+                          favoritesConfig);
       }
       return result;
     }
@@ -187,11 +186,7 @@ public class AddToFavoritesAction extends AnAction {
     if (object instanceof VirtualFile) {
       final VirtualFile vFile = (VirtualFile)object;
       final PsiFile psiFile = psiManager.findFile(vFile);
-      addPsiElementNode(psiFile,
-                        project,
-                        result,
-                        favoritesConfig,
-                        moduleContext);
+      addPsiElementNode(psiFile, project, result, favoritesConfig);
       return result;
     }
 
@@ -233,8 +228,7 @@ public class AddToFavoritesAction extends AnAction {
   private static void addPsiElementNode(PsiElement psiElement,
                                        final Project project,
                                        final ArrayList<AbstractTreeNode> result,
-                                       final ViewSettings favoritesConfig,
-                                       Module module) {
+                                       final ViewSettings favoritesConfig) {
 
     Class<? extends AbstractTreeNode> klass = getPsiElementNodeClass(psiElement);
     if (klass == null) {

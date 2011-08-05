@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,7 +40,7 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   private boolean myAsSource;
 
   private DnDSupport(JComponent component,
-                     @NotNull Function<DnDActionInfo, DnDDragStartBean> beanProvider,
+                     Function<DnDActionInfo, DnDDragStartBean> beanProvider,
                      Function<DnDActionInfo, DnDImage> imageProvider,
                      DnDDropHandler handler,
                      DnDTargetChecker checker,
@@ -74,7 +73,9 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
 
   @Override
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-    return myBeanProvider.fun(new DnDActionInfo(action, dragOrigin)) != null;
+    return myBeanProvider != null
+           && myAsSource
+           && myBeanProvider.fun(new DnDActionInfo(action, dragOrigin)) != null;
   }
 
 

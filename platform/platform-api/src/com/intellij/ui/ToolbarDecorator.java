@@ -46,6 +46,7 @@ import java.util.List;
 @SuppressWarnings("UnusedDeclaration")
 public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.ListenerFactory {
   private JTable myTable;
+  private JTree myTree;
   private TableModel myTableModel;
   private ListModel myListModel;
   private Border myToolbarBorder;
@@ -77,7 +78,7 @@ public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.List
       }
       return 0;
     }
-  };
+  };  
 
   private ToolbarDecorator(JTable table) {
     myTable = table;
@@ -107,6 +108,11 @@ public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.List
     }
   }
 
+  public ToolbarDecorator(JTree tree) {
+    myTree = tree;
+    initPositionAndBorder();
+  }
+
   private void createDefaultListActions() {
     myRemoveAction = new AnActionButtonRunnable() {
       @Override
@@ -132,10 +138,13 @@ public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.List
   }
 
   private void initPositionAndBorder() {
-    myToolbarPosition = SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
+    myToolbarPosition = SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : myTree == null ? ActionToolbarPosition.RIGHT : ActionToolbarPosition.TOP;
     myBorder = SystemInfo.isMac ? new CustomLineBorder(0,1,1,1) : new CustomLineBorder(0, 1, 0, 0);
     if (myTable != null) {
       myTable.setBorder(IdeBorderFactory.createEmptyBorder(0));
+    }
+    if (myTree != null) {
+      myTree.setBorder(IdeBorderFactory.createEmptyBorder(0));
     }
   }
 
@@ -266,6 +275,10 @@ public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.List
   public static ToolbarDecorator createDecorator(@NotNull JTable table) {
     return new ToolbarDecorator(table);
   }
+  
+  public static ToolbarDecorator createDecorator(@NotNull JTree tree) {
+    return new ToolbarDecorator(tree);
+  }
 
   public static ToolbarDecorator createDecorator(@NotNull JList list) {
     return new ToolbarDecorator(list);
@@ -361,13 +374,13 @@ public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.List
   public JPanel createPanel() {
     final AddRemoveUpDownPanel.Buttons[] buttons = getButtons();
     myPanel = new AddRemoveUpDownPanel(this,
-                             myTable == null ? myList : myTable,
+                                       myTable == null ? myList == null ? myTree : myList : myTable,
                              myToolbarPosition == ActionToolbarPosition.TOP || myToolbarPosition == ActionToolbarPosition.BOTTOM,
                              myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
                              myAddName, myRemoveName, myMoveUpName, myMoveDownName,
                              buttons);
     myPanel.setBorder(myBorder);
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable == null ? myList : myTable);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable == null ? myList == null ? myTree : myList : myTable);
     scrollPane.setBorder(IdeBorderFactory.createEmptyBorder(0));
     final JPanel panel = new JPanel(new BorderLayout()) {
       @Override

@@ -6,8 +6,21 @@
 
   <!--// TODO den implement-->
   <depends>com.intellij.modules.lang</depends>
+  <depends>org.intellij.groovy</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportProvider"/>
+    <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder"/>
+    <projectConfigurable instance="org.jetbrains.plugins.gradle.config.GradleConfigurable"/>
+    <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
+    <projectService serviceInterface="org.jetbrains.plugins.gradle.config.GradleSettings"
+                    serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
+    <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
   </extensions>
+  
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <positionManagerDelegate implementation="org.jetbrains.plugins.gradle.config.GradlePositionManager"/>
+    <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
+  </extensions>
+  
 </idea-plugin>

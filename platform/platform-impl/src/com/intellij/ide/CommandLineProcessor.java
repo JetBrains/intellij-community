@@ -156,10 +156,10 @@ public class CommandLineProcessor {
         }
       }
       else {
+        if (StringUtil.isQuotedString(arg)) {
+          arg = StringUtil.stripQuotesAroundValue(arg);
+        }
         if (line != -1) {
-          if (StringUtil.isQuotedString(arg)) {
-            arg = StringUtil.stripQuotesAroundValue(arg);
-          }
           final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
           if (virtualFile != null) {
             lastOpenedProject = doOpenFile(virtualFile, line);

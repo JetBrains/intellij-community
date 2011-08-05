@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.gradle;
+package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleIcons;
+import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
@@ -42,18 +44,18 @@ import java.util.regex.Pattern;
  * @author nik
  */
 public class GradleLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
+  
   private static final LibraryKind<GroovyLibraryProperties> GRADLE_KIND = LibraryKind.create("gradle");
-  public static final Icon GRADLE_ICON = IconLoader.getIcon("/icons/gradle/gradle.png");
-  @NonNls static final Pattern GRADLE_JAR_FILE_PATTERN = Pattern.compile("gradle-(core-)?(\\d.*)\\.jar");
-  @NonNls static final Pattern ANY_GRADLE_JAR_FILE_PATTERN = Pattern.compile("gradle-(.*)\\.jar");
-
+  
+  private final GradleLibraryManager myLibraryManager = GradleLibraryManager.INSTANCE;
+  
   public GradleLibraryPresentationProvider() {
     super(GRADLE_KIND);
   }
   @NotNull
   @Override
   public Icon getIcon() {
-    return GRADLE_ICON;
+    return GradleIcons.GRADLE_ICON;
   }
 
   @Nls
@@ -62,15 +64,14 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
     return getGradleVersion(libraryFiles);
   }
 
-
   @Override
   public boolean isSDKHome(@NotNull VirtualFile file) {
-    return isGradleSdkHome(file);
+    return myLibraryManager.isGradleSdkHome(file);
   }
 
   @Override
   public boolean managesLibrary(final VirtualFile[] libraryFiles) {
-    return isGradleSdk(libraryFiles);
+    return myLibraryManager.isGradleSdk(libraryFiles);
   }
 
   @NotNull
@@ -117,15 +118,6 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
     return null;
   }
 
-  public static boolean isGradleSdkHome(VirtualFile file) {
-    final VirtualFile lib = file.findChild("lib");
-    if (lib == null) {
-      return false;
-    }
-
-    return isGradleSdk(lib.getChildren());
-  }
-
   @Nullable
   public static VirtualFile getSdkHome(@Nullable Module module, @NotNull Project project) {
     if (module != null) {
@@ -135,41 +127,31 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
       }
     }
 
-    return GradleSettings.getInstance(project).getSdkHome();
+    // TODO den implement
+    return null;
+    //return GradleSettings.getInstance(project).INSTALLATION_HOME;
   }
 
   @Nullable
   public static VirtualFile getSdkHomeFromClasspath(Module module) {
-    final VirtualFile gradleJar = findGradleJar(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
-    if (gradleJar != null) {
-      final VirtualFile parent = gradleJar.getParent();
-      if (parent != null && "lib".equals(parent.getName())) {
-        return parent.getParent();
-      }
-    }
+    // TODO den implement
+    //final VirtualFile gradleJar = myfindGradleJar(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
+    //if (gradleJar != null) {
+    //  final VirtualFile parent = gradleJar.getParent();
+    //  if (parent != null && "lib".equals(parent.getName())) {
+    //    return parent.getParent();
+    //  }
+    //}
     return null;
-  }
-
-  @Nullable
-  private static VirtualFile findGradleJar(VirtualFile[] files) {
-    for (VirtualFile file : files) {
-      if (GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches()) {
-        return PathUtil.getLocalFile(file);
-      }
-    }
-    return null;
-  }
-
-  public static boolean isGradleSdk(VirtualFile[] files) {
-    return findGradleJar(files) != null;
   }
 
   @Nullable
   private static String getGradleJarVersion(VirtualFile file) {
-    final Matcher matcher = GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
-    if (matcher.matches()) {
-      return matcher.group(2);
-    }
+    // TODO den implement
+    //final Matcher matcher = GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
+    //if (matcher.matches()) {
+    //  return matcher.group(2);
+    //}
     return null;
   }
 }

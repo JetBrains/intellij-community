@@ -19,10 +19,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,18 +33,39 @@ import java.util.Collections;
 public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
-    return element instanceof PsiFile;
+    return element instanceof PsiFileSystemItem;
   }
 
   @Override
-  public RenameDialog createRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
-    return new RenameFileDialog(project, element, nameSuggestionContext, editor);
+  public RenameDialog createRenameDialog(Project project, final PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+    return new RenameWithOptionalReferencesDialog(project, element, nameSuggestionContext, editor) {
+      @Override
+      protected boolean getSearchForReferences() {
+        return RenamePsiFileProcessor.getSearchForReferences(element);
+      }
+
+      @Override
+      protected void setSearchForReferences(boolean value) {
+        if (element instanceof PsiFile) {
+          RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE = value;
+        }
+        else {
+          RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
+        }
+      }
+    };
+  }
+
+  private static boolean getSearchForReferences(PsiElement element) {
+    return element instanceof PsiFile
+      ? RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE
+      : RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY;
   }
 
   @NotNull
   @Override
   public Collection<PsiReference> findReferences(PsiElement element) {
-    if (!RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE) {
+    if (!getSearchForReferences(element)) {
       return Collections.emptyList();
     }
     return super.findReferences(element);
