@@ -40,13 +40,13 @@ import java.util.Map;
 public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F extends Facet<C>, U extends FacetConfiguration> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.autodetecting.FacetDetectorWrapper");
   private final AutodetectionFilter myAutodetectionFilter;
-  private final FileContentPattern myFileContentPattern;
+  private final OldFileContentPattern myFileContentPattern;
   private final FacetDetector<S,C> myFacetDetector;
   private final UnderlyingFacetSelector<VirtualFile, U> myUnderlyingFacetSelector;
   private final ProjectFacetInfoSet myDetectedFacetSet;
   private final FacetType<F,C> myFacetType;
 
-  protected FacetDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType, final AutodetectionFilter autodetectionFilter, final FileContentPattern fileContentPattern,
+  protected FacetDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType, final AutodetectionFilter autodetectionFilter, final OldFileContentPattern fileContentPattern,
                                  final FacetDetector<S, C> facetDetector,
                                  final UnderlyingFacetSelector<VirtualFile, U> selector) {
     myDetectedFacetSet = projectFacetSet;
@@ -57,7 +57,7 @@ public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F ex
     myUnderlyingFacetSelector = selector;
   }
 
-  public FileContentPattern getFileContentPattern() {
+  public OldFileContentPattern getFileContentPattern() {
     return myFileContentPattern;
   }
 

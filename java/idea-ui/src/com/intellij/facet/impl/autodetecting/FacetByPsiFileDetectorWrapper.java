@@ -37,7 +37,7 @@ public class FacetByPsiFileDetectorWrapper<C extends FacetConfiguration, F exten
   private final Condition<PsiFile> myPsiFileFilter;
 
   public FacetByPsiFileDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType,
-                                       final AutodetectionFilter autodetectionFilter, final FileContentPattern fileContentPattern,
+                                       final AutodetectionFilter autodetectionFilter, final OldFileContentPattern fileContentPattern,
                                        final FacetDetector<PsiFile, C> facetDetector,
                                        Condition<PsiFile> psiFileFilter, final UnderlyingFacetSelector<VirtualFile, U> selector) {
     super(projectFacetSet, facetType, autodetectionFilter, fileContentPattern, facetDetector, selector);

@@ -30,11 +30,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface FacetOnTheFlyDetectorRegistry<C extends FacetConfiguration> {
   <U extends FacetConfiguration>
-  void register(@NotNull FileType fileType, @NotNull FileContentPattern fileContentPattern,
+  void register(@NotNull FileType fileType, @NotNull OldFileContentPattern fileContentPattern,
                 @NotNull FacetDetector<VirtualFile, C> detector, UnderlyingFacetSelector<VirtualFile, U> selector);
 
   <U extends FacetConfiguration>
-  void register(@NotNull FileType fileType, @NotNull FileContentPattern fileContentPattern,
+  void register(@NotNull FileType fileType, @NotNull OldFileContentPattern fileContentPattern,
                 @NotNull Condition<PsiFile> psiFileFilter, @NotNull FacetDetector<PsiFile, C> detector,
                 UnderlyingFacetSelector<VirtualFile, U> selector);
 }

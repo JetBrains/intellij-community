@@ -52,26 +52,26 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
   }
 
   public void registerUniversalDetectorByRootTag(@NotNull final String rootTag, @NotNull final FacetDetector<VirtualFile, C> detector) {
-    registerUniversalDetector(StdFileTypes.XML, FileContentPattern.fileContent().xmlWithRootTag(rootTag), detector, null);
+    registerUniversalDetector(StdFileTypes.XML, OldFileContentPattern.fileContent().xmlWithRootTag(rootTag), detector, null);
   }
 
   public <U extends FacetConfiguration> void registerUniversalDetectorByFileNameAndRootTag(@NotNull @NonNls String fileName,
                                                             @NotNull @NonNls String rootTag,
                                                             @NotNull final FacetDetector<VirtualFile, C> detector,
                                                             @Nullable UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
-    registerUniversalDetector(StdFileTypes.XML, FileContentPattern.fileContent().withName(fileName).xmlWithRootTag(rootTag), detector, underlyingFacetSelector);
+    registerUniversalDetector(StdFileTypes.XML, OldFileContentPattern.fileContent().withName(fileName).xmlWithRootTag(rootTag), detector, underlyingFacetSelector);
   }
 
   public void registerDetectorForWizard(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, @NotNull final FacetDetector<VirtualFile, C> facetDetector) {
     if (myForWizardDelegate != null) {
-      myForWizardDelegate.register(fileType, FileContentPattern.byFilter(virtualFileFilter), facetDetector, null);
+      myForWizardDelegate.register(fileType, OldFileContentPattern.byFilter(virtualFileFilter), facetDetector, null);
     }
   }
 
   public void registerDetectorForWizard(@NotNull final FileType fileType, @NotNull final VirtualFilePattern virtualFilePattern,
                        @NotNull final FacetDetector<VirtualFile, C> facetDetector) {
     if (myForWizardDelegate != null) {
-      myForWizardDelegate.register(fileType, FileContentPattern.byFilePattern(virtualFilePattern), facetDetector, null);
+      myForWizardDelegate.register(fileType, OldFileContentPattern.byFilePattern(virtualFilePattern), facetDetector, null);
     }
   }
 
@@ -79,7 +79,7 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
                        @NotNull final FacetDetector<VirtualFile, C> facetDetector,
                        @NotNull final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
     if (myForWizardDelegate != null) {
-      myForWizardDelegate.register(fileType, FileContentPattern.byFilePattern(virtualFilePattern), facetDetector, underlyingFacetSelector);
+      myForWizardDelegate.register(fileType, OldFileContentPattern.byFilePattern(virtualFilePattern), facetDetector, underlyingFacetSelector);
     }
   }
 
@@ -90,7 +90,7 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
                                                                       @NotNull final FacetDetector<PsiFile, C> facetDetector,
                                                                       @Nullable UnderlyingFacetSelector<VirtualFile, U> selector) {
     if (myOnTheFlyDelegate != null) {
-      myOnTheFlyDelegate.register(fileType, FileContentPattern.byFilter(virtualFileFilter), psiFileFilter, facetDetector, selector);
+      myOnTheFlyDelegate.register(fileType, OldFileContentPattern.byFilter(virtualFileFilter), psiFileFilter, facetDetector, selector);
     }
   }
 
@@ -125,11 +125,11 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
   }
 
   public void registerUniversalDetector(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, @NotNull final FacetDetector<VirtualFile, C> facetDetector) {
-    registerUniversalDetector(fileType, FileContentPattern.byFilter(virtualFileFilter), facetDetector, null);
+    registerUniversalDetector(fileType, OldFileContentPattern.byFilter(virtualFileFilter), facetDetector, null);
   }
 
   public <U extends FacetConfiguration> void registerUniversalDetector(@NotNull final FileType fileType,
-                                         @NotNull final FileContentPattern fileContentFilter,
+                                         @NotNull final OldFileContentPattern fileContentFilter,
                                          @NotNull final FacetDetector<VirtualFile, C> facetDetector,
                                          final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
     if (myForWizardDelegate != null) {
@@ -143,7 +143,7 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
   public <U extends FacetConfiguration> void registerUniversalSubFacetDetector(@NotNull final FileType fileType, @NotNull final VirtualFilePattern virtualFilePattern,
                                                                                @NotNull final FacetDetector<VirtualFile, C> facetDetector,
                                                                                final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
-    registerUniversalDetector(fileType, FileContentPattern.byFilePattern(virtualFilePattern), facetDetector, underlyingFacetSelector);
+    registerUniversalDetector(fileType, OldFileContentPattern.byFilePattern(virtualFilePattern), facetDetector, underlyingFacetSelector);
   }
 
   private static class MyPatternFilter implements VirtualFileFilter {

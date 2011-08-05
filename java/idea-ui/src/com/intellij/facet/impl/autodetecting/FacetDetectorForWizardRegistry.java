@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public interface FacetDetectorForWizardRegistry<C extends FacetConfiguration> {
-  <U extends FacetConfiguration> void register(final FileType fileType, @NotNull final FileContentPattern fileContentPattern,
+  <U extends FacetConfiguration> void register(final FileType fileType, @NotNull final OldFileContentPattern fileContentPattern,
                                                final FacetDetector<VirtualFile, C> facetDetector,
                                                final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector);
 }

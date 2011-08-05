@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.facet.impl.autodetecting;
+package com.intellij.framework.detection;
 
-import com.intellij.ide.caches.FileContent;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.patterns.*;
-import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.intellij.util.xml.XmlFileHeader;
@@ -31,7 +29,7 @@ import java.io.IOException;
  * @author nik
  */
 public class FileContentPattern extends ObjectPattern<FileContent, FileContentPattern> {
-  public FileContentPattern() {
+  private FileContentPattern() {
     super(FileContent.class);
   }
 
@@ -43,7 +41,7 @@ public class FileContentPattern extends ObjectPattern<FileContent, FileContentPa
     return with(new PatternCondition<FileContent>("withName") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
-        return name.equals(fileContent.getVirtualFile().getName());
+        return name.equals(fileContent.getFile().getName());
       }
     });
   }
@@ -52,7 +50,7 @@ public class FileContentPattern extends ObjectPattern<FileContent, FileContentPa
     return with(new PatternCondition<FileContent>("withName") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
-        return namePattern.accepts(fileContent.getVirtualFile().getName());
+        return namePattern.accepts(fileContent.getFile().getName());
       }
     });
   }
@@ -61,7 +59,7 @@ public class FileContentPattern extends ObjectPattern<FileContent, FileContentPa
     return with(new PatternCondition<FileContent>("inDirectory") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
-        return name.equals(fileContent.getVirtualFile().getParent().getName());
+        return name.equals(fileContent.getFile().getParent().getName());
       }
     });
   }
@@ -98,28 +96,10 @@ public class FileContentPattern extends ObjectPattern<FileContent, FileContentPa
     });
   }
 
-  public static FileContentPattern byFilter(@NotNull final VirtualFileFilter filter) {
-    return fileContent().with(new PatternCondition<FileContent>("withFileFilter") {
-      @Override
-      public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
-        return filter.accept(fileContent.getVirtualFile());
-      }
-    });
-  }
-
-  public static FileContentPattern byFilePattern(@NotNull final VirtualFilePattern pattern) {
-    return fileContent().with(new PatternCondition<FileContent>("withFilePattern") {
-      @Override
-      public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
-        return pattern.accepts(fileContent.getVirtualFile());
-      }
-    });
-  }
-
   @NotNull
   private static XmlFileHeader parseHeaderWithException(FileContent fileContent) throws IOException {
-    final CharSequence contentText = CacheUtil.getContentText(fileContent);
     //noinspection IOResourceOpenedButNotSafelyClosed
-    return NanoXmlUtil.parseHeaderWithException(new CharSequenceReader(contentText));
+    return NanoXmlUtil.parseHeaderWithException(new CharSequenceReader(fileContent.getContentAsText()));
   }
+
 }

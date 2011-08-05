@@ -21,7 +21,7 @@ import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.facet.impl.autodetecting.FacetDetectorForWizardRegistry;
 import com.intellij.facet.impl.autodetecting.FacetDetectorRegistryEx;
-import com.intellij.facet.impl.autodetecting.FileContentPattern;
+import com.intellij.facet.impl.autodetecting.OldFileContentPattern;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -129,11 +129,11 @@ public class FacetDetectionProcessor {
   private class MyFacetDetectorWrapper<C extends FacetConfiguration, U extends FacetConfiguration> {
     private final FacetType<?, C> myFacetType;
     private final FileType myFileType;
-    private final FileContentPattern myFileContentPattern;
+    private final OldFileContentPattern myFileContentPattern;
     private final FacetDetector<VirtualFile, C> myDetector;
     private final UnderlyingFacetSelector<VirtualFile, U> myUnderlyingFacetSelector;
 
-    public MyFacetDetectorWrapper(final FacetType<?, C> facetType, final FileType fileType, final FileContentPattern fileContentFilter, final FacetDetector<VirtualFile, C> detector,
+    public MyFacetDetectorWrapper(final FacetType<?, C> facetType, final FileType fileType, final OldFileContentPattern fileContentFilter, final FacetDetector<VirtualFile, C> detector,
                                   final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
       myUnderlyingFacetSelector = underlyingFacetSelector;
       myFacetType = facetType;
@@ -225,7 +225,7 @@ public class FacetDetectionProcessor {
       myLevel=level;
     }
 
-    public <U extends FacetConfiguration> void register(final FileType fileType, @NotNull final FileContentPattern fileContentPattern, final FacetDetector<VirtualFile, C> facetDetector,
+    public <U extends FacetConfiguration> void register(final FileType fileType, @NotNull final OldFileContentPattern fileContentPattern, final FacetDetector<VirtualFile, C> facetDetector,
                                                         final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
       if (myFacetType.getUnderlyingFacetType() != null) {
         LOG.assertTrue(underlyingFacetSelector != null, "UnderlyingFacetSelector must be specified for " + myFacetType.getPresentableName() + " detector");
