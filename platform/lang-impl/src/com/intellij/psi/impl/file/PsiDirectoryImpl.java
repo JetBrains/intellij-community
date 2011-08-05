@@ -16,6 +16,8 @@
 
 package com.intellij.psi.impl.file;
 
+import com.intellij.ide.impl.ProjectViewSelectInTarget;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -208,13 +210,13 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       if (vFile.isDirectory()) {
         PsiDirectory dir = myManager.findDirectory(vFile);
         if (dir != null) {
-          if(!processor.execute(dir)) return false;
+          if (!processor.execute(dir)) return false;
         }
       }
       else {
         PsiFile file = myManager.findFile(vFile);
         if (file != null) {
-          if(!processor.execute(file)) return false;
+          if (!processor.execute(file)) return false;
         }
       }
     }
@@ -312,7 +314,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     try {
       VirtualFile file = getVirtualFile().createChildDirectory(myManager, name);
       PsiDirectory directory = myManager.findDirectory(file);
-      if (directory == null) throw new IncorrectOperationException("Cannot find directory in '"+file.getPresentableUrl()+"'");
+      if (directory == null) throw new IncorrectOperationException("Cannot find directory in '" + file.getPresentableUrl() + "'");
       return directory;
     }
     catch (IOException e) {
@@ -365,15 +367,14 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       }
       final PsiFile copyPsi = myManager.findFile(copyVFile);
       if (copyPsi == null) {
-        LOG.error("Could not find file '"+copyVFile+"' after copying '"+vFile+"'");
+        LOG.error("Could not find file '" + copyVFile + "' after copying '" + vFile + "'");
       }
       updateAddedFile(copyPsi);
       return copyPsi;
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(e.toString(),e);
+      throw new IncorrectOperationException(e.toString(), e);
     }
-
   }
 
   private static void updateAddedFile(PsiFile copyPsi) throws IncorrectOperationException {
@@ -420,7 +421,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
           if (document != null) {
             document.setText(text);
             fileDocumentManager.saveDocument(document);
-          } else {
+          }
+          else {
             String lineSeparator = fileDocumentManager.getLineSeparator(newVFile, getProject());
             if (!lineSeparator.equals("\n")) {
               text = StringUtil.convertLineSeparators(text, lineSeparator);
@@ -453,7 +455,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
         return newFile;
       }
       catch (IOException e) {
-        throw new IncorrectOperationException(e.toString(),e);
+        throw new IncorrectOperationException(e.toString(), e);
       }
     }
     else {
@@ -468,7 +470,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       String name = ((PsiDirectory)element).getName();
       PsiDirectory[] subpackages = getSubdirectories();
       for (PsiDirectory dir : subpackages) {
-        if (Comparing.strEqual(dir.getName(),name)) {
+        if (Comparing.strEqual(dir.getName(), name)) {
           throw new IncorrectOperationException(VfsBundle.message("dir.already.exists.error", dir.getVirtualFile().getPresentableUrl()));
         }
       }
@@ -477,7 +479,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       String name = ((PsiFile)element).getName();
       PsiFile[] files = getFiles();
       for (PsiFile file : files) {
-        if (Comparing.strEqual(file.getName(),name, SystemInfo.isFileSystemCaseSensitive)) {
+        if (Comparing.strEqual(file.getName(), name, SystemInfo.isFileSystemCaseSensitive)) {
           throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", file.getVirtualFile().getPresentableUrl()));
         }
       }
@@ -510,7 +512,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       myFile.delete(myManager);
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(e.toString(),e);
+      throw new IncorrectOperationException(e.toString(), e);
     }
 
     /*
@@ -552,6 +554,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   public void navigate(boolean requestFocus) {
+    ProjectViewSelectInTarget.select(getProject(), this, ProjectViewPane.ID, null, getVirtualFile(), requestFocus);
   }
 
   public FileStatus getFileStatus() {

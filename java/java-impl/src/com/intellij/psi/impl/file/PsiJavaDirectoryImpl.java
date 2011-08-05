@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.impl.file;
 
-import com.intellij.ide.impl.ProjectViewSelectInTarget;
-import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -25,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -76,9 +73,5 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
     else {
       super.checkAdd(element);
     }
-  }
-
-  public void navigate(final boolean requestFocus) {
-    ProjectViewSelectInTarget.select(getProject(), this, ProjectViewPane.ID, null, getVirtualFile(), requestFocus);
   }
 }
