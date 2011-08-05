@@ -22,6 +22,7 @@ import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -126,7 +127,9 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
                                                                  findUnderlyingFacet(module));
     model.addFacet(facet);
     modifiableModelsProvider.commitFacetModifiableModel(module, model);
-    myDetector.setupFacet(facet);
+    final ModifiableRootModel rootModel = modifiableModelsProvider.getModuleModifiableModel(module);
+    myDetector.setupFacet(facet, rootModel);
+    modifiableModelsProvider.commitModuleModifiableModel(rootModel);
   }
 
   @Nullable

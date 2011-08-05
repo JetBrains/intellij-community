@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.indexing.FileContent;
@@ -41,7 +42,7 @@ public class AndroidFrameworkDetector extends FacetBasedFrameworkDetector<Androi
   }
 
   @Override
-  public void setupFacet(@NotNull final AndroidFacet facet) {
+  public void setupFacet(@NotNull final AndroidFacet facet, ModifiableRootModel model) {
     final Module module = facet.getModule();
     final Project project = module.getProject();
 

@@ -21,6 +21,7 @@ import com.intellij.facet.FacetType;
 import com.intellij.framework.FrameworkType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,7 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
     return getFacetType().createDefaultConfiguration();
   }
 
-  public void setupFacet(@NotNull F facet) {
+  public void setupFacet(@NotNull F facet, ModifiableRootModel model) {
   }
 
   @Override
