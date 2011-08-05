@@ -208,7 +208,7 @@ public class RecursionManager {
     Integer depth = ourDepth.get();
     if (depth != progressMap.size()) {
       ourDepth.set(progressMap.size());
-      throw new AssertionError("Inconsistent depth " + s + "; depth=" + depth + "; map.size=" + progressMap.size());
+      throw new AssertionError("Inconsistent depth " + s + "; depth=" + depth + "; map=" + progressMap);
     }
   }
 
