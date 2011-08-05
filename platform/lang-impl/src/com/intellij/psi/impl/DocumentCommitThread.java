@@ -273,10 +273,11 @@ public class DocumentCommitThread implements Runnable, Disposable {
             log("Pulled", document, false, indicator);
 
             CommitStage commitStage = getCommitStage(document);
+            Document[] uncommitted = null;
             if (commitStage != CommitStage.QUEUED_TO_COMMIT
-                || project.isDisposed() || !ArrayUtil.contains(document,PsiDocumentManager.getInstance(project).getUncommittedDocuments())) {
-              log("Abandon and proceeding to next",document, false, commitStage, Arrays.asList(
-                PsiDocumentManager.getInstance(project).getUncommittedDocuments()));
+                || project.isDisposed() || !ArrayUtil.contains(document,(uncommitted = PsiDocumentManager.getInstance(project).getUncommittedDocuments()))) {
+              List<Document> documents = uncommitted == null ? null : Arrays.asList(uncommitted);
+              log("Abandon and proceeding to next",document, false, commitStage, documents);
               continue;
             }
             if (indicator.isRunning()) {
