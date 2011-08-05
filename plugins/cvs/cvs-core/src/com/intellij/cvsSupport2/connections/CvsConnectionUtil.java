@@ -22,6 +22,7 @@ import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.ext.ExtConnection;
 import com.intellij.cvsSupport2.connections.ssh.*;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
+import com.intellij.util.SystemProperties;
 import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.connection.PServerConnection;
@@ -51,11 +52,11 @@ public class CvsConnectionUtil {
     final ConnectionPoolI pool = SshConnectionPool.getInstance();
     final SshAuthentication authentication;
     if (sshConfiguration.USE_PPK) {
-      authentication = new SshPublicKeyAuthentication(new File(sshConfiguration.PATH_TO_PPK), settings.USER, sshPasswordProvider,
+      authentication = new SshPublicKeyAuthentication(new File(sshConfiguration.PATH_TO_PPK), getUserName(settings), sshPasswordProvider,
                                                       settings.getCvsRootAsString());
     }
     else {
-      authentication = new SshPasswordAuthentication(settings.USER, sshPasswordProvider, settings.getCvsRootAsString());
+      authentication = new SshPasswordAuthentication(getUserName(settings), sshPasswordProvider, settings.getCvsRootAsString());
     }
     return pool.getConnection(settings.REPOSITORY, connectionSettings, authentication);
   }
@@ -73,7 +74,7 @@ public class CvsConnectionUtil {
                                  timeout);
     }
     else {
-      return new ExtConnection(settings.HOST, settings.USER, settings.REPOSITORY, extConfiguration, errorRegistry);
+      return new ExtConnection(settings.HOST, getUserName(settings), settings.REPOSITORY, extConfiguration, errorRegistry);
     }
   }
 
@@ -91,7 +92,17 @@ public class CvsConnectionUtil {
     return new PServerConnection(connectionSettings, root.USER, root.PASSWORD, adjustRepository(root));
   }
 
-  public static String adjustRepository(CvsRootData root) {
+  private static String getUserName(CvsRootData settings) {
+    final String login;
+    if (settings.USER.isEmpty()) {
+      login = SystemProperties.getUserName();
+    } else {
+      login = settings.USER;
+    }
+    return login;
+  }
+
+  private static String adjustRepository(CvsRootData root) {
     if (root.REPOSITORY != null) {
       return root.REPOSITORY.replace('\\', '/');
     } else {
