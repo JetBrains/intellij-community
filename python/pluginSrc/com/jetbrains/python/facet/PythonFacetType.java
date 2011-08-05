@@ -2,15 +2,16 @@ package com.jetbrains.python.facet;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
-import com.intellij.facet.autodetecting.FacetDetector;
-import com.intellij.facet.autodetecting.FacetDetectorRegistry;
+import com.intellij.framework.detection.FacetBasedFrameworkDetector;
+import com.intellij.framework.detection.FileContentPattern;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.util.indexing.FileContent;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.module.PythonModuleType;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -61,15 +61,26 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfigura
     return ICON;
   }
 
-  @Override
-  public void registerDetectors(FacetDetectorRegistry<PythonFacetConfiguration> detectorRegistry) {
-    detectorRegistry.registerUniversalDetector(PythonFileType.INSTANCE, VirtualFileFilter.ALL, new FacetDetector<VirtualFile, PythonFacetConfiguration>("python-detector") {
-      public PythonFacetConfiguration detectFacet(VirtualFile source,
-                                                  Collection<PythonFacetConfiguration> existentFacetConfigurations) {
-        return existentFacetConfigurations.isEmpty()
-               ? createDefaultConfiguration()
-               : existentFacetConfigurations.iterator().next();
-      }
-    });
+  public static class PythonFrameworkDetector extends FacetBasedFrameworkDetector<PythonFacet, PythonFacetConfiguration> {
+    public PythonFrameworkDetector() {
+      super("python");
+    }
+
+    @Override
+    public FacetType<PythonFacet, PythonFacetConfiguration> getFacetType() {
+      return PythonFacetType.getInstance();
+    }
+
+    @NotNull
+    @Override
+    public FileType getFileType() {
+      return PythonFileType.INSTANCE;
+    }
+
+    @NotNull
+    @Override
+    public ElementPattern<FileContent> createSuitableFilePattern() {
+      return FileContentPattern.fileContent();
+    }
   }
 }
