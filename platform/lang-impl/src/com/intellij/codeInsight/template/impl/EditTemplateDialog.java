@@ -619,6 +619,22 @@ public class EditTemplateDialog extends DialogWrapper {
 
     }
 
+    boolean anyChecked = false;
+    for (JCheckBox contextCheckBox : myCbContextMap.values()) {
+      if (contextCheckBox.isSelected()) {
+        anyChecked = true;
+        break;
+      }
+    }
+    if (!anyChecked) {
+      Messages.showMessageDialog(getContentPane(),
+                                 "Please enable at least one context checkbox. Otherwise the live template will never ber active.",
+                                 CodeInsightBundle.message("dialog.edit.template.error.title"),
+                                 Messages.getErrorIcon()
+                                 );
+      return;
+    }
+
     super.doOKAction();
   }
 }
