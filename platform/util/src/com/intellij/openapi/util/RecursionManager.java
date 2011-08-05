@@ -112,16 +112,12 @@ public class RecursionManager {
           throw new AssertionError("Non-zero stamp with empty stack: " + ourStamp.get());
         }
 
-        if (ourDepth.get() != progressMap.size()) {
-          throw new AssertionError("Inconsistent depth 1");
-        }
+        checkDepth("1");
 
         progressMap.put(realKey, ourStamp.get());
         ourDepth.set(ourDepth.get() + 1);
 
-        if (ourDepth.get() != progressMap.size()) {
-          throw new AssertionError("Inconsistent depth 2");
-        }
+        checkDepth("2");
 
         int startStamp = ourMemoizationStamp.get();
 
@@ -153,9 +149,7 @@ public class RecursionManager {
             checkZero();
           }
 
-          if (ourDepth.get() != progressMap.size()) {
-            throw new AssertionError("Inconsistent depth 3");
-          }
+          checkDepth("3");
         }
       }
 
@@ -207,6 +201,14 @@ public class RecursionManager {
         checkZero();
       }
     };
+  }
+
+  private static void checkDepth(String s) {
+    LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
+    if (ourDepth.get() != progressMap.size()) {
+      ourDepth.set(progressMap.size());
+      throw new AssertionError("Inconsistent depth " + s);
+    }
   }
 
   private static void checkZero() {
