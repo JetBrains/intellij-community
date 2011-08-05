@@ -235,7 +235,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   public static void addAllClasses(CompletionParameters parameters,
                                    final CompletionResultSet result,
                                    final InheritorsHolder inheritors) {
-    if (!isClassNamePossible(parameters) || !mayStartClassName(result, parameters.isRelaxedMatching())) return;
+    if (!isClassNamePossible(parameters.getPosition()) || !mayStartClassName(result, parameters.isRelaxedMatching())) return;
 
     if (mayShowAllClasses(parameters)) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, result, new Consumer<LookupElement>() {
@@ -276,7 +276,7 @@ public class JavaCompletionContributor extends CompletionContributor {
                                                                                   checkAccess,
                                                                                   result.getPrefixMatcher(), parameters);
             PsiClass arrays = JavaPsiFacade.getInstance(position.getProject()).findClass(CommonClassNames.JAVA_UTIL_ARRAYS, position.getResolveScope());
-            if (arrays != null && filter.isAcceptable(arrays, position) && isClassNamePossible(parameters)) {
+            if (arrays != null && filter.isAcceptable(arrays, position) && isClassNamePossible(parameters.getPosition())) {
               set.add(JavaClassNameCompletionContributor.createClassLookupItem(arrays, true));
             }
             for (LookupElement element : set) {
@@ -350,8 +350,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static boolean isClassNamePossible(CompletionParameters parameters) {
-    PsiElement position = parameters.getPosition();
+  public static boolean isClassNamePossible(final PsiElement position) {
     final PsiElement parent = position.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return false;
     if (((PsiJavaCodeReferenceElement)parent).getQualifier() != null) return false;

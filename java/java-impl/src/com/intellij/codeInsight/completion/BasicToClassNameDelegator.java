@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
@@ -28,7 +29,13 @@ public class BasicToClassNameDelegator extends AbstractBasicToClassNameDelegator
 
   @Override
   protected boolean isClassNameCompletionSupported(CompletionResultSet result, PsiFile file, PsiElement position) {
-    return file.getLanguage().isKindOf(StdLanguages.XML) && JavaCompletionContributor.mayStartClassName(result, false);
+    if (!JavaCompletionContributor.mayStartClassName(result, false)) return false;
+
+    if (file.getLanguage() == StdLanguages.JAVA) {
+      return JavaCompletionContributor.isClassNamePossible(position);
+    }
+
+    return file.getLanguage() instanceof XMLLanguage;
   }
 
   @Override

@@ -32,7 +32,7 @@ public abstract class AbstractBasicToClassNameDelegator extends CompletionContri
 
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getCompletionType() != CompletionType.BASIC) return;
+    if (parameters.getCompletionType() != CompletionType.BASIC || parameters.getInvocationCount() == 0) return;
 
     final PsiFile file = parameters.getOriginalFile();
     final PsiElement position = parameters.getPosition();
