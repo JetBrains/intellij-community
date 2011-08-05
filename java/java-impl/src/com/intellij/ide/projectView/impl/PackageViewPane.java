@@ -148,28 +148,6 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
     return super.getSelectedDirectories();
   }
 
-  private final class ShowModulesAction extends ToggleAction {
-    private ShowModulesAction() {
-      super(IdeBundle.message("action.show.modules"), IdeBundle.message("action.description.show.modules"), IconLoader.getIcon("/objectBrowser/showModules.png"));
-    }
-
-    public boolean isSelected(AnActionEvent event) {
-      return ProjectView.getInstance(myProject).isShowModules(getId());
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
-      projectView.setShowModules(flag, getId());
-    }
-
-    public void update(AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
-      presentation.setVisible(projectView.getCurrentProjectViewPane() == PackageViewPane.this);
-    }
-  }
-
   private final class ShowLibraryContentsAction extends ToggleAction {
     private ShowLibraryContentsAction() {
       super(IdeBundle.message("action.show.libraries.contents"), IdeBundle.message("action.show.hide.library.contents"), IconLoader.getIcon("/objectBrowser/showLibraryContents.png"));
@@ -193,7 +171,12 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   public void addToolbarActions(DefaultActionGroup actionGroup) {
-    actionGroup.addAction(new ShowModulesAction()).setAsSecondary(true);
+    actionGroup.addAction(new ShowModulesAction(myProject){
+      @Override
+      protected String getId() {
+        return PackageViewPane.this.getId();
+      }
+    }).setAsSecondary(true);
     actionGroup.addAction(new ShowLibraryContentsAction()).setAsSecondary(true);
   }
 
