@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -42,6 +43,14 @@ public class TaskCompletionContributor extends CompletionContributor {
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
     final Consumer<Task> consumer = file.getUserData(KEY);
+
+    if (CompletionService.getCompletionService().getAdvertisementText() == null) {
+      final String shortcut = getActionShortcut(IdeActions.ACTION_QUICK_JAVADOC);
+      if (shortcut != null) {
+        CompletionService.getCompletionService().setAdvertisementText("Pressing " + shortcut + " would show task description and comments");
+      }
+    }
+
     if (consumer != null) {
       result.stopHere();
 
