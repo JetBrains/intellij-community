@@ -35,17 +35,20 @@ public class ConfigImportHelper {
   @NonNls private static final String BUILD_NUMBER_FILE = "build.txt";
   @NonNls private static final String PLUGINS_PATH = "plugins";
   @NonNls private static final String BIN_FOLDER = "bin";
+  @NonNls private static final String OPTIONS_XML = "options/options.xml";
 
   private ConfigImportHelper() {}
 
   public static void importConfigsTo(String newConfigPath) {
+    File oldConfigDir = findOldConfigDir(newConfigPath);
+
     do {
       ImportOldConfigsPanel dlg;
       if (UIUtil.hasJdk6Dialogs()) {
-        dlg = new ImportOldConfigsPanel();
+        dlg = new ImportOldConfigsPanel(oldConfigDir);
       }
       else {
-        dlg = new ImportOldConfigsPanel(JOptionPane.getRootFrame());
+        dlg = new ImportOldConfigsPanel(oldConfigDir, JOptionPane.getRootFrame());
       }
 
       UIUtil.setToolkitModal(dlg);
@@ -53,7 +56,7 @@ public class ConfigImportHelper {
       dlg.setVisible(true);
       if (dlg.isImportEnabled()) {
         File instHome = dlg.getSelectedFile();
-        File oldConfigDir = getOldConfigDir(instHome);
+        oldConfigDir = getOldConfigDir(instHome);
         if (!validateOldConfigDir(instHome, oldConfigDir)) continue;
 
         doImport(newConfigPath, oldConfigDir);
@@ -62,6 +65,33 @@ public class ConfigImportHelper {
       break;
     }
     while (true);
+  }
+
+  private static File findOldConfigDir(String newConfigPath) {
+    final File configDir = new File(newConfigPath);
+    final File selectorDir = SystemInfo.isMac ? configDir : configDir.getParentFile();
+    final File parent = selectorDir.getParentFile();
+    if (parent == null || !parent.exists()) return null;
+    File maxFile = null;
+    long lastModified = 0;
+    final String selector = PathManager.getPathsSelector() != null ? PathManager.getPathsSelector() : selectorDir.getName();
+    for (File file : parent.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File file, String name) {
+        return name.length() == selector.length() &&
+               name.startsWith(selector.replaceAll("\\d",""));
+
+      }
+    })) {
+      final File options = new File(file, OPTIONS_XML);
+      if (!options.exists()) continue;
+      final long modified = options.lastModified();
+      if (modified > lastModified) {
+        lastModified = modified;
+        maxFile = file;
+      }
+    }
+    return maxFile;
   }
 
   public static void doImport(final String newConfigPath, final File oldConfigDir) {
@@ -77,9 +107,13 @@ public class ConfigImportHelper {
 
   public static boolean validateOldConfigDir(final File instHome, final File oldConfigDir) {
     if (oldConfigDir == null) {
+      final String message = !instHome.equals(oldConfigDir) ?
+                             ApplicationBundle.message("error.invalid.installation.home", instHome.getAbsolutePath(),
+                                                       ApplicationNamesInfo.getInstance().getFullProductName()) :
+                             ApplicationBundle.message("error.invalid.config.folder", instHome.getAbsolutePath(),
+                                                       ApplicationNamesInfo.getInstance().getFullProductName()) ;
       JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                    ApplicationBundle.message("error.invalid.installation.home", instHome.getAbsolutePath(),
-                                                              ApplicationNamesInfo.getInstance().getFullProductName()));
+                                    message);
       return false;
     }
 
@@ -113,6 +147,12 @@ public class ConfigImportHelper {
 
   @Nullable
   public static File getOldConfigDir(File oldInstallHome) {
+    if (oldInstallHome == null) return null;
+    // check if it's already config dir
+    if (new File(oldInstallHome, OPTIONS_XML).exists()) {
+      return oldInstallHome;
+    }
+
     int oldBuildNumber = getBuildNumber(oldInstallHome);
 
     if (oldBuildNumber != -1 && oldBuildNumber <= 600) { // Pandora
@@ -252,7 +292,9 @@ public class ConfigImportHelper {
     return dir;
   }
 
-  public static boolean isInstallationHome(String installationHome) {
+  public static boolean isInstallationHomeOrConfig(String installationHome) {
+    if (new File(installationHome, OPTIONS_XML).exists()) return true;
+
     String mainJarName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName()) + ".jar";
     //noinspection HardCodedStringLiteral
     boolean quickTest = new File(new File(installationHome, "lib"), mainJarName).exists() &&

@@ -183,7 +183,7 @@ public class PathManager {
     return ourConfigPath;
   }
 
-  private static String getPathsSelector() {
+  public static String getPathsSelector() {
     return System.getProperty(PROPERTY_PATHS_SELECTOR);
   }
 
