@@ -36,7 +36,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Dec 18, 2007
  */
-public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
+public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentHashMap");
   private PersistentHashMapValueStorage myValueStorage;
   private final DataExternalizer<Value> myValueExternalizer;
@@ -120,7 +120,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     public void force() {
       //System.out.println("Flushing caches: " + myFile.getPath());
       synchronized (PersistentHashMap.this) {
-        synchronized (ourLock) {
+        synchronized (PersistentEnumerator.ourLock) {
           clearAppenderCaches();
         }
       }
@@ -133,13 +133,44 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   
   public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFiles(file), keyDescriptor, initialSize);
-    myParentValueRefOffset = getRecordSize();
+
+    final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = myEnumerator.getRecordHandler();
+    myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
     myRecordBuffer = new byte[myParentValueRefOffset + 8 + 4];
+    
+    myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase>() {
+      @Override
+      int recordWriteOffset(PersistentEnumeratorBase enumerator, byte[] buf) {
+        return recordHandler.recordWriteOffset(enumerator, buf);
+      }
+
+      @Override
+      byte[] getRecordBuffer(PersistentEnumeratorBase enumerator) {
+        return myRecordBuffer;
+      }
+
+      @Override
+      void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, byte[] buf) {
+        recordHandler.setupRecord(enumerator, hashCode, dataOffset, buf);
+        for (int i = myParentValueRefOffset; i < myRecordBuffer.length; i++) {
+          buf[i] = 0;
+        }
+      }
+    });
+
+    myEnumerator.setMarkCleanCallback(
+      new Flushable() {
+        @Override
+        public void flush() throws IOException {
+          myEnumerator.putMetaData(myGarbageSize);
+        }
+      }
+    );
 
     try {
       myValueExternalizer = valueExternalizer;
       myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath());
-      myGarbageSize = getMetaData();
+      myGarbageSize = myEnumerator.getMetaData();
 
       if (makesSenseToCompact()) {
         compact();
@@ -150,7 +181,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
     catch (Throwable t) {
       LOG.error(t);
-      throw new CorruptedException(file);
+      throw new PersistentEnumerator.CorruptedException(file);
     }
   }
 
@@ -159,11 +190,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public File getBaseFile() {
-    return myFile;
+    return myEnumerator.myFile;
   }
 
   private boolean makesSenseToCompact() {
-    final long fileSize = getDataFile(myFile).length();
+    final long fileSize = getDataFile(myEnumerator.myFile).length();
     return fileSize > 5 * 1024 * 1024 && myGarbageSize * 2 > fileSize; // file is longer than 5MB and more than 50% of data is garbage
   }
 
@@ -193,8 +224,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public synchronized void put(Key key, Value value) throws IOException {
-    synchronized (ourLock) {
-      markDirty(true);
+    synchronized (PersistentEnumerator.ourLock) {
+      myEnumerator.markDirty(true);
       myAppendCache.remove(key);
 
       final int id = enumerate(key);
@@ -217,8 +248,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
   
   public synchronized void appendData(Key key, ValueDataAppender appender) throws IOException {
-    synchronized (ourLock) {
-      markDirty(true);
+    synchronized (PersistentEnumerator.ourLock) {
+      myEnumerator.markDirty(true);
       
       final AppendStream stream = myAppendCache.get(key);
       appender.append(stream);
@@ -230,9 +261,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
    * {@link #processKeysWithExistingMapping(com.intellij.util.Processor)} to process only keys with existing mappings
    */
   public synchronized boolean processKeys(Processor<Key> processor) throws IOException {
-    synchronized (ourLock) {
+    synchronized (PersistentEnumerator.ourLock) {
       myAppendCache.clear();
-      return iterateData(processor);
+      return myEnumerator.iterateData(processor);
     }
   }
 
@@ -243,8 +274,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public synchronized boolean processKeysWithExistingMapping(Processor<Key> processor) throws IOException {
-    synchronized (ourLock) {
-      return processAllDataObject(processor, new DataFilter() {
+    synchronized (PersistentEnumerator.ourLock) {
+      return myEnumerator.processAllDataObject(processor, new PersistentEnumerator.DataFilter() {
         public boolean accept(final int id) {
           return readValueId(id).address != NULL_ADDR;
         }
@@ -253,21 +284,21 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public synchronized Value get(Key key) throws IOException {
-    synchronized (ourLock) {
+    synchronized (PersistentEnumerator.ourLock) {
       myAppendCache.remove(key);
       final int id = tryEnumerate(key);
-      if (id == NULL_ID) {
+      if (id == PersistentEnumerator.NULL_ID) {
         return null;
       }
       final HeaderRecord header = readValueId(id);
-      if (header.address == NULL_ID) {
+      if (header.address == PersistentEnumerator.NULL_ID) {
         return null;
       }
 
       byte[] data = new byte[header.size];
       long newAddress = myValueStorage.readBytes(header.address, data);
       if (newAddress != header.address) {
-        markDirty(true);
+        myEnumerator.markDirty(true);
         header.address = newAddress;
         updateValueId(id, header);
         myGarbageSize += header.size;
@@ -284,25 +315,25 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public synchronized boolean containsMapping(Key key) throws IOException {
-    synchronized (ourLock) {
+    synchronized (PersistentEnumerator.ourLock) {
       myAppendCache.remove(key);
       final int id = tryEnumerate(key);
-      if (id == NULL_ID) {
+      if (id == PersistentEnumerator.NULL_ID) {
         return false;
       }
-      return readValueId(id).address != NULL_ID;
+      return readValueId(id).address != PersistentEnumerator.NULL_ID;
     }
 
   }
 
   public synchronized void remove(Key key) throws IOException {
-    synchronized (ourLock) {
+    synchronized (PersistentEnumerator.ourLock) {
       myAppendCache.remove(key);
       final int id = tryEnumerate(key);
-      if (id == NULL_ID) {
+      if (id == PersistentEnumerator.NULL_ID) {
         return;
       }
-      markDirty(true);
+      myEnumerator.markDirty(true);
 
       final HeaderRecord record = readValueId(id);
       myGarbageSize += record.size;
@@ -312,16 +343,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public final synchronized void markDirty() throws IOException {
-    markDirty(true);
-  }
-
-  protected void markClean() throws IOException {
-    putMetaData(myGarbageSize);
-    super.markClean();
+    myEnumerator.markDirty(true);
   }
 
   public synchronized void force() {
-    synchronized (ourLock) {
+    synchronized (PersistentEnumerator.ourLock) {
       try {
         clearAppenderCaches();
       }
@@ -337,7 +363,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public synchronized void close() throws IOException {
-    synchronized (ourLock) {
+    synchronized (PersistentEnumerator.ourLock) {
       try {
         myAppendCacheFlusher.stop();
         myAppendCache.clear();
@@ -351,13 +377,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   
   // made public for tests
   public synchronized void compact() throws IOException {
-    synchronized (ourLock) {
+    synchronized (PersistentEnumerator.ourLock) {
       final long now = System.currentTimeMillis();
-      final String newPath = getDataFile(myFile).getPath() + ".new";
+      final String newPath = getDataFile(myEnumerator.myFile).getPath() + ".new";
       final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
       myValueStorage.switchToCompactionMode();
 
-      traverseAllRecords(new RecordsProcessor() {
+      traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
         public boolean process(final int keyId) throws IOException {
           final HeaderRecord record = readValueId(keyId);
           if (record.address != NULL_ADDR) {
@@ -373,38 +399,25 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       myValueStorage.dispose();
       newStorage.dispose();
 
-      FileUtil.rename(new File(newPath), getDataFile(myFile));
+      FileUtil.rename(new File(newPath), getDataFile(myEnumerator.myFile));
 
-      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
-      LOG.info("Compacted " + myFile.getPath() + " in " + (System.currentTimeMillis() - now) + "ms.");
+      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myEnumerator.myFile).getPath());
+      LOG.info("Compacted " + myEnumerator.myFile.getPath() + " in " + (System.currentTimeMillis() - now) + "ms.");
       myGarbageSize = 0;
-      putMetaData(0);
+      myEnumerator.putMetaData(0);
     }
   }
 
   private HeaderRecord readValueId(final int keyId) {
     HeaderRecord result = new HeaderRecord();
-    result.address = myStorage.getLong(keyId + myParentValueRefOffset);
-    result.size = myStorage.getInt(keyId + myParentValueRefOffset + 8);
+    result.address = myEnumerator.myStorage.getLong(keyId + myParentValueRefOffset);
+    result.size = myEnumerator.myStorage.getInt(keyId + myParentValueRefOffset + 8);
     return result;
   }
 
   private void updateValueId(final int keyId, HeaderRecord value) {
-    myStorage.putLong(keyId + myParentValueRefOffset, value.address);
-    myStorage.putInt(keyId + myParentValueRefOffset + 8, value.size);
-  }
-
-  @Override
-  protected byte[] getRecordBuffer() {
-    return myRecordBuffer;
-  }
-
-  @Override
-  protected void setupRecord(final int hashCode, final int dataOffset, final byte[] buf) {
-    super.setupRecord(hashCode, dataOffset, buf);
-    for (int i = myParentValueRefOffset; i < myRecordBuffer.length; i++) {
-      buf[i] = 0;
-    }
+    myEnumerator.myStorage.putLong(keyId + myParentValueRefOffset, value.address);
+    myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset + 8, value.size);
   }
 
   private static class HeaderRecord {

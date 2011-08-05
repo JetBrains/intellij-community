@@ -44,8 +44,6 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int FIRST_LEVEL_MASK = SLOTS_PER_FIRST_VECTOR - 1;
   private static final byte[] FIRST_VECTOR = new byte[SLOTS_PER_FIRST_VECTOR * 4];
 
-  private final byte[] myBuffer = new byte[RECORD_SIZE];
-
   private static final int COLLISION_OFFSET = 0;
   private static final int KEY_HASHCODE_OFFSET = COLLISION_OFFSET + 4;
   private static final int KEY_REF_OFFSET = KEY_HASHCODE_OFFSET + 4;
@@ -54,7 +52,8 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
 
   public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new MappedFileSimpleStorage(file, initialSize), dataDescriptor, initialSize, ourVersion);
+    super(file, new MappedFileSimpleStorage(file, initialSize), dataDescriptor, initialSize, ourVersion,
+          new RecordBufferHandler());
   }
 
   protected  void setupEmptyFile() throws IOException {
@@ -182,15 +181,10 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     int id = super.writeData(value, hashCode);
     ++valuesCount;
 
-    if (valuesCount % 20000 == 0 && IOStatistics.DEBUG) {
+    if (valuesCount % 50000 == 0 && IOStatistics.DEBUG) {
       IOStatistics.dump("Index " + myFile + ", values " + valuesCount + ", storage size:" + myStorage.length());
     }
     return id;
-  }
-
-  @Override
-  protected int recordWriteOffset(byte[] buf) {
-    return (int)myStorage.length();
   }
 
   private static int hcByte(int hashcode, int byteN) {
@@ -214,16 +208,6 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     return -myStorage.getInt(idx);
   }
 
-  protected byte[] getRecordBuffer() {
-    return myBuffer;
-  }
-
-  protected void setupRecord(int hashCode, final int dataOffset, final byte[] buf) {
-    Bits.putInt(buf, COLLISION_OFFSET, 0);
-    Bits.putInt(buf, KEY_HASHCODE_OFFSET, hashCode);
-    Bits.putInt(buf, KEY_REF_OFFSET, dataOffset);
-  }
-
   private int hashCodeOf(int idx) throws IOException {
     return myStorage.getInt(idx + KEY_HASHCODE_OFFSET);
   }
@@ -233,8 +217,23 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     return myStorage.getInt(idx + KEY_REF_OFFSET);
   }
 
-  @Override
-  protected int getRecordSize() {
-    return RECORD_SIZE;
+  private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumerator> {
+    private final byte[] myBuffer = new byte[RECORD_SIZE];
+
+    protected int recordWriteOffset(PersistentEnumerator enumerator, byte[] buf) {
+      return (int)enumerator.myStorage.length();
+    }
+
+    @Override
+    byte[] getRecordBuffer(PersistentEnumerator t) {
+      return myBuffer;
+    }
+
+    @Override
+    void setupRecord(PersistentEnumerator enumerator, int hashCode, int dataOffset, byte[] buf) {
+      Bits.putInt(buf, COLLISION_OFFSET, 0);
+      Bits.putInt(buf, KEY_HASHCODE_OFFSET, hashCode);
+      Bits.putInt(buf, KEY_REF_OFFSET, dataOffset);
+    }
   }
 }
