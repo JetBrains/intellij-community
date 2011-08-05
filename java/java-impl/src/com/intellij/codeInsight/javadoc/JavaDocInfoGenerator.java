@@ -232,10 +232,13 @@ public class JavaDocInfoGenerator {
       return null;
     }
     if (docURLs != null) {
-      StringBuffer errorsSection = new StringBuffer("<p id=\"error\">Following external urls were checked:<br>&nbsp;&nbsp;&nbsp;<i>");
+      StringBuilder errorsSection = new StringBuilder("<p id=\"error\">Following external urls were checked:<br>&nbsp;&nbsp;&nbsp;<i>");
       errorsSection.append(StringUtil.join(docURLs, "</i><br>&nbsp;&nbsp;&nbsp;<i>"));
       errorsSection.append("</i><br>The documentation for this element is not found. Please add all the needed paths to API docs in ");
       errorsSection.append("<a href=\"open://Project Settings\">Project Settings.</a></p>");
+      if (buffer.length() == 0) {
+        buffer.append("<html><body></body></html>");
+      }
       buffer.insert(buffer.indexOf("<body>"), errorsSection.toString());
     }
     return fixupDoc(buffer);
