@@ -215,7 +215,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   public void selectScope(final NamedScope scope) {
-    refreshScope(scope, true);
+    refreshScope(scope);
     if (scope != DefaultScopesProvider.getAllScope()) {
       CURRENT_SCOPE_NAME = scope.getName();
     }
@@ -262,7 +262,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  private void refreshScope(@Nullable NamedScope scope, boolean showProgress) {
+  private void refreshScope(@Nullable NamedScope scope) {
     FileTreeModelBuilder.clearCaches(myProject);
     if (scope == null || scope.getValue() == null) { //was deleted
       scope = DefaultScopesProvider.getAllScope();
@@ -289,7 +289,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myTree.getEmptyText().setText("Loading...");
     myActionCallback = new ActionCallback();
     myTree.putClientProperty(TreeState.CALLBACK, new WeakReference<ActionCallback>(myActionCallback));
-    myTree.setModel(myBuilder.build(myProject, showProgress, new Runnable(){
+    myTree.setModel(myBuilder.build(myProject, true, new Runnable(){
       @Override
       public void run() {
         myTree.setPaintBusy(false);
@@ -598,7 +598,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       myUpdateQueue.cancelAllUpdates();
       queueUpdate(new Runnable() {
         public void run() {
-          refreshScope(scope, true);
+          refreshScope(scope);
         }
       }, false);
     }
@@ -652,7 +652,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       myUpdateQueue.cancelAllUpdates();
       myUpdateQueue.queue(new Update("RootsChanged") {
         public void run() {
-          refreshScope(getCurrentScope(), false);
+          refreshScope(getCurrentScope());
         }
 
         public boolean isExpired() {
