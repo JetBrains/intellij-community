@@ -40,7 +40,7 @@ public class FoldingDescriptor {
   private final ASTNode myElement;
   private final TextRange myRange;
   @Nullable private final FoldingGroup myGroup;
-  private Set<Object> myDependencies;
+  private final Set<Object> myDependencies;
   private final boolean myNeverExpands;
 
   /**
@@ -150,6 +150,7 @@ public class FoldingDescriptor {
     return myNeverExpands;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   @Override
   public String toString() {
     return myRange + " for AST: " + myElement;
