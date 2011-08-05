@@ -205,9 +205,10 @@ public class RecursionManager {
 
   private static void checkDepth(String s) {
     LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
-    if (ourDepth.get() != progressMap.size()) {
+    Integer depth = ourDepth.get();
+    if (depth != progressMap.size()) {
       ourDepth.set(progressMap.size());
-      throw new AssertionError("Inconsistent depth " + s);
+      throw new AssertionError("Inconsistent depth " + s + "; depth=" + depth + "; map.size=" + progressMap.size());
     }
   }
 
