@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.content.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
-import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -912,7 +911,10 @@ public class DocumentationManager {
   }
 
   void showHint(final JBPopup hint) {
-    PopupPositionManager.positionPopupInBestPosition(hint, myEditor, true);
+    //todo[spleaner] please fix this in PopupPositionManager
+    //PopupPositionManager.positionPopupInBestPosition(hint, myEditor, true);
+    final Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
+    hint.showInBestPositionFor(DataManager.getInstance().getDataContext(focusOwner));
   }
 
   public void requestFocus() {
