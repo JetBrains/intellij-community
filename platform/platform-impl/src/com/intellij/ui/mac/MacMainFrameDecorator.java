@@ -23,17 +23,16 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Function;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
-import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
 
 /**
  * User: spLeaner
@@ -95,7 +94,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   private Callback myDidEnter;
 
   public MacMainFrameDecorator(@NotNull final Frame frame, final boolean navBar) {
-    final ID window = findWindowForTitle(frame.getTitle());
+    final ID window = MacUtil.findWindowForTitle(frame.getTitle());
     if (window == null) return;
 
     if (CURRENT_SETTER == null) {
@@ -212,7 +211,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   public static void toggleFullScreen(Frame frame) {
     if (!SystemInfo.isMacOSLion) return;
     
-    final ID window = findWindowForTitle(frame.getTitle());
+    final ID window = MacUtil.findWindowForTitle(frame.getTitle());
     if (window == null) return;
 
     invoke(window, "toggleFullScreen:", window);
@@ -221,45 +220,11 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   public static boolean isFullScreenMode(@NotNull Frame frame) {
     if (!SystemInfo.isMacOSLion) return false;
 
-    final ID window = findWindowForTitle(frame.getTitle());
+    final ID window = MacUtil.findWindowForTitle(frame.getTitle());
     if (window == null) return false;
 
     final ID mask = invoke(window, "styleMask");
     return (mask.intValue() & (1 << 14)) == (1 << 14);
   }
 
-  @Nullable
-  public static ID findWindowForTitle(final String title) {
-    if (title == null || title.length() == 0) return null;
-    final ID pool = invoke("NSAutoreleasePool", "new");
-
-    ID focusedWindow = null;
-    try {
-      final ID sharedApplication = invoke("NSApplication", "sharedApplication");
-      final ID windows = invoke(sharedApplication, "windows");
-      final ID windowEnumerator = invoke(windows, "objectEnumerator");
-
-      while (true) {
-        // dirty hack: walks through all the windows to find a cocoa window to show sheet for
-        final ID window = invoke(windowEnumerator, "nextObject");
-        if (0 == window.intValue()) break;
-
-        final ID windowTitle = invoke(window, "title");
-        if (windowTitle != null && windowTitle.intValue() != 0) {
-          final String titleString = toStringViaUTF8(windowTitle);
-          if (titleString.equals(title)) {
-            if (1 == invoke(window, "isVisible").intValue()) {
-              focusedWindow = window;
-              break;
-            }
-          }
-        }
-      }
-    }
-    finally {
-      invoke(pool, "release");
-    }
-
-    return focusedWindow;
-  }
 }

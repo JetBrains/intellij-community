@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.mac.DoNotAskDialogOption;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.AwtVisitor;
@@ -1147,7 +1148,7 @@ public abstract class DialogWrapper {
   }
 
   public boolean isOK() {
-    return myExitCode == OK_EXIT_CODE;
+    return getExitCode() == OK_EXIT_CODE;
   }
 
   public boolean isOKActionEnabled() {
@@ -1556,7 +1557,7 @@ public abstract class DialogWrapper {
     return myDisposable;
   }
 
-  public interface DoNotAskOption {
+  public interface DoNotAskOption extends DoNotAskDialogOption {
 
     boolean isToBeShown();
 

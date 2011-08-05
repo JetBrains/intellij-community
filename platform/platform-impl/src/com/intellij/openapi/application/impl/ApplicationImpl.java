@@ -773,15 +773,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private static boolean showConfirmation() {
     final boolean hasUnsafeBgTasks = ProgressManager.getInstance().hasUnsafeProgressIndicator();
-    final ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog(hasUnsafeBgTasks);
-    if (confirmExitDialog.isToBeShown()) {
-      confirmExitDialog.show();
-      if (!confirmExitDialog.isOK()) {
+    if (hasUnsafeBgTasks || GeneralSettings.getInstance().isConfirmExit()) {
+      String message = ApplicationBundle
+        .message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt",
+                 ApplicationNamesInfo.getInstance().getFullProductName());
+
+      if (DialogWrapper.OK_EXIT_CODE != Messages.showYesNoDialog(message, ApplicationBundle.message("exit.confirm.title"),
+                                        ApplicationBundle.message("command.exit"), "Cancel",
+                                        Messages.getQuestionIcon())) {
         return false;
       }
-    }
-    else {
-      confirmExitDialog.close(DialogWrapper.OK_EXIT_CODE);
     }
     return true;
   }

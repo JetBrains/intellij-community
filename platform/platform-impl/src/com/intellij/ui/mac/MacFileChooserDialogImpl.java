@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.ui.mac.foundation.MacUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
@@ -139,7 +140,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
             activeWindowTitle = ((JDialog)activeWindow).getTitle();
           }
 
-          final ID focusedWindow = MacMainFrameDecorator.findWindowForTitle(activeWindowTitle);
+          final ID focusedWindow = MacUtil.findWindowForTitle(activeWindowTitle);
           if (focusedWindow != null) {
             invoke(chooser, "beginSheetForDirectory:file:types:modalForWindow:modalDelegate:didEndSelector:contextInfo:",
                    directory, file, null, focusedWindow, self, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), null);

@@ -20,13 +20,16 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -173,10 +176,20 @@ public class Messages {
    * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(Project,boolean)
    */
   public static void showMessageDialog(Project project, String message, String title, @Nullable Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showOkMessageDialog(title, message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
+      return;
+    }
+    
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
   public static void showMessageDialog(Component parent, String message, String title, @Nullable Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showOkMessageDialog(title, message, OK_BUTTON, SwingUtilities.getWindowAncestor(parent));
+      return;
+    }
+    
     showDialog(parent, message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
@@ -187,22 +200,47 @@ public class Messages {
    * @see #showMessageDialog(Component, String, String, Icon)
    */
   public static void showMessageDialog(String message, String title, @Nullable Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showOkMessageDialog(title, message, OK_BUTTON);
+      return;
+    }
+    
     showDialog(message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
   /**
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
+  public static int showYesNoDialog(Project project, String message, String title, String yesText, String noText, @Nullable Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoDialog(message, title, yesText, noText, WindowManager.getInstance().suggestParentWindow(project));
+    }
+    
+    return showDialog(project, message, title, new String[]{yesText, noText}, 0, icon);
+  }
+
+  /**
+   * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
+   */
   public static int showYesNoDialog(Project project, String message, String title, @Nullable Icon icon) {
-    return showDialog(project, message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon);
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoDialog(message, title, YES_BUTTON, NO_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
+    }
+    
+    return showYesNoDialog(project, message, title, YES_BUTTON, NO_BUTTON, icon);
   }
 
   /**
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
   public static int showYesNoDialog(Component parent, String message, String title, @Nullable Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoDialog(message, title, YES_BUTTON, NO_BUTTON, SwingUtilities.getWindowAncestor(parent));
+    }
+    
     return showDialog(parent, message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon);
   }
+
 
   /**
    * Use this method only if you do not know project or component
@@ -211,27 +249,43 @@ public class Messages {
    * @see #showYesNoDialog(Project, String, String, Icon)
    * @see #showYesNoDialog(Component, String, String, Icon)
    */
+  public static int showYesNoDialog(String message, String title, String yesText, String noText, @Nullable Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoDialog(title, message, yesText, noText, null);
+    }
+    
+    return showDialog(message, title, new String[]{yesText, noText}, 0, icon);
+  }
+  
+  /**
+   * Use this method only if you do not know project or component
+   *
+   * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
+   * @see #showYesNoDialog(Project, String, String, Icon)
+   * @see #showYesNoDialog(Component, String, String, Icon)
+   */
   public static int showYesNoDialog(String message, String title, @Nullable Icon icon) {
-    return showDialog(message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon);
-  }
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoDialog(title, message, YES_BUTTON, NO_BUTTON, null);
+    }
 
-  public static int showYesNoDialog(Component parent, String message, String title, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
-    return showDialog(parent, message, title, new String[]{YES_BUTTON, NO_BUTTON}, defaultOptionIndex, focusedOptionIndex, icon);
-  }
-
-  public static int showYesNoDialog(Project project, String message, String title, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
-    return showDialog(project, message, title, new String[]{YES_BUTTON, NO_BUTTON}, defaultOptionIndex, focusedOptionIndex, icon);
+    return showYesNoDialog(message, title, YES_BUTTON, NO_BUTTON, icon);
   }
 
   public static int showOkCancelDialog(Project project, String message, String title, Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoDialog(title, message, OK_BUTTON, CANCEL_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
+    }
+    
     return showDialog(project, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
-  public static int showOkCancelDialog(Component parent, String message, String title, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
-    return showDialog(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, defaultOptionIndex, focusedOptionIndex, icon);
-  }
-
   public static int showOkCancelDialog(Component parent, String message, String title, Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoDialog(title, message, OK_BUTTON, CANCEL_BUTTON, SwingUtilities.getWindowAncestor(parent));
+    }
+
+
     return showDialog(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
@@ -242,12 +296,17 @@ public class Messages {
    * @see #showOkCancelDialog(Component, String, String, Icon)
    */
   public static int showOkCancelDialog(String message, String title, Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoDialog(title, message, OK_BUTTON, CANCEL_BUTTON, null);
+    }
+    
     return showDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
   public static int showCheckboxOkCancelDialog(String message, String title, String checkboxText, final boolean checked,
                                                   final int defaultOptionIndex, final int focusedOptionIndex, Icon icon) {
-    return showCheckboxMessageDialog(message, title, new String[] {OK_BUTTON, CANCEL_BUTTON}, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
+    return showCheckboxMessageDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, checkboxText, checked, defaultOptionIndex,
+                                     focusedOptionIndex, icon,
                                      new PairFunction<Integer, JCheckBox, Integer>() {
                                        @Override
                                        public Integer fun(final Integer exitCode, final JCheckBox cb) {
@@ -272,18 +331,33 @@ public class Messages {
 
 
   public static int showTwoStepConfirmationDialog(String message, String title, String checkboxText, Icon icon) {
-    return showCheckboxMessageDialog(message, title, new String[] {OK_BUTTON, CANCEL_BUTTON}, checkboxText, true, -1, -1, icon, null);
+    return showCheckboxMessageDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, checkboxText, true, -1, -1, icon, null);
   }
 
   public static void showErrorDialog(Project project, @Nls String message, @Nls String title) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showErrorDialog(title, message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
+      return;
+    }
+
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
   public static void showErrorDialog(Component component, String message, @Nls String title) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showErrorDialog(title, message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
+      return;
+    }
+
     showDialog(component, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
   public static void showErrorDialog(Component component, String message) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showErrorDialog(CommonBundle.getErrorTitle(), message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
+      return;
+    }
+    
     showDialog(component, message, CommonBundle.getErrorTitle(), new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
@@ -294,14 +368,29 @@ public class Messages {
    * @see #showErrorDialog(Component, String, String)
    */
   public static void showErrorDialog(String message, String title) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showErrorDialog(CommonBundle.getErrorTitle(), message, OK_BUTTON, null);
+      return;
+    }
+
     showDialog(message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
   public static void showWarningDialog(Project project, String message, String title) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showErrorDialog(CommonBundle.getErrorTitle(), message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
+      return;
+    }
+    
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
   }
 
   public static void showWarningDialog(Component component, String message, String title) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showErrorDialog(CommonBundle.getErrorTitle(), message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
+      return;
+    }
+
     showDialog(component, message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
   }
 
@@ -312,22 +401,55 @@ public class Messages {
    * @see #showWarningDialog(Component, String, String)
    */
   public static void showWarningDialog(String message, String title) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showErrorDialog(CommonBundle.getErrorTitle(), message, OK_BUTTON, null);
+      return;
+    }
+    
     showDialog(message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
   }
 
-  public static int showYesNoCancelDialog(Project project, String message, String title, Icon icon) {
-    return showDialog(project, message, title, new String[]{YES_BUTTON, NO_BUTTON, CANCEL_BUTTON}, 0, icon);
+  public static int showYesNoCancelDialog(Project project, String message, String title, String yes, String no, String cancel, Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoCancelDialog(title, message, yes, no, cancel,
+                                               WindowManager.getInstance().suggestParentWindow(project), null);
+    }
+
+    return showDialog(project, message, title, new String[]{yes, no, cancel}, 0, icon);
   }
 
-  public static int showYesNoCancelDialog(Project project, String message, String title, final int defaultOptionIndex,
-                                          final int focusedOptionIndex, Icon icon) {
-    return showDialog(project, message, title, new String[]{YES_BUTTON, NO_BUTTON, CANCEL_BUTTON}, defaultOptionIndex, focusedOptionIndex, icon);
+
+  public static int showYesNoCancelDialog(Project project, String message, String title, Icon icon) {
+    return showYesNoCancelDialog(project, message, title, YES_BUTTON, NO_BUTTON, CANCEL_BUTTON, icon);
+  }
+
+  public static int showYesNoCancelDialog(Component parent, String message, String title, String yes, String no, String cancel, Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoCancelDialog(title, message, yes, no, cancel,
+                                               SwingUtilities.getWindowAncestor(parent), null);
+    }
+
+    return showDialog(parent, message, title, new String[]{yes, no, cancel}, 0, icon);
   }
 
   public static int showYesNoCancelDialog(Component parent, String message, String title, Icon icon) {
-    return showDialog(parent, message, title, new String[]{YES_BUTTON, NO_BUTTON, CANCEL_BUTTON}, 0, icon);
+    return showYesNoCancelDialog(parent, message, title, YES_BUTTON, NO_BUTTON, CANCEL_BUTTON, icon);
   }
 
+
+  public static int showYesNoCancelDialog(String message, String title, String yes, String no, String cancel, Icon icon,
+                                          DialogWrapper.DoNotAskOption doNotAskOption) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoCancelDialog(title, message, yes, no, cancel, null, doNotAskOption);
+    }
+    
+    return showDialog(message, title, new String[]{yes, no, cancel}, 0, icon, doNotAskOption);
+  }
+
+  public static int showYesNoCancelDialog(String message, String title, String yes, String no, String cancel, Icon icon) {
+    return showYesNoCancelDialog(message, title, yes, no, cancel, icon, null);
+  }
+  
   /**
    * Use this method only if you do not know project or component
    *
@@ -335,7 +457,7 @@ public class Messages {
    * @see #showYesNoCancelDialog(Component, String, String, Icon)
    */
   public static int showYesNoCancelDialog(String message, String title, Icon icon) {
-    return showDialog(message, title, new String[]{YES_BUTTON, NO_BUTTON, CANCEL_BUTTON}, 0, icon);
+    return showYesNoCancelDialog(message, title, YES_BUTTON, NO_BUTTON, CANCEL_BUTTON, icon);
   }
 
   /**
@@ -520,6 +642,11 @@ public class Messages {
    * Shows dialog with given message and title, infomation icon {@link #getInformationIcon()} and OK button
    */
   public static void showInfoMessage(Component component, String message, String title) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showOkMessageDialog(title, message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
+      return;
+    }
+    
     showMessageDialog(component, message, title, getInformationIcon());
   }
 
@@ -527,6 +654,11 @@ public class Messages {
    * Shows dialog with given message and title, infomation icon {@link #getInformationIcon()} and OK button
    */
   public static void showInfoMessage(Project project, @Nls String message, @Nls String title) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showOkMessageDialog(title, message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
+      return;
+    }
+
     showMessageDialog(project, message, title, getInformationIcon());
   }
 
@@ -534,6 +666,12 @@ public class Messages {
    * Shows dialog with given message and title, infomation icon {@link #getInformationIcon()} and OK button
    */
   public static void showInfoMessage(String message, String title) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      MacMessages.showOkMessageDialog(title, message, OK_BUTTON, null);
+      return;
+    }
+    
+
     showMessageDialog(message, title, getInformationIcon());
   }
 
