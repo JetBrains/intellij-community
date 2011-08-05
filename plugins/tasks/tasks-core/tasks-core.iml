@@ -29,7 +29,15 @@
     <orderEntry type="library" exported="" name="http-client-3.1" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="jira-connector" />
-    <orderEntry type="library" name="markdownj" level="project" />
+    <orderEntry type="module-library">
+      <library name="markdownj">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/markdownj-core-0.4.2-SNAPSHOT.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 
