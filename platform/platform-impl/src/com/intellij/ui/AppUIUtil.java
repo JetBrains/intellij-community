@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.ImageLoader;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,10 +42,11 @@ public class AppUIUtil {
     frame.setIconImages(getAppIconImages());
   }
 
+  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "deprecation"})
   public static List<Image> getAppIconImages() {
     final List<Image> images = new ArrayList<Image>();
-    images.add(ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getIconUrl()));
-    images.add(ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getSmallIconUrl()));
+    images.add(com.intellij.util.ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getIconUrl()));
+    images.add(com.intellij.util.ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getSmallIconUrl()));
     return images;
   }
 
@@ -66,16 +69,22 @@ public class AppUIUtil {
     }
   }
 
-  public static void updateFrameClass(final String productName) {
+  public static void updateFrameClass() {
     try {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
       final Class<? extends Toolkit> aClass = toolkit.getClass();
       if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
         final Field awtAppClassName = aClass.getDeclaredField("awtAppClassName");
         awtAppClassName.setAccessible(true);
-        awtAppClassName.set(toolkit, productName);
+        awtAppClassName.set(toolkit, getFrameClass());
       }
     }
     catch (Exception ignore) { }
+  }
+
+  public static String getFrameClass() {
+    final String name = ApplicationNamesInfo.getInstance().getProductName();
+    final String wmClass = StringUtil.replaceChar(name.toLowerCase(), ' ', '-');
+    return PlatformUtils.isCommunity() ? wmClass + "-ce" : wmClass;
   }
 }
