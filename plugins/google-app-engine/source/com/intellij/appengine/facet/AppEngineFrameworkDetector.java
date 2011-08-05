@@ -9,6 +9,7 @@ import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FileContentPattern;
 import com.intellij.j2ee.web.WebUtilImpl;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.indexing.FileContent;
@@ -38,7 +39,7 @@ public class AppEngineFrameworkDetector extends FacetBasedFrameworkDetector<AppE
   }
 
   @Override
-  public void setupFacet(@NotNull AppEngineFacet facet) {
+  public void setupFacet(@NotNull AppEngineFacet facet, ModifiableRootModel model) {
     final List<? extends AppEngineSdk> sdks = AppEngineSdkManager.getInstance().getValidSdks();
     if (!sdks.isEmpty()) {
       facet.getConfiguration().setSdkHomePath(sdks.get(0).getSdkHomePath());
