@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
@@ -31,12 +29,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * @author max
+ */
 public class BuildInfo implements Comparable<BuildInfo> {
   private final BuildNumber myNumber;
   private final String myVersion;
   private final String myMessage;
   private final Date myReleaseDate;
   private final List<PatchInfo> myPatches;
+  private final List<ButtonInfo> myButtons;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.BuildInfo");
 
@@ -59,6 +61,11 @@ public class BuildInfo implements Comparable<BuildInfo> {
     myPatches = new ArrayList<PatchInfo>();
     for (Object patchNode : node.getChildren("patch")) {
       myPatches.add(new PatchInfo((Element)patchNode));
+    }
+    
+    myButtons = new ArrayList<ButtonInfo>();
+    for (Object buttonNode : node.getChildren("button")) {
+      myButtons.add(new ButtonInfo((Element) buttonNode));
     }
 
     Element messageTag = node.getChild("message");
@@ -92,6 +99,10 @@ public class BuildInfo implements Comparable<BuildInfo> {
       if (each.getFromBuild().asStringWithoutProductCode().equals(currentBuild.asStringWithoutProductCode())) return each;
     }
     return null;
+  }
+
+  public List<ButtonInfo> getButtons() {
+    return ImmutableList.copyOf(myButtons);
   }
 
   @Override
