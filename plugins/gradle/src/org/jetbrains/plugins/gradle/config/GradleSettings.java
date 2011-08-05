@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 )
 public class GradleSettings implements PersistentStateComponent<GradleSettings> {
   
-  public String INSTALLATION_HOME;
+  public String GRADLE_HOME;
   
   @Override
   public GradleSettings getState() {

@@ -99,7 +99,7 @@ public class GradleLibraryManager {
       return null;
     }
     GradleSettings settings = GradleSettings.getInstance(project);
-    String path = settings.INSTALLATION_HOME;
+    String path = settings.GRADLE_HOME;
     if (path == null) {
       return null;
     }
