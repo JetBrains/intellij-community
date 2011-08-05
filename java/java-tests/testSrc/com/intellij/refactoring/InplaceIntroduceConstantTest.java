@@ -60,7 +60,15 @@ public class InplaceIntroduceConstantTest extends AbstractInplaceIntroduceTest {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        type("BAR");
+      }
+    });
+  }
+
+  public void testNoConflictingConstantName() throws Exception {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
       }
     });
   }

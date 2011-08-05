@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 class Test {
-    private static final String FOO = "foo";
-    public static final String FOO1 = "foo";
 
-    public void method(Map<Object, Object> args) {
+    public static final String FOO = "foo";
+
+    public void method(String FOO) {
       System.out.println(FOO);
-      System.out.println(FOO1);
+      System.out.println(Test.FOO);
     }
 }
