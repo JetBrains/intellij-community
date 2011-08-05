@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.gradle;
+package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -51,7 +51,7 @@ import java.util.regex.Pattern;
  * @author John Murph
  */
 public class GradlePositionManager extends ScriptPositionManagerHelper {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.gradle.GradlePositionManager");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.gradle.config.GradlePositionManager");
   private static final Pattern GRADLE_CLASS_PATTERN = Pattern.compile(".*_gradle_.*");
   private static final Key<CachedValue<ClassLoader>> GRADLE_CLASS_LOADER = Key.create("GRADLE_CLASS_LOADER");
   private static final Key<CachedValue<FactoryMap<File, String>>> GRADLE_CLASS_NAME = Key.create("GRADLE_CLASS_NAME");

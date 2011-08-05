@@ -4,11 +4,19 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="module" module-name="compiler-openapi" />
+    <orderEntry type="module" module-name="jetgroovy" />
+    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="execution-impl" />
+    <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="java-impl" />
   </component>
 </module>
 

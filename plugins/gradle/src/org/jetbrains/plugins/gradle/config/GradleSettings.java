@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.gradle;
+package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
+import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -32,12 +30,22 @@ import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
       @Storage( file = "$PROJECT_CONFIG_DIR$/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class GradleSettings extends SdkHomeSettings {
-  public GradleSettings(Project project) {
-    super(project);
+public class GradleSettings implements PersistentStateComponent<GradleSettings> {
+  
+  public String INSTALLATION_HOME;
+  
+  @Override
+  public GradleSettings getState() {
+    return this;
   }
 
-  public static GradleSettings getInstance(Project project) {
+  @Override
+  public void loadState(GradleSettings state) {
+    XmlSerializerUtil.copyBean(state, this);
+  }
+
+  @NotNull
+  public static GradleSettings getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GradleSettings.class);
   }
 }

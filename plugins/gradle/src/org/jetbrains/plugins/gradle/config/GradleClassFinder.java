@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.gradle;
+package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,7 +36,8 @@ public class GradleClassFinder extends NonClasspathClassFinder {
 
   @Override
   protected List<VirtualFile> calcClassRoots() {
-    return mySettings.getClassRoots();
+    // TODO den implement
+    return new ArrayList<VirtualFile>();
+    //return mySettings.getClassRoots();
   }
-
 }

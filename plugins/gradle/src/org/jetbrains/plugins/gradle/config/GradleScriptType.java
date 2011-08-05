@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.gradle;
+package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.*;
@@ -37,6 +37,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleIcons;
+import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -67,6 +69,8 @@ public class GradleScriptType extends GroovyScriptType {
   private static final Pattern MAIN_CLASS_NAME_PATTERN = Pattern.compile("\nSTARTER_MAIN_CLASS=(.*)\n");
 
   public static final GroovyScriptType INSTANCE = new GradleScriptType();
+  
+  private final GradleLibraryManager myLibraryManager = GradleLibraryManager.INSTANCE;
 
   private GradleScriptType() {
     super("gradle");
@@ -75,7 +79,7 @@ public class GradleScriptType extends GroovyScriptType {
   @NotNull
   @Override
   public Icon getScriptIcon() {
-    return GradleLibraryPresentationProvider.GRADLE_ICON;
+    return GradleIcons.GRADLE_ICON;
   }
 
   @Override
@@ -142,15 +146,18 @@ public class GradleScriptType extends GroovyScriptType {
     return new GroovyScriptRunner() {
       @Override
       public boolean isValidModule(@NotNull Module module) {
-        return GradleLibraryPresentationProvider.isGradleSdk(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
+        return myLibraryManager.isGradleSdk(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
       }
 
       @Override
       public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
         if (GradleLibraryPresentationProvider.getSdkHome(module, project) == null) {
-          int result = Messages
-            .showOkCancelDialog("Gradle is not configured. Do you want to configure it?", "Configure Gradle SDK",
-                                GradleLibraryPresentationProvider.GRADLE_ICON);
+          // TODO den internationalise
+          int result = Messages.showOkCancelDialog(
+            "Gradle is not configured. Do you want to configure it?",
+            "Configure Gradle SDK",
+            GradleIcons.GRADLE_ICON
+          );
           if (result == 0) {
             ShowSettingsUtil.getInstance().editConfigurable(project, new GradleConfigurable(project));
           }
@@ -186,8 +193,9 @@ public class GradleScriptType extends GroovyScriptType {
         if (StringUtil.isNotEmpty(userDefinedClasspath)) {
           params.getClassPath().add(userDefinedClasspath);
         } else {
-          params.getClassPath().addAllFiles(
-            GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GradleLibraryPresentationProvider.ANY_GRADLE_JAR_FILE_PATTERN));
+          // TODO den implement
+          //params.getClassPath().addAllFiles(
+          //  GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GradleLibraryPresentationProvider.ANY_GRADLE_JAR_FILE_PATTERN));
         }
 
         params.getVMParametersList().addParametersString(configuration.getVMParameters());
@@ -248,20 +256,22 @@ public class GradleScriptType extends GroovyScriptType {
     }
 
     final GradleSettings gradleSettings = GradleSettings.getInstance(file.getProject());
-    final VirtualFile home = gradleSettings.getSdkHome();
-    if (home == null) {
-      return baseScope;
-    }
-
-    final List<VirtualFile> files = gradleSettings.getClassRoots();
-    if (files.isEmpty()) {
-      return baseScope;
-    }
+    // TODO den implement
+    //final VirtualFile home = gradleSettings.getSdkHome();
+    //if (home == null) {
+    //  return baseScope;
+    //}
+    //
+    //final List<VirtualFile> files = gradleSettings.getClassRoots();
+    //if (files.isEmpty()) {
+    //  return baseScope;
+    //}
 
     GlobalSearchScope result = baseScope;
-    for (final VirtualFile root : files) {
-      result = result.uniteWith(new NonClasspathDirectoryScope(root));
-    }
+    // TODO den implement
+    //for (final VirtualFile root : files) {
+    //  result = result.uniteWith(new NonClasspathDirectoryScope(root));
+    //}
     return result;
   }
 
