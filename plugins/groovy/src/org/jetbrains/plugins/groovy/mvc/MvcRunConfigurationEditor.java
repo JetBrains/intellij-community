@@ -55,7 +55,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
 
   protected void resetEditorFrom(T configuration) {
     myFramework = configuration.getFramework();
-    myVMParameters.setDialogCaption("VM Parameters");
+    myVMParameters.setDialogCaption("VM Options");
     myVMParameters.setText(configuration.vmParams);
     myVMParamsLabel.setLabelFor(myVMParameters);
 

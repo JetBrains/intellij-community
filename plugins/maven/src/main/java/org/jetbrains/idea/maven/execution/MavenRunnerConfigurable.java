@@ -76,7 +76,7 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
     }
     c.gridwidth = 1;
 
-    JLabel labelVMParameters = new JLabel("VM Parameters");
+    JLabel labelVMParameters = new JLabel("VM Options");
     labelVMParameters.setDisplayedMnemonic('v');
     labelVMParameters.setLabelFor(myVMParametersEditor = new RawCommandLineEditor());
     myVMParametersEditor.setDialogCaption(labelVMParameters.getText());

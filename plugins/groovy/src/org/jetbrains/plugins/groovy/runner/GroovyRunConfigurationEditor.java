@@ -75,7 +75,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   }
 
   public void resetEditorFrom(GroovyScriptRunConfiguration configuration) {
-    myVMParameters.setDialogCaption("VM Parameters");
+    myVMParameters.setDialogCaption("VM Options");
     myVMParameters.setText(configuration.getVMParameters());
 
     myParameters.setDialogCaption("Script Parameters");
