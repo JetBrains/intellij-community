@@ -69,7 +69,11 @@ public class GrKindWeigher extends CompletionWeigher {
       if (o instanceof PsiPackage) return NotQualifiedKind.aPackage;
       if (isLightElement(o)) return NotQualifiedKind.anImplicitGroovyMethod;
       if (o instanceof PsiMember) return NotQualifiedKind.aMember;
-      if (o instanceof String) return NotQualifiedKind.aString;
+      if (o instanceof String) {
+        if ("for".equals(o)) return NotQualifiedKind.aKeyword;
+
+        return NotQualifiedKind.aString;
+      }
     }
     else {
       if (o instanceof PsiClass) return QualifiedKind.aClass;
@@ -97,7 +101,7 @@ public class GrKindWeigher extends CompletionWeigher {
   }
 
   static enum NotQualifiedKind {
-    aPackage, aClass, anImplicitGroovyMethod, aMember, aLocal, aString
+    aPackage, aClass, anImplicitGroovyMethod, aKeyword, aMember, aLocal, aString
   }
 
   static enum QualifiedKind {

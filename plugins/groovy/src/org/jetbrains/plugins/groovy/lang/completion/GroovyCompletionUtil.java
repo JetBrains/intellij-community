@@ -346,16 +346,17 @@ public class GroovyCompletionUtil {
 
 
   private static LookupElementBuilder setTypeText(PsiElement element, LookupElementBuilder builder, PsiSubstitutor substitutor) {
-    if (element instanceof PsiVariable) {
-      builder = builder.setTypeText(substitutor.substitute(((PsiVariable)element).getType()).getPresentableText());
+    PsiType type = null;
+    if (element instanceof GrVariable) {
+      type = ((GrVariable)element).getTypeGroovy();
+    }
+    else if (element instanceof PsiVariable) {
+      type = ((PsiVariable)element).getType();
     }
     else if (element instanceof PsiMethod) {
-      final PsiType type = substitutor.substitute(((PsiMethod)element).getReturnType());
-      if (type != null) {
-        builder = builder.setTypeText(type.getPresentableText());
-      }
+      type = substitutor.substitute(((PsiMethod)element).getReturnType());
     }
-    return builder;
+    return type != null ? builder.setTypeText(type.getPresentableText()) : builder;
   }
 
   public static boolean hasConstructorParameters(@NotNull PsiClass clazz, @NotNull GroovyPsiElement place) {
