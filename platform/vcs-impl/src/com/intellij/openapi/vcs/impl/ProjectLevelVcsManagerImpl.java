@@ -579,6 +579,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
     return myMappings.getMappingsAsFilesUnderVcs(vcs);
   }
 
+  @NotNull
   public VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
     return myMappingsToRoots.getRootsUnderVcs(vcs);
   }
