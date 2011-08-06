@@ -17,6 +17,7 @@ package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -38,7 +39,13 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
   GitRepositoryUpdater(GitRepository repository) {
     myRepository = repository;
-    myRepositoryFiles = GitRepositoryFiles.getInstance(repository.getRoot());
+    VirtualFile root = repository.getRoot();
+
+    VirtualFile gitDir = root.findChild(".git");
+    assert gitDir != null;
+    LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
+
+    myRepositoryFiles = GitRepositoryFiles.getInstance(root);
     myMessageBusConnection = repository.getProject().getMessageBus().connect();
     myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
   }

@@ -45,10 +45,6 @@ public class GitRepositoryFiles {
     // add .git/ and .git/refs/heads to the VFS
     VirtualFile gitDir = root.findChild(".git");
     assert gitDir != null;
-    gitDir.getChildren();
-    final VirtualFile refsHeadsDir = gitDir.findFileByRelativePath("refs/heads");
-    assert refsHeadsDir != null;
-    refsHeadsDir.getChildren();
 
     // save paths of the files, that we will watch
     String gitDirPath = GitFileUtils.stripFileProtocolPrefix(gitDir.getPath());
