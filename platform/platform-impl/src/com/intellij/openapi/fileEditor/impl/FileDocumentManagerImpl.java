@@ -186,6 +186,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
+  @Nullable
   public VirtualFile getFile(@NotNull Document document) {
     return document.getUserData(FILE_KEY);
   }

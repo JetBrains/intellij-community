@@ -78,6 +78,7 @@ public abstract class WindowManager {
    * @param project
    * @return
    */
+  @Nullable
   public abstract StatusBar getStatusBar(Project project);
 
   /**
