@@ -18,7 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
@@ -35,7 +34,7 @@ public class BasicToClassNameDelegator extends AbstractBasicToClassNameDelegator
       return JavaCompletionContributor.isClassNamePossible(position);
     }
 
-    return file.getLanguage() instanceof XMLLanguage;
+    return file.getLanguage().isKindOf(StdLanguages.XML);
   }
 
   @Override
