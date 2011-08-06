@@ -26,6 +26,7 @@ import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.vfs.IfsUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +46,7 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
     private final ImageEditorUI editorUI;
     private boolean disposed;
 
-    ImageEditorImpl(Project project, VirtualFile file) {
+    ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
         this.project = project;
         this.file = file;
 
@@ -104,10 +105,12 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
         return editorUI.getImageComponent();
     }
 
+    @NotNull
     public VirtualFile getFile() {
         return file;
     }
 
+    @NotNull
     public Project getProject() {
         return project;
     }

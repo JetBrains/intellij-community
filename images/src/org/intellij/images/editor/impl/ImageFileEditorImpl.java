@@ -45,7 +45,7 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     private static final String NAME = "ImageFileEditor";
     private final ImageEditor imageEditor;
 
-    ImageFileEditorImpl(Project project, VirtualFile file) {
+    ImageFileEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
         imageEditor = ImageEditorManagerImpl.createImageEditor(project, file);
 
         // Append file listener
@@ -130,6 +130,7 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
         ImageEditorManagerImpl.releaseImageEditor(imageEditor);
     }
 
+    @NotNull
     public ImageEditor getImageEditor() {
         return imageEditor;
     }
