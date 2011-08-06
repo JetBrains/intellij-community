@@ -35,6 +35,7 @@
       <!-- <reference id="ChangesView.Browse"/> -->
       <separator/>
 
+      <action id="Git.Branching" class="git4idea.ui.branch.GitBranchesAction" text="_Branches"/>
       <action id="Git.CurrentBranch" class="git4idea.actions.GitCurrentBranch" text="Current Branch..."/>
       <action id="Git.Checkout" class="git4idea.actions.GitCheckout" text="Checkout Branch..."/>
       <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="/actions/include.png">
