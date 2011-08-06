@@ -1,9 +1,12 @@
 package org.jetbrains.ether.dependencyView;
 
+import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.ether.RW;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,18 +24,28 @@ public class ClassRepr extends Proto {
     public final TypeRepr.AbstractType superClass;
     public final Set<TypeRepr.AbstractType> interfaces;
     public final Set<TypeRepr.AbstractType> nestedClasses;
+    public final Set<ElementType> targets;
+    public final RetentionPolicy policy;
 
     private final Set<FieldRepr> fields;
     private final Set<MethodRepr> methods;
 
     public abstract class Diff extends Difference {
-        public abstract Difference.Specifier<TypeRepr.AbstractType> interfaces();
+        public abstract Specifier<TypeRepr.AbstractType> interfaces();
+        public abstract Specifier<TypeRepr.AbstractType> nestedClasses();
+        public abstract Specifier<FieldRepr> fields();
+        public abstract Specifier<MethodRepr> methods();
+        public abstract Specifier<ElementType> targets();
+        public abstract boolean retentionChanged ();
 
-        public abstract Difference.Specifier<TypeRepr.AbstractType> nestedClasses();
-
-        public abstract Difference.Specifier<FieldRepr> fields();
-
-        public abstract Difference.Specifier<MethodRepr> methods();
+        public boolean unchanged () {
+            return interfaces().unchanged() &&
+                   nestedClasses().unchanged() &&
+                   fields().unchanged() &&
+                   methods().unchanged() &&
+                   targets().unchanged() &&
+                   ! retentionChanged();
+        }
     }
 
     public Diff difference(final Proto past) {
@@ -47,22 +60,40 @@ public class ClassRepr extends Proto {
         final int d = diff;
 
         return new Diff() {
+            @Override
             public Difference.Specifier<TypeRepr.AbstractType> interfaces() {
                 return Difference.make(pastClass.interfaces, interfaces);
             }
 
+            @Override
             public Difference.Specifier<TypeRepr.AbstractType> nestedClasses() {
                 return Difference.make(pastClass.nestedClasses, nestedClasses);
             }
 
+            @Override
             public Difference.Specifier<FieldRepr> fields() {
                 return Difference.make(pastClass.fields, fields);
             }
 
+            @Override
             public Difference.Specifier<MethodRepr> methods() {
                 return Difference.make(pastClass.methods, methods);
             }
 
+            @Override
+            public Specifier<ElementType> targets() {
+                return Difference.make(pastClass.targets, targets);
+            }
+
+            @Override
+            public boolean retentionChanged() {
+                return !((policy == null && pastClass.policy == RetentionPolicy.CLASS) ||
+                         (policy == RetentionPolicy.CLASS && pastClass.policy == null) ||
+                         (policy == pastClass.policy)
+                        );
+            }
+
+            @Override
             public int base() {
                 return d;
             }
@@ -92,7 +123,7 @@ public class ClassRepr extends Proto {
         }
     }
 
-    public ClassRepr(final int a, final StringCache.S sn, final StringCache.S fn, final StringCache.S n, final String sig, final String sup, final String[] i, final Collection<String> ns, final Set<FieldRepr> f, final Set<MethodRepr> m) {
+    public ClassRepr(final int a, final StringCache.S sn, final StringCache.S fn, final StringCache.S n, final String sig, final String sup, final String[] i, final Collection<String> ns, final Set<FieldRepr> f, final Set<MethodRepr> m, final Set<ElementType> targets, final RetentionPolicy policy) {
         super(a, sig, n);
         fileName = fn;
         sourceFileName = sn;
@@ -101,17 +132,28 @@ public class ClassRepr extends Proto {
         nestedClasses = (Set<TypeRepr.AbstractType>) TypeRepr.createClassType(ns, new HashSet<TypeRepr.AbstractType>());
         fields = f;
         methods = m;
+        this.targets = targets;
+        this.policy = policy;
     }
 
     public ClassRepr(final BufferedReader r) {
         super(r);
         fileName = StringCache.get(RW.readString(r));
-        sourceFileName = null;
+        sourceFileName = StringCache.get(RW.readString(r));
         superClass = TypeRepr.reader.read(r);
         interfaces = (Set<TypeRepr.AbstractType>) RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
         nestedClasses = (Set<TypeRepr.AbstractType>) RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
         fields = (Set<FieldRepr>) RW.readMany(r, FieldRepr.reader, new HashSet<FieldRepr>());
         methods = (Set<MethodRepr>) RW.readMany(r, MethodRepr.reader, new HashSet<MethodRepr>());
+        targets = (Set<ElementType>) RW.readMany(r, UsageRepr.AnnotationUsage.elementTypeReader, new HashSet<ElementType>());
+
+        final String s = RW.readString(r);
+
+        policy = s.isEmpty() ? null : RetentionPolicy.valueOf(s);
+    }
+
+    public boolean isAnnotation () {
+        return (access & Opcodes.ACC_ANNOTATION) > 0;
     }
 
     public static RW.Reader<ClassRepr> reader = new RW.Reader<ClassRepr>() {
@@ -123,11 +165,14 @@ public class ClassRepr extends Proto {
     public void write(final BufferedWriter w) {
         super.write(w);
         RW.writeln(w, fileName.value);
+        RW.writeln(w, sourceFileName.value);
         superClass.write(w);
         RW.writeln(w, interfaces);
         RW.writeln(w, nestedClasses);
         RW.writeln(w, fields);
         RW.writeln(w, methods);
+        RW.writeln(w, targets, UsageRepr.AnnotationUsage.elementTypeToWritable);
+        RW.writeln(w, policy == null ? "" : policy.toString());
     }
 
     @Override

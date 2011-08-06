@@ -56,6 +56,7 @@ public class AnnotationsTest extends IncrementalTestCase {
         doTest();
     }
 
+    /*  Discussion is needed --- unnecessarily conservative
     public void testMetaAnnotationChanged() throws Exception {
         doTest();
     }
@@ -66,7 +67,7 @@ public class AnnotationsTest extends IncrementalTestCase {
 
     public void testMetaAnnotationChangedCascade2() throws Exception {
         doTest();
-    }
+    } */
 
     public void testRemoveAnnotationTarget() throws Exception {
         doTest();
@@ -81,6 +82,14 @@ public class AnnotationsTest extends IncrementalTestCase {
     }
 
     public void testRemoveDefaultFromAnnotationMember() throws Exception {
+        doTest();
+    }
+
+    public void testConservativeNonIncremental() throws Exception {
+        doTest();
+    }
+
+    public void testConservativeNonIncremental1() throws Exception {
         doTest();
     }
 }

@@ -14,14 +14,19 @@ import java.io.*;
  */
 public abstract class IncrementalTestCase extends TestCase {
     private final String groupName;
-    private final String baseDir;
     private final String tempDir = System.getProperty("java.io.tmpdir");
-    private final String workDir;
+
+    private String baseDir;
+    private String workDir;
 
     protected IncrementalTestCase(final String name) throws Exception {
         super(name);
         groupName = name;
-        baseDir = "testData" + File.separator + "incremental" + File.separator; // + groupName;
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        baseDir = "testData" + File.separator + "incremental" + File.separator;
 
         for (int i = 0; ; i++) {
             final File tmp = new File(tempDir + File.separator + "__temp__" + i);
@@ -30,17 +35,12 @@ public abstract class IncrementalTestCase extends TestCase {
                 break;
             }
         }
-    }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        prepare();
+        copy(new File(getBaseDir()), new File(getWorkDir()));
     }
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
         delete(new File(workDir));
     }
 
@@ -94,10 +94,6 @@ public abstract class IncrementalTestCase extends TestCase {
         }
     }
 
-    private void prepare() throws Exception {
-        copy(new File(getBaseDir()), new File(getWorkDir()));
-    }
-
     private void modify() throws Exception {
         final File dir = new File(getBaseDir());
         final File[] files = dir.listFiles(new FileFilter() {
@@ -109,8 +105,19 @@ public abstract class IncrementalTestCase extends TestCase {
 
         for (File input : files) {
             final String name = input.getName();
-            final File output = new File(getWorkDir() + File.separator + "src" + File.separator + name.substring(0, name.length() - ".new".length()));
-            copy(input, output);
+            final int pathSep = name.indexOf("$");
+
+            if (pathSep == -1) {
+                final File output = new File(getWorkDir() + File.separator + "src" + File.separator + name.substring(0, name.length() - ".new".length()));
+                copy(input, output);
+            }
+            else {
+                final String path = name.substring(0, pathSep).replace('-', File.separatorChar);
+                final String it   = name.substring(pathSep+1);
+
+                final File output = new File(getWorkDir() + File.separator + path + File.separator + it.substring(0, it.length() - ".new".length()));
+                copy(input, output);
+            }
         }
     }
 
@@ -123,28 +130,32 @@ public abstract class IncrementalTestCase extends TestCase {
         modify();
 
         final ProjectWrapper second = ProjectWrapper.load(getWorkDir(), null, true);
+
         final PrintStream stream = new PrintStream(new FileOutputStream(getWorkDir() + ".log"));
 
-        second.makeModule(null, new ProjectWrapper.Flags() {
-            public boolean tests() {
-                return false;
-            }
+        try {
+            second.makeModule(null, new ProjectWrapper.Flags() {
+                public boolean tests() {
+                    return false;
+                }
 
-            public boolean incremental() {
-                return true;
-            }
+                public boolean incremental() {
+                    return true;
+                }
 
-            public boolean force() {
-                return false;
-            }
+                public boolean force() {
+                    return false;
+                }
 
-            public PrintStream logStream() {
-                return stream;
-            }
-        });
+                public PrintStream logStream() {
+                    return stream;
+                }
+            });
 
-        stream.close();
+        } finally {
+            stream.close();
+        }
 
-        FileAssert.assertEquals(new File (getBaseDir () + ".log"), new File (getWorkDir() + ".log"));
+        FileAssert.assertEquals(new File(getBaseDir() + ".log"), new File(getWorkDir() + ".log"));
     }
 }

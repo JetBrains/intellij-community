@@ -12,12 +12,16 @@ module RemoveAnnotationTypeMember
 End of propagated
 Cleaning output files:
 out/production/RemoveAnnotationTypeMember/A.class
+End of files
+Compiling files:
+src/A.java
+End of files
+Cleaning output files:
 out/production/RemoveAnnotationTypeMember/C.class
 out/production/RemoveAnnotationTypeMember/C1.class
 out/production/RemoveAnnotationTypeMember/C2.class
 End of files
 Compiling files:
-src/A.java
 src/C.java
 src/C1.java
 src/C2.java

@@ -176,24 +176,70 @@ public class UsageRepr {
     }
 
     public static class AnnotationUsage extends Usage {
+        public static final RW.Reader<ElementType> elementTypeReader = new RW.Reader<ElementType>() {
+                public ElementType read(final BufferedReader r) {
+                    return ElementType.valueOf(RW.readString(r));
+                }
+            };
+
+        public static final RW.ToWritable<ElementType> elementTypeToWritable = new RW.ToWritable<ElementType>() {
+                public RW.Writable convert(final ElementType x) {
+                    return new RW.Writable() {
+                        public void write(final BufferedWriter w) {
+                            RW.writeln(w, x.toString());
+                        }
+                    };
+                }
+            };
+
         final TypeRepr.ClassType type;
         final Collection<StringCache.S> usedArguments;
-        final Collection<ElementType> targets;
+        final Collection<ElementType> usedTargets;
+
+        public boolean satisfies(final Usage usage) {
+            if (usage instanceof AnnotationUsage) {
+                final AnnotationUsage annotationUsage = (AnnotationUsage) usage;
+
+                if (!type.equals(annotationUsage.type)) {
+                    return false;
+                }
+
+                boolean argumentsSatisfy = false;
+
+                if (usedArguments != null) {
+                    final Collection<StringCache.S> arguments = new HashSet<StringCache.S>(usedArguments);
+
+                    arguments.removeAll(annotationUsage.usedArguments);
+
+                    argumentsSatisfy = !arguments.isEmpty();
+                }
+
+                boolean targetsSatisfy = false;
+
+                if (usedTargets != null) {
+                    final Collection<ElementType> targets = new HashSet<ElementType>(usedTargets);
+
+                    targets.retainAll(annotationUsage.usedTargets);
+
+                    targetsSatisfy = !targets.isEmpty();
+                }
+
+                return argumentsSatisfy || targetsSatisfy;
+            }
+
+            return false;
+        }
 
         private AnnotationUsage(final TypeRepr.ClassType type, final Collection<StringCache.S> usedArguments, final Collection<ElementType> targets) {
             this.type = type;
             this.usedArguments = usedArguments;
-            this.targets = targets;
+            this.usedTargets = targets;
         }
 
         private AnnotationUsage(final BufferedReader r) {
             type = (TypeRepr.ClassType) TypeRepr.reader.read(r);
             usedArguments = RW.readMany(r, StringCache.reader, new HashSet<StringCache.S>());
-            targets = RW.readMany(r, new RW.Reader<ElementType>() {
-                public ElementType read(final BufferedReader r) {
-                    return ElementType.valueOf(RW.readString(r));
-                }
-            }, new HashSet<ElementType>());
+            usedTargets = RW.readMany(r, elementTypeReader, new HashSet<ElementType>());
         }
 
         @Override
@@ -205,15 +251,7 @@ public class UsageRepr {
             RW.writeln(w, "annotationUsage");
             type.write(w);
             RW.writeln(w, usedArguments);
-            RW.writeln(w, targets, new RW.ToWritable<ElementType> () {
-                public RW.Writable convert(final ElementType x) {
-                    return new RW.Writable () {
-                        public void write(final BufferedWriter w) {
-                            RW.writeln(w, x.toString());
-                        }
-                    };
-                }
-            });
+            RW.writeln(w, usedTargets, elementTypeToWritable);
         }
 
         @Override
@@ -223,8 +261,9 @@ public class UsageRepr {
 
             AnnotationUsage that = (AnnotationUsage) o;
 
-            if (usedArguments != null ? !usedArguments.equals(that.usedArguments) : that.usedArguments != null) return false;
-            if (targets != null ? !targets.equals(that.targets) : that.targets != null) return false;
+            if (usedArguments != null ? !usedArguments.equals(that.usedArguments) : that.usedArguments != null)
+                return false;
+            if (usedTargets != null ? !usedTargets.equals(that.usedTargets) : that.usedTargets != null) return false;
             if (type != null ? !type.equals(that.type) : that.type != null) return false;
 
             return true;
@@ -234,7 +273,7 @@ public class UsageRepr {
         public int hashCode() {
             int result = type != null ? type.hashCode() : 0;
             result = 31 * result + (usedArguments != null ? usedArguments.hashCode() : 0);
-            result = 31 * result + (targets != null ? targets.hashCode() : 0);
+            result = 31 * result + (usedTargets != null ? usedTargets.hashCode() : 0);
             return result;
         }
     }

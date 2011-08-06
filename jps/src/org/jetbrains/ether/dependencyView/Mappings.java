@@ -8,6 +8,8 @@ import org.objectweb.asm.Opcodes;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 /**
@@ -39,6 +41,7 @@ public class Mappings {
 
     private FoxyMap<StringCache.S, ClassRepr> sourceFileToClasses = new FoxyMap<StringCache.S, ClassRepr>(classSetConstructor);
     private FoxyMap<StringCache.S, UsageRepr.Usage> sourceFileToUsages = new FoxyMap<StringCache.S, UsageRepr.Usage>(usageSetConstructor);
+    private FoxyMap<StringCache.S, UsageRepr.Usage> sourceFileToAnnotationUsages = new FoxyMap<StringCache.S, UsageRepr.Usage>(usageSetConstructor);
     private Map<StringCache.S, StringCache.S> classToSourceFile = new HashMap<StringCache.S, StringCache.S>();
     private FoxyMap<StringCache.S, StringCache.S> fileToFileDependency = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
     private FoxyMap<StringCache.S, StringCache.S> waitingForResolve = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
@@ -69,6 +72,7 @@ public class Mappings {
             final Set<ClassRepr> pastClasses = (Set<ClassRepr>) sourceFileToClasses.foxyGet(fileName);
             final Set<StringCache.S> dependants = (Set<StringCache.S>) fileToFileDependency.foxyGet(fileName);
             final Set<UsageRepr.Usage> affectedUsages = new HashSet<UsageRepr.Usage>();
+            final Set<UsageRepr.AnnotationUsage> annotationQuery = new HashSet<UsageRepr.AnnotationUsage>();
 
             final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes);
 
@@ -76,17 +80,52 @@ public class Mappings {
                 final ClassRepr it = changed.fst;
                 final ClassRepr.Diff diff = (ClassRepr.Diff) changed.snd;
 
+                if (it.isAnnotation() && it.policy == RetentionPolicy.SOURCE) {
+                    return false;
+                }
+
                 if (diff.base() != Difference.NONE || !diff.interfaces().unchanged() || !diff.nestedClasses().unchanged()) {
                     affectedUsages.add(it.createUsage());
+                }
+
+                if (it.isAnnotation()) {
+                    if (diff.retentionChanged()) {
+                        affectedUsages.add(it.createUsage());
+                    } else {
+                        final Collection<ElementType> removedtargets = diff.targets().removed();
+
+                        if (removedtargets.contains(ElementType.LOCAL_VARIABLE)) {
+                            return false;
+                        }
+
+                        if (!removedtargets.isEmpty()) {
+                            annotationQuery.add((UsageRepr.AnnotationUsage) UsageRepr.createAnnotationUsage(TypeRepr.createClassType(it.name), null, removedtargets));
+                        }
+
+                        for (MethodRepr m : diff.methods().added()) {
+                            if (!m.hasValue()) {
+                                affectedUsages.add(it.createUsage());
+                            }
+                        }
+                    }
                 }
 
                 for (MethodRepr m : diff.methods().removed()) {
                     affectedUsages.add(m.createUsage(it.name));
                 }
 
-                for (Pair<MethodRepr, Difference> m : diff.methods().changed()) {
-                    if (m.snd.base() != Difference.NONE) {
-                        affectedUsages.add(m.fst.createUsage(it.name));
+                for (Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
+                    final MethodRepr m = mr.fst;
+                    final MethodRepr.Diff d = (MethodRepr.Diff) mr.snd;
+
+                    if (it.isAnnotation()) {
+                        if (d.defaultRemoved()) {
+                            final List<StringCache.S> l = new LinkedList<StringCache.S>();
+                            l.add(m.name);
+                            annotationQuery.add((UsageRepr.AnnotationUsage) UsageRepr.createAnnotationUsage(TypeRepr.createClassType(it.name), l, null));
+                        }
+                    } else if (mr.snd.base() != Difference.NONE) {
+                        affectedUsages.add(mr.fst.createUsage(it.name));
                     }
                 }
 
@@ -130,6 +169,19 @@ public class Mappings {
                         if (!usages.isEmpty()) {
                             affectedFiles.add(depFile);
                         }
+
+                        if (annotationQuery.size() > 0) {
+                            final Collection<UsageRepr.Usage> annotationUsages = sourceFileToAnnotationUsages.foxyGet(depFile);
+
+                            for (UsageRepr.Usage usage : annotationUsages) {
+                                for (UsageRepr.AnnotationUsage query : annotationQuery) {
+                                    if (query.satisfies(usage)) {
+                                        affectedFiles.add(depFile);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -159,6 +211,7 @@ public class Mappings {
         classToForm.putAll(delta.classToForm);
         sourceFileToClasses.putAll(delta.sourceFileToClasses);
         sourceFileToUsages.putAll(delta.sourceFileToUsages);
+        sourceFileToAnnotationUsages.putAll(delta.sourceFileToAnnotationUsages);
         classToSourceFile.putAll(delta.classToSourceFile);
         fileToFileDependency.putAll(delta.fileToFileDependency);
     }
@@ -170,6 +223,10 @@ public class Mappings {
 
     private void updateSourceToUsages(final StringCache.S source, final Set<UsageRepr.Usage> usages) {
         sourceFileToUsages.put(source, usages);
+    }
+
+    private void updateSourceToAnnotationUsages(final StringCache.S source, final Set<UsageRepr.Usage> usages) {
+        sourceFileToAnnotationUsages.put(source, usages);
     }
 
     private void updateSourceToClasses(final StringCache.S source, final ClassRepr classRepr) {
@@ -208,9 +265,10 @@ public class Mappings {
 
             public void associate(final String classFileName, final Callbacks.SourceFileNameLookup sourceFileName, final ClassReader cr) {
                 final StringCache.S classFileNameS = StringCache.get(project.getRelativePath(classFileName));
-                final Pair<ClassRepr, Set<UsageRepr.Usage>> result = ClassfileAnalyzer.analyze(classFileNameS, cr);
+                final Pair<ClassRepr, Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>>> result = ClassfileAnalyzer.analyze(classFileNameS, cr);
                 final ClassRepr repr = result.fst;
-                final Set<UsageRepr.Usage> localUsages = result.snd;
+                final Set<UsageRepr.Usage> localUsages = result.snd.fst;
+                final Set<UsageRepr.Usage> localAnnotationUsages = result.snd.snd;
 
                 final StringCache.S sourceFileNameS =
                         StringCache.get(project.getRelativePath(sourceFileName.get(repr == null ? null : repr.getSourceFileName().value)));
@@ -227,19 +285,28 @@ public class Mappings {
                 if (!localUsages.isEmpty()) {
                     updateSourceToUsages(sourceFileNameS, localUsages);
                 }
+
+                if (!localAnnotationUsages.isEmpty()) {
+                    updateSourceToAnnotationUsages(sourceFileNameS, localAnnotationUsages);
+                }
             }
 
-            public void associate(final Set<ClassRepr> classes, final Set<UsageRepr.Usage> usages, final String sourceFileName) {
+            public void associate(final Set<ClassRepr> classes, final Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>> usages, final String sourceFileName) {
                 final StringCache.S sourceFileNameS = StringCache.get(sourceFileName);
 
                 sourceFileToClasses.put(sourceFileNameS, classes);
-                sourceFileToUsages.put(sourceFileNameS, usages);
+                sourceFileToUsages.put(sourceFileNameS, usages.fst);
+                sourceFileToAnnotationUsages.put(sourceFileNameS, usages.snd);
 
                 for (ClassRepr r : classes) {
                     updateClassToSource(r.name, sourceFileNameS);
                 }
 
-                for (UsageRepr.Usage u : usages) {
+                for (UsageRepr.Usage u : usages.fst) {
+                    updateDependency(sourceFileNameS, u.getOwner());
+                }
+
+                for (UsageRepr.Usage u : usages.snd) {
                     updateDependency(sourceFileNameS, u.getOwner());
                 }
             }
@@ -262,6 +329,10 @@ public class Mappings {
 
     public Set<UsageRepr.Usage> getUsages(final StringCache.S sourceFileName) {
         return (Set<UsageRepr.Usage>) sourceFileToUsages.foxyGet(sourceFileName);
+    }
+
+    public Set<UsageRepr.Usage> getAnnotationUsages(final StringCache.S sourceFileName) {
+        return (Set<UsageRepr.Usage>) sourceFileToAnnotationUsages.foxyGet(sourceFileName);
     }
 
     public Set<StringCache.S> getFormClass(final StringCache.S formFileName) {

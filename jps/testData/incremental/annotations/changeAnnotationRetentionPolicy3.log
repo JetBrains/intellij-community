@@ -12,12 +12,16 @@ module ChangeAnnotationRetentionPolicy3
 End of propagated
 Cleaning output files:
 out/production/ChangeAnnotationRetentionPolicy3/A.class
+End of files
+Compiling files:
+src/A.java
+End of files
+Cleaning output files:
 out/production/ChangeAnnotationRetentionPolicy3/C.class
 out/production/ChangeAnnotationRetentionPolicy3/C1.class
 out/production/ChangeAnnotationRetentionPolicy3/C2.class
 End of files
 Compiling files:
-src/A.java
 src/C.java
 src/C1.java
 src/C2.java

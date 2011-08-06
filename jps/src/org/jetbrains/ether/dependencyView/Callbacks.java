@@ -1,5 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
+import org.jetbrains.ether.Pair;
 import org.objectweb.asm.ClassReader;
 
 import java.util.Collection;
@@ -30,7 +31,7 @@ public class Callbacks {
 
         public void associate(String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
 
-        public void associate(Set<ClassRepr> classes, Set<UsageRepr.Usage> usages, String sourceFileName);
+        public void associate(Set<ClassRepr> classes, Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>> usages, String sourceFileName);
 
         public void associateForm(StringCache.S formName, StringCache.S className);
     }

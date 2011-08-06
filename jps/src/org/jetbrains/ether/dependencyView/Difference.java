@@ -21,11 +21,8 @@ public abstract class Difference {
 
     public interface Specifier<T> {
         public Collection<T> added();
-
         public Collection<T> removed();
-
         public Collection<Pair<T, Difference>> changed();
-
         public boolean unchanged();
     }
 
@@ -88,19 +85,15 @@ public abstract class Difference {
             public Collection<T> added() {
                 return added;
             }
-
             public Collection<T> removed() {
                 return removed;
             }
-
             public Collection<Pair<T, Difference>> changed() {
                 return changed;
             }
-
             public boolean unchanged() {
                 return changed.isEmpty() && added.isEmpty() && removed.isEmpty();
             }
-
         };
     }
 

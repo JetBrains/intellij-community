@@ -118,6 +118,10 @@ public class TypeRepr {
             this.className = StringCache.get(className);
         }
 
+        ClassType(final StringCache.S className) {
+            this.className = className;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -140,6 +144,10 @@ public class TypeRepr {
     }
 
     public static ClassType createClassType(final String s) {
+        return (ClassType) getType(new ClassType(s));
+    }
+
+    public static ClassType createClassType(final StringCache.S s) {
         return (ClassType) getType(new ClassType(s));
     }
 

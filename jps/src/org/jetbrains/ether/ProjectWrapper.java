@@ -281,9 +281,10 @@ public class ProjectWrapper {
 
             final Set<ClassRepr> classes = (Set<ClassRepr>) RW.readMany(r, ClassRepr.reader, new HashSet<ClassRepr>());
             final Set<UsageRepr.Usage> usages = (Set<UsageRepr.Usage>) RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage>());
+            final Set<UsageRepr.Usage> annotationUsages = (Set<UsageRepr.Usage>) RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage>());
             final Set<StringCache.S> formClasses = (Set<StringCache.S>) RW.readMany(r, StringCache.S.reader, new HashSet<StringCache.S>());
 
-            backendCallback.associate(classes, usages, myName.value);
+            backendCallback.associate(classes, new Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>>(usages, annotationUsages), myName.value);
 
             for (StringCache.S classFileName : formClasses) {
                 backendCallback.associateForm(myName, classFileName);
@@ -306,6 +307,7 @@ public class ProjectWrapper {
 
             RW.writeln(w, dependencyMapping.getClasses(name));
             RW.writeln(w, dependencyMapping.getUsages(name));
+            RW.writeln(w, dependencyMapping.getAnnotationUsages(name));
             RW.writeln(w, dependencyMapping.getFormClass(name));
         }
 
@@ -1089,7 +1091,7 @@ public class ProjectWrapper {
                     buildException = true;
                 }
 
-                if (! buildException) {
+                if (!buildException) {
                     compiledFiles.addAll(filesToCompile);
                     affectedFiles.removeAll(filesToCompile);
 
@@ -1109,8 +1111,7 @@ public class ProjectWrapper {
                     }
 
                     return iterativeCompile(chunk, tests, sources, null, null, flags);
-                }
-                else {
+                } else {
                     return BuildStatus.FAILURE;
                 }
             } else {
@@ -1126,7 +1127,7 @@ public class ProjectWrapper {
             boolean incremental = flags.incremental();
             final List<ModuleChunk> chunks = myProject.getChunks(tests);
 
-            for (ModuleChunk c : chunks) {
+            for (final ModuleChunk c : chunks) {
                 final Set<Module> chunkModules = c.getElements();
 
                 if (!DefaultGroovyMethods.intersect(modules, chunkModules).isEmpty()) {
@@ -1151,6 +1152,13 @@ public class ProjectWrapper {
                             return result;
                         }
                     } else {
+                        new Logger(flags) {
+                            @Override
+                            public void log(PrintStream stream) {
+                                stream.println("Compiling chunk " + c.getName() + " non-incrementally.");
+                            }
+                        }.log();
+
                         for (Module m : chunkModules) {
                             final ModuleWrapper mw = getModule(m.getName());
                             removedSources.addAll(tests ? mw.getRemovedTests() : mw.getRemovedSources());
@@ -1173,9 +1181,8 @@ public class ProjectWrapper {
                         final Callbacks.Backend deltaCallback = delta.getCallback();
 
                         try {
-                        builder.buildChunk(c, tests, null, deltaCallback, ProjectWrapper.this);
-                        }
-                        catch (Exception e) {
+                            builder.buildChunk(c, tests, null, deltaCallback, ProjectWrapper.this);
+                        } catch (Exception e) {
                             e.printStackTrace();
                             return BuildStatus.FAILURE;
                         }
@@ -1190,7 +1197,7 @@ public class ProjectWrapper {
                 }
             }
 
-        return BuildStatus.INCREMENTAL;
+            return BuildStatus.INCREMENTAL;
         }
     }
 

@@ -25,14 +25,26 @@ public class MethodRepr extends ProtoMember {
 
     public abstract class Diff extends Difference {
         public abstract Specifier<TypeRepr.AbstractType> exceptions();
+        public abstract boolean defaultAdded ();
+        public abstract boolean defaultRemoved ();
     }
 
     @Override
-    public Difference difference(Proto past) {
+    public Difference difference(final Proto past) {
         final int d = super.difference(past).base();
         final Difference.Specifier<TypeRepr.AbstractType> excs = Difference.make(((MethodRepr) past).exceptions, exceptions);
 
         return new Diff() {
+            @Override
+            public boolean defaultAdded() {
+                return hasValue() && !((MethodRepr) past).hasValue();
+            }
+
+            @Override
+            public boolean defaultRemoved() {
+                return !hasValue() && ((MethodRepr) past).hasValue();
+            }
+
             @Override
             public Specifier<TypeRepr.AbstractType> exceptions() {
                 return excs;
