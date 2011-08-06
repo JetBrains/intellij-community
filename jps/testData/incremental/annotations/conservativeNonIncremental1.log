@@ -1,0 +1,45 @@
+Request to make modules:
+module a1
+module a2
+module b21
+module b22
+module conservativeNonIncremental
+End of request
+digraph X {
+  a1[label="a1"];
+  conservativeNonIncremental -> a1;
+  a2[label="a2"];
+  conservativeNonIncremental -> a2;
+  b21[label="b21"];
+  a2 -> b21;
+  b22[label="b22"];
+  a2 -> b22;
+  conservativeNonIncremental[label="conservativeNonIncremental"];
+}
+digraph X {
+  a1[label="a1"];
+  conservativeNonIncremental -> a1;
+  conservativeNonIncremental[label="conservativeNonIncremental"];
+  a2[label="a2"];
+  b21[label="b21"];
+  b22[label="b22"];
+}
+Propagated modules:
+module a2
+module b21
+module b22
+End of propagated
+Cleaning output files:
+out/production/a2/A2.class
+End of files
+Compiling files:
+a2/src/A2.java
+End of files
+Cleaning output files:
+out/production/a2/C.class
+End of files
+Compiling files:
+a2/src/C.java
+End of files
+Compiling chunk b21 non-incrementally.
+Compiling chunk b22 non-incrementally.
