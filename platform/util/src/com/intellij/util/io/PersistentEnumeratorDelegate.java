@@ -34,7 +34,7 @@ public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable 
 
   private boolean useBtree() {
     String property = System.getProperty("idea.use.btree");
-    if (property == null) property = Boolean.toString(SystemInfo.is32Bit);
+    //if (property == null) property = Boolean.toString(SystemInfo.is32Bit);
     return "true".equals(property);
   }
 
