@@ -15,10 +15,14 @@
  */
 package git4idea.ui.branch;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -30,6 +34,9 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <p>
@@ -147,7 +154,7 @@ class GitBranchPopup  {
       @Override public void actionPerformed(AnActionEvent e) {
         // TODO dynamic error text: general validity + existance of such name
         final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout new branch", Messages.getQuestionIcon(),
-                                               "", GitRefNameValidator.getInstance());
+                                               "", GitNewBranchNameValidator.newInstance(myRepository));
         if (name != null) {
           new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranch(name);
         }
@@ -307,7 +314,7 @@ class GitBranchPopup  {
         // TODO show popup to enter name. Autofill the same name as the remote has. Checkbox to auto-create in future, if the name is available
         // TODO when checkbox is set, the action name can transform to "checkout as <name>".
         final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout remote branch", Messages.getQuestionIcon(),
-                                               guessBranchName(), GitRefNameValidator.getInstance());
+                                               guessBranchName(), GitNewBranchNameValidator.newInstance(myRepository));
         if (name == null) {
           return;
         }
@@ -339,6 +346,69 @@ class GitBranchPopup  {
     @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setVisible(false);
+    }
+  }
+
+
+  /**
+   * In addition to {@link GitRefNameValidator} checks that the entered branch name doesn't conflict with any existing local
+   * or remote branch.
+   */
+  private static class GitNewBranchNameValidator implements InputValidatorEx {
+    
+    private final GitRepository myRepository;
+    private String myErrorText;
+    private Set<String> myLocalNames = new HashSet<String>();
+    private Set<String> myRemoteNames = new HashSet<String>();
+
+    private GitNewBranchNameValidator(GitRepository repository) {
+      myRepository = repository;
+      cacheBranchNames();
+    }
+
+    private void cacheBranchNames() {
+      for (GitBranch branch : myRepository.getBranches().getLocalBranches()) {
+        myLocalNames.add(branch.getName());
+      }
+      for (GitBranch branch : myRepository.getBranches().getRemoteBranches()) {
+        myRemoteNames.add(branch.getName());
+      }
+    }
+
+    static GitNewBranchNameValidator newInstance(GitRepository repository) {
+      return new GitNewBranchNameValidator(repository);
+    }
+
+    @Override
+    public boolean checkInput(String inputString) {
+      if (!GitRefNameValidator.getInstance().checkInput(inputString)){
+        myErrorText = "Invalid name for branch";
+        return false;
+      } 
+      return checkBranchConflict(inputString); 
+    }
+
+    private boolean checkBranchConflict(String inputString) {
+      if (myLocalNames.contains(inputString)) {
+        myErrorText = "Branch " + inputString + " already exists";
+        return false;
+      }
+      if (myRemoteNames.contains(inputString)) {
+        myErrorText = "Branch name " + inputString + " clashes with remote branch with the same name";
+        return false;
+      }
+      myErrorText = null;
+      return true;
+    }
+
+    @Override
+    public boolean canClose(String inputString) {
+      return checkInput(inputString);
+    }
+
+    @Override
+    public String getErrorText(String inputString) {
+      return myErrorText;
     }
   }
 
