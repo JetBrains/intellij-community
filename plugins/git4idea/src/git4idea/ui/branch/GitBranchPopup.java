@@ -26,6 +26,7 @@ import com.intellij.openapi.util.IconLoader;
 import git4idea.GitBranch;
 import git4idea.process.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,8 +58,12 @@ class GitBranchPopup  {
   private GitBranchPopup(Project project, GitRepository repository) {
     myProject = project;
     myRepository = repository;
+
+    String rootPostFix = GitRepositoryManager.getInstance(project).moreThanOneRoot() ? " on [" + repository.getRoot().getName() + "]" : "";
+    String title = "Git Branches" + rootPostFix;
+
     myPopup = JBPopupFactory.getInstance().createActionGroupPopup(
-      "Git branches", createActions(),
+      title, createActions(),
       SimpleDataContext.getProjectContext(project),
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
   }
@@ -69,13 +74,13 @@ class GitBranchPopup  {
     popupGroup.addAction(new CurrentBranchAction(myRepository));
     popupGroup.addAction(new NewBranchActions(myProject, myRepository));
     popupGroup.addAction(new CheckoutRevisionActions(myProject, myRepository));
-    popupGroup.addSeparator("Local branches");
+    popupGroup.addSeparator("Local Branches");
     for (GitBranch localBranch : myRepository.getBranches().getLocalBranches()) {
       if (!localBranch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
         popupGroup.add(new LocalBranchActions(myProject, myRepository, localBranch.getName()));
       }
     }
-    popupGroup.addSeparator("Remote branches");
+    popupGroup.addSeparator("Remote Branches");
     for (GitBranch remoteBranch : myRepository.getBranches().getRemoteBranches()) {
       popupGroup.add(new RemoteBranchActions(myProject, myRepository, remoteBranch.getName()));
     }
@@ -89,7 +94,7 @@ class GitBranchPopup  {
    */
   private static class CurrentBranchAction extends DumbAwareAction {
     public CurrentBranchAction(GitRepository repository) {
-      super("Current branch: " + getBranchText(repository),
+      super("Current Branch: " + getBranchText(repository),
         String.format("Current branch [%s] in root [%s]", getBranchText(repository), repository.getRoot().getName()),
         null);
     }
@@ -115,7 +120,7 @@ class GitBranchPopup  {
     private final GitRepository myRepository;
 
     public NewBranchActions(Project project, GitRepository repository) {
-      super("New branch", "Create and checkout new branch", IconLoader.getIcon("/general/add.png"));
+      super("New Branch", "Create and checkout new branch", IconLoader.getIcon("/general/add.png"));
       myProject = project;
       myRepository = repository;
       setPopup(true);
@@ -158,13 +163,14 @@ class GitBranchPopup  {
     private final GitRepository myRepository;
 
     public CheckoutRevisionActions(Project project, GitRepository repository) {
-      super("Checkout tag/revision");
+      super("Checkout Tag or Revision");
       myProject = project;
       myRepository = repository;
     }
 
     @Override public void actionPerformed(AnActionEvent e) {
       // TODO autocomplete branches, tags.
+      // on type check ref validity, on OK check ref existance.
       String reference = Messages.showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
         new GitBranchOperationsProcessor(myProject, myRepository).checkout(reference);

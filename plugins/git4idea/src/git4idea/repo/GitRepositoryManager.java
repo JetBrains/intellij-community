@@ -116,6 +116,10 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
     }
   }
 
+  public boolean moreThanOneRoot() {
+    return myRepositories.values().size() > 1;
+  }
+
   /**
    * Adds the listener to all existing repositories AND all future repositories.
    * I.e. if a new GitRepository is be created via this GitRepositoryManager, the listener will be added to the repository.
