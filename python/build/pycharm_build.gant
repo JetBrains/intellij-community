@@ -36,7 +36,8 @@ setProperty("pluginFilter", [
             "webDeployment",
             "jdbc-console", "django-db-config",
             "database-impl", "DatabaseSupport",
-            "sql"
+            "sql",
+            "relaxng"
             ])
 
 private List platformImplementationModules() {
