@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -59,16 +60,20 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
 
   @Override
   public DataIndexer<Integer, Void, FileContent> getIndexer() {
-    final List<Pair<ElementPattern<FileContent>, Integer>> detectors = new ArrayList<Pair<ElementPattern<FileContent>, Integer>>();
+    final MultiMap<FileType, Pair<ElementPattern<FileContent>, Integer>> detectors = new MultiMap<FileType, Pair<ElementPattern<FileContent>, Integer>>();
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
-      detectors.add(Pair.create(detector.createSuitableFilePattern(), myRegistry.getDetectorId(detector)));
+      detectors.putValue(detector.getFileType(), Pair.create(detector.createSuitableFilePattern(), myRegistry.getDetectorId(detector)));
     }
     return new DataIndexer<Integer, Void, FileContent>() {
       @NotNull
       @Override
       public Map<Integer, Void> map(FileContent inputData) {
+        final FileType fileType = inputData.getFileType();
+        if (!detectors.containsKey(fileType)) {
+          return Collections.emptyMap();
+        }
         Map<Integer, Void> result = null;
-        for (Pair<ElementPattern<FileContent>, Integer> pair : detectors) {
+        for (Pair<ElementPattern<FileContent>, Integer> pair : detectors.get(fileType)) {
           if (pair.getFirst().accepts(inputData)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug(inputData.getFile() + " accepted by detector " + pair.getSecond());
