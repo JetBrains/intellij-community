@@ -28,6 +28,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -608,16 +609,16 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         item.handleInsert(context);
         PostprocessReformattingAspect.getInstance(indicator.getProject()).doPostponedFormatting();
 
-        final int tailOffset = context.getTailOffset();
-        if (tailOffset >= 0) {
-          if (context.shouldAddCompletionChar()) {
+        if (context.shouldAddCompletionChar()) {
+          int tailOffset = context.getTailOffset();
+          if (tailOffset < 0) {
+            LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass());
+            tailOffset = editor.getCaretModel().getOffset();
+          } else {
             editor.getCaretModel().moveToOffset(tailOffset);
-            EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, DataManager.getInstance()
-              .getDataContext(editor.getContentComponent()));
           }
-        }
-        else {
-          LOG.error("tailOffset<0 after inserting " + item + " of " + item.getClass());
+          DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
+          EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
         }
         context.stopWatching();
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

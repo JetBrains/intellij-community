@@ -106,7 +106,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   private static void reportInvalidation(RangeMarkerEx markerEx, Object e) {
     if (markerEx.isTrackInvalidation()) {
-      LOG.error("Range marker invalidated: "+markerEx +"; say thanks to the "+e);
+      LOG.info("Range marker invalidated: "+markerEx +"; say thanks to the "+e);
     }
   }
 
