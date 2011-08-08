@@ -51,7 +51,7 @@ public class PluginDownloader {
   @NonNls private static final String FILENAME = "filename=";
 
   private final String myPluginId;
-  private final String myPluginUrl;
+  private String myPluginUrl;
   private String myPluginVersion;
 
   private String myFileName;
@@ -197,14 +197,9 @@ public class PluginDownloader {
 
     pi.setText(IdeBundle.message("progress.connecting"));
 
-    final URLConnection connection = new URL(myPluginUrl).openConnection();
+    URLConnection connection = null;
     try {
-      if (connection instanceof HttpURLConnection) {
-        final int responseCode = ((HttpURLConnection)connection).getResponseCode();
-        if (responseCode != HttpURLConnection.HTTP_OK) {
-          throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
-        }
-      }
+      connection = openConnection(myPluginUrl);
 
       final InputStream is = UrlConnectionUtil.getConnectionInputStream(connection, pi);
       if (is == null) {
@@ -241,6 +236,31 @@ public class PluginDownloader {
         ((HttpURLConnection)connection).disconnect();
       }
     }
+  }
+
+  private URLConnection openConnection(String url) throws IOException {
+    final URLConnection connection = new URL(url).openConnection();
+    if (connection instanceof HttpURLConnection) {
+      final int responseCode = ((HttpURLConnection)connection).getResponseCode();
+      if (responseCode != HttpURLConnection.HTTP_OK) {
+        String location = null;
+        if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
+          location = connection.getHeaderField("Location");
+        }
+        if (location == null) {
+          throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
+        } else {
+          setPluginUrl(location);
+          ((HttpURLConnection)connection).disconnect();
+          return openConnection(location);
+        }
+      }
+    }
+    return connection;
+  }
+
+  private void setPluginUrl(String location) {
+    myPluginUrl = location;
   }
 
   private void guessFileName(final URLConnection connection, final File file) throws IOException {

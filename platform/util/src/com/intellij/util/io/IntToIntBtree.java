@@ -1,8 +1,11 @@
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -11,11 +14,10 @@ import java.util.Arrays;
 * Date: 7/12/11
 * Time: 1:34 PM
 */
-abstract class IntToIntBtree {
-  static final int VERSION = 1;
+class IntToIntBtree {
+  static final int VERSION = 2;
   static final boolean doSanityCheck = false;
   static final boolean doDump = false;
-  private static final int ROUND_FACTOR = 1048576;
 
   final int pageSize;
   private final short maxInteriorNodes;
@@ -28,8 +30,6 @@ abstract class IntToIntBtree {
   private int hashSearchRequests;
   private int pagesCount;
   private int hashedPagesCount;
-  private int nextFreePage = -1;
-  private int nextFreePageCount = 0;
   private int count;
   private int movedMembersCount;
 
@@ -45,13 +45,12 @@ abstract class IntToIntBtree {
   private TIntIntHashMap myCachedMappings;
   private final int myCachedMappingsSize;
 
-  public IntToIntBtree(int _pageSize, int rootAddress, ISimpleStorage _storage, boolean initial) {
+  public IntToIntBtree(int _pageSize, File file, boolean initial) throws IOException {
     pageSize = _pageSize;
     buffer = new byte[_pageSize];
-    storage = _storage;
 
     root = new BtreeIndexNodeView(this);
-    root.setAddress(rootAddress);
+    root.setAddress(0);
 
     int i = (pageSize - BtreePage.RESERVED_META_PAGE_LEN) / BtreeIndexNodeView.INTERIOR_SIZE - 1;
     assert i < Short.MAX_VALUE && i % 2 == 0;
@@ -82,7 +81,14 @@ abstract class IntToIntBtree {
     assert i > 0 && i % 2 == 0;
     maxLeafNodesInHash = (short) i;
 
-    pagesCount = 1;
+    if (initial) {
+      FileUtil.delete(file);
+    }
+
+    storage = new MappedFileSimpleStorage(file, pageSize, 1024 * 1024);
+    if (initial) {
+      nextPage(); // allocate root
+    }
     ((BtreePage)root).load();
 
     if (initial) {
@@ -106,9 +112,8 @@ abstract class IntToIntBtree {
     count = storage.persistInt(16, count, toDisk);
     hashSearchRequests = storage.persistInt(20, hashSearchRequests, toDisk);
     totalHashStepsSearched = storage.persistInt(24, totalHashStepsSearched, toDisk);
-    nextFreePage = storage.persistInt(28, nextFreePage, toDisk);
-    nextFreePageCount = storage.persistInt(32, nextFreePageCount, toDisk);
-    hashedPagesCount = storage.persistInt(36, hashedPagesCount, toDisk);
+    hashedPagesCount = storage.persistInt(28, hashedPagesCount, toDisk);
+    root.setAddress(storage.persistInt(32, root.address, toDisk));
   }
 
   interface BtreeDataStorage {
@@ -124,34 +129,11 @@ abstract class IntToIntBtree {
     return true;
   }
 
-  protected abstract int allocEmptyPage();
-
-  private int nextPage(boolean root) {
-    int address;
-
-    if (nextFreePageCount == 0) {
-      if ((height == 2 && root) || height >= 3) {  // ensure more locality for index pages
-        nextFreePage = allocEmptyPage();
-        nextFreePageCount = 1;
-        int freePage = nextFreePage + pageSize;
-        int numOfFullPages = 1;
-
-        while(freePage % ROUND_FACTOR != 0 || numOfFullPages-- > 0) {
-          freePage = allocEmptyPage();
-          ++nextFreePageCount;
-        }
-      }
-    }
-
-    if (nextFreePageCount > 0) {
-      address = nextFreePage;
-      nextFreePage += pageSize;
-      --nextFreePageCount;
-    } else {
-      address = allocEmptyPage();
-    }
+  private int nextPage() {
+    int pageStart = (int)storage.length();
+    storage.putInt(pageStart + pageSize - 4, 0);
     ++pagesCount;
-    return address;
+    return pageStart;
   }
 
   public @Nullable Integer get(int key) {
@@ -212,7 +194,7 @@ abstract class IntToIntBtree {
     int usedPercent2 = (int)((count * 100L) / leafNodesCapacity2);
     IOStatistics.dump("pagecount:" + pagesCount + ", height:" + height + ", movedMembers:"+movedMembersCount +
                       ", hash steps:" + maxStepsSearchedInHash + ", avg search in hash:" + (hashSearchRequests != 0 ? totalHashStepsSearched / hashSearchRequests:0) +
-                      ", leaf pages used:" + usedPercent + "%, leaf pages used if sorted: " + usedPercent2 + "%" );
+                      ", leaf pages used:" + usedPercent + "%, leaf pages used if sorted: " + usedPercent2 + "%, size:"+storage.length() );
   }
 
   private void flushCachedMappings() {
@@ -224,12 +206,14 @@ abstract class IntToIntBtree {
     }
   }
 
-  void cleanupOnClose() {
+  void doClose() throws IOException {
     myCachedMappings = null;
+    storage.close();
   }
 
   void doFlush() {
     flushCachedMappings();
+    storage.force();
   }
 
   static void myAssert(boolean b) {
@@ -552,7 +536,7 @@ abstract class IntToIntBtree {
       short maxIndex = (short)(getMaxChildrenCount() / 2);
 
       BtreeIndexNodeView newIndexNode = new BtreeIndexNodeView(btree);
-      newIndexNode.setAddress(btree.nextPage(false));
+      newIndexNode.setAddress(btree.nextPage());
 
       newIndexNode.setIndexLeaf(indexLeaf);
 
@@ -668,7 +652,7 @@ abstract class IntToIntBtree {
         if (doSanityCheck) {
           btree.root.dump("Splitting root:"+medianKey);
         }
-        int newRootAddress = btree.nextPage(true);
+        int newRootAddress = btree.nextPage();
         if (doSanityCheck) {
           System.out.println("Pages:"+btree.pagesCount+", elements:"+btree.count + ", average:" + (btree.height + 1));
         }

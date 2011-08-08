@@ -260,6 +260,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
                                                                                   initContext.getOffsetMap(), hasModifiers);
+    indicator.addMapToDispose(hostMap);
+    indicator.addMapToDispose(context.getOffsetMap());
 
     boolean sync =
       (invokedExplicitly || ApplicationManager.getApplication().isUnitTestMode()) && !CompletionAutoPopupHandler.ourTestingAutopopup;
@@ -520,7 +522,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap);
         }
       });
-    } else {
+    }
+    else {
       PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
 
       doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap);
@@ -627,13 +630,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           if (!context.getProject().isDisposed()) {
             runnable.run();
           }
+          indicator.disposeOffsetMaps();
         }
       };
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        ApplicationManager.getApplication().invokeLater(runnable1);
-      } else {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
         runnable1.run();
       }
+      else {
+        ApplicationManager.getApplication().invokeLater(runnable1);
+      }
+    }
+    else {
+      indicator.disposeOffsetMaps();
     }
   }
 

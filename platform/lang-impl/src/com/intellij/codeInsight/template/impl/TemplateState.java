@@ -549,6 +549,7 @@ public class TemplateState implements Disposable {
           }
         }.execute();
       }
+      offsetMap.dispose();
 
       if (completionChar == '.') {
         EditorModificationUtil.insertStringAtCaret(myEditor, ".");

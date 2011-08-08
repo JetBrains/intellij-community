@@ -157,11 +157,11 @@ public class FoldingUpdate {
                                      @NotNull FoldingMap elementsToFoldMap,
                                      boolean quick) {
     final FileViewProvider viewProvider = file.getViewProvider();
+    TextRange docRange = TextRange.from(0, document.getTextLength());
     for (final Language language : viewProvider.getLanguages()) {
       final PsiFile psi = viewProvider.getPsi(language);
       final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
       if (psi != null && foldingBuilder != null) {
-        TextRange docRange = TextRange.from(0, document.getTextLength());
         for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptors(foldingBuilder, psi, document, quick)) {
           TextRange range = descriptor.getRange();
           if (!docRange.contains(range)) {

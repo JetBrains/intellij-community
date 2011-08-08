@@ -119,5 +119,6 @@
   <extensionPoint name="xmlRpcHandler" beanClass="com.intellij.ide.XmlRpcHandlerBean"/>
 
   <extensionPoint name="editorHighlighterProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
-  <extensionPoint name="fileDocumentManagerListener" interface="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>  
+  <extensionPoint name="fileDocumentManagerListener" interface="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+  <extensionPoint name="exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory"/>
 </extensionPoints>

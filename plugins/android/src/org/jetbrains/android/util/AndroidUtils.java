@@ -139,6 +139,9 @@ public class AndroidUtils {
   @NonNls public static final String ANDROID_LIBRARY_PROPERTY = "android.library";
   @NonNls public static final String ANDROID_TARGET_PROPERTY = "target";
   @NonNls public static final String ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX = "android.library.reference.";
+  public static final String SERVICE_CLASS_NAME = "android.app.Service";
+  public static final String RECEIVER_CLASS_NAME = "android.content.BroadcastReceiver";
+  public static final String PROVIDER_CLASS_NAME = "android.content.ContentProvider";
 
   private AndroidUtils() {
   }

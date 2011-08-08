@@ -15,15 +15,18 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CompositeFilter implements Filter {
+public class CompositeFilter implements Filter, FilterMixin {
   private final List<Filter> myFilters = new ArrayList<Filter>();
+  private boolean myIsAnyHeavy;
   private final DumbService myDumbService;
 
   public CompositeFilter(Project project) {
@@ -48,11 +51,34 @@ public class CompositeFilter implements Filter {
     return null;
   }
 
+  @Override
+  public void applyHeavyFilter(Document copiedFragment,
+                               int startOffset,
+                               int startLineNumber,
+                               Consumer<AdditionalHighlight> consumer) {
+    final boolean dumb = myDumbService.isDumb();
+    List<Filter> filters = myFilters;
+    int count = filters.size();
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < count; i++) {
+      Filter filter = filters.get(i);
+      if (! (filter instanceof FilterMixin)) continue;
+      if (!dumb || DumbService.isDumbAware(filter)) {
+        ((FilterMixin) filter).applyHeavyFilter(copiedFragment, startOffset, startLineNumber, consumer);
+      }
+    }
+  }
+
   public boolean isEmpty() {
     return myFilters.isEmpty();
   }
 
+  public boolean isAnyHeavy() {
+    return myIsAnyHeavy;
+  }
+
   public void addFilter(final Filter filter) {
     myFilters.add(filter);
+    myIsAnyHeavy |= filter instanceof FilterMixin;
   }
 }

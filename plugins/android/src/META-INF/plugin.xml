@@ -156,6 +156,8 @@
 
     <sdkType implementation="org.jetbrains.android.sdk.AndroidSdkType"/>
     <gotoDeclarationHandler implementation="org.jetbrains.android.AndroidGotoDeclarationHandler"/>
+    <refactoring.safeDeleteProcessor id="android" order="before javaProcessor"
+                                     implementation="org.jetbrains.android.AndroidSafeDeleteProcessorDelegate"/>
   </extensions>
 
   <extensionPoints>

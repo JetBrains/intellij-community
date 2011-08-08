@@ -62,6 +62,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.content.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
+import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -911,10 +912,9 @@ public class DocumentationManager {
   }
 
   void showHint(final JBPopup hint) {
-    //todo[spleaner] please fix this in PopupPositionManager
-    //PopupPositionManager.positionPopupInBestPosition(hint, myEditor, true);
     final Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-    hint.showInBestPositionFor(DataManager.getInstance().getDataContext(focusOwner));
+    DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
+    PopupPositionManager.positionPopupInBestPosition(hint, null, dataContext);
   }
 
   public void requestFocus() {

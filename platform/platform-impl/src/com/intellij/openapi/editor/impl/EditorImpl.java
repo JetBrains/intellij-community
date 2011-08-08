@@ -321,7 +321,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int startLine = myDocument.getLineNumber(start);
         int endLine = end < myDocument.getTextLength() ? myDocument.getLineNumber(end) : myDocument.getLineCount() - 1;
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-        ((EditorMarkupModelImpl)getMarkupModel()).markDirtied();
         ((EditorMarkupModelImpl)getMarkupModel()).repaint(start, end);
         GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
         if (renderer != null) {
@@ -2467,7 +2466,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    private void addContent(Graphics g, char[] _data, int _start, int _end, int _x, int _y, Color _color) {
+    private void addContent(Graphics g, char[] _data, int _start, int _end, int _x, int _y, @Nullable Color _color) {
       final int count = myCount;
       if (count > 0) {
         final int lastCount = count - 1;
@@ -2706,8 +2705,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                          int end,
                          Point position,
                          Rectangle clip,
-                         Color effectColor,
-                         EffectType effectType,
+                         @Nullable Color effectColor,
+                         @Nullable EffectType effectType,
                          int fontType,
                          Color fontColor) {
     if (start >= end) return position.x;

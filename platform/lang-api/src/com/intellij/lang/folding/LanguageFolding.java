@@ -55,7 +55,7 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
       }
     }
     else {
-      return (extensions.size() == 1) ? extensions.get(0) : new CompositeFoldingBuilder(extensions);
+      return extensions.size() == 1 ? extensions.get(0) : new CompositeFoldingBuilder(extensions);
     }
 
     l.putUserData(getLanguageCache(), result);

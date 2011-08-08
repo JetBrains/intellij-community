@@ -435,30 +435,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     }
     injected.add(documentWindow);
 
-    cacheInjectedRegion(documentWindow, hostDocument);
     return injectedPsi;
-  }
-
-  private static void cacheInjectedRegion(DocumentWindowImpl documentWindow, DocumentEx hostDocument) {
-    List<RangeMarker> injectedRegions = InjectedLanguageUtil.getCachedInjectedRegions(hostDocument);
-    RangeMarker newMarker = documentWindow.getHostRanges()[0];
-    TextRange newRange = ProperTextRange.create(newMarker);
-    for (int i = 0; i < injectedRegions.size(); i++) {
-      RangeMarker stored = injectedRegions.get(i);
-      if (!stored.isValid()) continue;
-      TextRange storedRange = ProperTextRange.create(stored);
-      if (storedRange.intersects(newRange)) {
-        injectedRegions.set(i, newMarker);
-        break;
-      }
-      if (storedRange.getStartOffset() > newRange.getEndOffset()) {
-        injectedRegions.add(i, newMarker);
-        break;
-      }
-    }
-    if (injectedRegions.isEmpty() || newRange.getStartOffset() > injectedRegions.get(injectedRegions.size()-1).getEndOffset()) {
-      injectedRegions.add(newMarker);
-    }
   }
 
   // returns lexer element types with corresponding ranges in encoded (injection host based) PSI

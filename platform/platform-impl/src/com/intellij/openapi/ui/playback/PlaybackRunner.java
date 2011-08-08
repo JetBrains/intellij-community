@@ -89,11 +89,13 @@ public class PlaybackRunner {
         myActionCallback.setRejected();
         return;
       }
-      cmd.execute(myCallback, myRobot, myUseDirectActionCall).doWhenDone(new Runnable() {
+      final ActionCallback cmdCallback = cmd.execute(myCallback, myRobot, myUseDirectActionCall);
+      cmdCallback.doWhenDone(new Runnable() {
         public void run() {
           if (cmd.canGoFurther()) {
             executeFrom(cmdIndex + 1);
-          } else {
+          }
+          else {
             myActionCallback.setDone();
           }
         }

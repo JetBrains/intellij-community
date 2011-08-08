@@ -258,16 +258,4 @@ public class LoadingDecorator {
     frame.setBounds(300, 300, 300, 300);
     frame.show();
   }
-
-
-  private static class MyLayeredPane extends JLayeredPane {
-    @Override
-    public void doLayout() {
-      super.doLayout();
-      for (int i = 0; i < getComponentCount(); i++) {
-        final Component each = getComponent(i);
-        each.setBounds(0, 0, getWidth(), getHeight());
-      }
-    }
-  }
 }

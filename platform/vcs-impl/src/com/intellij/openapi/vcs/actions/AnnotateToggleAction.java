@@ -188,7 +188,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
                                 final AbstractVcs vcs) {
     final String upToDateContent = fileAnnotation.getAnnotatedContent();
 
-    final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project, upToDateContent);
+    final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
     editor.getGutter().closeAllAnnotations();
 
     // be careful, not proxies but original items are put there (since only their presence not behaviour is important)

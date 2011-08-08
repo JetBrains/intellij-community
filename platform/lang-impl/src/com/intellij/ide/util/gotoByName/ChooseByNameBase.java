@@ -308,7 +308,7 @@ public abstract class ChooseByNameBase {
     
     public void repositionHint() {
       if (myHint == null || !myHint.isVisible()) return;
-      PopupPositionManager.positionPopupInBestPosition(myHint, null, true);
+      PopupPositionManager.positionPopupInBestPosition(myHint, null, null);
     }
   }
 
