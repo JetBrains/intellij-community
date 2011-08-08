@@ -743,7 +743,9 @@ public class JavaCompletionUtil {
           }
 
           newElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
-          newStartOffset = newElement.getTextRange().getStartOffset();
+          if (newElement != null) {
+            newStartOffset = newElement.getTextRange().getStartOffset();
+          }
 
           if (!staticImport &&
               newElement instanceof PsiJavaCodeReferenceElement &&
