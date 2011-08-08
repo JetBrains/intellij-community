@@ -209,7 +209,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     return myRecordHandler;
   }
 
-  public final void setRecordHandler(RecordBufferHandler<PersistentEnumeratorBase> recordHandler) {
+  public void setRecordHandler(RecordBufferHandler<PersistentEnumeratorBase> recordHandler) {
     myRecordHandler = recordHandler;
   }
 
@@ -316,8 +316,6 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       markDirty(true);
 
       final int dataOff = myKeyStorage != null ? (int)myKeyStorage.length() : ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(value);
-      final byte[] buf = myRecordHandler.getRecordBuffer(this);
-      myRecordHandler.setupRecord(this, hashCode, dataOff, buf);
 
       if (myKeyStorage != null) {
         final BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
@@ -326,14 +324,20 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
         myKeyStorage.put(dataOff, bos.getInternalBuffer(), 0, bos.size());
       }
 
-      final int pos = myRecordHandler.recordWriteOffset(this, buf);
-      myStorage.put(pos, buf, 0, buf.length);
-
-      return pos;
+      return setupValueId(hashCode, dataOff);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected int setupValueId(int hashCode, int dataOff) {
+    final byte[] buf = myRecordHandler.getRecordBuffer(this);
+    myRecordHandler.setupRecord(this, hashCode, dataOff, buf);
+    final int pos = myRecordHandler.recordWriteOffset(this, buf);
+    myStorage.put(pos, buf, 0, buf.length);
+
+    return pos;
   }
 
   protected boolean iterateData(final Processor<Data> processor) throws IOException {

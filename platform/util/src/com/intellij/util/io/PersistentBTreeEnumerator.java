@@ -58,17 +58,20 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private IntToIntBtree btree;
   private final boolean myInlineKeysNoMapping;
+  private boolean myExternalKeysNoMapping;
 
   private static final int DIRTY_MAGIC = 0xbabe1977;
   private static final int VERSION = 5 + IntToIntBtree.VERSION;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafc + VERSION + PAGE_SIZE;
   private static Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
+  private static final int KEY_SHIFT = 1;
 
   public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024), dataDescriptor, initialSize,
           ourVersion, new RecordBufferHandler());
 
-    myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantInlineKeyMapping();
+    myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantKeyMapping();
+    myExternalKeysNoMapping = !(myDataDescriptor instanceof InlineKeyDescriptor) && !wantKeyMapping();
 
     if (btree == null) {
       synchronized (ourLock) {
@@ -83,7 +86,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return new File(file.getPath() + "_i");
   }
 
-  protected boolean wantInlineKeyMapping() {
+  protected boolean wantKeyMapping() {
     return false;
   }
 
@@ -166,8 +169,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   @Override
   public boolean traverseAllRecords(RecordsProcessor p) throws IOException {
     synchronized (ourLock) {
-      if (myInlineKeysNoMapping) {
+      if (myInlineKeysNoMapping || myExternalKeysNoMapping) {
         List<IntToIntBtree.BtreeIndexNodeView> leafPages = new ArrayList<IntToIntBtree.BtreeIndexNodeView> ();
+        btree.root.setAddress(btree.root.address);
         collectLeafPages(btree.root, leafPages);
         Collections.sort(leafPages, new Comparator<IntToIntBtree.BtreeIndexNodeView>() {
           @Override
@@ -182,7 +186,16 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
             Integer record = btree.get(key);
             p.setCurrentKey(key);
             assert record != null;
-            if (!p.process(record)) break out;
+            if (record > 0) {
+              if (!p.process(record)) break out;
+            } else {
+              int rec = - record;
+              while(rec != 0) {
+                int id = myStorage.getInt(rec);
+                if (!p.process(id)) break out;
+                rec = myStorage.getInt(rec + COLLISION_OFFSET);
+              }
+            }
           }
         }
         return true;
@@ -219,11 +232,28 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   protected int indexToAddr(int idx) {
+    if (myExternalKeysNoMapping) {
+      IntToIntBtree.myAssert(idx > 0);
+      return idx - KEY_SHIFT;
+    }
+    
     int anInt = myStorage.getInt(idx);
     if (IntToIntBtree.doSanityCheck) {
       IntToIntBtree.myAssert(anInt >= 0 || myDataDescriptor instanceof InlineKeyDescriptor);
     }
     return anInt;
+  }
+
+  @Override
+  protected int setupValueId(int hashCode, int dataOff) {
+    if (myExternalKeysNoMapping) return dataOff + KEY_SHIFT;
+    return super.setupValueId(hashCode, dataOff);
+  }
+
+  @Override
+  public void setRecordHandler(PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler) {
+    myExternalKeysNoMapping = false;
+    super.setRecordHandler(recordHandler);
   }
 
   protected int enumerateImpl(final Data value, final boolean saveNewValue) throws IOException {
