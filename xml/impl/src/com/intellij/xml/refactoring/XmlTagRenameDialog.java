@@ -161,8 +161,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
-    panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createRoundedBorder(), BorderFactory.createEmptyBorder(4, 8, 4, 8)));
+    panel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
 
     myTitleLabel = new JLabel();
     panel.add(myTitleLabel);

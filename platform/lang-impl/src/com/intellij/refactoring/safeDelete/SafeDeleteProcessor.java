@@ -347,7 +347,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
       for (PsiElement element : myElements) {
         for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
-          delegate.prepareForDeletion(element);
+          if (delegate.handlesElement(element)) {
+            delegate.prepareForDeletion(element);
+          }
         }
 
         element.delete();

@@ -16,6 +16,7 @@
 
 package com.intellij.ide.plugins.cl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.lang.UrlClassLoader;
@@ -90,7 +91,12 @@ public class PluginClassLoader extends UrlClassLoader {
       return c;
     }
 
-    c = _findClass(name);
+    try {
+      c = _findClass(name);
+    }
+    catch (IncompatibleClassChangeError e) {
+      throw new PluginException(e, myPluginId);
+    }
     if (c != null) {
       PluginManager.addPluginClass(c.getName(), myPluginId);
     }

@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
@@ -97,7 +98,7 @@ public class ResolveCache {
                                                                @NotNull final AbstractResolver<TRef, TResult> resolver,
                                                                @NotNull Map<? super TRef,Reference<TResult>>[] maps,
                                                                boolean needToPreventRecursion,
-                                                               final boolean incompleteCode) {
+                                                               final boolean incompleteCode, boolean poly) {
     ProgressManager.checkCanceled();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -116,7 +117,7 @@ public class ResolveCache {
     };
 
     RecursionGuard.StackStamp stamp = myGuard.markStack();
-    result = needToPreventRecursion ? myGuard.doPreventingRecursion(ref, true, computable) : computable.compute();
+    result = needToPreventRecursion ? myGuard.doPreventingRecursion(Trinity.create(ref, incompleteCode, poly), true, computable) : computable.compute();
     if (stamp.mayCacheNow()) {
       cache(ref, result, maps, physical, incompleteCode, clearCountOnStart);
     }
@@ -127,7 +128,7 @@ public class ResolveCache {
                                                                                  @NotNull PolyVariantResolver<T> resolver,
                                                                                  boolean needToPreventRecursion,
                                                                                  boolean incompleteCode) {
-    ResolveResult[] result = resolve(ref, resolver, myPolyVariantResolveMaps, needToPreventRecursion, incompleteCode);
+    ResolveResult[] result = resolve(ref, resolver, myPolyVariantResolveMaps, needToPreventRecursion, incompleteCode, true);
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
 
@@ -135,7 +136,7 @@ public class ResolveCache {
                                        @NotNull Resolver resolver,
                                        boolean needToPreventRecursion,
                                        boolean incompleteCode) {
-    return resolve(ref, resolver, myResolveMaps, needToPreventRecursion, incompleteCode);
+    return resolve(ref, resolver, myResolveMaps, needToPreventRecursion, incompleteCode, false);
   }
 
   private static int getIndex(boolean physical, boolean incompleteCode){

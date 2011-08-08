@@ -64,6 +64,7 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
   public String EVALUATION_DIALOG_TYPE;
   public String RUN_HOTSWAP_AFTER_COMPILE;
   public boolean COMPILE_BEFORE_HOTSWAP;
+  public boolean HOTSWAP_HANG_WARNING_ENABLED = true;
 
   public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;
@@ -145,6 +146,7 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&
       SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
+      HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
       (RUN_HOTSWAP_AFTER_COMPILE != null ? RUN_HOTSWAP_AFTER_COMPILE.equals(secondSettings.RUN_HOTSWAP_AFTER_COMPILE) : secondSettings.RUN_HOTSWAP_AFTER_COMPILE == null) &&
       DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters);
   }

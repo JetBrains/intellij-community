@@ -233,15 +233,33 @@ public class GitFileAnnotation implements FileAnnotation {
     return null;
   }
 
+  @Override
+  public int getLineCount() {
+    return myLines.size();
+  }
+
   /**
    * {@inheritDoc}
    */
   public VcsRevisionNumber getLineRevisionNumber(final int lineNumber) {
-    if (myLines.size() <= lineNumber || lineNumber < 0 || myLines.get(lineNumber) == null) {
+    if (lineNumberCheck(lineNumber)) {
       return null;
     }
     final LineInfo lineInfo = myLines.get(lineNumber);
     return lineInfo == null ? null : lineInfo.getRevision();
+  }
+
+  private boolean lineNumberCheck(int lineNumber) {
+    return myLines.size() <= lineNumber || lineNumber < 0 || myLines.get(lineNumber) == null;
+  }
+
+  @Override
+  public Date getLineDate(int lineNumber) {
+    if (lineNumberCheck(lineNumber)) {
+      return null;
+    }
+    final LineInfo lineInfo = myLines.get(lineNumber);
+    return lineInfo == null ? null : lineInfo.getDate();
   }
 
   /**
@@ -287,7 +305,7 @@ public class GitFileAnnotation implements FileAnnotation {
     }
 
     public String getValue(int lineNumber) {
-      if (myLines.size() <= lineNumber || lineNumber < 0 || myLines.get(lineNumber) == null) {
+      if (lineNumberCheck(lineNumber)) {
         return "";
       }
       else {

@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -81,6 +82,9 @@ public interface FileAnnotation {
   @Nullable
   VcsRevisionNumber getLineRevisionNumber(int lineNumber);
 
+  @Nullable
+  Date getLineDate(int lineNumber);
+
   /**
    * Get revision number for the line.
    */
@@ -100,4 +104,6 @@ public interface FileAnnotation {
 
   @Nullable
   AnnotationSourceSwitcher getAnnotationSourceSwitcher();
+  
+  int getLineCount();
 }

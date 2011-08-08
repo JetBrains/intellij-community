@@ -26,6 +26,7 @@ import java.awt.*;
 public class DebuggerHotswapConfigurable implements SearchableConfigurable {
   private JCheckBox myHotswapInBackground;
   private JCheckBox myCbCompileBeforeHotswap;
+  private JCheckBox myCbHangWarningEnabled;
   private JRadioButton myRbAlways;
   private JRadioButton myRbNever;
   private JRadioButton myRbAsk;
@@ -34,6 +35,7 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
     final DebuggerSettings settings = DebuggerSettings.getInstance();
     myHotswapInBackground.setSelected(settings.HOTSWAP_IN_BACKGROUND);
     myCbCompileBeforeHotswap.setSelected(settings.COMPILE_BEFORE_HOTSWAP);
+    myCbHangWarningEnabled.setSelected(settings.HOTSWAP_HANG_WARNING_ENABLED);
 
     if(DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(settings.RUN_HOTSWAP_AFTER_COMPILE)) {
       myRbAlways.setSelected(true);
@@ -53,6 +55,7 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
   private void getSettingsTo(DebuggerSettings settings) {
     settings.HOTSWAP_IN_BACKGROUND = myHotswapInBackground.isSelected();
     settings.COMPILE_BEFORE_HOTSWAP = myCbCompileBeforeHotswap.isSelected();
+    settings.HOTSWAP_HANG_WARNING_ENABLED = myCbHangWarningEnabled.isSelected();
 
     if (myRbAlways.isSelected()) {
       settings.RUN_HOTSWAP_AFTER_COMPILE = DebuggerSettings.RUN_HOTSWAP_ALWAYS;
@@ -97,12 +100,14 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
     final JPanel panel = new JPanel(new GridBagLayout());
 
     myCbCompileBeforeHotswap = new JCheckBox(DebuggerBundle.message("label.debugger.hotswap.configurable.compile.before.hotswap"));
+    myCbHangWarningEnabled = new JCheckBox(DebuggerBundle.message("label.debugger.hotswap.configurable.enable.vm.hang.warning"));
     myHotswapInBackground = new JCheckBox(DebuggerBundle.message("label.debugger.hotswap.configurable.hotswap.background"));
     myRbAlways = new JRadioButton(DebuggerBundle.message("label.debugger.hotswap.configurable.always"));
     myRbNever = new JRadioButton(DebuggerBundle.message("label.debugger.hotswap.configurable.never"));
     myRbAsk = new JRadioButton(DebuggerBundle.message("label.debugger.hotswap.configurable.ask"));
 
     panel.add(myCbCompileBeforeHotswap, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+    panel.add(myCbHangWarningEnabled, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
     panel.add(myHotswapInBackground, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
     
     int cbLeftOffset = 0;

@@ -22,6 +22,7 @@ import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -55,6 +56,11 @@ public class HgAnnotation implements FileAnnotation {
 
   public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
     return null;
+  }
+
+  @Override
+  public int getLineCount() {
+    return lines.size();
   }
 
   public VcsRevisionNumber originalRevision(int lineNumber) {
@@ -97,6 +103,16 @@ public class HgAnnotation implements FileAnnotation {
     }
     HgAnnotationLine annotationLine = lines.get(lineNumber);
     return annotationLine.getVcsRevisionNumber();
+  }
+
+  @Override
+  public Date getLineDate(int lineNumber) {
+    if (lineNumber >= lines.size() || lineNumber < 0) {
+      return null;
+    }
+    //lines.get(lineNumber).get(HgAnnotation.FIELD.DATE)
+    // todo : parse date
+    return null;
   }
 
   public List<VcsFileRevision> getRevisions() {

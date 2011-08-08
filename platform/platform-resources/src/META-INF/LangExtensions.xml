@@ -200,6 +200,13 @@
   <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
                  serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
 
+  <applicationService serviceInterface="com.intellij.framework.detection.impl.FrameworkDetectorRegistry"
+                      serviceImplementation="com.intellij.framework.detection.impl.FrameworkDetectorRegistryImpl"/>
+  <fileBasedIndex implementation="com.intellij.framework.detection.impl.FrameworkDetectionIndex"/>
+  <projectService serviceInterface="com.intellij.framework.detection.DetectionExcludesConfiguration"
+                  serviceImplementation="com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl"/>
+  <projectService serviceImplementation="com.intellij.framework.detection.impl.exclude.old.OldFacetDetectionExcludesConfiguration"/>
+
   <projectService serviceInterface="com.intellij.codeInsight.AutoPopupController"
                   serviceImplementation="com.intellij.codeInsight.AutoPopupController"/>
 
@@ -248,6 +255,8 @@
                   serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>
   <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
                   serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
+  <projectService serviceInterface="com.intellij.packageDependencies.DependenciesToolWindow"
+                  serviceImplementation="com.intellij.packageDependencies.DependenciesToolWindow"/>
 
   <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
                   serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManager"/>

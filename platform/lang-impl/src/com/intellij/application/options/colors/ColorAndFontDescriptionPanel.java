@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * @author cdr
- */
 package com.intellij.application.options.colors;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.ui.ColorPanel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/**
+ * @author cdr
+ */
 public class ColorAndFontDescriptionPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.colors.ColorAndFontDescriptionPanel");
 
@@ -68,12 +69,10 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     add(settingsPanel, BorderLayout.CENTER);
     setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 4));
 
-    myEffectsCombo.setRenderer(new DefaultListCellRenderer() {
+    myEffectsCombo.setRenderer(new ListCellRendererWrapper<String>(myEffectsCombo.getRenderer()) {
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        if (value == null) value = "Invalid";
-        return super.getListCellRendererComponent(list, value, index, isSelected,
-                                                  cellHasFocus);
+      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+        setText(value != null ? value : "Invalid");
       }
     });
   }
@@ -302,17 +301,11 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     myEffectsCombo.setEnabled(false);
   }
 
-  //public void disableControlls(final boolean disabled) {
-  //  myCbBold.setEnabled(!disabled);
-  //  myCbItalic.setEnabled(!disabled);
-  //  myCbItalic.setEnabled(!disabled);
-  //}
-
   private static void updateColorChooser(JCheckBox checkBox,
                                          ColorPanel colorPanel,
                                          boolean isEnabled,
                                          boolean isChecked,
-                                         Color color) {
+                                         @Nullable Color color) {
     checkBox.setEnabled(isEnabled);
     checkBox.setSelected(isChecked);
     if (color != null) {
@@ -332,7 +325,8 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       int fontType = description.getFontType();
       myCbBold.setSelected((fontType & Font.BOLD) != 0);
       myCbItalic.setSelected((fontType & Font.ITALIC) != 0);
-    } else {
+    }
+    else {
       myLabelFont.setEnabled(false);
       myCbBold.setSelected(false);
       myCbBold.setEnabled(false);

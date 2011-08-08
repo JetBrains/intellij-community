@@ -363,7 +363,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     String tooltipText = ApplicationBundle.message("quickdoc.tooltip.font.size.by.wheel");
     result.setToolTipText(tooltipText);
     myFontSizeSlider.setToolTipText(tooltipText);
-    result.setBorder(IdeBorderFactory.createRoundedBorder());
     result.setVisible(false);
     result.setOpaque(true);
     myFontSizeSlider.setOpaque(true);

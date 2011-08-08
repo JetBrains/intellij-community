@@ -17,14 +17,15 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.MultiMapBasedOnSet;
 import com.intellij.util.containers.SoftHashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * There are moments when a computation A requires the result of computation B, which in turn requires C, which (unexpectedly) requires A.
@@ -49,34 +50,10 @@ import java.util.Map;
 public class RecursionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.RecursionManager");
   private static final Object NULL = new Object();
-  private static final ThreadLocal<Integer> ourStamp = new ThreadLocal<Integer>() {
+  private static final ThreadLocal<CalculationStack> ourStack = new ThreadLocal<CalculationStack>() {
     @Override
-    protected Integer initialValue() {
-      return 0;
-    }
-  };
-  private static final ThreadLocal<Integer> ourMemoizationStamp = new ThreadLocal<Integer>() {
-    @Override
-    protected Integer initialValue() {
-      return 0;
-    }
-  };
-  private static final ThreadLocal<Integer> ourDepth = new ThreadLocal<Integer>() {
-    @Override
-    protected Integer initialValue() {
-      return 0;
-    }
-  };
-  private static final ThreadLocal<LinkedHashMap<MyKey, Integer>> ourProgress = new ThreadLocal<LinkedHashMap<MyKey, Integer>>() {
-    @Override
-    protected LinkedHashMap<MyKey, Integer> initialValue() {
-      return new LinkedHashMap<MyKey, Integer>();
-    }
-  };
-  private static final ThreadLocal<Map<MyKey, SoftReference>> ourIntermediateCache = new ThreadLocal<Map<MyKey, SoftReference>>() {
-    @Override
-    protected Map<MyKey, SoftReference> initialValue() {
-      return new SoftHashMap<MyKey, SoftReference>();
+    protected CalculationStack initialValue() {
+      return new CalculationStack();
     }
   };
 
@@ -89,93 +66,50 @@ public class RecursionManager {
       @Override
       public <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
         MyKey realKey = new MyKey(id, key);
-        LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
-        if (progressMap.containsKey(realKey)) {
-          _prohibitResultCaching(key);
+        final CalculationStack stack = ourStack.get();
 
+        if (stack.checkReentrancy(realKey)) {
           return null;
         }
 
         if (memoize) {
-          SoftReference reference = ourIntermediateCache.get().get(realKey);
-          if (reference != null) {
-            if (ourDepth.get() == 0) {
-              throw new AssertionError("Memoized values with empty stack");
+          Object o = stack.getMemoizedValue(realKey);
+          if (o != null) {
+            for (MyKey noCacheUntil : stack.toProhibitCachingOnMemo.get(realKey)) {
+              stack._prohibitResultCaching(noCacheUntil);
             }
-            Object o = reference.get();
-            if (o != null) {
-              //noinspection unchecked
-              return o == NULL ? null : (T)o;
-            }
+
+            //noinspection unchecked
+            return o == NULL ? null : (T)o;
           }
         }
 
-        if (progressMap.isEmpty() && ourStamp.get() != 0) {
-          throw new AssertionError("Non-zero stamp with empty stack: " + ourStamp.get());
-        }
-
-        checkDepth("1");
-
-        int sizeBefore = progressMap.size();
-        progressMap.put(realKey, ourStamp.get());
-        ourDepth.set(ourDepth.get() + 1);
-
-        checkDepth("2");
-
-        int sizeAfter = progressMap.size();
-        if (sizeAfter != sizeBefore + 1) {
-          LOG.error("Key doesn't lead to the map size increase: " + sizeBefore + " " + sizeAfter + " " + key);
-        }
-
-        int startStamp = ourMemoizationStamp.get();
+        final int sizeBefore = stack.progressMap.size();
+        stack.beforeComputation(realKey);
+        final int sizeAfter = stack.progressMap.size();
+        int startStamp = stack.memoizationStamp;
 
         try {
           T result = computation.compute();
 
-          if (memoize && ourMemoizationStamp.get() == startStamp) {
-            ourIntermediateCache.get().put(realKey, new SoftReference<Object>(result == null ? NULL : result));
+          if (memoize) {
+            stack.maybeMemoize(realKey, result == null ? NULL : result, startStamp);
           }
 
           return result;
         }
         finally {
-          if (sizeAfter != progressMap.size()) {
-            LOG.error("Map size changed: " + progressMap.size() + " " + sizeAfter + " " + key);
-          }
-          
-          ourDepth.set(ourDepth.get() - 1);
-          Integer value = progressMap.remove(realKey);
-
-          if (sizeBefore != progressMap.size()) {
-            LOG.error("Map size doesn't decrease: " + progressMap.size() + " " + sizeBefore + " " + key);
-          }
-
-          if (value == null) {
-            throw new AssertionError(key + " has changed its equals/hashCode");
-          }
-
-          ourStamp.set(value);
-          if (value == 0) {
-            ourIntermediateCache.get().clear();
-          }
-          else if (progressMap.isEmpty()) {
-            ourIntermediateCache.get().clear();
-            throw new AssertionError("Non-zero stamp for empty progress map: " + key + ", " + value);
-          } else {
-            checkZero();
-          }
-
-          checkDepth("3");
+          stack.afterComputation(realKey, sizeBefore, sizeAfter);
         }
       }
 
       @Override
       public StackStamp markStack() {
-        final Integer stamp = ourStamp.get();
+        final int stamp = ourStack.get().reentrancyCount;
         return new StackStamp() {
           @Override
           public boolean mayCacheNow() {
-            return Comparing.equal(stamp, ourStamp.get());
+            return stamp == ourStack.get().reentrancyCount;
           }
         };
       }
@@ -183,7 +117,7 @@ public class RecursionManager {
       @Override
       public List<Object> currentStack() {
         ArrayList<Object> result = new ArrayList<Object>();
-        LinkedHashMap<MyKey, Integer> map = ourProgress.get();
+        LinkedHashMap<MyKey, Integer> map = ourStack.get().progressMap;
         for (MyKey pair : map.keySet()) {
           if (pair.first.equals(id)) {
             result.add(pair.second);
@@ -194,51 +128,151 @@ public class RecursionManager {
 
       @Override
       public void prohibitResultCaching(Object since) {
-        _prohibitResultCaching(since);
-        ourMemoizationStamp.set(ourMemoizationStamp.get() + 1);
+        ourStack.get()._prohibitResultCaching(new MyKey(id, since));
+        ourStack.get().memoizationStamp++;
       }
 
-      private void _prohibitResultCaching(Object since) {
-        int stamp = ourStamp.get() + 1;
-        ourStamp.set(stamp);
-
-        checkZero();
-
-        boolean inLoop = false;
-        for (Map.Entry<MyKey, Integer> entry: ourProgress.get().entrySet()) {
-          if (inLoop) {
-            entry.setValue(stamp);
-          }
-          else if (entry.getKey().first.equals(id) && entry.getKey().second.equals(since)) {
-            inLoop = true;
-          }
-        }
-
-        checkZero();
-      }
     };
-  }
-
-  private static void checkDepth(String s) {
-    LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
-    Integer depth = ourDepth.get();
-    if (depth != progressMap.size()) {
-      ourDepth.set(progressMap.size());
-      throw new AssertionError("Inconsistent depth " + s + "; depth=" + depth + "; map=" + progressMap);
-    }
-  }
-
-  private static void checkZero() {
-    LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
-    if (!progressMap.isEmpty() && progressMap.get(progressMap.keySet().iterator().next()) != 0) {
-      throw new AssertionError("Prisoner Zero has escaped");
-    }
   }
 
   private static class MyKey extends Pair<String, Object> {
     public MyKey(String first, Object second) {
       super(first, second);
     }
+  }
+
+  private static class CalculationStack {
+    private int reentrancyCount;
+    private int memoizationStamp;
+    private int depth;
+    private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<MyKey, Integer>();
+    private final Set<MyKey> toMemoize = new THashSet<MyKey>();
+    private final MultiMap<MyKey, MyKey> toClearMemoized = new MultiMapBasedOnSet<MyKey, MyKey>();
+    private final MultiMap<MyKey, MyKey> toProhibitCachingOnMemo = new MultiMapBasedOnSet<MyKey, MyKey>();
+    private final SoftHashMap<MyKey, SoftReference> intermediateCache = new SoftHashMap<MyKey, SoftReference>();
+
+    boolean checkReentrancy(MyKey realKey) {
+      if (progressMap.containsKey(realKey)) {
+        _prohibitResultCaching(realKey);
+
+        return true;
+      }
+      return false;
+    }
+
+    @Nullable
+    Object getMemoizedValue(MyKey realKey) {
+      SoftReference reference = intermediateCache.get(realKey);
+      if (reference != null) {
+        if (depth == 0) {
+          throw new AssertionError("Memoized values with empty stack");
+        }
+        return reference.get();
+      }
+      return null;
+    }
+
+    final void beforeComputation(MyKey realKey) {
+      if (progressMap.isEmpty()) {
+        assert reentrancyCount == 0 : "Non-zero stamp with empty stack: " + reentrancyCount;
+      }
+
+      checkDepth("1");
+
+      int sizeBefore = progressMap.size();
+      progressMap.put(realKey, reentrancyCount);
+      depth++;
+
+      checkDepth("2");
+
+      int sizeAfter = progressMap.size();
+      if (sizeAfter != sizeBefore + 1) {
+        LOG.error("Key doesn't lead to the map size increase: " + sizeBefore + " " + sizeAfter + " " + realKey.second);
+      }
+    }
+
+    final void maybeMemoize(MyKey realKey, @NotNull Object result, int startStamp) {
+      if (memoizationStamp == startStamp && toMemoize.contains(realKey)) {
+        intermediateCache.put(realKey, new SoftReference<Object>(result));
+      }
+    }
+
+    final void afterComputation(MyKey realKey, int sizeBefore, int sizeAfter) {
+      if (sizeAfter != progressMap.size()) {
+        LOG.error("Map size changed: " + progressMap.size() + " " + sizeAfter + " " + realKey.second);
+      }
+
+      if (depth != progressMap.size()) {
+        LOG.error("Inconsistent depth after computation; depth=" + depth + "; map=" + progressMap);
+      }
+
+      depth--;
+      Integer value = progressMap.remove(realKey);
+      toMemoize.remove(realKey);
+      final Collection<MyKey> stale = toClearMemoized.remove(realKey);
+      if (stale != null) {
+        intermediateCache.keySet().removeAll(stale);
+        toProhibitCachingOnMemo.keySet().removeAll(stale);
+      }
+
+      if (depth == 0) {
+        assert intermediateCache.isEmpty() : "non-empty intermediateCache";
+        assert toProhibitCachingOnMemo.isEmpty() : "non-empty toProhibitCachingOnMemo";
+        assert toClearMemoized.isEmpty() : "non-empty toClearMemoized";
+        assert toMemoize.isEmpty() : "non-empty toMemoize";
+      }
+
+      if (sizeBefore != progressMap.size()) {
+        LOG.error("Map size doesn't decrease: " + progressMap.size() + " " + sizeBefore + " " + realKey.second);
+      }
+
+      assert value != null : realKey.second + " has changed its equals/hashCode";
+
+      reentrancyCount = value;
+      checkZero();
+
+      checkDepth("4");
+    }
+
+    private void _prohibitResultCaching(MyKey realKey) {
+      reentrancyCount++;
+
+      checkZero();
+
+      Set<MyKey> memo = new THashSet<MyKey>();
+      boolean inLoop = false;
+      for (Map.Entry<MyKey, Integer> entry: progressMap.entrySet()) {
+        if (inLoop) {
+          entry.setValue(reentrancyCount);
+          memo.add(entry.getKey());
+        }
+        else if (entry.getKey().equals(realKey)) {
+          inLoop = true;
+        }
+      }
+
+      toMemoize.addAll(memo);
+      for (MyKey key : memo) {
+        toProhibitCachingOnMemo.putValue(key, realKey);
+      }
+      toClearMemoized.putValues(realKey, memo);
+
+      checkZero();
+    }
+
+    private void checkDepth(String s) {
+      if (depth != progressMap.size()) {
+        depth = progressMap.size();
+        throw new AssertionError("Inconsistent depth " + s + "; depth=" + depth + "; map=" + progressMap);
+      }
+    }
+
+    private void checkZero() {
+      if (!progressMap.isEmpty() && progressMap.get(progressMap.keySet().iterator().next()) != 0) {
+        throw new AssertionError("Prisoner Zero has escaped");
+      }
+    }
+
   }
 
 }

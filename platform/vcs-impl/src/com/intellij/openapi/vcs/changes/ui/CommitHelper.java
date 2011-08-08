@@ -135,7 +135,8 @@ public class CommitHelper {
             if (failed > 0) {
               text += ", " + failed + " " + StringUtil.pluralize("change", failed) + " failed to commit";
             }
-            AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(text, myCommitMessage, NotificationType.INFORMATION, null).notify( myProject);
+            String content = StringUtil.isEmpty(myCommitMessage) ? text : text + ": " + myCommitMessage;
+            AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION).notify( myProject);
             return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
           }
         };

@@ -33,7 +33,8 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.filters.ExceptionFilter;
+import com.intellij.execution.filters.ExceptionFilters;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -498,7 +499,10 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   public void addThreadDump(List<ThreadState> threads) {
     final Project project = getProject();
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-    consoleBuilder.addFilter(new ExceptionFilter(myDebuggerSession.getSearchScope()));
+    List<Filter> filters = ExceptionFilters.getFilters(myDebuggerSession.getSearchScope());
+    for (Filter filter : filters) {
+      consoleBuilder.addFilter(filter);
+    }
     final ConsoleView consoleView = consoleBuilder.getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);

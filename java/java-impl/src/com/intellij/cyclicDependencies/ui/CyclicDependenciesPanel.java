@@ -28,9 +28,8 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packageDependencies.DependenciesToolWindow;
 import com.intellij.packageDependencies.DependencyUISettings;
-import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.packageDependencies.ui.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -449,7 +448,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
     public void actionPerformed(AnActionEvent e) {
       Disposer.dispose(myUsagesPanel);
-      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).closeContent(myContent);
+      DependenciesToolWindow.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
     }
   }
@@ -517,7 +516,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     public void actionPerformed(AnActionEvent e) {
-      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).closeContent(myContent);
+      DependenciesToolWindow.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {

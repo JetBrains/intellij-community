@@ -98,6 +98,18 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     if (DaemonListeners.isUnderIgnoredAction(null)) return;
     List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
     if (toUpdate != null) {
+      Application application = ApplicationManager.getApplication();
+      final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+      if (editor != null && !application.isUnitTestMode()) {
+        application.invokeLater(new Runnable() {
+          public void run() {
+            if (myProject.isDisposed()) return;
+            EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
+            markupModel.setErrorStripeRenderer(markupModel.getErrorStripeRenderer());
+          }
+        }, ModalityState.stateForComponent(editor.getComponent()));
+      }
+
       for (Pair<PsiElement, Boolean> changedElement : toUpdate) {
         PsiElement element = changedElement.getFirst();
         Boolean whiteSpaceOptimizationAllowed = changedElement.getSecond();
@@ -172,17 +184,6 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   }
 
   private void updateByChange(@NotNull PsiElement child, @NotNull Document document, final boolean whitespaceOptimizationAllowed) {
-    final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-    Application application = ApplicationManager.getApplication();
-    if (editor != null && !application.isUnitTestMode()) {
-      application.invokeLater(new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
-          EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
-          markupModel.setErrorStripeRenderer(markupModel.getErrorStripeRenderer());
-        }
-      }, ModalityState.stateForComponent(editor.getComponent()));
-    }
     PsiFile file;
     try {
       file = child.getContainingFile();

@@ -163,6 +163,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
+  public boolean shouldShowInBreakpointsDialog(@NotNull Project project) {
+    return true;
+  }
+
   @Nullable @NonNls
   public String getBreakpointsDialogHelpTopic() {
     return null;

@@ -22,8 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesBuilder;
-import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.packageDependencies.DependencyValidationManagerImpl;
+import com.intellij.packageDependencies.DependenciesToolWindow;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
@@ -73,8 +72,7 @@ public abstract class DependenciesHandlerBase {
                 Content content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, false);
                 content.setDisposer(panel);
                 panel.setContent(content);
-                ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(DependenciesHandlerBase.this.myProject))
-                  .addContent(content);
+                DependenciesToolWindow.getInstance(DependenciesHandlerBase.this.myProject).addContent(content);
               }
             }
           });

@@ -263,6 +263,12 @@ public class FileUtil {
   }
 
   @NotNull
+  public static String loadTextAndClose(@NotNull InputStream stream) throws IOException {
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    return loadTextAndClose(new InputStreamReader(stream));
+  }
+
+  @NotNull
   public static String loadTextAndClose(@NotNull Reader reader) throws IOException {
     try {
       return new String(adaptiveLoadText(reader));

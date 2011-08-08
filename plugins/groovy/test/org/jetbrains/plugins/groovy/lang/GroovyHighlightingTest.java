@@ -436,4 +436,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testTwoLevelGrMap() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
+
+  public void testPassingCollectionSubtractionIntoGenericMethod() throws Exception {
+    doTest(new GroovyAssignabilityCheckInspection(), new GroovyUnresolvedAccessInspection());
+  }
 }

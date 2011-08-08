@@ -22,8 +22,7 @@ import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.packageDependencies.DependencyValidationManagerImpl;
+import com.intellij.packageDependencies.DependenciesToolWindow;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 
@@ -58,7 +57,7 @@ public class CyclicDependenciesHandler {
               "action.analyzing.cyclic.dependencies.in.scope", builder.getScope().getDisplayName()), false);
             content.setDisposer(panel);
             panel.setContent(content);
-            ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
+            DependenciesToolWindow.getInstance(myProject).addContent(content);
           }
         });
       }

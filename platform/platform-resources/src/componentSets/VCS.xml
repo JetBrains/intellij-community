@@ -106,5 +106,12 @@
     <component><interface-class>com.intellij.openapi.vcs.impl.VcsBaseContentProvider</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
     </component>
+    <component><interface-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings</interface-class>
+    <implementation-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings</implementation-class>
+    </component>
+    <component><interface-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotation</interface-class>
+    <implementation-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl</implementation-class></component>
+    <component><interface-class>com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl</implementation-class></component>
   </project-components>
 </components>

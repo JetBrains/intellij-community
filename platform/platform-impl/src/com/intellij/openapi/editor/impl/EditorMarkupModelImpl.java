@@ -384,19 +384,20 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (clip.height == 0) return;
 
       final Rectangle componentBounds = c.getBounds();
+      final TextRange docRange = TextRange.create(0, getEditor().getDocument().getTextLength());
       if (myCachedTrack == null || myCachedTrack.getHeight() != componentBounds.getHeight()) {
         myCachedTrack = new BufferedImage(componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
-        myDirtyRange = TextRange.create(0, getEditor().getDocument().getTextLength());
+        myDirtyRange = docRange;
         paintTrackBasement(myCachedTrack.getGraphics(), new Rectangle(0, 0, componentBounds.width, componentBounds.height));
       }
 
       if (myDirtyRange != null) {
         final Graphics2D imageGraphics = myCachedTrack.createGraphics();
 
-
         ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
         try {
+          myDirtyRange = myDirtyRange.intersection(docRange);
           repaint(imageGraphics, componentBounds.width, ERROR_ICON_WIDTH - 1, myDirtyRange.getStartOffset(), myDirtyRange.getEndOffset());
           myDirtyRange = null;
         }
@@ -428,6 +429,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       paintTrackBasement(g, clip);
 
       Document document = myEditor.getDocument();
+      startOffset = yPositionToOffset(clip.y - getMinHeight(), true);
       endOffset = yPositionToOffset(clip.y + clip.height, false);
 
       drawMarkup(g, stripeWidth, startOffset, endOffset, EditorMarkupModelImpl.this);

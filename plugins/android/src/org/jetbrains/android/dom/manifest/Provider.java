@@ -19,15 +19,17 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.android.dom.AndroidAttributeValue;
 import org.jetbrains.android.dom.converters.PackageClassConverter;
+import org.jetbrains.android.util.AndroidUtils;
 
 /**
  * @author yole
  */
 public interface Provider extends ApplicationComponent {
+
   @Attribute("name")
   @Required
   @Convert(PackageClassConverter.class)
-  @ExtendClass("android.content.ContentProvider")
+  @ExtendClass(AndroidUtils.PROVIDER_CLASS_NAME)
   AndroidAttributeValue<PsiClass> getProviderClass();
 
   @Required

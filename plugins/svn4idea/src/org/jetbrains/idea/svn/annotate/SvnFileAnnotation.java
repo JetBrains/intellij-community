@@ -246,6 +246,16 @@ public class SvnFileAnnotation implements FileAnnotation {
     return null;
   }
 
+  @Override
+  public Date getLineDate(int lineNumber) {
+    if (myInfos.size() <= lineNumber || lineNumber < 0) {
+      return null;
+    }
+    final LineInfo info = myInfos.get(lineNumber);
+    if (info == null) return null;
+    return info.getDate();
+  }
+
   public List<VcsFileRevision> getRevisions() {
     final List<VcsFileRevision> result = new ArrayList<VcsFileRevision>(myRevisionMap.values());
     Collections.sort(result, new Comparator<VcsFileRevision>() {
@@ -295,6 +305,11 @@ public class SvnFileAnnotation implements FileAnnotation {
         myInfos.setShowMergeSource(source.showMerged());
       }
     };
+  }
+
+  @Override
+  public int getLineCount() {
+    return getNumLines();
   }
 
   private abstract class SvnAnnotationAspect extends LineAnnotationAspectAdapter {

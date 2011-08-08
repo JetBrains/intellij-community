@@ -715,6 +715,19 @@ class Foo {
     myFixture.checkResult(" class Foo { { int iteraaa; iteraaa<caret> } } ")
     assert !lookup
   }
+  
+  public void _testChoosingItemDuringCopyCommit() {
+    registerLongCompletionContributor()
+
+    myFixture.configureByText("a.java", """ class Foo { { int iteraaa; <caret> } } """)
+    type 'ite'
+    assert !('iter' in myFixture.lookupElementStrings)
+    myFixture.type 'r'
+    joinCommit()
+    myFixture.type 'a.'
+    myFixture.checkResult(" class Foo { { int iteraaa; iteraaa.<caret> } } ")
+    assert !lookup
+  }
 
   private void joinSomething(int degree) {
     if (degree == 0) return

@@ -24,12 +24,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class DefaultConsoleFiltersProvider implements ConsoleFilterProviderEx {
   public Filter[] getDefaultFilters(@NotNull Project project) {
-    return new Filter[]{new ExceptionFilter(project), new YourkitFilter(project)};
+    return getDefaultFilters(project, GlobalSearchScope.allScope(project));
   }
 
   public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
-    return new Filter[]{new ExceptionFilter(scope), new YourkitFilter(project)};
+    List<Filter> filters = ExceptionFilters.getFilters(scope);
+    filters.add(new YourkitFilter(project));
+    return filters.toArray(new Filter[filters.size()]);
   }
 }

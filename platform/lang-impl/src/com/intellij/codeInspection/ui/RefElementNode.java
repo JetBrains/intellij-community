@@ -21,7 +21,9 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.ui.ComputableIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +37,16 @@ public class RefElementNode extends InspectionTreeNode {
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
   protected InspectionTool myTool;
+  private ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
+    @Override
+    public Icon compute() {
+      final RefEntity refEntity = getElement();
+      if (refEntity == null) {
+        return null;
+      }
+      return refEntity.getIcon(false);
+    }
+  });
 
   public RefElementNode(final Object userObject, final InspectionTool tool) {
     super(userObject);
@@ -55,11 +67,7 @@ public class RefElementNode extends InspectionTreeNode {
 
   @Nullable
   public Icon getIcon(boolean expanded) {
-    final RefEntity refEntity = getElement();
-    if (refEntity == null) {
-      return null;
-    }
-    return refEntity.getIcon(expanded);
+    return myIcon.getIcon();
   }
 
   public int getProblemCount() {

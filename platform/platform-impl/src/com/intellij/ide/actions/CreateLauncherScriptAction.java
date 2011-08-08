@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,18 +29,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.system.ExecUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+
+import static com.intellij.util.containers.CollectionFactory.hashMap;
+import static java.util.Arrays.asList;
 
 /**
  * @author yole
@@ -46,133 +45,94 @@ import java.io.InputStreamReader;
 public class CreateLauncherScriptAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateLauncherScriptAction");
 
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    showDialog(project);
+  public static boolean isAvailable() {
+    return SystemInfo.isUnix;
   }
 
-  public static void showDialog(Project project) {
+  @Override
+  public void update(AnActionEvent e) {
+    final boolean canCreateScript = isAvailable();
+    final Presentation presentation = e.getPresentation();
+    presentation.setVisible(canCreateScript);
+    presentation.setEnabled(canCreateScript);
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    if (!isAvailable()) return;
+
+    Project project = e.getProject();
     CreateLauncherScriptDialog dialog = new CreateLauncherScriptDialog(project);
     dialog.show();
-    if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+    if (!dialog.isOK()) {
       return;
     }
-    createLauncherScript(project, new File(dialog.myPathField.getText(), dialog.myNameField.getText()).getPath());
+
+    final File target = new File(dialog.myPathField.getText(), dialog.myNameField.getText());
+    if (target.exists()) {
+      int rc = Messages.showOkCancelDialog(project, ApplicationBundle.message("launcher.script.overwrite", target),
+                                           "Create Launcher Script", Messages.getQuestionIcon());
+      if (rc != 0) {
+        return;
+      }
+    }
+
+    createLauncherScript(project, target.getAbsolutePath());
   }
 
   public static void createLauncherScript(Project project, String pathName) {
-    if (!SystemInfo.isUnix) return;
+    if (!isAvailable()) return;
+
     try {
       final File scriptFile = createLauncherScriptFile();
       final File scriptTarget = new File(pathName);
-      if (scriptTarget.exists()) {
-        int rc = Messages.showOkCancelDialog(project, "The file " + scriptTarget + " already exists. Would you like to overwrite it?",
-                                             "Create Launcher Script", Messages.getQuestionIcon());
-        if (rc != 0) {
-          return;
-        }
-      }
 
       final File launcherScriptContainingDir = scriptTarget.getParentFile();
       if (!(launcherScriptContainingDir.exists() || launcherScriptContainingDir.mkdirs()) ||
           !scriptFile.renameTo(scriptTarget)) {
         final String launcherScriptContainingDirPath = launcherScriptContainingDir.getCanonicalPath();
         final String installationScriptSrc =
+          "#!/bin/sh\n" +
           // create all intermediate folders
-          "mkdir -p " + launcherScriptContainingDirPath + "\n" +
-          // Copy file & change owner to root
-          // uid 0 = root
-          // gid 0 = root || wheel (MacOS)
-          "install -g 0 -o 0 " + scriptFile.getCanonicalPath() + " " + pathName;
-        final File installationScript = createTempExecutableScript("launcher_installer", installationScriptSrc);
-
-        sudo(installationScript.getCanonicalPath(),
-             installationScriptSrc,
-             "Please enter your password to create a launcher script in a " + launcherScriptContainingDirPath);
+          "mkdir -p \"" + launcherScriptContainingDirPath + "\"\n" +
+          // copy file and change ownership to root (UID 0 = root, GID 0 = root (wheel on Macs))
+          "install -g 0 -o 0 \"" + scriptFile.getCanonicalPath() + "\" \"" + pathName + "\"";
+        final File installationScript = ExecUtil.createTempExecutableScript("launcher_installer", ".sh", installationScriptSrc);
+        ExecUtil.sudoAndGetResult(installationScript.getAbsolutePath(),
+                                  ApplicationBundle.message("launcher.script.sudo.prompt", launcherScriptContainingDirPath));
       }
     }
     catch (Exception e) {
-      LOG.info(e);
-      Messages.showErrorDialog(project, "Failed to create launcher script: " + e.getMessage(), "Create Launcher Script");
-    }
-  }
-
-  private static boolean sudo(final String installationScriptPath,
-                              final String installScriptSrc,
-                              final String prompt) throws IOException, ScriptException, ExecutionException {
-    if (SystemInfo.isMac) {
-      final ScriptEngine engine = new ScriptEngineManager(null).getEngineByName("AppleScript");
-      if (engine == null) {
-        throw new IOException("Could not find AppleScript engine");
-      }
-      engine.eval("do shell script \"" + installationScriptPath + "\" with administrator privileges");
-    }
-    else {
-      GeneralCommandLine cmdLine = new GeneralCommandLine();
-      if (SystemInfo.isGnome) {
-        cmdLine.setExePath("gksudo");
-        cmdLine.addParameters("--message", prompt);
-      }
-      else if (SystemInfo.isKDE) {
-        cmdLine.setExePath("kdesudo");
+      final String message = e.getMessage();
+      if (!StringUtil.isEmptyOrSpaces(message)) {
+        LOG.warn(e);
+        Notifications.Bus.notify(
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Failed to create launcher script", message, NotificationType.ERROR),
+          project
+        );
       }
       else {
-        Messages.showMessageDialog("Unsupported graphical environment. Please execute the following command from the shell:\n" + installScriptSrc,
-                                   "Create Launcher Script",
-                                   Messages.getInformationIcon());
-        return true;
+        LOG.error(e);
       }
-      cmdLine.addParameter(installationScriptPath);
-      cmdLine.createProcess();
     }
-    return false;
   }
 
   private static File createLauncherScriptFile() throws IOException {
-    final File tempFile = FileUtil.createTempFile("launcher", "");
-
-    final InputStream stream = CreateLauncherScriptAction.class.getClassLoader().getResourceAsStream("launcher.py");
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    String launcherContents = FileUtil.loadTextAndClose(new InputStreamReader(stream));
-    launcherContents = launcherContents.replace("$CONFIG_PATH$", PathManager.getConfigPath());
-
-    String homePath = PathManager.getHomePath();
-    if (SystemInfo.isMac) {
-      // Just use "*.app"
-      launcherContents = launcherContents.replace("$RUN_PATH$", homePath);
+    String runPath = PathManager.getHomePath();
+    if (!SystemInfo.isMac) {
+      // for Macs just use "*.app"
+      final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
+      runPath += "/bin/" + productName + ".sh";
     }
-    else {
-      String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
-      launcherContents = launcherContents.replace("$RUN_PATH$", homePath + "/bin/" + productName + ".sh");
-    }
-
-    FileUtil.writeToFile(tempFile, launcherContents.getBytes(CharsetToolkit.UTF8_CHARSET));
-    if (!tempFile.setExecutable(true)) {
-      throw new IOException("Failed to mark the launcher script as executable");
-    }
-    return tempFile;
-  }
-
-  private static File createTempExecutableScript(final String fileNamePrefix,
-                                                 final String source) throws IOException {
-    final File tempFile = FileUtil.createTempFile(fileNamePrefix, "");
-    FileUtil.writeToFile(tempFile, source.getBytes(CharsetToolkit.UTF8_CHARSET));
-    if (!tempFile.setExecutable(true)) {
-      throw new IOException("Failed to mark the launcher installation script as executable: script path " + tempFile.getCanonicalPath());
-    }
-    return tempFile;
+    final String launcherContents = ExecUtil.loadTemplate(CreateLauncherScriptAction.class.getClassLoader(), "launcher.py",
+                                                          hashMap(asList("$CONFIG_PATH$", "$RUN_PATH$"),
+                                                                  asList(PathManager.getConfigPath(), runPath)));
+    return ExecUtil.createTempExecutableScript("launcher", "", launcherContents);
   }
 
   public static String defaultScriptName() {
-    final String productName = ApplicationNamesInfo.getInstance().getScriptName();
-    return StringUtil.isEmptyOrSpaces(productName) ? "idea" : productName;
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    final boolean canCreateScript = SystemInfo.isUnix;
-    e.getPresentation().setVisible(canCreateScript);
+    final String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
+    return StringUtil.isEmptyOrSpaces(scriptName) ? "idea" : scriptName;
   }
 
   public static class CreateLauncherScriptDialog extends DialogWrapper {
@@ -186,7 +146,7 @@ public class CreateLauncherScriptAction extends AnAction {
       init();
       setTitle("Create Launcher Script");
       final String productName = ApplicationNamesInfo.getInstance().getProductName();
-      myTitle.setText(myTitle.getText().replace("$APPNAME", productName));
+      myTitle.setText(myTitle.getText().replace("$APP_NAME$", productName));
       myNameField.setText(defaultScriptName());
     }
 

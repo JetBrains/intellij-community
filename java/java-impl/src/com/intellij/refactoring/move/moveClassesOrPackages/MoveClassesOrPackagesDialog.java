@@ -157,7 +157,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
   private void createUIComponents() {
     myMainPanel = new JPanel();
-    myMainPanel.setBorder(IdeBorderFactory.createRoundedBorder());
 
     myWithBrowseButtonReference = createPackageChooser();
     myClassPackageChooser = createPackageChooser();

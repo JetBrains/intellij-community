@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 
 /**
  * @author Maxim.Medvedev
@@ -203,6 +204,14 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
 
   public void testPropertyWithSecondUpperLetter() throws Exception {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "geteMail", "getePost");
+  }
+
+  public void testInferredVariableType() throws Exception {
+    myFixture.configureByText "a.groovy", "def foo = 'xxx'; fo<caret>"
+    def presentation = new LookupElementPresentation()
+    myFixture.completeBasic()[0].renderElement(presentation)
+    assert presentation.itemText == 'foo'
+    assert presentation.typeText == 'String'
   }
 
   public void testIntCompletionInPlusMethod() {doBasicTest();}

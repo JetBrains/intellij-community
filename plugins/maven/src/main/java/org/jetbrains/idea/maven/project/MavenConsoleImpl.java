@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
@@ -34,6 +35,7 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MavenConsoleImpl extends MavenConsole {
@@ -73,10 +75,11 @@ public class MavenConsoleImpl extends MavenConsole {
   public static TextConsoleBuilder createConsoleBuilder(Project project) {
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
 
-    Filter[] filters = {new ExceptionFilter(project), new RegexpFilter(project, CONSOLE_FILTER_REGEXP)};
+    List<Filter> filters = ExceptionFilters.getFilters(GlobalSearchScope.allScope(project));
     for (Filter filter : filters) {
       builder.addFilter(filter);
     }
+    builder.addFilter(new RegexpFilter(project, CONSOLE_FILTER_REGEXP));
     return builder;
   }
 

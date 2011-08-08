@@ -111,8 +111,6 @@ public abstract class IntroduceParameterSettingsUI {
   protected JPanel createReplaceFieldsWithGettersPanel() {
     JPanel radioButtonPanel = new JPanel(new GridBagLayout());
 
-    radioButtonPanel.setBorder(IdeBorderFactory.createRoundedBorder());
-
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.insets = new Insets(4, 8, 4, 8);
     gbConstraints.weighty = 1;

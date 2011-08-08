@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -134,6 +135,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   private JButton myEditButton;
   private JButton myRemoveButton;
   private final Map<String, VcsDescriptor> myAllVcss;
+  private VcsContentAnnotationConfigurable myRecentlyChangedConfigurable;
   private final boolean myIsDisabled;
 
   public VcsDirectoryConfigurationPanel(final Project project) {
@@ -147,6 +149,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     }
 
     myDirectoryMappingTable = new TableView<VcsDirectoryMapping>();
+    initPanel();
     initializeModel();
 
     final JComboBox comboBox = myVcsComboBox.getComboBox();
@@ -172,7 +175,6 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
         updateButtons();
       }
     });
-    initPanel();
     updateButtons();
     if (myIsDisabled) {
       myDirectoryMappingTable.setEnabled(false);
@@ -187,6 +189,8 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     }
     myModel = new ListTableModel<VcsDirectoryMapping>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);
     myDirectoryMappingTable.setModel(myModel);
+
+    myRecentlyChangedConfigurable.reset();
   }
 
   private void updateButtons() {
@@ -273,19 +277,26 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   }
 
   protected JComponent createMainComponent() {
-    return ScrollPaneFactory.createScrollPane(myDirectoryMappingTable);
+    JPanel panel = new JPanel(new BorderLayout());
+    final JScrollPane scroll = ScrollPaneFactory.createScrollPane(myDirectoryMappingTable);
+    panel.add(scroll, BorderLayout.CENTER);
+    myRecentlyChangedConfigurable = new VcsContentAnnotationConfigurable(myProject);
+    panel.add(myRecentlyChangedConfigurable.createComponent(), BorderLayout.SOUTH);
+    return panel;
   }
 
   public void reset() {
     initializeModel();
   }
 
-  public void apply() {
+  public void apply() throws ConfigurationException {
     myVcsManager.setDirectoryMappings(myModel.getItems());
+    myRecentlyChangedConfigurable.apply();
     initializeModel();
   }
 
   public boolean isModified() {
+    if (myRecentlyChangedConfigurable.isModified()) return true;
     return !myModel.getItems().equals(myVcsManager.getDirectoryMappings());
   }
 

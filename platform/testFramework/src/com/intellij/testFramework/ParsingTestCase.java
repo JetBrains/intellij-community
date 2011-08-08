@@ -33,6 +33,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
@@ -268,7 +269,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
 
   private static String doLoadFile(String myFullDataPath, String name) throws IOException {
     String fullName = myFullDataPath + File.separatorChar + name;
-    String text = FileUtil.loadFile(new File(fullName)).trim();
+    String text = FileUtil.loadFile(new File(fullName), CharsetToolkit.UTF8).trim();
     text = StringUtil.convertLineSeparators(text);
     return text;
   }

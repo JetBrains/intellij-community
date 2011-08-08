@@ -17,24 +17,16 @@
 package com.intellij.packageDependencies;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -60,7 +52,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   public boolean SKIP_IMPORT_STATEMENTS = false;
 
-  private ContentManager myContentManager;
   @NonNls private static final String DENY_RULE_KEY = "deny_rule";
   @NonNls private static final String FROM_SCOPE_KEY = "from_scope";
   @NonNls private static final String TO_SCOPE_KEY = "to_scope";
@@ -75,35 +66,18 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   public DependencyValidationManagerImpl(final Project project) {
     super(project);
-
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-      public void run() {
-        final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        if (toolWindowManager == null) return;
-        ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
-                                                                     true,
-                                                                     ToolWindowAnchor.BOTTOM,
-                                                                     project);
-        myContentManager = toolWindow.getContentManager();
-
-        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"));
-        new ContentManagerWatcher(toolWindow, myContentManager);
-      }
-    });
   }
-
-
 
   @NotNull
   public List<NamedScope> getPredefinedScopes() {
-    final List<NamedScope> predifinedScopes = new ArrayList<NamedScope>();
+    final List<NamedScope> predefinedScopes = new ArrayList<NamedScope>();
     final CustomScopesProvider[] scopesProviders = myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER);
     if (scopesProviders != null) {
       for (CustomScopesProvider scopesProvider : scopesProviders) {
-        predifinedScopes.addAll(scopesProvider.getCustomScopes());
+        predefinedScopes.addAll(scopesProvider.getCustomScopes());
       }
     }
-    return predifinedScopes;
+    return predefinedScopes;
   }
 
   public boolean hasRules() {
@@ -182,16 +156,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
         myUnnamedScopes.put(packageSet.getText(), packageSet);
       }
     }
-  }
-
-  public void addContent(Content content) {
-    myContentManager.addContent(content);
-    myContentManager.setSelectedContent(content);
-    ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEPENDENCIES).activate(null);
-  }
-
-  public void closeContent(Content content) {
-    myContentManager.removeContent(content, true);
   }
 
   public String getDisplayName() {

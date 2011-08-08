@@ -95,8 +95,6 @@ public class MigrationPanel extends JPanel implements Disposable {
     myProject = project;
     myPreviewUsages = previewUsages;
 
-    setBorder(IdeBorderFactory.createRoundedBorder());
-
     myRootsTree = new MyTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     final TypeMigrationTreeBuilder builder = new TypeMigrationTreeBuilder(myRootsTree, project);
     final MigrationRootNode currentRoot = new MigrationRootNode(project, myLabeler, builder, root, myPreviewUsages);
