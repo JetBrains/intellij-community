@@ -38,10 +38,8 @@ public class RecursionManagerTest extends TestCase {
   }
 
   public void testMemoization() {
-    def barVisited = false
     assert "foo-return" == prevent("foo") {
       assert "bar-return" == prevent("bar") {
-        barVisited = true
         assert null == prevent("foo") { "foo-return" }
         return "bar-return"
       }
@@ -92,6 +90,32 @@ public class RecursionManagerTest extends TestCase {
       return "doo-return"
     }
     assert doo1.mayCacheNow()
+  }
+
+  public void testNoCachingForMemoizedValues() {
+    assert "foo-return" == prevent("foo") {
+      assert "bar-return" == prevent("bar") {
+        assert null == prevent("foo") { "foo-return" }
+        return "bar-return"
+      }
+      def stamp = myGuard.markStack()
+      assert "bar-return" == prevent("bar") {
+        fail()
+      }
+      assert !stamp.mayCacheNow()
+      return "foo-return"
+    }
+  }
+
+  public void testNoMemoizationForNoReentrancy() {
+    assert "foo-return" == prevent("foo") {
+      assert null == prevent("foo") { "foo-return" }
+      assert "bar-return" == prevent("bar") { "bar-return" }
+      def stamp = myGuard.markStack()
+      assert "bar-return2" == prevent("bar") { "bar-return2" }
+      assert stamp.mayCacheNow()
+      return "foo-return"
+    }
   }
 
 }
