@@ -823,7 +823,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
       myHyperlinks.highlightHyperlinks(myCustomFilter, myPredefinedMessageFilter, line1, endLine);
     }
     
-    if (myPredefinedMessageFilter.isAnyHeavy()) {
+    if (myPredefinedMessageFilter.isAnyHeavy() && myPredefinedMessageFilter.shouldRunHeavy()) {
       final int startLine = Math.max(0, line1);
 
       final Document document = getEditor().getDocument();
@@ -837,6 +837,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
       myHeavyAlarm.addRequest(new Runnable() {
         @Override
         public void run() {
+          if (! myPredefinedMessageFilter.shouldRunHeavy()) return;
           myPredefinedMessageFilter.applyHeavyFilter(documentCopy, startOffset, startLine, new Consumer<FilterMixin.AdditionalHighlight>() {
             @Override
             public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {

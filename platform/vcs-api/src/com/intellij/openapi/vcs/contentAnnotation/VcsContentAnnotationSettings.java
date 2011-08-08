@@ -45,7 +45,7 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
   }
   
   public static class State {
-    public boolean myShow = true;
+    public boolean myShow1 = false;
     public long myLimit;
   }
 
@@ -72,10 +72,10 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
   }
 
   public boolean isShow() {
-    return myState.myShow;
+    return myState.myShow1;
   }
 
   public void setShow(final boolean value) {
-    myState.myShow = value;
+    myState.myShow1 = value;
   }
 }

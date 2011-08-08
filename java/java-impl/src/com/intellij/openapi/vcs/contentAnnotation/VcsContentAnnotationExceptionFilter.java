@@ -54,10 +54,12 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilter");
   private final GlobalSearchScope myScope;
+  private final VcsContentAnnotationSettings mySettings;
 
   public VcsContentAnnotationExceptionFilter(GlobalSearchScope scope) {
     myScope = scope;
     myProject = scope.getProject();
+    mySettings = VcsContentAnnotationSettings.getInstance(myProject);
   }
 
   private static class MyAdditionalHighlight extends AdditionalHighlight {
@@ -79,6 +81,11 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       clone.setBackgroundColor(changedColor.getBackgroundColor());
       return clone;
     }
+  }
+
+  @Override
+  public boolean shouldRunHeavy() {
+    return mySettings.isShow();
   }
 
   @Override

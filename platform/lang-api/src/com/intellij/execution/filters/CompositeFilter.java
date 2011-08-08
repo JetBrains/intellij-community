@@ -52,6 +52,14 @@ public class CompositeFilter implements Filter, FilterMixin {
   }
 
   @Override
+  public boolean shouldRunHeavy() {
+    for (Filter filter : myFilters) {
+      if (filter instanceof FilterMixin && ((FilterMixin)filter).shouldRunHeavy()) return true;
+    }
+    return false;
+  }
+
+  @Override
   public void applyHeavyFilter(Document copiedFragment,
                                int startOffset,
                                int startLineNumber,
