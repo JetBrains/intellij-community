@@ -77,8 +77,8 @@ public class ExecUtil {
     return tempFile;
   }
 
-  public static int sudo(@NotNull final String scriptPath,
-                         @NotNull final String prompt) throws IOException, ScriptException, InterruptedException {
+  public static int sudoAndGetResult(@NotNull final String scriptPath,
+                                     @NotNull final String prompt) throws IOException, ScriptException, InterruptedException {
     if (SystemInfo.isMac) {
       final ScriptEngine engine = new ScriptEngineManager(null).getEngineByName("AppleScript");
       if (engine == null) {
@@ -99,8 +99,10 @@ public class ExecUtil {
                                                    "echo \"" + prompt + "\"\n" +
                                                    "echo\n" +
                                                    "sudo \"" + scriptPath + "\"\n" +
+                                                   "STATUS=$?" +
                                                    "echo\n" +
-                                                   "read -p \"Press Enter to close this window...\" TEMP\n");
+                                                   "read -p \"Press Enter to close this window...\" TEMP\n" +
+                                                   "exit $STATUS\n");
       return execAndGetResult("xterm", "-T", "Install", "-e", sudo.getAbsolutePath());
     }
     else {

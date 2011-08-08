@@ -1,23 +1,43 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.application.options;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.NewColorAndFontPanel;
 import com.intellij.application.options.colors.SimpleEditorPreview;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.ide.actions.CreateLauncherScriptAction;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,6 +56,9 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private JTextField myScriptPathTextField;
   private JPanel myCreateScriptPanel;
   private JPanel myColorPreviewPanel;
+  private JCheckBox myCreateEntryCheckBox;
+  private JCheckBox myGlobalEntryCheckBox;
+  private JPanel myCreateEntryPanel;
   private String myColorSettingsPage;
   private SimpleEditorPreview myPreviewEditor;
   private ColorAndFontOptions myPreviewOptions;
@@ -91,12 +114,20 @@ public class InitialConfigurationDialog extends DialogWrapper {
     updateColorSchemePreview();
     init();
 
-    final boolean canCreateLauncherScript = SystemInfo.isMac || SystemInfo.isLinux;
+    final boolean canCreateLauncherScript = CreateLauncherScriptAction.isAvailable();
     myCreateScriptCheckbox.setVisible(canCreateLauncherScript);
     myCreateScriptCheckbox.setSelected(canCreateLauncherScript);
     myCreateScriptPanel.setVisible(canCreateLauncherScript);
     if (canCreateLauncherScript) {
       myScriptPathTextField.setText("/usr/local/bin/" + CreateLauncherScriptAction.defaultScriptName());
+    }
+
+    final boolean canCreateDesktopEntry = CreateDesktopEntryAction.isAvailable();
+    myCreateEntryCheckBox.setVisible(canCreateDesktopEntry);
+    myCreateEntryCheckBox.setSelected(canCreateDesktopEntry);
+    myCreateEntryPanel.setVisible(canCreateDesktopEntry);
+    if (canCreateDesktopEntry) {
+      myGlobalEntryCheckBox.setSelected(!PathManager.getHomePath().startsWith("/home"));
     }
   }
 
@@ -161,12 +192,24 @@ public class InitialConfigurationDialog extends DialogWrapper {
     // create default todo_pattern for color scheme
     TodoConfiguration.getInstance().resetToDefaultTodoPatterns();
 
-    if (myCreateScriptCheckbox.isSelected()) {
-      final String pathname = myScriptPathTextField.getText();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+    final boolean createScript = myCreateScriptCheckbox.isSelected();
+    final boolean createEntry = myCreateEntryCheckBox.isSelected();
+    if (createScript || createEntry) {
+      final String pathName = myScriptPathTextField.getText();
+      final boolean globalEntry = myGlobalEntryCheckBox.isSelected();
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, getTitle()) {
         @Override
-        public void run() {
-          CreateLauncherScriptAction.createLauncherScript(project, pathname);
+        public void run(@NotNull final ProgressIndicator indicator) {
+          indicator.setFraction(0.0);
+          if (createScript) {
+            indicator.setText("Creating launcher script...");
+            CreateLauncherScriptAction.createLauncherScript(project, pathName);
+            indicator.setFraction(0.5);
+          }
+          if (createEntry) {
+            CreateDesktopEntryAction.createDesktopEntry(project, indicator, globalEntry);
+          }
+          indicator.setFraction(1.0);
         }
       });
     }

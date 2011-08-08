@@ -20,6 +20,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -44,32 +45,47 @@ import static java.util.Arrays.asList;
 public class CreateLauncherScriptAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateLauncherScriptAction");
 
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    showDialog(e.getProject());
+  public static boolean isAvailable() {
+    return SystemInfo.isUnix;
   }
 
-  public static void showDialog(Project project) {
+  @Override
+  public void update(AnActionEvent e) {
+    final boolean canCreateScript = isAvailable();
+    final Presentation presentation = e.getPresentation();
+    presentation.setVisible(canCreateScript);
+    presentation.setEnabled(canCreateScript);
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    if (!isAvailable()) return;
+
+    Project project = e.getProject();
     CreateLauncherScriptDialog dialog = new CreateLauncherScriptDialog(project);
     dialog.show();
-    if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+    if (!dialog.isOK()) {
       return;
     }
-    createLauncherScript(project, new File(dialog.myPathField.getText(), dialog.myNameField.getText()).getPath());
+
+    final File target = new File(dialog.myPathField.getText(), dialog.myNameField.getText());
+    if (target.exists()) {
+      int rc = Messages.showOkCancelDialog(project, ApplicationBundle.message("launcher.script.overwrite", target),
+                                           "Create Launcher Script", Messages.getQuestionIcon());
+      if (rc != 0) {
+        return;
+      }
+    }
+
+    createLauncherScript(project, target.getAbsolutePath());
   }
 
   public static void createLauncherScript(Project project, String pathName) {
-    if (!SystemInfo.isUnix) return;
+    if (!isAvailable()) return;
+
     try {
       final File scriptFile = createLauncherScriptFile();
       final File scriptTarget = new File(pathName);
-      if (scriptTarget.exists()) {
-        int rc = Messages.showOkCancelDialog(project, ApplicationBundle.message("launcher.script.overwrite", scriptTarget),
-                                             "Create Launcher Script", Messages.getQuestionIcon());
-        if (rc != 0) {
-          return;
-        }
-      }
 
       final File launcherScriptContainingDir = scriptTarget.getParentFile();
       if (!(launcherScriptContainingDir.exists() || launcherScriptContainingDir.mkdirs()) ||
@@ -82,8 +98,8 @@ public class CreateLauncherScriptAction extends AnAction {
           // copy file and change ownership to root (UID 0 = root, GID 0 = root (wheel on Macs))
           "install -g 0 -o 0 \"" + scriptFile.getCanonicalPath() + "\" \"" + pathName + "\"";
         final File installationScript = ExecUtil.createTempExecutableScript("launcher_installer", ".sh", installationScriptSrc);
-        ExecUtil.sudo(installationScript.getAbsolutePath(),
-                      ApplicationBundle.message("launcher.script.sudo.prompt", launcherScriptContainingDirPath));
+        ExecUtil.sudoAndGetResult(installationScript.getAbsolutePath(),
+                                  ApplicationBundle.message("launcher.script.sudo.prompt", launcherScriptContainingDirPath));
       }
     }
     catch (Exception e) {
@@ -119,12 +135,6 @@ public class CreateLauncherScriptAction extends AnAction {
     return StringUtil.isEmptyOrSpaces(scriptName) ? "idea" : scriptName;
   }
 
-  @Override
-  public void update(AnActionEvent e) {
-    final boolean canCreateScript = SystemInfo.isUnix;
-    e.getPresentation().setVisible(canCreateScript);
-  }
-
   public static class CreateLauncherScriptDialog extends DialogWrapper {
     private JPanel myMainPanel;
     private JTextField myNameField;
@@ -136,7 +146,7 @@ public class CreateLauncherScriptAction extends AnAction {
       init();
       setTitle("Create Launcher Script");
       final String productName = ApplicationNamesInfo.getInstance().getProductName();
-      myTitle.setText(myTitle.getText().replace("$APPNAME", productName));
+      myTitle.setText(myTitle.getText().replace("$APP_NAME$", productName));
       myNameField.setText(defaultScriptName());
     }
 

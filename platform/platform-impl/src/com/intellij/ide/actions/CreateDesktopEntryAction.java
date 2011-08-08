@@ -28,6 +28,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.system.ExecUtil;
@@ -37,6 +39,7 @@ import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.script.ScriptException;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
@@ -49,54 +52,76 @@ public class CreateDesktopEntryAction extends AnAction {
 
   private static final int MIN_ICON_SIZE = 32;
 
+  public static boolean isAvailable() {
+    return SystemInfo.isLinux || SystemInfo.isGnome || SystemInfo.isKDE;  // KDE patched for FreeBSD, sure
+  }
+
   @Override
   public void update(final AnActionEvent event) {
+    final boolean enabled = isAvailable();
     final Presentation presentation = event.getPresentation();
-    presentation.setEnabled(SystemInfo.isLinux);
-    presentation.setVisible(SystemInfo.isLinux);
+    presentation.setEnabled(enabled);
+    presentation.setVisible(enabled);
   }
 
   @Override
   public void actionPerformed(final AnActionEvent event) {
-    if (!SystemInfo.isLinux) return;
+    if (!isAvailable()) return;
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, event.getPresentation().getText()) {
+    final Project project = event.getProject();
+    final CreateDesktopEntryDialog dialog = new CreateDesktopEntryDialog(project);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return;
+    }
+
+    final boolean globalEntry = dialog.myGlobalEntryCheckBox.isSelected();
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, event.getPresentation().getText()) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
-        try {
-          indicator.setText(ApplicationBundle.message("desktop.entry.checking"));
-          check();
-          indicator.setFraction(0.33);
-
-          indicator.setText(ApplicationBundle.message("desktop.entry.preparing"));
-          final File entry = prepare();
-          indicator.setFraction(0.66);
-
-          indicator.setText(ApplicationBundle.message("desktop.entry.installing"));
-          install(entry);
-          indicator.setFraction(1.0);
-    
-          final String message = ApplicationBundle.message("desktop.entry.success",
-                                                           ApplicationNamesInfo.getInstance().getProductName());
-          Notifications.Bus.notify(
-            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop entry created", message, NotificationType.INFORMATION)
-          );
-        }
-        catch (Exception e) {
-          final String message = e.getMessage();
-          if (!StringUtil.isEmptyOrSpaces(message)) {
-            LOG.warn(e);
-            Notifications.Bus.notify(
-              new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Failed to create desktop entry", message, NotificationType.ERROR),
-              event.getProject()
-            );
-          }
-          else {
-            LOG.error(e);
-          }
-        }
+        createDesktopEntry(getProject(), indicator, globalEntry);
       }
     });
+  }
+
+  public static void createDesktopEntry(@Nullable final Project project,
+                                        @NotNull final ProgressIndicator indicator,
+                                        final boolean globalEntry) {
+    if (!isAvailable()) return;
+    final double step = (1.0 - indicator.getFraction()) / 3;
+
+    try {
+      indicator.setText(ApplicationBundle.message("desktop.entry.checking"));
+      check();
+      indicator.setFraction(indicator.getFraction() + step);
+
+      indicator.setText(ApplicationBundle.message("desktop.entry.preparing"));
+      final File entry = prepare();
+      indicator.setFraction(indicator.getFraction() + step);
+
+      indicator.setText(ApplicationBundle.message("desktop.entry.installing"));
+      install(entry, globalEntry);
+      indicator.setFraction(indicator.getFraction() + step);
+
+      final String message = ApplicationBundle.message("desktop.entry.success",
+                                                       ApplicationNamesInfo.getInstance().getProductName());
+      Notifications.Bus.notify(
+        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop entry created", message, NotificationType.INFORMATION)
+      );
+    }
+    catch (Exception e) {
+      final String message = e.getMessage();
+      if (!StringUtil.isEmptyOrSpaces(message)) {
+        LOG.warn(e);
+        Notifications.Bus.notify(
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Failed to create desktop entry", message, NotificationType.ERROR),
+          project
+        );
+      }
+      else {
+        LOG.error(e);
+      }
+    }
   }
 
   private static void check() throws IOException, InterruptedException {
@@ -135,7 +160,6 @@ public class CreateDesktopEntryAction extends AnAction {
     return entryFile;
   }
 
-  // idea128.png, idea_CE128.png, flexide.png (32), RMlogo.svg, PyCharm_128.png, webide.png (128)
   @Nullable
   private static String findIcon(final String iconsPath) {
     final File iconsDir = new File(iconsPath);
@@ -164,7 +188,6 @@ public class CreateDesktopEntryAction extends AnAction {
     return iconPath;
   }
 
-  // idea.sh, flexide.sh, rubymine.sh, pycharm.sh, WebStorm.sh, PhpStorm.sh
   @Nullable
   private static String findScript(final String binPath) {
     final String productName = ApplicationNamesInfo.getInstance().getProductName();
@@ -178,13 +201,40 @@ public class CreateDesktopEntryAction extends AnAction {
     return null;
   }
 
-  private static void install(final File entryFile) throws IOException, InterruptedException {
+  private static void install(final File entryFile, final boolean globalEntry) throws IOException, InterruptedException, ScriptException {
     try {
-      final int result = ExecUtil.execAndGetResult("xdg-desktop-menu", "install", "--mode", "user", entryFile.getAbsolutePath());
+      final int result;
+      if (globalEntry) {
+        final String source = "#!/bin/sh\n" +
+                               "xdg-desktop-menu install --mode system \"" + entryFile.getAbsolutePath() + "\"";
+        final File script = ExecUtil.createTempExecutableScript("sudo", ".sh", source);
+        result = ExecUtil.sudoAndGetResult(script.getAbsolutePath(), ApplicationBundle.message("desktop.entry.sudo.prompt"));
+      }
+      else {
+        result = ExecUtil.execAndGetResult("xdg-desktop-menu", "install", "--mode", "user", entryFile.getAbsolutePath());
+      }
       if (result != 0) throw new RuntimeException("'" + entryFile.getAbsolutePath() + "' : " + result);
     }
     finally {
       if (!entryFile.delete()) LOG.error("Failed to delete temp file '" + entryFile + "'");
+    }
+  }
+
+  public static class CreateDesktopEntryDialog extends DialogWrapper {
+    private JPanel myContentPane;
+    private JLabel myLabel;
+    private JCheckBox myGlobalEntryCheckBox;
+
+    public CreateDesktopEntryDialog(final Project project) {
+      super(project);
+      init();
+      setTitle("Create Desktop Entry");
+      myLabel.setText(myLabel.getText().replace("$APP_NAME$", ApplicationNamesInfo.getInstance().getProductName()));
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      return myContentPane;
     }
   }
 }
