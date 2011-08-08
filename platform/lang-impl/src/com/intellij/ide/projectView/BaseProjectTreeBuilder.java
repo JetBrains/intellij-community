@@ -17,6 +17,7 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -120,9 +121,14 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   private static VirtualFile getFileToRefresh(Object element) {
-    return element instanceof PsiDirectory
-           ? ((PsiDirectory)element).getVirtualFile()
-           : element instanceof PsiFile ? ((PsiFile)element).getVirtualFile() : null;
+    Object object = element;
+    if (element instanceof AbstractTreeNode) {
+      object = ((AbstractTreeNode)element).getValue();
+    }
+    
+    return object instanceof PsiDirectory
+           ? ((PsiDirectory)object).getVirtualFile()
+           : object instanceof PsiFile ? ((PsiFile)object).getVirtualFile() : null;
   }
 
   private List<AbstractTreeNode> getOrBuildChildren(AbstractTreeNode parent) {
