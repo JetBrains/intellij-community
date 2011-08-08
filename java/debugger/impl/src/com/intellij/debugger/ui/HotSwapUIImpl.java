@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -32,12 +33,16 @@ import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -111,6 +116,19 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     myListeners.remove(listener);
   }
 
+  private boolean shouldDisplayHangWarning(DebuggerSettings settings, List<DebuggerSession> sessions) {
+    if (!settings.HOTSWAP_HANG_WARNING_ENABLED) {
+      return false;
+    }
+    // todo: return false if yourkit agent is inactive
+    for (DebuggerSession session : sessions) {
+      if (session.isPaused()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void hotSwapSessions(final List<DebuggerSession> sessions) {
     final boolean shouldAskBeforeHotswap = myAskBeforeHotswap;
     myAskBeforeHotswap = true;
@@ -118,7 +136,10 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     // need this because search with PSI is perormed during hotswap
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    final String runHotswap = DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE;
+    final DebuggerSettings settings = DebuggerSettings.getInstance();
+    final String runHotswap = settings.RUN_HOTSWAP_AFTER_COMPILE;
+    final boolean shouldDisplayHangWarning = shouldDisplayHangWarning(settings, sessions);
+
     if (shouldAskBeforeHotswap && DebuggerSettings.RUN_HOTSWAP_NEVER.equals(runHotswap)) {
       return;
     }
@@ -139,12 +160,33 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
         application.invokeLater(new Runnable() {
           public void run() {
             if (shouldAskBeforeHotswap && !DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(runHotswap)) {
-              final RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions);
+              final RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions, shouldDisplayHangWarning);
               dialog.show();
               if (!dialog.isOK()) {
                 return;
               }
               modifiedClasses.keySet().retainAll(dialog.getSessionsToReload());
+            }
+            else {
+              if (shouldDisplayHangWarning) {
+                final int answer = Messages.showCheckboxMessageDialog(
+                  DebuggerBundle.message("hotswap.dialog.hang.warning"),
+                  DebuggerBundle.message("hotswap.dialog.title"),
+                  new String[]{CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText()},
+                  CommonBundle.message("dialog.options.do.not.show"),
+                  false, 1, 1, Messages.getWarningIcon(),
+                  new PairFunction<Integer, JCheckBox, Integer>() {
+                    @Override
+                    public Integer fun(Integer exitCode, JCheckBox cb) {
+                      settings.HOTSWAP_HANG_WARNING_ENABLED = !cb.isSelected();
+                      return exitCode;
+                    }
+                  }
+                );
+                if (answer == DialogWrapper.CANCEL_EXIT_CODE) {
+                  return;
+                }
+              }
             }
 
             if (!modifiedClasses.isEmpty()) {

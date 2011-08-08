@@ -15,15 +15,16 @@
  */
 package com.intellij.debugger.ui;
 
+import com.intellij.CommonBundle;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,9 +42,11 @@ import java.util.List;
 public class RunHotswapDialog extends OptionsDialog {
   private final JPanel myPanel;
   private final ElementsChooser<SessionItem> myElementsChooser;
+  private final boolean myDisplayHangWarning;
 
-  public RunHotswapDialog(Project project, java.util.List<DebuggerSession> sessions) {
+  public RunHotswapDialog(Project project, List<DebuggerSession> sessions, boolean displayHangWarning) {
     super(project);
+    myDisplayHangWarning = displayHangWarning;
     myPanel = new JPanel(new BorderLayout());
     final List<SessionItem> items = new ArrayList<SessionItem>(sessions.size());
     for (DebuggerSession session : sessions) {
@@ -109,6 +112,16 @@ public class RunHotswapDialog extends OptionsDialog {
     if (icon != null) {
       label.setIcon(icon);
       label.setIconTextGap(7);
+    }
+    if (myDisplayHangWarning) {
+      final JLabel warningLabel = new JLabel(DebuggerBundle.message("hotswap.dialog.hang.warning"));
+      warningLabel.setUI(new MultiLineLabelUI());
+      final Icon warningIcon = UIUtil.getWarningIcon();
+      if (warningIcon != null) {
+        warningLabel.setIcon(warningIcon);
+        warningLabel.setIconTextGap(7);
+      }
+      panel.add(warningLabel, BorderLayout.SOUTH);
     }
     return panel;
   }
