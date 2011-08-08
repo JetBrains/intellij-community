@@ -55,7 +55,6 @@ public class EditMigrationEntryDialog extends DialogWrapper{
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
-    panel.setBorder(IdeBorderFactory.createRoundedBorder());
     gbConstraints.insets = new Insets(4, 4, 4, 4);
     gbConstraints.weighty = 1;
 

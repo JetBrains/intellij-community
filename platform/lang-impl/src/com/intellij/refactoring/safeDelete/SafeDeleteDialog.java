@@ -77,7 +77,6 @@ public class SafeDeleteDialog extends DialogWrapper {
 
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createRoundedBorder());
     final GridBagConstraints gbc = new GridBagConstraints();
 
     final String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message("search.for.usages.and.delete.elements"), myElements);

@@ -78,7 +78,6 @@ public class ExtractIncludeDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new VerticalFlowLayout());
-    panel.setBorder(IdeBorderFactory.createRoundedBorder());
 
     JLabel nameLabel = new JLabel();
     panel.add(nameLabel);

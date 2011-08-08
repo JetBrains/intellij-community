@@ -228,7 +228,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     JComponent scopePanel = createSearchScopePanel();
     if (scopePanel != null) {
       JPanel panel = new JPanel(new BorderLayout());
-      panel.add(allOptionsPanel, BorderLayout.CENTER);
+      panel.add(allOptionsPanel, BorderLayout.NORTH);
       panel.add(scopePanel, BorderLayout.SOUTH);
       return panel;
     }

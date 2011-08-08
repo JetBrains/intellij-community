@@ -92,8 +92,6 @@ class CopyClassDialog extends DialogWrapper{
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    panel.setBorder(IdeBorderFactory.createRoundedBorder());
-
     gbConstraints.insets = new Insets(4,8,4,8);
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = 2;
@@ -111,6 +109,7 @@ class CopyClassDialog extends DialogWrapper{
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
     myNameField = new EditorTextField("");
+    myNameLabel.setLabelFor(myNameField);
     panel.add(myNameField, gbConstraints);
 
     gbConstraints.gridx = 0;
@@ -123,11 +122,10 @@ class CopyClassDialog extends DialogWrapper{
     String qualifiedName = getQualifiedName();
 
     myTfPackage = new PackageNameReferenceEditorCombo(qualifiedName, myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
-    if (qualifiedName.length() > 0) {
-      myTfPackage.setTextFieldPreferredWidth(qualifiedName.length() + 5);
-    }
+    myTfPackage.setTextFieldPreferredWidth(Math.max(qualifiedName.length() + 5, 40));
 
     myPackageLabel.setText(RefactoringBundle.message("destination.package"));
+    myPackageLabel.setLabelFor(myTfPackage);
 
     panel.add(myTfPackage, gbConstraints);
     if (myDoClone) {
