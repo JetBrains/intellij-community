@@ -308,6 +308,7 @@ public class DateFormatUtil {
     final ID autoReleasePool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
       final ID dateFormatter = Foundation.invoke("NSDateFormatter", "new");
+      Foundation.invoke(dateFormatter, Foundation.createSelector("setFormatterBehavior:"), MacFormatterBehavior_10_4);
 
       int style;
       switch (type) {
@@ -453,4 +454,5 @@ public class DateFormatUtil {
   private static final int MacFormatterMediumStyle = 2;
   private static final int MacFormatterLongStyle = 3;
   private static final int MacFormatterFullStyle = 4;
+  private static final int MacFormatterBehavior_10_4 = 1040;
 }
