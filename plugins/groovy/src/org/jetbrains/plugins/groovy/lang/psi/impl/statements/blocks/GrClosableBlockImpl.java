@@ -20,6 +20,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -30,8 +33,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -44,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -56,7 +58,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
  */
 public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
   private volatile GrParameter mySyntheticItParameter;
-  private GrVariable myOwner;
 
   public GrClosableBlockImpl(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
@@ -64,6 +65,13 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitClosure(this);
+  }
+
+  @Override
+  public PsiElement copy() {
+    final GrClosableBlockImpl clone = (GrClosableBlockImpl)super.copy();
+    clone.mySyntheticItParameter = null;
+    return clone;
   }
 
   public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
@@ -190,29 +198,31 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return mySyntheticItParameter;
   }
 
-  private GrVariable getOwner() {
-    if (myOwner == null) {
-      final GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-      PsiType type = null;
-      if (context instanceof GrTypeDefinition) {
-        type = factory.createType((PsiClass)context);
-      }
-      else if (context instanceof GrClosableBlock) {
-        type = GrClosureType.create((GrClosableBlock)context, true);
-      }
-      else if (context instanceof GroovyFile) {
-        final PsiClass scriptClass = ((GroovyFile)context).getScriptClass();
-        if (scriptClass != null && GroovyNamesUtil.isIdentifier(scriptClass.getName())) type = factory.createType(scriptClass);
-      }
-      if (type == null) {
-        type = TypesUtil.getJavaLangObject(this);
-      }
+  private PsiVariable getOwner() {
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiVariable>() {
+      @Override
+      public Result<PsiVariable> compute() {
+        final GroovyPsiElement context = PsiTreeUtil.getParentOfType(GrClosableBlockImpl.this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+        PsiType type = null;
+        if (context instanceof GrTypeDefinition) {
+          type = factory.createType((PsiClass)context);
+        }
+        else if (context instanceof GrClosableBlock) {
+          type = GrClosureType.create((GrClosableBlock)context, true);
+        }
+        else if (context instanceof GroovyFile) {
+          final PsiClass scriptClass = ((GroovyFile)context).getScriptClass();
+          if (scriptClass != null && GroovyNamesUtil.isIdentifier(scriptClass.getName())) type = factory.createType(scriptClass);
+        }
+        if (type == null) {
+          type = TypesUtil.getJavaLangObject(GrClosableBlockImpl.this);
+        }
 
-      myOwner = GroovyPsiElementFactory.getInstance(getProject()).createVariableDeclaration(null, null, type, OWNER_NAME).getVariables()[0];
-    }
-
-    return myOwner;
+        PsiVariable owner = new GrLightVariable(null, getManager(), OWNER_NAME, type, GrClosableBlockImpl.this);
+        return Result.create(owner, PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
   }
 
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {

@@ -54,8 +54,8 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   public void testClosureOwner() throws Exception {
     PsiReference ref = configureByFile("closureOwner/A.groovy");
     PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, GrVariable);
-    assertEquals(((PsiClassType) ((GrVariable) resolved).getTypeGroovy()).getCanonicalText(), "W");
+    assertInstanceOf(resolved, PsiVariable);
+    assertEquals(((PsiVariable) resolved).getType().getCanonicalText(), "W");
   }
 
   public void testLocal1() throws Exception {

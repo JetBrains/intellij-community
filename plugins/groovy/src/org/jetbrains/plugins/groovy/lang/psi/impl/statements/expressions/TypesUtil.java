@@ -379,8 +379,11 @@ public class TypesUtil {
 
   public static PsiType unboxPrimitiveTypeWrapper(PsiType type) {
     if (type instanceof PsiClassType) {
-      PsiType unboxed = ourQNameToUnboxed.get(type.getCanonicalText());
-      if (unboxed != null) type = unboxed;
+      final PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass != null) {
+        PsiType unboxed = ourQNameToUnboxed.get(psiClass.getQualifiedName());
+        if (unboxed != null) type = unboxed;
+      }
     }
     return type;
   }
