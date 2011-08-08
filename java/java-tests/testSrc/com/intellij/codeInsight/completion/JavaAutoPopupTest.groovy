@@ -716,7 +716,7 @@ class Foo {
     assert !lookup
   }
   
-  public void testChoosingItemDuringCopyCommit() {
+  public void _testChoosingItemDuringCopyCommit() {
     registerLongCompletionContributor()
 
     myFixture.configureByText("a.java", """ class Foo { { int iteraaa; <caret> } } """)
