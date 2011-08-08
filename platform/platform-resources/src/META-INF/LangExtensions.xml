@@ -255,6 +255,8 @@
                   serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>
   <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
                   serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
+  <projectService serviceInterface="com.intellij.packageDependencies.DependenciesToolWindow"
+                  serviceImplementation="com.intellij.packageDependencies.DependenciesToolWindow"/>
 
   <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
                   serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManager"/>

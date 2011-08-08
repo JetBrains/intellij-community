@@ -486,7 +486,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     public void actionPerformed(AnActionEvent e) {
       Disposer.dispose(myUsagesPanel);
-      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).closeContent(myContent);
+      DependenciesToolWindow.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
     }
   }
@@ -690,7 +690,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     public void actionPerformed(AnActionEvent e) {
-      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).closeContent(myContent);
+      DependenciesToolWindow.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
