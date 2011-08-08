@@ -62,8 +62,10 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     XBreakpointType<?,?>[] types = XBreakpointUtil.getBreakpointTypes();
     ArrayList<AbstractBreakpointPanel<XBreakpoint>> panels = new ArrayList<AbstractBreakpointPanel<XBreakpoint>>();
     for (XBreakpointType<? extends XBreakpoint<?>, ?> type : types) {
-      XBreakpointsPanel<?> panel = createBreakpointsPanel(project, parentDialog, type);
-      panels.add(panel);
+      if (type.shouldShowInBreakpointsDialog(project)) {
+        XBreakpointsPanel<?> panel = createBreakpointsPanel(project, parentDialog, type);
+        panels.add(panel);
+      }
     }
     return panels;
   }
