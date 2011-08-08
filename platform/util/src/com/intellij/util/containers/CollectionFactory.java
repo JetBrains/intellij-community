@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.HashMap;
 import java.util.Stack;
 
 /**
@@ -89,6 +90,18 @@ public class CollectionFactory {
 
   public static <T, V> Map<T, V> hashMap() {
     return Maps.newHashMap();
+  }
+
+  public static <T, V> Map<T, V> hashMap(@NotNull final List<T> keys, @NotNull final List<V> values) {
+    if (keys.size() != values.size()) {
+      throw new IllegalArgumentException(keys + " should have some length as " + values);
+    }
+
+    final HashMap<T,V> map = Maps.newHashMap();
+    for (int i = 0; i < keys.size(); ++i) {
+      map.put(keys.get(i), values.get(i));
+    }
+    return map;
   }
 
   public static <T, V> LinkedHashMap<T, V> linkedMap() {

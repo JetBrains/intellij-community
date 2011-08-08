@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -32,6 +30,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.system.ExecUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
@@ -41,8 +40,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+
+import static com.intellij.util.containers.CollectionFactory.hashMap;
+import static java.util.Arrays.asList;
 
 public class CreateDesktopEntryAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateDesktopEntryAction");
@@ -87,7 +87,8 @@ public class CreateDesktopEntryAction extends AnAction {
           if (!StringUtil.isEmptyOrSpaces(message)) {
             LOG.warn(e);
             Notifications.Bus.notify(
-              new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Unable to create desktop entry", message, NotificationType.ERROR)
+              new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Failed to create desktop entry", message, NotificationType.ERROR),
+              event.getProject()
             );
           }
           else {
@@ -98,19 +99,9 @@ public class CreateDesktopEntryAction extends AnAction {
     });
   }
 
-  private static void check() {
-    final GeneralCommandLine cmd = new GeneralCommandLine();
-    cmd.setExePath("which");
-    cmd.addParameter("xdg-desktop-menu");
-
-    try {
-      final Process process = cmd.createProcess();
-      final int result = process.waitFor();
-      if (result != 0) throw new Exception("'" + cmd.getCommandLineString() + "' : " + result);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(ApplicationBundle.message("desktop.entry.xdg.missing"), e);
-    }
+  private static void check() throws IOException, InterruptedException {
+    final int result = ExecUtil.execAndGetResult("which", "xdg-desktop-menu");
+    if (result != 0) throw new RuntimeException(ApplicationBundle.message("desktop.entry.xdg.missing"));
   }
 
   private static File prepare() throws IOException {
@@ -134,19 +125,13 @@ public class CreateDesktopEntryAction extends AnAction {
 
     final String wmClass = AppUIUtil.getFrameClass();
 
-    final InputStream stream = CreateDesktopEntryAction.class.getClassLoader().getResourceAsStream("entry.desktop");
-    assert stream != null : CreateDesktopEntryAction.class.getClassLoader();
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    String content = FileUtil.loadTextAndClose(new InputStreamReader(stream));
-    content = StringUtil.replace(content, "$NAME$", name);
-    content = StringUtil.replace(content, "$SCRIPT$", execPath);
-    content = StringUtil.replace(content, "$ICON$", iconPath);
-    content = StringUtil.replace(content, "$WM_CLASS$", wmClass);
+    final String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop",
+                                                 hashMap(asList("$NAME$", "$SCRIPT$", "$ICON$", "$WM_CLASS$"),
+                                                         asList(name, execPath, iconPath, wmClass)));
 
     final String entryName = wmClass + ".desktop";
     final File entryFile = new File(FileUtil.getTempDirectory(), entryName);
     FileUtil.writeToFile(entryFile, content);
-
     return entryFile;
   }
 
@@ -193,14 +178,10 @@ public class CreateDesktopEntryAction extends AnAction {
     return null;
   }
 
-  private static void install(final File entryFile) throws ExecutionException, InterruptedException {
-    final GeneralCommandLine cmd = new GeneralCommandLine();
-    cmd.setExePath("xdg-desktop-menu");
-    cmd.addParameters("install", "--mode", "user", entryFile.getAbsolutePath());
+  private static void install(final File entryFile) throws IOException, InterruptedException {
     try {
-      final Process process = cmd.createProcess();
-      final int result = process.waitFor();
-      if (result != 0) throw new RuntimeException("'" + cmd.getCommandLineString() + "' : " + result);
+      final int result = ExecUtil.execAndGetResult("xdg-desktop-menu", "install", "--mode", "user", entryFile.getAbsolutePath());
+      if (result != 0) throw new RuntimeException("'" + entryFile.getAbsolutePath() + "' : " + result);
     }
     finally {
       if (!entryFile.delete()) LOG.error("Failed to delete temp file '" + entryFile + "'");
