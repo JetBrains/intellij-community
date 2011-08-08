@@ -34,15 +34,15 @@ import java.util.Map;
  */
 public class VcsHistoryCache {
   private final Object myLock;
-  private final SLRUMap<BaseKey, CachedHistory> myHistoryCache;
-  private final SLRUMap<WithRevisionKey, VcsAnnotation> myAnnotationCache;
-  //private final SLRUMap<WithRevisionKey, String> myContentCache;
+  private final SLRUMap<HistoryCacheBaseKey, CachedHistory> myHistoryCache;
+  private final SLRUMap<HistoryCacheWithRevisionKey, VcsAnnotation> myAnnotationCache;
+  //private final SLRUMap<HistoryCacheWithRevisionKey, String> myContentCache;
 
   public VcsHistoryCache() {
     myLock = new Object();
-    myHistoryCache = new SLRUMap<BaseKey, CachedHistory>(10, 10);
-    myAnnotationCache = new SLRUMap<WithRevisionKey, VcsAnnotation>(10, 5);
-    //myContentCache = new SLRUMap<WithRevisionKey, String>(20, 20);
+    myHistoryCache = new SLRUMap<HistoryCacheBaseKey, CachedHistory>(10, 10);
+    myAnnotationCache = new SLRUMap<HistoryCacheWithRevisionKey, VcsAnnotation>(10, 5);
+    //myContentCache = new SLRUMap<HistoryCacheWithRevisionKey, String>(20, 20);
   }
 
   public <C extends Serializable, T extends VcsAbstractHistorySession> void put(final FilePath filePath,
@@ -52,7 +52,7 @@ public class VcsHistoryCache {
                                                                                 @NotNull final VcsCacheableHistorySessionFactory<C, T> factory,
                                                                                 boolean isFull) {
     synchronized (myLock) {
-      myHistoryCache.put(new BaseKey(filePath, vcsKey),
+      myHistoryCache.put(new HistoryCacheBaseKey(filePath, vcsKey),
                          new CachedHistory(correctedPath != null ? correctedPath : filePath, session.getRevisionList(),
                                            session.getCurrentRevisionNumber(), factory.getAddinionallyCachedData(session), isFull));
     }
@@ -62,7 +62,7 @@ public class VcsHistoryCache {
   public <C extends Serializable, T extends VcsAbstractHistorySession> T getFull(final FilePath filePath, final VcsKey vcsKey,
                                                                                  @NotNull final VcsCacheableHistorySessionFactory<C, T> factory) {
     synchronized (myLock) {
-      final CachedHistory cachedHistory = myHistoryCache.get(new BaseKey(filePath, vcsKey));
+      final CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
       if (cachedHistory == null || ! cachedHistory.isIsFull()) {
         return null;
       }
@@ -75,7 +75,7 @@ public class VcsHistoryCache {
   public <C extends Serializable, T extends VcsAbstractHistorySession> T getMaybePartial(final FilePath filePath, final VcsKey vcsKey,
                                                                                          @NotNull final VcsCacheableHistorySessionFactory<C, T> factory) {
     synchronized (myLock) {
-      final CachedHistory cachedHistory = myHistoryCache.get(new BaseKey(filePath, vcsKey));
+      final CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
       if (cachedHistory == null) {
         return null;
       }
@@ -86,9 +86,9 @@ public class VcsHistoryCache {
 
   public void clear() {
     synchronized (myLock) {
-      final Iterator<Map.Entry<BaseKey,CachedHistory>> iterator = myHistoryCache.entrySet().iterator();
+      final Iterator<Map.Entry<HistoryCacheBaseKey,CachedHistory>> iterator = myHistoryCache.entrySet().iterator();
       while (iterator.hasNext()) {
-        final Map.Entry<BaseKey, CachedHistory> next = iterator.next();
+        final Map.Entry<HistoryCacheBaseKey, CachedHistory> next = iterator.next();
         if (! next.getKey().getFilePath().isNonLocal()) {
           iterator.remove();
         }
@@ -99,84 +99,13 @@ public class VcsHistoryCache {
   public void put(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number,
                   @NotNull final VcsAnnotation vcsAnnotation) {
     synchronized (myLock) {
-      myAnnotationCache.put(new WithRevisionKey(filePath, vcsKey, number), vcsAnnotation);
+      myAnnotationCache.put(new HistoryCacheWithRevisionKey(filePath, vcsKey, number), vcsAnnotation);
     }
   }
 
   public VcsAnnotation get(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number) {
     synchronized (myLock) {
-      return myAnnotationCache.get(new WithRevisionKey(filePath, vcsKey, number));
-    }
-  }
-
-  private static class WithRevisionKey extends BaseKey {
-    private final VcsRevisionNumber myRevisionNumber;
-
-    private WithRevisionKey(FilePath filePath, VcsKey vcsKey, @NotNull VcsRevisionNumber revisionNumber) {
-      super(filePath, vcsKey);
-      myRevisionNumber = revisionNumber;
-    }
-
-    public VcsRevisionNumber getRevisionNumber() {
-      return myRevisionNumber;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-
-      WithRevisionKey that = (WithRevisionKey)o;
-
-      if (!myRevisionNumber.equals(that.myRevisionNumber)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + myRevisionNumber.hashCode();
-      return result;
-    }
-  }
-
-  private static class BaseKey {
-    private final FilePath myFilePath;
-    private final VcsKey myVcsKey;
-
-    BaseKey(FilePath filePath, VcsKey vcsKey) {
-      myFilePath = filePath;
-      myVcsKey = vcsKey;
-    }
-
-    public FilePath getFilePath() {
-      return myFilePath;
-    }
-
-    public VcsKey getVcsKey() {
-      return myVcsKey;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      BaseKey baseKey = (BaseKey)o;
-
-      if (!myFilePath.equals(baseKey.myFilePath)) return false;
-      if (!myVcsKey.equals(baseKey.myVcsKey)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myFilePath.hashCode();
-      result = 31 * result + myVcsKey.hashCode();
-      return result;
+      return myAnnotationCache.get(new HistoryCacheWithRevisionKey(filePath, vcsKey, number));
     }
   }
 

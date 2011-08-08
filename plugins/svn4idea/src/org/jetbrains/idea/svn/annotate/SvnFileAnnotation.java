@@ -307,6 +307,11 @@ public class SvnFileAnnotation implements FileAnnotation {
     };
   }
 
+  @Override
+  public int getLineCount() {
+    return getNumLines();
+  }
+
   private abstract class SvnAnnotationAspect extends LineAnnotationAspectAdapter {
     public SvnAnnotationAspect(String id, boolean showByDefault) {
       super(id, showByDefault);

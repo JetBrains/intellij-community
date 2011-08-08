@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -103,8 +104,9 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       });
       if (worker.getResult() != null) {
         VirtualFile vf = worker.getFile().getVirtualFile();
+        final VcsRevisionNumber recentChangeRevision = vcsContentAnnotation.fileRecentlyChanged(vf);
         if (localChangesCorrector.isFileAlreadyIdentifiedAsChanged(vf) || ChangeListManager.isFileChanged(myProject, vf) ||
-            vcsContentAnnotation.fileRecentlyChanged(vf)) {
+            recentChangeRevision != null) {
           final Document document = getDocumentForFile(worker);
           if (document == null) return;
 
@@ -123,7 +125,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
                 break;
               }
               final TextRange correctedRange = localChangesCorrector.getCorrectedRange(vf, document, range);
-              if (vcsContentAnnotation.intervalRecentlyChanged(vf, correctedRange)) {
+              if (vcsContentAnnotation.intervalRecentlyChanged(vf, correctedRange, recentChangeRevision)) {
                 methodChanged = true;
                 break;
               }
@@ -197,9 +199,6 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       }
     });
   }
-
-  /*    final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project, upToDateContent);
-  /**/
 
   // line numbers
   private List<TextRange> findMethodRange(final ExceptionWorker worker, final Document document, final Trinity<PsiClass, PsiFile, String> previousLineResult) {

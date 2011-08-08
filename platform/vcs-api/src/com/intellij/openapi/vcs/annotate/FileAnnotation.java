@@ -104,4 +104,6 @@ public interface FileAnnotation {
 
   @Nullable
   AnnotationSourceSwitcher getAnnotationSourceSwitcher();
+  
+  int getLineCount();
 }

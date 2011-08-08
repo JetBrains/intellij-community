@@ -233,6 +233,11 @@ public class GitFileAnnotation implements FileAnnotation {
     return null;
   }
 
+  @Override
+  public int getLineCount() {
+    return myLines.size();
+  }
+
   /**
    * {@inheritDoc}
    */

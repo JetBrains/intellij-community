@@ -180,6 +180,11 @@ public class CvsFileAnnotation implements FileAnnotation{
     return null;
   }
 
+  @Override
+  public int getLineCount() {
+    return myAnnotations.length;
+  }
+
   private abstract class CvsAnnotationAspect extends LineAnnotationAspectAdapter {
     public CvsAnnotationAspect(String id, boolean showByDefault) {
       super(id, showByDefault);

@@ -58,6 +58,11 @@ public class HgAnnotation implements FileAnnotation {
     return null;
   }
 
+  @Override
+  public int getLineCount() {
+    return lines.size();
+  }
+
   public VcsRevisionNumber originalRevision(int lineNumber) {
     return getLineRevisionNumber(lineNumber);
   }
