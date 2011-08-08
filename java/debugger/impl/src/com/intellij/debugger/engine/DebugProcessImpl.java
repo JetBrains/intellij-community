@@ -50,7 +50,8 @@ import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.filters.ExceptionFilter;
+import com.intellij.execution.filters.ExceptionFilters;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -1669,7 +1670,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
         if (state instanceof CommandLineState) {
           final TextConsoleBuilder consoleBuilder = ((CommandLineState)state).getConsoleBuilder();
           if (consoleBuilder != null) {
-            consoleBuilder.addFilter(new ExceptionFilter(session.getSearchScope()));
+            List<Filter> filters = ExceptionFilters.getFilters(session.getSearchScope());
+            for (Filter filter : filters) {
+              consoleBuilder.addFilter(filter);
+            }
           }
         }
         myExecutionResult = state.execute(executor, runner);

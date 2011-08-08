@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 20-Aug-2007
- */
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class DefaultConsoleFiltersProvider implements ConsoleFilterProviderEx {
-  public Filter[] getDefaultFilters(@NotNull Project project) {
-    return getDefaultFilters(project, GlobalSearchScope.allScope(project));
+/**
+ * Created by IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 8/5/11
+ * Time: 7:54 PM
+ */
+public class ExceptionFilters {
+  private ExceptionFilters() {
   }
 
-  public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
-    List<Filter> filters = ExceptionFilters.getFilters(scope);
-    filters.add(new YourkitFilter(project));
-    return filters.toArray(new Filter[filters.size()]);
+  public static List<Filter> getFilters(final GlobalSearchScope searchScope) {
+    List<Filter> filters = new ArrayList<Filter>();
+    ExceptionFilterFactory[] extensions = ExceptionFilterFactory.EP_NAME.getExtensions();
+    for (ExceptionFilterFactory extension : extensions) {
+      filters.add(extension.create(searchScope));
+    }
+    return filters;
   }
 }

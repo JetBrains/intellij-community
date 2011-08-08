@@ -44,6 +44,7 @@ public interface Filter {
   /**
    * Filters line by creating an instance of {@link Result}.
    *
+   *
    * @param line
    *     The line to be filtered. Note that the line must contain a line
    *     separator at the end.
