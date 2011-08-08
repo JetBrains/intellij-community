@@ -40,7 +40,25 @@ public abstract class WebBrowserUrlProvider {
    * Invariant: element has not null containing psi file with not null virtual file 
    */
   @NotNull
-  public abstract String getUrl(@NotNull PsiElement element, boolean shiftDown) throws Exception;
+  public String getUrl(@NotNull PsiElement element) throws BrowserException {
+    try {
+      return getUrl(element, false);
+    }
+    catch (BrowserException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * @deprecated override {@link #getUrl(com.intellij.psi.PsiElement)} instead
+   */
+  @NotNull
+  public String getUrl(@NotNull PsiElement element, boolean shiftDown) throws Exception {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Invariant: element has not null containing psi file with not null virtual file

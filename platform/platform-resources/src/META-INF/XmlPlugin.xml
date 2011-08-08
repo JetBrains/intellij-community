@@ -286,7 +286,8 @@
 
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
 
-    <webBrowserUrlProvider implementation="com.intellij.ide.browsers.HtmlWebBrowserUrlProvider" id="static" order="last"/>
+    <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserService"
+                        serviceImplementation="com.intellij.ide.browsers.impl.WebBrowserServiceImpl"/>
 
     <patterns.patternClass className="com.intellij.patterns.XmlPatterns" alias="xml"/>
 

@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.problems.ProblemImpl;
+import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
@@ -49,6 +50,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -558,6 +560,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final Runnable action = new Runnable() {
       public void run() {
         //noinspection unchecked
+        boolean failed = false;
         for (List<PsiElement> elements : new List[]{elements1, elements2}) {
           int nextLimit = chunkSize;
           for (int i = 0; i < elements.size(); i++) {
@@ -575,7 +578,24 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             holder.clear();
 
             for (final HighlightVisitor visitor : visitors) {
-              visitor.visit(element, holder);
+              try {
+                visitor.visit(element, holder);
+              }
+              catch (ProcessCanceledException e) {
+                throw e;
+              }
+              catch (IndexNotReadyException e) {
+                throw e;
+              }
+              catch (WolfTheProblemSolverImpl.HaveGotErrorException e) {
+                throw e;
+              }
+              catch (Exception e) {
+                if (!failed) {
+                  LOG.error(e);
+                }
+                failed = true;
+              }
             }
 
             if (i == nextLimit) {

@@ -75,6 +75,8 @@ public class OffsetMap {
       myModified.add(key);
     }
 
+    RangeMarker old = myMap.get(key);
+    if (old != null) old.dispose();
     final RangeMarker marker = myDocument.createRangeMarker(offset, offset);
     marker.setGreedyToRight(key.isMoveableToRight());
     myMap.put(key, marker);
@@ -82,6 +84,9 @@ public class OffsetMap {
 
   public void removeOffset(OffsetKey key) {
     myModified.add(key);
+    RangeMarker old = myMap.get(key);
+    if (old != null) old.dispose();
+
     myMap.remove(key);
   }
 
@@ -100,5 +105,11 @@ public class OffsetMap {
 
   public boolean wasModified(OffsetKey key) {
     return myModified.contains(key);
+  }
+
+  public void dispose() {
+    for (RangeMarker rangeMarker : myMap.values()) {
+      rangeMarker.dispose();
+    }
   }
 }

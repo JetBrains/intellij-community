@@ -73,23 +73,22 @@ public class CvsServicesImpl extends CvsServices {
   }
 
   public CvsRepository[] getConfiguredRepositories() {
-    List configurations = CvsApplicationLevelConfiguration.getInstance().CONFIGURATIONS;
+    List<CvsRootConfiguration> configurations = CvsApplicationLevelConfiguration.getInstance().CONFIGURATIONS;
     CvsRepository[] result = new CvsRepository[configurations.size()];
     for (int i = 0; i < configurations.size(); i++) {
-      result[i] = ((CvsRootConfiguration)configurations.get(i)).createCvsRepository();
+      result[i] = configurations.get(i).createCvsRepository();
     }
     return result;
   }
 
   private static ComparableVcsRevisionOnOperation createCvsVersionOn(CvsModule module, Project project) {
     final CvsRootConfiguration rootConfiguration = CvsApplicationLevelConfiguration.getInstance()
-      .getConfigurationForCvsRoot(module.getRepository()
-        .getStringRepresentation());
+      .getConfigurationForCvsRoot(module.getRepository().getStringRepresentation());
     CvsConnectionSettings env = new IDEARootFormatter(rootConfiguration).createConfiguration();
 
-    GetFileContentOperation operation = new GetFileContentOperation(new File(module.getPathInCvs()),
-                                                                    env, new SimpleRevision(module.getRevision())
-    );
+    GetFileContentOperation operation =
+      new GetFileContentOperation(new File(module.getPathInCvs()),
+                                  env, new SimpleRevision(module.getRevision()));
 
     return new ComparableVcsRevisionOnOperation(operation, project);
 

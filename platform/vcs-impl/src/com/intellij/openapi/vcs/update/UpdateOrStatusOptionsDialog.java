@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.CancelledConfigurationException;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -86,6 +87,9 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     for (Configurable configurable : myEnvToConfMap.values()) {
       try {
         configurable.apply();
+      }
+      catch (CancelledConfigurationException e) {
+        return;
       }
       catch (ConfigurationException e) {
         Messages.showErrorDialog(myProject, VcsBundle.message("messge.text.cannot.save.settings", e.getLocalizedMessage()), getRealTitle());

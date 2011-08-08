@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,12 +47,13 @@ public class CvsStatusEnvironment implements UpdateEnvironment {
   }
 
   @NotNull
-  public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator,
+  public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, final UpdatedFiles updatedFiles,
+                                         ProgressIndicator progressIndicator,
                                          @NotNull final Ref<SequentialUpdatesContext> context) {
     final UpdateSettings updateSettings = UpdateSettings.DONT_MAKE_ANY_CHANGES;
     final UpdateHandler handler = CommandCvsHandler.createUpdateHandler(contentRoots,
                                                                         updateSettings, myProject, updatedFiles);
-    handler.addCvsListener(new UpdatedFilesProcessor(myProject, updatedFiles));
+    handler.addCvsListener(new UpdatedFilesProcessor(updatedFiles));
     CvsOperationExecutor cvsOperationExecutor = new CvsOperationExecutor(true, myProject, ModalityState.defaultModalityState());
     cvsOperationExecutor.setShowErrors(false);
     cvsOperationExecutor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);

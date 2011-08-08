@@ -19,6 +19,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,16 +42,19 @@ public class ImportOldConfigsPanel extends JDialog {
   private JButton myOkButton;
   private JLabel mySuggestLabel;
   private JLabel myHomeLabel;
+  private JRadioButton myRbImportAuto;
+  private final File myGuessedOldConfig;
 
-  public ImportOldConfigsPanel(final Frame owner) {
+  public ImportOldConfigsPanel(final File guessedOldConfig, final Frame owner) {
     super(owner, true);
+    myGuessedOldConfig = guessedOldConfig;
 
     init();
   }
 
-  public ImportOldConfigsPanel() {
+  public ImportOldConfigsPanel(final File guessedOldConfig) {
     super((Dialog) null, true);
-
+    myGuessedOldConfig = guessedOldConfig;
     init();
   }
 
@@ -60,12 +64,19 @@ public class ImportOldConfigsPanel extends JDialog {
     ButtonGroup group = new ButtonGroup();
     group.add(myRbDoNotImport);
     group.add(myRbImport);
+    group.add(myRbImportAuto);
     myRbDoNotImport.setSelected(true);
 
     final ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     final String productName = namesInfo.getProductName().equals("IDEA") ? namesInfo.getFullProductName() : namesInfo.getProductName();
     mySuggestLabel.setText(ApplicationBundle.message("label.you.can.import", productName));
     myRbDoNotImport.setText(ApplicationBundle.message("radio.do.not.import", productName));
+    if(myGuessedOldConfig != null) {
+      myRbImportAuto.setText(ApplicationBundle.message("radio.import.auto", myGuessedOldConfig.getAbsolutePath().replace(SystemProperties.getUserHome(), "~")));
+      myRbImportAuto.setSelected(true);
+    } else {
+      myRbImportAuto.setVisible(false);
+    }
     myHomeLabel.setText(ApplicationBundle.message("editbox.installation.home", productName));
 
     myRbImport.addChangeListener(new ChangeListener() {
@@ -74,7 +85,9 @@ public class ImportOldConfigsPanel extends JDialog {
       }
     });
 
-    if (SystemInfo.isMac) {
+    if (myGuessedOldConfig != null) {
+      myPrevInstallation.setText(myGuessedOldConfig.getParent());
+    } if (SystemInfo.isMac) {
       myPrevInstallation.setText(findPreviousInstallationMac(productName));
     }
     else if (SystemInfo.isWindows) {
@@ -91,9 +104,7 @@ public class ImportOldConfigsPanel extends JDialog {
           fc = new JFileChooser(myLastSelection);
         }
 
-        if (!SystemInfo.isMac) {
-          fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        }
+        fc.setFileSelectionMode(SystemInfo.isMac ? JFileChooser.FILES_AND_DIRECTORIES : JFileChooser.DIRECTORIES_ONLY);
 
         int returnVal = fc.showOpenDialog(ImportOldConfigsPanel.this);
         if (returnVal == JFileChooser.APPROVE_OPTION){
@@ -184,7 +195,7 @@ public class ImportOldConfigsPanel extends JDialog {
         return;
       }
 
-      if (!ConfigImportHelper.isInstallationHome(instHome)) {
+      if (myRbImport.isSelected() && !ConfigImportHelper.isInstallationHomeOrConfig(instHome)) {
         JOptionPane.showMessageDialog(this,
                                       ApplicationBundle.message("error.does.not.appear.to.be.installation.home", instHome,
                                                                 productWithVendor),
@@ -204,11 +215,11 @@ public class ImportOldConfigsPanel extends JDialog {
   }
 
   public boolean isImportEnabled() {
-    return myRbImport.isSelected();
+    return myRbImport.isSelected() || myRbImportAuto.isSelected();
   }
 
   public File getSelectedFile() {
-    return new File(myPrevInstallation.getText());
+    return myRbImportAuto.isSelected() ? myGuessedOldConfig : new File(myPrevInstallation.getText());
   }
 
   private void update() {
@@ -216,7 +227,7 @@ public class ImportOldConfigsPanel extends JDialog {
   }
 
   public static void main(String[] args) {
-    ImportOldConfigsPanel dlg = new ImportOldConfigsPanel();
+    ImportOldConfigsPanel dlg = new ImportOldConfigsPanel(null);
     dlg.setVisible(true);
   }
 }

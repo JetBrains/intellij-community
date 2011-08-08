@@ -20,7 +20,7 @@ import com.intellij.util.containers.SLRUMap;
 import java.io.File;
 import java.io.IOException;
 
-public class PersistentStringEnumerator extends PersistentEnumerator<String>{
+public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<String>{
   private final SLRUMap<Integer, String> myIdToStringCache;
   private final SLRUMap<Integer, Integer> myHashcodeToIdCache;
 
@@ -70,20 +70,13 @@ public class PersistentStringEnumerator extends PersistentEnumerator<String>{
         myHashcodeToIdCache.put(value.hashCode(), enumerate);
       }
     }
-    return enumerate;
-  }
-
-  @Override
-  protected int enumerateImpl(String value, boolean saveNewValue) throws IOException {
-    int idx = super.enumerateImpl(value, saveNewValue);
 
     if (myIdToStringCache != null) {
       synchronized (myIdToStringCache) {
-        myIdToStringCache.put(idx, value);
+        myIdToStringCache.put(enumerate, value);
       }
     }
-
-    return idx;
+    return enumerate;
   }
 
   @Override
@@ -98,25 +91,8 @@ public class PersistentStringEnumerator extends PersistentEnumerator<String>{
   }
 
   @Override
-  protected void markCorrupted() {
-    super.markCorrupted();
-
-    if (myIdToStringCache != null) {
-      synchronized (myIdToStringCache) {
-        myIdToStringCache.clear();
-      }
-    }
-
-    if (myHashcodeToIdCache != null) {
-      synchronized (myHashcodeToIdCache) {
-        myHashcodeToIdCache.clear();
-      }
-    }
-  }
-
-  @Override
-  protected void doClose() throws IOException {
-    super.doClose();
+  public void close() throws IOException {
+    super.close();
 
     if (myIdToStringCache != null) {
       synchronized (myIdToStringCache) {

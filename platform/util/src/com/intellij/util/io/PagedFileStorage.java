@@ -28,9 +28,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -58,7 +56,6 @@ public class PagedFileStorage implements Forceable {
   }
 
   private final StorageLock myLock;
-  private boolean myZeroWhenExpand;
   private int myLastPage = UNKNOWN_PAGE;
   private int myLastPage2 = UNKNOWN_PAGE;
   private MappedBufferWrapper myLastBuffer;
@@ -175,15 +172,14 @@ public class PagedFileStorage implements Forceable {
   protected final int myPageSize;
   @NonNls private static final String RW = "rw";
 
-  public PagedFileStorage(File file, StorageLock lock, int pageSize, boolean zeroWhenExpand) throws IOException {
+  public PagedFileStorage(File file, StorageLock lock, int pageSize) throws IOException {
     myFile = file;
     myLock = lock;
     myPageSize = Math.max(pageSize, Page.PAGE_SIZE);
-    myZeroWhenExpand = zeroWhenExpand;
   }
 
   public PagedFileStorage(File file, StorageLock lock) throws IOException {
-    this(file, lock, DEFAULT_BUFFER_SIZE, true);
+    this(file, lock, DEFAULT_BUFFER_SIZE);
   }
 
   public File getFile() {
@@ -301,11 +297,14 @@ public class PagedFileStorage implements Forceable {
   }
 
   private void unmapAll() {
-    for (Map.Entry<PageKey, MappedBufferWrapper> entry : myLock.myBuffersCache.entrySet()) {
-      if (entry.getKey().owner == this) {
-        myLock.myBuffersCache.remove(entry.getKey());
+    final Map<PageKey, MappedBufferWrapper> mineBuffers = getMineBuffersOrdered();
+
+    if (mineBuffers != null) {
+      for (PageKey key : mineBuffers.keySet()) {
+        myLock.myBuffersCache.remove(key);
       }
     }
+
     myLastPage = UNKNOWN_PAGE;
     myLastPage2 = UNKNOWN_PAGE;
     myLastBuffer = null;
@@ -325,7 +324,7 @@ public class PagedFileStorage implements Forceable {
     // it is not guaranteed that new partition will consist of null
     // after resize, so we should fill it manually
     int delta = newSize - oldSize;
-    if (delta > 0 && myZeroWhenExpand) fillWithZeros(oldSize, delta);
+    if (delta > 0) fillWithZeros(oldSize, delta);
 
     if (IOStatistics.DEBUG) {
       long finished = System.currentTimeMillis();
@@ -403,9 +402,11 @@ public class PagedFileStorage implements Forceable {
 
   public void force() {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-    for (Map.Entry<PageKey,MappedBufferWrapper> entry : myLock.myBuffersCache.entrySet()) {
-      if (entry.getKey().owner == this) {
-        entry.getValue().flush();
+    Map<PageKey, MappedBufferWrapper> mineBuffers = getMineBuffersOrdered();
+    
+    if (mineBuffers != null) {
+      for(MappedBufferWrapper buffer:mineBuffers.values()) {
+        buffer.flush();
       }
     }
     isDirty = false;
@@ -415,6 +416,23 @@ public class PagedFileStorage implements Forceable {
         IOStatistics.dump("Flushed "+myFile + " for " + (finished - started));
       }
     }
+  }
+
+  private @Nullable
+  Map<PageKey, MappedBufferWrapper> getMineBuffersOrdered() {
+    Map<PageKey, MappedBufferWrapper> mineBuffers = null;
+    for (Map.Entry<PageKey,MappedBufferWrapper> entry : myLock.myBuffersCache.entrySet()) {
+      if (entry.getKey().owner == this) {
+        if (mineBuffers == null) mineBuffers = new TreeMap<PageKey, MappedBufferWrapper>(new Comparator<PageKey>() {
+          @Override
+          public int compare(PageKey o1, PageKey o2) {
+            return o1.page - o2.page;
+          }
+        });
+        mineBuffers.put(entry.getKey(), entry.getValue());        
+      }
+    }
+    return mineBuffers;
   }
 
   public boolean isDirty() {

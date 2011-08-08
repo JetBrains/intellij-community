@@ -119,7 +119,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private Tree myBlockTree;
   private JPanel myBlockStructurePanel;
   private JSplitPane myBlockRefSplitPane;
-  private TitledSeparatorWithMnemonic myTextSeparator;
+  private JCheckBox myShowBlocksCheckBox;
+   private TitledSeparatorWithMnemonic myTextSeparator;
   private TitledSeparatorWithMnemonic myPsiTreeSeparator;
   private TitledSeparatorWithMnemonic myRefsSeparator;
   private TitledSeparatorWithMnemonic myBlockTreeSeparator;
@@ -233,6 +234,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       final Document document = EditorFactory.getInstance().createDocument("");
       editor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject);
     }
+    editor.getSettings().setLineMarkerAreaShown(false);
     myEditor = editor;
     init();
     if (myCurrentFile != null) {
@@ -423,7 +425,20 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     psiTreeStructure.setShowWhiteSpaces(settings.showWhiteSpaces);
     myShowTreeNodesCheckBox.setSelected(settings.showTreeNodes);
     psiTreeStructure.setShowTreeNodes(settings.showTreeNodes);
-
+    myShowBlocksCheckBox.setSelected(settings.showBlocks);
+    myBlockStructurePanel.setVisible(settings.showBlocks);
+    myShowBlocksCheckBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        if (!myShowBlocksCheckBox.isSelected()) {
+          settings.blockRefDividerLocation = myBlockRefSplitPane.getDividerLocation();
+        }
+        else {
+          myBlockRefSplitPane.setDividerLocation(settings.blockRefDividerLocation);
+        }
+        myBlockStructurePanel.setVisible(myShowBlocksCheckBox.isSelected());
+        myBlockStructurePanel.repaint();
+      }
+    });
     myTextPanel.setLayout(new BorderLayout());
     myTextPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
 
@@ -747,7 +762,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   @Nullable
-  private static Block buildBlocks(@NotNull PsiElement rootElement) {
+  private  Block buildBlocks(@NotNull PsiElement rootElement) {
     FormattingModelBuilder formattingModelBuilder = LanguageFormatting.INSTANCE.forContext(rootElement);
     CodeStyleSettings settings = new CodeStyleSettings();
     if (formattingModelBuilder != null) {
@@ -991,7 +1006,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     settings.dialect = myDialectComboBox.isVisible() && selectedDialect != null ? selectedDialect.toString() : "";
     settings.textDividerLocation = myTextSplit.getDividerLocation();
     settings.treeDividerLocation = myTreeSplit.getDividerLocation();
-    settings.blockRefDividerLocation = myBlockRefSplitPane.getDividerLocation();
+    settings.showBlocks = myShowBlocksCheckBox.isSelected();
+    if( myShowBlocksCheckBox.isSelected()) {
+         settings.blockRefDividerLocation = myBlockRefSplitPane.getDividerLocation();
+    }
     super.doCancelAction();
   }
 

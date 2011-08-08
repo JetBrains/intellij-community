@@ -30,10 +30,9 @@ public class GroupedLogMessage extends AbstractMessage {
   }
 
   public String getThrowableText() {
-    StringBuffer result = new StringBuffer();
-    for (int i = 0; i < myMessages.size(); i++) {
-      AbstractMessage each = myMessages.get(i);
-      result.append(each.getThrowableText() + "\n\n\n");
+    StringBuilder result = new StringBuilder();
+    for (AbstractMessage each : myMessages) {
+      result.append(each.getThrowableText()).append("\n\n\n");
     }
     return result.toString();
   }

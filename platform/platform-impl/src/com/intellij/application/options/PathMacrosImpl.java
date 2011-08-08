@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -75,57 +76,54 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     SYSTEM_MACROS.add(USER_HOME_MACRO_NAME);
   }
 
-  private static final Set<String> ourToolsMacros = new HashSet<String>();
-
-  static {
-    ourToolsMacros.addAll(Arrays.asList(
-      "ClasspathEntry",
-      "Classpath",
-      "ColumnNumber",
-      "FileClass",
-      "FileDir",
-      "FileDirRelativeToProjectRoot",
-      "/FileDirRelativeToProjectRoot",
-      "FileDirRelativeToSourcepath",
-      "/FileDirRelativeToSourcepath",
-      "FileExt",
-      "FileFQPackage",
-      "FileName",
-      "FileNameWithoutExtension",
-      "FilePackage",
-      "FilePath",
-      "FilePathRelativeToProjectRoot",
-      "/FilePathRelativeToProjectRoot",
-      "FilePathRelativeToSourcepath",
-      "/FilePathRelativeToSourcepath",
-      "FileRelativeDir",
-      "/FileRelativeDir",
-      "FileRelativePath",
-      "/FileRelativePath",
-      "JavaDocPath",
-      "JDKPath",
-      "LineNumber",
-      "ModuleFileDir",
-      "ModuleFilePath",
-      "ModuleName",
-      "ModuleSourcePath",
-      "OutputPath",
-      "PhpExecutable",
-      "ProjectFileDir",
-      "ProjectFilePath",
-      "ProjectName",
-      "Projectpath",
-      "Prompt",
-      "SourcepathEntry",
-      "Sourcepath",
-      "SHOW_CHANGES",
-      "SelectedText",
-      "SelectionStartLine",
-      "SelectionEndLine",
-      "SelectionStartColumn",
-      "SelectionEndColumn"
-    ));
-  }
+  private static final Set<String> ourToolsMacros = ImmutableSet.of(
+    "ClasspathEntry",
+    "Classpath",
+    "ColumnNumber",
+    "FileClass",
+    "FileDir",
+    "FileDirRelativeToProjectRoot",
+    "/FileDirRelativeToProjectRoot",
+    "FileDirRelativeToSourcepath",
+    "/FileDirRelativeToSourcepath",
+    "FileExt",
+    "FileFQPackage",
+    "FileName",
+    "FileNameWithoutExtension",
+    "FilePackage",
+    "FilePath",
+    "FilePathRelativeToProjectRoot",
+    "/FilePathRelativeToProjectRoot",
+    "FilePathRelativeToSourcepath",
+    "/FilePathRelativeToSourcepath",
+    "FilePrompt",
+    "FileRelativeDir",
+    "/FileRelativeDir",
+    "FileRelativePath",
+    "/FileRelativePath",
+    "JavaDocPath",
+    "JDKPath",
+    "LineNumber",
+    "ModuleFileDir",
+    "ModuleFilePath",
+    "ModuleName",
+    "ModuleSourcePath",
+    "OutputPath",
+    "PhpExecutable",
+    "ProjectFileDir",
+    "ProjectFilePath",
+    "ProjectName",
+    "Projectpath",
+    "Prompt",
+    "SourcepathEntry",
+    "Sourcepath",
+    "SHOW_CHANGES",
+    "SelectedText",
+    "SelectionStartLine",
+    "SelectionEndLine",
+    "SelectionStartColumn",
+    "SelectionEndColumn"
+  );
 
   public PathMacrosImpl() {
     //setMacro(USER_HOME_MACRO_NAME, FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));

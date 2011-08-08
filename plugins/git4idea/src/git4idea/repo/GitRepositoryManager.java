@@ -21,10 +21,10 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitVcs;
-import git4idea.vfs.GitRootsListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * GitRepositoryManager initializes and stores {@link GitRepository GitRepositories} for Git roots defined in the project.
  * @author Kirill Likhodedov
  */
-public final class GitRepositoryManager extends AbstractProjectComponent implements Disposable, GitRootsListener {
+public final class GitRepositoryManager extends AbstractProjectComponent implements Disposable, VcsListener {
 
   private final GitVcs myVcs;
   private final ProjectLevelVcsManager myVcsManager;
@@ -58,7 +58,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
 
   @Override
   public void initComponent() {
-    myVcs.addGitRootsListener(this);
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
     Disposer.register(myProject, this);
   }
 
@@ -138,7 +138,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
 
   // note: we are not calling this method during the project startup - it is called anyway by the GitRootTracker
   @Override
-  public void gitRootsChanged() {
+  public void directoryMappingChanged() {
     try {
       REPO_LOCK.writeLock().lock();
       final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(myVcs);
@@ -157,7 +157,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
       }
     }
     finally {
-      REPO_LOCK.writeLock().unlock();
+        REPO_LOCK.writeLock().unlock();
     }
   }
 

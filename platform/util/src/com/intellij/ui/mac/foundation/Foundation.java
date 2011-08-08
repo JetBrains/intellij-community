@@ -142,6 +142,10 @@ public class Foundation {
     myFoundationLibrary.CFRetain(id);
   }
 
+  public static void cfRelease(ID id) {
+    myFoundationLibrary.CFRelease(id);
+  }
+
   private static Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<String, RunnableInfo>();
   private static long ourCurrentRunnableCount = 0;
   private static final Object RUNNABLE_LOCK = new Object();

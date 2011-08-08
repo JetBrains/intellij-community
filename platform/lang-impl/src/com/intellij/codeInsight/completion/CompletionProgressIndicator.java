@@ -60,6 +60,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +72,7 @@ import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -94,7 +96,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final CopyOnWriteArrayList<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createEmptyCOWList();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
     public void itemSelected(LookupEvent event) {
-      finishCompletionProcess();
+      finishCompletionProcess(false);
 
       LookupElement item = event.getItem();
       if (item == null) return;
@@ -108,13 +110,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
 
     public void lookupCanceled(final LookupEvent event) {
-      finishCompletionProcess();
+      finishCompletionProcess(true);
     }
   };
   private volatile int myCount;
   private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(TObjectHashingStrategy.IDENTITY);
   private final LinkedList<Runnable> myDelayQueue = new LinkedList<Runnable>();
   private volatile boolean myProcessingDelayedActions;
+  private final Set<OffsetMap> myMapsToDispose = new THashSet<OffsetMap>();
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, boolean hasModifiers) {
@@ -134,6 +137,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
+    addMapToDispose(offsetMap);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -407,7 +411,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     Lookup lookup = LookupManager.getActiveLookup(myEditor);
     LOG.assertTrue(lookup == myLookup, lookup + "; " + this);
     myLookup.removeLookupListener(myLookupListener);
-    finishCompletionProcess();
+    finishCompletionProcess(true);
     CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
 
     if (hideLookup) {
@@ -415,7 +419,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  private void finishCompletionProcess() {
+  private void finishCompletionProcess(boolean disposeOffsetMap) {
     cancel();
 
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -427,13 +431,23 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     CompletionServiceImpl.assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class, CompletionPhase.Restarted.class);
     CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+    if (disposeOffsetMap) {
+      disposeOffsetMaps();
+    }
+  }
+
+  void disposeOffsetMaps() {
+    for (OffsetMap map : myMapsToDispose) {
+        map.dispose();
+      }
+    myMapsToDispose.clear();
   }
 
   @TestOnly
   public static void cleanupForNextTest() {
     CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
-      currentCompletion.finishCompletionProcess();
+      currentCompletion.finishCompletionProcess(true);
       CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     } else {
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
@@ -718,4 +732,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
   }
+
+  public void addMapToDispose(OffsetMap map) {
+    myMapsToDispose.add(map);
+  }
+
 }

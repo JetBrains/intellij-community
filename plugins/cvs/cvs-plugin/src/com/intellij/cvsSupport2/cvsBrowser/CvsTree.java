@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,8 +77,8 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
   private void setCurrentSelection(TreePath[] paths) {
     ArrayList<CvsElement> selection = new ArrayList<CvsElement>();
     if (paths != null) {
-      for (int i = 0; i < paths.length; i++) {
-        Object selectedObject = paths[i].getLastPathComponent();
+      for (TreePath path : paths) {
+        Object selectedObject = path.getLastPathComponent();
         if (!(selectedObject instanceof CvsElement)) continue;
         CvsElement cvsElement = (CvsElement)selectedObject;
         if (cvsElement.getElementPath().equals(".") && (!myAllowRootSelection)) continue;
@@ -91,8 +91,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
 
   private CvsElement createRoot(Project project) {
     String rootName = myCvsRootConfiguration.toString();
-    CvsElement result = CvsElementFactory.FOLDER_ELEMENT_FACTORY
-      .createElement(rootName, myCvsRootConfiguration, project);
+    CvsElement result = CvsElementFactory.FOLDER_ELEMENT_FACTORY.createElement(rootName, myCvsRootConfiguration, project);
     result.setName(rootName);
     result.setDataProvider(new RootDataProvider(myCvsRootConfiguration, myShowFiles, myShowModules));
     result.setPath(".");
@@ -145,7 +144,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     myTree.requestFocus();
   }
 
-  class AlwaysNotificatedObservable extends Observable{
+  static class AlwaysNotificatedObservable extends Observable{
     public void notifyObservers(Object arg) {
       setChanged();
       super.notifyObservers(arg);

@@ -18,18 +18,24 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.HashMap;
 
+import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.util.Map;
 
 public class SimpleDataContext implements DataContext {
   private final Map<String, Object> myDataId2Data;
   private final DataContext myParent;
 
+  private WeakReference<Component> myContextComponent;
+  
   private SimpleDataContext(String dataId, Object data, DataContext parent) {
     myDataId2Data = new HashMap<String, Object>(1);
     myDataId2Data.put(dataId, data);
     myParent = parent;
+    myContextComponent = new WeakReference<Component>(IdeFocusManager.getGlobalInstance().getFocusOwner());
   }
   
   private SimpleDataContext(Map<String, Object> dataid2data, DataContext parent) {
@@ -38,8 +44,14 @@ public class SimpleDataContext implements DataContext {
   }
 
   public Object getData(String dataId) {
-    return myDataId2Data.containsKey(dataId) ? myDataId2Data.get(dataId) : 
+    Object result =  myDataId2Data.containsKey(dataId) ? myDataId2Data.get(dataId) : 
            myParent == null ? null : myParent.getData(dataId);
+    
+    if (result == null && PlatformDataKeys.CONTEXT_COMPONENT.getName().equals(dataId)) {
+      result = myContextComponent.get();  
+    }
+    
+    return result;
   }
 
   public static DataContext getSimpleContext(String dataId, Object data, DataContext parent) {

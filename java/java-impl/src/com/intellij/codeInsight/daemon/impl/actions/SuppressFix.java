@@ -160,19 +160,24 @@ public class SuppressFix extends SuppressIntentionAction {
                                                    final String id) {
 
     if (annotation != null) {
-      if (annotation.getText().indexOf("{") == -1) {
+      final String currentSuppressedId = "\"" + id + "\"";
+      if (!annotation.getText().contains("{")) {
         final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
         if (attributes.length == 1) {
           final String suppressedWarnings = attributes[0].getText();
-          return JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText("@" +
-                                                                                                 SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({" + suppressedWarnings + ", \"" + id + "\"})", container);
+          if (suppressedWarnings.contains(currentSuppressedId)) return null;
+          return JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(
+              "@" + SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({" + suppressedWarnings + ", " + currentSuppressedId + "})", container);
+
         }
       }
       else {
         final int curlyBraceIndex = annotation.getText().lastIndexOf("}");
         if (curlyBraceIndex > 0) {
+          final String oldSuppressWarning = annotation.getText().substring(0, curlyBraceIndex);
+          if (oldSuppressWarning.contains(currentSuppressedId)) return null;
           return JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(
-            annotation.getText().substring(0, curlyBraceIndex) + ", \"" + id + "\"})", container);
+            oldSuppressWarning + ", " + currentSuppressedId + "})", container);
         }
         else if (!ApplicationManager.getApplication().isUnitTestMode() && editor != null) {
           Messages.showErrorDialog(editor.getComponent(),

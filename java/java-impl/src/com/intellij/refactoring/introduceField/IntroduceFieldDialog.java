@@ -177,7 +177,8 @@ class IntroduceFieldDialog extends DialogWrapper {
     namePrompt.setLabelFor(myNameField.getFocusableComponent());
 
     myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
-                                                          createGenerator(myWillBeDeclaredStatic, myLocalVariable, myInitializerExpression, myIsInvokedOnDeclaration, myEnteredName));
+                                                          createGenerator(myWillBeDeclaredStatic, myLocalVariable, myInitializerExpression, myIsInvokedOnDeclaration, myEnteredName,
+                                                                          myParentClass));
     myNameSuggestionsManager.setLabelsFor(type, namePrompt);
 
     return panel;
@@ -200,7 +201,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   static NameSuggestionsGenerator createGenerator(final boolean willBeDeclaredStatic,
                                                   final PsiLocalVariable localVariable,
                                                   final PsiExpression initializerExpression,
-                                                  final boolean isInvokedOnDeclaration, final String enteredName) {
+                                                  final boolean isInvokedOnDeclaration, final String enteredName, final PsiClass parentClass) {
     return new NameSuggestionsGenerator() {
       private final JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(localVariable != null ? localVariable.getProject()
                                                                                                                      : initializerExpression.getProject());
@@ -212,6 +213,15 @@ class IntroduceFieldDialog extends DialogWrapper {
           propertyName = myCodeStyleManager.variableNameToPropertyName(localVariable.getName(), VariableKind.LOCAL_VARIABLE);
         }
         final SuggestedNameInfo nameInfo = myCodeStyleManager.suggestVariableName(variableKind, propertyName, initializerExpression, type);
+        if (initializerExpression != null) {
+          String[] names = nameInfo.names;
+          for (int i = 0, namesLength = names.length; i < namesLength; i++) {
+            String name = names[i];
+            if (parentClass.findFieldByName(name, false) != null) {
+              names[i] = myCodeStyleManager.suggestUniqueVariableName(name, initializerExpression, true);
+            }
+          }
+        }
         final String[] strings = JavaCompletionUtil.completeVariableNameForRefactoring(myCodeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
         return new SuggestedNameInfo.Delegate(enteredName != null ? ArrayUtil.mergeArrays(new String[]{enteredName}, strings) : strings, nameInfo);
       }

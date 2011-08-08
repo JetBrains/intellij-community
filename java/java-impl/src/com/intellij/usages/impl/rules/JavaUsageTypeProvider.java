@@ -155,6 +155,10 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
       if (referenceList.getParent() instanceof PsiClass) return UsageType.CLASS_EXTENDS_IMPLEMENTS_LIST;
       if (referenceList.getParent() instanceof PsiMethod) return UsageType.CLASS_METHOD_THROWS_LIST;
     }
+    if (PsiTreeUtil.getParentOfType(element, PsiTypeParameterList.class) != null ||
+        PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class) != null) {
+      return UsageType.TYPE_PARAMETER;
+    }
 
     PsiTypeCastExpression castExpression = PsiTreeUtil.getParentOfType(element, PsiTypeCastExpression.class);
     if (castExpression != null) {
@@ -203,7 +207,12 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
     final PsiNewExpression psiNewExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
     if (psiNewExpression != null) {
       final PsiJavaCodeReferenceElement classReference = psiNewExpression.getClassReference();
-      if (classReference != null && PsiTreeUtil.isAncestor(classReference, element, false)) return UsageType.CLASS_NEW_OPERATOR;
+      if (classReference != null && PsiTreeUtil.isAncestor(classReference, element, false)) {
+        if (psiNewExpression.getArrayDimensions().length > 0) {
+          return UsageType.CLASS_NEW_ARRAY;
+        }
+        return UsageType.CLASS_NEW_OPERATOR;
+      }
     }
 
     return null;

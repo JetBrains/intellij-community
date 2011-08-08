@@ -15,10 +15,10 @@
  */
 class Test {
     private static final String FOO = "foo";
-    public static final String BAR = "foo";
+    public static final String FOO1 = "foo";
 
     public void method(Map<Object, Object> args) {
       System.out.println(FOO);
-      System.out.println(BAR);
+      System.out.println(FOO1);
     }
 }

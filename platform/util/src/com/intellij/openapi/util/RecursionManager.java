@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -46,6 +47,7 @@ import java.util.Map;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class RecursionManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.RecursionManager");
   private static final Object NULL = new Object();
   private static final ThreadLocal<Integer> ourStamp = new ThreadLocal<Integer>() {
     @Override
@@ -54,6 +56,12 @@ public class RecursionManager {
     }
   };
   private static final ThreadLocal<Integer> ourMemoizationStamp = new ThreadLocal<Integer>() {
+    @Override
+    protected Integer initialValue() {
+      return 0;
+    }
+  };
+  private static final ThreadLocal<Integer> ourDepth = new ThreadLocal<Integer>() {
     @Override
     protected Integer initialValue() {
       return 0;
@@ -91,6 +99,9 @@ public class RecursionManager {
         if (memoize) {
           SoftReference reference = ourIntermediateCache.get().get(realKey);
           if (reference != null) {
+            if (ourDepth.get() == 0) {
+              throw new AssertionError("Memoized values with empty stack");
+            }
             Object o = reference.get();
             if (o != null) {
               //noinspection unchecked
@@ -103,7 +114,19 @@ public class RecursionManager {
           throw new AssertionError("Non-zero stamp with empty stack: " + ourStamp.get());
         }
 
+        checkDepth("1");
+
+        int sizeBefore = progressMap.size();
         progressMap.put(realKey, ourStamp.get());
+        ourDepth.set(ourDepth.get() + 1);
+
+        checkDepth("2");
+
+        int sizeAfter = progressMap.size();
+        if (sizeAfter != sizeBefore + 1) {
+          LOG.error("Key doesn't lead to the map size increase: " + sizeBefore + " " + sizeAfter + " " + key);
+        }
+
         int startStamp = ourMemoizationStamp.get();
 
         try {
@@ -116,10 +139,21 @@ public class RecursionManager {
           return result;
         }
         finally {
+          if (sizeAfter != progressMap.size()) {
+            LOG.error("Map size changed: " + progressMap.size() + " " + sizeAfter + " " + key);
+          }
+          
+          ourDepth.set(ourDepth.get() - 1);
           Integer value = progressMap.remove(realKey);
+
+          if (sizeBefore != progressMap.size()) {
+            LOG.error("Map size doesn't decrease: " + progressMap.size() + " " + sizeBefore + " " + key);
+          }
+
           if (value == null) {
             throw new AssertionError(key + " has changed its equals/hashCode");
           }
+
           ourStamp.set(value);
           if (value == 0) {
             ourIntermediateCache.get().clear();
@@ -130,6 +164,8 @@ public class RecursionManager {
           } else {
             checkZero();
           }
+
+          checkDepth("3");
         }
       }
 
@@ -158,10 +194,11 @@ public class RecursionManager {
 
       @Override
       public void prohibitResultCaching(Object since) {
-        ourMemoizationStamp.set(_prohibitResultCaching(since));
+        _prohibitResultCaching(since);
+        ourMemoizationStamp.set(ourMemoizationStamp.get() + 1);
       }
 
-      private int _prohibitResultCaching(Object since) {
+      private void _prohibitResultCaching(Object since) {
         int stamp = ourStamp.get() + 1;
         ourStamp.set(stamp);
 
@@ -178,10 +215,17 @@ public class RecursionManager {
         }
 
         checkZero();
-
-        return stamp;
       }
     };
+  }
+
+  private static void checkDepth(String s) {
+    LinkedHashMap<MyKey, Integer> progressMap = ourProgress.get();
+    Integer depth = ourDepth.get();
+    if (depth != progressMap.size()) {
+      ourDepth.set(progressMap.size());
+      throw new AssertionError("Inconsistent depth " + s + "; depth=" + depth + "; map=" + progressMap);
+    }
   }
 
   private static void checkZero() {

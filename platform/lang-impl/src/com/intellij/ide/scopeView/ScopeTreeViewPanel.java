@@ -215,7 +215,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   public void selectScope(final NamedScope scope) {
-    refreshScope(scope, true);
+    refreshScope(scope);
     if (scope != DefaultScopesProvider.getAllScope()) {
       CURRENT_SCOPE_NAME = scope.getName();
     }
@@ -262,7 +262,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  private void refreshScope(@Nullable NamedScope scope, boolean showProgress) {
+  private void refreshScope(@Nullable NamedScope scope) {
     FileTreeModelBuilder.clearCaches(myProject);
     if (scope == null || scope.getValue() == null) { //was deleted
       scope = DefaultScopesProvider.getAllScope();
@@ -277,6 +277,8 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     final ProjectView projectView = ProjectView.getInstance(myProject);
     settings.UI_FLATTEN_PACKAGES = projectView.isFlattenPackages(ScopeViewPane.ID);
     settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = projectView.isHideEmptyMiddlePackages(ScopeViewPane.ID);
+    settings.UI_SHOW_MODULES = projectView.isShowModules(ScopeViewPane.ID);
+    settings.UI_SHOW_MODULE_GROUPS = projectView.isShowModules(ScopeViewPane.ID);
     myBuilder = new FileTreeModelBuilder(myProject, new Marker() {
       public boolean isMarked(VirtualFile file) {
         return packageSet != null && (packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(file, holder) : packageSet.contains(PackageSetBase.getPsiFile(file, holder), holder));
@@ -287,7 +289,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myTree.getEmptyText().setText("Loading...");
     myActionCallback = new ActionCallback();
     myTree.putClientProperty(TreeState.CALLBACK, new WeakReference<ActionCallback>(myActionCallback));
-    myTree.setModel(myBuilder.build(myProject, showProgress, new Runnable(){
+    myTree.setModel(myBuilder.build(myProject, true, new Runnable(){
       @Override
       public void run() {
         myTree.setPaintBusy(false);
@@ -596,7 +598,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       myUpdateQueue.cancelAllUpdates();
       queueUpdate(new Runnable() {
         public void run() {
-          refreshScope(scope, true);
+          refreshScope(scope);
         }
       }, false);
     }
@@ -650,7 +652,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       myUpdateQueue.cancelAllUpdates();
       myUpdateQueue.queue(new Update("RootsChanged") {
         public void run() {
-          refreshScope(getCurrentScope(), false);
+          refreshScope(getCurrentScope());
         }
 
         public boolean isExpired() {

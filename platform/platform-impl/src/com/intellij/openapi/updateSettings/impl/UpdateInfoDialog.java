@@ -27,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,23 +50,40 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   @Override
   protected Action[] createActions() {
-    AbstractAction ignore = new AbstractAction("&Ignore This Update") {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        UpdateSettings.getInstance().getIgnoredBuildNumbers().add(myLatestBuild.getNumber().asStringWithoutProductCode());
-        doCancelAction();
-      }
-    };
-    if (hasPatch()) {
-      AbstractAction moreInfo = new AbstractAction(IdeBundle.message("updates.more.info.button")) {
-        public void actionPerformed(ActionEvent e) {
-          openDownloadPage();
-        }
-      };
-      return new Action[]{getOKAction(), moreInfo, getCancelAction(), ignore };
-    }
+    List<Action> actions = new ArrayList<Action>();
+    actions.add(getOKAction());
 
-    return new Action[] { getOKAction(), getCancelAction(), ignore };
+    final List<ButtonInfo> buttons = myLatestBuild.getButtons();
+
+    if (hasPatch()) {
+      if (buttons.isEmpty()) {
+        actions.add(new AbstractAction(IdeBundle.message("updates.more.info.button")) {
+          public void actionPerformed(ActionEvent e) {
+            openDownloadPage();
+          }
+        });
+      }
+      else {
+        for (ButtonInfo info : buttons) {
+          actions.add(new ButtonAction(info));
+        }
+      }
+    }
+    else {
+      for (int i = 1; i < buttons.size(); i++) {
+        actions.add(new ButtonAction(buttons.get(i)));
+      }
+    }
+    actions.add(getCancelAction());
+    actions.add(new AbstractAction("&Ignore This Update") {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            UpdateSettings.getInstance().getIgnoredBuildNumbers().add(myLatestBuild.getNumber().asStringWithoutProductCode());
+            doCancelAction();
+          }
+        });
+
+    return actions.toArray(new Action[buttons.size()]);
   }
 
   private void openDownloadPage() {
@@ -77,6 +95,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       return ApplicationManager.getApplication().isRestartCapable()
              ? IdeBundle.message("updates.download.and.install.patch.button.restart")
              : IdeBundle.message("updates.download.and.install.patch.button");
+    }
+    else if (myLatestBuild.getButtons().size() > 0) {
+      return myLatestBuild.getButtons().get(0).getName();
     }
     else {
       return IdeBundle.message("updates.more.info.button");
@@ -100,7 +121,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       return;
     }
 
-    openDownloadPage();
+    if (myLatestBuild.getButtons().size() > 0) {
+      BrowserUtil.launchBrowser(myLatestBuild.getButtons().get(0).getUrl());
+    }
+    else {
+      openDownloadPage();
+    }
     super.doOKAction();
   }
 
@@ -123,6 +149,20 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   private boolean hasPatch() {
     return myLatestBuild.findPatchForCurrentBuild() != null;
+  }
+  
+  private static class ButtonAction extends AbstractAction {
+    private ButtonInfo myInfo;
+
+    private ButtonAction(ButtonInfo info) {
+      super(info.getName());
+      myInfo = info;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      BrowserUtil.launchBrowser(myInfo.getUrl());
+    }
   }
 
   private class UpdateInfoPanel {

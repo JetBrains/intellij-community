@@ -23,6 +23,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.containers.ShareableKey;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -55,7 +56,9 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   private boolean myCorrupted = false;
   private final MyDataIS myKeyReadStream;
   private final Version myVersion;
+  private RecordBufferHandler<PersistentEnumeratorBase> myRecordHandler;
   private volatile boolean myDirtyStatusUpdateInProgress;
+  private Flushable myMarkCleanCallback;
 
   public static class Version {
     private final int correctlyClosedMagic;
@@ -66,6 +69,12 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       dirtyMagic = _dirtyMagic;
       assert correctlyClosedMagic != dirtyMagic;
     }
+  }
+  
+  public static abstract class RecordBufferHandler<T extends PersistentEnumeratorBase> {
+    abstract int recordWriteOffset(T enumerator, byte[] buf);
+    abstract @NotNull byte[] getRecordBuffer(T enumerator);
+    abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
   }
 
   private static class CacheKey implements ShareableKey {
@@ -126,10 +135,12 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  public PersistentEnumeratorBase(File file, ISimpleStorage storage, KeyDescriptor<Data> dataDescriptor, int initialSize, Version version) throws IOException {
+  public PersistentEnumeratorBase(File file, ISimpleStorage storage, KeyDescriptor<Data> dataDescriptor, int initialSize, 
+                                  Version version, RecordBufferHandler<? extends PersistentEnumeratorBase> recordBufferHandler) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
     myVersion = version;
+    myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase>)recordBufferHandler;
 
     if (!file.exists()) {
       FileUtil.delete(keystreamFile());
@@ -193,6 +204,18 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   protected abstract void setupEmptyFile() throws IOException;
+
+  public final RecordBufferHandler<PersistentEnumeratorBase> getRecordHandler() {
+    return myRecordHandler;
+  }
+
+  public final void setRecordHandler(RecordBufferHandler<PersistentEnumeratorBase> recordHandler) {
+    myRecordHandler = recordHandler;
+  }
+
+  public void setMarkCleanCallback(Flushable markCleanCallback) {
+    myMarkCleanCallback = markCleanCallback;
+  }
 
   protected int tryEnumerate(Data value) throws IOException {
     synchronized (ourEnumerationCache) {
@@ -293,7 +316,8 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       markDirty(true);
 
       final int dataOff = myKeyStorage != null ? (int)myKeyStorage.length() : ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(value);
-      byte[] buf = prepareEntryRecordBuf(hashCode, dataOff);
+      final byte[] buf = myRecordHandler.getRecordBuffer(this);
+      myRecordHandler.setupRecord(this, hashCode, dataOff, buf);
 
       if (myKeyStorage != null) {
         final BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
@@ -302,7 +326,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
         myKeyStorage.put(dataOff, bos.getInternalBuffer(), 0, bos.size());
       }
 
-      final int pos = recordWriteOffset(buf);
+      final int pos = myRecordHandler.recordWriteOffset(this, buf);
       myStorage.put(pos, buf, 0, buf.length);
 
       return pos;
@@ -311,18 +335,6 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       throw new RuntimeException(e);
     }
   }
-
-  protected abstract int recordWriteOffset(byte[] buf);
-
-  private byte[] prepareEntryRecordBuf(int hashCode, int dataOffset) {
-    final byte[] buf = getRecordBuffer();
-    setupRecord(hashCode, dataOffset, buf);
-    return buf;
-  }
-
-  protected abstract byte[] getRecordBuffer();
-
-  protected abstract void setupRecord(int hashCode, final int dataOffset, final byte[] buf);
 
   protected boolean iterateData(final Processor<Data> processor) throws IOException {
     if (myKeyStorage == null) {
@@ -376,8 +388,6 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   protected abstract int indexToAddr(int idx);
-
-  protected abstract int getRecordSize();
 
   private static class MyDataIS extends DataInputStream {
     private MyDataIS(ResizeableMappedFile raf) {
@@ -492,7 +502,8 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  protected void markClean() throws IOException {
+  private void markClean() throws IOException {
+    if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
     if (!myCorrupted) {
       myStorage.putInt(0, myVersion.correctlyClosedMagic);
       myDirty = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,12 +92,13 @@ public class Switcher extends AnAction implements DumbAware {
   static {
     TW_KEYMAP.put("Messages",  0);
     TW_KEYMAP.put("Project",   1);
-    TW_KEYMAP.put("Commander", 2);
+    TW_KEYMAP.put("Favorites", 2);
     TW_KEYMAP.put("Find",      3);
     TW_KEYMAP.put("Run",       4);
     TW_KEYMAP.put("Debug",     5);
     TW_KEYMAP.put("TODO",      6);
     TW_KEYMAP.put("Structure", 7);
+    TW_KEYMAP.put("Hierarchy", 8);
     TW_KEYMAP.put("Changes",   9);
 
     IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -124,7 +125,8 @@ public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindo
 
       getModel().insertNodeInto(loadingNode, this, 0);
       myLoading = true;
-      myModel.getCvsTree().getTree().setEnabled(false);
+      final CvsTree cvsTree = myModel.getCvsTree();
+      cvsTree.setEnabled(false);
       myLoadingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           myDataProvider.fillContentFor(CvsElement.this, myProject, new MyGetContentCallback(loadingNode));
@@ -142,7 +144,7 @@ public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindo
         }
       };
       myPeriodAlarm.addRequest(periodRequest, 200);
-      myModel.getCvsTree().addListener(this);
+      cvsTree.addListener(this);
     }
 
     return children;
@@ -239,20 +241,24 @@ public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindo
               remove(myLoadingNode);
             }
             getModel().reload(CvsElement.this);
-            getModel().getCvsTree().getTree().expandPath(new TreePath(getModel().getPathToRoot(CvsElement.this)));
+            final Tree tree = getModel().getCvsTree().getTree();
+            final TreePath path = new TreePath(getModel().getPathToRoot(CvsElement.this));
+            tree.expandPath(path);
+            tree.setSelectionPath(path);
           }
         });
     }
 
     public void finished() {
       if (getParent() == null) {
-        getModel().selectRoot();
+        myModel.selectRoot();
       }
-      myModel.getCvsTree().removeListener(this);
+      final CvsTree cvsTree = myModel.getCvsTree();
+      cvsTree.removeListener(this);
       myLoading = false;
 
       myPeriodAlarm.cancelAllRequests();
-      myModel.getCvsTree().getTree().setEnabled(true);
+      cvsTree.getTree().setEnabled(true);
       myLoadingThreadFuture = null;
       SwingUtilities.invokeLater(new Runnable() {
           public void run() {

@@ -26,6 +26,7 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.TransferableWrapper;
+import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -604,20 +605,42 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     protected final DefaultActionGroup createPopupActionGroup(final JComponent button) {
       final DefaultActionGroup group = new DefaultActionGroup();
 
-      group.add(new MenuAction(SCOPE_PROJECT));
-      group.add(new MenuAction(SCOPE_TEST));
-      group.add(new MenuAction(SCOPE_ALL));
-      group.add(new MenuAction(SCOPE_CLASS));
+      for(String name: getValidScopeNames()) {
+        group.add(new MenuAction(name));
+      }
+      
+      group.add(new ConfigureScopesAction());
+
+      return group;
+    }
+
+    private Collection<String> getValidScopeNames() {
+      List<String> result = new ArrayList<String>();
+      result.add(SCOPE_PROJECT);
+      result.add(SCOPE_TEST);
+      result.add(SCOPE_ALL);
+      result.add(SCOPE_CLASS);
 
       final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
       for (NamedScopesHolder holder : holders) {
         NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
         for (NamedScope scope : scopes) {
-          group.add(new MenuAction(scope.getName()));
+          result.add(scope.getName());
         }
       }
+      return result;
+    }
 
-      return group;
+    private void selectScope(final String scopeType) {
+      myType2ScopeMap.put(myCurrentViewType, scopeType);
+      HierarchyBrowserManager.getInstance(myProject).getState().SCOPE = scopeType;
+
+      // invokeLater is called to update state of button before long tree building operation
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          doRefresh(true); // scope is kept per type so other builders doesn't need to be refreshed
+        }
+      });
     }
 
     public final JComponent createCustomComponent(final Presentation presentation) {
@@ -638,18 +661,23 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
 
       public final void actionPerformed(final AnActionEvent e) {
-        myType2ScopeMap.put(myCurrentViewType, myScopeType);
-        HierarchyBrowserManager.getInstance(myProject).getState().SCOPE = myScopeType;
-
-        // invokeLater is called to update state of button before long tree building operation
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            doRefresh(true); // scope is kept per type so other builders doesn't need to be refreshed
-          }
-        });
+        selectScope(myScopeType);
 
       }
     }
+    
+    private final class ConfigureScopesAction extends AnAction {
+      private ConfigureScopesAction() {
+        super("Configure...");
+      }
 
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        EditScopesDialog.editConfigurable(myProject, null);
+        if (!getValidScopeNames().contains(myType2ScopeMap.get(myCurrentViewType))) {
+          selectScope(SCOPE_ALL);
+        }
+      }
+    }
   }
 }

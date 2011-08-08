@@ -85,7 +85,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
         pattern += recursively ? "..*" : ".*";
       }
       else {
-        pattern = recursively ? "*..*" : ".*";
+        pattern = recursively ? "*..*" : "*";
       }
 
       return new PatternPackageSet(pattern, scope, getModulePattern(node));

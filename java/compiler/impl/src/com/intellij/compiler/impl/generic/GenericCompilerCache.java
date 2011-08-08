@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +50,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
       myPersistentMap = new PersistentHashMap<KeyAndTargetData<Key>, PersistentStateData<SourceState,OutputState>>(myCacheFile, new SourceItemDataDescriptor(myCompiler.getItemKeyDescriptor()),
                                                                     new PersistentStateDataExternalizer(myCompiler));
     }
-    catch (PersistentHashMap.CorruptedException e) {
+    catch (PersistentEnumerator.CorruptedException e) {
       FileUtil.delete(myCacheFile);
       throw e;
     }

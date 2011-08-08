@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
+ *
+ * @deprecated use {@link WebBrowserService} instead
  */
 public class WebBrowserUrlProviders  {
   private WebBrowserUrlProviders() {
@@ -30,7 +32,7 @@ public class WebBrowserUrlProviders  {
     if (element == null) {
       return null;
     }
-    
+
     final WebBrowserUrlProvider[] urlProviders = WebBrowserUrlProvider.EP_NAME.getExtensions();
     for (WebBrowserUrlProvider urlProvider : urlProviders) {
       if (urlProvider.canHandleElement(element)) {

@@ -308,7 +308,6 @@ public class InjectedLanguageUtil {
   }
 
   private static final Key<List<DocumentWindow>> INJECTED_DOCS_KEY = Key.create("INJECTED_DOCS_KEY");
-  private static final Key<List<RangeMarker>> INJECTED_REGIONS_KEY = Key.create("INJECTED_REGIONS_KEY");
   @NotNull
   public static List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
     // modification of cachedInjectedDocuments must be under PsiLock only
@@ -323,26 +322,36 @@ public class InjectedLanguageUtil {
   }
 
   public static void commitAllInjectedDocuments(Document hostDocument, Project project) {
-    List<RangeMarker> injected = getCachedInjectedRegions(hostDocument);
-    if (injected.isEmpty()) return;
-
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     PsiFile hostPsiFile = documentManager.getPsiFile(hostDocument);
     if (hostPsiFile == null) return;
-    for (RangeMarker rangeMarker : injected) {
+
+    List<DocumentWindow> injected = getCachedInjectedDocuments(hostPsiFile);
+    if (injected.isEmpty()) return;
+
+    for (int i = injected.size() - 1; i >= 0; i--) {
+      DocumentWindow documentWindow = injected.get(i);
       ProgressManager.checkCanceled();
+      RangeMarker rangeMarker = documentWindow.getHostRanges()[0];
       PsiElement element = rangeMarker.isValid() ? hostPsiFile.findElementAt(rangeMarker.getStartOffset()) : null;
       if (element == null) {
-        injected.remove(rangeMarker);
+        injected.remove(i);
         continue;
       }
-      ProgressManager.checkCanceled();
+      final DocumentWindow[] stillInjectedDocument = {null};
       // it is here where the reparse happens and old file contents replaced
       enumerate(element, hostPsiFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-          PsiDocumentManagerImpl.checkConsistency(injectedPsi, injectedPsi.getViewProvider().getDocument());
+          stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
+          PsiDocumentManagerImpl.checkConsistency(injectedPsi, stillInjectedDocument[0]);
         }
       }, true);
+      if (stillInjectedDocument[0] == null) {
+        injected.remove(i);
+      }
+      else if (stillInjectedDocument[0] != documentWindow) {
+        injected.set(i,stillInjectedDocument[0]);
+      }
     }
     EditorWindow.disposeInvalidEditors();  // in write action
 
@@ -379,15 +388,6 @@ public class InjectedLanguageUtil {
     //FileDocumentManagerImpl.registerDocument(documentWindow, null);
   }
 
-
-  static List<RangeMarker> getCachedInjectedRegions(Document hostDocument) {
-    List<RangeMarker> injectedRegions = hostDocument.getUserData(INJECTED_REGIONS_KEY);
-    if (injectedRegions == null) {
-      injectedRegions = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(INJECTED_REGIONS_KEY,
-                                                                             ContainerUtil.<RangeMarker>createEmptyCOWList());
-    }
-    return injectedRegions;
-  }
 
   public static Editor openEditorFor(PsiFile file, Project project) {
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);

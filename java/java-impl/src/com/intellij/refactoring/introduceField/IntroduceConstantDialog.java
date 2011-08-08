@@ -34,6 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
@@ -225,7 +226,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
     final NameSuggestionsManager nameSuggestionsManager =
       new NameSuggestionsManager(myTypeSelector, myNameField, createNameSuggestionGenerator(propertyName, myInitializerExpression,
-                                                                                            myCodeStyleManager, myEnteredName));
+                                                                                            myCodeStyleManager, myEnteredName, myParentClass));
 
     nameSuggestionsManager.setLabelsFor(myTypeLabel, myNameSuggestionLabel);
     //////////
@@ -292,11 +293,20 @@ class IntroduceConstantDialog extends DialogWrapper {
   protected static NameSuggestionsGenerator createNameSuggestionGenerator(final String propertyName,
                                                                           final PsiExpression psiExpression,
                                                                           final JavaCodeStyleManager codeStyleManager,
-                                                                          final String enteredName) {
+                                                                          final String enteredName, final PsiClass parentClass) {
     return new NameSuggestionsGenerator() {
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-        final SuggestedNameInfo nameInfo =
+        SuggestedNameInfo nameInfo =
             codeStyleManager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, propertyName, psiExpression, type);
+        if (psiExpression != null) {
+          String[] names = nameInfo.names;
+          for (int i = 0, namesLength = names.length; i < namesLength; i++) {
+            String name = names[i];
+            if (parentClass.findFieldByName(name, false) != null) {
+              names[i] = codeStyleManager.suggestUniqueVariableName(name, psiExpression, true);
+            }
+          }
+        }
         final String[] strings = JavaCompletionUtil
           .completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
         return new SuggestedNameInfo.Delegate(enteredName != null ? ArrayUtil.mergeArrays(new String[]{enteredName}, strings): strings, nameInfo);

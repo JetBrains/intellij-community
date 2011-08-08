@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -59,6 +60,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 import java.util.Queue;
@@ -79,6 +81,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private int myEditorScrollbarTop = -1;
   private int myEditorTargetHeight = -1;
   private int myEditorSourceHeight = -1;
+  private TextRange myDirtyRange = null;
 
   @NotNull private ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
 
@@ -283,7 +286,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   void repaint(int startOffset, int endOffset) {
-    markDirtied();
+    markDirtied(startOffset, endOffset);
 
     ProperTextRange range = offsetToYPosition(startOffset, endOffset);
 
@@ -331,6 +334,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener {
     private PopupHandler myHandler;
     private ErrorStripeButton myErrorStripeButton;
+    private BufferedImage myCachedTrack;
 
     @Override
     protected JButton createDecreaseButton(int orientation) {
@@ -376,22 +380,41 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
+      Rectangle clip = g.getClipBounds().intersection(bounds);
+      if (clip.height == 0) return;
+
+      final Rectangle componentBounds = c.getBounds();
+      if (myCachedTrack == null || myCachedTrack.getHeight() != componentBounds.getHeight()) {
+        myCachedTrack = new BufferedImage(componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
+        myDirtyRange = TextRange.create(0, getEditor().getDocument().getTextLength());
+        paintTrackBasement(myCachedTrack.getGraphics(), new Rectangle(0, 0, componentBounds.width, componentBounds.height));
+      }
+
+      if (myDirtyRange != null) {
+        final Graphics2D imageGraphics = myCachedTrack.createGraphics();
+
+
+        ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
+
+        try {
+          repaint(imageGraphics, componentBounds.width, ERROR_ICON_WIDTH - 1, myDirtyRange.getStartOffset(), myDirtyRange.getEndOffset());
+          myDirtyRange = null;
+        }
+        finally {
+          ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
+        }
+      }
+
+      ((Graphics2D)g).drawImage(myCachedTrack, null, 0, 0);
+    }
+
+    private void paintTrackBasement(Graphics g, Rectangle bounds) {
       g.setColor(TRACK_BACKGROUND);
       g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
       g.setColor(TRACK_BORDER);
       int border = isMirrored() ? bounds.x + bounds.width - 1 : bounds.x;
       g.drawLine(border, bounds.y, border, bounds.y + bounds.height);
-
-      ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
-
-      try {
-        Rectangle clipBounds = g.getClipBounds();
-        repaint(g, ERROR_ICON_WIDTH - 1, clipBounds);
-      }
-      finally {
-        ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
-      }
     }
 
     @Override
@@ -399,13 +422,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return ColorUtil.withAlpha(ColorUtil.shift(super.adjustColor(c), 0.9), 0.85);
     }
 
-    private void repaint(final Graphics g, final int width, Rectangle clipBounds) {
-      Document document = myEditor.getDocument();
-      int startOffset = yPositionToOffset(clipBounds.y, true);
-      int endOffset = yPositionToOffset(clipBounds.y + clipBounds.height, false);
+    private void repaint(final Graphics g, int gutterWidth, final int stripeWidth, int startOffset, int endOffset) {
+      final ProperTextRange yrange = offsetToYPosition(startOffset, endOffset);
+      final Rectangle clip = new Rectangle(0, yrange.getStartOffset(), gutterWidth, yrange.getLength() + getMinHeight());
+      paintTrackBasement(g, clip);
 
-      drawMarkup(g, width, startOffset, endOffset, EditorMarkupModelImpl.this);
-      drawMarkup(g, width, startOffset, endOffset, (MarkupModelEx)document.getMarkupModel(myEditor.getProject()));
+      Document document = myEditor.getDocument();
+      endOffset = yPositionToOffset(clip.y + clip.height, false);
+
+      drawMarkup(g, stripeWidth, startOffset, endOffset, EditorMarkupModelImpl.this);
+      drawMarkup(g, stripeWidth, startOffset, endOffset, (MarkupModelEx)document.getMarkupModel(myEditor.getProject()));
     }
 
     private void drawMarkup(final Graphics g, final int width, int startOffset, int endOffset, MarkupModelEx markup) {
@@ -684,10 +710,18 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     LOG.assertTrue(success);
   }
 
-  public void markDirtied() {
+  public void markDirtied(int startOffset, int endOffset) {
     myEditorScrollbarTop = -1;
     myEditorSourceHeight = -1;
     myEditorTargetHeight = -1;
+
+    final TextRange range = TextRange.create(startOffset, endOffset);
+    if (myDirtyRange == null) {
+      myDirtyRange = range;
+    }
+    else {
+      myDirtyRange = myDirtyRange.union(range);
+    }
   }
 
   public void setMinMarkHeight(final int minMarkHeight) {

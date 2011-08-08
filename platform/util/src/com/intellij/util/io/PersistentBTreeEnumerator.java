@@ -44,10 +44,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private static final int RECORD_SIZE = 4;
-  private final byte[] myBuffer;
 
   private int myLogicalFileLength;
-  private int myRootNodeStart;
   private int myDataPageStart;
   private int myFirstPageStart;
 
@@ -67,10 +65,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
 
   public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024, false), dataDescriptor, initialSize, ourVersion);
+    super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024), dataDescriptor, initialSize,
+          ourVersion, new RecordBufferHandler());
 
     myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantInlineKeyMapping();
-    myBuffer = new byte[getRecordSize()];
 
     if (btree == null) {
       synchronized (ourLock) {
@@ -81,42 +79,33 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     }
   }
 
+  private File indexFile(File file) {
+    return new File(file.getPath() + "_i");
+  }
+
   protected boolean wantInlineKeyMapping() {
     return false;
   }
 
-  private void initBtree(boolean initial) {
-    btree = new IntToIntBtree(PAGE_SIZE, myRootNodeStart, myStorage, initial) {
-
-      @Override
-      protected int allocEmptyPage() {
-        return PersistentBTreeEnumerator.this.allocPage();
-      }
-
-      @Override
-      void setRootAddress(int newRootAddress) {
-        super.setRootAddress(newRootAddress);
-        myRootNodeStart = newRootAddress;
-      }
-    };
+  private void initBtree(boolean initial) throws IOException {
+    btree = new IntToIntBtree(PAGE_SIZE, indexFile(myFile), initial);
   }
 
   private void storeVars(boolean toDisk) {
     myLogicalFileLength = store(DATA_START, myLogicalFileLength, toDisk);
-    myRootNodeStart = store(DATA_START + 4, myRootNodeStart, toDisk);
-    myDataPageStart = store(DATA_START + 8, myDataPageStart, toDisk);
-    myDataPageOffset = store(DATA_START + 12, myDataPageOffset, toDisk);
-    myFirstPageStart = store(DATA_START + 16, myFirstPageStart, toDisk);
-    myDuplicatedValuesPageStart = store(DATA_START + 20, myDuplicatedValuesPageStart, toDisk);
-    myDuplicatedValuesPageOffset = store(DATA_START + 24, myDuplicatedValuesPageOffset, toDisk);
-    valuesCount = store(DATA_START + 28, valuesCount, toDisk);
-    collisions = store(DATA_START + 32, collisions, toDisk);
+    myDataPageStart = store(DATA_START + 4, myDataPageStart, toDisk);
+    myDataPageOffset = store(DATA_START + 8, myDataPageOffset, toDisk);
+    myFirstPageStart = store(DATA_START + 12, myFirstPageStart, toDisk);
+    myDuplicatedValuesPageStart = store(DATA_START + 16, myDuplicatedValuesPageStart, toDisk);
+    myDuplicatedValuesPageOffset = store(DATA_START + 20, myDuplicatedValuesPageOffset, toDisk);
+    valuesCount = store(DATA_START + 24, valuesCount, toDisk);
+    collisions = store(DATA_START + 28, collisions, toDisk);
     storeBTreeVars(toDisk);
   }
 
   private void storeBTreeVars(boolean toDisk) {
     if (btree != null) {
-      final int BTREE_DATA_START = DATA_START + 36;
+      final int BTREE_DATA_START = DATA_START + 32;
       btree.persistVars(new IntToIntBtree.BtreeDataStorage() {
         @Override
         public int persistInt(int offset, int value, boolean toDisk) {
@@ -140,9 +129,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   @Override
   protected void setupEmptyFile() throws IOException {
     myLogicalFileLength = PAGE_SIZE;
-    myRootNodeStart = (DATA_START / PAGE_SIZE + 1) * PAGE_SIZE;
-
-    allocEmptyPage(myRootNodeStart);
     myFirstPageStart = myDataPageStart = -1;
     myDuplicatedValuesPageStart = -1;
 
@@ -153,19 +139,13 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   @Override
   protected void doClose() throws IOException {
     super.doClose();
-    btree.cleanupOnClose();
-  }
-
-  private int allocEmptyPage(int pageStart) {
-    byte[] buff = new byte[PAGE_SIZE];
-    myStorage.put(pageStart, buff, 0, PAGE_SIZE);
-
-    myLogicalFileLength += PAGE_SIZE;
-    return pageStart;
+    btree.doClose();
   }
 
   private int allocPage() {
-    return allocEmptyPage(myLogicalFileLength);
+    int pageStart = myLogicalFileLength;
+    myLogicalFileLength += PAGE_SIZE;
+    return pageStart;
   }
 
   public boolean processAllDataObject(final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
@@ -211,7 +191,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       int current = myFirstPageStart;
       int currentPage = current;
       int end = myDataPageStart + myDataPageOffset;
-      byte[] recordBuffer = getRecordBuffer();
+      byte[] recordBuffer = getRecordHandler().getRecordBuffer(this);
       int last = PAGE_SIZE - 4;
 
       while(current != end) {
@@ -244,11 +224,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       IntToIntBtree.myAssert(anInt >= 0 || myDataDescriptor instanceof InlineKeyDescriptor);
     }
     return anInt;
-  }
-
-  @Override
-  protected int getRecordSize() {
-    return myInlineKeysNoMapping ? 0:RECORD_SIZE;
   }
 
   protected int enumerateImpl(final Data value, final boolean saveNewValue) throws IOException {
@@ -303,7 +278,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       int newValueId = writeData(value, valueHC);
       ++valuesCount;
 
-      if (valuesCount % 25000 == 0 && IOStatistics.DEBUG) {
+      if (valuesCount % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
         IOStatistics.dump("Index " +
                           myFile +
                           ", values " +
@@ -360,25 +335,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return super.valueOf(idx);
   }
 
-  @Override
-  protected int recordWriteOffset(byte[] buf) {
-    if (myFirstPageStart == -1) {
-      myFirstPageStart = myDataPageStart = allocPage();
-    }
-    if (myDataPageOffset + buf.length + 4 > btree.pageSize) {
-      assert myDataPageOffset + 4 <= btree.pageSize;
-      int prevDataPageStart = myDataPageStart + btree.pageSize - 4;
-      myDataPageStart = allocPage();
-      myStorage.putInt(prevDataPageStart, myDataPageStart);
-      myDataPageOffset = 0;
-    }
-
-    int recordWriteOffset = myDataPageOffset;
-    assert recordWriteOffset + buf.length + 4 <= btree.pageSize;
-    myDataPageOffset += buf.length;
-    return recordWriteOffset + myDataPageStart;
-  }
-
   private int nextDuplicatedValueRecord() {
     if (myDuplicatedValuesPageStart == -1 || myDuplicatedValuesPageOffset == btree.pageSize) {
       myDuplicatedValuesPageStart = allocPage();
@@ -390,19 +346,46 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return myDuplicatedValuesPageStart + duplicatedValueOff;
   }
 
-
-  protected byte[] getRecordBuffer() {
-    return myBuffer;
-  }
-
-  protected void setupRecord(int hashCode, final int dataOffset, final byte[] buf) {
-    if (!myInlineKeysNoMapping) Bits.putInt(buf, 0, dataOffset);
-  }
-
   @Override
   protected void doFlush() throws IOException {
     btree.doFlush();
     storeVars(true);
     super.doFlush();
+  }
+
+  private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentBTreeEnumerator> {
+    private byte[] myBuffer;
+
+    @Override
+    int recordWriteOffset(PersistentBTreeEnumerator enumerator, byte[] buf) {
+      if (enumerator.myFirstPageStart == -1) {
+        enumerator.myFirstPageStart = enumerator.myDataPageStart = enumerator.allocPage();
+      }
+      if (enumerator.myDataPageOffset + buf.length + 4 > enumerator.btree.pageSize) {
+        assert enumerator.myDataPageOffset + 4 <= enumerator.btree.pageSize;
+        int prevDataPageStart = enumerator.myDataPageStart + enumerator.btree.pageSize - 4;
+        enumerator.myDataPageStart = enumerator.allocPage();
+        enumerator.myStorage.putInt(prevDataPageStart, enumerator.myDataPageStart);
+        enumerator.myDataPageOffset = 0;
+      }
+
+      int recordWriteOffset = enumerator.myDataPageOffset;
+      assert recordWriteOffset + buf.length + 4 <= enumerator.btree.pageSize;
+      enumerator.myDataPageOffset += buf.length;
+      return recordWriteOffset + enumerator.myDataPageStart;
+    }
+
+    @Override
+    byte[] getRecordBuffer(PersistentBTreeEnumerator enumerator) {
+      if (myBuffer == null) {
+        myBuffer = new byte[enumerator.myInlineKeysNoMapping ? 0:RECORD_SIZE];
+      }
+      return myBuffer;
+    }
+
+    @Override
+    void setupRecord(PersistentBTreeEnumerator enumerator, int hashCode, int dataOffset, byte[] buf) {
+      if (!enumerator.myInlineKeysNoMapping) Bits.putInt(buf, 0, dataOffset);
+    }
   }
 }

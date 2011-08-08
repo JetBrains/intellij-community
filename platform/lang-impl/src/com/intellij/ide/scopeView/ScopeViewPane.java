@@ -20,10 +20,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.ide.projectView.impl.ShowModulesAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -73,8 +71,10 @@ public class ScopeViewPane extends AbstractProjectViewPane {
         refreshProjectViewAlarm.addRequest(new Runnable(){
           public void run() {
             if (myProject.isDisposed()) return;
+            String subId = getSubId();
             myProjectView.removeProjectPane(ScopeViewPane.this);
             myProjectView.addProjectPane(ScopeViewPane.this);
+            myProjectView.changeView(getId(), subId);
           }
         },10);
       }
@@ -135,6 +135,12 @@ public class ScopeViewPane extends AbstractProjectViewPane {
 
   public void addToolbarActions(DefaultActionGroup actionGroup) {
     actionGroup.add(ActionManager.getInstance().getAction("ScopeView.EditScopes"));
+    actionGroup.addAction(new ShowModulesAction(myProject){
+      @Override
+      protected String getId() {
+        return ScopeViewPane.this.getId();
+      }
+    }).setAsSecondary(true);
   }
 
   public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {

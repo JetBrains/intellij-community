@@ -155,12 +155,14 @@
           </grid>
         </children>
       </splitpane>
-      <grid id="a4d7" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="a4d7" layout-manager="GridLayoutManager" row-count="1" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties/>
+        <properties>
+          <doubleBuffered value="true"/>
+        </properties>
         <border type="none"/>
         <children>
           <component id="85961" class="javax.swing.JCheckBox" binding="myShowWhiteSpacesBox">
@@ -246,6 +248,17 @@
               </component>
             </children>
           </grid>
+          <component id="aa136" class="javax.swing.JCheckBox" binding="myShowBlocksCheckBox">
+            <constraints>
+              <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <label value="Show formatting blocks"/>
+              <margin top="0" left="0" bottom="0" right="0"/>
+              <selected value="true"/>
+              <text value="Show &amp;formatting blocks"/>
+            </properties>
+          </component>
         </children>
       </grid>
       <component id="bd033" class="com.intellij.ui.TitledSeparatorWithMnemonic" binding="myTextSeparator">
