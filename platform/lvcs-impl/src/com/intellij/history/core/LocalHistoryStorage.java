@@ -16,6 +16,7 @@
 package com.intellij.history.core;
 
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.storage.AbstractRecordsTable;
 import com.intellij.util.io.storage.AbstractStorage;
@@ -89,6 +90,13 @@ public class LocalHistoryStorage extends AbstractStorage {
     synchronized (myLock) {
       return ((LocalHistoryRecordsTable)myRecordsTable).getTimestamp(record);
     }
+  }
+
+  public Pair<Long, Integer> getOffsetAndSize(int id) {
+    synchronized (myLock) {
+      return Pair.create(myRecordsTable.getAddress(id), myRecordsTable.getSize(id));
+    }
+
   }
 
   public int createNextRecord() throws IOException {

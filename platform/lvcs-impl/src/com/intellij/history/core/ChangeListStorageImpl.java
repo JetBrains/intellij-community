@@ -26,6 +26,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -130,7 +131,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
                                               "Local History is broken",
                                               message + "<br>" +
                                               "<br>" +
-                                              "Please attach log files from <a href=\"file\">" +logFile + "</a><br>" +
+                                              "Please attach log files from <a href=\"file\">" + logFile + "</a><br>" +
                                               "to the <a href=\"url\">YouTrack issue</a>",
                                               NotificationType.ERROR,
                                               new NotificationListener() {
@@ -171,13 +172,15 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       String message = null;
       if (prevId != 0) {
         try {
+          Pair<Long, Integer> prevOS = myStorage.getOffsetAndSize(prevId);
           long prevRecordTimestamp = myStorage.getTimestamp(prevId);
           int lastRecord = myStorage.getLastRecord();
+          Pair<Long, Integer> lastOS = myStorage.getOffsetAndSize(lastRecord);
           long lastRecordTimestamp = myStorage.getTimestamp(lastRecord);
 
-          message = "invalid record is: " + prevId
+          message = "invalid record is: " + prevId + " offset: " + prevOS.first + " size: " + prevOS.second
                     + " (created " + DateFormat.getDateTimeInstance().format(prevRecordTimestamp) + ") "
-                    + "last record is: " + lastRecord
+                    + "last record is: " + lastRecord + " offset: " + lastOS.first + " size: " + lastOS.second
                     + " (created " + DateFormat.getDateTimeInstance().format(lastRecordTimestamp) + ")";
         }
         catch (Exception e1) {
@@ -216,9 +219,11 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       myStorage.setLastId(myLastId);
       myStorage.force();
 
-      LocalHistoryLog.LOG.info("Block was written: " + id);
+      // todo remove this when bug is found
+      Pair<Long, Integer> os = myStorage.getOffsetAndSize(id);
+      LocalHistoryLog.LOG.info("Block was written: " + id + " offset: " + os.first + " size: " + os.second);
 
-      // todo remove this check when buf is found
+      // todo remove this when bug is found
       if (ApplicationManagerEx.getApplicationEx().isInternal()) {
         try {
           doReadBlock(id);
@@ -246,6 +251,9 @@ public class ChangeListStorageImpl implements ChangeListStorage {
 
       while (eachBlockId != 0) {
         processor.consume(doReadBlock(eachBlockId).changeSet);
+        // todo remove this when bug is found
+        Pair<Long, Integer> os = myStorage.getOffsetAndSize(eachBlockId);
+        LocalHistoryLog.LOG.info("Block was deleted: " + eachBlockId + " offset: " + os.first + " size: " + os.second);
         eachBlockId = doReadPrevSafely(eachBlockId, recursionGuard);
       }
       myStorage.deleteRecordsUpTo(firstObsoleteId);
