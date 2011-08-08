@@ -429,6 +429,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       paintTrackBasement(g, clip);
 
       Document document = myEditor.getDocument();
+      startOffset = yPositionToOffset(clip.y - getMinHeight(), true);
       endOffset = yPositionToOffset(clip.y + clip.height, false);
 
       drawMarkup(g, stripeWidth, startOffset, endOffset, EditorMarkupModelImpl.this);
