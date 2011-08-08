@@ -58,7 +58,7 @@ public class ExecutionUtil {
     String error = e.getMessage();
     HyperlinkListener listener = null;
 
-    if (error.contains("87") &&
+    if ((error.contains("87") || error.contains("111") || error.contains("206")) &&
         e instanceof ProcessNotCreatedException &&
         !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
       final String commandLineString = ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString();
