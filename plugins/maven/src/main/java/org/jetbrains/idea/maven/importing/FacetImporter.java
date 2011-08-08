@@ -16,9 +16,12 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.facet.*;
-import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
+import com.intellij.framework.FrameworkType;
+import com.intellij.framework.detection.DetectionExcludesConfiguration;
+import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -60,7 +63,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
                          MavenProjectChanges changes,
                          MavenModifiableModelsProvider modifiableModelsProvider) {
     prepareImporter(mavenProject);
-    disableFacetAutodetection(module);
+    disableFacetAutodetection(module, modifiableModelsProvider);
     ensureFacetExists(module, mavenProject, modifiableModelsProvider);
   }
 
@@ -78,9 +81,14 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   protected void prepareImporter(MavenProject p) {
   }
 
-  private void disableFacetAutodetection(Module module) {
-    FacetAutodetectingManager m = FacetAutodetectingManager.getInstance(module.getProject());
-    m.disableAutodetectionInModule(myFacetType, module);
+  private void disableFacetAutodetection(Module module, MavenModifiableModelsProvider provider) {
+    final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(module.getProject());
+    final FrameworkType frameworkType = FrameworkDetectionUtil.findFrameworkTypeForFacetDetector(myFacetType);
+    if (frameworkType != null) {
+      for (VirtualFile file : provider.getContentRoots(module)) {
+        excludesConfiguration.addExcludedFile(file, frameworkType);
+      }
+    }
   }
 
   protected abstract void setupFacet(FACET_TYPE f, MavenProject mavenProject);

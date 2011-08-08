@@ -20,7 +20,6 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
-import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
 import com.intellij.facet.impl.invalid.InvalidFacetType;
 import com.intellij.facet.ui.DefaultFacetSettingsEditor;
 import com.intellij.facet.ui.FacetEditor;
@@ -59,9 +58,6 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
     myProject = project;
     myContext = context;
     myFacetType = facetType;
-    if (FacetAutodetectingManager.getInstance(project).hasDetectors(facetType)) {
-      myInitialConfigurables.add(new FacetAutodetectionConfigurable(project, context, facetType));
-    }
 
     if (!(facetType instanceof InvalidFacetType)) {
       C configuration = ProjectFacetManager.getInstance(project).createDefaultConfiguration(facetType);

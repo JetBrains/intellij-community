@@ -24,7 +24,8 @@ import com.intellij.ide.util.projectWizard.ExistingModuleLoader;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -96,101 +96,106 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
     final Map<LibraryDescriptor, Library> projectLibs = new HashMap<LibraryDescriptor, Library>();
     final List<Module> result = new ArrayList<Module>();
-    // create project-level libraries
-    Exception e = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
-      public Exception compute() {
-        try {
-          for (LibraryDescriptor lib : myChosenLibraries) {
-            if (lib.getLevel() == LibraryDescriptor.Level.PROJECT) {
-              final Collection<File> files = lib.getJars();
-              final Library projectLib = projectLibraryTable.createLibrary(lib.getName());
-              final Library.ModifiableModel model = projectLib.getModifiableModel();
-              for (File file : files) {
-                model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
-              }
-              model.commit();
-              projectLibs.put(lib, projectLib);
+    try {
+      AccessToken token = WriteAction.start();
+      try {
+        // create project-level libraries
+        for (LibraryDescriptor lib : myChosenLibraries) {
+          if (lib.getLevel() == LibraryDescriptor.Level.PROJECT) {
+            final Collection<File> files = lib.getJars();
+            final Library projectLib = projectLibraryTable.createLibrary(lib.getName());
+            final Library.ModifiableModel libraryModel = projectLib.getModifiableModel();
+            for (File file : files) {
+              libraryModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
             }
+            libraryModel.commit();
+            projectLibs.put(lib, projectLib);
           }
-          return null;
-        }
-        catch (Exception e) {
-          return e;
         }
       }
-    });
-    if (e != null) {
+      finally {
+        token.finish();
+      }
+    }
+    catch (Exception e) {
       Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", e.getMessage()), IdeBundle.message("title.add.module"));
     }
-    
-    
+
     // create modules and set up dependencies
     final Map<String, String> sourceRootToPrefixMap = new HashMap<String, String>();
     for (Pair<String, String> pair : getSourcePaths()) {
       sourceRootToPrefixMap.put(FileUtil.toSystemIndependentName(pair.getFirst()), pair.getSecond());
     }
     final Map<ModuleDescriptor, Module> descriptorToModuleMap = new HashMap<ModuleDescriptor, Module>();
-    Exception ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
-      public Exception compute() {
-        try {
-          final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
-          for (final ModuleDescriptor moduleDescriptor : myChosenModules) {
-            final Module module;
-            if (moduleDescriptor.isReuseExistingElement()) {
-              final ExistingModuleLoader moduleLoader = ImportImlMode.setUpLoader(FileUtil.toSystemIndependentName(moduleDescriptor.computeModuleFilePath()));
-              module = moduleLoader.createModule(moduleModel);
-            }
-            else {
-              module = createModule(project, moduleDescriptor, sourceRootToPrefixMap, projectLibs, moduleModel);
-            }
-            result.add(module);
-            descriptorToModuleMap.put(moduleDescriptor, module);
+
+    try {
+      AccessToken token = WriteAction.start();
+      try {
+        final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
+        for (final ModuleDescriptor moduleDescriptor : myChosenModules) {
+          final Module module;
+          if (moduleDescriptor.isReuseExistingElement()) {
+            final ExistingModuleLoader moduleLoader =
+              ImportImlMode.setUpLoader(FileUtil.toSystemIndependentName(moduleDescriptor.computeModuleFilePath()));
+            module = moduleLoader.createModule(moduleModel);
           }
-          moduleModel.commit();
+          else {
+            module = createModule(moduleDescriptor, sourceRootToPrefixMap, projectLibs, moduleModel);
+          }
+          result.add(module);
+          descriptorToModuleMap.put(moduleDescriptor, module);
         }
-        catch (Exception e) {
-          return e;
-        }
-        return null;
+        moduleModel.commit();
       }
-    });
-    if (ex != null) {
-      Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()), IdeBundle.message("title.add.module"));
+      finally {
+        token.finish();
+      }
     }
-    
+    catch (Exception e) {
+      Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", e.getMessage()), IdeBundle.message("title.add.module"));
+    }
+
     // setup dependencies between modules
-    ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
-      public Exception compute() {
-        try {
-          for (final ModuleDescriptor descriptor : myChosenModules) {
-            final Module module = descriptorToModuleMap.get(descriptor);
-            if (module == null) {
-              continue;
-            }
-            final Set<ModuleDescriptor> deps = descriptor.getDependencies();
-            if (deps.size() == 0) {
-              continue;
-            }
-            final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-            for (ModuleDescriptor dependentDescriptor : deps) {
-              final Module dependentModule = descriptorToModuleMap.get(dependentDescriptor);
-              if (dependentModule != null) {
-                rootModel.addModuleOrderEntry(dependentModule);
-              }
-            }
-            rootModel.commit();
+    try {
+      AccessToken token = WriteAction.start();
+      try {
+        for (final ModuleDescriptor descriptor : myChosenModules) {
+          final Module module = descriptorToModuleMap.get(descriptor);
+          if (module == null) {
+            continue;
           }
+          final Set<ModuleDescriptor> deps = descriptor.getDependencies();
+          if (deps.size() == 0) {
+            continue;
+          }
+          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+          for (ModuleDescriptor dependentDescriptor : deps) {
+            final Module dependentModule = descriptorToModuleMap.get(dependentDescriptor);
+            if (dependentModule != null) {
+              rootModel.addModuleOrderEntry(dependentModule);
+            }
+          }
+          rootModel.commit();
         }
-        catch (Exception e) {
-          return e;
-        }
-        return null;
       }
-    });
-    
-    if (ex != null) {
-      Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()), IdeBundle.message("title.add.module"));
+      finally {
+        token.finish();
+      }
     }
+    catch (Exception e) {
+      Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", e.getMessage()), IdeBundle.message("title.add.module"));
+    }
+
+    AccessToken token = WriteAction.start();
+    try {
+      for (ProjectConfigurationUpdater updater : myUpdaters) {
+        updater.updateProject(project);
+      }
+    }
+    finally {
+      token.finish();
+    }
+
 
     return result;
   }
@@ -200,7 +205,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
   }
 
   @NotNull
-  public Module createModule(final Project project, final ModuleDescriptor descriptor, final Map<String, String> sourceRootToPrefixMap,
+  private Module createModule(final ModuleDescriptor descriptor, final Map<String, String> sourceRootToPrefixMap,
                              final Map<LibraryDescriptor, Library> projectLibs, final ModifiableModuleModel moduleModel) 
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
 
@@ -210,9 +215,6 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     final Module module = moduleModel.newModule(moduleFilePath, StdModuleTypes.JAVA);
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
     setupRootModel(descriptor, modifiableModel, sourceRootToPrefixMap, projectLibs);
-    for (ProjectConfigurationUpdater updater : myUpdaters) {
-      updater.updateModule(descriptor, module, modifiableModel);
-    }
     modifiableModel.commit();
     return module;
   }
@@ -310,10 +312,8 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     return available.contains(lib);
   }
 
-  public static interface ProjectConfigurationUpdater {
-
-    void updateModule(final ModuleDescriptor descriptor, Module module, ModifiableRootModel rootModel);
-
+  public interface ProjectConfigurationUpdater {
+    void updateProject(@NotNull Project project);
   }
 
   @Override

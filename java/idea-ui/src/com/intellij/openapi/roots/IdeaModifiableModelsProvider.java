@@ -1,5 +1,7 @@
 package com.intellij.openapi.roots;
 
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -21,9 +23,8 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   @Nullable
   public ModifiableRootModel getModuleModifiableModel(final Module module) {
     final Project project = module.getProject();
-    StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
-    if (context != null) {
-      final ModulesConfigurator configurator = context.getModulesConfigurator();
+    final ModulesConfigurator configurator = getModulesConfigurator(project);
+    if (configurator != null) {
       if (!configurator.isModuleModelCommitted()) {
         final ModuleEditor moduleEditor = configurator.getModuleEditor(module);
         if (moduleEditor != null) {
@@ -32,6 +33,12 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
       }
     }
     return ModuleRootManager.getInstance(module).getModifiableModel();
+  }
+
+  @Nullable
+  private static ModulesConfigurator getModulesConfigurator(Project project) {
+    StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+    return context != null ? context.getModulesConfigurator() : null;
   }
 
   public void commitModuleModifiableModel(final ModifiableRootModel model) {
@@ -46,6 +53,23 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
       model.dispose();
     }
     //IDEA should dispose this model instead of us, because it is was given from StructureConfigurableContext
+  }
+
+  @Override
+  public ModifiableFacetModel getFacetModifiableModel(Module module) {
+    final ModulesConfigurator configurator = getModulesConfigurator(module.getProject());
+    if (configurator != null) {
+      return configurator.getFacetsConfigurator().getOrCreateModifiableModel(module);
+    }
+    return FacetManager.getInstance(module).createModifiableModel();
+  }
+
+  @Override
+  public void commitFacetModifiableModel(Module module, ModifiableFacetModel model) {
+    final ModulesConfigurator configurator = getModulesConfigurator(module.getProject());
+    if (configurator == null || !(configurator.getFacetsConfigurator().getFacetModel(module) instanceof ModifiableFacetModel)) {
+      model.commit();
+    }
   }
 
   public LibraryTable.ModifiableModel getLibraryTableModifiableModel() {

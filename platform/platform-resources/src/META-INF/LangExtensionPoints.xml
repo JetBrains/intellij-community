@@ -390,6 +390,8 @@
                   interface="com.intellij.facet.FacetType"/>
   <extensionPoint name="facet.toolWindow"
                   beanClass="com.intellij.facet.ui.FacetDependentToolWindow"/>
+  <extensionPoint name="framework.detector"
+                  interface="com.intellij.framework.detection.FrameworkDetector"/>
 
   <extensionPoint name="methodNavigationOffsetProvider"
                   interface="com.intellij.codeInsight.navigation.MethodNavigationOffsetProvider"/>

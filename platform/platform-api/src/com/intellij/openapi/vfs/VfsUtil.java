@@ -251,7 +251,7 @@ public class VfsUtil {
       ancestorsList.add(ancestor);
       filesSet.clear();
     }
-    return VfsUtil.toVirtualFileArray(ancestorsList);
+    return toVirtualFileArray(ancestorsList);
   }
 
   /**
@@ -262,6 +262,7 @@ public class VfsUtil {
    * @return common ancestor for the passed files. Returns <code>null</code> if
    *         the files do not have common ancestor
    */
+  @Nullable
   public static VirtualFile getCommonAncestor(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     if (!file1.getFileSystem().equals(file2.getFileSystem())) {
       return null;
@@ -270,27 +271,34 @@ public class VfsUtil {
     VirtualFile[] path1 = getPathComponents(file1);
     VirtualFile[] path2 = getPathComponents(file2);
 
-    VirtualFile[] minLengthPath;
-    VirtualFile[] maxLengthPath;
-    if (path1.length < path2.length) {
-      minLengthPath = path1;
-      maxLengthPath = path2;
-    }
-    else {
-      minLengthPath = path2;
-      maxLengthPath = path1;
-    }
-
     int lastEqualIdx = -1;
-    for (int i = 0; i < minLengthPath.length; i++) {
-      if (minLengthPath[i].equals(maxLengthPath[i])) {
+    for (int i = 0; i < path1.length && i < path2.length; i++) {
+      if (path1[i].equals(path2[i])) {
         lastEqualIdx = i;
       }
       else {
         break;
       }
     }
-    return lastEqualIdx == -1 ? null : minLengthPath[lastEqualIdx];
+    return lastEqualIdx == -1 ? null : path1[lastEqualIdx];
+  }
+
+  /**
+   * Gets the common ancestor for passed files, or {@code null} if the files do not have common ancestors.
+   */
+  @Nullable
+  public static VirtualFile getCommonAncestor(@NotNull Collection<? extends VirtualFile> files) {
+    VirtualFile ancestor = null;
+    for (VirtualFile file : files) {
+      if (ancestor == null) {
+        ancestor = file;
+      }
+      else {
+        ancestor = getCommonAncestor(ancestor, file);
+        if (ancestor == null) return null;
+      }
+    }
+    return ancestor;
   }
 
   /**

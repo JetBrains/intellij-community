@@ -44,7 +44,7 @@ import java.util.List;
 * @author nik
 */
 class AddFacetOfTypeAction extends DumbAwareAction {
-  private FacetStructureConfigurable myFacetStructureConfigurable;
+  private final FacetStructureConfigurable myFacetStructureConfigurable;
 
   AddFacetOfTypeAction(FacetStructureConfigurable facetStructureConfigurable) {
     super("New Facet", null, PlatformIcons.ADD_ICON);

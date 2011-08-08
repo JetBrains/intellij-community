@@ -32,7 +32,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.module.StdModuleTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,14 +69,14 @@ public class CreateFromSourcesMode extends WizardMode {
     sequence.addCommonStep(new ModulesDetectionStep(projectBuilder, moduleInsight, icon, "reference.dialogs.new.project.fromCode.page2"));
     sequence.addCommonStep(factory.createProjectJdkStep(context));
 
-    if (FacetDetectionStep.isEnabled(StdModuleTypes.JAVA)) {
-      FacetDetectionStep facetDetectionStep = new FacetDetectionStep(icon, StdModuleTypes.JAVA) {
-        protected List<ModuleDescriptor> getModuleDescriptors() {
+    if (FrameworkDetectionStep.isEnabled()) {
+      FrameworkDetectionStep frameworkDetectionStep = new FrameworkDetectionStep(icon, projectBuilder) {
+        public List<ModuleDescriptor> getModuleDescriptors() {
           return projectBuilder.getModules();
         }
       };
-      projectBuilder.addConfigurationUpdater(facetDetectionStep);
-      sequence.addCommonStep(facetDetectionStep);
+      projectBuilder.addConfigurationUpdater(frameworkDetectionStep);
+      sequence.addCommonStep(frameworkDetectionStep);
     }
 
     return sequence;

@@ -5,7 +5,7 @@
       <keyboard-shortcut first-keystroke="shift alt BACK_SPACE" />
       <keyboard-shortcut first-keystroke="control Y" />
     </action>
-    <action id="ActivateCommanderToolWindow" />
+    <action id="ActivateFavoritesToolWindow" />
     <action id="ActivateFindToolWindow">
       <keyboard-shortcut first-keystroke="shift alt U" />
       <keyboard-shortcut first-keystroke="shift control 0" />

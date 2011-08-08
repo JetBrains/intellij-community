@@ -15,8 +15,10 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 
 @NonNls public class PsiTestUtil {
@@ -185,6 +188,28 @@ import java.util.Collection;
       }
     }
     return null;
+  }
+
+  public static void addExcludedRoot(Module module, VirtualFile dir) {
+    AccessToken token = WriteAction.start();
+    try {
+      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      boolean added = false;
+      for (ContentEntry entry : model.getContentEntries()) {
+        if (VfsUtil.isAncestor(entry.getFile(), dir, false)) {
+          entry.addExcludeFolder(dir);
+          added = true;
+          break;
+        }
+      }
+      if (!added) {
+        throw new RuntimeException(dir + " is not under content roots: " + Arrays.toString(model.getContentRoots()));
+      }
+      model.commit();
+    }
+    finally {
+      token.finish();
+    }
   }
 
   public static void removeContentEntry(final Module module, final ContentEntry e) {

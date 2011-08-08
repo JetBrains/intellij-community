@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots;
 
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,9 @@ public interface ModifiableModelsProvider {
   ModifiableRootModel getModuleModifiableModel(final Module module);
   void commitModuleModifiableModel(final ModifiableRootModel model);
   void disposeModuleModifiableModel(final ModifiableRootModel model);
+
+  ModifiableFacetModel getFacetModifiableModel(Module module);
+  void commitFacetModifiableModel(Module module, ModifiableFacetModel model);
 
   LibraryTable.ModifiableModel getLibraryTableModifiableModel();
   LibraryTable.ModifiableModel getLibraryTableModifiableModel(Project project);

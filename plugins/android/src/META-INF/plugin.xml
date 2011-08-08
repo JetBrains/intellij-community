@@ -108,6 +108,7 @@
     <configurationType implementation="org.jetbrains.android.run.testing.AndroidTestRunConfigurationType"/>
     <programRunner implementation="org.jetbrains.android.run.AndroidDebugRunner"/>
     <facetType implementation="org.jetbrains.android.facet.AndroidFacetType"/>
+    <framework.detector implementation="org.jetbrains.android.facet.AndroidFrameworkDetector"/>
     <fileTemplateGroup implementation="org.jetbrains.android.AndroidFileTemplateProvider"/>
     <moduleType id="ANDROID_MODULE" implementationClass="org.jetbrains.android.newProject.AndroidModuleType" classpathProvider="true"/>
     <moduleConfigurationEditorProvider implementation="org.jetbrains.android.newProject.AndroidModuleConfigurationEditorProvider"/>
