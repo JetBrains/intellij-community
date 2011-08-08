@@ -453,7 +453,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
             if (prev == null) continue;
 
             if (prev.getID() == KeyEvent.KEY_PRESSED) {
-              if (prev.getKeyCode() == each.getKeyCode()) {
+              if (prev.getKeyCode() == each.getKeyCode() || prev.getKeyChar() == each.getKeyChar()) {
                 toDispatch = true;
                 events[i] = null;
                 break;

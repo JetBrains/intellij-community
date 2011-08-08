@@ -42,7 +42,7 @@ public class CallCommand extends AbstractCommand {
 
   @Override
   protected ActionCallback _execute(final PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
-    final ActionCallback.Done cmdResult = new ActionCallback.Done();
+    final ActionCallback cmdResult = new ActionCallback();
 
     final String cmd = getText().substring(PREFIX.length()).trim();
     final int open = cmd.indexOf("(");

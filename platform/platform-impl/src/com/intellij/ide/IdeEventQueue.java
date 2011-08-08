@@ -435,8 +435,9 @@ public class IdeEventQueue extends EventQueue {
       enterSuspendModeIfNeeded(e);
     }
 
+    myKeyboardBusy = (e instanceof KeyEvent) || peekEvent(KeyEvent.KEY_PRESSED) != null || peekEvent(KeyEvent.KEY_RELEASED) != null || peekEvent(KeyEvent.KEY_TYPED) != null;
+
     if (e instanceof KeyEvent) {
-      myKeyboardBusy = e.getID() != KeyEvent.KEY_RELEASED || ((KeyEvent)e).getModifiers() != 0;
       if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
         myMouseEventDispatcher.resetHorScrollingTracker();
       }
