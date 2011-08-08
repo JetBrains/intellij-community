@@ -459,7 +459,9 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
       myEditor = null;
       myHyperlinks = null;
     }
-    myJLayeredPane.dispose();
+    if (myJLayeredPane != null) {
+      myJLayeredPane.dispose();
+    }
   }
 
   protected void disposeEditor() {
