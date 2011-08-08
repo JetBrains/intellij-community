@@ -79,6 +79,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -1351,6 +1352,12 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
       }
     }
     return result;
+  }
+
+  @Override
+  public void setBorder(Border border) {
+    createCenterComponent();
+    myMainPanel.setBorder(border);
   }
 
   protected void scrollToTheEnd() {

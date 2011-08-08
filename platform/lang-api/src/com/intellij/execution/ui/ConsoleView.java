@@ -21,6 +21,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.border.Border;
+
 public interface ConsoleView extends ExecutionConsole{
   void print(String s, ConsoleViewContentType contentType);
   void clear();
@@ -47,4 +49,6 @@ public interface ConsoleView extends ExecutionConsole{
 
   @NotNull
   AnAction[] createConsoleActions();
+
+  void setBorder(final Border border);
 }
