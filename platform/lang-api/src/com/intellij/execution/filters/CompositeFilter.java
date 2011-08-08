@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
@@ -51,7 +52,10 @@ public class CompositeFilter implements Filter, FilterMixin {
   }
 
   @Override
-  public void applyHeavyFilter(String line, int entireLength, int lineNumber, Consumer<AdditionalHighlight> consumer) {
+  public void applyHeavyFilter(Document copiedFragment,
+                               int startOffset,
+                               int startLineNumber,
+                               Consumer<AdditionalHighlight> consumer) {
     final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
@@ -60,7 +64,7 @@ public class CompositeFilter implements Filter, FilterMixin {
       Filter filter = filters.get(i);
       if (! (filter instanceof FilterMixin)) continue;
       if (!dumb || DumbService.isDumbAware(filter)) {
-        ((FilterMixin) filter).applyHeavyFilter(line, entireLength, lineNumber, consumer);
+        ((FilterMixin) filter).applyHeavyFilter(copiedFragment, startOffset, startLineNumber, consumer);
       }
     }
   }

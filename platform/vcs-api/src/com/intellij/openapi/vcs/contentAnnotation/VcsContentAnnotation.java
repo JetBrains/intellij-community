@@ -15,9 +15,10 @@
  */
 package com.intellij.openapi.vcs.contentAnnotation;
 
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.RichTextItem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.BeforeAfter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -29,8 +30,12 @@ import java.util.List;
  * Time: 12:50 PM
  */
 public interface VcsContentAnnotation {
+  boolean fileRecentlyChanged(final VirtualFile vf);
+
+  boolean intervalRecentlyChanged(VirtualFile file, final TextRange lineInterval);
+
   @Nullable
-  Details annotateLine(final VirtualFile vf, final BeforeAfter<Integer> enclosingRange, final int lineNumber);
+  Details annotateLine(final VirtualFile vf, final Getter<TextRange> enclosingRange, final int lineNumber);
   
   class Details {
     private final boolean myLineChanged;

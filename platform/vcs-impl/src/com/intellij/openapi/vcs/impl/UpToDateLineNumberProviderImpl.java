@@ -29,20 +29,54 @@ import java.util.List;
 public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvider {
   private final Document myDocument;
   private final Project myProject;
-  private final String myUpToDateContent;
+  private final LineStatusTrackerManagerI myLineStatusTrackerManagerI;
 
-  public UpToDateLineNumberProviderImpl(Document document, Project project, String upToDateContent) {
+  public UpToDateLineNumberProviderImpl(Document document, Project project) {
     myDocument = document;
     myProject = project;
-    myUpToDateContent = upToDateContent;
+    myLineStatusTrackerManagerI = LineStatusTrackerManager.getInstance(myProject);
   }
 
   public int getLineNumber(int currentNumber) {
-    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myDocument);
+    LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
     if (tracker == null) {
       return currentNumber;
     }
     return calcLineNumber(tracker, currentNumber);
+  }
+  
+  public boolean isRangeChanged(final int start, final int end) {
+    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myDocument);
+    if (tracker == null) {
+      return false;
+    }
+    for (Range range : tracker.getRanges()) {
+      if (lineInRange(range, start) || lineInRange(range, end)) {
+        return true;
+      }
+      if (range.getOffset1() > start) {
+        return range.getOffset1() < end;
+      }
+    }
+    return false;
+  }
+  
+  private static boolean lineInRange(final Range range, final int currentNumber) {
+    return range.getOffset1() <= currentNumber && range.getOffset2() >= currentNumber;
+  }
+
+  @Override
+  public boolean isLineChanged(int currentNumber) {
+    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myDocument);
+    if (tracker == null) {
+      return false;
+    }
+    for (Range range : tracker.getRanges()) {
+      if (range.getOffset1() <= currentNumber && range.getOffset2() >= currentNumber) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean endsWithSeparator(final CharSequence string) {

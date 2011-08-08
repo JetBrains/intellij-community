@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.filters;
+package com.intellij.openapi.vcs.contentAnnotation;
 
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.execution.filters.ExceptionFilterFactory;
+import com.intellij.execution.filters.Filter;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NotNull;
 
-public class ExceptionFilter implements Filter, DumbAware {
-  private final GlobalSearchScope myScope;
-
-  public ExceptionFilter(@NotNull final GlobalSearchScope scope) {
-    myScope = scope;
-  }
-
-  public Result applyFilter(final String line, final int textEndOffset) {
-    ExceptionWorker worker = new ExceptionWorker(myScope.getProject(), myScope);
-    worker.execute(line, textEndOffset);
-    return worker.getResult();
+/**
+ * Created by IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 8/5/11
+ * Time: 8:03 PM
+ */
+public class VcsContentAnnotationExceptionFilterFactory implements ExceptionFilterFactory {
+  @Override
+  public Filter create(GlobalSearchScope searchScope) {
+    return new VcsContentAnnotationExceptionFilter(searchScope);
   }
 }

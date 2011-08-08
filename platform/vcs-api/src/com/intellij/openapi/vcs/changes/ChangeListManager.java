@@ -150,4 +150,12 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract void letGo();
   public abstract String isFreezed();
   public abstract boolean isFreezedWithNotification(@Nullable String modalTitle);
+  
+  public static boolean isFileChanged(final Project project, final VirtualFile vf) {
+    FileStatus status = getInstance(project).getStatus(vf);
+    if (status == null || FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) || FileStatus.IGNORED.equals(status)) {
+      return false;
+    }
+    return true;
+  }
 }

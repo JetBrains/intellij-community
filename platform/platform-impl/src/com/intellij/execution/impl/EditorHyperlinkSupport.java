@@ -308,6 +308,7 @@ public class EditorHyperlinkSupport {
     }, i, ranges.size());
   }
 
+  // todo fix link followed here!
   private static void linkFollowed(Editor editor, Collection<RangeHighlighter> ranges, final RangeHighlighter link) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
     for (RangeHighlighter range : ranges) {
@@ -325,6 +326,7 @@ public class EditorHyperlinkSupport {
         attributes.setEffectType(oldAttributes.getEffectType());
         attributes.setEffectColor(oldAttributes.getEffectColor());
         attributes.setForegroundColor(oldAttributes.getForegroundColor());
+        attributes.setBackgroundColor(oldAttributes.getBackgroundColor());
         markupModel.setRangeHighlighterAttributes(range, attributes);
       }
     }

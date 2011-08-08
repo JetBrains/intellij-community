@@ -19,4 +19,6 @@ public interface UpToDateLineNumberProvider {
   int ABSENT_LINE_NUMBER = -1;
 
   int getLineNumber(int currentNumber);
+  boolean isLineChanged(int currentNumber);
+  boolean isRangeChanged(final int start, final int end);
 }

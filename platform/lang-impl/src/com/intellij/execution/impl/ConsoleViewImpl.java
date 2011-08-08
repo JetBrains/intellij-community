@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -60,10 +61,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MyLayeredPane;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -405,7 +403,8 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
       /*JPanel wrapper = new JPanel(new BorderLayout());
       wrapper.add(myAsyncProcessIcon, BorderLayout.NORTH);
       wrapper.setOpaque(false);*/
-      myJLayeredPane.add(myAsyncProcessIcon, BorderLayout.NORTH, JLayeredPane.DRAG_LAYER);
+
+      //myJLayeredPane.add(myAsyncProcessIcon, BorderLayout.NORTH, JLayeredPane.DRAG_LAYER);
 
       myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
@@ -816,45 +815,41 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
     if (canHighlightHyperlinks) {
       myHyperlinks.highlightHyperlinks(myCustomFilter, myPredefinedMessageFilter, line1, endLine);
     }
+    
     if (myPredefinedMessageFilter.isAnyHeavy()) {
-      final Document document = getEditor().getDocument();
       final int startLine = Math.max(0, line1);
-      for (int line = startLine; line <= endLine; line++) {
-        int endOffset = document.getLineEndOffset(line);
-        if (endOffset < document.getTextLength()) {
-          endOffset++; // add '\n'
-        }
-        final String lineText = EditorHyperlinkSupport.getLineText(document, line, true);
-        assert myHeavyAlarm != null;
-        final int finalEndOffset = endOffset;
-        final int finalLine = line;
-        myAsyncProcessIcon.resume();
-        myHeavyAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            myPredefinedMessageFilter.applyHeavyFilter(lineText, finalEndOffset, finalLine, new Consumer<FilterMixin.AdditionalHighlight>() {
-              @Override
-              public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
-                SwingUtilities.invokeLater(
-                  new Runnable() {
-                    @Override
-                    public void run() {
-                      myFlushAlarm.addRequest(new Runnable() {
-                        @Override
-                        public void run() {
-                          myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
-                        }
-                      }, 0);
-                    }
-                  });
-              }
-            });
-            if (myHeavyAlarm.getActiveRequestCount() == 0) {
-              myAsyncProcessIcon.suspend();
+
+      final Document document = getEditor().getDocument();
+      final Document documentCopy = new DocumentImpl(true);
+      final int startOffset = document.getLineStartOffset(startLine);
+      documentCopy.setText(new String(document.getText(new TextRange(startOffset, document.getLineEndOffset(endLine)))));
+      documentCopy.setReadOnly(true);
+
+      myHeavyAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          myPredefinedMessageFilter.applyHeavyFilter(documentCopy, startOffset, startLine, new Consumer<FilterMixin.AdditionalHighlight>() {
+            @Override
+            public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
+              SwingUtilities.invokeLater(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    myFlushAlarm.addRequest(new Runnable() {
+                      @Override
+                      public void run() {
+                        myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
+                      }
+                    }, 0);
+                  }
+                });
             }
+          });
+          if (myHeavyAlarm.getActiveRequestCount() == 0) {
+            myAsyncProcessIcon.suspend();
           }
-        }, 0);
-      }
+        }
+      }, 0);
     }
     if (myUpdateFoldingsEnabled) {
       updateFoldings(line1, endLine, true);

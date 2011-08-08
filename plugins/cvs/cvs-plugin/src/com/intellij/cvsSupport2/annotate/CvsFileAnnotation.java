@@ -155,6 +155,14 @@ public class CvsFileAnnotation implements FileAnnotation{
     return null;
   }
 
+  @Override
+  public Date getLineDate(int lineNumber) {
+    if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
+      return null;
+    }
+    return myAnnotations[lineNumber].getDate();
+  }
+
   public VcsRevisionNumber originalRevision(int lineNumber) {
     return getLineRevisionNumber(lineNumber);
   }
