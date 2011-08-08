@@ -115,6 +115,8 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
   private final Alarm mySpareTimeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   @Nullable
   private final Alarm myHeavyAlarm;
+  @Nullable
+  private int myHeavyUpdateTicket;
 
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
   private final ArrayList<AnAction> customActions = new ArrayList<AnAction>();
@@ -291,6 +293,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
         myPredefinedMessageFilter.addFilter(filter);
       }
     }
+    myHeavyUpdateTicket = 0;
     if (myPredefinedMessageFilter.isAnyHeavy()) {
       myHeavyAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this);
     } else {
@@ -327,6 +330,10 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
     }
     myFlushAlarm.cancelAllRequests();
     myFlushAlarm.addRequest(myClearRequest, 0, getStateForUpdate());
+    if (myHeavyAlarm != null) {
+      myHeavyAlarm.cancelAllRequests();
+      ++ myHeavyUpdateTicket;
+    }
   }
 
   public void scrollTo(final int offset) {
@@ -826,6 +833,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
       documentCopy.setReadOnly(true);
 
       myJLayeredPane.startUpdating();
+      final int currentValue = myHeavyUpdateTicket;
       myHeavyAlarm.addRequest(new Runnable() {
         @Override
         public void run() {
@@ -839,6 +847,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
                     myFlushAlarm.addRequest(new Runnable() {
                       @Override
                       public void run() {
+                        if (myHeavyUpdateTicket != currentValue) return;
                         myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
                       }
                     }, 0);
