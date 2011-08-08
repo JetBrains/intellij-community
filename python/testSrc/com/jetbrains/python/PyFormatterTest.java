@@ -117,6 +117,11 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testSpaceInMethodDeclaration() {  // PY-4241
+    CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).SPACE_BEFORE_METHOD_PARENTHESES = true;
+    doTest();
+  }
+
   public void testPsiFormatting() { // IDEA-69724
     String initial =
       "def method_name(\n" +

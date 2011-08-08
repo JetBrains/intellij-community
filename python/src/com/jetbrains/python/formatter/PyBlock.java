@@ -381,6 +381,9 @@ public class PyBlock implements ASTBlock {
     if (type2 == PyElementTypes.ARGUMENT_LIST) {
       return getSpacingForOption(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
     }
+    if (type2 == PyElementTypes.PARAMETER_LIST) {
+      return getSpacingForOption(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
+    }
 
     if (type1 == PyTokenTypes.EQ || type2 == PyTokenTypes.EQ) {
       if (parentType == PyElementTypes.ASSIGNMENT_STATEMENT) {

@@ -33,6 +33,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) {
       consumer.showStandardOptions("SPACE_BEFORE_METHOD_CALL_PARENTHESES",
+                                   "SPACE_BEFORE_METHOD_PARENTHESES",
                                    "SPACE_AROUND_ASSIGNMENT_OPERATORS",
                                    "SPACE_AROUND_EQUALITY_OPERATORS",
                                    "SPACE_AROUND_RELATIONAL_OPERATORS",
