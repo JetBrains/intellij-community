@@ -60,7 +60,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MyLayeredPane;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
@@ -73,7 +72,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.AsyncProcessIcon;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -122,9 +120,9 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
   private final ConsoleBuffer myBuffer = new ConsoleBuffer();
   private boolean myUpdateFoldingsEnabled = true;
   private EditorHyperlinkSupport myHyperlinks;
-  private AsyncProcessIcon myAsyncProcessIcon;
-  private JLayeredPane myJLayeredPane;
+  private MyDiffContainer myJLayeredPane;
   private JPanel myMainPanel;
+  private final Runnable myFinishProgress;
 
   @TestOnly
   public Editor getEditor() {
@@ -299,6 +297,12 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
     }
 
     Disposer.register(project, this);
+    myFinishProgress = new Runnable() {
+      @Override
+      public void run() {
+        myJLayeredPane.finishUpdating();
+      }
+    };
   }
 
   public void attachToProcess(final ProcessHandler processHandler) {
@@ -386,25 +390,17 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
   }
 
   public JComponent getComponent() {
-    myJLayeredPane = new MyLayeredPane();
-    myJLayeredPane.setLayout(new BorderLayout());
+    if (myMainPanel == null) {
+      myMainPanel = new JPanel(new BorderLayout());
+      myJLayeredPane = new MyDiffContainer(myMainPanel, "Checking recent changes...");
+    }
+
     if (myEditor == null) {
       myEditor = createEditor();
       myHyperlinks = new EditorHyperlinkSupport(myEditor, myProject);
       requestFlushImmediately();
-      myMainPanel = new JPanel(new BorderLayout());
       myMainPanel.add(createCenterComponent(), BorderLayout.CENTER);
-      myJLayeredPane.add(myMainPanel, BorderLayout.CENTER, JLayeredPane.DEFAULT_LAYER);
 
-      myAsyncProcessIcon = new AsyncProcessIcon(toString()).setUseMask(false);
-      myAsyncProcessIcon.setOpaque(false);
-      myAsyncProcessIcon.setPaintPassiveIcon(false);
-      myAsyncProcessIcon.suspend();
-      /*JPanel wrapper = new JPanel(new BorderLayout());
-      wrapper.add(myAsyncProcessIcon, BorderLayout.NORTH);
-      wrapper.setOpaque(false);*/
-
-      //myJLayeredPane.add(myAsyncProcessIcon, BorderLayout.NORTH, JLayeredPane.DRAG_LAYER);
 
       myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
@@ -438,7 +434,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
         }
       });
     }
-    return myMainPanel;
+    return myJLayeredPane;
   }
 
   protected JComponent createCenterComponent() {
@@ -462,6 +458,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
       myEditor = null;
       myHyperlinks = null;
     }
+    myJLayeredPane.dispose();
   }
 
   protected void disposeEditor() {
@@ -825,6 +822,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
       documentCopy.setText(new String(document.getText(new TextRange(startOffset, document.getLineEndOffset(endLine)))));
       documentCopy.setReadOnly(true);
 
+      myJLayeredPane.startUpdating();
       myHeavyAlarm.addRequest(new Runnable() {
         @Override
         public void run() {
@@ -846,7 +844,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
             }
           });
           if (myHeavyAlarm.getActiveRequestCount() == 0) {
-            myAsyncProcessIcon.suspend();
+            SwingUtilities.invokeLater(myFinishProgress);
           }
         }
       }, 0);
