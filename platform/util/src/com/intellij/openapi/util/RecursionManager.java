@@ -17,15 +17,15 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.MultiMapBasedOnSet;
 import com.intellij.util.containers.SoftHashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * There are moments when a computation A requires the result of computation B, which in turn requires C, which (unexpectedly) requires A.
@@ -75,6 +75,10 @@ public class RecursionManager {
         if (memoize) {
           Object o = stack.getMemoizedValue(realKey);
           if (o != null) {
+            for (MyKey noCacheUntil : stack.toProhibitCachingOnMemo.get(realKey)) {
+              stack._prohibitResultCaching(noCacheUntil);
+            }
+
             //noinspection unchecked
             return o == NULL ? null : (T)o;
           }
@@ -124,7 +128,7 @@ public class RecursionManager {
 
       @Override
       public void prohibitResultCaching(Object since) {
-        ourStack.get()._prohibitResultCaching(since, id);
+        ourStack.get()._prohibitResultCaching(new MyKey(id, since));
         ourStack.get().memoizationStamp++;
       }
 
@@ -142,11 +146,14 @@ public class RecursionManager {
     private int memoizationStamp;
     private int depth;
     private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<MyKey, Integer>();
-    private final Map<MyKey, SoftReference> intermediateCache = new SoftHashMap<MyKey, SoftReference>();
+    private final Set<MyKey> toMemoize = new THashSet<MyKey>();
+    private final MultiMap<MyKey, MyKey> toClearMemoized = new MultiMapBasedOnSet<MyKey, MyKey>();
+    private final MultiMap<MyKey, MyKey> toProhibitCachingOnMemo = new MultiMapBasedOnSet<MyKey, MyKey>();
+    private final SoftHashMap<MyKey, SoftReference> intermediateCache = new SoftHashMap<MyKey, SoftReference>();
 
     boolean checkReentrancy(MyKey realKey) {
       if (progressMap.containsKey(realKey)) {
-        _prohibitResultCaching(realKey.second, realKey.first);
+        _prohibitResultCaching(realKey);
 
         return true;
       }
@@ -166,8 +173,8 @@ public class RecursionManager {
     }
 
     final void beforeComputation(MyKey realKey) {
-      if (progressMap.isEmpty() && reentrancyCount != 0) {
-        throw new AssertionError("Non-zero stamp with empty stack: " + reentrancyCount);
+      if (progressMap.isEmpty()) {
+        assert reentrancyCount == 0 : "Non-zero stamp with empty stack: " + reentrancyCount;
       }
 
       checkDepth("1");
@@ -185,7 +192,7 @@ public class RecursionManager {
     }
 
     final void maybeMemoize(MyKey realKey, @NotNull Object result, int startStamp) {
-      if (memoizationStamp == startStamp) {
+      if (memoizationStamp == startStamp && toMemoize.contains(realKey)) {
         intermediateCache.put(realKey, new SoftReference<Object>(result));
       }
     }
@@ -195,46 +202,60 @@ public class RecursionManager {
         LOG.error("Map size changed: " + progressMap.size() + " " + sizeAfter + " " + realKey.second);
       }
 
+      if (depth != progressMap.size()) {
+        LOG.error("Inconsistent depth after computation; depth=" + depth + "; map=" + progressMap);
+      }
+
       depth--;
       Integer value = progressMap.remove(realKey);
+      toMemoize.remove(realKey);
+      final Collection<MyKey> stale = toClearMemoized.remove(realKey);
+      if (stale != null) {
+        intermediateCache.keySet().removeAll(stale);
+        toProhibitCachingOnMemo.keySet().removeAll(stale);
+      }
+
+      if (depth == 0) {
+        assert intermediateCache.isEmpty() : "non-empty intermediateCache";
+        assert toProhibitCachingOnMemo.isEmpty() : "non-empty toProhibitCachingOnMemo";
+        assert toClearMemoized.isEmpty() : "non-empty toClearMemoized";
+        assert toMemoize.isEmpty() : "non-empty toMemoize";
+      }
 
       if (sizeBefore != progressMap.size()) {
         LOG.error("Map size doesn't decrease: " + progressMap.size() + " " + sizeBefore + " " + realKey.second);
       }
 
-      if (value == null) {
-        throw new AssertionError(realKey.second + " has changed its equals/hashCode");
-      }
+      assert value != null : realKey.second + " has changed its equals/hashCode";
 
       reentrancyCount = value;
-      if (value == 0) {
-        intermediateCache.clear();
-      }
-      else if (progressMap.isEmpty()) {
-        intermediateCache.clear();
-        throw new AssertionError("Non-zero stamp for empty progress map: " + realKey.second + ", " + value);
-      } else {
-        checkZero();
-      }
+      checkZero();
 
-      checkDepth("3");
-
+      checkDepth("4");
     }
 
-    private void _prohibitResultCaching(Object since, String id) {
+    private void _prohibitResultCaching(MyKey realKey) {
       reentrancyCount++;
 
       checkZero();
 
+      Set<MyKey> memo = new THashSet<MyKey>();
       boolean inLoop = false;
       for (Map.Entry<MyKey, Integer> entry: progressMap.entrySet()) {
         if (inLoop) {
           entry.setValue(reentrancyCount);
+          memo.add(entry.getKey());
         }
-        else if (entry.getKey().first.equals(id) && entry.getKey().second.equals(since)) {
+        else if (entry.getKey().equals(realKey)) {
           inLoop = true;
         }
       }
+
+      toMemoize.addAll(memo);
+      for (MyKey key : memo) {
+        toProhibitCachingOnMemo.putValue(key, realKey);
+      }
+      toClearMemoized.putValues(realKey, memo);
 
       checkZero();
     }
