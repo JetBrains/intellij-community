@@ -62,7 +62,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         }
 
         if (scrollbar != null) {
-          scrollbar.repaint();
+          scrollbar.repaint(((ButtonlessScrollBarUI)scrollbar.getUI()).getThumbBounds());
         }
       }
     };
