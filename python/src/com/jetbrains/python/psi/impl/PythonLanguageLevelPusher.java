@@ -177,7 +177,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     }
   }
 
-  public static void setForcedLanguageLevel(final Project project, LanguageLevel languageLevel) {
+  public static void setForcedLanguageLevel(final Project project, @Nullable LanguageLevel languageLevel) {
     FORCE_LANGUAGE_LEVEL = languageLevel;
     pushLanguageLevel(project);
   }

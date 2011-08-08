@@ -112,6 +112,7 @@ public class PyStringFormatInspection extends PyInspection {
           final PyCallExpression.PyMarkedCallee markedFunction = ((PyCallExpression)rightExpression).resolveCallee(myTypeEvalContext);
           if (markedFunction != null && !markedFunction.isImplicitlyResolved()) {
             final Callable callable = markedFunction.getCallable();
+            // TODO: Switch to Callable.getReturnType()
             if (callable instanceof PyFunction && myTypeEvalContext.maySwitchToAST((PyFunction) callable)) {
               PyStatementList statementList = ((PyFunction)callable).getStatementList();
               PyReturnStatement[] returnStatements = PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
@@ -304,7 +305,7 @@ public class PyStringFormatInspection extends PyInspection {
         if (expected != null && "str".equals(expected.getName())) {
           return;
         }
-        if (actual != null && !PyTypeCheckerInspection.match(expected, actual, myTypeEvalContext)) {
+        if (actual != null && !PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
           registerProblem(problemTarget, PyBundle.message("INSP.unexpected.type.$0", actual.getName()));
         }
       }

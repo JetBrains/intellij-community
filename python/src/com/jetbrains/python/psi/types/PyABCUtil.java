@@ -9,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
  * @author vlan
  */
 public class PyABCUtil {
+  private PyABCUtil() {
+  }
+
   public static boolean isSubclass(@NotNull PyClass subClass, @NotNull PyClass superClass) {
     final String superName = superClass.getName();
     if (superName != null) {

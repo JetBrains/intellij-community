@@ -1,6 +1,8 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -20,4 +22,7 @@ public interface PyBinaryExpression extends PyExpression {
 
   PyExpression getOppositeExpression(PyExpression expression)
       throws IllegalArgumentException;
+
+  @Nullable
+  PsiReference getReference(PyResolveContext resolveContext);
 }

@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     @Nullable final TextRange rangeInElement,
     final LocalQuickFix... fixes)
   {
-    if (myHolder != null) {
+    if (myHolder != null && !(psiElement instanceof PsiErrorElement)) {
       myHolder.registerProblem(new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false,
                                                          rangeInElement, hintAction, myHolder.isOnTheFly()));
     }

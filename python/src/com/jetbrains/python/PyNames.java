@@ -102,6 +102,20 @@ public class PyNames {
     "__version__"
   );
 
+  /**
+   * These operators have a fallback implementation if they are not defined for a class
+   */
+  public static ImmutableSet<String> OPERATORS_WITH_FALLBACK = ImmutableSet.of(
+    "__eq__",
+    "__ne__",
+    "__lt__",
+    "__le__",
+    "__gt__",
+    "__ge__",
+    "__cmp__",
+    "__contains__"
+  );
+
   public static class BuiltinDescription {
     private final String mySignature;
 

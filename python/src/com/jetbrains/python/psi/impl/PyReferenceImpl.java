@@ -49,8 +49,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   public TextRange getRangeInElement() {
     final ASTNode nameElement = myElement.getNameElement();
-    final int startOffset = nameElement != null ? nameElement.getStartOffset() : myElement.getNode().getTextRange().getEndOffset();
-    return new TextRange(startOffset - myElement.getNode().getStartOffset(), myElement.getTextLength());
+    final TextRange range = nameElement != null ? nameElement.getTextRange() : myElement.getNode().getTextRange();
+    return range.shiftRight(-myElement.getNode().getStartOffset());
   }
 
   public PsiElement getElement() {
