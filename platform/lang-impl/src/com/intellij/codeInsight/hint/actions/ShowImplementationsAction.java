@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -194,7 +195,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         .setTitle(title)
         .createPopup();
 
-      PopupPositionManager.positionPopupInBestPosition(popup, editor, invokedFromEditor);
+      PopupPositionManager.positionPopupInBestPosition(popup, editor, DataManager.getInstance().getDataContext());
       component.setHint(popup, title);
       
       myPopupRef = new WeakReference<JBPopup>(popup);
