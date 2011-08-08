@@ -547,7 +547,7 @@ public class HtmlUtil {
     return false;
   }
 
-  private static boolean isHtmlFile(final PsiFile file) {
+  public static boolean isHtmlFile(final PsiFile file) {
     final Language language = file.getLanguage();
     if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
       return true;
