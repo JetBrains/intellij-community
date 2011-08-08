@@ -16,43 +16,28 @@
 
 package org.jetbrains.android.actions;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import org.jetbrains.android.AndroidTestCase;
 
 public class AndroidCreateComponentTest extends AndroidTestCase {
-  private static final String TEST_FOLDER = "createComponent";
+  private static final String TEST_FOLDER = "/createComponent/";
 
-  public void test1() {
-    /*VirtualFile manifestFile = myFixture.findFileInTempDir(SdkConstants.FN_ANDROID_MANIFEST_XML);
-    VirtualFile dir = manifestFile.getParent();
-    final Project project = myFixture.getProject();
-    final PsiDirectory psiDir = PsiManager.getInstance(project).findDirectory(dir);
-    executeWritingCommand(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          NewAndroidComponentDialog.doCreate(AndroidFileTemplateProvider.ACTIVITY, psiDir, project, "MyActivity", "", false);
-          ApplicationManager.getApplication().saveAll();
-          String expectedFileName = "f1.xml";
-          myFixture.copyFileToProject(TEST_FOLDER + '/' + expectedFileName, expectedFileName);
-          VirtualFile actual = myFixture.findFileInTempDir(SdkConstants.FN_ANDROID_MANIFEST_XML);
-          VirtualFile expected = myFixture.findFileInTempDir(expectedFileName);
-          IdeaTestUtil.assertFilesEqual(expected, actual);
-        }
-        catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-    });*/
+  public AndroidCreateComponentTest() {
+    super(false);
   }
 
-  private void executeWritingCommand(final Runnable r) {
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(r);
-      }
-    }, "", null);
+  public void testDeleteComponent() {
+    myFixture.copyFileToProject(TEST_FOLDER + "f1.xml", "AndroidManifest.xml");
+    final VirtualFile activityFile = myFixture.copyFileToProject(TEST_FOLDER + "MyActivity.java", "p1/p2/MyActivity.java");
+    myFixture.configureFromExistingVirtualFile(activityFile);
+    final PsiFile psiActivityFile = PsiManager.getInstance(getProject()).findFile(activityFile);
+    final PsiClass activityClass = ((PsiJavaFile)psiActivityFile).getClasses()[0];
+    final DataContext context = DataManager.getInstance().getDataContext(myFixture.getEditor().getComponent());
+    new SafeDeleteHandler().invoke(getProject(), new PsiElement[]{activityClass}, context);
+    myFixture.checkResultByFile("AndroidManifest.xml", TEST_FOLDER + "f1_after.xml", true);
   }
 }
