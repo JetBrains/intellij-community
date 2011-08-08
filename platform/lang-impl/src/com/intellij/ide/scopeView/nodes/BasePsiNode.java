@@ -35,6 +35,7 @@ import java.awt.*;
  */
 public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
   private final SmartPsiElementPointer myPsiElementPointer;
+  private Icon myIcon;
 
   public BasePsiNode(final T element) {
     super(element.getProject());
@@ -63,7 +64,10 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
 
   private Icon getIcon() {
     final PsiElement element = getPsiElement();
-    return element != null && element.isValid() ? element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS) : null;
+    if (myIcon == null) {
+      myIcon = element != null && element.isValid() ? element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS) : null;
+    }
+    return myIcon;
   }
 
   @Nullable
