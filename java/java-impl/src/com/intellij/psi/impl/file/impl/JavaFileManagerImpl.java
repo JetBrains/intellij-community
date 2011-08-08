@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.AppTopics;
@@ -25,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.vcs.ComparableComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -35,8 +31,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,14 +43,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 
+/**
+ * @author max
+ */
 public class JavaFileManagerImpl implements JavaFileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
-  private final ConcurrentHashMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = new ConcurrentHashMap<GlobalSearchScope, PsiClass>();
-  private final Map<String,PsiClass> myNameToClassMap = new ConcurrentHashMap<String, PsiClass>(); // used only in mode without repository
+
   @NonNls private static final String JAVA_EXTENSION = ".java";
   @NonNls private static final String CLASS_EXTENSION = ".class";
+
+  private final ConcurrentHashMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = new ConcurrentHashMap<GlobalSearchScope, PsiClass>();
+  private final Map<String,PsiClass> myNameToClassMap = new ConcurrentHashMap<String, PsiClass>(); // used only in mode without repository
   private final PsiManagerEx myManager;
   private final ProjectRootManager myProjectRootManager;
   private final FileManager myFileManager;
@@ -166,8 +165,8 @@ public class JavaFileManagerImpl implements JavaFileManager {
   public static boolean notClass(final PsiElement found) {
     if (found instanceof PsiClass) return false;
 
-    VirtualFile faultyContainer = PsiUtil.getVirtualFile(found);
-    LOG.error("Non class in class list: " + faultyContainer+". found: "+found);
+    VirtualFile faultyContainer = PsiUtilBase.getVirtualFile(found);
+    LOG.error("Non class in class list: " + faultyContainer + ". found: " + found);
     if (faultyContainer != null && faultyContainer.isValid()) {
       FileBasedIndex.getInstance().requestReindex(faultyContainer);
     }
@@ -175,24 +174,8 @@ public class JavaFileManagerImpl implements JavaFileManager {
     return true;
   }
 
-  /*
-  private static ConcurrentMap<String, Integer> ourStats = new ConcurrentHashMap<String, Integer>();
-
-  public static void printStats() {
-    TreeMap<Integer, List<String>> map = new TreeMap<Integer, List<String>>(new ComparableComparator.Descending<Integer>());
-    for (Map.Entry<String, Integer> entry : ourStats.entrySet()) {
-      ContainerUtil.getOrCreate(map, entry.getValue(), new ArrayList<String>()).add(entry.getKey());
-    }
-    for (Map.Entry<Integer, List<String>> entry : map.entrySet()) {
-      System.out.println(entry.getKey() + ": " + entry.getValue());
-    }
-  }
-  */
-
   @Nullable
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    //ourStats.put(qName, ConcurrencyUtil.cacheOrGet(ourStats, qName, 0) + 1);
-
     if (!myUseRepository) {
       return findClassWithoutRepository(qName);
     }
