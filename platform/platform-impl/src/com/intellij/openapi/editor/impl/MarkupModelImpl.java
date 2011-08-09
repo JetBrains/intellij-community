@@ -29,13 +29,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.*;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   MarkupModelImpl(DocumentImpl document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myDocument = document;
-    myHighlighterTree = new RangeHighlighterTree(myDocument);
+    myHighlighterTree = new RangeHighlighterTree(myDocument, this);
   }
 
   public void dispose() {
@@ -168,20 +169,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     myCachedHighlighters = null;
     if (!segmentHighlighter.isValid()) return;
 
-    fireBeforeRemoved((RangeHighlighterEx)segmentHighlighter);
-
     boolean removed = myHighlighterTree.removeInterval((RangeHighlighterEx)segmentHighlighter);
     LOG.assertTrue(removed);
   }
 
   public void removeAllHighlighters() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myHighlighterTree.process(new Processor<RangeMarkerEx>() {
-      public boolean process(RangeMarkerEx rangeMarkerEx) {
-        fireBeforeRemoved((RangeHighlighterEx)rangeMarkerEx);
-        return true;
-      }
-    });
     myCachedHighlighters = null;
     myHighlighterTree.clear();
   }
@@ -215,7 +208,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       listener.afterAdded(segmentHighlighter);
     }
   }
-  private void fireBeforeRemoved(RangeHighlighterEx segmentHighlighter) {
+
+  void fireBeforeRemoved(RangeHighlighterEx segmentHighlighter) {
     for (MarkupModelListener listener : myListeners) {
       listener.beforeRemoved(segmentHighlighter);
     }

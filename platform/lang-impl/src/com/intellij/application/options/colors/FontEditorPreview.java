@@ -58,7 +58,7 @@ public class FontEditorPreview implements PreviewPanel{
   }
 
   static void installTrafficLights(EditorEx editor) {
-    ErrorStripeRenderer renderer = new TrafficLightRenderer(null,null,null,null){
+    ErrorStripeRenderer renderer = new TrafficLightRenderer(null, null,null){
       protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount, SeverityRegistrar severityRegistrar) {
         DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
         status.errorAnalyzingFinished = true;

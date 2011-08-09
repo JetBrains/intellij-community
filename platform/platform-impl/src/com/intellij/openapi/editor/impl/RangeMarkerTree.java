@@ -39,6 +39,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
   private final PrioritizedDocumentListener myListener;
   private final Document myDocument;
+
   private final EqualStartIntervalComparator<IntervalNode> myEqualStartIntervalComparator = new EqualStartIntervalComparator<IntervalNode>() {
     @Override
     public int compare(IntervalNode i1, IntervalNode i2) {
@@ -366,5 +367,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
 
     return true;
+  }
+
+  @Override
+  void reportInvalidation(RangeMarkerEx markerEx, Object reason) {
+    if (markerEx.isTrackInvalidation()) {
+      LOG.error("Range marker invalidated: "+markerEx +"; say thanks to the "+ reason);
+    }
   }
 }

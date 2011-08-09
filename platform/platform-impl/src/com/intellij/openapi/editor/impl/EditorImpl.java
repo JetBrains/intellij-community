@@ -316,13 +316,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
-        int start = highlighter.getAffectedAreaStartOffset();
-        int end = highlighter.getAffectedAreaEndOffset();
+        int textLength = myDocument.getTextLength();
+        int start = Math.max(0, Math.min(textLength - 1, highlighter.getAffectedAreaStartOffset()));
+        int end = Math.max(0, Math.min(start, highlighter.getAffectedAreaEndOffset()));
+
         int startLine = myDocument.getLineNumber(start);
-        int endLine = end < myDocument.getTextLength() ? myDocument.getLineNumber(end) : myDocument.getLineCount() - 1;
+        int endLine = myDocument.getLineNumber(end);
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-        ((EditorMarkupModelImpl)getMarkupModel()).repaint(start, end);
         GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+
+        // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
+        if (renderer != null || highlighter.getErrorStripeMarkColor() != null) {
+          ((EditorMarkupModelImpl)getMarkupModel()).repaint(start, end);
+        }
+
         if (renderer != null) {
           updateGutterSize();
         }

@@ -75,7 +75,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public void dispose() {
     if(isValid()) {
       unregisterInTree();
-      reportInvalidation(this, "Explicit Dispose");
     }
   }
 
@@ -97,16 +96,10 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       node.processAliveKeys(new Processor<RangeMarkerEx>() {
         @Override
         public boolean process(RangeMarkerEx markerEx) {
-          reportInvalidation(markerEx, e);
+          myNode.getTree().reportInvalidation(markerEx, e);
           return true;
         }
       });
-    }
-  }
-
-  private static void reportInvalidation(RangeMarkerEx markerEx, Object e) {
-    if (markerEx.isTrackInvalidation()) {
-      LOG.info("Range marker invalidated: "+markerEx +"; say thanks to the "+e);
     }
   }
 
@@ -158,11 +151,10 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
     changedUpdateImpl(e);
     if (isValid() && (intervalStart() > intervalEnd() || intervalStart() < 0 || intervalEnd() > docLength)) {
-      String markerBefore = toString();
       LOG.error("Update failed. Event = " + e + ". " +
                 "old doc length=" + docLength + "; real doc length = "+myDocument.getTextLength()+
                 "; "+getClass()+"." +
-                " Before update: '"+markerBefore+"'; After update: '"+this+"'");
+                " After update: '"+this+"'");
       invalidate(e);
     }
   }

@@ -16,8 +16,6 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -146,7 +144,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
   private class DomElementsTrafficLightRenderer extends TrafficLightRenderer {
 
     public DomElementsTrafficLightRenderer(final PsiFile xmlFile) {
-      super(xmlFile.getProject(), (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(xmlFile.getProject()),
+      super(xmlFile.getProject(),
             PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile), xmlFile);
     }
 
