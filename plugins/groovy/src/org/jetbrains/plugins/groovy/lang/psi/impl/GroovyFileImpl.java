@@ -193,7 +193,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                                         PsiElement lastParent,
                                         PsiElement place,
                                         PsiScopeProcessor importProcessor,
-                                        GrImportStatement[] importStatements, boolean shouldProcessOnDemand) {
+                                        GrImportStatement[] importStatements, 
+                                        boolean shouldProcessOnDemand) {
     for (int i = importStatements.length - 1; i >= 0; i--) {
       final GrImportStatement imp = importStatements[i];
       if (shouldProcessOnDemand != imp.isOnDemand()) continue;
@@ -236,14 +237,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return result;
   }
 
-  private boolean processImplicitImports(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent,
-                                         PsiElement place) {
+  private boolean processImplicitImports(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent, PsiElement place) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-
-    final PsiPackage currentPackage = facade.findPackage(getPackageName());
-    if (currentPackage != null) {
-      if (!currentPackage.processDeclarations(processor, state, lastParent, place)) return false;
-    }
 
     final DelegatingScopeProcessor packageSkipper = new DelegatingScopeProcessor(processor) {
       @Override
@@ -270,11 +265,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return true;
   }
 
-  private boolean processDeclarationsInPackage(final PsiScopeProcessor processor,
-                                               ResolveState state,
-                                               PsiElement lastParent,
-                                               PsiElement place, JavaPsiFacade facade, String implicitlyImported) {
-    PsiPackage aPackage = facade.findPackage(implicitlyImported);
+  private static boolean processDeclarationsInPackage(final PsiScopeProcessor processor,
+                                                      ResolveState state,
+                                                      PsiElement lastParent,
+                                                      PsiElement place, JavaPsiFacade facade,
+                                                      String packageName) {
+    PsiPackage aPackage = facade.findPackage(packageName);
     if (aPackage != null && !aPackage.processDeclarations(new DelegatingScopeProcessor(processor) {
       @Override
       public boolean execute(PsiElement element, ResolveState state) {
