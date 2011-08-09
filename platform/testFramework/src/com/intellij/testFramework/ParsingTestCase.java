@@ -178,9 +178,8 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       ensureParsed(myFile);
       assertEquals("light virtual file text mismatch", text, ((LightVirtualFile)myFile.getVirtualFile()).getContent().toString());
       assertEquals("virtual file text mismatch", text, LoadTextUtil.loadText(myFile.getVirtualFile()));
-
-      assertEquals("psi text mismatch", text, myFile.getText());
       assertEquals("doc text mismatch", text, myFile.getViewProvider().getDocument().getText());
+      assertEquals("psi text mismatch", text, myFile.getText());
       if (checkResult){
         checkResult(name + ".txt", myFile);
       }
