@@ -30,12 +30,12 @@
     <action class="org.intellij.images.actions.EditExternallyAction"
             id="Images.EditExternaly"
             icon="/org/intellij/images/icons/EditExternaly.png"
-            text="Open image in external editor">
+            text="Open Image in External Editor">
       <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
     </action>
     <action class="org.intellij.images.actions.ShowThumbnailsAction"
-            id="Images.ShowThumbnails" text="Show image thumbnails">
+            id="Images.ShowThumbnails" text="Show Image Thumbnails">
       <keyboard-shortcut first-keystroke="shift control T" keymap="$default"/>
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddToFavorites"/>
       <add-to-group anchor="after" group-id="NavbarPopupMenu" relative-to-action="AddToFavorites"/>
@@ -68,7 +68,7 @@
       <action class="org.intellij.images.editor.actions.ActualSizeAction"
               id="Images.Editor.ActualSize"
               icon="/org/intellij/images/icons/ActualSize.png"
-              text="Zoom to actual size">
+              text="Zoom to Actual Size">
         <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
         <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>
       </action>
