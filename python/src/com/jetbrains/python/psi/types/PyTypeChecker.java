@@ -3,6 +3,8 @@ package com.jetbrains.python.psi.types;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author vlan
  */
@@ -22,8 +24,14 @@ public class PyTypeChecker {
       return match(expected, ((PyTypeReference)actual).resolve(null, context), context);
     }
     if (actual instanceof PyUnionType) {
-      for (PyType t : ((PyUnionType)actual).getMembers()) {
-        if (!match(expected, t, context)) {
+      final List<PyType> members = ((PyUnionType)actual).getMembers();
+      for (PyType m : members) {
+        if (m == null) {
+          return true;
+        }
+      }
+      for (PyType m : members) {
+        if (!match(expected, m, context)) {
           return false;
         }
       }
