@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 
 import java.io.File;
+import java.io.IOException;
 
 /*
 * Created by IntelliJ IDEA.
@@ -53,7 +54,14 @@ public class RncParsingTest extends AbstractParsingTest {
 
   public void testDocbook() throws Throwable {
     String name = getTestName(false);
-    String fullName = myFullDataPath + File.separatorChar + name + "." + myFileExt;
+    printFile(name + "." + myFileExt);
+    printFile(name + ".txt");
+
+    doTest(true);
+  }
+
+  private void printFile(String fileName) throws IOException {
+    String fullName = myFullDataPath + File.separatorChar + fileName;
     File file = new File(fullName);
     byte[] bytes = FileUtil.loadFileBytes(file);
     String utf8 = new String(bytes, CharsetToolkit.UTF8);
@@ -61,9 +69,7 @@ public class RncParsingTest extends AbstractParsingTest {
     assertTrue(utf8, i > 0);
 
     String hex = toHexString(bytes, i - 5, i + 35, utf8);
-    System.out.println(hex);
-
-    doTest(true);
+    System.out.println(fileName + ":\n"+ hex);
   }
 
   private static String toHexString(byte[] b, int start, int end, String utf8) {
