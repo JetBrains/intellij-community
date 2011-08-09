@@ -33,21 +33,9 @@ public class PyDefUseUtil {
       throw new InstructionNotFoundException();
     }
     final boolean[] visited = new boolean[instructions.length];
-    final Collection<PyElement> result = new HashSet<PyElement>();
+    final Collection<PyElement> result = new LinkedHashSet<PyElement>();
     getLatestDefs(var, instructions, instr, visited, result);
-    final List<PyElement> sortedResult = new ArrayList<PyElement>();
-    sortedResult.addAll(result);
-    Collections.sort(sortedResult, new Comparator<PyElement>() {
-      @Override
-      public int compare(PyElement e1, PyElement e2) {
-        final String n1 = e1.getName();
-        if (n1 != null) {
-          return n1.compareTo(e2.getName());
-        }
-        return 0;
-      }
-    });
-    return sortedResult.toArray(new PyElement[sortedResult.size()]);
+    return result.toArray(new PyElement[result.size()]);
   }
 
   private static void getLatestDefs(final PyElement var,
