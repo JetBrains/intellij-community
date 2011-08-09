@@ -210,16 +210,22 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   private static String tryGetFromMessages(List<AbstractMessage> messages) {
     String result = null;
     for (AbstractMessage message : messages) {
+      String s;
       if (message instanceof LogMessageEx) {
-        if (result == null) {
-          result = ((LogMessageEx)message).getNotificationText();
-        }
-        else if (!result.equals(((LogMessageEx)message).getNotificationText())) {
-          // if texts are different, show default
-          return null;
-        }
+        s = ((LogMessageEx)message).getNotificationText();
+      }
+      else if (message instanceof GroupedLogMessage) {
+        s = tryGetFromMessages(((GroupedLogMessage)message).getMessages());
       }
       else {
+        return null;
+      }
+
+      if (result == null) {
+        result = s;
+      }
+      else if (!result.equals(s)) {
+        // if texts are different, show default
         return null;
       }
     }
