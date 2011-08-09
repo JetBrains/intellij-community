@@ -89,6 +89,9 @@ public interface PyClass extends
   PyTargetExpression findClassAttribute(String name, boolean inherited);
 
   List<PyTargetExpression> getInstanceAttributes();
+  
+  @Nullable
+  PyTargetExpression findInstanceAttribute(String name, boolean inherited);
 
   PyClass[] getNestedClasses();
 

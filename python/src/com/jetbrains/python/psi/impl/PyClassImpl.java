@@ -789,6 +789,26 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return myInstanceAttributes;
   }
 
+  @Nullable
+  @Override
+  public PyTargetExpression findInstanceAttribute(String name, boolean inherited) {
+    final List<PyTargetExpression> instanceAttributes = getInstanceAttributes();
+    for (PyTargetExpression instanceAttribute : instanceAttributes) {
+      if (name.equals(instanceAttribute.getReferencedName())) {
+        return instanceAttribute;        
+      }
+    }
+    if (inherited) {
+      for(PyClass ancestor: iterateAncestorClasses()) {
+        final PyTargetExpression attribute = ancestor.findInstanceAttribute(name, false);
+        if (attribute != null) {
+          return attribute;
+        }
+      }
+    }
+    return null;
+  }
+
   private List<PyTargetExpression> collectInstanceAttributes() {
     Map<String, PyTargetExpression> result = new HashMap<String, PyTargetExpression>();
 
