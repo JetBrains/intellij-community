@@ -73,6 +73,18 @@ public class AsyncProcessIcon extends AnimatedIcon {
     }
     return icons;
   }
+  
+  public void updateLocation(JComponent container) {
+    final Rectangle rec = container.getVisibleRect();
+
+    final Dimension iconSize = getPreferredSize();
+
+    final Rectangle newBounds = new Rectangle(rec.x + rec.width - iconSize.width, rec.y, iconSize.width, iconSize.height);
+    if (!newBounds.equals(getBounds())) {
+      setBounds(newBounds);
+      container.repaint();
+    }
+  }
 
   private static class ProcessIcon extends LayeredIcon {
     private ProcessIcon(Icon mask, Icon stepIcon) {

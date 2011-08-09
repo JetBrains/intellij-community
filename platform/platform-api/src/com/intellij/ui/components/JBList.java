@@ -17,12 +17,14 @@ package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -39,6 +41,10 @@ import java.util.Collection;
 public class JBList extends JList implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>{
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
+
+  private AsyncProcessIcon myBusyIcon;
+  private boolean myBusy;
+
 
   public JBList() {
     init();
@@ -64,6 +70,72 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
 
   public JBList(Collection items) {
     this(ArrayUtil.toObjectArray(items));
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+
+    if (myBusyIcon != null) {
+      remove(myBusyIcon);
+      Disposer.dispose(myBusyIcon);
+      myBusyIcon = null;
+    }
+  }
+
+  @Override
+  public void doLayout() {
+    super.doLayout();
+
+    if (myBusyIcon != null) {
+      myBusyIcon.updateLocation(this);
+    }
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+    if (myBusyIcon != null) {
+      myBusyIcon.updateLocation(this);
+    }
+  }
+
+  public void setPaintBusy(boolean paintBusy) {
+    if (myBusy == paintBusy) return;
+
+    myBusy = paintBusy;
+    updateBusy();
+  }
+
+  private void updateBusy() {
+    if (myBusy) {
+      if (myBusyIcon == null) {
+        myBusyIcon = new AsyncProcessIcon(toString()).setUseMask(false);
+        myBusyIcon.setOpaque(false);
+        myBusyIcon.setPaintPassiveIcon(false);
+        add(myBusyIcon);
+      }
+    }
+
+    if (myBusyIcon != null) {
+      if (myBusy) {
+        myBusyIcon.resume();
+      }
+      else {
+        myBusyIcon.suspend();
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (myBusyIcon != null) {
+              repaint();
+            }
+          }
+        });
+      }
+      if (myBusyIcon != null) {
+        myBusyIcon.updateLocation(this);
+      }
+    }
   }
 
   @Override
