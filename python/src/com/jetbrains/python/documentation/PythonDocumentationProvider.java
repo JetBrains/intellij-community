@@ -160,12 +160,13 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       }
     }
     if (type instanceof PyUnionType) {
-      final List<String> typeNames = new ArrayList<String>();
-      for (PyType t : ((PyUnionType)type).getMembers()) {
-        typeNames.add(getTypeName(t, context));
-      }
-      Collections.sort(typeNames);
-      return String.format("one of (%s)", StringUtil.join(typeNames, ", "));
+      return String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getMembers(),
+                                                          new Function<PyType, String>() {
+                                                            @Override
+                                                            public String fun(PyType t) {
+                                                              return getTypeName(t, context);
+    }
+                                                          }, ", "));
     }
     return name;
   }
