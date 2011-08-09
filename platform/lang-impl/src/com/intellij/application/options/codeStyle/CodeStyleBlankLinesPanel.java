@@ -64,23 +64,21 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
     JPanel optionsPanel = new JPanel(new GridBagLayout());
     optionsPanel.add(createKeepBlankLinesPanel(),
-                     new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                     new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                             new Insets(0, 0, 0, 0), 0, 0));
     optionsPanel.add(createBlankLinesPanel(),
-                     new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                     new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                             new Insets(0, 0, 0, 0), 0, 0));
     optionsPanel.add(new JPanel(),
                      new GridBagConstraints(0, 2, 1, 1, 0, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,
-                                            0));
-    optionsPanel.add(new JPanel(),
-                     new GridBagConstraints(1, 0, 1, 3, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,
                                             0));
 
     JScrollPane scroll = ScrollPaneFactory.createScrollPane(optionsPanel);
     scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     scroll.setBorder(null);
-    scroll.setMinimumSize(new Dimension(350, 0));
+    scroll.setMinimumSize(new Dimension(optionsPanel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width,
+                                        optionsPanel.getPreferredSize().height));
 
     myPanel
       .add(scroll,

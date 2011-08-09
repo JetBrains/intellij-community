@@ -147,7 +147,6 @@ public class CodeStyleImportsPanel extends JPanel {
 
     panel.add(createPackagesTable(), BorderLayout.CENTER);
     panel.add(createPackagesButtonsPanel(), BorderLayout.EAST);
-    panel.setPreferredSize(new Dimension(-1, 200));
     return panel;
   }
 
@@ -190,7 +189,6 @@ public class CodeStyleImportsPanel extends JPanel {
     panel.add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
     panel.add(createImportLayoutTable(), BorderLayout.CENTER);
     panel.add(createImportLayoutButtonsPanel(), BorderLayout.EAST);
-    panel.setPreferredSize(new Dimension(-1, 200));
     return panel;
   }
 
