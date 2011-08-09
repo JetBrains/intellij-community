@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.ApplicationInfoProvider;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -78,6 +79,16 @@ public class IdeaLogger extends Logger {
 
   IdeaLogger(org.apache.log4j.Logger logger) {
     myLogger = logger;
+  }
+
+  @Override
+  public void error(Object message) {
+    if (message instanceof IdeaLoggingEvent) {
+      myLogger.error(message);
+    }
+    else {
+      super.error(message);
+    }
   }
 
   public boolean isDebugEnabled() {

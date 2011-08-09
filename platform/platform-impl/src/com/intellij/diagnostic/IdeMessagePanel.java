@@ -16,7 +16,6 @@
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
@@ -24,6 +23,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.popup.NotificationPopup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,6 +31,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class IdeMessagePanel extends JPanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
@@ -40,7 +41,6 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   private final IconPane[] myIcons;
   private static final String INTERNAL_ERROR_NOTICE = DiagnosticBundle.message("error.notification.tooltip");
 
-  private long myPreviousExceptionTimeStamp;
   private IdeErrorsDialog myDialog;
   private boolean myOpeningInProgress;
   private final MessagePool myMessagePool;
@@ -53,7 +53,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     myIdeFatal = new IconPane(myIcon, myEmptyIcon,
                               DiagnosticBundle.message("error.notification.empty.text"), new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        openFatals();
+        openFatals(null);
       }
     });
 
@@ -90,7 +90,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     return this;
   }
 
-  public void openFatals() {
+  public void openFatals(@Nullable final LogMessage message) {
     if (myDialog != null) return;
     if (myOpeningInProgress) return;
     myOpeningInProgress = true;
@@ -105,7 +105,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
         }
 
         try {
-          _openFatals();
+          _openFatals(message);
         }
         finally {
           myOpeningInProgress = false;
@@ -116,11 +116,11 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     task.run();
   }
 
-  private void _openFatals() {
+  private void _openFatals(@Nullable final LogMessage message) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        myDialog = new IdeErrorsDialog(myMessagePool) {
-          protected void doOKAction() {
+        myDialog = new IdeErrorsDialog(myMessagePool, message) {
+          public void doOKAction() {
             super.doOKAction();
             disposeDialog(this);
           }
@@ -152,18 +152,6 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   public void newEntryAdded() {
     updateFatalErrorsIcon();
 
-    long lastExceptionTimestamp = System.currentTimeMillis();
-    if (lastExceptionTimestamp - myPreviousExceptionTimeStamp > 1000 && myMessagePool.hasUnreadMessages()){
-      showErrorCallout();
-    }
-
-    myPreviousExceptionTimeStamp = lastExceptionTimestamp;
-  }
-
-  private void showErrorCallout() {
-    if (PropertiesComponent.getInstance().isTrueValue(IdeErrorsDialog.IMMEDIATE_POPUP_OPTION)) {
-      openFatals();
-    }
   }
 
   public void poolCleared() {
@@ -191,7 +179,8 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   private void updateFatalErrorsIcon() {
-    if (myMessagePool.getFatalErrors(false, false).isEmpty()) {
+    final List<AbstractMessage> errors = myMessagePool.getFatalErrors(false, false);
+    if (errors.isEmpty()) {
       myNotificationPopupAlreadyShown = false;
       myIdeFatal.deactivate();
     }
@@ -200,11 +189,15 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       if (!myNotificationPopupAlreadyShown) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            final JLabel label = new JLabel(INTERNAL_ERROR_NOTICE);
+            String notificationText = tryGetFromMessages(errors);
+            if (notificationText == null) {
+              notificationText = INTERNAL_ERROR_NOTICE;
+            }
+            final JLabel label = new JLabel(notificationText);
             label.setIcon(myIcon);
             new NotificationPopup(IdeMessagePanel.this, label, LightColors.RED, false, new ActionListener() {
               public void actionPerformed(ActionEvent e) {
-                _openFatals();
+                _openFatals(null);
               }
             }, true);
           }
@@ -212,6 +205,25 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
         myNotificationPopupAlreadyShown = true;
       }
     }
+  }
+
+  private static String tryGetFromMessages(List<AbstractMessage> messages) {
+    String result = null;
+    for (AbstractMessage message : messages) {
+      if (message instanceof LogMessageEx) {
+        if (result == null) {
+          result = ((LogMessageEx)message).getNotificationText();
+        }
+        else if (!result.equals(((LogMessageEx)message).getNotificationText())) {
+          // if texts are different, show default
+          return null;
+        }
+      }
+      else {
+        return null;
+      }
+    }
+    return result;
   }
 
   private class Blinker implements Runnable {

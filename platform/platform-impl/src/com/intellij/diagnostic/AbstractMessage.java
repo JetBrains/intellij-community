@@ -26,7 +26,6 @@ public abstract class AbstractMessage {
   private boolean myIsRead = false;
   private boolean myIsSubmitting = false;
   private SubmittedReportInfo mySubmissionInfo;
-  private String myScrID;
   private String myAdditionalInfo;
   private Notification myNotification;
 
@@ -53,6 +52,7 @@ public abstract class AbstractMessage {
   }
 
   public void setSubmitted(SubmittedReportInfo info) {
+    myIsSubmitting = false;
     mySubmissionInfo = info;
   }
 
