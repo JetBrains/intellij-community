@@ -425,6 +425,10 @@
       <keyboard-shortcut first-keystroke="meta M"/>
     </action>
 
+    <action id="ToggleFullScreen">
+      <keyboard-shortcut first-keystroke="meta control F"/>
+    </action>
+
     <action id="Vcs.ShowMessageHistory">
       <keyboard-shortcut first-keystroke="control M"/>
     </action>
