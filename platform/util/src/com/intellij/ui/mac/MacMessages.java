@@ -261,11 +261,9 @@ public class MacMessages {
           }
         }
 
-        if (doNotAskDialogOption != null) {
+        if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
           if (cancelCode != code || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
-            if (doNotAskDialogOption.canBeHidden()) {
-              doNotAskDialogOption.setToBeShown(!suppress, code);
-            }
+            doNotAskDialogOption.setToBeShown(!suppress, code);
           }
         }
         

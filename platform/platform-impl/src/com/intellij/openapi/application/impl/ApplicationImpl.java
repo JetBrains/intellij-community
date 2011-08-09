@@ -773,14 +773,42 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private static boolean showConfirmation() {
     final boolean hasUnsafeBgTasks = ProgressManager.getInstance().hasUnsafeProgressIndicator();
-    if (hasUnsafeBgTasks || GeneralSettings.getInstance().isConfirmExit()) {
+
+    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+      @Override
+      public boolean isToBeShown() {
+        return GeneralSettings.getInstance().isConfirmExit();
+      }
+
+      @Override
+      public void setToBeShown(boolean value, int exitCode) {
+        GeneralSettings.getInstance().setConfirmExit(value);
+      }
+
+      @Override
+      public boolean canBeHidden() {
+        return !hasUnsafeBgTasks;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return false;
+      }
+
+      @Override
+      public String getDoNotShowMessage() {
+        return "Do not ask me again";
+      }
+    };
+
+    if (hasUnsafeBgTasks || option.isToBeShown()) {
       String message = ApplicationBundle
         .message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt",
                  ApplicationNamesInfo.getInstance().getFullProductName());
 
       if (DialogWrapper.OK_EXIT_CODE != Messages.showYesNoDialog(message, ApplicationBundle.message("exit.confirm.title"),
                                         ApplicationBundle.message("command.exit"), "Cancel",
-                                        Messages.getQuestionIcon())) {
+                                        Messages.getQuestionIcon(), option)) {
         return false;
       }
     }
