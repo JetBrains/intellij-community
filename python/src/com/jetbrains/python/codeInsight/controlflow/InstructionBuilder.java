@@ -27,8 +27,7 @@ public class InstructionBuilder {
 
   public static void addAssertInstructions(ControlFlowBuilder builder, PyTypeAssertionEvaluator assertionEvaluator) {
     for (Instruction instr : buildInstructions(builder, assertionEvaluator.getDefinitions())) {
-        builder.addNode(instr);
-      }
-
+      builder.addNode(instr);
+    }
   }
 }

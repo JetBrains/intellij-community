@@ -56,9 +56,7 @@ public class PyDefUseUtil {
       }
       if (access.isWriteAccess() && Comparing.strEqual(name, var.getName())) {
         result.add((PyElement)element);
-        if (access != ReadWriteInstruction.ACCESS.WRITETYPE) {
-          return;
-        }
+        return;
       }
     }
     for (Instruction instruction : instructions[instr].allPred()) {
