@@ -842,6 +842,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                 new Runnable() {
                   @Override
                   public void run() {
+                    if (myFlushAlarm.isDisposed()) return;
                     myFlushAlarm.addRequest(new Runnable() {
                       @Override
                       public void run() {
