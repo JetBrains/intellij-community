@@ -303,6 +303,10 @@
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.DocStringReferenceContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.DocStringTagCompletionContributor"/>
 
+    <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
+                    serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
+                    overrides="true"/>
+
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>
