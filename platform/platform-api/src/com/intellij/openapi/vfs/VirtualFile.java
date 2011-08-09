@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,6 +208,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return <code>true</code> if this file is a directory, <code>false</code> otherwise
    */
   public abstract boolean isDirectory();
+
+  public boolean isSymLink() {
+    return false;
+  }
 
   /**
    * Checks whether this <code>VirtualFile</code> is valid. File can be invalidated either by deleting it or one of its
