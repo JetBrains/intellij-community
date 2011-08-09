@@ -174,7 +174,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     try {
       String text = loadFile(name + "." + myFileExt);
       myFile = createPsiFile(name, text);
-      myFile.accept(new PsiRecursiveElementVisitor(){});
+      ensureParsed(myFile);
       assertEquals(text, myFile.getText());
       if (checkResult){
         checkResult(name + ".txt", myFile);
