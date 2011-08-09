@@ -23,7 +23,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
@@ -478,6 +481,18 @@ public class PyUtil {
     PyExpression qualifier = targetExpr.getQualifier();
     return qualifier != null && qualifier.getText().equals(params[0].getName());
   }
+
+  public static boolean isClassAttribute(PsiElement element) {
+    PyAssignmentStatement statement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
+    if (statement == null) {
+      return false;
+    }
+    PyStatementList stmtList = PsiTreeUtil.getParentOfType(statement, PyStatementList.class);
+    if (stmtList == null || !(stmtList.getParent() instanceof PyClass)) {
+      return false;
+    }
+    return PsiTreeUtil.isAncestor(statement.getLeftHandSideExpression(), element, false);
+  } 
 
   public static boolean isDocString(PyExpression expression) {
     final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(expression, PyDocStringOwner.class);

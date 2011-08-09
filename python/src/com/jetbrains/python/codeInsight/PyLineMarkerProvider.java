@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.CollectionQuery;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -16,16 +18,15 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -99,6 +100,27 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
   };
 
+  private static final PyLineMarkerNavigator<PsiElement> ourSuperAttributeNavigator = new PyLineMarkerNavigator<PsiElement>() {
+    protected String getTitle(final PsiElement elt) {
+      return "Choose Super Attribute of " + ((PyTargetExpression)elt).getName();
+    }
+
+    @Nullable
+    protected Query<PsiElement> search(final PsiElement elt) {
+      List<PsiElement> result = new ArrayList<PsiElement>();
+      PyClass containingClass = PsiTreeUtil.getParentOfType(elt, PyClass.class);
+      if (containingClass != null && elt instanceof PyTargetExpression) {
+        for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
+          final PyTargetExpression attribute = ancestor.findClassAttribute(((PyTargetExpression)elt).getReferencedName(), false);
+          if (attribute != null) {
+            result.add(attribute);
+          }
+        }
+      }
+      return new CollectionQuery<PsiElement>(result);
+    }
+  };
+
   private static final PyLineMarkerNavigator<PyClass> ourSubclassNavigator = new PyLineMarkerNavigator<PyClass>() {
     protected String getTitle(final PyClass elt) {
       return "Choose Subclass of "+ elt.getName();
@@ -125,6 +147,9 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       final PyFunction function = (PyFunction)element.getParent();
       return getMethodMarker(element, function);
     }
+    if (element instanceof PyTargetExpression && PyUtil.isClassAttribute(element)) {
+      return getAttributeMarker((PyTargetExpression) element);
+    }
     if (DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS && isSeparatorAllowed(element)) {
       return PyLineSeparatorUtil.addLineSeparatorIfNeeded(this, element);
     }
@@ -150,6 +175,22 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(), OVERRIDING_METHOD_ICON, Pass.UPDATE_ALL,
                                             superClass == null ? null : new TooltipProvider("Overrides method in " + superClass.getName()),
                                             ourSuperMethodNavigator);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static LineMarkerInfo<PsiElement> getAttributeMarker(PyTargetExpression element) {
+    PyClass containingClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
+    if (containingClass == null) return null;
+    for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
+      final PyTargetExpression ancestorAttr = ancestor.findClassAttribute(element.getReferencedName(), false);
+      if (ancestorAttr != null) {
+        return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(),
+                                              OVERRIDING_METHOD_ICON, Pass.UPDATE_ALL,
+                                              new TooltipProvider("Overrides attribute in " + ancestor.getName()),
+                                              ourSuperAttributeNavigator);
+      }
     }
     return null;
   }
