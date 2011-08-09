@@ -172,17 +172,12 @@ public class SdkUtil {
     if (lines == null) return null;
     for (String s : lines) {
       Matcher m = regex.matcher(s);
-       if (m.matches()) {
+      if (m.matches()) {
         if (m.groupCount() > 0) {
           return m.group(1);
         }
       }
     }
-    if (lines.size() > 0) {
-      return lines.get(0);
-    }
-    else {
-      return null;
-    }
+    return null;
   }
 }
