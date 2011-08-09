@@ -136,7 +136,9 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
   }
 
   private void queueDetection() {
-    myDetectionQueue.queue(myDetectionUpdate);
+    if (myDetectionQueue != null) {
+      myDetectionQueue.queue(myDetectionUpdate);
+    }
   }
 
   @Override
