@@ -170,19 +170,14 @@ class DocumentationBuilder {
     else if (isAttribute()) {
       addAttributeDoc();
     }
-    else if (followed != null && outer instanceof PyReferenceExpression) {
-      Class[] uninteresting_classes = {PyTargetExpression.class, PyAugAssignmentStatement.class};
-      boolean is_interesting = myElement != null && ! PyUtil.instanceOf(myElement, uninteresting_classes);
-      if (is_interesting) {
-        PsiElement old_parent = myElement.getParent();
-        is_interesting = ! PyUtil.instanceOf(old_parent, uninteresting_classes);
-      }
-      if (is_interesting) {
-        myBody.add(combUp(PyUtil.getReadableRepr(followed, false)));
-      }
-    }
-    if (followed instanceof PyNamedParameter) {
+    else if (followed instanceof PyNamedParameter) {
+      myBody.add(combUp(PyUtil.getReadableRepr(followed, false)));
       addParameterDoc((PyNamedParameter) followed);
+    }
+    else if (followed != null && outer instanceof PyReferenceExpression) {
+      myBody
+        .add(BR)
+        .add(combUp(PythonDocumentationProvider.describeExpressionType((PyReferenceExpression)outer)));
     }
     if (myBody.isEmpty() && myEpilog.isEmpty()) return null; // got nothing substantial to say!
     else return myResult.toString();

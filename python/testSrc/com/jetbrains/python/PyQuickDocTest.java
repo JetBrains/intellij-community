@@ -122,6 +122,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkRefDocPair();
   }
 
+  // PY-3496
+  public void testVariable() {
+    checkHTMLOnly();
+  }
+
   public void testInheritedMethod() {
     Map<String, PsiElement> marks = loadTest();
     assertEquals(2, marks.size());
