@@ -540,6 +540,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   }
 
   private static final String DUMMY_IDENTIFIER_TRIMMED_DECAPITALIZED = "intelliJIdeaRulezzz";
+  private static final String DUMMY_IDENTIFIER_DECAPITALIZED = "intelliJIdeaRulezzz ";
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     if (context.getCompletionType() == CompletionType.BASIC && context.getFile() instanceof GroovyFile) {
@@ -557,14 +558,14 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   private static String setCorrectCase(CompletionInitializationContext context) {
     final PsiElement element = context.getFile().findElementAt(context.getStartOffset());
-    if (element == null) return DUMMY_IDENTIFIER_TRIMMED_DECAPITALIZED;
+    if (element == null) return DUMMY_IDENTIFIER_DECAPITALIZED;
 
     final String text = element.getText();
-    if (text.length() == 0) return DUMMY_IDENTIFIER_TRIMMED_DECAPITALIZED;
+    if (text.length() == 0) return DUMMY_IDENTIFIER_DECAPITALIZED;
 
-    if (Character.isUpperCase(text.charAt(0))) return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
+    if (Character.isUpperCase(text.charAt(0))) return CompletionInitializationContext.DUMMY_IDENTIFIER;
 
-    return DUMMY_IDENTIFIER_TRIMMED_DECAPITALIZED;
+    return DUMMY_IDENTIFIER_DECAPITALIZED;
   }
 
   public static boolean isInPossibleClosureParameter(PsiElement position) { //Closure cl={String x, <caret>...
