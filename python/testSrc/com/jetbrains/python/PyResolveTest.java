@@ -413,4 +413,8 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testSuperclassResolveScope() {  // PY-3554
     assertResolvesTo(PyClass.class, "date", "datetime.py");
   }
+
+  public void testDontResolveTargetToBuiltins() {  // PY-4256
+    assertResolvesTo(PyTargetExpression.class, "str");
+  }
 }

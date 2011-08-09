@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -21,7 +22,15 @@ public class PyTargetReference extends PyReferenceImpl {
   @Override
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveResult[] results = super.multiResolve(incompleteCode);
-    if (results.length > 0) {
+    boolean resolvedToAnotherFile = false;
+    for (ResolveResult result : results) {
+      final PsiElement element = result.getElement();
+      if (element != null && element.getContainingFile() != myElement.getContainingFile()) {
+        resolvedToAnotherFile = true;
+        break;
+      }
+    }
+    if (results.length > 0 && !resolvedToAnotherFile) {
       return results;
     }
     // resolve to self if no other target found
