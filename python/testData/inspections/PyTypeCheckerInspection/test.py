@@ -211,3 +211,13 @@ def test_function_assignments():
     h = g
     h(<warning descr="Expected type 'int', got 'str' instead">"str"</warning>) #fail
 
+
+def test_old_style_classes():
+    class C:
+        pass
+    def f(x):
+        """
+        :type x: object
+        """
+        pass
+    f(C()) #pass

@@ -37,6 +37,12 @@ public class PyTypeChecker {
       }
       return false;
     }
+    if (expected instanceof PyClassType) {
+      final PyClass c = ((PyClassType)expected).getPyClass();
+      if (c != null && "object".equals(c.getName())) {
+        return true;
+      }
+    }
     if (expected instanceof PyClassType && actual instanceof PyClassType) {
       final PyClass superClass = ((PyClassType)expected).getPyClass();
       final PyClass subClass = ((PyClassType)actual).getPyClass();

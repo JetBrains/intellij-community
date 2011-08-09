@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -68,8 +69,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       PyClass cls = (PyClass)element;
       return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString();
     }
-    else if (element instanceof PyTargetExpression || element instanceof PyNamedParameter) {
-      return describeExpression((PyExpression)element);
+    else if (originalElement instanceof PyReferenceExpression) {
+      return describeExpression((PyExpression)originalElement);
     }
     return null;
   }
@@ -103,14 +104,18 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   private static String describeExpression(PyExpression expr) {
     final String name = expr.getName();
     if (name != null) {
-      final TypeEvalContext context = TypeEvalContext.slow();
       final String kind = (expr instanceof PyNamedParameter) ? "parameter" : "variable";
-      return String.format("%s \"%s\"\nInferred type: %s",
+      return String.format("%s \"%s\"\n%s",
                            kind,
                            name,
-                           getTypeName(expr.getType(context), context));
+                           describeExpressionType(expr));
     }
     return null;
+  }
+
+  static String describeExpressionType(PyExpression expr) {
+    final TypeEvalContext context = TypeEvalContext.slow();
+    return String.format("Inferred type: %s", getTypeName(expr.getType(context), context));
   }
 
   public static String getTypeDescription(@NotNull PyFunction fun) {
@@ -160,7 +165,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                             @Override
                                                             public String fun(PyType t) {
                                                               return getTypeName(t, context);
-                                                            }
+    }
                                                           }, ", "));
     }
     return name;

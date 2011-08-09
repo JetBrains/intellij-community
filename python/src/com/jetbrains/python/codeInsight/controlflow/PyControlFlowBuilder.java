@@ -251,16 +251,19 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       myBuilder.prevInstruction = lastBranchingPoint;
       myBuilder.startConditionalNode(part, lastCondition, false);
       condition = part.getCondition();
+      assertionEvaluator = new PyTypeAssertionEvaluator();
       if (condition != null) {
         lastCondition = condition;
         lastBranchingPoint = getPrevInstruction(lastCondition);
         condition.accept(this);
+        condition.accept(assertionEvaluator);
       }
       // Set the head as the last instruction of condition
       myBuilder.prevInstruction = getPrevInstruction(lastCondition);
       myBuilder.startConditionalNode(part, lastCondition, true);
       final PyStatementList statementList = part.getStatementList();
       if (statementList != null) {
+        InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
         statementList.accept(this);
       }
       myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
