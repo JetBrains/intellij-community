@@ -173,6 +173,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
 
   @Nullable
   public ExcludesConfigurationState getActualState() {
+    ensureOldSettingsLoaded();
     if (myExcludedFiles.isEmpty() && myExcludedFrameworks.isEmpty()) {
       return null;
     }
