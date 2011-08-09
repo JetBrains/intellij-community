@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.resolve;
+package org.jetbrains.plugins.gradle.importing.model;
 
 import java.io.Serializable;
 

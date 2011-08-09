@@ -3,8 +3,6 @@ package org.jetbrains.plugins.gradle.remote;
 import com.intellij.execution.rmi.RemoteServer;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.resolve.GradleProjectResolver;
-import org.jetbrains.plugins.gradle.resolve.GradleProjectResolverImpl;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

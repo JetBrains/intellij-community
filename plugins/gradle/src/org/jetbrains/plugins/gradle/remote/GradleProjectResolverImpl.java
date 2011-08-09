@@ -1,12 +1,12 @@
-package org.jetbrains.plugins.gradle.resolve;
+package org.jetbrains.plugins.gradle.remote;
 
 import com.intellij.execution.rmi.RemoteObject;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.idea.OfflineIdeaProject;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.remote.RemoteGradleProcessSettings;
-import org.jetbrains.plugins.gradle.remote.RemoteGradleService;
+import org.jetbrains.plugins.gradle.importing.model.GradleProject;
+import org.jetbrains.plugins.gradle.importing.model.GradleProjectImpl;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 

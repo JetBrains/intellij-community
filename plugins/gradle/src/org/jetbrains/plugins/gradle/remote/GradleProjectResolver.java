@@ -1,6 +1,7 @@
-package org.jetbrains.plugins.gradle.resolve;
+package org.jetbrains.plugins.gradle.remote;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.importing.model.GradleProject;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

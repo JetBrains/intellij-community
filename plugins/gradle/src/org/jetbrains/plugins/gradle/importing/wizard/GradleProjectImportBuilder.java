@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing;
+package org.jetbrains.plugins.gradle.importing.wizard;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -15,9 +15,9 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.importing.model.GradleProject;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
-import org.jetbrains.plugins.gradle.resolve.GradleProject;
-import org.jetbrains.plugins.gradle.resolve.GradleProjectResolver;
+import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleLog;
