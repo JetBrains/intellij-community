@@ -18,6 +18,7 @@ package org.intellij.plugins.relaxNG;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,7 +58,13 @@ public class RncParsingTest extends AbstractParsingTest {
     printFile(name + "." + myFileExt);
     printFile(name + ".txt");
 
-    doTest(true);
+    try {
+      doTest(true);
+    }
+    finally {
+      VirtualFile virtualFile = myFile.getVirtualFile();
+      System.out.println("virtualFile = " + virtualFile+"; charset = " + virtualFile.getCharset());
+    }
   }
 
   private void printFile(String fileName) throws IOException {
@@ -82,12 +89,12 @@ public class RncParsingTest extends AbstractParsingTest {
       hex.append(hexChar.charAt((b[i] >> 4) & 0x0f));
       hex.append(hexChar.charAt(b[i] & 0x0f));
       hex.append(" ");
-      if (i % 5 == 0) hex.append("   ");
+      if ((i-start+1) % 5 == 0) hex.append("   ");
 
       //ch.append(utf8.charAt(i));
       ch.append((char)b[i]);
       ch.append("  ");
-      if (i % 5 == 0) ch.append("   ");
+      if ((i-start+1) % 5 == 0) ch.append("   ");
     }
     return hex + "\n" + ch;
   }
