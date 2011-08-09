@@ -55,7 +55,7 @@ public class RncParsingTest extends AbstractParsingTest {
 
   public void testDocbook() throws Throwable {
     String name = getTestName(false);
-    printFile(name + "." + myFileExt);
+    String fileUtf8 = printFile(name + "." + myFileExt);
     printFile(name + ".txt");
 
     try {
@@ -64,10 +64,11 @@ public class RncParsingTest extends AbstractParsingTest {
     finally {
       VirtualFile virtualFile = myFile.getVirtualFile();
       System.out.println("virtualFile = " + virtualFile+"; charset = " + virtualFile.getCharset());
+      assertEquals(myFile.getText(), fileUtf8);
     }
   }
 
-  private void printFile(String fileName) throws IOException {
+  private String printFile(String fileName) throws IOException {
     String fullName = myFullDataPath + File.separatorChar + fileName;
     File file = new File(fullName);
     byte[] bytes = FileUtil.loadFileBytes(file);
@@ -75,11 +76,12 @@ public class RncParsingTest extends AbstractParsingTest {
     int i = utf8.indexOf("for dates and times");
     assertTrue(utf8, i > 0);
 
-    String hex = toHexString(bytes, i - 5, i + 35, utf8);
+    String hex = toHexString(bytes, i - 5, i + 35);
     System.out.println(fileName + ":\n"+ hex);
+    return utf8.trim().replaceAll("\r\n","\n");
   }
 
-  private static String toHexString(byte[] b, int start, int end, String utf8) {
+  private static String toHexString(byte[] b, int start, int end) {
     final String hexChar = "0123456789abcdef";
 
     StringBuilder hex = new StringBuilder();

@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
@@ -175,7 +176,11 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       String text = loadFile(name + "." + myFileExt);
       myFile = createPsiFile(name, text);
       ensureParsed(myFile);
-      assertEquals(text, myFile.getText());
+      assertEquals("light virtual file text mismatch", text, ((LightVirtualFile)myFile.getVirtualFile()).getContent().toString());
+      assertEquals("virtual file text mismatch", text, LoadTextUtil.loadText(myFile.getVirtualFile()));
+
+      assertEquals("psi text mismatch", text, myFile.getText());
+      assertEquals("doc text mismatch", text, myFile.getViewProvider().getDocument().getText());
       if (checkResult){
         checkResult(name + ".txt", myFile);
       }
