@@ -55,6 +55,17 @@ public class InplaceIntroduceConstantTest extends AbstractInplaceIntroduceTest {
     });
   }
 
+  public void testReplaceAllFromSecondOccurrence() throws Exception {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        type("O");
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+      }
+    });
+  }
+
   public void testConflictingConstantName() throws Exception {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {

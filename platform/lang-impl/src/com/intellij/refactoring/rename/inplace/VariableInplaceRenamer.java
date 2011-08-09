@@ -245,7 +245,7 @@ public class VariableInplaceRenamer {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final int offset = myEditor.getCaretModel().getOffset();
+            final RangeMarker offset = myEditor.getDocument().createRangeMarker(new TextRange(myEditor.getCaretModel().getOffset(), myEditor.getCaretModel().getOffset()));
             final SelectionModel selectionModel = myEditor.getSelectionModel();
             final TextRange selectedRange = preserveSelectedRange(selectionModel);
             Template template = builder.buildInlineTemplate();
@@ -294,7 +294,7 @@ public class VariableInplaceRenamer {
             //move to old offset
             Runnable runnable = new Runnable() {
               public void run() {
-                myEditor.getCaretModel().moveToOffset(offset);
+                myEditor.getCaretModel().moveToOffset(offset.getStartOffset());
                 if (selectedRange != null){
                   myEditor.getSelectionModel().setSelection(selectedRange.getStartOffset(), selectedRange.getEndOffset());
                 }
@@ -302,7 +302,7 @@ public class VariableInplaceRenamer {
             };
 
             final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-            if (lookup != null && lookup.getLookupStart() <= offset) {
+            if (lookup != null && lookup.getLookupStart() <= offset.getStartOffset()) {
               lookup.setFocused(false);
               lookup.performGuardedChange(runnable);
             } else {
