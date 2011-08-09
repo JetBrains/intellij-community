@@ -92,6 +92,11 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   }
 
   @Override
+  public void allowHeavyFilters() {
+    myTextConsole.allowHeavyFilters();
+  }
+
+  @Override
   public JComponent getComponent() {
     return this;
   }
