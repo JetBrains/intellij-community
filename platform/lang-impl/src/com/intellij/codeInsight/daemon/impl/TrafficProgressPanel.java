@@ -164,14 +164,15 @@ public class TrafficProgressPanel extends JPanel {
 
   public void updatePanel(TrafficLightRenderer.DaemonCodeAnalyzerStatus status, boolean isFake) {
     if (status == null) return;
-    dumbLabel.setVisible(DumbService.isDumb(myTrafficLightRenderer.getProject()));
+    boolean isDumb = DumbService.isDumb(myTrafficLightRenderer.getProject());
+    dumbLabel.setVisible(isDumb);
     try {
       if (PowerSaveMode.isEnabled()) {
         statusLabel.setText("Code analysis is disabled in power save mode");
         myPassStatuses.setVisible(false);
         statistics.setText("");
       } else if (status.errorAnalyzingFinished) {
-        if (DumbService.isDumb(myTrafficLightRenderer.getProject())) {
+        if (isDumb) {
           statusLabel.setText("Shallow analysis completed");
         } else {
           statusLabel.setText(DaemonBundle.message("analysis.completed"));
