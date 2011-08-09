@@ -125,6 +125,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private MyDiffContainer myJLayeredPane;
   private JPanel myMainPanel;
   private final Runnable myFinishProgress;
+  private boolean myAllowHeavyFilters = false;
 
   @TestOnly
   public Editor getEditor() {
@@ -820,49 +821,53 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myHyperlinks.highlightHyperlinks(myCustomFilter, myPredefinedMessageFilter, line1, endLine);
     }
     
-    if (myPredefinedMessageFilter.isAnyHeavy() && myPredefinedMessageFilter.shouldRunHeavy()) {
-      final int startLine = Math.max(0, line1);
-
-      final Document document = getEditor().getDocument();
-      final Document documentCopy = new DocumentImpl(true);
-      final int startOffset = document.getLineStartOffset(startLine);
-      documentCopy.setText(new String(document.getText(new TextRange(startOffset, document.getLineEndOffset(endLine)))));
-      documentCopy.setReadOnly(true);
-
-      myJLayeredPane.startUpdating();
-      final int currentValue = myHeavyUpdateTicket;
-      myHeavyAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (! myPredefinedMessageFilter.shouldRunHeavy()) return;
-          myPredefinedMessageFilter.applyHeavyFilter(documentCopy, startOffset, startLine, new Consumer<FilterMixin.AdditionalHighlight>() {
-            @Override
-            public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
-              SwingUtilities.invokeLater(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    if (myFlushAlarm.isDisposed()) return;
-                    myFlushAlarm.addRequest(new Runnable() {
-                      @Override
-                      public void run() {
-                        if (myHeavyUpdateTicket != currentValue) return;
-                        myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
-                      }
-                    }, 0);
-                  }
-                });
-            }
-          });
-          if (myHeavyAlarm.getActiveRequestCount() == 0) {
-            SwingUtilities.invokeLater(myFinishProgress);
-          }
-        }
-      }, 0);
+    if (myAllowHeavyFilters && myPredefinedMessageFilter.isAnyHeavy() && myPredefinedMessageFilter.shouldRunHeavy()) {
+      runHeavyFilters(line1, endLine);
     }
     if (myUpdateFoldingsEnabled) {
       updateFoldings(line1, endLine, true);
     }
+  }
+
+  private void runHeavyFilters(int line1, int endLine) {
+    final int startLine = Math.max(0, line1);
+
+    final Document document = getEditor().getDocument();
+    final Document documentCopy = new DocumentImpl(true);
+    final int startOffset = document.getLineStartOffset(startLine);
+    documentCopy.setText(new String(document.getText(new TextRange(startOffset, document.getLineEndOffset(endLine)))));
+    documentCopy.setReadOnly(true);
+
+    myJLayeredPane.startUpdating();
+    final int currentValue = myHeavyUpdateTicket;
+    myHeavyAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (! myPredefinedMessageFilter.shouldRunHeavy()) return;
+        myPredefinedMessageFilter.applyHeavyFilter(documentCopy, startOffset, startLine, new Consumer<FilterMixin.AdditionalHighlight>() {
+          @Override
+          public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
+            SwingUtilities.invokeLater(
+              new Runnable() {
+                @Override
+                public void run() {
+                  if (myFlushAlarm.isDisposed()) return;
+                  myFlushAlarm.addRequest(new Runnable() {
+                    @Override
+                    public void run() {
+                      if (myHeavyUpdateTicket != currentValue) return;
+                      myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
+                    }
+                  }, 0);
+                }
+              });
+          }
+        });
+        if (myHeavyAlarm.getActiveRequestCount() == 0) {
+          SwingUtilities.invokeLater(myFinishProgress);
+        }
+      }
+    }, 0);
   }
 
   private void updateFoldings(final int line1, final int endLine, boolean immediately) {
@@ -1362,6 +1367,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
     return result;
+  }
+
+  @Override
+  public void allowHeavyFilters() {
+    myAllowHeavyFilters = true;
   }
 
   protected void scrollToTheEnd() {

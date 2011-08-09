@@ -505,6 +505,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
     final ConsoleView consoleView = consoleBuilder.getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    consoleView.allowHeavyFilters();
     final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
 
     final Icon icon = null;
