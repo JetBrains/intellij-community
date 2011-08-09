@@ -9,8 +9,8 @@
   <depends>org.intellij.groovy</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportProvider"/>
-    <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder"/>
+    <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportProvider"/>
+    <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportBuilder"/>
     <projectConfigurable instance="org.jetbrains.plugins.gradle.config.GradleConfigurable"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <projectService serviceInterface="org.jetbrains.plugins.gradle.config.GradleSettings"
