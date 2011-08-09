@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -69,8 +68,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       PyClass cls = (PyClass)element;
       return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString();
     }
-    else if (originalElement instanceof PyReferenceExpression) {
-      return describeExpression((PyExpression)originalElement);
+    else if (element instanceof PyTargetExpression || element instanceof PyNamedParameter) {
+      return describeExpression((PyExpression)element, originalElement);
     }
     return null;
   }
@@ -101,14 +100,22 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @Nullable
-  private static String describeExpression(PyExpression expr) {
+  private static String describeExpression(PyExpression expr, PsiElement originalElement) {
     final String name = expr.getName();
     if (name != null) {
-      final String kind = (expr instanceof PyNamedParameter) ? "parameter" : "variable";
-      return String.format("%s \"%s\"\n%s",
-                           kind,
-                           name,
-                           describeExpressionType(expr));
+      StringBuilder result = new StringBuilder((expr instanceof PyNamedParameter) ? "parameter" : "variable");
+      result.append(String.format(" \"%s\"", name));
+      if (expr instanceof PyNamedParameter) {
+        final PyFunction function = PsiTreeUtil.getParentOfType(expr, PyFunction.class);
+        if (function != null) {
+          result.append(" of ").append(function.getContainingClass() == null ? "function" : "method");
+          result.append(String.format(" \"%s\"", function.getName()));
+        }
+      }
+      if (originalElement instanceof PyExpression) {
+        result.append("\n").append(describeExpressionType((PyExpression)originalElement));        
+      }
+      return result.toString();
     }
     return null;
   }
