@@ -82,6 +82,7 @@ public class ToolRunProfile implements ModuleRunProfile{
         return myCommandLine;
       }
 
+      @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         final GeneralCommandLine commandLine = createCommandLine();
         final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());

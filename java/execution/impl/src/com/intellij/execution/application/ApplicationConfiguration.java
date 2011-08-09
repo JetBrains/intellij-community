@@ -262,6 +262,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       return params;
     }
 
+    @NotNull
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
       final OSProcessHandler handler = super.startProcess();

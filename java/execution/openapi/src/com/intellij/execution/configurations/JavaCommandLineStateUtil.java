@@ -28,6 +28,7 @@ public class JavaCommandLineStateUtil {
   private JavaCommandLineStateUtil() {
   }
 
+  @NotNull
   public static OSProcessHandler startProcess(@NotNull final GeneralCommandLine commandLine) throws ExecutionException {
     final DefaultJavaProcessHandler processHandler = new DefaultJavaProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);

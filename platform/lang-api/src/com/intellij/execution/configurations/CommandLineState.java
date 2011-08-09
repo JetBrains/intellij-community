@@ -60,6 +60,7 @@ public abstract class CommandLineState implements RunnableState {
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
   }
 
+  @NotNull
   protected abstract ProcessHandler startProcess() throws ExecutionException;
 
   protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler) {

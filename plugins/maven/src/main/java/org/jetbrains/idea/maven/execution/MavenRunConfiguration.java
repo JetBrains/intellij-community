@@ -73,6 +73,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
           .createJavaParameters(env.getProject(), mySettings.myRunnerParameters, mySettings.myGeneralSettings, mySettings.myRunnerSettings);
       }
 
+      @NotNull
       @Override
       protected OSProcessHandler startProcess() throws ExecutionException {
         OSProcessHandler result = super.startProcess();

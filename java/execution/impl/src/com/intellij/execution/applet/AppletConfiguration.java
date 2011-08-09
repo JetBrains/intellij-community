@@ -103,6 +103,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         return params;
       }
 
+      @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         final OSProcessHandler handler = super.startProcess();
         final AppletHtmlFile htmlUrl = myHtmlURL;

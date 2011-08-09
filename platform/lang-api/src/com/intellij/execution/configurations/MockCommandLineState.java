@@ -17,11 +17,9 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author oleg
@@ -32,7 +30,6 @@ public class MockCommandLineState extends CommandLineState {
     super(env);
   }
 
-  @Nullable
   protected OSProcessHandler startProcess() throws ExecutionException {
     return null;
   }

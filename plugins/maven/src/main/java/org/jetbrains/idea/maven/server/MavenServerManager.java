@@ -198,6 +198,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         return new DefaultExecutionResult(null, processHandler, AnAction.EMPTY_ARRAY);
       }
 
+      @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();
         Sdk sdk = params.getJdk();

@@ -37,6 +37,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return myParams;
   }
 
+  @NotNull
   protected OSProcessHandler startProcess() throws ExecutionException {
     return JavaCommandLineStateUtil.startProcess(createCommandLine());
   }

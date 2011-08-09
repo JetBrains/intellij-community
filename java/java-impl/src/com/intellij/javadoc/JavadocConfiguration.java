@@ -42,11 +42,9 @@ import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.util.Function;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -303,6 +301,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       }
     }
 
+    @NotNull
     protected OSProcessHandler startProcess() throws ExecutionException {
       final OSProcessHandler handler = JavaCommandLineStateUtil.startProcess(createCommandLine());
       ProcessTerminatedListener.attach(handler, myProject, JavadocBundle.message("javadoc.generate.exited"));

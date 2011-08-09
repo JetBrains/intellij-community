@@ -268,6 +268,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
       MvcFramework.addJavaHome(params, myModule);
     }
 
+    @NotNull
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
       final OSProcessHandler handler = super.startProcess();
