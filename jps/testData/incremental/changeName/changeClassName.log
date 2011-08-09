@@ -1,0 +1,18 @@
+Request to make modules:
+module ChangeClassName
+End of request
+digraph X {
+  ChangeClassName[label="ChangeClassName"];
+}
+digraph X {
+  ChangeClassName[label="ChangeClassName"];
+}
+Propagated modules:
+module ChangeClassName
+End of propagated
+Cleaning output files:
+out/production/ChangeClassName/A.class
+End of files
+Compiling files:
+src/B.java
+End of files

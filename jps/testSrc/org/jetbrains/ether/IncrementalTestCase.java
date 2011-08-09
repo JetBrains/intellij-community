@@ -41,7 +41,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        delete(new File(workDir));
+//        delete(new File(workDir));
     }
 
     private String getDir(final String prefix) {
@@ -98,25 +98,28 @@ public abstract class IncrementalTestCase extends TestCase {
         final File dir = new File(getBaseDir());
         final File[] files = dir.listFiles(new FileFilter() {
             public boolean accept(final File pathname) {
-                return pathname.getName().endsWith(".java.new");
+                final String name = pathname.getName();
+
+                return name.endsWith(".java.new") || name.endsWith(".java.remove");
             }
         }
         );
 
         for (File input : files) {
             final String name = input.getName();
-            final int pathSep = name.indexOf("$");
 
-            if (pathSep == -1) {
-                final File output = new File(getWorkDir() + File.separator + "src" + File.separator + name.substring(0, name.length() - ".new".length()));
-                copy(input, output);
+            final boolean copy = name.endsWith(".java.new");
+            final String  postfix = name.substring(0, name.length() - (copy ? ".new" : ".remove").length());
+            final int pathSep = postfix.indexOf("$");
+            final String basename = pathSep == -1 ? postfix : postfix.substring(pathSep+1);
+            final String path = getWorkDir() + File.separator + (pathSep == -1 ? "src" : postfix.substring(0, pathSep).replace('-', File.separatorChar));
+            final File output = new File (path + File.separator + basename);
+
+            if (copy) {
+                copy (input, output);
             }
             else {
-                final String path = name.substring(0, pathSep).replace('-', File.separatorChar);
-                final String it   = name.substring(pathSep+1);
-
-                final File output = new File(getWorkDir() + File.separator + path + File.separator + it.substring(0, it.length() - ".new".length()));
-                copy(input, output);
+                output.delete();
             }
         }
     }
