@@ -28,7 +28,7 @@ import java.awt.*;
 /**
  * @author pegov
  */
-public class ToggleFullScreenAction extends AnAction {
+public class ToggleMacFullScreenAction extends AnAction {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
