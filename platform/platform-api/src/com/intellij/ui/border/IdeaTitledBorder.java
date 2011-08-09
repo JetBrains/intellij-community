@@ -57,7 +57,7 @@ public class IdeaTitledBorder extends TitledBorder {
 
     this.titleFont = font;
     this.titleJustification = LEADING;
-    this.titlePosition = DEFAULT_POSITION;
+    this.titlePosition = TOP;
     this.border = BorderFactory.createCompoundBorder(new EmptyBorder(outsideInsets),
                                                      BorderFactory.createCompoundBorder(
                                                        BorderFactory.createMatteBorder(borderWidth, 0, 0, 0, borderColor),
@@ -260,8 +260,6 @@ public class IdeaTitledBorder extends TitledBorder {
     Dimension minimumSize = getMinimumSize(c);
     c.setMinimumSize(new Dimension(Math.max(minimumSize.width, c.getMinimumSize().width),
                                    Math.max(minimumSize.height, c.getMinimumSize().height)));
-    c.setPreferredSize(new Dimension(Math.max(c.getPreferredSize().width, c.getMinimumSize().width),
-                                     Math.max(c.getPreferredSize().height, c.getMinimumSize().height)));
   }
 
   private static boolean computeIntersection(Rectangle dest,
