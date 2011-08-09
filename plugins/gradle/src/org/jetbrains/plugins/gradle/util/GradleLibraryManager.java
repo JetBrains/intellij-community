@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,7 @@ public class GradleLibraryManager {
     // Manually defined gradle home
     File gradleHome = getGradleHome(project);
 
-    if (gradleHome == null || gradleHome.isDirectory()) {
+    if (gradleHome == null || !gradleHome.isDirectory()) {
       return null;
     }
 
@@ -70,6 +71,17 @@ public class GradleLibraryManager {
     return result;
   }
 
+  /**
+   * Performs the same job as {@link #getGradleHome(Project)} but tries to deduce project to use.
+   * 
+   * @return    file handle that points to the gradle installation home (if any)
+   */
+  public File getGradleHome() {
+    ProjectManager projectManager = ProjectManager.getInstance();
+    Project[] openProjects = projectManager.getOpenProjects();
+    return openProjects.length == 1 ? getGradleHome(openProjects[0]) : getGradleHome(projectManager.getDefaultProject());
+  }
+  
   /**
    * Tries to return file handle that points to the gradle installation home.
    * 
@@ -96,7 +108,7 @@ public class GradleLibraryManager {
   @Nullable
   public File getManuallyDefinedGradleHome(@Nullable Project project) {
     if (project == null) {
-      return null;
+      project = ProjectManager.getInstance().getDefaultProject();
     }
     GradleSettings settings = GradleSettings.getInstance(project);
     String path = settings.GRADLE_HOME;

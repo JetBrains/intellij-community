@@ -94,7 +94,11 @@ public class GradleConfigurable implements SearchableConfigurable {
     }
     String newPath = myPathComponent.getPath();
     String oldPath = GradleSettings.getInstance(myProject).GRADLE_HOME;
-    return newPath == null ? oldPath == null : newPath.equals(oldPath);
+    boolean modified = newPath == null ? oldPath == null : !newPath.equals(oldPath);
+    if (modified) {
+      useNormalColorForPath();
+    } 
+    return modified;
   }
 
   @Override

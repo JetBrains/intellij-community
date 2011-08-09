@@ -177,6 +177,12 @@ public def layoutCommunityPlugins(String home) {
       fileset(dir: "$home/plugins/maven/maven2-server-impl/lib")
     }
 
+    layoutPlugin("gradle") {
+      jar("gradle.jar") {
+        module("gradle")
+      }
+    }
+    
     layoutPlugin("git4idea") {
       fileset(dir: "$home/plugins/git4idea/lib", excludes: "**/trilead-ssh2-src.zip")
     }

@@ -2,17 +2,25 @@ package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
+import org.jetbrains.plugins.gradle.resolve.GradleProject;
+import org.jetbrains.plugins.gradle.resolve.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleIcons;
+import org.jetbrains.plugins.gradle.util.GradleLog;
 
 import javax.swing.*;
 import java.io.File;
@@ -29,8 +37,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
 
   private static final String GRADLE_IMPORT_ROOT_KEY = "gradle.import.root";
   
-  private final GradleProjectParser myProjectParser = new GradleProjectParser();
-  private GradleProject myProject;
+  private GradleProject myGradleProject;
   private File myProjectFile;
   
   @Override
@@ -82,9 +89,13 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
    * @return         start path to use during importing gradle projects
    */
   @NotNull
-  public String getRootDirectoryPath(@Nullable WizardContext context) {
+  public String getProjectPath(@Nullable WizardContext context) {
     String result = PropertiesComponent.getInstance().getValue(GRADLE_IMPORT_ROOT_KEY, "");
-    if (new File(result).isDirectory()) {
+    File file = new File(result);
+    if (file.exists()) {
+      if (myProjectFile == null) {
+        myProjectFile = file;
+      }
       return result;
     }
     if (context == null) {
@@ -106,17 +117,8 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
     }
     if (file == null) {
       return;
-    } 
-    String pathToStore = null;
-    if (file.isDirectory()) {
-      pathToStore = file.getAbsolutePath();
     }
-    else if (file.isFile()) {
-      pathToStore = file.getParentFile().getAbsolutePath();
-    }
-    if (pathToStore != null) {
-      PropertiesComponent.getInstance().setValue(GRADLE_IMPORT_ROOT_KEY, pathToStore);
-    }
+    PropertiesComponent.getInstance().setValue(GRADLE_IMPORT_ROOT_KEY, file.getAbsolutePath());
   }
 
   /**
@@ -132,10 +134,29 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       throw new ConfigurationException(GradleBundle.message("gradle.import.text.error.directory.instead.file"));
     }
     try {
-      myProject = myProjectParser.parse(myProjectFile);
+      ProgressManager.getInstance().run(new Task.Modal(null, GradleBundle.message("gradle.import.progress.text"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
+          try {
+            GradleProjectResolver resolver = manager.getFacade().getResolver();
+            myGradleProject = resolver.resolveProjectInfo(myProjectFile.getAbsolutePath());
+          }
+          catch (Exception e) {
+            // Ignore here because it will be reported on method exit.
+            GradleLog.LOG.warn("Can't resolve gradle project", e);
+          }
+        }
+      });
     }
     catch (IllegalArgumentException e) {
       throw new ConfigurationException(e.getMessage(), GradleBundle.message("gradle.import.text.error.cannot.parse.project"));
     }
+    if (myGradleProject == null) {
+      throw new ConfigurationException(
+        GradleBundle.message("gradle.import.text.error.resolve.generic", myProjectFile.getPath()),
+        GradleBundle.message("gradle.import.title.error.resolve.generic")
+      );
+    } 
   }
 }
