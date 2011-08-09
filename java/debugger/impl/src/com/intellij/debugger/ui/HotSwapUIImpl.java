@@ -179,7 +179,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
                     @Override
                     public Integer fun(Integer exitCode, JCheckBox cb) {
                       settings.HOTSWAP_HANG_WARNING_ENABLED = !cb.isSelected();
-                      return exitCode;
+                      return exitCode == DialogWrapper.OK_EXIT_CODE? exitCode : DialogWrapper.CANCEL_EXIT_CODE;
                     }
                   }
                 );
