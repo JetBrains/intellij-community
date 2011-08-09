@@ -79,7 +79,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -89,7 +88,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
+public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
   @NonNls private static final String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
@@ -277,6 +276,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
 
   protected ConsoleViewImpl(final Project project, GlobalSearchScope searchScope, boolean viewer, FileType fileType,
                             @NotNull final ConsoleState initialState) {
+    super(new BorderLayout());
     isViewer = viewer;
     myState = initialState;
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
@@ -393,14 +393,11 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
     }
   }
 
-  public void addToolbar(JComponent component, String constraint) {
-    myMainPanel.add(component, constraint);
-  }
-
   public JComponent getComponent() {
     if (myMainPanel == null) {
       myMainPanel = new JPanel(new BorderLayout());
       myJLayeredPane = new MyDiffContainer(myMainPanel, "Checking recent changes...");
+      add(myJLayeredPane, BorderLayout.CENTER);
     }
 
     if (myEditor == null) {
@@ -442,7 +439,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
         }
       });
     }
-    return myJLayeredPane;
+    return this;
   }
 
   protected JComponent createCenterComponent() {
@@ -509,7 +506,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
   }
 
   private ModalityState getStateForUpdate() {
-    return myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(myJLayeredPane);
+    return myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(this);
   }
 
   private void requestFlushImmediately() {
@@ -1139,7 +1136,7 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
         s = (String)content.getTransferData(DataFlavor.stringFlavor);
       }
       catch (Exception e) {
-        consoleView.getComponent().getToolkit().beep();
+        consoleView.getToolkit().beep();
       }
       if (s == null) return;
       Editor editor = consoleView.myEditor;
@@ -1364,12 +1361,6 @@ public class ConsoleViewImpl implements ConsoleView, ObservableConsoleView, Data
       }
     }
     return result;
-  }
-
-  @Override
-  public void setBorder(Border border) {
-    createCenterComponent();
-    myMainPanel.setBorder(border);
   }
 
   protected void scrollToTheEnd() {

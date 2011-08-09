@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 
 public abstract class BaseTestsOutputConsoleView implements ConsoleView, ObservableConsoleView {
   private ConsoleView myConsole;
@@ -75,11 +74,6 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
 
   public void scrollTo(final int offset) {
     myConsole.scrollTo(offset);
-  }
-
-  @Override
-  public void setBorder(Border border) {
-    myConsole.setBorder(border);
   }
 
   public void setOutputPaused(final boolean value) {
