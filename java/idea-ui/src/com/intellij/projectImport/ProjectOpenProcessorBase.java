@@ -172,17 +172,15 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
           existingName = "'" + projectFile.getName() + "'";
           pathToOpen = projectFilePath;
         }
-        int result = Messages.showDialog(projectToClose,
+        int result = Messages.showYesNoCancelDialog(projectToClose,
                                          IdeBundle.message("project.import.open.existing",
                                                            existingName,
                                                            projectFile.getParent(),
                                                            virtualFile.getName()),
                                          IdeBundle.message("title.open.project"),
-                                         new String[]{
                                            IdeBundle.message("project.import.open.existing.reimport"),
                                            IdeBundle.message("project.import.open.existing.openExisting"),
-                                           CommonBundle.message("button.cancel")},
-                                         0,
+                                           CommonBundle.message("button.cancel"),
                                          Messages.getQuestionIcon());
         if (result == 2) return null;
         shouldOpenExisting = result == 1;

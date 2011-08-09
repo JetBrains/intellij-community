@@ -153,7 +153,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     if (!files.isEmpty()) {
       final String message = IdeBundle.message("message.text.unlock.read.only.files", getFilesString(files));
       final String[] options = {CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText()};
-      if (Messages.showDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"), options, 0, null) != 0) {
+      if (Messages.showOkCancelDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"), options[0], options[1], null) != 0) {
         return false;
       }
       unlockFiles(files);

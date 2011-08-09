@@ -610,14 +610,13 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
     HashMap<String, ArrayList<KeyboardShortcut>> conflicts = mySelectedKeymap.getConflicts(actionId, keyboardShortcut);
     if(conflicts.size() > 0) {
-      int result = Messages.showDialog(
+      int result = Messages.showYesNoCancelDialog(
         this,
         KeyMapBundle.message("conflict.shortcut.dialog.message"),
         KeyMapBundle.message("conflict.shortcut.dialog.title"),
-        new String[]{KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
+        KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
           KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
-          KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),},
-        0,
+          KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
         Messages.getWarningIcon());
 
       if(result == 0) {
@@ -696,14 +695,13 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
     String[] actionIds = mySelectedKeymap.getActionIds(mouseShortcut);
     if(actionIds.length > 1 || (actionIds.length == 1 && !actionId.equals(actionIds[0]))) {
-      int result = Messages.showDialog(
+      int result = Messages.showYesNoCancelDialog(
         this,
         KeyMapBundle.message("conflict.shortcut.dialog.message"),
         KeyMapBundle.message("conflict.shortcut.dialog.title"),
-        new String[]{KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
+        KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
           KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
-          KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),},
-        0,
+          KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
         Messages.getWarningIcon());
 
       if(result == 0) {

@@ -235,12 +235,12 @@ public class ActivateTaskDialog extends DialogWrapper {
         mySelectedTask = manager.createLocalTask(taskName);
       }
       else if (mySelectedTask == null) {
-        if (Messages.showDialog(myProject,
+        if (Messages.showOkCancelDialog(myProject,
                             "Issue " + lastId + " not found.\n" +
                             "Do you want to create local task?",
                             "Issue Not Found",
-                            new String[] {CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()},
-                            1, Messages.getQuestionIcon()) == 1) {
+                            CommonBundle.getNoButtonText(), CommonBundle.getYesButtonText(),
+                            Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
           return;
         }
         mySelectedTask = manager.createLocalTask(taskName);

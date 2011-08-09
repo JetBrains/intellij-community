@@ -170,10 +170,9 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         }
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           public void run() {
-            if (Messages.showDialog(myProject, message,
+            if (Messages.showOkCancelDialog(myProject, message,
                                     VcsBundle.message("create.patch.commit.action.title"),
-                                    new String[]{RevealFileAction.getActionName(), IdeBundle.message("action.close")},
-                                    0, Messages.getInformationIcon()) == 0) {
+                                    RevealFileAction.getActionName(), IdeBundle.message("action.close"), Messages.getInformationIcon()) == 0) {
               ShowFilePathAction.open(file, file);
             }
           }

@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -130,12 +131,12 @@ public class TodoCheckinHandler extends CheckinHandler {
     if (! myConfiguration.CHECK_NEW_TODO) return ReturnResult.COMMIT;
     if (DumbService.getInstance(myProject).isDumb()) {
       final String todoName = VcsBundle.message("before.checkin.new.todo.check.title");
-      if (Messages.showDialog(myProject,
+      if (Messages.showOkCancelDialog(myProject,
                               todoName +
                               " can't be performed while IntelliJ IDEA updates the indices in background.\n" +
                               "You can commit the changes without running checks, or you can wait until indices are built.",
                               todoName + " is not possible right now",
-                              new String[]{"&Commit", "&Wait"}, 1, null) != 0) {
+                              "&Wait", "&Commit", null) == DialogWrapper.OK_EXIT_CODE) {
         return ReturnResult.CANCEL;
       }
       return ReturnResult.COMMIT;
@@ -171,7 +172,7 @@ public class TodoCheckinHandler extends CheckinHandler {
       buttons = new String[]{commitButtonText, CommonBundle.getCancelButtonText()};
     }
 
-    final int answer = Messages.showDialog(text, "TODO", buttons, 0, UIUtil.getWarningIcon());
+    final int answer = Messages.showOkCancelDialog(text, "TODO", buttons[0], buttons[1], UIUtil.getWarningIcon());
     if (thereAreTodoFound && answer == 0) {
       showTodo(worker);
       return ReturnResult.CLOSE_WINDOW;

@@ -151,8 +151,8 @@ public class DeleteHandler {
         warningMessage += "\n\nWarning:\n  Safe delete is not available while " + ApplicationNamesInfo.getInstance().getFullProductName() + " updates indices,\n  no usages will be checked.";
       }
 
-      int result = Messages.showDialog(project, warningMessage, IdeBundle.message("title.delete"),
-                                       new String[]{ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText()}, 0,
+      int result = Messages.showOkCancelDialog(project, warningMessage, IdeBundle.message("title.delete"),
+                                       ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText(),
                                        Messages.getQuestionIcon());
       if (result != 0) return;
     }

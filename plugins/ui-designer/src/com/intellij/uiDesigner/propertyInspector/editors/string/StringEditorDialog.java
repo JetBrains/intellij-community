@@ -148,15 +148,12 @@ public final class StringEditorDialog extends DialogWrapper{
 
         String newKeyName = null;
         if (references.size() > 1) {
-          final int rc = Messages.showDialog(module.getProject(), UIDesignerBundle.message("edit.text.multiple.usages",
+          final int rc = Messages.showYesNoCancelDialog(module.getProject(), UIDesignerBundle.message("edit.text.multiple.usages",
                                                                                            propertyByKey.getUnescapedKey(), references.size()),
                                              UIDesignerBundle.message("edit.text.multiple.usages.title"),
-                                             new String[] {
                                                UIDesignerBundle.message("edit.text.change.all"),
                                                UIDesignerBundle.message("edit.text.make.unique"),
-                                               CommonBundle.getCancelButtonText()
-                                             },
-                                             0,
+                                               CommonBundle.getCancelButtonText(),
                                              Messages.getWarningIcon());
           if (rc == 2) {
             return null;

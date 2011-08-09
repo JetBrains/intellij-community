@@ -265,12 +265,11 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           return;
         }
         else {
-          if (0 == Messages.showDialog(myPatterns.myAddButton, FileTypesBundle.message("filetype.edit.add.pattern.exists.message",
+          if (0 == Messages.showOkCancelDialog(myPatterns.myAddButton, FileTypesBundle.message("filetype.edit.add.pattern.exists.message",
                                                                                        registeredFileType.getDescription()),
                                        FileTypesBundle.message("filetype.edit.add.pattern.exists.title"),
-                                       new String[]{
                                          FileTypesBundle.message("filetype.edit.add.pattern.reassign.button"),
-                                         CommonBundle.getCancelButtonText()}, 0, Messages.getQuestionIcon())) {
+                                         CommonBundle.getCancelButtonText(), Messages.getQuestionIcon())) {
             myTempPatternsTable.removeAssociation(matcher, registeredFileType);
             myTempTemplateDataLanguages.removeAssociation(matcher, oldLanguage);
           } else {

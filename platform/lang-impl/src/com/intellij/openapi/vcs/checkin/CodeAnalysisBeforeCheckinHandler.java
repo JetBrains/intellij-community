@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.CodeSmellDetector;
@@ -102,10 +103,10 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       commitButtonText = commitButtonText.substring(0, commitButtonText.length()-3);
     }
 
-    final int answer = Messages.showDialog(
+    final int answer = Messages.showYesNoCancelDialog(
       VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text", errorCount, warningCount),
-      VcsBundle.message("code.smells.error.messages.tab.name"), new String[]{VcsBundle.message("code.smells.review.button"),
-      commitButtonText, CommonBundle.getCancelButtonText()}, 0, UIUtil.getWarningIcon());
+      VcsBundle.message("code.smells.error.messages.tab.name"), VcsBundle.message("code.smells.review.button"),
+      commitButtonText, CommonBundle.getCancelButtonText(), UIUtil.getWarningIcon());
     if (answer == 0) {
       CodeSmellDetector.getInstance(myProject).showCodeSmellErrors(codeSmells);
       return ReturnResult.CLOSE_WINDOW;
@@ -129,11 +130,11 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
   public ReturnResult beforeCheckin(CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
     if (getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
       if (DumbService.getInstance(myProject).isDumb()) {
-        if (Messages.showDialog(myProject,
+        if (Messages.showOkCancelDialog(myProject,
                                 "Code analysis can't be performed while IntelliJ IDEA updates the indices in background.\n" +
                                 "You can commit the changes without running inspections, or you can wait until indices are built.",
                                 "Code analysis is not possible right now",
-                                new String[]{"&Commit", "&Wait"}, 1, null) != 0) {
+                                "&Wait", "&Commit", null) == DialogWrapper.OK_EXIT_CODE) {
           return ReturnResult.CANCEL;
         }
         return ReturnResult.COMMIT;

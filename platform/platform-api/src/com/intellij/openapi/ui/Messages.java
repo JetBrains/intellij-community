@@ -100,15 +100,22 @@ public class Messages {
     return UIUtil.getQuestionIcon();
   }
 
+  /**
+   * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!  
+   */
   public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
-    return showDialog(project, message, title, options, defaultOptionIndex, -1, icon);
+    return showDialog(project, message, title, options, defaultOptionIndex, icon, null);
   }
 
-  public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
+  /**
+   * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!  
+   */
+  public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
-    MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, focusedOptionIndex, icon);
+    MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
     dialog.show();
     return dialog.getExitCode();
   }
@@ -128,15 +135,11 @@ public class Messages {
   }
 
   public static int showDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
-    return showDialog(parent, message, title, options, defaultOptionIndex, defaultOptionIndex, icon);
-  }
-
-  public static int showDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
-      MessageDialog dialog = new MessageDialog(parent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon);
+      MessageDialog dialog = new MessageDialog(parent, message, title, options, defaultOptionIndex, defaultOptionIndex, icon);
       dialog.show();
       return dialog.getExitCode();
     }
@@ -161,15 +164,11 @@ public class Messages {
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
   public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon, @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
-    return showDialog(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
+    return showDialog(message, title, options, defaultOptionIndex, defaultOptionIndex, icon, doNotAskOption);
   }
 
   public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
-    return showDialog(message, title, options, defaultOptionIndex, -1, icon);
-  }
-
-  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon) {
-    return showDialog(message, title, options, defaultOptionIndex, focusedOptionIndex, icon, null);
+    return showDialog(message, title, options, defaultOptionIndex, icon);
   }
 
   /**
@@ -272,21 +271,39 @@ public class Messages {
     return showYesNoDialog(message, title, YES_BUTTON, NO_BUTTON, icon);
   }
 
-  public static int showOkCancelDialog(Project project, String message, String title, Icon icon) {
+  public static int showOkCancelDialog(Project project, String message, String title, String okText, String cancelText, Icon icon,
+                                       DialogWrapper.DoNotAskOption doNotAskOption) {
     if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
-      return MacMessages.showYesNoDialog(title, message, OK_BUTTON, CANCEL_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
+      return MacMessages.showYesNoDialog(title, message, okText, cancelText, WindowManager.getInstance().suggestParentWindow(project),
+                                         doNotAskOption);
     }
     
-    return showDialog(project, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
+    return showDialog(project, message, title, new String[]{okText, cancelText}, 0, icon);
+  }
+
+  public static int showOkCancelDialog(Project project, String message, String title, String okText, String cancelText, Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoDialog(title, message, okText, cancelText, WindowManager.getInstance().suggestParentWindow(project));
+    }
+    
+    return showDialog(project, message, title, new String[]{okText, cancelText}, 0, icon);
+  }
+
+  public static int showOkCancelDialog(Project project, String message, String title, Icon icon) {
+    return showOkCancelDialog(project, message, title, OK_BUTTON, CANCEL_BUTTON, icon);
+  }
+
+  public static int showOkCancelDialog(Component parent, String message, String title, String okText, String cancelText, Icon icon) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoDialog(title, message, okText, cancelText, SwingUtilities.getWindowAncestor(parent));
+    }
+
+
+    return showDialog(parent, message, title, new String[]{okText, cancelText}, 0, icon);
   }
 
   public static int showOkCancelDialog(Component parent, String message, String title, Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
-      return MacMessages.showYesNoDialog(title, message, OK_BUTTON, CANCEL_BUTTON, SwingUtilities.getWindowAncestor(parent));
-    }
-
-
-    return showDialog(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
+    return showOkCancelDialog(parent, message, title, OK_BUTTON, CANCEL_BUTTON, icon);
   }
 
   /**
@@ -296,11 +313,19 @@ public class Messages {
    * @see #showOkCancelDialog(Component, String, String, Icon)
    */
   public static int showOkCancelDialog(String message, String title, Icon icon) {
+    return showOkCancelDialog(message, title, OK_BUTTON, CANCEL_BUTTON, icon, null);
+  }
+
+  public static int showOkCancelDialog(String message, String title, String okText, String cancelText, Icon icon) {
+    return showOkCancelDialog(message, title, okText, cancelText, icon, null);
+  }
+
+  public static int showOkCancelDialog(String message, String title, String okText, String cancelText, Icon icon, @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
-      return MacMessages.showYesNoDialog(title, message, OK_BUTTON, CANCEL_BUTTON, null);
+      return MacMessages.showYesNoDialog(title, message, okText, cancelText, null, doNotAskOption);
     }
     
-    return showDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
+    return showDialog(message, title, new String[]{okText, cancelText}, 0, icon, doNotAskOption);
   }
 
   public static int showCheckboxOkCancelDialog(String message, String title, String checkboxText, final boolean checked,
@@ -670,7 +695,6 @@ public class Messages {
       MacMessages.showOkMessageDialog(title, message, OK_BUTTON, null);
       return;
     }
-    
 
     showMessageDialog(message, title, getInformationIcon());
   }
@@ -757,6 +781,12 @@ public class Messages {
 
     public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
       this(project, message, title, options, defaultOptionIndex, -1, icon);
+    }
+
+    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon,
+                         @Nullable DoNotAskOption doNotAskOption) {
+      super(project, false);
+      _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
     }
 
     public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon) {

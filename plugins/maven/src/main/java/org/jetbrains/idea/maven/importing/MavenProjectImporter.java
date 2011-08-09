@@ -193,9 +193,9 @@ public class MavenProjectImporter {
           ProjectBundle.message("maven.import.incompatible.modules.ignore")
         };
 
-        result[0] = Messages.showDialog(myProject, message,
+        result[0] = Messages.showOkCancelDialog(myProject, message,
                                         ProjectBundle.message("maven.tab.importing"),
-                                        options, 0, Messages.getQuestionIcon());
+                                        options[0], options[1], Messages.getQuestionIcon());
       }
     });
 

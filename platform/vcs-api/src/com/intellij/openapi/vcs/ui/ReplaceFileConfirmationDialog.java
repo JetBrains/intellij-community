@@ -59,9 +59,9 @@ public class ReplaceFileConfirmationDialog {
   public boolean requestConfirmation(final Collection modifiedFiles) {
     if (modifiedFiles.isEmpty()) return true;
 
-    return Messages.showDialog(createMessage(modifiedFiles), myActionName,
-                                    new String[]{createOwerriteButtonName(modifiedFiles), getCancelButtonText()},
-                               0, Messages.getWarningIcon()) ==
+    return Messages.showOkCancelDialog(createMessage(modifiedFiles), myActionName,
+                                    createOwerriteButtonName(modifiedFiles), getCancelButtonText(),
+                               Messages.getWarningIcon()) ==
                 DialogWrapper.OK_EXIT_CODE;
 
   }

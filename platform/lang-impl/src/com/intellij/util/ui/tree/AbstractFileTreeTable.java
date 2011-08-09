@@ -165,7 +165,8 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       return true;
     }
     else {
-      int ret = Messages.showDialog(myProject, message, title, new String[]{"Override", "Do Not Override", "Cancel"}, 0, Messages.getWarningIcon());
+      int ret = Messages.showYesNoCancelDialog(myProject, message, title, "Override", "Do Not Override", "Cancel", 
+                                               Messages.getWarningIcon());
       if (ret == 0) {
         for (VirtualFile file : subdirectoryMappings.keySet()) {
           myModel.setValueAt(null, new DefaultMutableTreeNode(file), 1);

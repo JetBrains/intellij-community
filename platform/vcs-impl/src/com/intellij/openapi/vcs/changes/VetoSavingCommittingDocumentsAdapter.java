@@ -109,8 +109,8 @@ public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponen
     }
     messageBuilder.append("Save the ").append(documentsToWarn.size() == 1 ? "file" : "files").append(" now?");
 
-    int rc = Messages.showDialog(project, messageBuilder.toString(), "Save Files During Commit", new String[] { "Save Now", "Postpone Save" },
-                                 0, Messages.getQuestionIcon());
+    int rc = Messages.showOkCancelDialog(project, messageBuilder.toString(), "Save Files During Commit", "Save Now", "Postpone Save", 
+                                         Messages.getQuestionIcon());
     return rc == 0;
   }
 }

@@ -353,10 +353,10 @@ public class PluginManagerMain implements Disposable {
             else if (error != null) {
               LOG.info(error);
               setDownloadStatus(false);
-              if (0==Messages.showDialog(
+              if (0==Messages.showOkCancelDialog(
                 IdeBundle.message("error.list.of.plugins.was.not.loaded", error.getMessage()),
                 IdeBundle.message("title.plugins"),
-                new String[]{CommonBundle.message("button.retry"), CommonBundle.getCancelButtonText()}, 0, Messages.getErrorIcon())) {
+                CommonBundle.message("button.retry"), CommonBundle.getCancelButtonText(), Messages.getErrorIcon())) {
                 loadPluginsFromHostInBackground();
               }
             }

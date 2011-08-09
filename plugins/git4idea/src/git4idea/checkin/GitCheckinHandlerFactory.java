@@ -85,10 +85,9 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                   "<a href='http://sitaramc.github.com/concepts/detached-head.html'>Read more about detached HEAD</a>.";
       }
 
-      final int choice = Messages.showDialog(myPanel.getComponent(), "<html>" + message + "</html>", title,
-                                             new String[]{"Commit", "Cancel"},
-                                             1, Messages.getWarningIcon());
-      if (choice == 0) {
+      final int choice = Messages.showOkCancelDialog(myPanel.getComponent(), "<html>" + message + "</html>", title,
+                                             "Cancel", "Commit", Messages.getWarningIcon());
+      if (choice == 1) {
         return ReturnResult.COMMIT;
       } else {
         return ReturnResult.CLOSE_WINDOW;
