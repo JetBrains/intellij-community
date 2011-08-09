@@ -1,5 +1,5 @@
 abstract class X {
-  abstract def foo<caret>(String s, int a)
+  abstract def fo<caret>o(String s, int a)
 
     def foo(String s) {
         return foo(s, 5);

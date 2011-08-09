@@ -33,7 +33,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -111,7 +111,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     if (element.getParent() instanceof GrMethod && ((GrMethod)element.getParent()).getNameIdentifierGroovy() == element) {
       return element.getParent();
     }
-    final GrMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, GrMethodCallExpression.class);
+    final GrCall expression = PsiTreeUtil.getParentOfType(element, GrCall.class);
     if (expression != null) {
       return expression.resolveMethod();
     }
