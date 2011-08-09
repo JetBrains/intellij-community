@@ -168,7 +168,7 @@ public class Messages {
   }
 
   public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
-    return showDialog(message, title, options, defaultOptionIndex, icon);
+    return showDialog(message, title, options, defaultOptionIndex, icon, null);
   }
 
   /**
