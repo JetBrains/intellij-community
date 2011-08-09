@@ -79,6 +79,10 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
   @Override
   public void initComponent() {
+    doInitialize();
+  }
+
+  public void doInitialize() {
     if (myProject.isDefault()) return;
     myDetectionQueue = new MergingUpdateQueue("FrameworkDetectionQueue", 500, true, null, myProject);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -112,6 +116,10 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
   @Override
   public void disposeComponent() {
+    doDispose();
+  }
+
+  public void doDispose() {
     if (myDetectedFrameworksData != null) {
       myDetectedFrameworksData.saveDetected();
     }
