@@ -99,6 +99,9 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
   public void testNamedArg() {doTest();}
   public void _testInlineInGString() throws Throwable {doTest(); }
 
+  public void testDontRemoveReturnValueExpr() {doTest();}
+  public void testDontRemoveLastStatement() {doTest();}
+
   public void testInlineAll() throws Throwable {
     doTest(new GroovyInlineHandler() {
       @Override
