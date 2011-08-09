@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.remote;
+package org.jetbrains.plugins.gradle.remote.api;
 
 import org.jetbrains.annotations.NotNull;
 

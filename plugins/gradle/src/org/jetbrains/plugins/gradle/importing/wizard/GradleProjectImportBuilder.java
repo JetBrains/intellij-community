@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.importing.model.GradleProject;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
-import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
+import org.jetbrains.plugins.gradle.remote.api.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleLog;
