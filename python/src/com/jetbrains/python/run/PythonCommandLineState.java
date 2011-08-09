@@ -113,6 +113,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
+  @NotNull
   protected ProcessHandler startProcess() throws ExecutionException {
     return startProcess(null);
   }
