@@ -55,6 +55,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.AutomaticRenamingDialog;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
@@ -382,6 +383,7 @@ public class VariableInplaceRenamer {
             return;
           }
 
+          if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilBase.toPsiElementArray(renamer.getElements()))) return;
           final UsageInfo[] usageInfos = usages.toArray(new UsageInfo[usages.size()]);
           final MultiMap<PsiElement,UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
           for (final PsiNamedElement element : renamer.getElements()) {
