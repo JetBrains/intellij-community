@@ -17,6 +17,7 @@ package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.FrameworkDetector;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -42,7 +43,9 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
 
   public FrameworkDetectorRegistryImpl() {
     loadDetectors();
-    saveDetectors();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      saveDetectors();
+    }
   }
 
   private void loadDetectors() {
