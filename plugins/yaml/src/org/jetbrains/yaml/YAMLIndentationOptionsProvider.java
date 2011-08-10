@@ -3,15 +3,15 @@ package org.jetbrains.yaml;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
 
 /**
  * @author oleg
  */
 public class YAMLIndentationOptionsProvider implements FileTypeIndentOptionsProvider {
-  public CodeStyleSettings.IndentOptions createIndentOptions() {
-    final CodeStyleSettings.IndentOptions indentOptions = new CodeStyleSettings.IndentOptions();
+  public CommonCodeStyleSettings.IndentOptions createIndentOptions() {
+    final CommonCodeStyleSettings.IndentOptions indentOptions = new CommonCodeStyleSettings.IndentOptions();
     indentOptions.INDENT_SIZE = 2;
     return indentOptions;
   }
