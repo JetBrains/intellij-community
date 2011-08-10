@@ -365,13 +365,20 @@ public class GithubUtil {
 
   @Nullable
   public static GitRemote findGitHubRemoteBranch(final Project project, final VirtualFile root) {
+    // i.e. find origin which points on my github repo
     try {
       // Check that given repository is properly configured git repository
-      final String host = GithubSettings.getInstance().getHost();
+      final GithubSettings githubSettings = GithubSettings.getInstance();
+      final String host = githubSettings.getHost();
+      final String username = githubSettings.getLogin();
+
+      final String userRepoMarkerSSHProtocol = host + ":" + username + "/";
+      final String userRepoMarkerOtherProtocols = host + "/" + username + "/";
+
       final List<GitRemote> gitRemotes = GitRemote.list(project, root);
       for (GitRemote gitRemote : gitRemotes) {
         final String pushUrl = gitRemote.pushUrl();
-        if (pushUrl.contains(host)) {
+        if (pushUrl.contains(userRepoMarkerSSHProtocol) || pushUrl.contains(userRepoMarkerOtherProtocols)) {
           return gitRemote;
         }
       }
