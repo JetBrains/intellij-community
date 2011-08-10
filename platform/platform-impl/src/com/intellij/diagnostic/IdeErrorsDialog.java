@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
@@ -54,7 +55,7 @@ import java.util.List;
 
 public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, Disposable, TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class.getName());
-  private /*static final*/ boolean INTERNAL_MODE = false; //ApplicationManagerEx.getApplicationEx().isInternal();
+  private static final boolean INTERNAL_MODE = ApplicationManagerEx.getApplicationEx().isInternal();
   @NonNls private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
   public static DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
 
@@ -508,6 +509,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
             // take first line
             msg = msg.substring(0, i);
           }
+          msg = StringUtil.first(msg, 200, true);
           myCommentsTabForm.setErrorText(msg);
         }
         else {
