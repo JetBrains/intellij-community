@@ -614,7 +614,8 @@ public class StringUtil {
 
   @NotNull
   public static String unquoteString(@NotNull String s) {
-    if (s.length() <= 1 || s.charAt(0) != '"' || s.charAt(s.length() - 1) != '"') {
+    char c;
+    if (s.length() <= 1 || (c = s.charAt(0)) != '"' && c != '\'' || s.charAt(s.length() - 1) != c) {
       return s;
     }
     return s.substring(1, s.length() - 1);
