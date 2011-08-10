@@ -118,4 +118,20 @@ public class RecursionManagerTest extends TestCase {
     }
   }
 
+  public void testFullGraphPerformance() throws Exception {
+    long start = System.currentTimeMillis()
+    int count = 20
+    Closure cl
+    cl = {
+      for (i in 1..count) {
+        prevent("foo" + i, cl)
+      }
+      return "zoo"
+    }
+
+    assert "zoo" == cl()
+
+    assert System.currentTimeMillis() - start < 10000
+  }
+
 }
