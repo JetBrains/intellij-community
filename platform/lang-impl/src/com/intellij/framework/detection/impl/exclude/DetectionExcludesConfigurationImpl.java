@@ -23,7 +23,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -180,7 +180,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
 
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
     state.getFrameworkTypes().addAll(myExcludedFrameworks);
-    Collections.sort(state.getFrameworkTypes());
+    Collections.sort(state.getFrameworkTypes(), String.CASE_INSENSITIVE_ORDER);
 
     for (String typeId : myExcludedFiles.keySet()) {
       final VirtualFilePointerContainer container = myExcludedFiles.get(typeId);
@@ -191,7 +191,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     Collections.sort(state.getFiles(), new Comparator<ExcludedFileState>() {
       @Override
       public int compare(ExcludedFileState o1, ExcludedFileState o2) {
-        return Comparing.comparePairs(o1.getUrl(), o1.getFrameworkType(), o2.getUrl(), o2.getFrameworkType());
+        return StringUtil.comparePairs(o1.getFrameworkType(), o1.getUrl(), o2.getFrameworkType(), o2.getUrl(), true);
       }
     });
     return state;
