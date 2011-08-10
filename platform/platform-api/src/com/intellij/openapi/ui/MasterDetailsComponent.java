@@ -520,14 +520,16 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   protected void addNode(MyNode nodeToAdd, MyNode parent) {
     parent.add(nodeToAdd);
-    TreeUtil.sort(parent, new Comparator() {
-      public int compare(final Object o1, final Object o2) {
-        MyNode node1 = (MyNode)o1;
-        MyNode node2 = (MyNode)o2;
-        return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
-      }
-    });
+    TreeUtil.sort(parent, getNodeComparator());
     ((DefaultTreeModel)myTree.getModel()).reload(parent);
+  }
+
+  protected Comparator<MyNode> getNodeComparator() {
+    return new Comparator<MyNode>() {
+      public int compare(final MyNode o1, final MyNode o2) {
+        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+      }
+    };
   }
 
   public ActionCallback selectNodeInTree(final DefaultMutableTreeNode nodeToSelect) {
