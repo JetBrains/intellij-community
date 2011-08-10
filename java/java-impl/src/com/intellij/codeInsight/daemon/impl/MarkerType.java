@@ -214,7 +214,7 @@ public class MarkerType {
     return myTooltip;
   }
 
-  private static class SubclassUpdater extends PsiElementListNavigator.AppenderTask {
+  private static class SubclassUpdater extends AppenderTask {
     private final PsiClass myClass;
     private final PsiClassListCellRenderer myRenderer;
 
@@ -237,7 +237,7 @@ public class MarkerType {
       ClassInheritorsSearch.search(myClass, myClass.getUseScope(), true).forEach(new CommonProcessors.CollectProcessor<PsiClass>() {
         @Override
         public boolean process(final PsiClass o) {
-          updateList(o, myRenderer);
+          updateList(o, myRenderer.getComparator());
           return super.process(o);
         }
       });
@@ -245,7 +245,7 @@ public class MarkerType {
 
   }
 
-  private static class OverridingMethodsUpdater extends PsiElementListNavigator.AppenderTask {
+  private static class OverridingMethodsUpdater extends AppenderTask {
     private PsiMethod myMethod;
     private PsiElementListCellRenderer myRenderer;
 
@@ -269,7 +269,7 @@ public class MarkerType {
         new CommonProcessors.CollectProcessor<PsiMethod>() {
           @Override
           public boolean process(PsiMethod psiMethod) {
-            updateList(psiMethod, myRenderer);
+            updateList(psiMethod, myRenderer.getComparator());
             return super.process(psiMethod);
           }
         });

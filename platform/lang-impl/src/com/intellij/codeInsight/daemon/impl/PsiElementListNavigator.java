@@ -17,14 +17,9 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
@@ -34,16 +29,10 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.speedSearch.NameFilteringListModel;
-import com.intellij.util.Alarm;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class PsiElementListNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PsiElementListNavigator");
@@ -125,81 +114,5 @@ public class PsiElementListNavigator {
       ProgressManager.getInstance().run(appenderTask);
     }
     return popup;
-  }
-
-
-  public static abstract class AppenderTask extends Task.Backgroundable {
-    private JBListWithHintProvider myList;
-    private AbstractPopup myPopup;
-
-    private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    private List<PsiElement> myData = new ArrayList<PsiElement>();
-
-    private final Object lock = new Object();
-
-    public AppenderTask(@Nullable final Project project,
-                        @NotNull final String title,
-                        final boolean canBeCancelled,
-                        @Nullable final PerformInBackgroundOption backgroundOption) {
-      super(project, title, canBeCancelled, backgroundOption);
-    }
-
-    public AppenderTask(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled) {
-      super(project, title, canBeCancelled);
-    }
-
-    public AppenderTask(@Nullable final Project project, @NotNull final String title) {
-      super(project, title);
-    }
-
-    public abstract String getCaption(int size);
-
-
-    @Override
-    public void run(@NotNull ProgressIndicator indicator) {
-      myList.setPaintBusy(true);
-    }
-
-    public void setList(JBListWithHintProvider list) {
-      myList = list;
-    }
-
-    public void setPopup(AbstractPopup popup) {
-      myPopup = popup;
-    }
-
-    public void updateList(PsiElement element, final PsiElementListCellRenderer renderer) {
-      synchronized (lock) {
-        myData.add(element);
-      }
-
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          myAlarm.cancelAllRequests();
-          final ListModel listModel = myList.getModel();
-          synchronized (lock) {
-            Collections.sort(myData, renderer.getComparator());
-            ((NameFilteringListModel)listModel).replaceAll(myData);
-          }
-          ((JComponent)myList.getParent()).revalidate();
-          myPopup.setSize(myList.getParent().getParent().getPreferredSize());
-          myList.repaint();
-          myPopup.setCaption(getCaption(getCurrentSize()));
-        }
-      }, 10, ModalityState.stateForComponent(myList));
-    }
-
-    public int getCurrentSize() {
-      synchronized (lock) {
-        return myData.size();
-      }
-    }
-
-    @Override
-    public void onSuccess() {
-      myList.setPaintBusy(false);
-      myPopup.setCaption(getCaption(getCurrentSize()));
-    }
   }
 }
