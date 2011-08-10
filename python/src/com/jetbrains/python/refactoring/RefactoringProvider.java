@@ -6,7 +6,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHandler;
 import com.jetbrains.python.refactoring.classes.pullUp.PyPullUpHandler;
@@ -61,9 +60,6 @@ public class RefactoringProvider extends RefactoringSupportProvider {
     if (containingFunction != null) {
       if (element instanceof PyTargetExpression || element instanceof PyFunction || element instanceof PyClass) {
         return true;
-      }
-      if (element instanceof PyNamedParameter) {
-        return containingFunction.getContainingClass() == null;
       }
     }
     return false;

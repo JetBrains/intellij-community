@@ -417,4 +417,8 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testDontResolveTargetToBuiltins() {  // PY-4256
     assertResolvesTo(PyTargetExpression.class, "str");
   }
+  
+  public void testKeywordArgument() {
+    assertResolvesTo(PyNamedParameter.class, "bar");
+  }
 }

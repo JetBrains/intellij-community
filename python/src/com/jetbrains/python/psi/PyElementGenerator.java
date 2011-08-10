@@ -41,7 +41,9 @@ public abstract class PyElementGenerator {
 
   public abstract PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral);
 
-  public abstract PyExpression createExpressionFromText(String text);
+  public abstract  PyExpression createExpressionFromText(String text);
+
+  public abstract PyExpression createExpressionFromText(final LanguageLevel languageLevel, String text);
 
   public abstract PsiElement insertItemIntoList(PyElement list, @Nullable PyExpression afterThis, PyExpression toInsert)
     throws IncorrectOperationException;

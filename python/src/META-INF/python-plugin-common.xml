@@ -253,6 +253,7 @@
                   order="before completionAutoPopup"/>
 
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyInitReferenceSearchExecutor"/>
+    <referencesSearch implementation="com.jetbrains.python.psi.search.PyKeywordArgumentSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyStringReferenceSearch"/>
     <findUsagesHandlerFactory implementation="com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory" id="Python"
                               order="last, before default"/>
@@ -276,6 +277,8 @@
 
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyStringLiteralExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionManipulator"/>
+    <lang.elementManipulator forClass="com.jetbrains.python.psi.PyKeywordArgument"
+                             implementationClass="com.jetbrains.python.psi.impl.PyKeywordArgumentManipulator"/>
 
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>
 
