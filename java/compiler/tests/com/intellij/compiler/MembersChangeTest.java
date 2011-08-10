@@ -82,4 +82,6 @@ public class MembersChangeTest extends CompilerTestCase {
   public void testRemoveHidingMethod() throws Exception  {doTest();}
   
   public void testRemoveHidingField() throws Exception  {doTest();}
+
+  public void testMoveInnerToSuper() throws Exception  {doTest();}
 }
