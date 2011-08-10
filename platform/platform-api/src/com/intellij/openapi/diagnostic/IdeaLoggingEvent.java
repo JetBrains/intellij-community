@@ -17,6 +17,7 @@ package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author kir
@@ -42,6 +43,11 @@ public class IdeaLoggingEvent {
     if (myThrowable == null) return "";
     
     return StringUtil.getThrowableText(myThrowable);
+  }
+
+  @Nullable
+  public Object getData() {
+    return null;
   }
 
   @NonNls

@@ -723,6 +723,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
               // makes no sense to start from within write action, will cancel anyway
               ApplicationManager.getApplication().invokeLater(this, myProject.getDisposed());
             }
+            if (PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments()) {
+              PsiDocumentManager.getInstance(myProject).cancelAndRunWhenAllCommitted("restart daemon when all committed", this);
+              return;
+            }
+
             Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.size());
             for (FileEditor fileEditor : activeEditors) {
               BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();

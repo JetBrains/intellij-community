@@ -19,8 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.StringLenComparator;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -93,18 +95,26 @@ public class VcsRootIterator {
   }
 
   public static boolean iterateVcsRoot(final Project project, final VirtualFile root, final Processor<FilePath> processor) {
-    final MyRootIterator rootIterator = new MyRootIterator(project, root, processor);
+    return iterateVcsRoot(project, root, processor, null);
+  }
+
+  public static boolean iterateVcsRoot(final Project project, final VirtualFile root, final Processor<FilePath> processor,
+                                       @Nullable PairProcessor<VirtualFile, VirtualFile[]> directoryFilter) {
+    final MyRootIterator rootIterator = new MyRootIterator(project, root, processor, directoryFilter);
     return rootIterator.iterate();
   }
 
   private static class MyRootIterator {
     private final Processor<FilePath> myProcessor;
+    @Nullable private final PairProcessor<VirtualFile, VirtualFile[]> myDirectoryFilter;
     private final LinkedList<VirtualFile> myQueue;
     private final MyRootFilter myRootPresentFilter;
     private final ExcludedFileIndex myExcludedFileIndex;
 
-    private MyRootIterator(final Project project, final VirtualFile root, final Processor<FilePath> processor) {
+    private MyRootIterator(final Project project, final VirtualFile root, final Processor<FilePath> processor,
+                           @Nullable PairProcessor<VirtualFile, VirtualFile[]> directoryFilter) {
       myProcessor = processor;
+      myDirectoryFilter = directoryFilter;
 
       final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
       final AbstractVcs vcs = plVcsManager.getVcsFor(root);
@@ -122,6 +132,7 @@ public class VcsRootIterator {
 
         if (current.isDirectory()) {
           final VirtualFile[] files = current.getChildren();
+          if (myDirectoryFilter != null && ! myDirectoryFilter.process(current, files)) continue;
 
           for (VirtualFile child : files) {
             if (myRootPresentFilter != null && (! myRootPresentFilter.accept(child))) continue;

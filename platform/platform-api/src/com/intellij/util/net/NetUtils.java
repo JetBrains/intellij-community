@@ -110,6 +110,7 @@ public class NetUtils {
                                       int expectedContentSize) throws IOException, ProcessCanceledException {
     if (indicator != null) {
       indicator.checkCanceled();
+      if (expectedContentSize < 0) indicator.setIndeterminate(true);
     }
 
     final byte[] buffer = new byte[4 * 1024];

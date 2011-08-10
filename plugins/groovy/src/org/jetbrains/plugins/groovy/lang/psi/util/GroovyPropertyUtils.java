@@ -15,11 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,9 +33,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor;
@@ -43,6 +53,8 @@ import java.util.List;
  * @author ilyas
  */
 public class GroovyPropertyUtils {
+  private static final Logger LOG = Logger.getInstance(GroovyPropertyUtils.class);
+
   public static final String IS_PREFIX = "is";
   public static final String GET_PREFIX = "get";
   public static final String SET_PREFIX = "set";
@@ -51,12 +63,12 @@ public class GroovyPropertyUtils {
   }
 
   public static PsiMethod[] getAllSettersByField(PsiField field) {
-    return getAllSetters(field.getContainingClass(), field.getName(), field.hasModifierProperty(GrModifier.STATIC), false);
+    return getAllSetters(field.getContainingClass(), field.getName(), field.hasModifierProperty(PsiModifier.STATIC), false);
   }
 
   @NotNull
   public static PsiMethod[] getAllGettersByField(PsiField field) {
-    return getAllGetters(field.getContainingClass(), field.getName(), field.hasModifierProperty(GrModifier.STATIC), false);
+    return getAllGetters(field.getContainingClass(), field.getName(), field.hasModifierProperty(PsiModifier.STATIC), false);
   }
 
   @Nullable
@@ -447,7 +459,7 @@ public class GroovyPropertyUtils {
       }
     }
     if (field == null) return null;
-    if (field.hasModifierProperty(GrModifier.STATIC) == accessor.hasModifierProperty(GrModifier.STATIC)) {
+    if (field.hasModifierProperty(PsiModifier.STATIC) == accessor.hasModifierProperty(PsiModifier.STATIC)) {
       return field;
     }
     return null;
@@ -486,7 +498,7 @@ public class GroovyPropertyUtils {
     final PsiClass accessorClass = accessor.getContainingClass();
     final PsiClass fieldClass = field.getContainingClass();
     if (!field.getManager().areElementsEquivalent(accessorClass, fieldClass)) return false;
-    return accessor.hasModifierProperty(GrModifier.STATIC) == field.hasModifierProperty(GrModifier.STATIC);
+    return accessor.hasModifierProperty(PsiModifier.STATIC) == field.hasModifierProperty(PsiModifier.STATIC);
   }
 
   public static List<GrAccessorMethod> getFieldAccessors(GrField field) {
@@ -497,4 +509,105 @@ public class GroovyPropertyUtils {
     if (setter != null) accessors.add(setter);
     return accessors;
   }
+
+  public static GrMethod generateGetterPrototype(PsiField field) {
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(field.getProject());
+    String name = field.getName();
+    String getName = getGetterNameNonBoolean(field.getName());
+    try {
+      PsiType type = field instanceof GrField ? ((GrField)field).getDeclaredType() : field.getType();
+      GrMethod getter = factory.createMethod(getName, type);
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiUtil.setModifierProperty(getter, PsiModifier.STATIC, true);
+      }
+
+      annotateWithNullableStuff(field, getter);
+
+      GrCodeBlock body = factory.createMethodBodyFromText("\nreturn " + name + "\n");
+      getter.getBlock().replace(body);
+      return getter;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  public static GrMethod generateSetterPrototype(PsiField field) {
+    Project project = field.getProject();
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+
+    String name = field.getName();
+    boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    VariableKind kind = codeStyleManager.getVariableKind(field);
+    String propertyName = codeStyleManager.variableNameToPropertyName(name, kind);
+    String setName = getSetterName(field.getName());
+
+    final PsiClass containingClass = field.getContainingClass();
+    try {
+      GrMethod setMethod = factory.createMethod(setName, PsiType.VOID);
+      String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
+      final PsiType type = field instanceof GrField ? ((GrField)field).getDeclaredType() : field.getType();
+      GrParameter param = factory.createParameter(parameterName, type);
+
+      annotateWithNullableStuff(field, param);
+
+      setMethod.getParameterList().add(param);
+      PsiUtil.setModifierProperty(setMethod, PsiModifier.STATIC, isStatic);
+
+      @NonNls StringBuilder builder = new StringBuilder();
+      if (name.equals(parameterName)) {
+        if (!isStatic) {
+          builder.append("this.");
+        }
+        else {
+          String className = containingClass.getName();
+          if (className != null) {
+            builder.append(className);
+            builder.append(".");
+          }
+        }
+      }
+      builder.append(name);
+      builder.append("=");
+      builder.append(parameterName);
+      builder.append("\n");
+      GrCodeBlock body = factory.createMethodBodyFromText(builder.toString());
+      setMethod.getBlock().replace(body);
+      return setMethod;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  private static void annotateWithNullableStuff(final PsiModifierListOwner field, final PsiModifierListOwner listOwner)
+    throws IncorrectOperationException {
+    final NullableNotNullManager manager = NullableNotNullManager.getInstance(field.getProject());
+    if (manager.isNotNull(field, false)) {
+      annotate(listOwner, manager.getDefaultNotNull());
+    }
+    else if (manager.isNullable(field, false)) {
+      annotate(listOwner, manager.getDefaultNullable());
+    }
+
+    final PsiModifierList modifierList = listOwner.getModifierList();
+    if (modifierList.hasExplicitModifier(GrModifier.DEF)) {
+      LOG.assertTrue(modifierList instanceof GrModifierList);
+      if (modifierList.getAnnotations().length > 0 || ((GrModifierList)modifierList).getModifiers().length > 1) {
+        modifierList.setModifierProperty(GrModifier.DEF, false);
+      }
+    }
+  }
+
+  private static void annotate(final PsiModifierListOwner listOwner, final String annotationQName)
+    throws IncorrectOperationException {
+    final PsiModifierList modifierList = listOwner.getModifierList();
+    LOG.assertTrue(modifierList != null);
+    modifierList.addAnnotation(annotationQName);
+  }
+
+
 }

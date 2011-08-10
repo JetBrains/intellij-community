@@ -293,10 +293,10 @@ public class GroovyInlineMethodUtil {
 
   }
 
-  public static boolean hasNoSideEffects(GrExpression qualifier) {
+  public static boolean isSimpleReference(GrExpression qualifier) {
     if (!(qualifier instanceof GrReferenceExpression)) return false;
     GrExpression qual = ((GrReferenceExpression) qualifier).getQualifierExpression();
-    return qual == null || hasNoSideEffects(qual);
+    return qual == null || isSimpleReference(qual);
   }
 
   static class ReferenceExpressionInfo {

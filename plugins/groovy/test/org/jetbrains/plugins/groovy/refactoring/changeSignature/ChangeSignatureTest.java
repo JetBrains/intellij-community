@@ -231,6 +231,10 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   public void testRemoveSingleClosureArgument() {
     doTest(new SimpleInfo[0]);
   }
+  
+  public void testNewExpr() {
+    doTest();
+  }
 
   public void testChangeJavaDoc() {
     doTest(new SimpleInfo("newName", 0), new SimpleInfo(1));

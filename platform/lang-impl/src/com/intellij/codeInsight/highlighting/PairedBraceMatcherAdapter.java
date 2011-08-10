@@ -52,7 +52,7 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
     final IElementType tokenType = iterator.getTokenType();
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
-      if (tokenType == (left? pair.getLeftBraceType() : pair.getRightBraceType())) return pair;
+      if (tokenType == (left ? pair.getLeftBraceType() : pair.getRightBraceType())) return pair;
     }
     return null;
   }

@@ -35,7 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.generate.GroovyCodeInsightBundle;
-import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerationInfo;
+import org.jetbrains.plugins.groovy.actions.generate.GroovyGenerationInfo;
 
 import java.util.Collection;
 import java.util.List;
@@ -44,7 +44,7 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 28.05.2008
  */
-public class EqualsGenerateHandler extends GenerateMembersHandlerBase {
+public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateHandler");
   private PsiField[] myEqualsFields = null;
@@ -52,7 +52,7 @@ public class EqualsGenerateHandler extends GenerateMembersHandlerBase {
   private PsiField[] myNonNullFields = null;
   private static final PsiElementClassMember[] DUMMY_RESULT = new PsiElementClassMember[1];
 
-  public EqualsGenerateHandler() {
+  public GroovyGenerateEqualsHandler() {
     super("");
   }
 
@@ -64,8 +64,9 @@ public class EqualsGenerateHandler extends GenerateMembersHandlerBase {
     myNonNullFields = PsiField.EMPTY_ARRAY;
 
     GlobalSearchScope scope = aClass.getResolveScope();
-    final PsiMethod equalsMethod = GrGenerateEqualsHelper.findMethod(aClass, GrGenerateEqualsHelper.getEqualsSignature(project, scope));
-    final PsiMethod hashCodeMethod = GrGenerateEqualsHelper.findMethod(aClass, GrGenerateEqualsHelper.getHashCodeSignature());
+    final PsiMethod equalsMethod = GroovyGenerateEqualsHelper
+      .findMethod(aClass, GroovyGenerateEqualsHelper.getEqualsSignature(project, scope));
+    final PsiMethod hashCodeMethod = GroovyGenerateEqualsHelper.findMethod(aClass, GroovyGenerateEqualsHelper.getHashCodeSignature());
 
     boolean needEquals = equalsMethod == null;
     boolean needHashCode = hashCodeMethod == null;
@@ -113,7 +114,7 @@ public class EqualsGenerateHandler extends GenerateMembersHandlerBase {
     Project project = aClass.getProject();
     final boolean useInstanceofToCheckParameterType = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
 
-    GrGenerateEqualsHelper helper = new GrGenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields, useInstanceofToCheckParameterType);
+    GroovyGenerateEqualsHelper helper = new GroovyGenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields, useInstanceofToCheckParameterType);
     Collection<PsiMethod> methods = helper.generateMembers();
     return ContainerUtil.map2List(methods, new Function<PsiMethod, PsiGenerationInfo<PsiMethod>>() {
       public PsiGenerationInfo<PsiMethod> fun(final PsiMethod s) {

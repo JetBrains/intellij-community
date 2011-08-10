@@ -272,23 +272,19 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     ((DefaultTreeModel) myTree.getModel()).reload(myRoot);
   }
 
-  protected void addNode(final MyNode nodeToAdd, final MyNode parent) {
-    parent.add(nodeToAdd);
-    TreeUtil.sort(parent, GroupNodesComparator.getInstance());
-    ((DefaultTreeModel)myTree.getModel()).reload(parent);
+  @Override
+  protected Comparator<MyNode> getNodeComparator() {
+    return GroupNodesComparator.getInstance();
   }
 
-  private static class GroupNodesComparator implements Comparator {
+  private static class GroupNodesComparator implements Comparator<MyNode> {
     private final static GroupNodesComparator instance = new GroupNodesComparator();
 
     private static GroupNodesComparator getInstance() {
       return instance;
     }
 
-    public int compare(final Object o1, final Object o2) {
-      MyNode node1 = (MyNode)o1;
-      MyNode node2 = (MyNode)o2;
-
+    public int compare(final MyNode node1, final MyNode node2) {
       if ((node1.getConfigurable() instanceof GroupConfigurable) && (node2.getConfigurable() instanceof GroupConfigurable)) {
         final ProxyGroup group1 = ((GroupConfigurable) node1.getConfigurable()).getEditableObject();
         final ProxyGroup group2 = ((GroupConfigurable) node2.getConfigurable()).getEditableObject();

@@ -6,14 +6,15 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoListener;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.util.containers.WeakFactoryMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.lang.ref.Reference;
 
 public class MockFileDocumentManagerImpl extends FileDocumentManager {
@@ -24,14 +25,10 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   private final WeakFactoryMap<VirtualFile,Document> myDocuments = new WeakFactoryMap<VirtualFile, Document>() {
     @Override
     protected Document create(final VirtualFile key) {
-      try {
-        final Document document = EditorFactory.getInstance().createDocument(new String(key.contentsToByteArray()));
-        document.putUserData(MOCK_VIRTUAL_FILE_KEY, key);
-        return document;
-      }
-      catch (IOException e) {
-        return null;
-      }
+      CharSequence text = LoadTextUtil.loadText(key);
+      final Document document = EditorFactory.getInstance().createDocument(text);
+      document.putUserData(MOCK_VIRTUAL_FILE_KEY, key);
+      return document;
     }
   };
 
@@ -106,7 +103,7 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   }
 
   @Override
-  public boolean requestWriting(@NotNull Document document, @NotNull Project project) {
+  public boolean requestWriting(@NotNull Document document, @Nullable Project project) {
     return true;
   }
 }

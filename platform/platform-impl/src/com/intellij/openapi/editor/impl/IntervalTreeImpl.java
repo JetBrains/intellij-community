@@ -75,7 +75,9 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     @Override
     public boolean processAliveKeys(@NotNull Processor<? super T> processor) {
-      for (Getable<T> interval : intervals) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < intervals.size(); i++) {
+        Getable<T> interval = intervals.get(i);
         T key = interval.get();
         if (key != null && !processor.process(key)) return false;
       }

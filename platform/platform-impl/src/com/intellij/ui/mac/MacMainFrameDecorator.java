@@ -18,6 +18,7 @@ package com.intellij.ui.mac;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
@@ -38,6 +41,8 @@ import static com.intellij.ui.mac.foundation.Foundation.invoke;
  * User: spLeaner
  */
 public class MacMainFrameDecorator implements UISettingsListener, Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
+  
   private static boolean SHOWN = false;
 
   private static Callback SET_VISIBLE_CALLBACK = new Callback() {
@@ -142,12 +147,20 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
                   // it seems like the title is still visible in fullscreen but the window itself shifted up for titlebar height
                   // and the size of the frame is still calculated to be the height of the screen which is wrong
                   // so just add these titlebar height to the frame height once again
-                  SwingUtilities.invokeLater(new Runnable() {
+                  Timer timer = new Timer(300, new ActionListener() {
                     @Override
-                    public void run() {
-                      frame.setSize(frame.getWidth(), frame.getHeight() + frame.getInsets().top);
+                    public void actionPerformed(ActionEvent e) {
+                      SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                          frame.setSize(frame.getWidth(), frame.getHeight() + frame.getInsets().top);
+                        }
+                      });
                     }
                   });
+                  
+                  timer.setRepeats(false);
+                  timer.start();
                 }
               }
             });

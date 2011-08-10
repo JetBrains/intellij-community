@@ -122,21 +122,25 @@ public class TracRepository extends BaseRepositoryImpl {
     Vector<Object> vector = (Vector<Object>)response;
     LocalTaskImpl task = new LocalTaskImpl();
     task.setId(vector.get(0).toString());
-    task.setCreated((Date)vector.get(1));
-    task.setUpdated((Date)vector.get(2));
+    task.setCreated(getDate(vector.get(1)));
+    task.setUpdated(getDate(vector.get(2)));
 
     Hashtable<String, String> map = (Hashtable<String, String>)vector.get(3);
     task.setSummary(map.get("summary"));
 
     TaskType taskType = TaskType.OTHER;
     String type = map.get("type");
-    if ("Feature".equals(type)) taskType = TaskType.FEATURE;
-    else if ("Bug".equals(type)) taskType = TaskType.BUG;
+    if ("Feature".equals(type) || type.equals("enhancement")) taskType = TaskType.FEATURE;
+    else if ("Bug".equals(type) || type.equals("defect") || type.equals("error")) taskType = TaskType.BUG;
     else if ("Exception".equals(type)) taskType = TaskType.EXCEPTION;
     task.setType(taskType);
 
     task.setIssue(true);
     return task;
+  }
+
+  private static Date getDate(Object o) {
+    return o instanceof Date ? (Date)o : new Date((Integer)o * 1000l);
   }
 
   @Override

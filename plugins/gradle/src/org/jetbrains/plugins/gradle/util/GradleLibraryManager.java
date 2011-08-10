@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ public class GradleLibraryManager {
     // Init static data with ability to redefine it locally.
     GRADLE_JAR_FILE_PATTERN = Pattern.compile(System.getProperty("gradle.pattern.core.jar", "gradle-(core-)?(\\d.*)\\.jar"));
     ANY_GRADLE_JAR_FILE_PATTERN = Pattern.compile(System.getProperty("gradle.pattern.core.jar", "gradle-(.*)\\.jar"));
-    GRADLE_START_FILE_NAMES = System.getProperty("gradle.start.file.names", "gradle|gradle.cmd|gradle.sh").split("|");
+    GRADLE_START_FILE_NAMES = System.getProperty("gradle.start.file.names", "gradle:gradle.cmd:gradle.sh").split(":");
     GRADLE_ENV_PROPERTY_NAME = System.getProperty("gradle.home.env.key", "GRADLE_HOME");
   }
 
@@ -52,7 +53,7 @@ public class GradleLibraryManager {
     // Manually defined gradle home
     File gradleHome = getGradleHome(project);
 
-    if (gradleHome == null || gradleHome.isDirectory()) {
+    if (gradleHome == null || !gradleHome.isDirectory()) {
       return null;
     }
 
@@ -70,6 +71,17 @@ public class GradleLibraryManager {
     return result;
   }
 
+  /**
+   * Performs the same job as {@link #getGradleHome(Project)} but tries to deduce project to use.
+   * 
+   * @return    file handle that points to the gradle installation home (if any)
+   */
+  public File getGradleHome() {
+    ProjectManager projectManager = ProjectManager.getInstance();
+    Project[] openProjects = projectManager.getOpenProjects();
+    return openProjects.length == 1 ? getGradleHome(openProjects[0]) : getGradleHome(projectManager.getDefaultProject());
+  }
+  
   /**
    * Tries to return file handle that points to the gradle installation home.
    * 
@@ -96,10 +108,10 @@ public class GradleLibraryManager {
   @Nullable
   public File getManuallyDefinedGradleHome(@Nullable Project project) {
     if (project == null) {
-      return null;
+      project = ProjectManager.getInstance().getDefaultProject();
     }
     GradleSettings settings = GradleSettings.getInstance(project);
-    String path = settings.INSTALLATION_HOME;
+    String path = settings.GRADLE_HOME;
     if (path == null) {
       return null;
     }
@@ -118,7 +130,7 @@ public class GradleLibraryManager {
     if (path == null) {
       return null;
     }
-    for (String pathEntry : path.split(File.separator)) {
+    for (String pathEntry : path.split(File.pathSeparator)) {
       File dir = new File(pathEntry);
       if (!dir.isDirectory()) {
         continue;

@@ -36,10 +36,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.util.Alarm;
 
 public class StatusBarUpdater implements Disposable {
   private final Project myProject;
-  private final UpdateStatusRunnable myUpdateStatusRunnable = new UpdateStatusRunnable();
+  private final DumbAwareRunnable myUpdateStatusRunnable = new DumbAwareRunnable() {
+    public void run() {
+      if (!myProject.isDisposed()) {
+        updateStatus();
+      }
+    }
+  };
+  private final Alarm updateStatusAlarm = new Alarm();
 
   public StatusBarUpdater(Project project) {
     myProject = project;
@@ -76,7 +84,8 @@ public class StatusBarUpdater implements Disposable {
       myUpdateStatusRunnable.run();
     }
     else {
-      application.invokeLater(myUpdateStatusRunnable);
+      updateStatusAlarm.cancelAllRequests();
+      updateStatusAlarm.addRequest(myUpdateStatusRunnable, 100);
     }
   }
 
@@ -102,14 +111,6 @@ public class StatusBarUpdater implements Disposable {
       StatusBarEx barEx = (StatusBarEx)statusBar;
       if (!text.equals(barEx.getInfo())){
         statusBar.setInfo(text, "updater");
-      }
-    }
-  }
-
-  private class UpdateStatusRunnable implements DumbAwareRunnable {
-    public void run() {
-      if (!myProject.isDisposed()) {
-        updateStatus();
       }
     }
   }

@@ -40,6 +40,8 @@ public class TitledSeparator extends JPanel {
         new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                                new Insets(3, 0, 0, 2), 0, 0));
 
+    setTitleFont(UIUtil.getBorderFont());
+
     setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
   }
 

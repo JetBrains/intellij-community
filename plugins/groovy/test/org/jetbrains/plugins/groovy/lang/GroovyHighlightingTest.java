@@ -440,4 +440,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testPassingCollectionSubtractionIntoGenericMethod() throws Exception {
     doTest(new GroovyAssignabilityCheckInspection(), new GroovyUnresolvedAccessInspection());
   }
+
+  public void testUnknownVarInArgList() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }

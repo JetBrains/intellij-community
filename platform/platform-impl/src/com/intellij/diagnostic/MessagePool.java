@@ -18,6 +18,7 @@ package com.intellij.diagnostic;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.notification.*;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
@@ -61,13 +62,13 @@ public class MessagePool {
     return MessagePoolHolder.ourInstance;
   }
 
-  public void addIdeFatalMessage(IdeaLoggingEvent aEvent) {
-    LogMessage message = new LogMessage(aEvent);
+  public void addIdeFatalMessage(final IdeaLoggingEvent aEvent) {
+    final LogMessage message = aEvent.getData() instanceof LogMessage ? (LogMessage)aEvent.getData() : new LogMessage(aEvent);
     if (myIdeFatals.size() < MAX_POOL_SIZE_FOR_FATALS) {
       myFatalsGrouper.add(message);
-      Throwable throwable = message.getThrowable();
-      String title = throwable == null ? "IDE Fatal Error" : throwable.getClass().getSimpleName();
-      Notification notification = NOTIFICATION_GROUP.createNotification(title, "<a href='xxx'>" + message.getMessage() + "</a>", NotificationType.ERROR, new NotificationListener() {
+      String title = getTitle(message);
+      String notificationText = getNotificationText(message);
+      Notification notification = NOTIFICATION_GROUP.createNotification(title, notificationText, NotificationType.ERROR, new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           Object source = event.getSource();
@@ -76,7 +77,7 @@ public class MessagePool {
             if (window instanceof IdeFrame) {
               StatusBarWidget widget = ((IdeStatusBarImpl)((IdeFrame)window).getStatusBar()).getWidget(IdeMessagePanel.FATAL_ERROR);
               if (widget instanceof IdeMessagePanel) {
-                ((IdeMessagePanel)widget).openFatals();
+                ((IdeMessagePanel)widget).openFatals(message);
               }
             }
           }
@@ -88,6 +89,25 @@ public class MessagePool {
       myFatalsGrouper.add(new LogMessage(new LoggingEvent(DiagnosticBundle.message("error.monitor.too.many.errors"),
                                                           Category.getRoot(), Priority.ERROR, null, new TooManyErrorsException())));
     }
+  }
+
+  private static String getNotificationText(LogMessage message) {
+    String text = message.getMessage();
+    if (message instanceof LogMessageEx) {
+      String result = ((LogMessageEx)message).getNotificationText();
+      if (result != null) {
+        text = StringUtil.stripHtml(result, false);
+      }
+    }
+    return "<a href='xxx'>" + text + "</a>";
+  }
+
+  private static String getTitle(LogMessage message) {
+    if (message instanceof LogMessageEx) {
+      return ((LogMessageEx)message).getTitle();
+    }
+    Throwable throwable = message.getThrowable();
+    return throwable == null ? "IDE Fatal Error" : throwable.getClass().getSimpleName();
   }
 
   public boolean hasUnreadMessages() {
@@ -195,7 +215,7 @@ public class MessagePool {
     }
   }
 
-  static class TooManyErrorsException extends Exception {
+  public static class TooManyErrorsException extends Exception {
     TooManyErrorsException() {
       super(DiagnosticBundle.message("error.monitor.too.many.errors"));
     }

@@ -17,6 +17,15 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

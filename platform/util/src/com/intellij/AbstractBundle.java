@@ -2,10 +2,10 @@ package com.intellij;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -17,7 +17,7 @@ import java.util.ResourceBundle;
  *   <li>Create class that extends this class and provides path to the target bundle to the current class constructor;</li>
  *   <li>
  *     Optionally create static facade method at the subclass - create single shared instance and delegate
- *     to its {@link #message(String, Object...)};
+ *     to its {@link #getMessage(String, Object...)};
  *   </li>
  * </ol>
  * </pre>
@@ -44,7 +44,7 @@ public class AbstractBundle {
     ResourceBundle bundle = null;
     if (myBundle != null) bundle = myBundle.get();
     if (bundle == null) {
-      bundle = ResourceBundle.getBundle(myPathToBundle);
+      bundle = ResourceBundle.getBundle(myPathToBundle, Locale.getDefault(), getClass().getClassLoader());
       myBundle = new SoftReference<ResourceBundle>(bundle);
     }
     return bundle;

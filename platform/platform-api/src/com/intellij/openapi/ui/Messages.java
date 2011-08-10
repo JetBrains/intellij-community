@@ -241,6 +241,15 @@ public class Messages {
   }
 
 
+  public static int showYesNoDialog(String message, String title, String yesText, String noText, @Nullable Icon icon,
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+      return MacMessages.showYesNoDialog(title, message, yesText, noText, null, doNotAskOption);
+    }
+    
+    return showDialog(message, title, new String[]{yesText, noText}, 0, icon, doNotAskOption);
+  }
+  
   /**
    * Use this method only if you do not know project or component
    *
@@ -249,11 +258,7 @@ public class Messages {
    * @see #showYesNoDialog(Component, String, String, Icon)
    */
   public static int showYesNoDialog(String message, String title, String yesText, String noText, @Nullable Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
-      return MacMessages.showYesNoDialog(title, message, yesText, noText, null);
-    }
-    
-    return showDialog(message, title, new String[]{yesText, noText}, 0, icon);
+    return showYesNoDialog(message, title, yesText, noText, icon, null);
   }
   
   /**

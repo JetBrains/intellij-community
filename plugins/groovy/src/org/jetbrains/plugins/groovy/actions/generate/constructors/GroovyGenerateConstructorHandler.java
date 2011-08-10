@@ -23,6 +23,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.actions.generate.GroovyGenerationInfo;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -37,7 +38,7 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 21.05.2008
  */
-public class ConstructorGenerateHandler extends GenerateConstructorHandler {
+public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler {
 
   private static final String DEF_PSEUDO_ANNO = "_____intellij_idea_rulez_def_";
 

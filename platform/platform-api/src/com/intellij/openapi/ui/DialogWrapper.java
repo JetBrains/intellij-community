@@ -1563,6 +1563,9 @@ public abstract class DialogWrapper {
 
     void setToBeShown(boolean value, int exitCode);
 
+    /**
+     * Should be 'true' for checkbox to be visible. 
+     */
     boolean canBeHidden();
 
     boolean shouldSaveOptionsOnCancel();

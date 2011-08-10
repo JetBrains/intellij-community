@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetType;
-import com.intellij.facet.FacetTypeRegistry;
+import com.intellij.facet.*;
 import com.intellij.facet.impl.invalid.InvalidFacetManager;
 import com.intellij.facet.impl.invalid.InvalidFacetType;
 import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
@@ -74,18 +71,43 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return FacetTypeRegistry.getInstance().getFacetTypes().length > 0 || !InvalidFacetManager.getInstance(myProject).getInvalidFacets().isEmpty();
   }
 
+  @Override
+  protected void initTree() {
+    super.initTree();
+    myTree.setCellRenderer(new FacetsTreeCellRenderer());
+  }
+
   protected void loadTree() {
     myTree.setRootVisible(false);
-    myTree.setShowsRootHandles(true);
+    myTree.setShowsRootHandles(false);
     for (FacetType<?,?> facetType : FacetTypeRegistry.getInstance().getFacetTypes()) {
-      addFacetTypeNode(facetType);
+      final FacetTypeEditor editor = getOrCreateFacetTypeEditor(facetType);
+      if (editor.isVisible() || ProjectFacetManager.getInstance(myProject).hasFacets(facetType.getId())) {
+        addFacetTypeNode(facetType);
+      }
     }
     if (!InvalidFacetManager.getInstance(myProject).getInvalidFacets().isEmpty()) {
       addFacetTypeNode(InvalidFacetType.getInstance());
     }
+    addNode(new MyNode(new FrameworkDetectionConfigurable(myProject)), myRoot);
   }
 
-  private void addFacetTypeNode(FacetType<?, ?> facetType) {
+  @Override
+  protected Comparator<MyNode> getNodeComparator() {
+    return new Comparator<MyNode>() {
+      @Override
+      public int compare(MyNode node1, MyNode node2) {
+        final NamedConfigurable c1 = node1.getConfigurable();
+        final NamedConfigurable c2 = node2.getConfigurable();
+        if (c1 instanceof FrameworkDetectionConfigurable && !(c2 instanceof FrameworkDetectionConfigurable)) return 1;
+        if (!(c1 instanceof FrameworkDetectionConfigurable) && c2 instanceof FrameworkDetectionConfigurable) return -1;
+
+        return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
+      }
+    };
+  }
+
+  private MyNode addFacetTypeNode(FacetType<?, ?> facetType) {
     FacetTypeConfigurable facetTypeConfigurable = new FacetTypeConfigurable(this, facetType);
     MyNode facetTypeNode = new MyNode(facetTypeConfigurable);
     addNode(facetTypeNode, myRoot);
@@ -97,6 +119,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
         addFacetNode(facetTypeNode, facet, editorFacade);
       }
     }
+    return facetTypeNode;
   }
 
   @NotNull
@@ -112,8 +135,12 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return elements;
   }
 
-  public MyNode findFacetTypeNode(FacetType facetType) {
-    return findNodeByObject(myRoot, facetType);
+  public MyNode getOrCreateFacetTypeNode(FacetType facetType) {
+    final MyNode node = findNodeByObject(myRoot, facetType);
+    if (node != null) {
+      return node;
+    }
+    return addFacetTypeNode(facetType);
   }
 
   public void addFacetNode(@NotNull MyNode facetTypeNode, @NotNull Facet facet, @NotNull FacetEditorFacadeImpl editorFacade) {
@@ -182,8 +209,6 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     actions.add(new MyRemoveAction());
     actions.add(Separator.getInstance());
     addCollapseExpandActions(actions);
-    actions.add(Separator.getInstance());
-    actions.add(new EditFrameworkDetectionExcludesAction(myProject));
     return actions;
   }
 

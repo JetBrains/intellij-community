@@ -45,10 +45,10 @@ import java.util.List;
  * @author nik
  */
 public class FacetTypeEditor extends UnnamedConfigurableGroup {
-  private final List<Configurable> myInitialConfigurables = new ArrayList<Configurable>();
   private final Project myProject;
   private final StructureConfigurableContext myContext;
   private final FacetType<?, ?> myFacetType;
+  private Configurable myDefaultSettingsConfigurable;
   private MultipleFacetSettingsEditor myAllFacetsEditor;
   private List<Configurable> myCurrentConfigurables;
   private TabbedPaneWrapper myTabbedPane;
@@ -63,13 +63,14 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
       C configuration = ProjectFacetManager.getInstance(project).createDefaultConfiguration(facetType);
       DefaultFacetSettingsEditor defaultSettingsEditor = facetType.createDefaultConfigurationEditor(project, configuration);
       if (defaultSettingsEditor != null) {
-        myInitialConfigurables.add(new DefaultFacetSettingsConfigurable<C>(facetType, project, defaultSettingsEditor, configuration));
+        myDefaultSettingsConfigurable = new DefaultFacetSettingsConfigurable<C>(facetType, project, defaultSettingsEditor, configuration);
+        add(myDefaultSettingsConfigurable);
       }
     }
+  }
 
-    for (Configurable configurable : myInitialConfigurables) {
-      add(configurable);
-    }
+  public boolean isVisible() {
+    return myDefaultSettingsConfigurable != null || myAllFacetsEditor != null;
   }
 
   @Nullable
@@ -102,7 +103,11 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
     }
     myAllFacetsEditor = allFacetsEditor;
 
-    myCurrentConfigurables = new ArrayList<Configurable>(myInitialConfigurables);
+    myCurrentConfigurables = new ArrayList<Configurable>();
+    if (myDefaultSettingsConfigurable != null) {
+      myCurrentConfigurables.add(myDefaultSettingsConfigurable);
+    }
+
     if (myAllFacetsEditor != null) {
       myCurrentConfigurables.add(new AllFacetsConfigurable(myAllFacetsEditor));
     }

@@ -761,12 +761,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public PsiMethod createMethod(@NotNull @NonNls String name, PsiType returnType) throws IncorrectOperationException {
+  public GrMethod createMethod(@NotNull @NonNls String name, @Nullable PsiType returnType) throws IncorrectOperationException {
     StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    builder.append("public");
     if (returnType != null) {
-      builder.append(' ');
       builder.append(returnType.getCanonicalText());
+    }
+    else {
+      builder.append("def");
     }
     builder.append(' ').append(name).append("(){}");
     return createMethodFromText(builder.toString());
@@ -787,8 +788,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public PsiParameter createParameter(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException {
-    return createParameter(name, type.getCanonicalText(), null, null);
+  public GrParameter createParameter(@NotNull @NonNls String name, @Nullable PsiType type) throws IncorrectOperationException {
+    return createParameter(name, type == null ? null : type.getCanonicalText(), null, null);
   }
 
   @NotNull

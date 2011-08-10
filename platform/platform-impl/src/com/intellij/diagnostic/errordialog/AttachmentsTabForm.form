@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.diagnostic.errordialog.AttachmentsTabForm">
+  <grid id="27dc6" binding="myContentPane" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="5">
+    <margin top="5" left="5" bottom="5" right="5"/>
+    <constraints>
+      <xy x="20" y="20" width="720" height="400"/>
+    </constraints>
+    <properties/>
+    <border type="empty"/>
+    <children>
+      <scrollpane id="4826" class="com.intellij.ui.components.JBScrollPane">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="6a25a" class="com.intellij.ui.table.TableView" binding="myTable">
+            <constraints/>
+            <properties/>
+          </component>
+        </children>
+      </scrollpane>
+      <nested-form id="b822a" form-file="com/intellij/diagnostic/errordialog/LabeledTextComponent.form" binding="myFileTextArea">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </nested-form>
+      <component id="c0c50" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="&lt;html&gt;These files will be attached to the bug report. We recommend to include all the files providing maximum information.&lt;br/&gt;&lt;b&gt;Note:&lt;/b&gt; all the data you send will be kept private.&lt;/ntml&gt;"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+  <inspectionSuppressions>
+    <suppress inspection="NoLabelFor" id="7c65c"/>
+  </inspectionSuppressions>
+</form>

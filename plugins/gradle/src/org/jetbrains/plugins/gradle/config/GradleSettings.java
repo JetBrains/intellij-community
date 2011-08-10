@@ -30,9 +30,9 @@ import org.jetbrains.annotations.NotNull;
       @Storage( file = "$PROJECT_CONFIG_DIR$/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class GradleSettings implements PersistentStateComponent<GradleSettings> {
+public class GradleSettings implements PersistentStateComponent<GradleSettings>, Cloneable {
   
-  public String INSTALLATION_HOME;
+  public String GRADLE_HOME;
   
   @Override
   public GradleSettings getState() {
@@ -47,5 +47,17 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
   @NotNull
   public static GradleSettings getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GradleSettings.class);
+  }
+
+  @Override
+  protected GradleSettings clone() throws CloneNotSupportedException {
+    GradleSettings result = new GradleSettings();
+    result.GRADLE_HOME = GRADLE_HOME;
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "home: " + GRADLE_HOME;
   }
 }

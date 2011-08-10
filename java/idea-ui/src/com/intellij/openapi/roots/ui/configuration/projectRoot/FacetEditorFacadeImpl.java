@@ -62,7 +62,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   private void addFacetNode(Facet facet) {
     addFacetNode(facet, myStructureConfigurable.findModuleNode(facet.getModule()));
     final FacetStructureConfigurable facetStructureConfigurable = FacetStructureConfigurable.getInstance(myStructureConfigurable.getProject());
-    final MasterDetailsComponent.MyNode facetTypeNode = facetStructureConfigurable.findFacetTypeNode(facet.getType());
+    final MasterDetailsComponent.MyNode facetTypeNode = facetStructureConfigurable.getOrCreateFacetTypeNode(facet.getType());
     LOG.assertTrue(facetTypeNode != null, "Cannot found node for " + facet.getType());
     facetStructureConfigurable.addFacetNode(facetTypeNode, facet, this);
   }

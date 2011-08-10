@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.actions.generate.constructors;
+package org.jetbrains.plugins.groovy.actions.generate.accessors;
 
+import com.intellij.codeInsight.generation.GenerateGetterHandler;
 import org.jetbrains.plugins.groovy.actions.generate.GrBaseGenerateAction;
 
 /**
- * User: Dmitry.Krasilschikov
- * Date: 21.05.2008
+ * @author Max Medvedev
  */
-public class CostructorGenerateAction extends GrBaseGenerateAction {
-  public CostructorGenerateAction() {
-    super(new ConstructorGenerateHandler());
+public class GroovyGenerateGetterAction extends GrBaseGenerateAction {
+  public GroovyGenerateGetterAction() {
+    super(new GenerateGetterHandler());
   }
 }

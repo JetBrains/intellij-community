@@ -50,6 +50,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProj
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
@@ -82,9 +83,30 @@ import java.util.List;
  * Date: 02-Jun-2006
  */
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
-
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");
+  private static final Comparator<MyNode> NODE_COMPARATOR = new Comparator<MyNode>() {
+    public int compare(final MyNode o1, final MyNode o2) {
+      final NamedConfigurable configurable1 = o1.getConfigurable();
+      final NamedConfigurable configurable2 = o2.getConfigurable();
+      if (configurable1.getClass() == configurable2.getClass()) {
+        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+      }
+      final Object editableObject1 = configurable1.getEditableObject();
+      final Object editableObject2 = configurable2.getEditableObject();
+
+      if (editableObject2 instanceof Module && editableObject1 instanceof ModuleGroup) return -1;
+      if (editableObject1 instanceof Module && editableObject2 instanceof ModuleGroup) return 1;
+
+      if (editableObject2 instanceof Module && editableObject1 instanceof String) return 1;
+      if (editableObject1 instanceof Module && editableObject2 instanceof String) return -1;
+
+      if (editableObject2 instanceof ModuleGroup && editableObject1 instanceof String) return 1;
+      if (editableObject1 instanceof ModuleGroup && editableObject2 instanceof String) return -1;
+
+      return 0;
+    }
+  };
 
   private boolean myPlainMode;
 
@@ -112,6 +134,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_MOVE_MODULE_TO_GROUP));
     return result;
+  }
+
+  @Override
+  public void addNode(MyNode nodeToAdd, MyNode parent) {
+    super.addNode(nodeToAdd, parent);
   }
 
   @NotNull
@@ -266,37 +293,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return true;
   }
 
-  protected void addNode(MyNode nodeToAdd, MyNode parent) {
-    parent.add(nodeToAdd);
-    TreeUtil.sort(parent, new Comparator() {
-      public int compare(final Object o1, final Object o2) {
-        final MyNode node1 = (MyNode)o1;
-        final MyNode node2 = (MyNode)o2;
-        final NamedConfigurable configurable1 = node1.getConfigurable();
-        final NamedConfigurable configurable2 = node2.getConfigurable();
-        if (configurable1.getClass() == configurable2.getClass()) {
-          return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
-        }
-        final Object editableObject1 = configurable1.getEditableObject();
-        final Object editableObject2 = configurable2.getEditableObject();
-
-        if (editableObject2 instanceof Module && editableObject1 instanceof ModuleGroup) return -1;
-        if (editableObject1 instanceof Module && editableObject2 instanceof ModuleGroup) return 1;
-
-        if (editableObject2 instanceof Module && editableObject1 instanceof String) return 1;
-        if (editableObject1 instanceof Module && editableObject2 instanceof String) return -1;
-
-        if (editableObject2 instanceof ModuleGroup && editableObject1 instanceof String) return 1;
-        if (editableObject1 instanceof ModuleGroup && editableObject2 instanceof String) return -1;
-
-        return 0;
-      }
-    });
-    ((DefaultTreeModel)myTree.getModel()).reload(parent);
+  @Override
+  protected Comparator<MyNode> getNodeComparator() {
+    return NODE_COMPARATOR;
   }
-
-  
-
 
   public void init(final StructureConfigurableContext context) {
     super.init(context);
