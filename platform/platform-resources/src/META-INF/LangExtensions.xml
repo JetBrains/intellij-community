@@ -600,8 +600,8 @@
   <projectConfigurable instance="com.intellij.ui.tabs.FileColorsConfigurable" id="fileColors"/>
 
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
-  <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.DisposerDebugger"/>
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.ActionTracer"/>
+  <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.DisposerDebugger"/>
 
   <applicationService serviceInterface="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"
                       serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>

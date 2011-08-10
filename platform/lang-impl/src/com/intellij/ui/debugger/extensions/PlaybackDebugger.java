@@ -23,10 +23,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
@@ -52,6 +48,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -80,11 +78,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private boolean myChanged;
   private JList myList;
 
-  private Document myDocument;
-  private Editor myEditor;
-
   private PlaybackDebuggerState myState;
   private static final FileChooserDescriptor FILE_DESCRIPTOR = new ScriptFileChooserDescriptor();
+  private JTextArea myCodeEditor;
 
   private void initUi() {
     myComponent = new JPanel(new BorderLayout());
@@ -122,11 +118,20 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     myComponent.add(north, BorderLayout.NORTH);
 
-    myDocument = EditorFactory.getInstance().createDocument("");
-    myEditor = EditorFactory.getInstance().createEditor(myDocument);
-    myDocument.addDocumentListener(new DocumentAdapter() {
+    myCodeEditor = new JTextArea();
+    myCodeEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+      public void insertUpdate(DocumentEvent e) {
+        myChanged = true;
+      }
+
+      @Override
+      public void removeUpdate(DocumentEvent e) {
+        myChanged = true;
+      }
+
+      @Override
+      public void changedUpdate(DocumentEvent e) {
         myChanged = true;
       }
     });
@@ -144,7 +149,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     //}
 
     final Splitter script2Log = new Splitter(true);
-    script2Log.setFirstComponent(ScrollPaneFactory.createScrollPane(myEditor.getComponent()));
+    script2Log.setFirstComponent(ScrollPaneFactory.createScrollPane(myCodeEditor));
 
     myList = new JBList(myMessage);
     myList.setCellRenderer(new MyListRenderer());
@@ -242,7 +247,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private void fillDocument(final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        myDocument.setText(text == null ? "" : text);
+        myCodeEditor.setText(text == null ? "" : text);
       }
     });
   }
@@ -258,7 +263,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private void save() {
     try {
       VirtualFile file = pathToFile();
-      final String toWrite = myDocument.getText();
+      final String toWrite = myCodeEditor.getText();
       String text = toWrite != null ? toWrite : "";
       VfsUtil.saveText(file, text);
       myChanged = false;
@@ -381,7 +386,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myMessage.clear();
 
     addInfo("Waiting for IDE frame activation", -1);
-    myRunner = new PlaybackRunner(myDocument.getText(), this, false);
+    myRunner = new PlaybackRunner(myCodeEditor.getText(), this, false);
 
 
     new Thread() {
@@ -482,7 +487,6 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     //System.setProperty("idea.playback.script", myDocument.getText());
     myCurrentScript.setText("");
     myMessage.clear();
-    EditorFactory.getInstance().releaseEditor(myEditor);
   }
 
   private void addInfo(String text, int line) {
