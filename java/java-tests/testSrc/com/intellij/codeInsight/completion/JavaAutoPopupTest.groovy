@@ -41,6 +41,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
+import com.intellij.util.Consumer
 
 /**
  * @author peter
@@ -518,8 +519,17 @@ public interface Test {
     }
   }
 
+  static class LongContributor extends CompletionContributor {
+
+    @Override
+    void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+      result.runRemainingContributors(parameters, { result.passResult(it) } as Consumer)
+      Thread.sleep 1000
+    }
+  }
+
   public void testDuringCompletionMustFinish() {
-    registerLongCompletionContributor()
+    registerContributor(LongReplacementOffsetContributor)
 
     edt { myFixture.addFileToProject 'directory/foo.txt', '' }
     myFixture.configureByText "a.java", 'public interface Test { RuntiExce<caret>xxx }'
@@ -532,10 +542,10 @@ public interface Test {
     myFixture.checkResult 'public interface Test { RuntimeException<caret>x }'
   }
 
-  private def registerLongCompletionContributor() {
+  private def registerContributor(final Class contributor, LoadingOrder order = LoadingOrder.LAST) {
     def ep = Extensions.rootArea.getExtensionPoint("com.intellij.completion.contributor")
-    def bean = new CompletionContributorEP(language: 'JAVA', implementationClass: LongReplacementOffsetContributor.name)
-    ep.registerExtension(bean, LoadingOrder.LAST)
+    def bean = new CompletionContributorEP(language: 'JAVA', implementationClass: contributor.name)
+    ep.registerExtension(bean, order)
     disposeOnTearDown({ ep.unregisterExtension(bean) } as Disposable)
   }
 
@@ -685,7 +695,7 @@ class Foo {
   }
 
   public void testRestartAndTypingDuringCopyCommit() {
-    registerLongCompletionContributor()
+    registerContributor(LongReplacementOffsetContributor)
 
     myFixture.configureByText("a.java", """ class Foo { { int newa; <caret> } } """)
     myFixture.type 'n'
@@ -701,7 +711,7 @@ class Foo {
   }
 
   public void testAutoRestartAndTypingDuringCopyCommit() {
-    registerLongCompletionContributor()
+    registerContributor(LongReplacementOffsetContributor)
 
     myFixture.configureByText("a.java", """ class Foo { { int iteraaa; <caret> } } """)
     type 'ite'
@@ -717,7 +727,7 @@ class Foo {
   }
   
   public void _testChoosingItemDuringCopyCommit() {
-    registerLongCompletionContributor()
+    registerContributor(LongReplacementOffsetContributor)
 
     myFixture.configureByText("a.java", """ class Foo { { int iteraaa; <caret> } } """)
     type 'ite'
@@ -730,19 +740,41 @@ class Foo {
   }
 
   public void testRestartWithInvisibleLookup() {
-    registerLongCompletionContributor()
+    registerContributor(LongReplacementOffsetContributor)
 
     myFixture.configureByText("a.java", """ class Foo { { int abcdef; <caret> } } """)
     myFixture.type 'a'
     joinAutopopup()
     assert lookup
     edt { myFixture.type 'bc' }
-    joinAlarm()
-    joinAlarm()
-    joinCompletion()
+    joinAutopopup()
+    joinAutopopup()
     joinCompletion()
     assert lookup
-    edt { assert lookup.shown }
+    assert lookup.shown
+  }
+
+  public void testRestartWithVisibleLookup() {
+    registerContributor(LongContributor, LoadingOrder.FIRST)
+
+    myFixture.configureByText("a.java", """ class Foo { { int abcdef; a<caret> } } """)
+    myFixture.completeBasic()
+    while (!lookup.shown) {
+      Thread.sleep(1)
+    }
+    def l = lookup
+    edt {
+      assert lookup.calculating
+      myFixture.type 'b'
+    }
+    joinCommit {
+      myFixture.type 'c'
+    }
+    joinAutopopup()
+    joinCompletion()
+    assert lookup == l
+    assert !lookup.calculating
+    assert lookup.shown
   }
 
   private void joinSomething(int degree) {
