@@ -71,9 +71,15 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return FacetTypeRegistry.getInstance().getFacetTypes().length > 0 || !InvalidFacetManager.getInstance(myProject).getInvalidFacets().isEmpty();
   }
 
+  @Override
+  protected void initTree() {
+    super.initTree();
+    myTree.setCellRenderer(new FacetsTreeCellRenderer());
+  }
+
   protected void loadTree() {
     myTree.setRootVisible(false);
-    myTree.setShowsRootHandles(true);
+    myTree.setShowsRootHandles(false);
     for (FacetType<?,?> facetType : FacetTypeRegistry.getInstance().getFacetTypes()) {
       final FacetTypeEditor editor = getOrCreateFacetTypeEditor(facetType);
       if (editor.isVisible() || ProjectFacetManager.getInstance(myProject).hasFacets(facetType.getId())) {
