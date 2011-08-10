@@ -16,11 +16,12 @@
 
 package com.intellij.ide.util.treeView;
 
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +46,9 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
     List<TreeStructureProvider> providers = getProvidersDumbAware();
     if (providers != null && !providers.isEmpty()) {
+      ViewSettings settings = treeNode instanceof ProjectViewNode ? ((ProjectViewNode) treeNode).getSettings() : ViewSettings.DEFAULT;
       for (TreeStructureProvider provider : providers) {
-        elements = provider.modify(treeNode, (Collection<AbstractTreeNode>)elements, ViewSettings.DEFAULT);
+        elements = provider.modify(treeNode, (Collection<AbstractTreeNode>)elements, settings);
       }
     }
     for (AbstractTreeNode node : elements) {
