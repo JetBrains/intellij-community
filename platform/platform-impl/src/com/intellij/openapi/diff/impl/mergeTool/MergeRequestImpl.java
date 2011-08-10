@@ -252,9 +252,9 @@ public class MergeRequestImpl extends MergeRequest {
       myWasInvoked = true;
       ChangeCounter.getOrCreate(myMergePanel.getMergeList()).removeListener(this);
       int doApply = Messages
-        .showDialog(getProject(), DiffBundle.message("merge.all.changes.have.processed.save.and.finish.confirmation.text"),
+        .showOkCancelDialog(getProject(), DiffBundle.message("merge.all.changes.have.processed.save.and.finish.confirmation.text"),
                     DiffBundle.message("all.changes.processed.dialog.title"),
-                    new String[]{DiffBundle.message("merge.save.and.finish.button"), DiffBundle.message("merge.continue.button")}, 0,
+                    DiffBundle.message("merge.save.and.finish.button"), DiffBundle.message("merge.continue.button"),
                     Messages.getQuestionIcon());
       if (doApply != 0) return;
       myDialogWrapper.close(DialogWrapper.OK_EXIT_CODE);

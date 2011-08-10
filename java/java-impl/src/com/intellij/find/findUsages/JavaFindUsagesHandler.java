@@ -104,10 +104,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   private static boolean askWhetherShouldSearchForParameterInOverridingMethods(final PsiElement psiElement, final PsiParameter parameter) {
-    return Messages.showDialog(psiElement.getProject(),
+    return Messages.showOkCancelDialog(psiElement.getProject(),
                                FindBundle.message("find.parameter.usages.in.overriding.methods.prompt", parameter.getName()),
                                FindBundle.message("find.parameter.usages.in.overriding.methods.title"),
-                               new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0,
+                               CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(),
                                Messages.getQuestionIcon()) == 0;
   }
 
@@ -183,9 +183,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
             doSearch = true;
           }
           else {
-            doSearch = Messages.showDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
+            doSearch = Messages.showOkCancelDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
                                            FindBundle.message("find.field.accessors.title"),
-                                           new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0,
+                                           CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(),
                                            Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE;
           }
           if (doSearch) {

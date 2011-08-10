@@ -237,9 +237,9 @@ public class HighlightableComponent extends JComponent {
 
     if (isOpaque()) {
       g.setColor(getBackground());
-      g.fillRect(0,0,textOffset-2,getHeight()-1);
+      g.fillRect(0,0,textOffset-2,getHeight());
       g.setColor(bgColor);
-      g.fillRect(textOffset-2, 0, getWidth()-1, getHeight()-1);
+      g.fillRect(textOffset-2, 0, getWidth(), getHeight());
     }
 
     // paint icon

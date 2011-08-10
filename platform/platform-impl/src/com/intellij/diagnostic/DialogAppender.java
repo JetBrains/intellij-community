@@ -61,13 +61,18 @@ public class DialogAppender extends AppenderSkeleton {
       return;
     }
 
-    ThrowableInformation throwable = event.getThrowableInformation();
-    if (throwable == null) {
-      return;
-    }
-
+    final IdeaLoggingEvent ideaEvent;
     final Object message = event.getMessage();
-    final IdeaLoggingEvent ideaEvent = new IdeaLoggingEvent(message == null ? "<null> " : message.toString(), throwable.getThrowable());
+    if (message instanceof IdeaLoggingEvent) {
+      ideaEvent = (IdeaLoggingEvent)message;
+    }
+    else {
+      ThrowableInformation throwable = event.getThrowableInformation();
+      if (throwable == null) {
+        return;
+      }
+      ideaEvent = new IdeaLoggingEvent(message == null ? "<null> " : message.toString(), throwable.getThrowable());
+    }
     for (int i = errorLoggers.length - 1; i >= 0; i--) {
 
       final ErrorLogger logger = errorLoggers[i];
@@ -86,7 +91,7 @@ public class DialogAppender extends AppenderSkeleton {
 
         final Application app = ApplicationManager.getApplication();
         if (app == null) {
-          new Thread(myDialogRunnable).start();  
+          new Thread(myDialogRunnable).start();
         } else {
           app.executeOnPooledThread(myDialogRunnable);
         }

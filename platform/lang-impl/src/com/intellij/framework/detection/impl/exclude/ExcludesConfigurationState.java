@@ -15,6 +15,7 @@
  */
 package com.intellij.framework.detection.impl.exclude;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 
@@ -54,7 +55,7 @@ public class ExcludesConfigurationState {
     if (!(o instanceof ExcludesConfigurationState)) return false;
 
     ExcludesConfigurationState state = (ExcludesConfigurationState)o;
-    return myFiles.equals(state.myFiles) && myFrameworkTypes.equals(state.myFrameworkTypes);
+    return Comparing.haveEqualElements(myFiles, state.myFiles) && Comparing.haveEqualElements(myFrameworkTypes, state.myFrameworkTypes);
   }
 
   @Override

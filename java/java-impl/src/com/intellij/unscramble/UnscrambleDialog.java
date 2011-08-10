@@ -25,11 +25,14 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TextFieldWithHistory;
@@ -64,7 +67,9 @@ public class UnscrambleDialog extends DialogWrapper {
   private JCheckBox myUseUnscrambler;
   private JPanel myUnscramblePanel;
   private JCheckBox myOnTheFly;
+  private JPanel myBottomPanel;
   protected AnalyzeStacktraceUtil.StacktraceEditorPanel myStacktraceEditorPanel;
+  private VcsContentAnnotationConfigurable myConfigurable;
 
   public UnscrambleDialog(Project project) {
     super(false);
@@ -138,6 +143,15 @@ public class UnscrambleDialog extends DialogWrapper {
 
     useUnscramblerChanged();
     myStacktraceEditorPanel.pasteTextFromClipboard();
+  }
+
+  private void createUIComponents() {
+    myBottomPanel = new JPanel(new BorderLayout());
+    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
+      myConfigurable = new VcsContentAnnotationConfigurable(myProject);
+      myBottomPanel.add(myConfigurable.createComponent(), BorderLayout.CENTER);
+      myConfigurable.reset();
+    }
   }
 
   public static String getLastUsedLogUrl() {
@@ -325,6 +339,15 @@ public class UnscrambleDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
+    if (myConfigurable != null && myConfigurable.isModified()) {
+      try {
+        myConfigurable.apply();
+      }
+      catch (ConfigurationException e) {
+        setText(e.getMessage());
+        return;
+      }
+    }
     if (performUnscramble()) {
       myLogFile.addCurrentTextToHistory();
       close(OK_EXIT_CODE);
@@ -345,6 +368,7 @@ public class UnscrambleDialog extends DialogWrapper {
     if (unscrambledTrace == null) return false;
     List<ThreadState> threadStates = ThreadDumpParser.parse(unscrambledTrace);
     final ConsoleView consoleView = addConsole(project, threadStates);
+    consoleView.allowHeavyFilters();
     AnalyzeStacktraceUtil.printStacktrace(consoleView, unscrambledTrace);
     return true;
   }

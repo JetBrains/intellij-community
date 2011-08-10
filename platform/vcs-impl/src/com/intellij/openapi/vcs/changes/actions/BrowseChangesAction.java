@@ -48,16 +48,15 @@ public class BrowseChangesAction extends AnAction implements DumbAware {
 
     int maxCount = 0;
     if (!settings.isAnyFilterSpecified()) {
-      int rc = Messages.showDialog(project, VcsBundle.message("browse.changes.no.filter.prompt"), VcsBundle.message("browse.changes.title"),
-                                   new String[] {
-                                     VcsBundle.message("browse.changes.show.all.button"),
+      int rc = Messages.showYesNoCancelDialog(project, VcsBundle.message("browse.changes.no.filter.prompt"), VcsBundle.message("browse.changes.title"),
                                      VcsBundle.message("browse.changes.show.recent.button"),
-                                     CommonBundle.getCancelButtonText()
-                                   }, 1, Messages.getQuestionIcon());
+                                     VcsBundle.message("browse.changes.show.all.button"),
+                                     CommonBundle.getCancelButtonText(),
+                                    Messages.getQuestionIcon());
       if (rc == 2) {
         return;
       }
-      if (rc == 1) {
+      if (rc == 0) {
         maxCount = 50;
       }
     }

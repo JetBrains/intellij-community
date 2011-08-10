@@ -15,7 +15,7 @@
  */
 package com.intellij.framework.detection.impl.exclude;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +28,7 @@ abstract class ExcludeListItem {
   public static final Comparator<ExcludeListItem> COMPARATOR = new Comparator<ExcludeListItem>() {
     @Override
     public int compare(ExcludeListItem o1, ExcludeListItem o2) {
-      return Comparing.comparePairs(o1.getPresentableFrameworkName(), o1.getFileUrl(), o2.getPresentableFrameworkName(), o2.getFileUrl());
+      return StringUtil.comparePairs(o1.getPresentableFrameworkName(), o1.getFileUrl(), o2.getPresentableFrameworkName(), o2.getFileUrl(), true);
     }
   };
 

@@ -75,9 +75,9 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
     if (errors.size() == 1) {
       ConfigurationErrorDescription error = errors.get(0);
       String message = error.getDescription() + "\n" + error.getRemoveConfirmationMessage();
-      String[] options = {CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()};
-      final int answer = Messages.showDialog(project, message, title, options, 1, Messages.getErrorIcon());
-      if (answer == 0) {
+      final int answer = Messages.showOkCancelDialog(project, message, title, CommonBundle.getNoButtonText(),
+                                                     CommonBundle.getYesButtonText(), Messages.getErrorIcon());
+      if (answer == 1) {
         error.removeInvalidElement();
       }
       return;

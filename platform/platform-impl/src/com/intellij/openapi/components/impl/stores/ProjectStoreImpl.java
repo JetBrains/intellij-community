@@ -28,7 +28,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.Messages;
@@ -36,7 +35,10 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
@@ -100,9 +102,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           buffer.append(s);
         }
         buffer.append(ProjectBundle.message("project.convert.problems.help"));
-        final int result = Messages.showDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
-                                               new String[]{ProjectBundle.message("project.convert.problems.help.button"),
-                                                 CommonBundle.getCloseButtonText()}, 0, Messages.getWarningIcon());
+        final int result = Messages.showOkCancelDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
+                                               ProjectBundle.message("project.convert.problems.help.button"),
+                                                 CommonBundle.getCloseButtonText(), Messages.getWarningIcon());
         if (result == 0) {
           HelpManager.getInstance().invokeHelp("project.migrationProblems");
         }

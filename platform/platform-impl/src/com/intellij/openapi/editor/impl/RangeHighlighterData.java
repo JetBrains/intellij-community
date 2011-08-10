@@ -216,7 +216,7 @@ abstract class RangeHighlighterData {
     if (getTargetArea() == HighlighterTargetArea.EXACT_RANGE) return endOffset;
     Document document = myModel.getDocument();
     int textLength = document.getTextLength();
-    if (endOffset == textLength) return endOffset;
+    if (endOffset >= textLength) return endOffset;
     return Math.min(textLength, document.getLineEndOffset(document.getLineNumber(endOffset)) + 1);
   }
 

@@ -271,7 +271,9 @@ public abstract class PassExecutorService implements Disposable {
         @Override
         public void consume(Future future) {
           try {
-            future.get();
+            if (!future.isCancelled()) { // for canceled task .get() generates CancellationException which is expensive
+              future.get();
+            }
           }
           catch (CancellationException ignored) {
           }

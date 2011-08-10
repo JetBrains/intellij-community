@@ -240,7 +240,8 @@ public class XPathEvalAction extends XPathAction {
                         Messages.showInfoMessage(project, "Expression produced " + list.size() + " " + s, "XPath Result");
                     }
                 } else {
-                    return Messages.showDialog(project, "Sorry, your expression did not return any result", "XPath Result", new String[]{ "OK", "Edit Expression" }, 0, Messages.getInformationIcon()) == 1;
+                    return Messages.showOkCancelDialog(project, "Sorry, your expression did not return any result", "XPath Result", 
+                                                       "OK", "Edit Expression", Messages.getInformationIcon()) == 1;
                 }
             } else if (result instanceof String) {
                 Messages.showMessageDialog("'" + result.toString() + "'", "XPath result (String)", Messages.getInformationIcon());
@@ -254,7 +255,7 @@ public class XPathEvalAction extends XPathAction {
         } catch (XPathSyntaxException e) {
             LOG.debug(e);
             // TODO: Better layout of the error message with non-fixed size fonts
-            return Messages.showDialog(project, e.getMultilineMessage(), "XPath syntax error", new String[]{ "OK", "Edit Expression" }, 1, Messages.getErrorIcon()) == 1;
+            return Messages.showOkCancelDialog(project, e.getMultilineMessage(), "XPath syntax error", "Edit Expression", "Cancel", Messages.getErrorIcon()) == 0;
         } catch (SAXPathException e) {
             LOG.debug(e);
             Messages.showMessageDialog(project, e.getMessage(), "XPath error", Messages.getErrorIcon());

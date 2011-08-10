@@ -1965,6 +1965,11 @@ public class StringUtil {
     return ignoreCase ? s1.compareToIgnoreCase(s2) : s1.compareTo(s2);
   }
 
+  public static int comparePairs(@Nullable String s1, @Nullable String t1, @Nullable String s2, @Nullable String t2, boolean ignoreCase) {
+    final int compare = compare(s1, s2, ignoreCase);
+    return compare != 0 ? compare : compare(t1, t2, ignoreCase);
+  }
+
   public static int hashCode(@NotNull CharSequence s) {
     return stringHashCode(s);
   }

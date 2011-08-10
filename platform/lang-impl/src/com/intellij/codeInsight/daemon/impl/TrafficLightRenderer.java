@@ -18,20 +18,28 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
+import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,12 +60,65 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final SeverityRegistrar mySeverityRegistrar;
 
-  public TrafficLightRenderer(Project project, DaemonCodeAnalyzerImpl highlighter, Document document, PsiFile file) {
+  /**
+   * array filled with number of highlighters with a given severity.
+   * errorCount[idx] == number of highlighters of severity with index idx in this markup model.
+   * severity index can be obtained via com.intellij.codeInsight.daemon.impl.SeverityRegistrar#getSeverityIdx(com.intellij.lang.annotation.HighlightSeverity)
+   */
+  private final int[] errorCount;
+
+  public TrafficLightRenderer(Project project, Document document, PsiFile file) {
     myProject = project;
-    myDaemonCodeAnalyzer = highlighter;
+    myDaemonCodeAnalyzer = project == null ? null : (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     myDocument = document;
     myFile = file;
     mySeverityRegistrar = SeverityRegistrar.getInstance(myProject);
+    errorCount = new int[mySeverityRegistrar.getSeverityMaxIndex()];
+
+    if (project != null) {
+      MarkupModelEx model = (MarkupModelEx)document.getMarkupModel(project);
+      model.addMarkupModelListener(new MarkupModelListener() {
+        @Override
+        public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+          incErrorCount(highlighter, 1);
+        }
+  
+        @Override
+        public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+          incErrorCount(highlighter, -1);
+        }
+  
+        @Override
+        public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
+        }
+      });
+      for (RangeHighlighter rangeHighlighter : model.getAllHighlighters()) {
+        incErrorCount(rangeHighlighter, 1);
+      }
+    }
+  }
+
+  public static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, Project project, Document document, PsiFile file) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
+    if (renderer instanceof TrafficLightRenderer) {
+      ((EditorMarkupModelImpl)editorMarkupModel).repaintVerticalScrollBar();
+    }
+    else {
+      renderer = new TrafficLightRenderer(project, document, file);
+      editorMarkupModel.setErrorStripeRenderer(renderer);
+    }
+  }
+  
+  private void incErrorCount(RangeHighlighter highlighter, int delta) {
+    Object o = highlighter.getErrorStripeTooltip();
+    if (!(o instanceof HighlightInfo)) return;
+    HighlightInfo info = (HighlightInfo)o;
+    HighlightSeverity infoSeverity = info.getSeverity();
+    final int severityIdx = mySeverityRegistrar.getSeverityIdx(infoSeverity);
+    if (severityIdx != -1) {
+      errorCount[severityIdx]+= delta;
+    }
   }
 
   public static class DaemonCodeAnalyzerStatus {
@@ -99,13 +160,15 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     status.noInspectionRoots = noInspectionRoots.isEmpty() ? null : ArrayUtil.toStringArray(noInspectionRoots);
     status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : ArrayUtil.toStringArray(noHighlightingRoots);
 
-    status.errorCount = new int[severityRegistrar.getSeverityMaxIndex()];
+    status.errorCount = errorCount.clone();
     status.rootsNumber = roots.length;
     fillDaemonCodeAnalyzerErrorsStatus(status, fillErrorsCount, severityRegistrar);
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument);
     status.passStati = passes.isEmpty() ? Collections.<ProgressableTextEditorHighlightingPass>emptyList() :
                        new ArrayList<ProgressableTextEditorHighlightingPass>(passes.size());
-    for (TextEditorHighlightingPass tepass : passes) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < passes.size(); i++) {
+      TextEditorHighlightingPass tepass = passes.get(i);
       if (!(tepass instanceof ProgressableTextEditorHighlightingPass)) continue;
       ProgressableTextEditorHighlightingPass pass = (ProgressableTextEditorHighlightingPass)tepass;
 
@@ -121,36 +184,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   protected void fillDaemonCodeAnalyzerErrorsStatus(final DaemonCodeAnalyzerStatus status,
                                                     final boolean fillErrorsCount,
                                                     final SeverityRegistrar severityRegistrar) {
-    final int count = severityRegistrar.getSeverityMaxIndex() - 1;
-    final HighlightSeverity maxPossibleSeverity = severityRegistrar.getSeverityByIndex(count);
-    final HighlightSeverity[] maxFoundSeverity = {null};
-
-    DaemonCodeAnalyzerImpl.processHighlights(myDocument, myProject, null, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
-      public boolean process(HighlightInfo info) {
-        HighlightSeverity infoSeverity = info.getSeverity();
-        if (fillErrorsCount) {
-          final int severityIdx = severityRegistrar.getSeverityIdx(infoSeverity);
-          if (severityIdx != -1) {
-            status.errorCount[severityIdx] ++;
-          }
-        }
-        else {
-          if (maxFoundSeverity[0] == null || severityRegistrar.compare(maxFoundSeverity[0], infoSeverity) < 0) {
-            maxFoundSeverity[0] = infoSeverity;
-          }
-          if (infoSeverity == maxPossibleSeverity) {
-            return false;
-          }
-        }
-        return true;
-      }
-    });
-    if (maxFoundSeverity[0] != null) {
-      final int severityIdx = severityRegistrar.getSeverityIdx(maxFoundSeverity[0]);
-      if (severityIdx != -1) {
-        status.errorCount[severityIdx] = 1;
-      }
-    }
   }
 
   public final Project getProject() {

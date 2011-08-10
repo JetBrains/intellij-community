@@ -315,10 +315,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     final EditorMarkupModel markup = (EditorMarkupModel)editor.getMarkupModel();
-    markup.setErrorStripeRenderer(new TrafficLightRenderer(myProject, this, document, psiFile));
     markup.setErrorPanelPopupHandler(new DaemonEditorPopup(psiFile));
     markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject));
     markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
+    TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markup, myProject, document, psiFile);
   }
 
   private final List<Pair<NamedScope, NamedScopesHolder>> myScopes = ContainerUtil.createEmptyCOWList();
@@ -723,6 +723,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
               // makes no sense to start from within write action, will cancel anyway
               ApplicationManager.getApplication().invokeLater(this, myProject.getDisposed());
             }
+            if (PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments()) {
+              PsiDocumentManager.getInstance(myProject).cancelAndRunWhenAllCommitted("restart daemon when all committed", this);
+              return;
+            }
+
             Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.size());
             for (FileEditor fileEditor : activeEditors) {
               BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();

@@ -145,7 +145,9 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     }
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    for (PsiElement element : elements) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < elements.size(); i++) {
+      PsiElement element = elements.get(i);
       ProgressManager.checkCanceled();
       if (element instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)element;

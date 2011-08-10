@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -53,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueSta
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -645,5 +647,33 @@ public abstract class GroovyRefactoringUtil {
       argText.append(" as ").append(typeText);
     }
     return GroovyPsiElementFactory.getInstance(project).createExpressionFromText(argText.toString());
+  }
+  
+  public static boolean hasSideEffect(@NotNull GrStatement statement) {
+    final Ref<Boolean> hasSideEffect = new Ref<Boolean>(false);
+    statement.accept(new GroovyRecursiveElementVisitor() {
+      @Override
+      public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
+        hasSideEffect.set(true);
+      }
+
+      @Override
+      public void visitCallExpression(GrCallExpression callExpression) {
+        hasSideEffect.set(true);
+      }
+
+      @Override
+      public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+        hasSideEffect.set(true);
+      }
+
+      @Override
+      public void visitElement(GroovyPsiElement element) {
+        if (hasSideEffect.get()) return;
+        super.visitElement(element);
+      }
+    });
+
+    return hasSideEffect.get();
   }
 }

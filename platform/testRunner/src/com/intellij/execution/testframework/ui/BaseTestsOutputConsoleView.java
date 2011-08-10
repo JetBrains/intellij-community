@@ -68,6 +68,10 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     });
   }
 
+  @Override
+  public void allowHeavyFilters() {
+  }
+
   public void clear() {
     myConsole.clear();
   }

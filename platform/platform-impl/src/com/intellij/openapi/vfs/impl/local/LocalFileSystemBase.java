@@ -167,8 +167,21 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         return names;
       }
     }
-    final String[] names = convertToIOFile(file).list();
+
+    File ioFile = convertToIOFile(file);
+    if (file.isSymLink() && isRecursiveSymLink(ioFile)) return ArrayUtil.EMPTY_STRING_ARRAY;
+
+    final String[] names = ioFile.list();
     return names != null ? names : ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  protected static boolean isRecursiveSymLink(File ioFile) {
+    try {
+      if (FileUtil.isAncestor(ioFile.getCanonicalFile(), ioFile, true)) return true;
+    }
+    catch (IOException ignore) {
+    }
+    return false;
   }
 
   @NotNull

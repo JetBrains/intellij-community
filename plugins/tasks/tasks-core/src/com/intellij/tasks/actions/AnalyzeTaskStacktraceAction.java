@@ -50,6 +50,7 @@ public class AnalyzeTaskStacktraceAction extends BaseTaskAction {
       Comment[] comments = stacktraceDialog.getTraces();
       for (Comment comment : comments) {
         ConsoleView consoleView = AnalyzeStacktraceUtil.addConsole(project, null, task.getId());
+        consoleView.allowHeavyFilters();
         AnalyzeStacktraceUtil.printStacktrace(consoleView, comment.getText());
       }
     }

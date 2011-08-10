@@ -75,7 +75,9 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     @Override
     public boolean processAliveKeys(@NotNull Processor<? super T> processor) {
-      for (Getable<T> interval : intervals) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < intervals.size(); i++) {
+        Getable<T> interval = intervals.get(i);
         T key = interval.get();
         if (key != null && !processor.process(key)) return false;
       }
@@ -729,6 +731,8 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       IntervalNode node = lookupNode(interval);
       if (node == null) return false;
 
+      reportInvalidation(interval, "Explicit Dispose");
+
       node.removeInterval(interval);
       setNode(interval, null);
 
@@ -1040,6 +1044,14 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   @Override
   public void clear() {
+    process(new Processor<T>() {
+      @Override
+      public boolean process(T t) {
+        reportInvalidation(t, "Clear all");
+        return true;
+      }
+    });
+
     super.clear();
     keySize = 0;
   }
@@ -1058,5 +1070,8 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     printSorted(root.getLeft());
     System.out.println(root);
     printSorted(root.getRight());
+  }
+
+  void reportInvalidation(T markerEx, Object reason) {
   }
 }

@@ -147,11 +147,10 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     final PsiDirectory[] projectDirectories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
     if (projectDirectories.length > 1) {
       int ret = Messages
-        .showDialog(project, prompt + " or all directories in project?", RefactoringBundle.message("warning.title"),
-                    new String[]{
+        .showYesNoCancelDialog(project, prompt + " or all directories in project?", RefactoringBundle.message("warning.title"),
                       RefactoringBundle.message("move.current.directory"),
                       RefactoringBundle.message("move.directories"),
-                      CommonBundle.getCancelButtonText()}, 0, Messages.getWarningIcon());
+                      CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
       if (ret == 0) {
         moveAsDirectory(project, targetContainer, callback, directories);
       }
@@ -159,8 +158,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
         moveAsDirectory(project, targetContainer, callback, projectDirectories);
       }
     }
-    else if (Messages.showDialog(project, prompt + "?", RefactoringBundle.message("warning.title"),
-                                 new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()}, 0,
+    else if (Messages.showOkCancelDialog(project, prompt + "?", RefactoringBundle.message("warning.title"),
                                  Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
       moveAsDirectory(project, targetContainer, callback, directories);
     }

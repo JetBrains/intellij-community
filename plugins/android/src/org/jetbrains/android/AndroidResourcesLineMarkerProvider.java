@@ -64,7 +64,9 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
   }
 
   public void collectSlowLineMarkers(List<PsiElement> psiElements, Collection<LineMarkerInfo> lineMarkerInfos) {
-    for (PsiElement element : psiElements) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < psiElements.size(); i++) {
+      PsiElement element = psiElements.get(i);
       addMarkerInfo(element, lineMarkerInfos);
     }
   }

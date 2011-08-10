@@ -138,6 +138,11 @@ public class MacMessages {
     return showMessageDialog(title, yesButton, null, noButton, message, window);
   }
 
+  public static int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window,
+                                    @Nullable DoNotAskDialogOption doNotAskDialogOption) {
+    return showAlertDialog(title, yesButton, null, noButton, message, window, false, doNotAskDialogOption);
+  }
+
   public static void showErrorDialog(String title, String message, String okButton, @Nullable Window window) {
     showAlertDialog(title, okButton, null, null, message, window, true, null);
   }
@@ -256,11 +261,9 @@ public class MacMessages {
           }
         }
 
-        if (doNotAskDialogOption != null) {
+        if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
           if (cancelCode != code || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
-            if (doNotAskDialogOption.canBeHidden()) {
-              doNotAskDialogOption.setToBeShown(!suppress, code);
-            }
+            doNotAskDialogOption.setToBeShown(!suppress, code);
           }
         }
         

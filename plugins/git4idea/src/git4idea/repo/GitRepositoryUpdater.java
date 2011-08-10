@@ -43,6 +43,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
     VirtualFile gitDir = root.findChild(".git");
     assert gitDir != null;
+    gitDir.getChildren();
     LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
 
     myRepositoryFiles = GitRepositoryFiles.getInstance(root);

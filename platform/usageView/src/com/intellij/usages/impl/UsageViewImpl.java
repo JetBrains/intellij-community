@@ -1253,7 +1253,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         if (canPerformReRun() && allTargetsAreValid()) {
           String[] options = {UsageViewBundle.message("action.description.rerun"), UsageViewBundle.message("usage.view.cancel.button")};
           String message = myCannotMakeString + "\n\n" + UsageViewBundle.message("dialog.rerun.search");
-          int answer = Messages.showDialog(myProject, message, title, options, 0, Messages.getErrorIcon());
+          int answer = Messages.showOkCancelDialog(myProject, message, title, options[0], options[1], Messages.getErrorIcon());
           if (answer == 0) {
             refreshUsages();
           }

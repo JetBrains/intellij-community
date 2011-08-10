@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
@@ -67,9 +66,8 @@ public class GroovyFindUsagesHandlerFactory extends JavaFindUsagesHandlerFactory
             final boolean doSearch;
             if (arePhysical(getters) || arePhysical(setters)) {
               if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
-              doSearch = Messages.showDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
+              doSearch = Messages.showYesNoDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
                                              FindBundle.message("find.field.accessors.title"),
-                                             new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0,
                                              Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE;
             }
             else {

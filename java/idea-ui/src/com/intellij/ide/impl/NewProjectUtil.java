@@ -41,6 +41,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -193,11 +194,11 @@ public class NewProjectUtil {
       final GeneralSettings settings = GeneralSettings.getInstance();
       int exitCode = settings.getConfirmOpenNewProject();
       if (exitCode == GeneralSettings.OPEN_PROJECT_ASK) {
-        exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.new.project"),
-                                           new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe")}, 1, 0,
+        exitCode = Messages.showOkCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.new.project"),
+                                               IdeBundle.message("button.existingframe"), IdeBundle.message("button.newframe"), 
                                            Messages.getQuestionIcon(), new ProjectNewWindowDoNotAskOption());
       }
-      if (exitCode == 1) { // "No" option
+      if (exitCode == DialogWrapper.OK_EXIT_CODE) { // "No" option
         ProjectUtil.closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);
       }
     }

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -53,7 +54,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState _state,
+                                     @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (PsiTreeUtil.isAncestor(this, place, false)) {
@@ -63,7 +64,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       final GrImportStatement staticImportParent = PsiTreeUtil.getParentOfType(place, GrImportStatement.class, false);
       if (staticImportParent != null) return true;
     }
-    ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
+
     if (isOnDemand()) {
       if (!processDeclarationsForMultipleElements(processor, lastParent, place, state)) return false;
     }
@@ -89,6 +90,8 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       PsiElement resolved = qualifier.resolve();
       if (!(resolved instanceof PsiClass)) return true;
       PsiClass clazz = (PsiClass)resolved;
+
+      state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
 
       final String refName = ref.getReferenceName();
       if (nameHint == null || name.equals(nameHint.getName(state))) {
@@ -116,15 +119,24 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
         if (!processor.execute(setter, state)) return false;
       }
     }
-    else {
+    else { //class import statement
       if (nameHint == null || name.equals(nameHint.getName(state))) {
         final PsiElement resolved = ref.resolve();
         if (resolved instanceof PsiClass) {
+          if (!isAliasedImport() && isFromSamePackage((PsiClass)resolved)) return true; //don't process classes from the same package because such import statements are ignored by compiler
+          state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
           if (!processor.execute(resolved, state)) return false;
         }
       }
     }
     return true;
+  }
+
+  private boolean isFromSamePackage(PsiClass resolved) {
+    final String qualifiedName = resolved.getQualifiedName();
+    final String packageName = ((GroovyFile)getContainingFile()).getPackageName();
+    final String assumed = packageName + '.' + resolved.getName();
+    return !packageName.isEmpty() && assumed.equals(qualifiedName);
   }
 
   private boolean processDeclarationsForMultipleElements(PsiScopeProcessor processor,
@@ -137,6 +149,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     if (isStatic()) {
       final PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiClass) {
+        state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
         final PsiClass clazz = (PsiClass)resolved;
         if (!processAllMembers(processor, clazz, state)) return false;
       }
@@ -145,7 +158,8 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       String qName = PsiUtil.getQualifiedReferenceText(ref);
       if (qName != null) {
         PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(qName);
-        if (aPackage != null) {
+        if (aPackage != null && !((GroovyFile)getContainingFile()).getPackageName().equals(aPackage.getQualifiedName())) {
+          state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
           if (!aPackage.processDeclarations(processor, state, lastParent, place)) return false;
         }
       }

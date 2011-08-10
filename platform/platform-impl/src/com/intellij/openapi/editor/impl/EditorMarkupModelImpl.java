@@ -99,6 +99,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myEditor.offsetToVisualLine(offset);
   }
 
+  public void repaintVerticalScrollBar() {
+    myEditor.getVerticalScrollBar().repaint();
+  }
+
   private static int getMinHeight() {
     return myMinMarkHeight;
   }
@@ -243,6 +247,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   public void setErrorPanelPopupHandler(@NotNull PopupHandler handler) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     MyErrorPanel errorPanel = getErrorPanel();
     if (errorPanel != null) {
       errorPanel.setPopupHandler(handler);
@@ -269,7 +274,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
     //HintManager.getInstance().getTooltipController().cancelTooltips();
 
-    myEditor.getVerticalScrollBar().repaint();
+    repaintVerticalScrollBar();
   }
 
   private void assertIsDispatchThread() {
@@ -665,7 +670,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       cancelMyToolTips(e, true);
     }
 
-    public void setPopupHandler(final PopupHandler handler) {
+    private void setPopupHandler(@NotNull PopupHandler handler) {
       if (myHandler != null) {
         scrollbar.removeMouseListener(myHandler);
         myErrorStripeButton.removeMouseListener(myHandler);
@@ -675,7 +680,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       scrollbar.addMouseListener(handler);
       myErrorStripeButton.addMouseListener(myHandler);
     }
-
   }
 
   private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject, HintHint hintHint) {

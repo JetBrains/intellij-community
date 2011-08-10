@@ -1,8 +1,10 @@
-package org.jetbrains.plugins.gradle.importing;
+package org.jetbrains.plugins.gradle.importing.wizard;
 
-import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
@@ -24,23 +26,27 @@ import java.awt.*;
 public class GradleSelectProjectStep extends GradleImportWizardStep {
 
   private final JPanel myComponent = new JPanel(new GridBagLayout());
-  private final NamePathComponent myRootPathComponent;
+  private final TextFieldWithBrowseButton myProjectPathComponent;
   
   public GradleSelectProjectStep(@NotNull WizardContext context) {
     super(context);
     
     GridBagConstraints constraints = new GridBagConstraints();
+    JLabel label = new JLabel(GradleBundle.message("gradle.import.label.select.project"));
+    myComponent.add(label);
+
     constraints.gridwidth = GridBagConstraints.REMAINDER;
     constraints.weightx = 1;
     constraints.fill = GridBagConstraints.HORIZONTAL;
     
-    myRootPathComponent = new NamePathComponent(
-      "", GradleBundle.message("gradle.import.label.select.project"), GradleBundle.message("gradle.import.title.select.project"), "", 
-      false, 
-      false
+    myProjectPathComponent = new TextFieldWithBrowseButton();
+    myProjectPathComponent.addBrowseFolderListener(
+      "",
+      GradleBundle.message("gradle.import.title.select.project"),
+      null,
+      new FileTypeDescriptor(GradleBundle.message("gradle.import.label.select.project"), "gradle")
     );
-    myRootPathComponent.setNameComponentVisible(false);
-    myComponent.add(myRootPathComponent, constraints);
+    myComponent.add(myProjectPathComponent, constraints);
     myComponent.add(Box.createVerticalGlue());
   }
 
@@ -51,8 +57,8 @@ public class GradleSelectProjectStep extends GradleImportWizardStep {
 
   @Override
   public void updateStep() {
-    if (!myRootPathComponent.isPathChangedByUser()) {
-      myRootPathComponent.setPath(getBuilder().getRootDirectoryPath(getWizardContext()));
+    if (isPathChanged()) {
+      myProjectPathComponent.setText(getBuilder().getProjectPath(getWizardContext()));
     }
   }
 
@@ -73,8 +79,12 @@ public class GradleSelectProjectStep extends GradleImportWizardStep {
   }
 
   private void storeCurrentSettings() {
-    if (myRootPathComponent.isPathChangedByUser()) {
-      getBuilder().setCurrentProjectPath(myRootPathComponent.getPath());
+    if (isPathChanged()) {
+      getBuilder().setCurrentProjectPath(myProjectPathComponent.getText());
     }
+  }
+
+  private boolean isPathChanged() {
+    return !StringUtil.equals(myProjectPathComponent.getText(), getBuilder().getProjectPath(getWizardContext()));
   }
 }

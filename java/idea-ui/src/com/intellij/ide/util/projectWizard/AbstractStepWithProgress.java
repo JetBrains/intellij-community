@@ -154,8 +154,8 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
   public boolean validate() {
     if (isProgressRunning()) {
-      final int answer = Messages.showDialog(getComponent(), myPromptStopSearch,
-                                             IdeBundle.message("title.question"), new String[] {IdeBundle.message("action.continue.searching"), IdeBundle.message("action.stop.searching")}, 0, Messages.getWarningIcon());
+      final int answer = Messages.showOkCancelDialog(getComponent(), myPromptStopSearch,
+                                             IdeBundle.message("title.question"), IdeBundle.message("action.continue.searching"), IdeBundle.message("action.stop.searching"), Messages.getWarningIcon());
       if (answer == 1) { // terminate
         cancelSearch();
       }

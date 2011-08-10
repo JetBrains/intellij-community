@@ -23,10 +23,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.impl.TrafficTooltipRenderer;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.update.ComparableObject;
 
 import java.awt.*;
+import java.util.EventObject;
 
 /**
  * User: cdr
@@ -55,15 +57,16 @@ public class TrafficTooltipRendererImpl extends ComparableObject.Impl implements
     myTrafficLightRenderer = (TrafficLightRenderer)((EditorMarkupModelImpl)editor.getMarkupModel()).getErrorStripeRenderer();
     myPanel = new TrafficProgressPanel(myTrafficLightRenderer, editor, hintHint);
     LineTooltipRenderer.correctLocation(editor, myPanel, p, alignToRight, false, -1);
-    LightweightHint hint = new LightweightHint(myPanel) {
+    LightweightHint hint = new LightweightHint(myPanel);
+    hint.addHintListener(new HintListener() {
       @Override
-      public void hide() {
+      public void hintHidden(EventObject event) {
         if (myPanel == null) return; //double hide?
-        super.hide();
         myPanel = null;
         onHide.run();
       }
-    };
+    });
+
     HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
     hintManager.showEditorHint(hint, editor, p,
                                HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT |

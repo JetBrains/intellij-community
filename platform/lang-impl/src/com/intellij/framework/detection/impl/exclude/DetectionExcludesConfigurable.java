@@ -59,6 +59,7 @@ public class DetectionExcludesConfigurable implements Configurable {
 
   @Nls
   @Override
+  @NotNull
   public JComponent createComponent() {
     myMainPanel = new JPanel(new BorderLayout());
     final JBList excludesList = new JBList(myModel);
@@ -78,6 +79,7 @@ public class DetectionExcludesConfigurable implements Configurable {
           doAddAction(button);
         }
       });
+    myMainPanel.add(new JLabel("Exclude from detection:"), BorderLayout.NORTH);
     myMainPanel.add(decorator.createPanel());
     return myMainPanel;
   }

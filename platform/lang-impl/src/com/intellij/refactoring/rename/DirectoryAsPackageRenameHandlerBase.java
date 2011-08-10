@@ -113,17 +113,16 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                                        "\' contains directories in libraries which cannot be renamed. Do you want to rename current directory";
           if (projectDirectories.length > 0) {
             int ret = Messages
-              .showDialog(project, promptMessage + " or all directories in project?", RefactoringBundle.message("warning.title"),
-                          new String[]{RefactoringBundle.message("rename.current.directory"),
-                            RefactoringBundle.message("rename.directories"), CommonBundle.getCancelButtonText()}, 0,
+              .showYesNoCancelDialog(project, promptMessage + " or all directories in project?", RefactoringBundle.message("warning.title"),
+                          RefactoringBundle.message("rename.current.directory"),
+                            RefactoringBundle.message("rename.directories"), CommonBundle.getCancelButtonText(),
                           Messages.getWarningIcon());
             if (ret == 2) return;
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage,
                        ret == 0 ? new PsiDirectory[]{psiDirectory} : projectDirectories);
           }
           else {
-            if (Messages.showDialog(project, promptMessage + "?", RefactoringBundle.message("warning.title"),
-                                    new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()}, 0,
+            if (Messages.showOkCancelDialog(project, promptMessage + "?", RefactoringBundle.message("warning.title"),
                                     Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
               renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, psiDirectory);
             }
@@ -135,9 +134,9 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
           buildMultipleDirectoriesInPackageMessage(message, getQualifiedName(aPackage), directories);
           message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed",
                                                    psiDirectory.getVirtualFile().getPresentableUrl()));
-          int ret = Messages.showDialog(project, message.toString(), RefactoringBundle.message("warning.title"),
-                                        new String[]{RefactoringBundle.message("rename.package.button.text"),
-                                          RefactoringBundle.message("rename.directory.button.text"), CommonBundle.getCancelButtonText()}, 0,
+          int ret = Messages.showYesNoCancelDialog(project, message.toString(), RefactoringBundle.message("warning.title"),
+                                        RefactoringBundle.message("rename.package.button.text"),
+                                          RefactoringBundle.message("rename.directory.button.text"), CommonBundle.getCancelButtonText(),
                                         Messages.getWarningIcon());
           if (ret == 0) {
             PsiElementRenameHandler.rename(aPackage, project, nameSuggestionContext, editor);

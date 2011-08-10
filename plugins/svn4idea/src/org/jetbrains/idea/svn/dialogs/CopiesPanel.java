@@ -220,10 +220,10 @@ public class CopiesPanel {
         final LinkLabel fixDepthLabel = new MyLinkLabel(myTextHeight, "Make infinity", new LinkListener() {
           public void linkSelected(LinkLabel aSource, Object aLinkData) {
             final int result =
-              Messages.showDialog(myVcs.getProject(), "You are going to checkout into '" + wcInfo.getPath() + "' with 'infinity' depth.\n" +
+              Messages.showOkCancelDialog(myVcs.getProject(), "You are going to checkout into '" + wcInfo.getPath() + "' with 'infinity' depth.\n" +
                                                       "This will update your working copy to HEAD revision as well.",
                                   "Set working copy infinity depth",
-                                  new String[]{"Ok", "Cancel"}, 0, Messages.getWarningIcon());
+                                  Messages.getWarningIcon());
             if (result == 0) {
               // update of view will be triggered by roots changed event
               SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getRootUrl(), SVNRevision.HEAD,

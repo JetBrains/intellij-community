@@ -143,7 +143,7 @@ class DaemonListeners implements Disposable {
     EditorTrackerListener editorTrackerListener = new EditorTrackerListener() {
       private List<Editor> myActiveEditors = Collections.emptyList();
       public void activeEditorsChanged(@NotNull List<Editor> editors) {
-        List<Editor> activeEditors = myEditorTracker.getActiveEditors();
+        List<Editor> activeEditors = getActiveEditors();
         if (!myActiveEditors.equals(activeEditors)) {
           myActiveEditors = activeEditors;
           stopDaemon(true);  // do not stop daemon if idea loses/gains focus
@@ -160,7 +160,11 @@ class DaemonListeners implements Disposable {
       public void editorCreated(EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
-        if (!worthBothering(document, editor.getProject())) {
+        Project editorProject = editor.getProject();
+        // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
+        PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
+        if (!worthBothering(document, editorProject)) {
+          LOG.debug("Not worth: " + file);
           return;
         }
         myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
@@ -496,7 +500,7 @@ class DaemonListeners implements Disposable {
 
   Collection<FileEditor> getSelectedEditors() {
     // Editors in modal context
-    List<Editor> editors = myEditorTracker.getActiveEditors();
+    List<Editor> editors = getActiveEditors();
 
     Collection<FileEditor> activeFileEditors = new THashSet<FileEditor>(editors.size());
     for (Editor editor : editors) {
@@ -523,5 +527,10 @@ class DaemonListeners implements Disposable {
       result.add(fileEditor);
     }
     return result;
+  }
+
+  @NotNull
+  List<Editor> getActiveEditors() {
+    return myEditorTracker.getActiveEditors();
   }
 }

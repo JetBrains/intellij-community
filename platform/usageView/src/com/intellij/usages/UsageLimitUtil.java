@@ -62,7 +62,7 @@ public class UsageLimitUtil {
   private static int showMessage(final Project project, final String message, final String title, final String[] buttons) {
     return runOrInvokeAndWait(new Computable<Integer>() {
       public Integer compute() {
-        return Messages.showDialog(project, message, title, buttons, 0, Messages.getWarningIcon());
+        return Messages.showOkCancelDialog(project, message, title, buttons[0], buttons[1], Messages.getWarningIcon());
       }
     });
   }

@@ -179,7 +179,9 @@ public class PsiClassImplUtil {
     assert pairs != null : "pairs should be already computed. Wrong allMap: " + getMap(aClass, type);
 
     final List<T> ret = new ArrayList<T>(pairs.size());
-    for (final Pair<T, PsiSubstitutor> pair : pairs) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < pairs.size(); i++) {
+      Pair<T, PsiSubstitutor> pair = pairs.get(i);
       T t = pair.getFirst();
       LOG.assertTrue(t != null, aClass);
       ret.add(t);

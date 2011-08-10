@@ -38,6 +38,7 @@ public class AnalyzeStacktraceOnErrorAction extends AnAction {
     final String message = IdeErrorsDialog.CURRENT_TRACE_KEY.getData(dataContext);
     if (message != null) {
       final ConsoleView consoleView = AnalyzeStacktraceUtil.addConsole(project, null, "<Stacktrace>");
+      consoleView.allowHeavyFilters();
       AnalyzeStacktraceUtil.printStacktrace(consoleView, message);
     }
   }

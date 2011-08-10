@@ -129,7 +129,7 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
 
     // TODO den implement
     return null;
-    //return GradleSettings.getInstance(project).INSTALLATION_HOME;
+    //return GradleSettings.getInstance(project).GRADLE_HOME;
   }
 
   @Nullable

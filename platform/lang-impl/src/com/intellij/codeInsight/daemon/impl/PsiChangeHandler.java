@@ -94,7 +94,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   public void dispose() {
   }
 
-  private void updateChangesForDocument(@NotNull Document document) {
+  private void updateChangesForDocument(@NotNull final Document document) {
     if (DaemonListeners.isUnderIgnoredAction(null)) return;
     List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
     if (toUpdate != null) {
@@ -105,7 +105,8 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
           public void run() {
             if (myProject.isDisposed()) return;
             EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
-            markupModel.setErrorStripeRenderer(markupModel.getErrorStripeRenderer());
+            PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+            TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markupModel, myProject, document, file);
           }
         }, ModalityState.stateForComponent(editor.getComponent()));
       }
@@ -183,8 +184,8 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     }
   }
 
-  private void updateByChange(@NotNull PsiElement child, @NotNull Document document, final boolean whitespaceOptimizationAllowed) {
-    PsiFile file;
+  private void updateByChange(@NotNull PsiElement child, @NotNull final Document document, final boolean whitespaceOptimizationAllowed) {
+    final PsiFile file;
     try {
       file = child.getContainingFile();
     }

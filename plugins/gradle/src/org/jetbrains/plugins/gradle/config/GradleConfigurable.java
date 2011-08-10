@@ -20,7 +20,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
-import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -91,36 +89,49 @@ public class GradleConfigurable implements SearchableConfigurable {
 
   @Override
   public boolean isModified() {
-    // TODO den implement
-    return true;
+    if (!myPathComponent.isPathChangedByUser()) {
+      return false;
+    }
+    String newPath = myPathComponent.getPath();
+    String oldPath = GradleSettings.getInstance(myProject).GRADLE_HOME;
+    boolean modified = newPath == null ? oldPath == null : !newPath.equals(oldPath);
+    if (modified) {
+      useNormalColorForPath();
+    } 
+    return modified;
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    GradleSettings.getInstance(myProject).INSTALLATION_HOME = myPathComponent.getPath();
+    useNormalColorForPath();
+    GradleSettings.getInstance(myProject).GRADLE_HOME = myPathComponent.getPath();
   }
 
   @Override
   public void reset() {
-    myPathComponent.setForeground(UIManager.getColor("TextField.foreground"));
-    String valueToUse = GradleSettings.getInstance(myProject).INSTALLATION_HOME;
+    useNormalColorForPath();
+    String valueToUse = GradleSettings.getInstance(myProject).GRADLE_HOME;
     if (!StringUtil.isEmpty(valueToUse)) {
       myPathComponent.setPath(valueToUse);
       return; 
     }
-    applyDefaultPathIfPossible();  
+    deduceGradleHomeIfPossible();  
   }
 
+  private void useNormalColorForPath() {
+    myPathComponent.getPathComponent().setForeground(UIManager.getColor("TextField.foreground"));
+  }
+  
   /**
    * Updates GUI of the gradle configurable in order to show deduced path to gradle (if possible).
    */
-  private void applyDefaultPathIfPossible() {
+  private void deduceGradleHomeIfPossible() {
     File gradleHome = myLibraryManager.getGradleHome(myProject);
     if (gradleHome == null) {
       return;
     }
     myPathComponent.setPath(gradleHome.getPath());
-    myPathComponent.setForeground(UIManager.getColor("TextField.inactiveForeground"));
+    myPathComponent.getPathComponent().setForeground(UIManager.getColor("TextField.inactiveForeground"));
   }
   
   @Override

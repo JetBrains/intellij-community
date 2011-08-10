@@ -17,15 +17,23 @@
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,12 +41,16 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class HyperlinkLabel extends HighlightableComponent {
+  private static final TextAttributes BOLD_ATTRIBUTES =
+    new TextAttributes(UIUtil.getLabelTextForeground(), UIUtil.getLabelBackground(), null, null, Font.BOLD);
+
+  private static final Logger LOG = Logger.getInstance(HyperlinkLabel.class.getName());
+
   private HighlightedText myHighlightedText;
   private final List<HyperlinkListener> myListeners = new ArrayList<HyperlinkListener>();
   private boolean myUseIconAsLink;
-  private final Color myTextForegroundColor;
-  private final Color myTextBackgroundColor;
-  private final Color myTextEffectColor;
+  private final TextAttributes myAnchorAttributes;
+  private HyperlinkListener myHyperlinkListener = null;
 
   public HyperlinkLabel() {
     this("");
@@ -49,9 +61,8 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
-    myTextForegroundColor = textForegroundColor;
-    myTextBackgroundColor = textBackgroundColor;
-    myTextEffectColor = textEffectColor;
+    myAnchorAttributes =
+      new TextAttributes(textForegroundColor, textBackgroundColor, textEffectColor, EffectType.LINE_UNDERSCORE, Font.PLAIN);
     enforceBackgroundOutsideText(textBackgroundColor);
     setHyperlinkText(text);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
@@ -105,15 +116,15 @@ public class HyperlinkLabel extends HighlightableComponent {
     if (myUseIconAsLink && myIcon != null && x < myIcon.getIconWidth()) {
       return true;
     }
-    return findRegionByX(x) != null;
+    final HighlightedRegion region = findRegionByX(x);
+    return region != null && region.textAttributes == myAnchorAttributes;
   }
 
   private void prepareText(String beforeLinkText, String linkText, String afterLinkText) {
     setFont(UIUtil.getLabelFont());
     myHighlightedText = new HighlightedText();
     myHighlightedText.appendText(beforeLinkText, null);
-    myHighlightedText.appendText(linkText, new TextAttributes(myTextForegroundColor, myTextBackgroundColor, myTextEffectColor,
-                                                          EffectType.LINE_UNDERSCORE, Font.PLAIN));
+    myHighlightedText.appendText(linkText, myAnchorAttributes);
     myHighlightedText.appendText(afterLinkText, null);
     myHighlightedText.applyToComponent(this);
     adjustSize();
@@ -125,13 +136,19 @@ public class HyperlinkLabel extends HighlightableComponent {
     super.setText(text);
   }
 
-  public void setHyperlinkTarget(@NotNull final String url) {
-    addHyperlinkListener(new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        BrowserUtil.launchBrowser(url);
-      }
-    });
+  public void setHyperlinkTarget(@Nullable final String url) {
+    if (myHyperlinkListener != null) {
+      removeHyperlinkListener(myHyperlinkListener);
+    }
+    if (url != null) {
+      myHyperlinkListener = new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          BrowserUtil.launchBrowser(url);
+        }
+      };
+      addHyperlinkListener(myHyperlinkListener);
+    }
   }
 
   public void addHyperlinkListener(HyperlinkListener listener) {
@@ -152,5 +169,41 @@ public class HyperlinkLabel extends HighlightableComponent {
     for (HyperlinkListener listener : listeners) {
       listener.hyperlinkUpdate(e);
     }
+  }
+
+  public void setHtmlText(String text) {
+    HTMLEditorKit.Parser parse = new ParserDelegator();
+    final HighlightedText highlightedText = new HighlightedText();
+    try {
+      parse.parse(new StringReader(text), new HTMLEditorKit.ParserCallback() {
+        private TextAttributes currentAttributes = null;
+
+        @Override
+        public void handleText(char[] data, int pos) {
+          highlightedText.appendText(new String(data), currentAttributes);
+        }
+
+        @Override
+        public void handleStartTag(HTML.Tag t, MutableAttributeSet a, int pos) {
+          if (t == HTML.Tag.B) {
+            currentAttributes = BOLD_ATTRIBUTES;
+          }
+          else if (t == HTML.Tag.A) {
+            currentAttributes = myAnchorAttributes;
+          }
+        }
+
+        @Override
+        public void handleEndTag(HTML.Tag t, int pos) {
+          currentAttributes = null;
+        }
+      }, false);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    highlightedText.applyToComponent(this);
+    ((JComponent)getParent()).revalidate();
+    adjustSize();
   }
 }

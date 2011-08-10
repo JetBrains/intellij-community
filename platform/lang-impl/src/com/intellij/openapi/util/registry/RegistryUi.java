@@ -293,10 +293,9 @@ public class RegistryUi implements Disposable {
       final ApplicationEx app = (ApplicationEx) ApplicationManager.getApplication();
       final ApplicationInfo info = ApplicationInfo.getInstance();
 
-      final int r = Messages.showDialog(myContent, "You need to restart " + info.getVersionName() + " for the changes to take effect", "Restart Required",
-          new String[]{
+      final int r = Messages.showOkCancelDialog(myContent, "You need to restart " + info.getVersionName() + " for the changes to take effect", "Restart Required",
               (app.isRestartCapable() ? "Restart Now" : "Shutdown Now"), (app.isRestartCapable() ? "Restart Later": "Shutdown Later")
-          }, 0, Messages.getQuestionIcon());
+          , Messages.getQuestionIcon());
 
 
       if (r == 0) {

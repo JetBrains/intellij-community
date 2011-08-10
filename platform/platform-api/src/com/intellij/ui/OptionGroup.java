@@ -76,7 +76,7 @@ public class OptionGroup {
         JComponent component = (JComponent)option;
         int verticalInset = component instanceof JLabel || component instanceof JTextField ? 2 : 0;
         panel.add(component,
-                  new GridBagConstraints(0, i, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.WEST, getFill(component),
+                  new GridBagConstraints(0, i, GridBagConstraints.REMAINDER, 1, 1, 0, GridBagConstraints.WEST, getFill(component),
                                          new Insets(verticalInset, leftInset, verticalInset, 5), 0, 0));
       }
       else {
@@ -89,7 +89,7 @@ public class OptionGroup {
         JComponent secondComponent = (JComponent)pair.second;
         verticalInset = secondComponent instanceof JLabel || secondComponent instanceof JTextField ? 2 : 0;
         panel.add(secondComponent,
-                  new GridBagConstraints(1, i, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL,
+                  new GridBagConstraints(1, i, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL,
                                          new Insets(verticalInset, 5, verticalInset, 5), 0, 0));
       }
     }

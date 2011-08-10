@@ -192,13 +192,12 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   private static boolean checkAssociate(final Project project, final FilePath file, DiffChainContext context) {
     final String pattern = FileUtil.getExtension(file.getName());
     if (context.contains(pattern)) return false;
-    int rc = Messages.showDialog(project,
+    int rc = Messages.showOkCancelDialog(project,
                                  VcsBundle.message("diff.unknown.file.type.prompt", file.getName()),
                                  VcsBundle.message("diff.unknown.file.type.title"),
-                                 new String[] {
                                    VcsBundle.message("diff.unknown.file.type.associate"),
-                                   CommonBundle.getCancelButtonText()
-                                 }, 0, Messages.getQuestionIcon());
+                                   CommonBundle.getCancelButtonText(),
+                                 Messages.getQuestionIcon());
     if (rc == 0) {
       FileType fileType = FileTypeChooser.associateFileType(file.getName());
       return fileType != null && !fileType.isBinary();

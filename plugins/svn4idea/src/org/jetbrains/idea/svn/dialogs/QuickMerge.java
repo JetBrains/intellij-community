@@ -172,8 +172,8 @@ public class QuickMerge {
 
     @Override
     public void run(final ContinuationContext context) {
-      final int result = Messages.showDialog(myProject, "Merge all?", myTitle,
-                                             new String[]{"Merge &all", "&Select revisions to merge", "Cancel"}, 0, Messages.getQuestionIcon());
+      final int result = Messages.showYesNoCancelDialog(myProject, "Merge all?", myTitle,
+                                             "Merge &all", "&Select revisions to merge", "Cancel", Messages.getQuestionIcon());
       if (result == 2) return;
       if (result == 0) {
         insertMergeAll(context);

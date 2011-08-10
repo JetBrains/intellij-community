@@ -325,7 +325,7 @@ public class UpdateHighlightersUtil {
       }
     });
 
-    Collections.sort(highlights, BY_START_OFFSET_NODUPS);
+    ContainerUtil.quickSort(highlights, BY_START_OFFSET_NODUPS);
     final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>(10);
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     final boolean[] changed = {false};

@@ -155,15 +155,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private void updateBusyIconLocation() {
     if (myBusyIcon != null) {
-      final Rectangle rec = getVisibleRect();
-
-      final Dimension iconSize = myBusyIcon.getPreferredSize();
-
-      final Rectangle newBounds = new Rectangle(rec.x + rec.width - iconSize.width, rec.y, iconSize.width, iconSize.height);
-      if (!newBounds.equals(myBusyIcon.getBounds())) {
-        myBusyIcon.setBounds(newBounds);
-        repaint();
-      }
+      myBusyIcon.updateLocation(this);
     }
   }
 

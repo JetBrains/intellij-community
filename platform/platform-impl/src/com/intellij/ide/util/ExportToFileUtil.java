@@ -58,16 +58,13 @@ public class ExportToFileUtil {
     String prepend = "";
     File file = new File(fileName);
     if (file.exists()) {
-      int result = Messages.showDialog(
+      int result = Messages.showYesNoCancelDialog(
         project,
         IdeBundle.message("error.text.file.already.exists", fileName),
         IdeBundle.message("title.warning"),
-          new String[]{
             IdeBundle.message("action.overwrite"),
             IdeBundle.message("action.append"),
-            CommonBundle.getCancelButtonText()
-          },
-        0,
+            CommonBundle.getCancelButtonText(),
         Messages.getWarningIcon()
       );
 

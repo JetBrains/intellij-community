@@ -45,9 +45,11 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
       return 0;
     }
   };
+  private final MarkupModelImpl myMarkupModel;
 
-  public RangeHighlighterTree(Document document) {
+  public RangeHighlighterTree(Document document, MarkupModelImpl markupModel) {
     super(document);
+    myMarkupModel = markupModel;
   }
 
   @Override
@@ -79,5 +81,11 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     protected Getable<RangeHighlighterEx> createGetable(@NotNull RangeHighlighterEx interval) {
       return (Getable)interval;
     }
+  }
+
+  @Override
+  void reportInvalidation(RangeHighlighterEx markerEx, Object reason) {
+    super.reportInvalidation(markerEx, reason);
+    myMarkupModel.fireBeforeRemoved(markerEx);
   }
 }

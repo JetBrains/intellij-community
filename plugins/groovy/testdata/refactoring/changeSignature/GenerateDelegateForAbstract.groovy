@@ -1,5 +1,5 @@
 abstract class X {
-  abstract def foo<caret>(String s) 
+  abstract def fo<caret>o(String s)
 }
 
 class Y extends X {

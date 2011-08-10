@@ -17,6 +17,7 @@ package com.intellij.util.graph;
 
 import com.intellij.openapi.util.Pair;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -191,5 +192,12 @@ public class DFSTBuilder<Node> {
     }
 
     return mySCCs;
+  }
+
+  @NotNull
+  public List<Node> getSortedNodes() {
+    List<Node> result = new ArrayList<Node>(myGraph.getNodes());
+    Collections.sort(result, comparator());
+    return result;
   }
 }

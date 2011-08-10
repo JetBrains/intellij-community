@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -83,6 +84,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     if (!InvalidFacetManager.getInstance(myProject).getInvalidFacets().isEmpty()) {
       addFacetTypeNode(InvalidFacetType.getInstance());
     }
+    myRoot.add(new MyNode(new FrameworkDetectionConfigurable(myProject)));
+    ((DefaultTreeModel)myTree.getModel()).reload();
   }
 
   private void addFacetTypeNode(FacetType<?, ?> facetType) {
@@ -182,8 +185,6 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     actions.add(new MyRemoveAction());
     actions.add(Separator.getInstance());
     addCollapseExpandActions(actions);
-    actions.add(Separator.getInstance());
-    actions.add(new EditFrameworkDetectionExcludesAction(myProject));
     return actions;
   }
 

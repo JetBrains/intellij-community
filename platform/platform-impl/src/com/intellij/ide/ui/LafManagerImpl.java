@@ -390,7 +390,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (message != null) {
       if (confirm) {
         final String[] options = {IdeBundle.message("confirm.set.look.and.feel"), CommonBundle.getCancelButtonText()};
-        final int result = Messages.showDialog(message, CommonBundle.getWarningTitle(), options, 1, Messages.getWarningIcon());
+        final int result = Messages.showOkCancelDialog(message, CommonBundle.getWarningTitle(), options[0], options[1], Messages.getWarningIcon());
         if (result == 0) {
           myLastWarning = message;
           return true;

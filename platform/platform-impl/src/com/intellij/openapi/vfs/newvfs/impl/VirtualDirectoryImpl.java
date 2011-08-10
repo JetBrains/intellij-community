@@ -550,4 +550,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, final long newTimeStamp) throws IOException {
     throw new IOException("getOutputStream() must not be called against a directory: " + getUrl());
   }
+
+  @Override
+  public boolean isSymLink() {
+    if (myFS instanceof LocalFileSystem) {
+      return ((LocalFileSystem)myFS).isSymLink(this);
+    }
+    return false;
+  }
 }

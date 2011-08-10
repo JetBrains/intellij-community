@@ -43,8 +43,8 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     if (files == null || files.length == 0) return;
 
     String message = createConfirmationMessage(files);
-    int returnValue = Messages.showDialog(message, UIBundle.message("delete.dialog.title"), new String[]{ApplicationBundle.message("button.delete"),
-      CommonBundle.getCancelButtonText()}, 0, 0, Messages.getQuestionIcon());
+    int returnValue = Messages.showOkCancelDialog(message, UIBundle.message("delete.dialog.title"), ApplicationBundle.message("button.delete"),
+      CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
     if (returnValue != 0) return;
 
     Arrays.sort(files, FileComparator.getInstance());

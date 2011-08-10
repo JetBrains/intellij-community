@@ -47,4 +47,6 @@ public interface ConsoleView extends ExecutionConsole{
 
   @NotNull
   AnAction[] createConsoleActions();
+
+  void allowHeavyFilters();
 }

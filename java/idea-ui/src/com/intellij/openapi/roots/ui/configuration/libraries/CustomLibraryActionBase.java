@@ -72,7 +72,8 @@ public abstract class CustomLibraryActionBase extends DumbAwareAction {
         final String name = existingEntries.get(0).getPresentableName();
         message = "There is already a " + myCreator.getDisplayName() + " library '" + name + "'.\n Do you want to replace it?";
       }
-      final int result = Messages.showDialog(rootModel.getProject(), message, "Library Already Exists", new String[]{"&Replace", "&Add", "&Cancel"}, 0, null);
+      final int result = Messages.showYesNoCancelDialog(rootModel.getProject(), message, "Library Already Exists",
+                                                        "&Replace", "&Add", "&Cancel", null);
       if (result == 0) {
         for (OrderEntry entry : existingEntries) {
           rootModel.removeOrderEntry(entry);

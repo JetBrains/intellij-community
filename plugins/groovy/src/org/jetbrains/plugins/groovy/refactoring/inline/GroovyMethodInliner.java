@@ -143,7 +143,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     }
   }
 
-  static RangeMarker inlineReferenceImpl(GrCallExpression call, GrMethod method, boolean replaceCall, boolean isTailMethodCall) {
+  static RangeMarker inlineReferenceImpl(GrCallExpression call, GrMethod method, boolean resultOfCallExplicitlyUsed, boolean isTailMethodCall) {
     try {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(call.getProject());
       final Project project = call.getProject();
@@ -159,7 +159,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         GrExpression invoked = ((GrMethodCallExpression) call).getInvokedExpression();
         if (invoked instanceof GrReferenceExpression && ((GrReferenceExpression) invoked).getQualifierExpression() != null) {
           qualifier = ((GrReferenceExpression) invoked).getQualifierExpression();
-          if (!GroovyInlineMethodUtil.hasNoSideEffects(qualifier)) {
+          if (!GroovyInlineMethodUtil.isSimpleReference(qualifier)) {
             String qualName = generateQualifierName(call, method, project, qualifier);
             qualifier = (GrExpression)PsiUtil.skipParentheses(qualifier, false);
             qualifierDeclaration = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, qualifier, null, qualName);
@@ -187,17 +187,21 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       PsiType methodType = method.getInferredReturnType();
       GrOpenBlock body = newMethod.getBlock();
       assert body != null;
-      GrExpression replaced = null;
-      if (replaceCall && !isTailMethodCall) {
+
+
+      GrExpression replaced;
+      if (resultOfCallExplicitlyUsed && !isTailMethodCall) {
         GrExpression resultExpr = null;
         if (PsiType.VOID.equals(methodType)) {
           resultExpr = factory.createExpressionFromText("null");
-        }else if (returnCount == 1) {
+        }
+        else if (returnCount == 1) {
           final GrExpression returnExpression = ControlFlowUtils.extractReturnExpression(returnStatements.iterator().next());
           if (returnExpression != null) {
             resultExpr = factory.createExpressionFromText(returnExpression.getText());
           }
-        }else if (returnCount > 1) {
+        }
+        else if (returnCount > 1) {
           resultExpr = factory.createExpressionFromText(resultName);
         }
 
@@ -206,9 +210,12 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         }
         replaced = call.replaceWithExpression(resultExpr, false);
       }
+      else {
+        replaced = call;
+      }
 
       // Calculate anchor to insert before
-      GrExpression enclosingExpr = changeEnclosingStatement(replaced != null ? replaced : call);
+      GrExpression enclosingExpr = addBlockIntoParent(replaced);
       GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(enclosingExpr, GrVariableDeclarationOwner.class);
       assert owner != null;
       PsiElement element = enclosingExpr;
@@ -218,7 +225,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       assert element != null && element instanceof GrStatement;
       GrStatement anchor = (GrStatement) element;
 
-      if (!replaceCall) {
+      if (!resultOfCallExplicitlyUsed) {
         assert anchor == enclosingExpr;
       }
 
@@ -245,8 +252,21 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           }
         }
       }
-      if (!isTailMethodCall && (PsiType.VOID.equals(methodType) || returnCount == 1)) {
+      if (!isTailMethodCall && resultOfCallExplicitlyUsed && returnCount == 1) {
+        returnStatements.iterator().next().removeStatement();
+      }
+      else if (!isTailMethodCall && (PsiType.VOID.equals(methodType) || returnCount == 1)) {
         for (GrStatement returnStatement : returnStatements) {
+          if (returnStatement instanceof GrReturnStatement) {
+            final GrExpression returnValue = ((GrReturnStatement)returnStatement).getReturnValue();
+            if (returnValue != null && GroovyRefactoringUtil.hasSideEffect(returnValue)) {
+              returnStatement.replaceWithStatement(returnValue);
+              continue;
+            }
+          }
+          else if (GroovyRefactoringUtil.hasSideEffect(returnStatement)) {
+            continue;
+          }
           returnStatement.removeStatement();
         }
       }
@@ -256,9 +276,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       for (GrStatement statement : statements) {
         ((GrStatementOwner) owner).addStatementBefore(statement, anchor);
       }
-      if (replaceCall && !isTailMethodCall) {
-        assert replaced != null;
-
+      if (resultOfCallExplicitlyUsed && !isTailMethodCall) {
         TextRange range = replaced.getTextRange();
         RangeMarker marker = editor != null ? editor.getDocument().createRangeMarker(range.getStartOffset(), range.getEndOffset(), true) : null;
         reformatOwner(owner);
@@ -307,50 +325,63 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     }
   }
 
-  private static GrExpression changeEnclosingStatement(GrExpression expr) throws IncorrectOperationException {
+  /**
+   *  adds block statement in parent of expr if needed. For Example:
+   *    while (true) a=foo()
+   *  will be replaced with
+   *    while(true) {a=foo()}
+   * @param expr
+   * @return corresponding expr inside block if it has been created or expr itself.
+   * @throws IncorrectOperationException
+   */
+
+  private static GrExpression addBlockIntoParent(GrExpression expr) throws IncorrectOperationException {
 
     PsiElement parent = expr.getParent();
     PsiElement child = expr;
     while (!(parent instanceof GrLoopStatement) &&
-        !(parent instanceof GrIfStatement) &&
-        !(parent instanceof GrVariableDeclarationOwner) &&
-        parent != null) {
+           !(parent instanceof GrIfStatement) &&
+           !(parent instanceof GrVariableDeclarationOwner) &&
+           parent != null) {
       parent = parent.getParent();
       child = child.getParent();
     }
-    if (parent instanceof GrWhileStatement && child == ((GrWhileStatement) parent).getCondition() ||
-        parent instanceof GrIfStatement && child == ((GrIfStatement) parent).getCondition()) {
+    if (parent instanceof GrWhileStatement && child == ((GrWhileStatement)parent).getCondition() ||
+        parent instanceof GrIfStatement && child == ((GrIfStatement)parent).getCondition()) {
       parent = parent.getParent();
     }
     assert parent != null;
     if (parent instanceof GrVariableDeclarationOwner) {
       return expr;
-    } else {
-      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
-      PsiElement tempStmt = expr;
-      while (parent != tempStmt.getParent()) {
-        tempStmt = tempStmt.getParent();
-      }
-      GrStatement toAdd = (GrStatement)tempStmt.copy();
-      GrBlockStatement blockStatement = factory.createBlockStatement();
-      if (parent instanceof GrLoopStatement) {
-        ((GrLoopStatement) parent).replaceBody(blockStatement);
-      } else {
-        GrIfStatement ifStatement = (GrIfStatement) parent;
-        if (tempStmt == ifStatement.getThenBranch()) {
-          ifStatement.replaceThenBranch(blockStatement);
-        } else if (tempStmt == ifStatement.getElseBranch()) {
-          ifStatement.replaceElseBranch(blockStatement);
-        }
-      }
-      GrStatement statement = blockStatement.getBlock().addStatementBefore(toAdd, null);
-      if (statement instanceof GrReturnStatement) {
-        expr = ((GrReturnStatement) statement).getReturnValue();
-      } else {
-        expr = (GrExpression) statement;
-      }
-      return expr;
     }
+
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
+    PsiElement tempStmt = expr;
+    while (parent != tempStmt.getParent()) {
+      tempStmt = tempStmt.getParent();
+    }
+    GrStatement toAdd = (GrStatement)tempStmt.copy();
+    GrBlockStatement blockStatement = factory.createBlockStatement();
+    if (parent instanceof GrLoopStatement) {
+      ((GrLoopStatement)parent).replaceBody(blockStatement);
+    }
+    else {
+      GrIfStatement ifStatement = (GrIfStatement)parent;
+      if (tempStmt == ifStatement.getThenBranch()) {
+        ifStatement.replaceThenBranch(blockStatement);
+      }
+      else if (tempStmt == ifStatement.getElseBranch()) {
+        ifStatement.replaceElseBranch(blockStatement);
+      }
+    }
+    GrStatement statement = blockStatement.getBlock().addStatementBefore(toAdd, null);
+    if (statement instanceof GrReturnStatement) {
+      expr = ((GrReturnStatement)statement).getReturnValue();
+    }
+    else {
+      expr = (GrExpression)statement;
+    }
+    return expr;
   }
 
 

@@ -20,6 +20,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -37,10 +38,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.io.IOException;
 
-public class DisableInspectionToolAction implements IntentionAction, Iconable {
+public class DisableInspectionToolAction implements IntentionAction, Iconable, LowPriorityAction {
   private final String myToolId;
   public static final String NAME = InspectionsBundle.message("disable.inspection.action.name");
-  private static final Icon ICON = IconLoader.getIcon("/general/inspectionsOff.png");
+  private static final Icon ICON = IconLoader.getIcon("/actions/cancel.png");
 
   public DisableInspectionToolAction(LocalInspectionTool tool) {
     myToolId = tool.getShortName();

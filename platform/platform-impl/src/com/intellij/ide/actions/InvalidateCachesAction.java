@@ -30,13 +30,12 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     String[] options = app.isRestartCapable() ? new String[]{"Invalidate and Restart", "Invalidate", "Cancel"}
                                               : new String[]{"Invalidate and Exit", "Invalidate", "Cancel"};
 
-    int result = Messages.showDialog(e.getData(PlatformDataKeys.PROJECT),
+    int result = Messages.showYesNoCancelDialog(e.getData(PlatformDataKeys.PROJECT),
                                      "The caches will be invalidated and rebuilt on the next startup.\n" +
                                      "WARNING: Local History will be also cleared.\n\n" +
                                      "Would you like to continue?\n\n",
                                      "Invalidate Caches",
-                                     options,
-                                     0,
+                                     options[0], options[1], options[2],
                                      Messages.getWarningIcon());
 
     if (result == -1 || result == options.length - 1) {

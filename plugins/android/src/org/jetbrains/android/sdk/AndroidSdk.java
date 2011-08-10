@@ -186,8 +186,8 @@ public abstract class AndroidSdk {
 
         if (!finished) {
           int result = Messages
-            .showDialog(project, "ADB not responding. Please, kill \"" + SdkConstants.FN_ADB + "\" process manually and click 'Retry'",
-                        CommonBundle.getErrorTitle(), new String[]{"&Retry", "&Cancel"}, 0, Messages.getErrorIcon());
+            .showOkCancelDialog(project, "ADB not responding. Please, kill \"" + SdkConstants.FN_ADB + "\" process manually and click 'Retry'",
+                        CommonBundle.getErrorTitle(), "&Retry", "&Cancel", Messages.getErrorIcon());
 
           if (result == 1) {
             forceInterrupt(t);

@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.MacMainFrameDecorator;
@@ -28,7 +29,7 @@ import java.awt.*;
 /**
  * @author pegov
  */
-public class ToggleMacFullScreenAction extends AnAction {
+public class ToggleMacFullScreenAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
