@@ -227,6 +227,11 @@ public class BlockSupportImpl extends BlockSupport {
       if (isReplaceWholeNode(fileImpl, newRoot)) {
         DiffLog treeChangeEvent = replaceElementWithEvents((CompositeElement)oldRoot, (CompositeElement)newRoot);
         fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
+
+        // may be time consuming - do not perform in AWT during finishCommit
+        TreeUtil.ensureParsed(oldRoot.getFirstChildNode());
+        TreeUtil.ensureParsed(newRoot.getFirstChildNode());
+
         return treeChangeEvent;
       }
       newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);

@@ -64,7 +64,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         ((DocumentImpl)document).normalizeRangeMarkers();
       }
 
-      for (SmartPointerEx pointer : pointers) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < pointers.size(); i++) {
+        SmartPointerEx pointer = pointers.get(i);
         if (pointer != null) {
           pointer.fastenBelt(offset, cachedRangeMarker);
         }
@@ -105,7 +107,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         ((DocumentImpl)document).normalizeRangeMarkers();
       }
 
-      for (SmartPointerEx pointer : pointers) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < pointers.size(); i++) {
+        SmartPointerEx pointer = pointers.get(i);
         if (pointer != null) {
           pointer.unfastenBelt(offset);
         }
@@ -133,14 +137,16 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     List<SmartPointerEx> pointers = getPointers(file);
     if (pointers == null) return;
 
-    for (SmartPointerEx pointer : pointers) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < pointers.size(); i++) {
+      SmartPointerEx pointer = pointers.get(i);
       if (pointer != null) {
         pointer.documentAndPsiInSync();
       }
     }
 
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
-    for(Document document:InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
+    for (Document document : InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
       PsiFile injectedfile = psiDocumentManager.getPsiFile(document);
       if (injectedfile == null) continue;
       _synchronizePointers(injectedfile);

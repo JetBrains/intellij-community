@@ -166,7 +166,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument);
     status.passStati = passes.isEmpty() ? Collections.<ProgressableTextEditorHighlightingPass>emptyList() :
                        new ArrayList<ProgressableTextEditorHighlightingPass>(passes.size());
-    for (TextEditorHighlightingPass tepass : passes) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < passes.size(); i++) {
+      TextEditorHighlightingPass tepass = passes.get(i);
       if (!(tepass instanceof ProgressableTextEditorHighlightingPass)) continue;
       ProgressableTextEditorHighlightingPass pass = (ProgressableTextEditorHighlightingPass)tepass;
 
