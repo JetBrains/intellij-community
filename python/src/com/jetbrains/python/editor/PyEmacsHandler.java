@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
@@ -330,7 +331,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     @NotNull public final Document document;
     public final          int      targetLine;
     
-    private CodeStyleSettings.IndentOptions myIndentOptions;
+    private CommonCodeStyleSettings.IndentOptions myIndentOptions;
 
     private ChangeIndentContext(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor,
                                 @NotNull Document document, int targetLine)
@@ -342,7 +343,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
       this.targetLine = targetLine;
     }
 
-    public CodeStyleSettings.IndentOptions getIndentOptions() {
+    public CommonCodeStyleSettings.IndentOptions getIndentOptions() {
       if (myIndentOptions == null) {
         CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
         myIndentOptions = codeStyleSettings.getIndentOptions(file.getFileType());

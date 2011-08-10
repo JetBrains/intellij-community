@@ -4,7 +4,7 @@ import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
 import com.jetbrains.python.PythonFileType;
 
@@ -12,8 +12,8 @@ import com.jetbrains.python.PythonFileType;
  * @author yole
  */
 public class PyIndentOptionsProvider implements FileTypeIndentOptionsProvider {
-  public CodeStyleSettings.IndentOptions createIndentOptions() {
-    final CodeStyleSettings.IndentOptions indentOptions = new CodeStyleSettings.IndentOptions();
+  public CommonCodeStyleSettings.IndentOptions createIndentOptions() {
+    final CommonCodeStyleSettings.IndentOptions indentOptions = new CommonCodeStyleSettings.IndentOptions();
     indentOptions.INDENT_SIZE = 4;
     return indentOptions;
   }
