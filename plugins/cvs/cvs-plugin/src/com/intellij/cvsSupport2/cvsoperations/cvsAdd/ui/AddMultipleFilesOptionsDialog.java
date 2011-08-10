@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,30 +27,34 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.dualView.TreeTableView;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
-import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import javax.swing.*;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.MutableTreeNode;
 import java.awt.*;
-import java.util.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Observable;
+import java.util.Observer;
 
 /**
  * author: lesya
  */
-
-
-public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
+public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
   private final Collection<AddedFileInfo> myRoots;
   private final static JCheckBox CHECKBOX = new JCheckBox();
 
@@ -79,19 +83,20 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
   };
 
 
-  private static final ColumnInfo FILE = new ColumnInfo(CvsBundle.message("add.multiple.files.file.column.name")) {
-    public Object valueOf(Object object) {
-      return ((AddedFileInfo)object).getPresentableText();
-    }
+  private static final ColumnInfo<AddedFileInfo, AddedFileInfo> FILE =
+    new ColumnInfo<AddedFileInfo, AddedFileInfo>(CvsBundle.message("add.multiple.files.file.column.name")) {
+      public AddedFileInfo valueOf(AddedFileInfo object) {
+        return object;
+      }
 
-    public Class getColumnClass() {
-      return TreeTableModel.class;
-    }
+      public Class getColumnClass() {
+        return TreeTableModel.class;
+      }
 
-    public boolean isCellEditable(Object o) {
-      return true;
-    }
-  };
+      public boolean isCellEditable(AddedFileInfo o) {
+        return true;
+      }
+    };
 
   private static final ColumnInfo KEYWORD_SUBSTITUTION = new ColumnInfo(
     CvsBundle.message("add.multiple.files.keyword.substitution.column.name")) {
@@ -106,7 +111,10 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
     }
 
     public void setValue(Object o, Object aValue) {
-      ((AddedFileInfo)o).setKeywordSubstitution(((KeywordSubstitutionWrapper)aValue).getSubstitution());
+      final AddedFileInfo fileInfo = (AddedFileInfo)o;
+      final KeywordSubstitutionWrapper substitutionWrapper = (KeywordSubstitutionWrapper)aValue;
+      final KeywordSubstitution substitution = substitutionWrapper.getSubstitution();
+      fileInfo.setKeywordSubstitution(substitution);
     }
 
     public TableCellRenderer getRenderer(Object o) {
@@ -127,7 +135,6 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
   private final ColumnInfo[] COLUMNS = new ColumnInfo[]{INCLUDED, FILE, KEYWORD_SUBSTITUTION};
 
   private TreeTable myTreeTable;
-  private ListTreeTableModelOnColumns myModel;
   private static final JPanel J_PANEL = new JPanel();
   private static final TableCellRenderer TABLE_CELL_RENDERER = new TableCellRenderer() {
     public Component getTableCellRendererComponent(JTable table,
@@ -143,9 +150,7 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
   private final Observer myObserver;
 
 
-  public AddMultiplyFilesOptionsDialog(Project project,
-                                       Collection<AddedFileInfo> roots,
-                                       Options options) {
+  public AddMultipleFilesOptionsDialog(Project project, Collection<AddedFileInfo> roots, Options options) {
     super(project, options);
 
     myRoots = roots;
@@ -155,18 +160,15 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
           }
         };
 
-    for (Iterator each = myRoots.iterator(); each.hasNext();) {
-      ((AddedFileInfo)each.next()).addIncludedObserver(myObserver);
+    for (AddedFileInfo myRoot : myRoots) {
+      myRoot.addIncludedObserver(myObserver);
     }
 
-    setTitle(com.intellij.CvsBundle.message("dialog.title.add.files.to.cvs"));
-
+    setTitle(CvsBundle.message("dialog.title.add.files.to.cvs"));
     createTree();
-
     expandAll();
 
     init();
-
     setOKButtonEnabling();
   }
 
@@ -175,8 +177,7 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
   }
 
   private boolean hasIncludedNodes() {
-    for (Iterator iterator = myRoots.iterator(); iterator.hasNext();) {
-      AddedFileInfo addedFileInfo = (AddedFileInfo)iterator.next();
+    for (AddedFileInfo addedFileInfo : myRoots) {
       if (addedFileInfo.hasIncludedNodes()) return true;
     }
     return false;
@@ -184,10 +185,9 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
 
   public void dispose() {
     super.dispose();
-    for (Iterator each = myRoots.iterator(); each.hasNext();) {
-      ((AddedFileInfo)each.next()).removeIncludedObserver(myObserver);
+    for (AddedFileInfo myRoot : myRoots) {
+      myRoot.removeIncludedObserver(myObserver);
     }
-
   }
 
   private void expandAll() {
@@ -202,33 +202,52 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
   private void createTree() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
 
-    for (Iterator each = myRoots.iterator(); each.hasNext();) {
-      root.add((MutableTreeNode)each.next());
+    for (AddedFileInfo myRoot : myRoots) {
+      root.add(myRoot);
     }
 
-    myModel = new ListTreeTableModelOnColumns(root, COLUMNS);
-
-    myTreeTable = new TreeTableView(myModel);
+    ListTreeTableModelOnColumns model = new ListTreeTableModelOnColumns(root, COLUMNS);
+    myTreeTable = new TreeTableView(model);
 
     int comboHeight = new JComboBox().getPreferredSize().height;
     int checkBoxHeight = new JCheckBox().getPreferredSize().height;
     myTreeTable.setMinRowHeight(Math.max(comboHeight, checkBoxHeight) + 2);
-
     myTreeTable.setRootVisible(false);
-
-    myTreeTable.getTree().setCellRenderer(new AddedFileCellRenderer());
-    TreeUtil.installActions(myTreeTable.getTree());
+    final JTableHeader tableHeader = myTreeTable.getTableHeader();
+    tableHeader.setReorderingAllowed(false);
+    tableHeader.setResizingAllowed(false);
+    final TreeTableTree tree = myTreeTable.getTree();
+    myTreeTable.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        final int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_SPACE) {
+          final int selectedColumn = myTreeTable.getSelectedColumn();
+          if (selectedColumn == 0) {
+            return;
+          }
+          final int[] selectedRows = myTreeTable.getSelectedRows();
+          for (int selectedRow : selectedRows) {
+            final AddedFileInfo addedFileInfo = (AddedFileInfo)myTreeTable.getValueAt(selectedRow, 1);
+            addedFileInfo.setIncluded(!addedFileInfo.included());
+            myTreeTable.repaint();
+          }
+        }
+      }
+    });
+    tree.setCellRenderer(new AddedFileCellRenderer());
+    TreeUtil.installActions(tree);
   }
 
   protected JComponent createCenterPanel() {
     JPanel result = new JPanel(new BorderLayout());
-    JComponent toolbal = createToolbal();
-    result.add(toolbal, BorderLayout.NORTH);
+    JComponent toolbar = createToolbar();
+    result.add(toolbar, BorderLayout.NORTH);
     result.add(ScrollPaneFactory.createScrollPane(myTreeTable), BorderLayout.CENTER);
     return result;
   }
 
-  private JComponent createToolbal() {
+  private JComponent createToolbar() {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new SelectAllAction());
@@ -242,22 +261,22 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      for (Iterator iterator = getAllFileInfos().iterator(); iterator.hasNext();) {
-        ((AddedFileInfo)iterator.next()).setIncluded(includedValue());
+      for (AddedFileInfo addedFileInfo : getAllFileInfos()) {
+        addedFileInfo.setIncluded(includedValue());
       }
 
-      AddMultiplyFilesOptionsDialog.this.myTreeTable.repaint();
+      AddMultipleFilesOptionsDialog.this.myTreeTable.repaint();
     }
 
-    private Collection getAllFileInfos() {
-      ArrayList result = new ArrayList();
-      for (Iterator iterator = myRoots.iterator(); iterator.hasNext();) {
-        addChildrenTo(result, (AddedFileInfo)iterator.next());
+    private Collection<AddedFileInfo> getAllFileInfos() {
+      ArrayList<AddedFileInfo> result = new ArrayList();
+      for (AddedFileInfo myRoot : myRoots) {
+        addChildrenTo(result, myRoot);
       }
       return result;
     }
 
-    private void addChildrenTo(ArrayList result, AddedFileInfo addedFileInfo) {
+    private void addChildrenTo(ArrayList<AddedFileInfo> result, AddedFileInfo addedFileInfo) {
       result.add(addedFileInfo);
       for (int i = 0; i < addedFileInfo.getChildCount(); i++) {
         addChildrenTo(result, (AddedFileInfo)addedFileInfo.getChildAt(i));
@@ -270,7 +289,7 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
   private class SelectAllAction extends SelectUnselectAllAction {
 
     public SelectAllAction() {
-      super(com.intellij.CvsBundle.message("action.name.select.all"), IconLoader.getIcon("/actions/selectall.png"));
+      super(CvsBundle.message("action.name.select.all"), IconLoader.getIcon("/actions/selectall.png"));
     }
 
     protected boolean includedValue() {
@@ -280,7 +299,7 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
 
   private class UnselectAllAction extends SelectUnselectAllAction {
     public UnselectAllAction() {
-      super(com.intellij.CvsBundle.message("action.name.unselect.all"), IconLoader.getIcon("/actions/unselectall.png"));
+      super(CvsBundle.message("action.name.unselect.all"), IconLoader.getIcon("/actions/unselectall.png"));
     }
 
     protected boolean includedValue() {

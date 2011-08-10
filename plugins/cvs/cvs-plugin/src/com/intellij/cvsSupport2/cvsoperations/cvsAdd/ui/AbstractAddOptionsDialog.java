@@ -38,15 +38,14 @@ public abstract class AbstractAddOptionsDialog extends OptionsDialog {
                                                       Options options){
     LOG.assertTrue(files.size() > 0);
     if ((files.size() > 1) || firstElementContainsChildren(files))
-      return new AddMultiplyFilesOptionsDialog(project, files, options);
+      return new AddMultipleFilesOptionsDialog(project, files, options);
     else
       return new AddOneFileOptionsDialog(project, options, files.iterator().next());
   }
 
   private static boolean firstElementContainsChildren(Collection<AddedFileInfo> files) {
-    return (files.iterator().next().getChildCount() > 0);
+    return files.iterator().next().getChildCount() > 0;
   }
-
 
   public AbstractAddOptionsDialog(Project project, Options options) {
     super(project);
