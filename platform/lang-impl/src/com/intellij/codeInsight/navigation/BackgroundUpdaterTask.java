@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -35,8 +35,9 @@ import java.util.List;
 /**
  * User: anna
  */
-public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
+public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   protected AbstractPopup myPopup;
+  protected T myComponent;
   private List<PsiElement> myData = new ArrayList<PsiElement>();
 
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -59,19 +60,20 @@ public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
     super(project, title, canBeCancelled, backgroundOption);
   }
 
+  public void init(AbstractPopup popup, T component) {
+    myPopup = popup;
+    myComponent = component;
+  }
+
   public abstract String getCaption(int size);
   protected abstract void replaceModel(ArrayList<PsiElement> data);
   protected abstract void paintBusy(boolean paintBusy);
-
-  public void setPopup(AbstractPopup popup) {
-    myPopup = popup;
-  }
 
   public void setCanceled() {
     myCanceled = true;
   }
 
-  public void updateList(PsiElement element, @Nullable final Comparator comparator) {
+  public void updateComponent(PsiElement element, @Nullable final Comparator comparator) {
     if (myCanceled) return;
 
     synchronized (lock) {
@@ -91,10 +93,8 @@ public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
           data.addAll(myData);
         }
         replaceModel(data);
-        myPopup.getContent().revalidate();
-        myPopup.pack(true, true);//setSize(myPopup.getComponent().getPreferredSize());
-        myPopup.getContent().repaint();
         myPopup.setCaption(getCaption(getCurrentSize()));
+        myPopup.pack(true, true);
       }
     }, 10, ModalityState.stateForComponent(myPopup.getContent()));
   }

@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
@@ -29,8 +28,7 @@ import java.util.ArrayList;
 /**
 * User: anna
 */
-public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
-  private JBList myList;
+public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JBList> {
 
   public ListBackgroundUpdaterTask(@Nullable final Project project,
                                    @NotNull final String title,
@@ -47,17 +45,13 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
     super(project, title);
   }
 
-  public void setList(JBList list) {
-    myList = list;
-  }
-
   @Override
   protected void paintBusy(final boolean paintBusy) {
-    myList.setPaintBusy(paintBusy);
+    myComponent.setPaintBusy(paintBusy);
   }
 
   @Override
   protected void replaceModel(ArrayList<PsiElement> data) {
-    ((NameFilteringListModel)myList.getModel()).replaceAll(data);
+    ((NameFilteringListModel)myComponent.getModel()).replaceAll(data);
   }
 }

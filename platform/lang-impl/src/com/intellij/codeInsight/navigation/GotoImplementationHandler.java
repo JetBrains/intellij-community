@@ -18,17 +18,13 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.daemon.impl.ListBackgroundUpdaterTask;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.search.searches.DefinitionsSearch;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +78,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       new ImplementationSearcher.BackgroundableImplementationSearcher() {
         protected void processElement(PsiElement element) {
           myGotoData.addTarget(element);
-          updateList(element, createComparator(renderers, myGotoData));
+          updateComponent(element, createComparator(renderers, myGotoData));
         }
       }.searchImplementations(myEditor, myGotoData.source, myOffset);
     }

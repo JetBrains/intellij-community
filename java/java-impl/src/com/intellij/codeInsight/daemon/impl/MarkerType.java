@@ -22,6 +22,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
+import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -237,7 +238,7 @@ public class MarkerType {
       ClassInheritorsSearch.search(myClass, myClass.getUseScope(), true).forEach(new CommonProcessors.CollectProcessor<PsiClass>() {
         @Override
         public boolean process(final PsiClass o) {
-          updateList(o, myRenderer.getComparator());
+          updateComponent(o, myRenderer.getComparator());
           return super.process(o);
         }
       });
@@ -269,7 +270,7 @@ public class MarkerType {
         new CommonProcessors.CollectProcessor<PsiMethod>() {
           @Override
           public boolean process(PsiMethod psiMethod) {
-            updateList(psiMethod, myRenderer.getComparator());
+            updateComponent(psiMethod, myRenderer.getComparator());
             return super.process(psiMethod);
           }
         });

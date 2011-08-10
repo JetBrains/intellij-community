@@ -17,7 +17,7 @@ package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.daemon.impl.BackgroundUpdaterTask;
+import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -233,8 +233,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
 
     final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(element, editor, title);
-    task.setPopup(popup);
-    task.setComponent(component);
+    task.init(popup, component);
 
     myTaskRef = new WeakReference<BackgroundUpdaterTask>(task);
     ProgressManager.getInstance().run(task);
@@ -285,8 +284,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     e.getPresentation().setEnabled(project != null);
   }
 
-  private static class ImplementationsUpdaterTask extends BackgroundUpdaterTask {
-    private ImplementationViewComponent myComponent;
+  private static class ImplementationsUpdaterTask extends BackgroundUpdaterTask<ImplementationViewComponent> {
     private String myCaption;
     private Editor myEditor;
     private PsiElement myElement;
@@ -321,16 +319,13 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
+      super.run(indicator);
       getSelfAndImplementations(myEditor, myElement, new ImplementationSearcher.BackgroundableImplementationSearcher() {
-          @Override
-          protected void processElement(PsiElement element) {
-            updateList(element, null);
-          }
-        });
-    }
-
-    public void setComponent(ImplementationViewComponent component) {
-      myComponent = component;
+        @Override
+        protected void processElement(PsiElement element) {
+          updateComponent(element, null);
+        }
+      });
     }
   }
 }

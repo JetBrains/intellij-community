@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.daemon.impl.ListBackgroundUpdaterTask;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
@@ -180,8 +179,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }).
       createPopup();
     if (gotoData.listUpdaterTask != null) {
-      gotoData.listUpdaterTask.setList(list);
-      gotoData.listUpdaterTask.setPopup((AbstractPopup)popup);
+      gotoData.listUpdaterTask.init((AbstractPopup)popup, list);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
     popup.showInBestPositionFor(editor);

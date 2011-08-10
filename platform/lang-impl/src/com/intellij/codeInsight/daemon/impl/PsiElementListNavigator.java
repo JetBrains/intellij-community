@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -108,8 +109,7 @@ public class PsiElementListNavigator {
       .createPopup();
 
     if (listUpdaterTask != null) {
-      listUpdaterTask.setList(list);
-      listUpdaterTask.setPopup((AbstractPopup)popup);
+      listUpdaterTask.init((AbstractPopup)popup, list);
 
       ProgressManager.getInstance().run(listUpdaterTask);
     }
