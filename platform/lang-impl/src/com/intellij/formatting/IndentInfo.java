@@ -17,7 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 public class IndentInfo {
 
@@ -52,7 +52,7 @@ public class IndentInfo {
    *
    * @param options              indentation formatting options
    */
-  public String generateNewWhiteSpace(CodeStyleSettings.IndentOptions options) {
+  public String generateNewWhiteSpace(CommonCodeStyleSettings.IndentOptions options) {
     StringBuffer buffer = new StringBuffer();
     StringUtil.repeatSymbol(buffer, '\n', myLineFeeds);
 

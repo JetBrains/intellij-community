@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NonNls;
 public interface FileTypeIndentOptionsProvider {
   ExtensionPointName<FileTypeIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeIndentOptionsProvider");
   
-  CodeStyleSettings.IndentOptions createIndentOptions();
+  CommonCodeStyleSettings.IndentOptions createIndentOptions();
 
   FileType getFileType();
 

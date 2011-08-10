@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
@@ -103,8 +104,8 @@ public class FormatterImpl extends FormatterEx
   }
 
   public void format(final FormattingModel model, final CodeStyleSettings settings,
-                     final CodeStyleSettings.IndentOptions indentOptions,
-                     final CodeStyleSettings.IndentOptions javaIndentOptions,
+                     final CommonCodeStyleSettings.IndentOptions indentOptions,
+                     final CommonCodeStyleSettings.IndentOptions javaIndentOptions,
                      final FormatTextRanges affectedRanges) throws IncorrectOperationException
   {
     SequentialTask task = new MyFormattingTask() {
@@ -158,7 +159,7 @@ public class FormatterImpl extends FormatterEx
   
   public void format(final FormattingModel model,
                      final CodeStyleSettings settings,
-                     final CodeStyleSettings.IndentOptions indentOptions,
+                     final CommonCodeStyleSettings.IndentOptions indentOptions,
                      final FormatTextRanges affectedRanges) throws IncorrectOperationException {
     SequentialTask task = new MyFormattingTask() {
       @NotNull
@@ -177,7 +178,7 @@ public class FormatterImpl extends FormatterEx
   public void formatWithoutModifications(final FormattingDocumentModel model,
                                          final Block rootBlock,
                                          final CodeStyleSettings settings,
-                                         final CodeStyleSettings.IndentOptions indentOptions,
+                                         final CommonCodeStyleSettings.IndentOptions indentOptions,
                                          final TextRange affectedRange) throws IncorrectOperationException
   {
     SequentialTask task = new MyFormattingTask() {
@@ -246,7 +247,7 @@ public class FormatterImpl extends FormatterEx
   public IndentInfo getWhiteSpaceBefore(final FormattingDocumentModel model,
                                         final Block block,
                                         final CodeStyleSettings settings,
-                                        final CodeStyleSettings.IndentOptions indentOptions,
+                                        final CommonCodeStyleSettings.IndentOptions indentOptions,
                                         final TextRange affectedRange, final boolean mayChangeLineFeeds)
   {
     disableFormatting();
@@ -273,7 +274,7 @@ public class FormatterImpl extends FormatterEx
 
   public void adjustLineIndentsForRange(final FormattingModel model,
                                         final CodeStyleSettings settings,
-                                        final CodeStyleSettings.IndentOptions indentOptions,
+                                        final CommonCodeStyleSettings.IndentOptions indentOptions,
                                         final TextRange rangeToAdjust) {
     disableFormatting();
     try {
@@ -338,7 +339,7 @@ public class FormatterImpl extends FormatterEx
 
   public int adjustLineIndent(final FormattingModel model,
                               final CodeStyleSettings settings,
-                              final CodeStyleSettings.IndentOptions indentOptions,
+                              final CommonCodeStyleSettings.IndentOptions indentOptions,
                               final int offset,
                               final TextRange affectedRange) throws IncorrectOperationException {
     disableFormatting();
@@ -368,7 +369,7 @@ public class FormatterImpl extends FormatterEx
 
   /**
    * Delegates to
-   * {@link #buildProcessorAndWrapBlocks(FormattingDocumentModel, Block, CodeStyleSettings, CodeStyleSettings.IndentOptions, FormatTextRanges, int)}
+   * {@link #buildProcessorAndWrapBlocks(FormattingDocumentModel, Block, CodeStyleSettings, CommonCodeStyleSettings.IndentOptions, FormatTextRanges, int)}
    * with '-1' as an interested offset.
    * 
    * @param docModel
@@ -381,7 +382,7 @@ public class FormatterImpl extends FormatterEx
   private static FormatProcessor buildProcessorAndWrapBlocks(final FormattingDocumentModel docModel,
                                                              Block rootBlock,
                                                              CodeStyleSettings settings,
-                                                             CodeStyleSettings.IndentOptions indentOptions,
+                                                             CommonCodeStyleSettings.IndentOptions indentOptions,
                                                              @Nullable FormatTextRanges affectedRanges)
   {
     return buildProcessorAndWrapBlocks(docModel, rootBlock, settings, indentOptions, affectedRanges, -1);
@@ -403,7 +404,7 @@ public class FormatterImpl extends FormatterEx
   private static FormatProcessor buildProcessorAndWrapBlocks(final FormattingDocumentModel docModel,
                                                              Block rootBlock,
                                                              CodeStyleSettings settings,
-                                                             CodeStyleSettings.IndentOptions indentOptions,
+                                                             CommonCodeStyleSettings.IndentOptions indentOptions,
                                                              @Nullable FormatTextRanges affectedRanges,
                                                              int interestingOffset)
   {
@@ -418,7 +419,7 @@ public class FormatterImpl extends FormatterEx
     final int offset,
     final FormattingDocumentModel documentModel,
     final FormatProcessor processor,
-    final CodeStyleSettings.IndentOptions indentOptions,
+    final CommonCodeStyleSettings.IndentOptions indentOptions,
     final FormattingModel model,
     final WhiteSpace whiteSpace)
   {
@@ -456,7 +457,7 @@ public class FormatterImpl extends FormatterEx
 
   public String getLineIndent(final FormattingModel model,
                               final CodeStyleSettings settings,
-                              final CodeStyleSettings.IndentOptions indentOptions,
+                              final CommonCodeStyleSettings.IndentOptions indentOptions,
                               final int offset,
                               final TextRange affectedRange) {
     final FormattingDocumentModel documentModel = model.getDocumentModel();
@@ -527,7 +528,7 @@ public class FormatterImpl extends FormatterEx
 
   public void adjustTextRange(final FormattingModel model,
                               final CodeStyleSettings settings,
-                              final CodeStyleSettings.IndentOptions indentOptions,
+                              final CommonCodeStyleSettings.IndentOptions indentOptions,
                               final TextRange affectedRange,
                               final boolean keepBlankLines,
                               final boolean keepLineBreaks,
@@ -601,7 +602,7 @@ public class FormatterImpl extends FormatterEx
 
   public void adjustTextRange(final FormattingModel model,
                               final CodeStyleSettings settings,
-                              final CodeStyleSettings.IndentOptions indentOptions,
+                              final CommonCodeStyleSettings.IndentOptions indentOptions,
                               final TextRange affectedRange) {
     disableFormatting();
     try {
@@ -632,7 +633,7 @@ public class FormatterImpl extends FormatterEx
   public void saveIndents(final FormattingModel model, final TextRange affectedRange,
                           IndentInfoStorage storage,
                           final CodeStyleSettings settings,
-                          final CodeStyleSettings.IndentOptions indentOptions) {
+                          final CommonCodeStyleSettings.IndentOptions indentOptions) {
     final Block block = model.getRootBlock();
     
     final FormatProcessor processor = buildProcessorAndWrapBlocks(

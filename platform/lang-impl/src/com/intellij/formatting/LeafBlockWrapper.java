@@ -17,7 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
 
 class LeafBlockWrapper extends AbstractBlockWrapper {
@@ -33,7 +33,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
 
   /**
    * Shortcut for calling
-   * {@link #LeafBlockWrapper(Block, CompositeBlockWrapper, WhiteSpace, FormattingDocumentModel, CodeStyleSettings.IndentOptions, LeafBlockWrapper, boolean, TextRange)}
+   * {@link #LeafBlockWrapper(Block, CompositeBlockWrapper, WhiteSpace, FormattingDocumentModel, CommonCodeStyleSettings.IndentOptions, LeafBlockWrapper, boolean, TextRange)}
    * with {@link Block#getTextRange() text range associated with the given block}.
    *
    * @param block               block to wrap
@@ -48,7 +48,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
                           CompositeBlockWrapper parent,
                           WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
-                          CodeStyleSettings.IndentOptions options,
+                          CommonCodeStyleSettings.IndentOptions options,
                           LeafBlockWrapper previousTokenBlock,
                           boolean isReadOnly)
   {
@@ -59,7 +59,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
                           CompositeBlockWrapper parent,
                           WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
-                          CodeStyleSettings.IndentOptions options,
+                          CommonCodeStyleSettings.IndentOptions options,
                           LeafBlockWrapper previousTokenBlock,
                           boolean isReadOnly,
                           final TextRange textRange)
@@ -166,7 +166,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return mySpaceProperty;
   }
 
-  public IndentData calculateOffset(final CodeStyleSettings.IndentOptions options) {
+  public IndentData calculateOffset(final CommonCodeStyleSettings.IndentOptions options) {
     // Calculate result as an indent of current block from parent plus parent block indent.
     if (myIndentFromParent != null) {
       final AbstractBlockWrapper firstIndentedParent = findFirstIndentedParent();

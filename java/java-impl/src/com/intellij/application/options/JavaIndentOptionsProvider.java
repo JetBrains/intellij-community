@@ -15,8 +15,8 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.openapi.fileTypes.FileType;
@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NonNls;
  * @author yole
  */
 public class JavaIndentOptionsProvider implements FileTypeIndentOptionsProvider {
-  public CodeStyleSettings.IndentOptions createIndentOptions() {
-    return new CodeStyleSettings.IndentOptions();
+  public CommonCodeStyleSettings.IndentOptions createIndentOptions() {
+    return new CommonCodeStyleSettings.IndentOptions();
   }
 
   public FileType getFileType() {

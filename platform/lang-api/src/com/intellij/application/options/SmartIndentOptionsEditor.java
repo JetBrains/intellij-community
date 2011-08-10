@@ -18,6 +18,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,20 +46,20 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     add(myContinuationIndentLabel, myContinuationIndentField);
   }
 
-  public boolean isModified(final CodeStyleSettings settings, final CodeStyleSettings.IndentOptions options) {
+  public boolean isModified(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
     boolean isModified = super.isModified(settings, options);
     isModified |= isFieldModified(myCbSmartTabs, options.SMART_TABS);
     isModified |= isFieldModified(myContinuationIndentField, options.CONTINUATION_INDENT_SIZE);
     return isModified;
   }
 
-  public void apply(final CodeStyleSettings settings, final CodeStyleSettings.IndentOptions options) {
+  public void apply(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
     super.apply(settings, options);
     options.CONTINUATION_INDENT_SIZE = getFieldValue(myContinuationIndentField, 0, options.CONTINUATION_INDENT_SIZE);
     options.SMART_TABS = isSmartTabValid(options.INDENT_SIZE, options.TAB_SIZE) && myCbSmartTabs.isSelected();
   }
 
-  public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CodeStyleSettings.IndentOptions options) {
+  public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
     super.reset(settings, options);
     myContinuationIndentField.setText(String.valueOf(options.CONTINUATION_INDENT_SIZE));
     myCbSmartTabs.setSelected(options.SMART_TABS);

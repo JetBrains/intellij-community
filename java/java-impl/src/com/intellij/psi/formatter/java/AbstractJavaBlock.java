@@ -78,7 +78,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   ));
 
   protected final CommonCodeStyleSettings mySettings;
-  protected final CodeStyleSettings.IndentOptions myIndentSettings;
+  protected final CommonCodeStyleSettings.IndentOptions myIndentSettings;
   private final Indent myIndent;
   protected Indent myChildIndent;
   protected Alignment myChildAlignment;
@@ -227,7 +227,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @Nullable
-  private static Indent getDefaultSubtreeIndent(final ASTNode child, final CodeStyleSettings.IndentOptions indentOptions) {
+  private static Indent getDefaultSubtreeIndent(final ASTNode child, final CommonCodeStyleSettings.IndentOptions indentOptions) {
     final ASTNode parent = child.getTreeParent();
     final IElementType childNodeType = child.getElementType();
     if (childNodeType == JavaElementType.ANNOTATION) {
@@ -255,7 +255,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @Nullable
-  private static Indent getChildIndent(final ASTNode parent, final CodeStyleSettings.IndentOptions indentOptions) {
+  private static Indent getChildIndent(final ASTNode parent, final CommonCodeStyleSettings.IndentOptions indentOptions) {
     final IElementType parentType = parent.getElementType();
     if (parentType == JavaElementType.MODIFIER_LIST) return Indent.getNoneIndent();
     if (parentType == JspElementType.JSP_CODE_BLOCK) return Indent.getNormalIndent();

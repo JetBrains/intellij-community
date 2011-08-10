@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
 import com.intellij.psi.impl.DebugUtil;
@@ -49,7 +49,7 @@ class InitialInfoBuilder {
   private final int                             myPositionOfInterest;
   @NotNull
   private final FormattingProgressCallback myProgressCallback;
-  private final CodeStyleSettings.IndentOptions myOptions;
+  private final CommonCodeStyleSettings.IndentOptions myOptions;
 
   private final Stack<State> myStates = new Stack<State>();
   
@@ -63,7 +63,7 @@ class InitialInfoBuilder {
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
                              final FormatTextRanges affectedRanges,
-                             final CodeStyleSettings.IndentOptions options,
+                             final CommonCodeStyleSettings.IndentOptions options,
                              final int positionOfInterest,
                              @NotNull FormattingProgressCallback progressCallback)
   {
@@ -78,7 +78,7 @@ class InitialInfoBuilder {
   public static InitialInfoBuilder prepareToBuildBlocksSequentially(Block root,
                                                                     FormattingDocumentModel model,
                                                                     final FormatTextRanges affectedRanges,
-                                                                    final CodeStyleSettings.IndentOptions options,
+                                                                    final CommonCodeStyleSettings.IndentOptions options,
                                                                     int interestingOffset,
                                                                     @NotNull FormattingProgressCallback progressCallback)
   {

@@ -17,7 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -46,12 +46,12 @@ class IndentInside {
     return result;
   }
 
-  public int getTabsCount(final CodeStyleSettings.IndentOptions options) {
+  public int getTabsCount(final CommonCodeStyleSettings.IndentOptions options) {
     final int tabsFromSpaces = whiteSpaces / options.TAB_SIZE;
     return tabs + tabsFromSpaces;
   }
 
-  public int getSpacesCount(final CodeStyleSettings.IndentOptions options) {
+  public int getSpacesCount(final CommonCodeStyleSettings.IndentOptions options) {
     return whiteSpaces + tabs * options.TAB_SIZE;
   }
 

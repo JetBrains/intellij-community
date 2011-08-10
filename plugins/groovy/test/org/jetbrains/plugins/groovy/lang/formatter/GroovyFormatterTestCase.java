@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
@@ -55,7 +56,7 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     myTempSettings = settings.clone();
 
-    CodeStyleSettings.IndentOptions gr = myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE);
+    CommonCodeStyleSettings.IndentOptions gr = myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE);
     Assert.assertNotSame(gr, settings.OTHER_INDENT_OPTIONS);
     gr.INDENT_SIZE = 2;
     gr.CONTINUATION_INDENT_SIZE = 4;

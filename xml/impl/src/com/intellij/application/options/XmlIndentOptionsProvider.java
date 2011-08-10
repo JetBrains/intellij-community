@@ -18,7 +18,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
 import com.intellij.util.PlatformUtils;
 
@@ -26,8 +26,8 @@ import com.intellij.util.PlatformUtils;
  * @author yole
  */
 public class XmlIndentOptionsProvider implements FileTypeIndentOptionsProvider {
-  public CodeStyleSettings.IndentOptions createIndentOptions() {
-    final CodeStyleSettings.IndentOptions options = new CodeStyleSettings.IndentOptions();
+  public CommonCodeStyleSettings.IndentOptions createIndentOptions() {
+    final CommonCodeStyleSettings.IndentOptions options = new CommonCodeStyleSettings.IndentOptions();
     // HACK [yole]
     if (PlatformUtils.isRubyMine()) {
       options.INDENT_SIZE = 2;

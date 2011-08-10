@@ -16,6 +16,7 @@
 package com.intellij.formatting;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -216,7 +217,7 @@ public class CoreFormatterUtil {
    * @param tokenBlockStartOffset   target wrapped block offset
    * @return                        indent to use for the given parameters
    */
-  public static IndentData getIndent(CodeStyleSettings.IndentOptions options, AbstractBlockWrapper block, 
+  public static IndentData getIndent(CommonCodeStyleSettings.IndentOptions options, AbstractBlockWrapper block,
                                      final int tokenBlockStartOffset)
   {
     final IndentImpl indent = block.getIndent();

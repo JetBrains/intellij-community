@@ -23,6 +23,7 @@ package com.intellij.psi.impl.source.codeStyle.javadoc;
 import com.intellij.formatting.IndentInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -96,7 +97,7 @@ public class JDParamListOwnerComment extends JDComment{
                             int min_name_length, int max_name_length, boolean generate_empty_tags, boolean wrapDescription)
   {
     CodeStyleSettings settings = myFormatter.getSettings();
-    CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
     String continuationIndent = new IndentInfo(0, indentOptions.CONTINUATION_INDENT_SIZE, 0).generateNewWhiteSpace(indentOptions);
     int max = 0;
     if (align_comments && ! wrapDescription) {

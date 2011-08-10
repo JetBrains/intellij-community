@@ -21,7 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 
 import java.util.ArrayList;
@@ -71,7 +71,7 @@ class WhiteSpace {
    * the first white space.
    * <p/>
    * <b>Note:</b> {@link #getEndOffset() end offset} value is the same as the {@link #getStartOffset() start offset} for
-   * the newly constructed object. {@link #append(int, FormattingDocumentModel, CodeStyleSettings.IndentOptions)} should be
+   * the newly constructed object. {@link #append(int, FormattingDocumentModel, CommonCodeStyleSettings.IndentOptions)} should be
    * called in order to apply desired end offset.
    *
    * @param startOffset       start offset to use
@@ -100,7 +100,7 @@ class WhiteSpace {
    * @param model                 formatting model that is used to access to the underlying document text
    * @param options               indent formatting options
    */
-  public void append(int newEndOffset, FormattingDocumentModel model, CodeStyleSettings.IndentOptions options) {
+  public void append(int newEndOffset, FormattingDocumentModel model, CommonCodeStyleSettings.IndentOptions options) {
     final int oldEndOffset = myEnd;
     if (newEndOffset == oldEndOffset) return;
     if (myStart >= newEndOffset) {
@@ -227,7 +227,7 @@ class WhiteSpace {
    * @return            string that contains line feeds, white spaces and tabulation symbols known to the current
    *                    {@link WhiteSpace} object
    */
-  public String generateWhiteSpace(CodeStyleSettings.IndentOptions options) {
+  public String generateWhiteSpace(CommonCodeStyleSettings.IndentOptions options) {
     return new IndentInfo(getLineFeeds(), myIndentSpaces, mySpaces, myForceSkipTabulationsUsage).generateNewWhiteSpace(options);
   }
 
@@ -401,7 +401,7 @@ class WhiteSpace {
    *         }
    *     </pre>
    * We may not want to use tabulation characters then even if user configured
-   * {@link CodeStyleSettings.IndentOptions#USE_TAB_CHARACTER their usage} because we can't be sure how many visual columns
+   * {@link CommonCodeStyleSettings.IndentOptions#USE_TAB_CHARACTER their usage} because we can't be sure how many visual columns
    * will be used for tab representation if there are non-white space symbols before it (IJ editor may use different number of columns
    * for single tabulation symbol representation).
    * <p/>
@@ -480,7 +480,7 @@ class WhiteSpace {
   /**
    * Allows to get information if current object contained line feed(s) initially. It's considered to contain them if
    * line feeds were found at the target text document fragment after
-   * new {@link #append(int, FormattingDocumentModel, CodeStyleSettings.IndentOptions) end offset appliance}.
+   * new {@link #append(int, FormattingDocumentModel, CommonCodeStyleSettings.IndentOptions) end offset appliance}.
    *
    * @return    <code>true</code> if current object contained line feeds initially; <code>false</code> otherwise
    */
@@ -579,7 +579,7 @@ class WhiteSpace {
     setFlag(FIRST, isFirstWhiteSpace);
   }
 
-  public StringBuilder generateWhiteSpace(final CodeStyleSettings.IndentOptions indentOptions,
+  public StringBuilder generateWhiteSpace(final CommonCodeStyleSettings.IndentOptions indentOptions,
                                                   final int offset,
                                                   final IndentInfo indent) {
     final StringBuilder result = new StringBuilder();
@@ -651,7 +651,7 @@ class WhiteSpace {
    * <p/>
    * <code>'Indent white space'</code> here is a white space representation of tabulation symbol. User may define that
    * he or she wants to use particular number of white spaces instead of tabulation
-   * ({@link CodeStyleSettings.IndentOptions#TAB_SIZE}). So, {@link WhiteSpace} object uses corresponding
+   * ({@link CommonCodeStyleSettings.IndentOptions#TAB_SIZE}). So, {@link WhiteSpace} object uses corresponding
    * number of 'indent white spaces' for each tabulation symbol encountered at target continuous white space text document fragment.
    * <p/>
    * <b>Note:</b> pay special attention to <code>'last line'</code> qualification here. Consider the following target
