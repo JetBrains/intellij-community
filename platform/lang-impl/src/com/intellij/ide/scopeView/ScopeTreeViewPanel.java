@@ -484,7 +484,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
     private void processNodeCreation(final PsiElement psiElement) {
       if (psiElement instanceof PsiFile && !isInjected((PsiFile)psiElement)) {
-        reload(myBuilder.addFileNode((PsiFile)psiElement));
+        final PackageDependenciesNode rootToReload = myBuilder.addFileNode((PsiFile)psiElement);
+        if (rootToReload != null) {
+          reload(rootToReload);
+        }
       }
       else if (psiElement instanceof PsiDirectory) {
         final PsiElement[] children = psiElement.getChildren();
@@ -524,7 +527,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
               if (virtualFile != null) {
                 final PsiFile newFile = file.isValid() ? file : PsiManager.getInstance(myProject).findFile(virtualFile);
                 if (newFile != null) {
-                  reload(myBuilder.addFileNode(newFile));
+                  final PackageDependenciesNode rootToReload = myBuilder.addFileNode(newFile);
+                  if (rootToReload != null) {
+                    reload(rootToReload);
+                  }
                 }
               }
             }
