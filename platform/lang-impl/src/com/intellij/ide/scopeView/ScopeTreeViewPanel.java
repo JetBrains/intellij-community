@@ -66,10 +66,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.*;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.psi.search.scope.packageSet.PackageSetBase;
+import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -264,12 +261,12 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   private void refreshScope(@Nullable NamedScope scope) {
     FileTreeModelBuilder.clearCaches(myProject);
-    if (scope == null || scope.getValue() == null) { //was deleted
+    if (scope == null) { //was deleted
       scope = DefaultScopesProvider.getAllScope();
     }
     LOG.assertTrue(scope != null);
     final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager);
-    final PackageSet packageSet = scope.getValue();
+    final PackageSet packageSet = scope.getValue() != null ? scope.getValue() : new InvalidPackageSet("");
     final DependenciesPanel.DependencyPanelSettings settings = new DependenciesPanel.DependencyPanelSettings();
     settings.UI_FILTER_LEGALS = true;
     settings.UI_GROUP_BY_SCOPE_TYPE = false;
