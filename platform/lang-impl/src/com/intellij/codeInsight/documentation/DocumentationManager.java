@@ -914,7 +914,7 @@ public class DocumentationManager {
   void showHint(final JBPopup hint) {
     final Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
     DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
-    PopupPositionManager.positionPopupInBestPosition(hint, null, dataContext);
+    PopupPositionManager.positionPopupInBestPosition(hint, myEditor, dataContext);
   }
 
   public void requestFocus() {
