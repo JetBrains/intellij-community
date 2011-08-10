@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
 import com.intellij.util.ui.FileLabel;
@@ -37,6 +38,35 @@ public class AddFileConfirmationPanel extends AbstractAddFileConfirmationPanel {
 
   public AddFileConfirmationPanel(AddedFileInfo addedFileInfo) {
     super(addedFileInfo);
+
+    myPanel = new JPanel(new GridBagLayout());
+
+    final JPanel panel1 = new JPanel(new GridBagLayout());
+    final GridBagConstraints constraints = new GridBagConstraints();
+    final JLabel label1 = new JLabel(CvsBundle.message("label.add.file.confirmation.keyword.substitution.add.file"));
+    panel1.add(label1, constraints);
+    myFileLabel = new FileLabel();
+    constraints.insets.left = 10;
+    panel1.add(myFileLabel, constraints);
+    final JLabel label2 = new JLabel(CvsBundle.message("label.add.file.confirmation.keyword.substitution.to.cvs.with"));
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.gridwidth = 3;
+    constraints.insets.left = 0;
+    constraints.anchor = GridBagConstraints.LINE_START;
+    constraints.insets.bottom = 5;
+    myPanel.add(panel1, constraints);
+
+    constraints.gridy = 1;
+    constraints.gridx = 0;
+    constraints.gridwidth = 1;
+    myPanel.add(label2, constraints);
+    mySubstitutionComboBox = new JComboBox();
+    constraints.gridx = 1;
+    myPanel.add(mySubstitutionComboBox, constraints);
+    final JLabel label3 = new JLabel(CvsBundle.message("label.add.file.confirmation.keyword.substitution"));
+    constraints.gridx = 2;
+    myPanel.add(label3, constraints);
 
     KeywordSubstitution defaultSubstitution = myAddedFileInfo.getKeywordSubstitution();
     KeywordSubstitutionWrapper.fillComboBox(mySubstitutionComboBox, defaultSubstitution);
