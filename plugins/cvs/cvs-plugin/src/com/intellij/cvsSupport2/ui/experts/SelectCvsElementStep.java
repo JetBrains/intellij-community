@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,15 +119,6 @@ public class SelectCvsElementStep extends WizardStep {
         public void update(Observable o, Object arg) {
           if (CvsTree.SELECTION_CHANGED.equals(arg)) {
             getWizard().updateStep();
-          }
-          else if (CvsTree.LOGIN_ABORTED.equals(arg)) {
-            myCvsTree = null;
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                getWizard().goToPrevious();
-              }
-            });
-
           }
         }
       });
