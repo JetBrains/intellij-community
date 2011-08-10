@@ -119,8 +119,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     private JPanel createTagsPanel(String[] tags, Options options) {
       JPanel panel = new JPanel(new GridBagLayout());
-      panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
-        InspectionsBundle.message("inspection.javadoc.required.tags.option.title")),
+      panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorder(
+        InspectionsBundle.message("inspection.javadoc.required.tags.option.title"), false, true),
                                                          BorderFactory.createEmptyBorder(0, 3, 3, 3)));
 
       GridBagConstraints gc = new GridBagConstraints();
@@ -167,8 +167,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     private JPanel createScopePanel(final String[] modifiers, final Options options) {
       JPanel panel = new JPanel(new BorderLayout());
-      panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(
-        InspectionsBundle.message("inspection.scope.for.title")),
+      panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorder(
+        InspectionsBundle.message("inspection.scope.for.title"), false, true),
                                                          BorderFactory.createEmptyBorder(0, 3, 3, 3)));
 
       final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();

@@ -16,7 +16,7 @@
         <properties/>
         <border type="etched" title="XML"/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactoryBoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
         </clientProperties>
         <children>
           <component id="5cbfc" class="javax.swing.JCheckBox" binding="myShowAutoImportPopups" default-binding="true">

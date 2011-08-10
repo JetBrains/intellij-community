@@ -243,7 +243,7 @@ class PrintDialog extends DialogWrapper {
 
   private JPanel createOrientationPanel() {
     JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(CodeEditorBundle.message("print.orientation.group")));
+    panel1.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.orientation.group"), false, true));
     JPanel panel = panel1;
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -270,7 +270,7 @@ class PrintDialog extends DialogWrapper {
 
   private JPanel createStylePanel() {
     JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(CodeEditorBundle.message("print.style.group")));
+    panel1.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.style.group"), false, true));
     JPanel panel = panel1;
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -297,7 +297,7 @@ class PrintDialog extends DialogWrapper {
 
   private JPanel createWrappingPanel() {
     JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(CodeEditorBundle.message("print.wrapping.group")));
+    panel1.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.wrapping.group"), false, true));
     JPanel panel = panel1;
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -324,7 +324,7 @@ class PrintDialog extends DialogWrapper {
 
   private JPanel createMarginsPanel() {
     JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(CodeEditorBundle.message("print.margins.group")));
+    panel1.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.margins.group"), false, true));
     JPanel panel = panel1;
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -415,7 +415,7 @@ class PrintDialog extends DialogWrapper {
 
   private JPanel createLinePanel(String name, JTextField lineTextField, JComboBox linePlacementCombo, JComboBox lineAlignmentCombo) {
     JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(name));
+    panel1.setBorder(IdeBorderFactory.createTitledBorder(name, false, true));
     JPanel panel = panel1;
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();

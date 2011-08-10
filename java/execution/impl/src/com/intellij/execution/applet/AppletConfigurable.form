@@ -82,7 +82,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
             </clientProperties>
             <border type="etched" title-resource-bundle="messages/ExecutionBundle" title-key="applet.configuration.url.border"/>
             <children>
@@ -113,7 +113,7 @@
               <enabled value="true"/>
             </properties>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
             </clientProperties>
             <border type="etched" title-resource-bundle="messages/ExecutionBundle" title-key="applet.configuration.applet.class.border"/>
             <children>
@@ -172,7 +172,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithoutIndent"/>
                 </clientProperties>
                 <border type="none" title-resource-bundle="messages/ExecutionBundle" title-key="applet.configuration.applet.parameters.label"/>
                 <children>

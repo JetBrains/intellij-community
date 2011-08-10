@@ -100,7 +100,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
       })
       .createPanel();
     final JPanel localPanel = new JPanel(new BorderLayout());
-    localPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent("Local colors"));
+    localPanel.setBorder(IdeBorderFactory.createTitledBorder("Local colors", false, false));
     localPanel.add(panel, BorderLayout.CENTER);
     mainPanel.add(localPanel);
 
@@ -120,7 +120,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     };
 
     final JPanel sharedPanel = new JPanel(new BorderLayout());
-    sharedPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent("Shared colors"));
+    sharedPanel.setBorder(IdeBorderFactory.createTitledBorder("Shared colors", false, false));
     final JPanel shared = ToolbarDecorator.createDecorator(mySharedTable)
       .addExtraAction(new AnActionButton("Unshare", UNSHARE) {
         @Override

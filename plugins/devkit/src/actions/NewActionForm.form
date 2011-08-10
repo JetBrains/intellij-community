@@ -15,7 +15,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithoutIndent"/>
         </clientProperties>
         <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.add.to.group"/>
         <children>
@@ -204,7 +204,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
         </clientProperties>
         <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.keyboard.shortcuts"/>
         <children>

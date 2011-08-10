@@ -50,7 +50,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
         </clientProperties>
         <border type="none" title="Compare Type" title-justification="4" title-position="2">
           <font name="Tahoma" size="11" style="0"/>

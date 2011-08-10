@@ -43,7 +43,7 @@ public class JavaVisibilityPanel extends VisibilityPanelBase {
   private final JRadioButton myRbPublic;
 
   public JavaVisibilityPanel(boolean hasAsIs, final boolean hasEscalate) {
-    setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(RefactoringBundle.message("visibility.border.title")));
+    setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title"), false, true));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     ButtonGroup bg = new ButtonGroup();
 

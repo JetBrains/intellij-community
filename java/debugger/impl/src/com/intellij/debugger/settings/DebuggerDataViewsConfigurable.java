@@ -135,7 +135,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     tooltipLabel.setLabelFor(myValueTooltipDelayField);
 
     final JPanel showPanel = new JPanel(new GridBagLayout());
-    showPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent("Show"));
+    showPanel.setBorder(IdeBorderFactory.createTitledBorder("Show", false, true));
 
     showPanel.add(myCbShowDeclaredType, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
     showPanel.add(myCbShowObjectId, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
@@ -150,7 +150,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     arraysComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
     arraysPanel.add(arraysComponent, BorderLayout.CENTER);
     arraysPanel.add(myCbHideNullArrayElements, BorderLayout.SOUTH);
-    arraysPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent("Arrays"));
+    arraysPanel.setBorder(IdeBorderFactory.createTitledBorder("Arrays", false, true));
     panel.add(arraysPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(4, 6, 0, 0), 0, 0));
 
     panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(10, 6, 0, 10), 0, 0));

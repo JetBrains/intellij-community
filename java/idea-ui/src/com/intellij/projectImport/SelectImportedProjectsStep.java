@@ -76,8 +76,8 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     for (T element : getContext().getList()) {
       fileChooser.addElement(element, getContext().isMarked(element));
     }
-    fileChooser.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent(
-      IdeBundle.message("project.import.select.title", getContext().getName())));
+    fileChooser.setBorder(IdeBorderFactory.createTitledBorder(
+      IdeBundle.message("project.import.select.title", getContext().getName()), false, false));
     openModuleSettingsCheckBox.setSelected(getBuilder().isOpenProjectSettingsAfter());
   }
 

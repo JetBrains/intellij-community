@@ -195,8 +195,8 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       table.getSelectionModel().addSelectionInterval(0, 0);
     }
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-    Border border = IdeBorderFactory.createTitledBorderSimpleWithoutIndent(
-          RefactoringBundle.message("move.members.members.to.be.moved.border.title"));
+    Border border = IdeBorderFactory.createTitledBorder(
+      RefactoringBundle.message("move.members.members.to.be.moved.border.title"), false, false);
     scrollPane.setBorder(border);
     scrollPane.setBackground(UIUtil.getPanelBackground());
     panel.add(scrollPane, BorderLayout.CENTER);

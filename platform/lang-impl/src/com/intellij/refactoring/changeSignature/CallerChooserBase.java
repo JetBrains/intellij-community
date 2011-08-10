@@ -203,10 +203,12 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     myCallerEditor = createEditor();
     myCalleeEditor = createEditor();
     final JComponent callerComponent = myCallerEditor.getComponent();
-    callerComponent.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(RefactoringBundle.message("caller.chooser.caller.method")));
+    callerComponent.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("caller.chooser.caller.method"),
+                                                                  false, true));
     splitter.setFirstComponent(callerComponent);
     final JComponent calleeComponent = myCalleeEditor.getComponent();
-    calleeComponent.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(RefactoringBundle.message("caller.chooser.callee.method")));
+    calleeComponent.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("caller.chooser.callee.method"),
+                                                                  false, true));
     splitter.setSecondComponent(calleeComponent);
     splitter.setBorder(IdeBorderFactory.createRoundedBorder());
     return splitter;

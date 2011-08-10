@@ -71,7 +71,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
 
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent("File Context"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder("File Context", false, true));
     myCombo = new ComboBox();
     myCombo.putClientProperty(CONTEXTS_COMBO_KEY, Boolean.TRUE);
     panel.add(

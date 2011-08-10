@@ -90,13 +90,13 @@ public class CodeStyleImportsPanel extends JPanel {
     final MultiLineLabel oneImportPerDirectiveLabel = new MultiLineLabel("<% page import=\"com.company.Boo\"%>\n" +
                                                                          "<% page import=\"com.company.Far\"%>");
     final JPanel labelPanel = new JPanel(new BorderLayout());
-    labelPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(20, 10, 0, 0), IdeBorderFactory.createTitledBorderSimpleWithoutIndent(
-      ApplicationBundle.message("title.preview"))));
+    labelPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(20, 10, 0, 0), IdeBorderFactory.createTitledBorder(
+      ApplicationBundle.message("title.preview"), false, false)));
 
     JPanel resultPanel = new JPanel(new BorderLayout());
     resultPanel.add(btnPanel, BorderLayout.NORTH);
     resultPanel.add(labelPanel, BorderLayout.CENTER);
-    resultPanel.setBorder(IdeBorderFactory.createTitledBorderBoldWithIndent(ApplicationBundle.message("title.jsp.imports.layout")));
+    resultPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.jsp.imports.layout"), true, true));
 
 
     ActionListener actionListener = new ActionListener() {
@@ -143,7 +143,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JPanel createPackagesPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithoutIndent(ApplicationBundle.message("title.packages.to.use.import.with")));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with"), true, false));
 
     panel.add(createPackagesTable(), BorderLayout.CENTER);
     panel.add(createPackagesButtonsPanel(), BorderLayout.EAST);
@@ -152,7 +152,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JPanel createImportLayoutPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorderBoldWithoutIndent(ApplicationBundle.message("title.import.layout")));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), true, false));
     myCbLayoutStaticImportsSeparately = new JCheckBox("Layout static imports separately");
 
     myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener(){
