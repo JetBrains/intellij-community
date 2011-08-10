@@ -119,6 +119,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         final Object component = treePath.getLastPathComponent();
         if (component instanceof PackageDependenciesNode) {
           ((PackageDependenciesNode)component).updateColor();
+          for (int i = 0; i< ((PackageDependenciesNode)component).getChildCount(); i++) {
+            ((PackageDependenciesNode)((PackageDependenciesNode)component).getChildAt(i)).updateColor();
+          }
         }
       }
     }
