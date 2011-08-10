@@ -58,7 +58,10 @@ public class IdeBorderFactory {
   }
 
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent) {
-    Font font = hasBoldFont ? UIUtil.getBorderFont().deriveFont(Font.BOLD) : UIUtil.getBorderFont();
+    Font font = UIUtil.getBorderFont();
+    if (hasBoldFont) {
+      font = font.deriveFont(Font.BOLD);
+    }
     int indent = hasIndent ? (hasBoldFont ? 18 : 15) : 0;
     Insets insets = hasBoldFont ? new Insets(5,0,10,0) : new Insets(3,0,6,0);
     return new IdeaTitledBorder(title, font, UIUtil.getBorderColor(), indent, 1, insets);
