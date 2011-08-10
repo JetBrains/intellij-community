@@ -75,6 +75,7 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
 
   public void update(final String scanningPackagesMessage, final boolean indeterminate, final double ffraction) {
     if (myPaintInQueue) return;
+    checkCanceled();
     myPaintInQueue = true;
     myAlarm.addRequest(new Runnable() {
       public void run() {
