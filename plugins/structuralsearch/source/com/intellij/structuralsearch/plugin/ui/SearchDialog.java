@@ -649,7 +649,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     JPanel searchOptions = new JPanel();
     searchOptions.setLayout(new GridLayout(getRowsCount(), 1, 0, 0));
-    searchOptions.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(SSRBundle.message("ssdialog.options.group.border")));
+    searchOptions.setBorder(IdeBorderFactory.createTitledBorder(SSRBundle.message("ssdialog.options.group.border"), false,
+                                                                true));
 
     myScopeChooserCombo = new ScopeChooserCombo(
       searchContext.getProject(),
