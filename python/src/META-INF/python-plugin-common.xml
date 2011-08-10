@@ -310,6 +310,8 @@
                     serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
                     overrides="true"/>
 
+    <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
+
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>

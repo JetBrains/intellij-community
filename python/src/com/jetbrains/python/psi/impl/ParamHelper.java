@@ -82,36 +82,6 @@ public class ParamHelper {
     public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) { }
   }
 
-  public static StringBuilder appendParameterList(PyParameterList plist, final StringBuilder target) {
-    final String COMMA = ", ";
-    target.append("(");
-    walkDownParamArray(
-      plist.getParameters(),
-      new ParamWalker() {
-        public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
-          target.append("(");
-        }
-
-        public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
-          target.append(")");
-          if (! last) target.append(COMMA);
-        }
-
-        public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
-          target.append(param.getRepr(true));
-          if (! last) target.append(COMMA);
-        }
-
-        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
-          target.append('*');
-          if (!last) target.append(COMMA);
-        }
-      }
-    );
-    target.append(")");
-    return target;
-  }
-
   public static List<PyNamedParameter> collectNamedParameters(PyParameterList plist) {
     final List<PyNamedParameter> result = new ArrayList<PyNamedParameter>(10); // a random 'enough'
     walkDownParamArray(

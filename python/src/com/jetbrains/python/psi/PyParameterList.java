@@ -42,4 +42,5 @@ public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParame
    */
   boolean isCompatibleTo(@NotNull PyParameterList another);
 
+  String getPresentableText(boolean includeDefaultValue);
 }
