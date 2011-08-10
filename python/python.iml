@@ -35,6 +35,7 @@
     <orderEntry type="library" scope="PROVIDED" name="Groovy" level="project" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="idea-ui" />
   </component>
   <component name="copyright">
     <Base>
