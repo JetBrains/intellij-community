@@ -31,7 +31,7 @@ import java.util.List;
  * @date 12/10/10
  */
 public class GithubRebase extends GitRebase {
-  private String myParent;
+  private String myOriginName;
 
   /**
    * {@inheritDoc}
@@ -39,7 +39,7 @@ public class GithubRebase extends GitRebase {
   @Nullable
   protected GitLineHandler createHandler(final Project project, final List<VirtualFile> gitRoots, final VirtualFile defaultRoot) {
     final GithubRebaseDialog dialog = new GithubRebaseDialog(project, gitRoots, defaultRoot);
-    dialog.configure(myParent);
+    dialog.configure(myOriginName);
     dialog.show();
     if (!dialog.isOK()) {
       return null;
@@ -47,8 +47,8 @@ public class GithubRebase extends GitRebase {
     return dialog.handler();
   }
 
-  public void setRebaseOrigin(final String parent) {
-    myParent = parent;
+  public void setRebaseOrigin(final String originName) {
+    myOriginName = originName;
   }
 }
 
