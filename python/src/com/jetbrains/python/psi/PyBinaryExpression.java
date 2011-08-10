@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PyBinaryExpression extends PyExpression {
+public interface PyBinaryExpression extends PyQualifiedExpression {
   PyExpression getLeftExpression();
   @Nullable PyExpression getRightExpression();
 
