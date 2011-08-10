@@ -15,8 +15,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.groovy.actions.generate.constructors.ConstructorGenerateHandler
+
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler
 
 /**
  * @author peter
@@ -107,7 +108,7 @@ class Foo extends Super<X> {
   RunResult generateConstructor() {
     return new WriteCommandAction(getProject(), new PsiFile[0]) {
       protected void run(Result result) throws Throwable {
-        new ConstructorGenerateHandler() {
+        new GroovyGenerateConstructorHandler() {
           @Override protected ClassMember[] chooseOriginalMembersImpl(PsiClass aClass, Project project) {
             List<ClassMember> members = aClass.fields.collect { new PsiFieldMember(it) }
             members << new PsiMethodMember(aClass.superClass.constructors[0])

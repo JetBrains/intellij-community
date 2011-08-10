@@ -636,13 +636,13 @@
             text="Exclude from stub generation" description="Don't generate Java stubs for this Groovy file on compilation">
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="RenameJavaFileToGroovyFileAction"/>
     </action>
-    <action id="org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateAction"
-            class="org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateAction"
+    <action id="org.jetbrains.plugins.groovy.actions.generate.equals.GroovyGenerateEqualsAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.equals.GroovyGenerateEqualsAction"
             text="equals() and hashCode()" description="Action generates equals and hashCode now">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
-    <action id="org.jetbrains.plugins.groovy.actions.generate.constructors.CostructorGenerateAction"
-            class="org.jetbrains.plugins.groovy.actions.generate.constructors.CostructorGenerateAction"
+    <action id="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
             text="Constructor" description="Generates constructor">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>

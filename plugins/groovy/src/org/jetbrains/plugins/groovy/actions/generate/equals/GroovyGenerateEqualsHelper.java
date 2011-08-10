@@ -42,7 +42,7 @@ import java.util.*;
  * User: Dmitry.Krasilschikov
  * Date: 02.06.2008
  */
-public class GrGenerateEqualsHelper {
+public class GroovyGenerateEqualsHelper {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.actions.generate.equals.GrGenerateEqualsHelper");
 
   private final PsiClass myClass;
@@ -67,12 +67,12 @@ public class GrGenerateEqualsHelper {
   private final Project myProject;
   private final boolean myCheckParameterWithInstanceof;
 
-  public GrGenerateEqualsHelper(Project project,
-                                PsiClass aClass,
-                                PsiField[] equalsFields,
-                                PsiField[] hashCodeFields,
-                                PsiField[] nonNullFields,
-                                boolean useInstanceofToCheckParameterType) {
+  public GroovyGenerateEqualsHelper(Project project,
+                                    PsiClass aClass,
+                                    PsiField[] equalsFields,
+                                    PsiField[] hashCodeFields,
+                                    PsiField[] nonNullFields,
+                                    boolean useInstanceofToCheckParameterType) {
     myClass = aClass;
     myEqualsFields = equalsFields;
     myHashCodeFields = hashCodeFields;
