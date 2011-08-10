@@ -282,15 +282,16 @@ public class RecursionManager {
     }
 
     private void checkDepth(String s) {
-      if (depth != progressMap.size()) {
+      int oldDepth = depth;
+      if (oldDepth != progressMap.size()) {
         depth = progressMap.size();
-        throw new AssertionError("Inconsistent depth " + s + "; depth=" + depth + "; map=" + progressMap);
+        throw new AssertionError("Inconsistent depth " + s + "; depth=" + oldDepth + "; map=" + progressMap);
       }
     }
 
     private void checkZero() {
-      if (!progressMap.isEmpty() && progressMap.get(progressMap.keySet().iterator().next()) != 0) {
-        throw new AssertionError("Prisoner Zero has escaped");
+      if (!progressMap.isEmpty() && !new Integer(0).equals(progressMap.get(progressMap.keySet().iterator().next()))) {
+        throw new AssertionError("Prisoner Zero has escaped: " + progressMap);
       }
     }
 
