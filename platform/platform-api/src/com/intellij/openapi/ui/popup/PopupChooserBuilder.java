@@ -416,12 +416,14 @@ public class PopupChooserBuilder {
               if (size >= 0 && size <= 20) {
                 return list.getPreferredSize();
               } else {
-                return super.preferredLayoutSize(parent);
+                final Dimension even = super.preferredLayoutSize(parent);
+                return new Dimension(even.width, even.height + list.getCellBounds(0, 0).height / 2);
               }
             }
           };
         }
       };
+      list.setVisibleRowCount(15);
       setViewport(viewport);
       setViewportView(list);
 
