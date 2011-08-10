@@ -197,7 +197,9 @@ public class MacMessages {
 
         ID paramsArray = invoke("NSArray", "arrayWithObjects:", cfString(title), cfString(UIUtil.removeMnemonic(defaultText)),
                                 cfString(otherText == null ? "-1" : UIUtil.removeMnemonic(otherText)),
-                                cfString(alternateText == null ? "-1" : UIUtil.removeMnemonic(alternateText)), cfString(StringUtil.stripHtml(message, true)),
+                                cfString(alternateText == null ? "-1" : UIUtil.removeMnemonic(alternateText)),
+                                // replace % -> %% to avoid formatted parameters (causes SIGTERM)
+                                cfString(StringUtil.stripHtml(message, true).replace("%", "%%")),
                                 focusedWindow, cfString(fakeTitle), cfString(errorStyle ? "error" : "-1"),
                                 cfString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                          // TODO: state=!doNotAsk.shouldBeShown()
