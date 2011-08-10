@@ -21,63 +21,59 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 /**
-* User: anna
-*/
-public abstract class AppenderTask extends Task.Backgroundable {
-  private JBList myList;
-  private AbstractPopup myPopup;
-
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+ * User: anna
+ */
+public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
+  protected AbstractPopup myPopup;
   private List<PsiElement> myData = new ArrayList<PsiElement>();
 
+  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Object lock = new Object();
 
-  public AppenderTask(@Nullable final Project project,
-                      @NotNull final String title,
-                      final boolean canBeCancelled,
-                      @Nullable final PerformInBackgroundOption backgroundOption) {
-    super(project, title, canBeCancelled, backgroundOption);
-  }
+  private volatile boolean myCanceled = false;
 
-  public AppenderTask(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled) {
+  public BackgroundUpdaterTask(Project project, String title, boolean canBeCancelled) {
     super(project, title, canBeCancelled);
   }
 
-  public AppenderTask(@Nullable final Project project, @NotNull final String title) {
+  public BackgroundUpdaterTask(Project project, String title) {
     super(project, title);
   }
 
+  public BackgroundUpdaterTask(Project project,
+                               String title,
+                               boolean canBeCancelled,
+                               PerformInBackgroundOption backgroundOption) {
+    super(project, title, canBeCancelled, backgroundOption);
+  }
+
   public abstract String getCaption(int size);
-
-
-  @Override
-  public void run(@NotNull ProgressIndicator indicator) {
-    myList.setPaintBusy(true);
-  }
-
-  public void setList(JBList list) {
-    myList = list;
-  }
+  protected abstract void replaceModel(ArrayList<PsiElement> data);
+  protected abstract void paintBusy(boolean paintBusy);
 
   public void setPopup(AbstractPopup popup) {
     myPopup = popup;
   }
 
+  public void setCanceled() {
+    myCanceled = true;
+  }
+
   public void updateList(PsiElement element, @Nullable final Comparator comparator) {
+    if (myCanceled) return;
+
     synchronized (lock) {
       myData.add(element);
     }
@@ -86,19 +82,21 @@ public abstract class AppenderTask extends Task.Backgroundable {
       @Override
       public void run() {
         myAlarm.cancelAllRequests();
-        final ListModel listModel = myList.getModel();
+        if (myCanceled) return;
+        ArrayList<PsiElement> data = new ArrayList<PsiElement>();
         synchronized (lock) {
           if (comparator != null) {
             Collections.sort(myData, comparator);
           }
-          ((NameFilteringListModel)listModel).replaceAll(myData);
+          data.addAll(myData);
         }
-        ((JComponent)myList.getParent().getParent()).revalidate();
-        myPopup.setSize(myList.getParent().getParent().getPreferredSize());
-        myList.repaint();
+        replaceModel(data);
+        myPopup.getContent().revalidate();
+        myPopup.pack(true, true);//setSize(myPopup.getComponent().getPreferredSize());
+        myPopup.getContent().repaint();
         myPopup.setCaption(getCaption(getCurrentSize()));
       }
-    }, 10, ModalityState.stateForComponent(myList));
+    }, 10, ModalityState.stateForComponent(myPopup.getContent()));
   }
 
   public int getCurrentSize() {
@@ -108,8 +106,13 @@ public abstract class AppenderTask extends Task.Backgroundable {
   }
 
   @Override
+  public void run(@NotNull ProgressIndicator indicator) {
+    paintBusy(true);
+  }
+
+  @Override
   public void onSuccess() {
-    myList.setPaintBusy(false);
     myPopup.setCaption(getCaption(getCurrentSize()));
+    paintBusy(false);
   }
 }

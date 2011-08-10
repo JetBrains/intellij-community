@@ -17,6 +17,7 @@ package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdaterTask;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -28,6 +29,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -42,6 +45,7 @@ import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -50,6 +54,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE = "codeassists.quickdefinition.lookup";
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_FEATURE = "codeassists.quickdefinition";
   private WeakReference<JBPopup> myPopupRef;
+  private WeakReference<BackgroundUpdaterTask> myTaskRef;
 
   public ShowImplementationsAction() {
     setEnabledInModalContext(true);
@@ -106,7 +111,11 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     if (element != null) {
       //if (element instanceof PsiPackage) return;
 
-      impls = getSelfAndImplementations(editor, element);
+      impls = getSelfAndImplementations(editor, element, new ImplementationSearcher.FirstImplementationsSearcher() {
+        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
+          return ShowImplementationsAction.filterElements(targetElements);
+        }
+      });
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
@@ -130,7 +139,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
     
 
-    showImplementations(impls, project, text, editor, file, isInvokedFromEditor);
+    showImplementations(impls, project, text, editor, file, element, isInvokedFromEditor);
   }
 
   protected void updateElementImplementations(final PsiElement element, final Editor editor, final Project project, final PsiFile file) {
@@ -139,14 +148,19 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     if (element != null) {
      // if (element instanceof PsiPackage) return;
 
-      impls = getSelfAndImplementations(editor, element);
+      impls = getSelfAndImplementations(editor, element, new ImplementationSearcher.FirstImplementationsSearcher() {
+        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
+          return ShowImplementationsAction.filterElements(targetElements);
+        }
+      });
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
-    showImplementations(impls, project, text, editor, file, false);
+    showImplementations(impls, project, text, editor, file, element, false);
   }
 
   protected void showImplementations(final PsiElement[] impls, final Project project, final String text, final Editor editor, final PsiFile file,
+                                     final PsiElement element,
                                      boolean invokedFromEditor) {
     if (impls == null || impls.length == 0) return;
 
@@ -163,13 +177,15 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         index = 1;
       }
     }
-    
+
+    final String title = CodeInsightBundle.message("implementation.view.title", text);
     if (myPopupRef != null) {
       final JBPopup popup = myPopupRef.get();
       if (popup != null && popup.isVisible() && popup instanceof AbstractPopup) {
         final ImplementationViewComponent component = (ImplementationViewComponent) ((AbstractPopup)popup).getComponent();
-        ((AbstractPopup)popup).setCaption(CodeInsightBundle.message("implementation.view.title", text));
+        ((AbstractPopup)popup).setCaption(title);
         component.update(impls, index);
+        updateInBackground(editor, element, component, title, (AbstractPopup)popup);
         return;
       }
     }
@@ -182,7 +198,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
           updateElementImplementations(element, editor, project, file);
         }
       };
-      final String title = CodeInsightBundle.message("implementation.view.title", text);
+
       final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
         .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
         .setProject(project)
@@ -195,6 +211,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         .setTitle(title)
         .createPopup();
 
+      updateInBackground(editor, element, component, title, (AbstractPopup)popup);
+
       PopupPositionManager.positionPopupInBestPosition(popup, editor, DataManager.getInstance().getDataContext());
       component.setHint(popup, title);
       
@@ -202,28 +220,31 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
   }
 
-  private static PsiElement[] getSelfAndImplementations(Editor editor, PsiElement element) {
-    ImplementationSearcher handler = new ImplementationSearcher() {
-      protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
-        Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
-        for (PsiElement elt : targetElements) {
-          PsiFile psiFile = elt.getContainingFile().getOriginalFile();
-          if (psiFile.getVirtualFile() == null) unique.remove(elt);
-        }
-        // special case for Python (PY-237)
-        // if the definition is the tree parent of the target element, filter out the target element
-        for (int i = 1; i < targetElements.length; i++) {
-          if (PsiTreeUtil.isAncestor(targetElements[i], targetElements[0], true)) {
-            unique.remove(targetElements[0]);
-            break;
-          }
-        }
-        return PsiUtilBase.toPsiElementArray(unique);
+  private void updateInBackground(Editor editor,
+                                  PsiElement element,
+                                  ImplementationViewComponent component,
+                                  String title,
+                                  AbstractPopup popup) {
+    if (myTaskRef != null) {
+      final BackgroundUpdaterTask updaterTask = myTaskRef.get();
+      if (updaterTask != null) {
+        updaterTask.setCanceled();
       }
-    };
+    }
+
+    final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(element, editor, title);
+    task.setPopup(popup);
+    task.setComponent(component);
+
+    myTaskRef = new WeakReference<BackgroundUpdaterTask>(task);
+    ProgressManager.getInstance().run(task);
+  }
+
+  private static PsiElement[] getSelfAndImplementations(Editor editor, PsiElement element, final ImplementationSearcher handler) {
 
     int offset = editor == null ? 0 : editor.getCaretModel().getOffset();
-    final PsiElement[] handlerImplementations = handler.searchImplementations(element, offset, !(element instanceof PomTargetPsiElement), true);
+    final PsiElement[] handlerImplementations = handler.searchImplementations(element, offset, !(element instanceof PomTargetPsiElement),
+                                                                              true);
     if (handlerImplementations.length > 0) return handlerImplementations;
 
     PsiFile psiFile = element.getContainingFile();
@@ -241,9 +262,75 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
   }
 
+  private static PsiElement[] filterElements(PsiElement[] targetElements) {
+    Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
+    for (PsiElement elt : targetElements) {
+      PsiFile psiFile = elt.getContainingFile().getOriginalFile();
+      if (psiFile.getVirtualFile() == null) unique.remove(elt);
+    }
+    // special case for Python (PY-237)
+    // if the definition is the tree parent of the target element, filter out the target element
+    for (int i = 1; i < targetElements.length; i++) {
+      if (PsiTreeUtil.isAncestor(targetElements[i], targetElements[0], true)) {
+        unique.remove(targetElements[0]);
+        break;
+      }
+    }
+    return PsiUtilBase.toPsiElementArray(unique);
+  }
+
   @Override
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null);
+  }
+
+  private static class ImplementationsUpdaterTask extends BackgroundUpdaterTask {
+    private ImplementationViewComponent myComponent;
+    private String myCaption;
+    private Editor myEditor;
+    private PsiElement myElement;
+
+    public ImplementationsUpdaterTask(final PsiElement element, final Editor editor, final String caption) {
+      super(element.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
+      myCaption = caption;
+      myEditor = editor;
+      myElement = element;
+    }
+
+    @Override
+    public String getCaption(int size) {
+      return myCaption;
+    }
+
+    @Override
+    protected void paintBusy(boolean paintBusy) {
+      //todo notify busy
+    }
+
+    @Override
+    protected void replaceModel(ArrayList<PsiElement> data) {
+      final PsiElement[] elements = myComponent.getElements();
+      final int includeSelfIdx = myElement instanceof PomTargetPsiElement ? 0 : 1;
+      final int startIdx = elements.length - includeSelfIdx;
+      final PsiElement[] result = new PsiElement[data.size() + includeSelfIdx];
+      System.arraycopy(elements, 0, result, 0, elements.length);
+      System.arraycopy(data.toArray(PsiElement.EMPTY_ARRAY), startIdx, result, elements.length, data.size() - startIdx);
+      myComponent.update(result, myComponent.getIndex());
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      getSelfAndImplementations(myEditor, myElement, new ImplementationSearcher.BackgroundableImplementationSearcher() {
+          @Override
+          protected void processElement(PsiElement element) {
+            updateList(element, null);
+          }
+        });
+    }
+
+    public void setComponent(ImplementationViewComponent component) {
+      myComponent = component;
+    }
   }
 }

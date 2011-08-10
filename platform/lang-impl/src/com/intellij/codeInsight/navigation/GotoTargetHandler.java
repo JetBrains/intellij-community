@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.daemon.impl.AppenderTask;
+import com.intellij.codeInsight.daemon.impl.ListBackgroundUpdaterTask;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
@@ -179,10 +179,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         }
       }).
       createPopup();
-    if (gotoData.appenderTask != null) {
-      gotoData.appenderTask.setList(list);
-      gotoData.appenderTask.setPopup((AbstractPopup)popup);
-      ProgressManager.getInstance().run(gotoData.appenderTask);
+    if (gotoData.listUpdaterTask != null) {
+      gotoData.listUpdaterTask.setList(list);
+      gotoData.listUpdaterTask.setPopup((AbstractPopup)popup);
+      ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
     popup.showInBestPositionFor(editor);
   }
@@ -255,7 +255,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     public final List<AdditionalAction> additionalActions;
 
     private boolean hasDifferentNames;
-    public AppenderTask appenderTask;
+    public ListBackgroundUpdaterTask listUpdaterTask;
     protected final Set<String> myNames;
     public Map<Object, PsiElementListCellRenderer> renderers = new HashMap<Object, PsiElementListCellRenderer>();
 

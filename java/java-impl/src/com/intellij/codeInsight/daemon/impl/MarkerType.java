@@ -214,7 +214,7 @@ public class MarkerType {
     return myTooltip;
   }
 
-  private static class SubclassUpdater extends AppenderTask {
+  private static class SubclassUpdater extends ListBackgroundUpdaterTask {
     private final PsiClass myClass;
     private final PsiClassListCellRenderer myRenderer;
 
@@ -245,7 +245,7 @@ public class MarkerType {
 
   }
 
-  private static class OverridingMethodsUpdater extends AppenderTask {
+  private static class OverridingMethodsUpdater extends ListBackgroundUpdaterTask {
     private PsiMethod myMethod;
     private PsiElementListCellRenderer myRenderer;
 

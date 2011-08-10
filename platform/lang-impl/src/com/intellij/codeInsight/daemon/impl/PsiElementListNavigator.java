@@ -48,8 +48,8 @@ public class PsiElementListNavigator {
                                  NavigatablePsiElement[] targets,
                                  String title,
                                  ListCellRenderer listRenderer,
-                                 @Nullable AppenderTask appenderTask) {
-    JBPopup popup = navigateOrCreatePopup(targets, title, listRenderer, appenderTask);
+                                 @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
+    JBPopup popup = navigateOrCreatePopup(targets, title, listRenderer, listUpdaterTask);
     if (popup != null) popup.show(new RelativePoint(e));
   }
 
@@ -62,7 +62,7 @@ public class PsiElementListNavigator {
   private static JBPopup navigateOrCreatePopup(final NavigatablePsiElement[] targets,
                                                final String title,
                                                final ListCellRenderer listRenderer,
-                                               final @Nullable AppenderTask appenderTask) {
+                                               final @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
     if (targets.length == 0) return null;
     if (targets.length == 1) {
       targets[0].navigate(true);
@@ -107,11 +107,11 @@ public class PsiElementListNavigator {
       })
       .createPopup();
 
-    if (appenderTask != null) {
-      appenderTask.setList(list);
-      appenderTask.setPopup((AbstractPopup)popup);
+    if (listUpdaterTask != null) {
+      listUpdaterTask.setList(list);
+      listUpdaterTask.setPopup((AbstractPopup)popup);
 
-      ProgressManager.getInstance().run(appenderTask);
+      ProgressManager.getInstance().run(listUpdaterTask);
     }
     return popup;
   }

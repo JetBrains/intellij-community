@@ -18,7 +18,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.daemon.impl.AppenderTask;
+import com.intellij.codeInsight.daemon.impl.ListBackgroundUpdaterTask;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -46,9 +46,11 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     int offset = editor.getCaretModel().getOffset();
     PsiElement source = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     if (source == null) return null;
-    final GotoData gotoData = new GotoData(source, new ImplementationSearcher.FirstImplementationsSearcher().searchImplementations(editor, source, offset),
+    final GotoData gotoData = new GotoData(source, new ImplementationSearcher.FirstImplementationsSearcher().searchImplementations(editor,
+                                                                                                                                   source,
+                                                                                                                                   offset),
                                            Collections.<AdditionalAction>emptyList());
-    gotoData.appenderTask = new ImplementationsUpdaterTask(gotoData, editor, offset);
+    gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset);
     return gotoData;
   }
 
@@ -61,7 +63,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return CodeInsightBundle.message("goto.implementation.notFound");
   }
 
-  private class ImplementationsUpdaterTask extends AppenderTask {
+  private class ImplementationsUpdaterTask extends ListBackgroundUpdaterTask {
     private Editor myEditor;
     private int myOffset;
     private GotoData myGotoData;
@@ -77,25 +79,10 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       super.run(indicator);
-      new ImplementationSearcher() {
-        @Override
-        protected PsiElement[] searchDefinitions(final PsiElement element) {
-          final CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<PsiElement>() {
-            @Override
-            public boolean process(PsiElement element) {
-              myGotoData.addTarget(element);
-              updateList(element, createComparator(renderers, myGotoData));
-              return super.process(element);
-            }
-          };
-          try {
-            DefinitionsSearch.search(element).forEach(processor);
-          }
-          catch (IndexNotReadyException e) {
-            ImplementationSearcher.dumbModeNotification(element);
-            return null;
-          }
-          return processor.toArray(PsiElement.EMPTY_ARRAY);
+      new ImplementationSearcher.BackgroundableImplementationSearcher() {
+        protected void processElement(PsiElement element) {
+          myGotoData.addTarget(element);
+          updateList(element, createComparator(renderers, myGotoData));
         }
       }.searchImplementations(myEditor, myGotoData.source, myOffset);
     }

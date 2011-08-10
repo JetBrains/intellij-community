@@ -15,10 +15,13 @@
  */
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -30,7 +33,12 @@ public class ClassImplementationsSearch implements QueryExecutor<PsiElement, Psi
   }
 
   public static boolean processImplementations(final PsiClass psiClass, final Processor<? super PsiClass> processor) {
-    return ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+    return ClassInheritorsSearch.search(psiClass, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return psiClass.getUseScope();
+      }
+    }), true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass element) {
         return element.isInterface() || processor.process(element);
       }

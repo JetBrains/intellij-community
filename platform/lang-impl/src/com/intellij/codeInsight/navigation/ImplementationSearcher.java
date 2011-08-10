@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.DefinitionsSearch;
+import com.intellij.util.CommonProcessors;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,5 +126,28 @@ public class ImplementationSearcher {
       }
       return result[0];
     }
+  }
+
+  public static abstract class BackgroundableImplementationSearcher extends ImplementationSearcher {
+    @Override
+    protected PsiElement[] searchDefinitions(final PsiElement element) {
+      final CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<PsiElement>() {
+        @Override
+        public boolean process(PsiElement element) {
+          processElement(element);
+          return super.process(element);
+        }
+      };
+      try {
+        DefinitionsSearch.search(element).forEach(processor);
+      }
+      catch (IndexNotReadyException e) {
+        ImplementationSearcher.dumbModeNotification(element);
+        return null;
+      }
+      return processor.toArray(PsiElement.EMPTY_ARRAY);
+    }
+
+    protected abstract void processElement(PsiElement element);
   }
 }
