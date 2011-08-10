@@ -403,6 +403,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
         try {
           myDirtyRange = myDirtyRange.intersection(docRange);
+          if (myDirtyRange == null) myDirtyRange = docRange;
           repaint(imageGraphics, componentBounds.width, ERROR_ICON_WIDTH - 1, myDirtyRange.getStartOffset(), myDirtyRange.getEndOffset());
           myDirtyRange = null;
         }
