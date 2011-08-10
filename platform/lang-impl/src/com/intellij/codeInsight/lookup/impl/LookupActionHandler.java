@@ -202,7 +202,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       }
 
       char c = seq.charAt(offset);
-      CharFilter.Result lookupAction = TypedHandler.getLookupAction(c, lookup);
+      CharFilter.Result lookupAction = LookupTypedHandler.getLookupAction(c, lookup);
 
       if (lookupAction != CharFilter.Result.ADD_TO_PREFIX || Character.isWhitespace(c)) {
         myOriginalHandler.execute(editor, context);
