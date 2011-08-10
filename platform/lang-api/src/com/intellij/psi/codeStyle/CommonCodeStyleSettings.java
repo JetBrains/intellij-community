@@ -16,10 +16,11 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.DifferenceFilter;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.*;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,13 +38,41 @@ public class CommonCodeStyleSettings {
 
   private Language myLanguage;
   private CodeStyleSettings myRootSettings;
+  private IndentOptions myIndentOptions;
+  private FileType myFileType;
 
   public CommonCodeStyleSettings(Language language) {
     myLanguage = language;
+    myIndentOptions = new IndentOptions();
+    if (language != null) {
+      myFileType = language.getAssociatedFileType();
+    }
   }
-  
-  public void setRootSettings(@NotNull CodeStyleSettings rootSettings) {
+
+  void setRootAndIndentSettings(@NotNull CodeStyleSettings rootSettings) {
     myRootSettings = rootSettings;
+    if (myRootSettings.USE_SAME_INDENTS) {
+      myIndentOptions = rootSettings.OTHER_INDENT_OPTIONS;
+    }
+    else if (myFileType != null) {
+      if (getFileTypeIndentOptionsProvider() == null) {
+        IndentOptions fileTypeOptions = myRootSettings.getIndentOptions(myFileType);
+        if (!myRootSettings.USE_SAME_INDENTS) {
+          myIndentOptions = (IndentOptions)fileTypeOptions.clone();
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private FileTypeIndentOptionsProvider getFileTypeIndentOptionsProvider() {
+    final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
+    for (FileTypeIndentOptionsProvider provider : providers) {
+      if (provider.getFileType().equals(myFileType)) {
+        return provider;
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -51,9 +80,14 @@ public class CommonCodeStyleSettings {
     return myRootSettings;
   }
 
+  public IndentOptions getIndentOptions() {
+    return myIndentOptions;
+  }
+
   public CommonCodeStyleSettings clone() {
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage);
     copyPublicFields(this, commonSettings);
+    commonSettings.getIndentOptions().copyFrom(myIndentOptions);
     return commonSettings;
   }
 
@@ -65,14 +99,14 @@ public class CommonCodeStyleSettings {
   void copyNonDefaultValuesFrom(CommonCodeStyleSettings from) {
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(null);
     PARENT_SETTINGS_INSTALLED =
-      copyFields(this.getClass().getFields(), from, this, new DifferenceFilter<CommonCodeStyleSettings>(from, defaultSettings));
+      copyFields(this.getClass().getFields(), from, this, new DifferenceFilter<CommonCodeStyleSettings>(from, defaultSettings));    
   }
 
   private static void copyFields(Field[] fields, Object from, Object to) {
     copyFields(fields, from, to, null);
   }
 
-  private static boolean copyFields(Field[] fields, Object from, Object to, DifferenceFilter diffFilter) {
+  private static boolean copyFields(Field[] fields, Object from, Object to, @Nullable DifferenceFilter diffFilter) {
     boolean valuesChanged = false;
     for (Field field : fields) {
       if (isPublic(field) && !isFinal(field)) {
@@ -119,10 +153,14 @@ public class CommonCodeStyleSettings {
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
+    myIndentOptions.readExternal(element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CommonCodeStyleSettings>(this, getDefaultSettings()));
+    if (myRootSettings != null && !myRootSettings.USE_SAME_INDENTS) {
+      myIndentOptions.writeExternalWithNonDefaults(element);
+    }
   }
 
 //----------------- GENERAL --------------------
@@ -749,5 +787,77 @@ public class CommonCodeStyleSettings {
   // values from shared code style settings (happens upon the very first initialization).
   //
   public boolean PARENT_SETTINGS_INSTALLED  = false;
+  
+  //-------------------------Indent options-------------------------------------------------
+  public static class IndentOptions implements JDOMExternalizable, Cloneable {
+    public int INDENT_SIZE = 4;
+    public int CONTINUATION_INDENT_SIZE = 8;
+    public int TAB_SIZE = 4;
+    public boolean USE_TAB_CHARACTER = false;
+    public boolean SMART_TABS = false;
+    public int LABEL_INDENT_SIZE = 0;
+    public boolean LABEL_INDENT_ABSOLUTE = false;
+    public boolean USE_RELATIVE_INDENTS = false;
+
+    public void readExternal(Element element) throws InvalidDataException {
+      DefaultJDOMExternalizer.readExternal(this, element);
+    }
+
+    public void writeExternal(Element element) throws WriteExternalException {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
+
+    public void writeExternalWithNonDefaults(Element element) {
+      XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters());
+    }
+
+    public Object clone() {
+      try {
+        return super.clone();
+      }
+      catch (CloneNotSupportedException e) {
+        // Cannot happen
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      IndentOptions that = (IndentOptions)o;
+
+      if (CONTINUATION_INDENT_SIZE != that.CONTINUATION_INDENT_SIZE) return false;
+      if (INDENT_SIZE != that.INDENT_SIZE) return false;
+      if (LABEL_INDENT_ABSOLUTE != that.LABEL_INDENT_ABSOLUTE) return false;
+      if (USE_RELATIVE_INDENTS != that.USE_RELATIVE_INDENTS) return false;
+      if (LABEL_INDENT_SIZE != that.LABEL_INDENT_SIZE) return false;
+      if (SMART_TABS != that.SMART_TABS) return false;
+      if (TAB_SIZE != that.TAB_SIZE) return false;
+      if (USE_TAB_CHARACTER != that.USE_TAB_CHARACTER) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = INDENT_SIZE;
+      result = 31 * result + CONTINUATION_INDENT_SIZE;
+      result = 31 * result + TAB_SIZE;
+      result = 31 * result + (USE_TAB_CHARACTER ? 1 : 0);
+      result = 31 * result + (SMART_TABS ? 1 : 0);
+      result = 31 * result + LABEL_INDENT_SIZE;
+      result = 31 * result + (LABEL_INDENT_ABSOLUTE ? 1 : 0);
+      result = 31 * result + (USE_RELATIVE_INDENTS ? 1 : 0);
+      return result;
+    }
+
+    public void copyFrom(IndentOptions other) {
+      copyPublicFields(other, this);
+    }
+  }
+  
+  
 
 }
