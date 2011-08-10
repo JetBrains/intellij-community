@@ -53,6 +53,13 @@ public class XmlTextManipulator extends AbstractElementManipulator<XmlText> {
   }
 
   public TextRange getRangeInElement(final XmlText text) {
-    return TextRange.from(0, text.getTextLength());
+    return getValueRange(text);
+  }
+
+  private static TextRange getValueRange(final XmlText xmlText) {
+    final String value = xmlText.getValue();
+    final int i = value.indexOf(value);
+    final int start = xmlText.displayToPhysical(i);
+    return value.length() == 0 ? new TextRange(start, start) : new TextRange(start, xmlText.displayToPhysical(i + value.length() - 1) + 1);
   }
 }
