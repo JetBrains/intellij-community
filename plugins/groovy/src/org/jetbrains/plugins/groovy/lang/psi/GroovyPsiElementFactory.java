@@ -222,4 +222,11 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrImplementsClause createImplementsClause();
 
   public abstract GrLiteral createLiteralFromValue(@Nullable Object value);
+
+  @NotNull
+  public abstract GrMethod createMethod(@NotNull @NonNls String name, @Nullable PsiType returnType) throws IncorrectOperationException;
+
+  @NotNull
+  public abstract GrParameter createParameter(@NotNull @NonNls String name, @Nullable PsiType type) throws IncorrectOperationException;
+
 }

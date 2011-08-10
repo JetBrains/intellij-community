@@ -106,7 +106,7 @@ public interface JVMElementFactory {
    *                                     or <code>type</code> represents an invalid type.
    */
   @NotNull
-  PsiParameter createParameter(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException;
+  PsiParameter createParameter(@NotNull @NonNls String name, PsiType type) throws IncorrectOperationException;
 
   /**
    * Creates a parameter list from the specified parameter names and types.

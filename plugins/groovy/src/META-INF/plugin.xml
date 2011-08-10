@@ -641,6 +641,25 @@
             text="equals() and hashCode()" description="Action generates equals and hashCode now">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
+
+    <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
+            text="Getter and Setter" description="Generates getter">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+
+    <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateSetterAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateSetterAction"
+            text="Setter" description="Generates setter">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+
+    <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterAction"
+            text="Getter" description="Generates getter">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+
     <action id="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
             class="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
             text="Constructor" description="Generates constructor">

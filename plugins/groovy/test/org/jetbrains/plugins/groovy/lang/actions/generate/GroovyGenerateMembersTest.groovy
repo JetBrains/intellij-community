@@ -5,9 +5,6 @@
 package org.jetbrains.plugins.groovy.lang.actions.generate;
 
 
-import com.intellij.codeInsight.generation.ClassMember
-import com.intellij.codeInsight.generation.PsiFieldMember
-import com.intellij.codeInsight.generation.PsiMethodMember
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.RunResult
 import com.intellij.openapi.command.WriteCommandAction
@@ -15,9 +12,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-
-import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction
 import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler
+import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.generation.*
 
 /**
  * @author peter
@@ -25,15 +24,15 @@ import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerate
 public class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
 
   public void testConstructorAtOffset() throws Throwable {
-    doTest();
+    doConstructorTest();
   }
 
   public void testConstructorAtEnd() throws Throwable {
-    doTest();
+    doConstructorTest();
   }
   
   public void testLonelyConstructor() throws Throwable {
-    doTest();
+    doConstructorTest();
   }
 
   public void testExplicitArgumentTypes() throws Exception {
@@ -99,14 +98,213 @@ class Foo extends Super<X> {
 ''')
   }
 
-  private void doTest() throws Throwable {
+  void testGetter1() {
+    myFixture.configureByText 'a.groovy', '''
+class Test {
+    def foo
+    <caret>
+}'''
+    generateGetter()
+
+    myFixture.checkResult '''
+class Test {
+    def foo
+
+    def getFoo() {
+        return foo
+    }
+}'''
+  }
+
+  void testGetter2() {
+      myFixture.configureByText 'a.groovy', '''
+  class Test {
+      int foo
+      <caret>
+  }'''
+      generateGetter()
+
+      myFixture.checkResult '''
+  class Test {
+      int foo
+
+      int getFoo() {
+          return foo
+      }
+  }'''
+    }
+
+  void testGetter3() {
+    myFixture.configureByText 'a.groovy', '''
+  class Test {
+      static foo
+      <caret>
+  }'''
+      generateGetter()
+
+      myFixture.checkResult '''
+  class Test {
+      static foo
+
+      static getFoo() {
+          return foo
+      }
+  }'''
+    }
+
+  void testGetter4() {
+    myFixture.addFileToProject('org/jetbrains/annotations/Nullable.java', 'package org.jetbrains.annotations; public @interface Nullable {}')
+
+    myFixture.configureByText 'a.groovy', '''
+  import org.jetbrains.annotations.Nullable
+
+  class Test {
+      @Nullable
+      def foo
+      <caret>
+  }'''
+      generateGetter()
+
+      myFixture.checkResult '''
+  import org.jetbrains.annotations.Nullable
+
+  class Test {
+      @Nullable
+      def foo
+
+      @Nullable getFoo() {
+          return foo
+      }
+  }'''
+    }
+
+  void testSetter1() {
+    myFixture.configureByText 'a.groovy', '''
+class Test {
+    def foo
+    <caret>
+}'''
+
+    generateSetter()
+
+    myFixture.checkResult '''
+class Test {
+    def foo
+
+    void setFoo(def foo) {
+        this.foo = foo
+    }
+}'''
+
+  }
+
+  void testSetter2() {
+    myFixture.configureByText 'a.groovy', '''
+class Test {
+    int foo
+    <caret>
+}'''
+
+    generateSetter()
+
+    myFixture.checkResult '''
+class Test {
+    int foo
+
+    void setFoo(int foo) {
+        this.foo = foo
+    }
+}'''
+
+  }
+
+  void testSetter3() {
+
+    myFixture.configureByText 'a.groovy', '''
+class Test {
+    static foo
+    <caret>
+}'''
+
+    generateSetter()
+
+    myFixture.checkResult '''
+class Test {
+    static foo
+
+    static void setFoo(def foo) {
+        Test.foo = foo
+    }
+}'''
+
+  }
+
+  void testSetter4() {
+    myFixture.addFileToProject('org/jetbrains/annotations/Nullable.java', 'package org.jetbrains.annotations; public @interface Nullable {}')
+
+    myFixture.configureByText 'a.groovy', '''
+import org.jetbrains.annotations.Nullable
+
+class Test {
+    @Nullable
+    def foo
+    <caret>
+}'''
+
+    generateSetter()
+
+    myFixture.checkResult '''
+import org.jetbrains.annotations.Nullable
+
+class Test {
+    @Nullable
+    def foo
+
+    void setFoo(@Nullable foo) {
+        this.foo = foo
+    }
+}'''
+
+  }
+
+
+
+  void generateGetter() {
+    new GroovyGenerateGetterSetterAction() //don't remove it!!!
+    new WriteCommandAction(project, new PsiFile[0]) {
+      protected void run(Result result) throws Throwable {
+        new GenerateGetterHandler() {
+          @Nullable
+          protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project) {
+            return members
+          }
+        }.invoke(project, myFixture.editor, myFixture.file);
+      }
+    }.execute()
+  }
+
+  void generateSetter() {
+    new GroovyGenerateGetterSetterAction() //don't remove it!!!
+    new WriteCommandAction(project, new PsiFile[0]) {
+      protected void run(Result result) throws Throwable {
+        new GenerateSetterHandler() {
+          @Nullable
+          protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project) {
+            return members
+          }
+        }.invoke(project, myFixture.editor, myFixture.file);
+      }
+    }.execute()
+  }
+
+  private void doConstructorTest() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     generateConstructor();
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
   RunResult generateConstructor() {
-    return new WriteCommandAction(getProject(), new PsiFile[0]) {
+    return new WriteCommandAction(project, new PsiFile[0]) {
       protected void run(Result result) throws Throwable {
         new GroovyGenerateConstructorHandler() {
           @Override protected ClassMember[] chooseOriginalMembersImpl(PsiClass aClass, Project project) {
@@ -115,7 +313,7 @@ class Foo extends Super<X> {
             return members as ClassMember[]
           }
 
-        }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+        }.invoke(project, myFixture.editor, myFixture.file);
       }
     }.execute()
   }
