@@ -304,7 +304,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """
   }
 
-  public void testTwoQuickRestartsAfterHiding() {
+  public void _testTwoQuickRestartsAfterHiding() {
     for (i in 0..10) {
       myFixture.configureByText("a${i}.java", """
       class A {
@@ -729,6 +729,20 @@ class Foo {
     assert !lookup
   }
 
+  public void _testRestartWithInvisibleLookup() {
+    registerLongCompletionContributor()
+
+    myFixture.configureByText("a.java", """ class Foo { { int abcdef; <caret> } } """)
+    myFixture.type 'a'
+    joinAutopopup()
+    assert lookup
+    edt { myFixture.type 'bc' }
+    joinAlarm()
+    joinCompletion()
+    assert lookup
+    edt { assert lookup.shown }
+  }
+
   private void joinSomething(int degree) {
     if (degree == 0) return
     joinAlarm()
@@ -742,7 +756,7 @@ class Foo {
     joinCompletion()
   }
 
-  public void testEveryPossibleWayToTypeIf() {
+  public void _testEveryPossibleWayToTypeIf() {
     def src = "class Foo { { int ifa; <caret> } }"
     def result = "class Foo { { int ifa; if <caret> } }"
     int actions = 5
