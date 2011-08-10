@@ -329,7 +329,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                        final boolean caseSensitively,
                                        @NotNull String text,
                                        @NotNull final Processor<PsiFile> processor,
-                                       ProgressIndicator progress) {
+                                       @Nullable ProgressIndicator progress) {
     List<String> words = StringUtil.getWordsIn(text);
     if (words.isEmpty()) return true;
     Collections.sort(words, new Comparator<String>() {
@@ -760,7 +760,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public SearchCostResult isCheapEnoughToSearch(@NotNull String name,
                                                 @NotNull GlobalSearchScope scope,
                                                 @Nullable final PsiFile fileToIgnoreOccurencesIn,
-                                                ProgressIndicator progress) {
+                                                @Nullable ProgressIndicator progress) {
     final int[] count = {0};
     if (!processFilesWithText(scope, UsageSearchContext.ANY, true, name, new Processor<PsiFile>() {
       public boolean process(PsiFile file) {

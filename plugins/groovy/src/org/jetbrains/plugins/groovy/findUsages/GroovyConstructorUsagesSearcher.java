@@ -25,10 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchRequestCollector;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -148,7 +145,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
                                               final boolean searchGppCalls,
                                               final Processor<GrNewExpression> newExpressionProcessor,
                                               final LiteralConstructorSearcher literalProcessor) {
-    final Set<PsiMethod> processedMethods = new ConcurrentHashSet<PsiMethod>();
+    final Set<PsiAnchor> processedMethods = new ConcurrentHashSet<PsiAnchor>();
 
     ReferencesSearch.searchOptimized(clazz, scope, true, collector, true, new PairProcessor<PsiReference, SearchRequestCollector>() {
       @Override
@@ -163,7 +160,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
 
         if (searchGppCalls) {
           final PsiMethod method = getMethodToSearchForCallsWithLiteralArguments(element, clazz);
-          if (method != null && processedMethods.add(method)) {
+          if (method != null && processedMethods.add(PsiAnchor.create(method))) {
             processGppMethodCalls(clazz, scope, collector, method, literalProcessor);
           }
         }
@@ -201,6 +198,15 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
                                             SearchRequestCollector originalCollector, @NotNull PsiMethod currentTarget,
                                             final LiteralConstructorSearcher literalProcessor) {
     final SearchScope gppScope = getGppScope(targetClass.getProject()).intersectWith(scope);
+
+    if (gppScope instanceof GlobalSearchScope) {
+      String name = currentTarget.getName();
+      if (currentTarget.getManager().getSearchHelper().isCheapEnoughToSearch(name, (GlobalSearchScope)gppScope, null, null) ==
+          PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
+        return;
+      }
+    }
+
     final ReadActionProcessor<PsiReference> gppCallProcessor = new ReadActionProcessor<PsiReference>() {
 
       @Nullable
