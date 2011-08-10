@@ -32,6 +32,7 @@ import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -612,7 +613,7 @@ public class IdeEventQueue extends EventQueue {
           }
           if (showingWindow != null) {
             final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
-            Runnable requestDefaultFocus = new Runnable() {
+            ExpirableRunnable maybeRequestDefaultFocus = new ExpirableRunnable.AlwaysValid() {
               public void run() {
                 if (UIUtil.isMeaninglessFocusOwner(mgr.getFocusOwner())) {
                   if (getPopupManager().requestDefaultFocus(false)) return;
@@ -624,12 +625,7 @@ public class IdeEventQueue extends EventQueue {
                 }
               }
             };
-            if (e != null) {
-              fm.doWhenFocusSettlesDown(requestDefaultFocus);
-            }
-            else {
-              requestDefaultFocus.run();
-            }
+            fm.revalidateFocus(maybeRequestDefaultFocus);
           }
         }
       }

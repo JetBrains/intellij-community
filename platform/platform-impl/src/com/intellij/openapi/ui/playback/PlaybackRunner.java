@@ -101,6 +101,7 @@ public class PlaybackRunner {
         }
       }).doWhenRejected(new Runnable() {
         public void run() {
+          myCallback.message("Stopped", cmdIndex);
           myActionCallback.setRejected();
         }
       });

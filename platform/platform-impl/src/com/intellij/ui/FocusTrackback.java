@@ -218,7 +218,7 @@ public class FocusTrackback {
       }).doWhenRejected(new Runnable() {
         @Override
         public void run() {
-          focusManager.doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(finalProject) {
+          focusManager.revalidateFocus(new ExpirableRunnable.ForProject(finalProject) {
             @Override
             public void run() {
               if (UIUtil.isMeaninglessFocusOwner(focusManager.getFocusOwner())) {

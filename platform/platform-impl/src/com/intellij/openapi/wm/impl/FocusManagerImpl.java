@@ -87,9 +87,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   };
   private boolean myFlushWasDelayedToFixFocus;
+  private ExpirableRunnable myFocusRevalidator;
+
+  private Set<FurtherRequestor> myValidFurtherRequestors = new HashSet<FurtherRequestor>();
 
   private boolean canFlushIdleRequests() {
-    return isFocusTransferReady() && !isIdleQueueEmpty() && !IdeEventQueue.getInstance().isDispatchingFocusEvent();
+    Component focusOwner = getFocusOwner();
+    return isFocusTransferReady()
+           && !isIdleQueueEmpty()
+           && !IdeEventQueue.getInstance().isDispatchingFocusEvent()
+           && !(focusOwner == null && myValidFurtherRequestors.size() > 0);
   }
 
   private final Map<IdeFrame, WeakReference<Component>> myLastFocused = new HashMap<IdeFrame, WeakReference<Component>>();
@@ -226,8 +233,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
             };
 
           myCmdTimestamp++;
+          revalidateFurtherRequestors();
           if (forced) {
             myForcedCmdTimestamp++;
+            revalidateFurtherRequestors();
           }
 
           command.run().doWhenDone(new Runnable() {
@@ -421,6 +430,18 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private void flushIdleRequests() {
+    if (myFocusRevalidator != null) {
+      ExpirableRunnable revalidator = myFocusRevalidator;
+      myFocusRevalidator = null;
+      if (!revalidator.isExpired()) {
+        revalidator.run();
+        if (!canFlushIdleRequests()) {
+          restartIdleAlarm();
+          return;
+        }
+      }
+    }
+
     int currentModalityCount = getCurrentModalityCount();
     try {
       incFlushingRequests(1, currentModalityCount);
@@ -484,10 +505,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
 
       if (isPendingKeyEventsRedispatched()) {
-        boolean focusOk = getFocusOwner() != null || myFlushWasDelayedToFixFocus;
-        if (!focusOk) {
+        boolean focusOk = getFocusOwner() != null;
+        if (!focusOk && !myFlushWasDelayedToFixFocus) {
           IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
           myFlushWasDelayedToFixFocus = true;
+        } else if (!focusOk && myFlushWasDelayedToFixFocus) {
+          myFlushWasDelayedToFixFocus = false;
         }
 
         if (canFlushIdleRequests() && getFlushingIdleRequests() <= 1 && (focusOk || !myFlushWasDelayedToFixFocus)) {
@@ -655,7 +678,26 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public FocusRequestor getFurtherRequestor() {
-    return new FurtherRequestor(this, getTimestamp(true));
+    FurtherRequestor requestor = new FurtherRequestor(this, getTimestamp(true));
+    myValidFurtherRequestors.add(requestor);
+    revalidateFurtherRequestors();
+    return requestor;
+  }
+
+  private void revalidateFurtherRequestors() {
+    Iterator<FurtherRequestor> requestorIterator = myValidFurtherRequestors.iterator();
+    while (requestorIterator.hasNext()) {
+      FurtherRequestor each = requestorIterator.next();
+      if (each.isExpired()) {
+        requestorIterator.remove();
+      }
+    }
+  }
+  
+  @Override
+  public void revalidateFocus(@NotNull ExpirableRunnable runnable) {
+    myFocusRevalidator = runnable;
+    restartIdleAlarm();
   }
 
   @Override
@@ -725,13 +767,17 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     @NotNull
     @Override
     public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
-      return myExpirable.isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(c, forced);
+      return isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(c, forced);
+    }
+
+    private boolean isExpired() {
+      return myExpirable.isExpired();
     }
 
     @NotNull
     @Override
     public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
-      return myExpirable.isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(command, forced);
+      return isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(command, forced);
     }
   }
 
