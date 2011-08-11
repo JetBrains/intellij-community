@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PySubscriptionExpression extends PyExpression {
+public interface PySubscriptionExpression extends PyQualifiedExpression, PyReferenceOwner {
   PyExpression getOperand();
 
   @Nullable

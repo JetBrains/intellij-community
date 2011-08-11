@@ -1,5 +1,7 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.PsiElement;
+
 /** How we refer to a name */
 public enum AccessDirection {
 
@@ -17,10 +19,20 @@ public enum AccessDirection {
    * @return the access direction of element, judging from surrounding statements.
    */
   public static AccessDirection of(PyElement element) {
-    AccessDirection ctx;
-    if (element instanceof PyTargetExpression) ctx = WRITE;
-    else if (element.getParent() instanceof PyDelStatement) ctx = DELETE;
-    else ctx = READ;
-    return ctx;
+    final PsiElement parent = element.getParent();
+    if (element instanceof PyTargetExpression) {
+      return WRITE;
+    }
+    else if (parent instanceof PyAssignmentStatement) {
+      for (PyExpression target : ((PyAssignmentStatement)parent).getTargets()) {
+        if (target == element) {
+          return WRITE;
+        }
+      }
+    }
+    else if (parent instanceof PyDelStatement) {
+      return DELETE;
+    }
+    return READ;
   }
 }
