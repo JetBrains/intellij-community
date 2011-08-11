@@ -91,8 +91,7 @@ public class CollectClassMembersUtil {
   private static void processClass(PsiClass aClass, Map<String, CandidateInfo> allFields, Map<String, List<CandidateInfo>> allMethods, Map<String, CandidateInfo> allInnerClasses, Set<PsiClass> visitedClasses, PsiSubstitutor substitutor, boolean includeSynthetic, boolean shouldProcessInnerClasses) {
     LOG.assertTrue(aClass.isValid());
 
-    if (visitedClasses.contains(aClass)) return;
-    visitedClasses.add(aClass);
+    if (!visitedClasses.add(aClass)) return;
 
     for (PsiField field : aClass.getFields()) {
       String name = field.getName();
@@ -152,7 +151,7 @@ public class CollectClassMembersUtil {
     if (methods == null) {
       methods = new ArrayList<CandidateInfo>();
       allMethods.put(name, methods);
-      methods.add(new CandidateInfo(method, substitutor));
-    } else methods.add(new CandidateInfo(method, substitutor));
+    }
+    methods.add(new CandidateInfo(method, substitutor));
   }
 }
