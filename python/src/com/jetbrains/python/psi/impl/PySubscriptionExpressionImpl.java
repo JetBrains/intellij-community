@@ -9,10 +9,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyCollectionType;
-import com.jetbrains.python.psi.types.PySubscriptableType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +46,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
         res = ((Callable)resolved).getReturnType(context, null);
       }
     }
-    if (res == null) {
+    if (res == null || res instanceof PyNoneType) {
       final PyExpression indexExpression = getIndexExpression();
       if (indexExpression != null) {
         final PyType type = context.getType(getOperand());
