@@ -103,6 +103,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
   private static final int MAX_LEAKY_PROJECTS = 42;
   private final ProgressManager myProgressManager;
+  private boolean myDefaultProjectWasDisposed = false;
 
   @NotNull
   private static List<ProjectManagerListener> getListeners(Project project) {
@@ -185,6 +186,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       });
 
       myDefaultProject = null;
+      myDefaultProjectWasDisposed = true;
     }
   }
 
@@ -331,6 +333,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
   @NotNull
   public synchronized Project getDefaultProject() {
+    // TODO: uncomment this as soon as http://youtrack.jetbrains.net/issue/IDEA-71686 will be fixed!
+    //LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project was already disposed!");
     if (myDefaultProject == null) {
       try {
         myDefaultProject = createAndInitProject(null, null, true, ApplicationManager.getApplication().isUnitTestMode(), null);
