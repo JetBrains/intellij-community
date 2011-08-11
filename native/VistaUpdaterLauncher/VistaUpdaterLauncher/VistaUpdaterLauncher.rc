@@ -7,7 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+#include "windows.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -27,18 +27,18 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE
 BEGIN
-    "#include ""afxres.h""\r\n"
+    "#include ""windows.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE
 BEGIN
     "\r\n"
     "\0"
@@ -70,12 +70,12 @@ BEGIN
         BLOCK "041904b0"
         BEGIN
             VALUE "CompanyName", "JetBrains, Inc."
-            VALUE "FileDescription", "IntelliJ IDEA Automatic Update"
+            VALUE "FileDescription", "JetBrains Updater Launcher"
             VALUE "FileVersion", "1, 0, 0, 1"
-            VALUE "InternalName", "fsnotifier"
-            VALUE "LegalCopyright", "Copyright (C) 2009 JetBrains, Inc."
+            VALUE "InternalName", "vistalauncher"
+            VALUE "LegalCopyright", "Copyright (C) 2009-2011 JetBrains, Inc."
             VALUE "OriginalFilename", "vistalauncher.exe"
-            VALUE "ProductName", "IntelliJ IDEA"
+            VALUE "ProductName", "JetBrains Updater Launcher"
             VALUE "ProductVersion", "1, 0, 0, 1"
         END
     END
