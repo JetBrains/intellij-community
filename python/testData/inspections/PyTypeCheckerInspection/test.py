@@ -282,3 +282,12 @@ def test_type_assertions():
         print_int_or_str(x_1)
     x_7 = f_7()
     print_int(x_7)
+
+def test_local_type_resolve():
+    class C():
+        def f(self):
+            return 2
+    c = C()
+    x = c.f()
+    y = x
+    return y + <warning descr="Expected type 'one of (int, long, float, complex)', got 'str' instead">'foo'</warning>
