@@ -163,24 +163,23 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       LOG.debug("Starting framework detectors: " + detectorsToProcess);
     }
     final FileBasedIndex index = FileBasedIndex.getInstance();
-    Map<Integer, Collection<? extends DetectedFrameworkDescription>> newDescriptions = new HashMap<Integer, Collection<? extends DetectedFrameworkDescription>>();
+    List<DetectedFrameworkDescription> newDescriptions = new ArrayList<DetectedFrameworkDescription>();
+    List<DetectedFrameworkDescription> oldDescriptions = new ArrayList<DetectedFrameworkDescription>();
     final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(myProject);
     for (Integer id : detectorsToProcess) {
       final List<? extends DetectedFrameworkDescription> frameworks = runDetector(id, index, excludesConfiguration, true);
+      oldDescriptions.addAll(frameworks);
       final Collection<? extends DetectedFrameworkDescription> updated = myDetectedFrameworksData.updateFrameworksList(id, frameworks);
+      newDescriptions.addAll(updated);
+      oldDescriptions.removeAll(updated);
       if (LOG.isDebugEnabled()) {
         LOG.debug(frameworks.size() + " frameworks detected, " + updated.size() + " changed");
-      }
-      if (!updated.isEmpty()) {
-        newDescriptions.put(id, updated);
       }
     }
 
     Set<String> frameworkNames = new HashSet<String>();
-    for (final Integer detectorId : newDescriptions.keySet()) {
-      for (final DetectedFrameworkDescription description : newDescriptions.get(detectorId)) {
-        frameworkNames.add(description.getFrameworkType().getPresentableName());
-      }
+    for (final DetectedFrameworkDescription description : FrameworkDetectionUtil.removeDisabled(newDescriptions, oldDescriptions)) {
+      frameworkNames.add(description.getFrameworkType().getPresentableName());
     }
     if (!frameworkNames.isEmpty()) {
       String names = StringUtil.join(frameworkNames, ", ");

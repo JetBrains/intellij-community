@@ -98,7 +98,7 @@ public class DetectedFrameworksTree extends CheckboxTree {
   @Override
   protected void onNodeStateChanged(CheckedTreeNode node) {
     final List<DetectedFrameworkDescription> checked = Arrays.asList(getCheckedNodes(DetectedFrameworkDescription.class, null));
-    final List<DetectedFrameworkDescription> disabled = FrameworkDetectionUtil.getDisabledDescriptions(checked);
+    final List<DetectedFrameworkDescription> disabled = FrameworkDetectionUtil.getDisabledDescriptions(checked, Collections.<DetectedFrameworkDescription>emptyList());
     for (DetectedFrameworkDescription description : disabled) {
       final DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject(getRoot(), description);
       if (treeNode instanceof CheckedTreeNode) {
