@@ -43,6 +43,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -641,14 +642,18 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
           final PsiExpression expr1 = fieldConflictsResolver.fixInitializer(expr);
           PsiExpression initializer = RefactoringUtil.unparenthesizeExpression(expr1);
+          final SmartTypePointer selectedType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(
+            settings.getSelectedType());
           if (expr1 instanceof PsiNewExpression) {
             final PsiNewExpression newExpression = (PsiNewExpression)expr1;
             if (newExpression.getArrayInitializer() != null) {
               initializer = newExpression.getArrayInitializer();
             }
+            initializer = replaceExplicitWithDiamondWhenApplicable(initializer, selectedType.getType());
           }
+
           PsiDeclarationStatement declaration = JavaPsiFacade.getInstance(project).getElementFactory()
-            .createVariableDeclarationStatement(settings.getEnteredName(), settings.getSelectedType(), initializer);
+            .createVariableDeclarationStatement(settings.getEnteredName(), selectedType.getType(), initializer);
           if (!isInsideLoop) {
             declaration = (PsiDeclarationStatement) container.addBefore(declaration, anchor);
             LOG.assertTrue(expr1.isValid());
@@ -705,6 +710,23 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         }
       }
     };
+  }
+
+  public static PsiExpression replaceExplicitWithDiamondWhenApplicable(final PsiExpression initializer,
+                                                                       final PsiType expectedType) {
+    if (initializer instanceof PsiNewExpression) {
+      final PsiNewExpression newExpression = (PsiNewExpression)initializer;
+      final PsiExpression tryToDetectDiamondNewExpr = ((PsiVariable)JavaPsiFacade.getElementFactory(initializer.getProject())
+        .createVariableDeclarationStatement("x", expectedType, initializer).getDeclaredElements()[0])
+        .getInitializer();
+      if (tryToDetectDiamondNewExpr instanceof PsiNewExpression &&
+          PsiDiamondTypeUtil.canCollapseToDiamond((PsiNewExpression)tryToDetectDiamondNewExpr, initializer)) {
+        final PsiElement paramList = PsiDiamondTypeUtil
+          .replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
+        return PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);
+      }
+    }
+    return initializer;
   }
 
   public static PsiElement replace(final PsiExpression expr1, final PsiExpression ref, final Project project)
