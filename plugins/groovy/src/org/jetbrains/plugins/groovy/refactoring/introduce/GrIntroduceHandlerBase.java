@@ -274,7 +274,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Nullable
-  private static GrVariable findVariable(GroovyFile file, int startOffset, int endOffset) {
+  public static GrVariable findVariable(GroovyFile file, int startOffset, int endOffset) {
     GrVariable var = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrVariable.class);
     if (var == null) {
       final GrVariableDeclaration variableDeclaration =

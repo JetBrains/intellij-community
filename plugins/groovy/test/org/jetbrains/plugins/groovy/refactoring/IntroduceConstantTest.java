@@ -18,14 +18,16 @@ package org.jetbrains.plugins.groovy.refactoring;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
@@ -55,15 +57,19 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testInsertInEnum() {
-    doTest("Planet", false, false, GrModifier.PROTECTED);
+    doTest("Planet", false, false, PsiModifier.PROTECTED);
   }
 
   public void testInsertInInterface() {
-    doTest("MyInterface", false, false, GrModifier.PROTECTED);
+    doTest("MyInterface", false, false, PsiModifier.PROTECTED);
+  }
+
+  public void testTupleDeclaration() {
+    doTest("Test", false, false, PsiModifier.PUBLIC);
   }
 
   private void doTest() {
-    doTest(null, true, true, GrModifier.PUBLIC);
+    doTest(null, true, true, PsiModifier.PUBLIC);
   }
 
   private void doTest(@Nullable String targetClassName, boolean replaceAllOccurences, boolean useExplicitType, String modifier) {
@@ -74,9 +80,9 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     final GrIntroduceConstantHandler handler = new GrIntroduceConstantHandler();
     final Editor editor = myFixture.getEditor();
 
-    final GrExpression expression = findExpression(editor);
-
-    final GrIntroduceContext context = handler.getContext(getProject(), editor, expression, null);
+    final GrExpression expression = findExpression();
+    final GrVariable variable = findVariable();
+    final GrIntroduceContext context = handler.getContext(getProject(), editor, expression, variable);
 
     PsiClass targetClass;
     if (targetClassName == null) {
@@ -88,7 +94,9 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     assertNotNull("target class is null", targetClass);
 
     final GrIntroduceConstantSettings settings =
-      new MockIntroduceConstantSettings(targetClass, replaceAllOccurences, useExplicitType ? expression.getType() : null, modifier);
+      new MockIntroduceConstantSettings(targetClass, replaceAllOccurences,
+                                        useExplicitType ? (expression != null ? expression.getType() : variable.getType()) : null,
+                                        modifier);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -100,7 +108,17 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
   }
 
-  private GrExpression findExpression(Editor editor) {
+  @Nullable
+  private GrVariable findVariable() {
+    final Editor editor = myFixture.getEditor();
+    final int start = editor.getSelectionModel().getSelectionStart();
+    final int end = editor.getSelectionModel().getSelectionEnd();
+    return GrIntroduceHandlerBase.findVariable((GroovyFile)myFixture.getFile(), start, end);
+  }
+
+  @Nullable
+  private GrExpression findExpression() {
+    final Editor editor = myFixture.getEditor();
     final int start = editor.getSelectionModel().getSelectionStart();
     final int end = editor.getSelectionModel().getSelectionEnd();
     return GrIntroduceHandlerBase.findExpression((GroovyFileBase)myFixture.getFile(), start, end);

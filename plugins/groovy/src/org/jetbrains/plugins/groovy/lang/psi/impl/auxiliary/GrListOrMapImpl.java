@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
@@ -74,6 +75,22 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     final ASTNode lastChild = getNode().getLastChildNode();
     getNode().addLeaf(mCOMMA, ",", lastChild);
     return super.addInternal(first, last, lastChild.getTreePrev(), false);
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    final PsiElement psi = child.getPsi();
+    if (psi instanceof GrExpression || psi instanceof GrNamedArgument) {
+      PsiElement prev = PsiUtil.getPrevNonSpace(psi);
+      PsiElement next = PsiUtil.getNextNonSpace(psi);
+      if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
+        super.deleteChildInternal(prev.getNode());
+      }
+      else if (next instanceof LeafPsiElement && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
+        super.deleteChildInternal(next.getNode());
+      }
+    }
+    super.deleteChildInternal(child);
   }
 
   public PsiType getType() {
