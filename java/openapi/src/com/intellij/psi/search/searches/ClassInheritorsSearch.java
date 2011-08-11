@@ -58,7 +58,12 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         if (progress != null) {
           progress.pushState();
-          String className = baseClass.getName();
+          String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            @Override
+            public String compute() {
+              return baseClass.getName();
+            }
+          });
           progress.setText(className != null ?
                            PsiBundle.message("psi.search.inheritors.of.class.progress", className) :
                            PsiBundle.message("psi.search.inheritors.progress"));

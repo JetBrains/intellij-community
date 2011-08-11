@@ -26,14 +26,24 @@ import com.intellij.psi.*;
  */
 public class EditorTextFieldWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor {
   public EditorTextFieldWithBrowseButton(Project project, boolean isClassAccepted) {
-    super(new EditorTextField(createDocument("", PsiManager.getInstance(project), isClassAccepted), project, StdFileTypes.JAVA), null);
+    this(project, isClassAccepted, JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
   }
 
-  private static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
+  public EditorTextFieldWithBrowseButton(Project project,
+                                         boolean isClassAccepted,
+                                         final JavaCodeFragment.VisibilityChecker visibilityChecker) {
+    super(new EditorTextField(createDocument("", PsiManager.getInstance(project), isClassAccepted,
+                                             visibilityChecker), project, StdFileTypes.JAVA), null);
+  }
+
+  private static Document createDocument(final String text,
+                                         PsiManager manager,
+                                         boolean isClassesAccepted,
+                                         JavaCodeFragment.VisibilityChecker visibilityChecker) {
     PsiElement defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
     final JavaCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
       .createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
-    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+    fragment.setVisibilityChecker(visibilityChecker);
     return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
   }
 
