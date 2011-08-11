@@ -658,4 +658,5 @@
   <projectService serviceInterface="com.intellij.openapi.vcs.CodeSmellDetector"
                   serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
 
+  <editorTabTitleProvider implementation="com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider"/>
 </extensions>

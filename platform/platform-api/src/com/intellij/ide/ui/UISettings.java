@@ -90,6 +90,8 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
    * Defines whether asterisk is shown on modified editor tab or not
    */
   public boolean MARK_MODIFIED_TABS_WITH_ASTERISK = false;
+  
+  public boolean SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = false;
 
   /**
    * Not tabbed pane
