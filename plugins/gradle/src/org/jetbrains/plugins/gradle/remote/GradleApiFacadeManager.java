@@ -29,8 +29,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.remote.api.GradleApiFacade;
-import org.jetbrains.plugins.gradle.remote.api.RemoteGradleProcessSettings;
 import org.jetbrains.plugins.gradle.remote.impl.GradleApiFacadeImpl;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
@@ -124,7 +122,8 @@ public class GradleApiFacadeManager {
         params.setMainClass(MAIN_CLASS_NAME);
         
         params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
-        //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5009");
+        // TODO den comment
+        params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5009");
         return params;
       }
 
