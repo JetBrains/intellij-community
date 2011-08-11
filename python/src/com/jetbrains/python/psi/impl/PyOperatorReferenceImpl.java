@@ -1,0 +1,67 @@
+package com.jetbrains.python.psi.impl;
+
+import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeReference;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author vlan
+ */
+public class PyOperatorReferenceImpl extends PyReferenceImpl {
+  public PyOperatorReferenceImpl(PyBinaryExpression element, @NotNull PyResolveContext context) {
+    super(element, context);
+  }
+
+  @NotNull
+  @Override
+  protected List<RatedResolveResult> resolveInner() {
+    final PyBinaryExpression binaryExpr = (PyBinaryExpression)myElement;
+    final String name = binaryExpr.getReferencedName();
+    List<RatedResolveResult> res;
+    res = resolveMember(binaryExpr.getLeftExpression(), name);
+    if (res.isEmpty()) {
+      res = resolveMember(binaryExpr.getRightExpression(), leftToRightOperatorName(name));
+    }
+    return res;
+  }
+
+  @Override
+  public boolean isReferenceTo(PsiElement element) {
+    if (element instanceof PyParameter || element instanceof PyTargetExpression) {
+      return false;
+    }
+    return super.isReferenceTo(element);
+  }
+
+  @Override
+  public String toString() {
+    return "PyOperatorReferenceImpl(" + myElement + "," + myContext + ")";
+  }
+
+  private static String leftToRightOperatorName(String name) {
+    return name.replaceFirst("__([a-z]+)__", "__r$1__");
+  }
+
+  @NotNull
+  private List<RatedResolveResult> resolveMember(@Nullable PyExpression object, @Nullable String name) {
+    final ArrayList<RatedResolveResult> results = new ArrayList<RatedResolveResult>();
+    if (object != null && name != null) {
+      final PyType type = myContext.getTypeEvalContext().getType(object);
+      if (type != null && !(type instanceof PyTypeReference)) {
+        List<? extends RatedResolveResult> res = type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
+        if (res != null) {
+          results.addAll(res);
+        }
+      }
+    }
+    return results;
+  }
+}

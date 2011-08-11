@@ -59,7 +59,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
         </clientProperties>
         <border type="none" title="Python Interpreter"/>
         <children>

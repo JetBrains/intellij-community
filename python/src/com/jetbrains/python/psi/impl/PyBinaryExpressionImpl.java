@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExpression, PyQualifiedExpression {
+public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExpression {
 
   public PyBinaryExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -93,13 +93,13 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
 
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.slow()));
+    return getReference(PyResolveContext.noImplicits());
   }
 
   public PsiReference getReference(PyResolveContext resolveContext) {
     final PyElementType t = getOperator();
     if (t != null && t.getSpecialMethodName() != null) {
-      return new PyQualifiedReferenceImpl(this, resolveContext);
+      return new PyOperatorReferenceImpl(this, resolveContext);
     }
     return null;
   }

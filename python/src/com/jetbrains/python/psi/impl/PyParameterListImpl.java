@@ -158,4 +158,35 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   public boolean mustResolveOutside() {
     return true;
   }
+
+  public String getPresentableText(final boolean includeDefaultValue) {
+    final StringBuilder target = new StringBuilder();
+    final String COMMA = ", ";
+    target.append("(");
+    ParamHelper.walkDownParamArray(
+      getParameters(),
+      new ParamHelper.ParamWalker() {
+        public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
+          target.append("(");
+        }
+
+        public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
+          target.append(")");
+          if (!last) target.append(COMMA);
+        }
+
+        public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
+          target.append(param.getRepr(includeDefaultValue));
+          if (!last) target.append(COMMA);
+        }
+
+        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
+          target.append('*');
+          if (!last) target.append(COMMA);
+        }
+      }
+    );
+    target.append(")");
+    return target.toString();
+  }
 }

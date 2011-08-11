@@ -191,7 +191,11 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   public PyExpression createExpressionFromText(final String text) {
-    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), text);
+    return createExpressionFromText(LanguageLevel.getDefault(), text);
+  }
+
+  public PyExpression createExpressionFromText(final LanguageLevel languageLevel, final String text) {
+    final PsiFile dummyFile = createDummyFile(languageLevel, text);
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     return expressionStatement.getExpression();
   }
