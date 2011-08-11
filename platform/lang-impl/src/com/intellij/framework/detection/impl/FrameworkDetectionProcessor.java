@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileContentImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -90,7 +91,7 @@ public class FrameworkDetectionProcessor {
 
     myProgressIndicator.setText2(file.getPresentableUrl());
     try {
-      FileContent fileContent = new FileContent(file, file.contentsToByteArray(false));
+      FileContent fileContent = new FileContentImpl(file, file.contentsToByteArray(false));
       for (FrameworkDetectorData detector : myDetectorsByFileType.get(fileType)) {
         if (detector.myFilePattern.accepts(fileContent)) {
           detector.mySuitableFiles.add(file);
