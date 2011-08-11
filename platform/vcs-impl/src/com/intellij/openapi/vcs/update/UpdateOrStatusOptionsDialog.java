@@ -43,7 +43,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
       myMainPanel = new JPanel(new BorderLayout());
       final Configurable configurable = confs.keySet().iterator().next();
       addComponent(confs.get(configurable), configurable, BorderLayout.CENTER);
-      myMainPanel.add(Box.createHorizontalGlue());
+      myMainPanel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
     }
     else {
       myMainPanel = new JTabbedPane();
