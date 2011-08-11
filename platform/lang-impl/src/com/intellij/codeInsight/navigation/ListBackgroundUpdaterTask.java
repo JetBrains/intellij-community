@@ -52,6 +52,13 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JB
 
   @Override
   protected void replaceModel(ArrayList<PsiElement> data) {
+    final Object selectedValue = myComponent.getSelectedValue();
+    final int index = myComponent.getSelectedIndex();
     ((NameFilteringListModel)myComponent.getModel()).replaceAll(data);
+    if (index == 0) {
+      myComponent.setSelectedIndex(0);
+    } else {
+      myComponent.setSelectedValue(selectedValue, true);
+    }
   }
 }

@@ -95,6 +95,16 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
         if (myParameterIndex < 0) return;
         restartInplaceIntroduceTemplate();
       }
+
+      protected TIntArrayList getParametersToRemove() {
+        TIntArrayList parameters = new TIntArrayList();
+        for (int i = 0; i < myParametersToRemove.length; i++) {
+          if (myParametersToRemove[i] != null) {
+            parameters.add(i);
+          }
+        }
+        return parameters;
+      }
     };
     myPanel.appendOccurrencesDelegate(myWholePanel);
   }

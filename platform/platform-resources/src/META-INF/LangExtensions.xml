@@ -516,7 +516,6 @@
   <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.lookup.impl.EndHandler"/>
   <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.lookup.impl.BackspaceHandler"/>
   <editorActionHandler action="EditorDeleteToWordStart" implementationClass="com.intellij.codeInsight.lookup.impl.DeleteToWordStartHandler"/>
-  <editorTypedHandler implementationClass="com.intellij.codeInsight.lookup.impl.TypedHandler"/>
 
   <!-- TemplateManagerActions -->
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EscapeHandler"/>
@@ -532,6 +531,7 @@
   <!-- HighlightManagerActions -->
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler" order="after hide-hints"/>
 
+  <typedHandler implementation="com.intellij.codeInsight.lookup.impl.LookupTypedHandler" id="lookup" order="first"/>
   <typedHandler implementation="com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler" id="completionAutoPopup"/>
   <typedHandler implementation="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler"/>
 

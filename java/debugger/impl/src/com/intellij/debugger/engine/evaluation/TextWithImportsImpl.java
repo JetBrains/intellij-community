@@ -68,7 +68,7 @@ public final class TextWithImportsImpl implements TextWithImports{
   }
 
   private static Trinity<String, String, FileType> parseExternalForm(String s) {
-    String[] split = s.trim().split(String.valueOf(DebuggerEditorImpl.SEPARATOR));
+    String[] split = s.split(String.valueOf(DebuggerEditorImpl.SEPARATOR));
     return Trinity.create(split[0], split.length > 1 ? split[1] : "", split.length > 2 ? FileTypeManager.getInstance().getStdFileType(split[2]) : null);
   }
 
