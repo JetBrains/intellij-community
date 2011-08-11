@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
@@ -63,8 +59,12 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
+/**
+ * @author max
+ */
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileImpl("*?;%NULL", null, -42);
+
   private final NewVirtualFileSystem myFS;
 
   // guarded by this
@@ -549,13 +549,5 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, final long newTimeStamp) throws IOException {
     throw new IOException("getOutputStream() must not be called against a directory: " + getUrl());
-  }
-
-  @Override
-  public boolean isSymLink() {
-    if (myFS instanceof LocalFileSystem) {
-      return ((LocalFileSystem)myFS).isSymLink(this);
-    }
-    return false;
   }
 }
