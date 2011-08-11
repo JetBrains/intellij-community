@@ -50,7 +50,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
 
   protected JComponent createCenterPanel() {
     myOptionsPanel = new JPanel();
-    myOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder(getBorderTitle(), false, true));
+    myOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder(getBorderTitle(), false, true, true));
     myOptionsPanel.setLayout(new BoxLayout(myOptionsPanel, BoxLayout.Y_AXIS));
 
     myRbInlineAll = new JRadioButton();

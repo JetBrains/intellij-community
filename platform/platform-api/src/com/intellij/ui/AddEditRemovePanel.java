@@ -72,7 +72,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
 
     final String label = getLabelText();
     if (label != null) {
-      setBorder(IdeBorderFactory.createTitledBorder(label, false, false));
+      setBorder(IdeBorderFactory.createTitledBorder(label, false, false, true));
     }
 
     final JPanel panel = ToolbarDecorator.createDecorator(myTable)

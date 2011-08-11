@@ -225,7 +225,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
       }
     };
     panel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("anonymousToInner.parameters.panel.border.title"), false, true));
+      RefactoringBundle.message("anonymousToInner.parameters.panel.border.title"), false, true, true));
     return panel;
   }
 

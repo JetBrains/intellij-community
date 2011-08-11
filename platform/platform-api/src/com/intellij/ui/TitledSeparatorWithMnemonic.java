@@ -30,11 +30,15 @@ public class TitledSeparatorWithMnemonic extends TitledSeparator {
   private String originalText;
 
   public TitledSeparatorWithMnemonic() {
-    super();
+    this("", null);
   }
 
   public TitledSeparatorWithMnemonic(String textWithMnemonic, @Nullable JComponent labelFor) {
-    super();
+    this(textWithMnemonic, labelFor, false, true);
+  }
+
+  public TitledSeparatorWithMnemonic(String textWithMnemonic, @Nullable JComponent labelFor, boolean boldFont, boolean smallFont) {
+    super(textWithMnemonic, boldFont, smallFont);
     setText(textWithMnemonic);
     setLabelFor(labelFor);
   }

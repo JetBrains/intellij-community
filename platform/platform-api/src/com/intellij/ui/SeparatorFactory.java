@@ -28,10 +28,15 @@ public class SeparatorFactory {
   private SeparatorFactory() {
   }
 
-  public static JComponent createSeparator(String textWithMnemonic, @Nullable JComponent labelFor) {
-    return new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor);
+  public static JComponent createSeparator(String textWithMnemonic, @Nullable JComponent labelFor, boolean boldFont, boolean smallFont) {
+    return new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor, boldFont, smallFont);
   }
 
+  public static JComponent createSeparator(String textWithMnemonic, @Nullable JComponent labelFor) {
+    return new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor, false, true);
+  }
+
+  @Deprecated
   public static JComponent createSeparatorWithBoldTitle(String textWithMnemonic, @Nullable JComponent labelFor) {
     TitledSeparatorWithMnemonic separator = new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor);
     separator.setTitleFont(separator.getTitleFont().deriveFont(Font.BOLD));
