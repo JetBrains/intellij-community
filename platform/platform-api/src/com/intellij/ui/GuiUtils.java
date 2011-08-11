@@ -123,7 +123,7 @@ public class GuiUtils {
 
   public static JPanel makeTitledPanel(JComponent aComponent, String aTitle) {
     JPanel result = makePaddedPanel(aComponent, false, true, false, true);
-    return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle, false, true));
+    return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle, false, true, true));
   }
 
 

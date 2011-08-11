@@ -95,6 +95,11 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
+  public void revalidateFocus(@NotNull ExpirableRunnable runnable) {
+    getGlobalInstance().revalidateFocus(runnable);
+  }
+
+  @Override
   public Component getFocusOwner() {
     return getGlobalInstance().getFocusOwner();
   }

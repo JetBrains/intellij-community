@@ -101,7 +101,7 @@ public class OptionGroup {
                                      new Insets(0, 0, 0, 0), 0, 0));
 
     if (myTitle != null) {
-      IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder(myTitle, true, true);
+      IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder(myTitle, true, true, true);
       panel.setBorder(titledBorder);
       titledBorder.acceptMinimumSize(panel);
     }

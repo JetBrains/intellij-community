@@ -121,7 +121,7 @@ public class HectorComponent extends JPanel {
                                                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle, false, false));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle, false, false, true));
     final boolean addLabel = mySliders.size() > 1;
     if (addLabel) {
       layoutVertical(panel);

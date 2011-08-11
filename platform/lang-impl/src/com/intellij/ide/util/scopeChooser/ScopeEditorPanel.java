@@ -41,6 +41,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,6 +135,16 @@ public class ScopeEditorPanel {
     });
 
     initTree(myPackageTree);
+    new UiNotifyConnector(myPanel, new Activatable() {
+      @Override
+      public void showNotify() {
+      }
+
+      @Override
+      public void hideNotify() {
+        cancelCurrentProgress();
+      }
+    });
   }
 
   private void updateCaretPositionText() {
@@ -513,7 +525,7 @@ public class ScopeEditorPanel {
   }
 
   protected PanelProgressIndicator createProgressIndicator(final boolean requestFocus) {
-    return new MyPanelProgressIndicator(true, requestFocus);
+    return new MyPanelProgressIndicator(requestFocus);
   }
 
   public void cancelCurrentProgress(){
@@ -646,16 +658,14 @@ public class ScopeEditorPanel {
   }
 
   protected class MyPanelProgressIndicator extends PanelProgressIndicator {
-    private final boolean myCheckVisible;
     private final boolean myRequestFocus;
 
-    public MyPanelProgressIndicator(final boolean checkVisible, final boolean requestFocus) {
+    public MyPanelProgressIndicator(final boolean requestFocus) {
       super(new Consumer<JComponent>() {
         public void consume(final JComponent component) {
           setToComponent(component, requestFocus);
         }
       });
-      myCheckVisible = checkVisible;
       myRequestFocus = requestFocus;
     }
 
@@ -665,7 +675,7 @@ public class ScopeEditorPanel {
     }
 
     public boolean isCanceled() {
-      return super.isCanceled() || myTextChanged || (myCheckVisible && !myPanel.isShowing());
+      return super.isCanceled() || myTextChanged;
     }
 
     public void stop() {

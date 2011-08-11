@@ -96,6 +96,11 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
+  public void revalidateFocus(@NotNull ExpirableRunnable runnable) {
+
+  }
+
+  @Override
   public Component getFocusOwner() {
     return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
   }

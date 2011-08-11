@@ -134,7 +134,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myProgressIcon.setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
     myProgressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"));
 
-    myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
+    myUpdateQueue = new MergingUpdateQueue("Progress indicator", 200, true, MergingUpdateQueue.ANY_COMPONENT);
     myPopup = new ProcessPopup(this);
 
     setRefreshVisible(false);

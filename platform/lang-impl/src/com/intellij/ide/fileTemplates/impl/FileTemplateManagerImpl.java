@@ -32,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -98,7 +99,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
   }
 
-  public FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager) {
+  public FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager, ProjectManager pm /*need this to ensure disposal of the service _after_ project manager*/) {
     myTypeManager = typeManager;
     myDefaultTemplatesManager = new FTManager(DEFAULT_TEMPLATES_CATEGORY, ROOT_DIR);
     myInternalTemplatesManager = new FTManager(INTERNAL_TEMPLATES_CATEGORY, INTERNAL_DIR);

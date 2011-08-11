@@ -34,4 +34,11 @@ public interface ExpirableRunnable extends Runnable, Expirable  {
     }
   }
 
+  abstract class AlwaysValid implements ExpirableRunnable {
+    @Override
+    public boolean isExpired() {
+      return false;
+    }
+  }
+
 }

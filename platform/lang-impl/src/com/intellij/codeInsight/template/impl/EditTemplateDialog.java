@@ -126,7 +126,7 @@ public class EditTemplateDialog extends DialogWrapper {
 
     JPanel panel1 = new JPanel();
     panel1.setBorder(IdeBorderFactory.createTitledBorder(
-      CodeInsightBundle.message("dialog.edit.template.template.text.title"), false, false));
+      CodeInsightBundle.message("dialog.edit.template.template.text.title"), false, false, true));
     panel1.setPreferredSize(new Dimension(500, 160));
     panel1.setMinimumSize(new Dimension(500, 160));
     panel1.setLayout(new BorderLayout());
@@ -232,7 +232,7 @@ public class EditTemplateDialog extends DialogWrapper {
   private JPanel createTemplateOptionsPanel() {
     JPanel panel = new JPanel();
     panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.options.title"),
-                                                        false, true));
+                                                        false, true, true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -284,7 +284,7 @@ public class EditTemplateDialog extends DialogWrapper {
 
     JPanel panel = new JPanel();
     panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.context.title"),
-                                                        false, true));
+                                                        false, true, true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;

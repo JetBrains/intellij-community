@@ -54,13 +54,16 @@ public class IdeBorderFactory {
   }
 
   public static TitledBorder createTitledBorder(String s) {
-    return createTitledBorder(s, false, true);
+    return createTitledBorder(s, false, true, true);
   }
 
-  public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent) {
+  public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont) {
     Font font = UIUtil.getBorderFont();
     if (hasBoldFont) {
       font = font.deriveFont(Font.BOLD);
+    }
+    if (hasSmallFont) {
+      font = UIUtil.getFont(UIUtil.FontSize.SMALL, font);
     }
     int indent = hasIndent ? (hasBoldFont ? 18 : 15) : 0;
     Insets insets = hasBoldFont ? new Insets(5,0,10,0) : new Insets(3,0,6,0);
@@ -83,7 +86,7 @@ public class IdeBorderFactory {
     private SimpleWithIndent() {
     }
     public static TitledBorder createTitledBorder(Border border, String title, int titleJustification, int titlePosition, Font titleFont, Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, false, true);
+      return IdeBorderFactory.createTitledBorder(title, false, true, true);
     }
   }
 
@@ -91,7 +94,7 @@ public class IdeBorderFactory {
     private SimpleWithoutIndent() {
     }
     public static TitledBorder createTitledBorder(Border border, String title, int titleJustification, int titlePosition, Font titleFont, Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, false, false);
+      return IdeBorderFactory.createTitledBorder(title, false, false, true);
     }
   }
 
@@ -99,7 +102,7 @@ public class IdeBorderFactory {
     private BoldWithIndent() {
     }
     public static TitledBorder createTitledBorder(Border border, String title, int titleJustification, int titlePosition, Font titleFont, Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, true, true);
+      return IdeBorderFactory.createTitledBorder(title, true, true, true);
     }
   }
 
@@ -107,7 +110,7 @@ public class IdeBorderFactory {
     private BoldWithoutIndent() {
     }
     public static TitledBorder createTitledBorder(Border border, String title, int titleJustification, int titlePosition, Font titleFont, Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, true, false);
+      return IdeBorderFactory.createTitledBorder(title, true, false, true);
     }
   }
 
