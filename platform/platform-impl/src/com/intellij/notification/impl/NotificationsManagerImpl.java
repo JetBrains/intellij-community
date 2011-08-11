@@ -245,12 +245,9 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       text.addHyperlinkListener(listener);
     }
 
-    text.setText(NotificationsUtil.buildHtml(notification));
-
-    final JLabel label = new JLabel(text.getText());
-    final Dimension size = label.getPreferredSize();
+    final JLabel label = new JLabel(NotificationsUtil.buildHtml(notification, null));
+    text.setText(NotificationsUtil.buildHtml(notification, "width:" + Math.min(400, label.getPreferredSize().width) + "px;"));
     text.setEditable(false);
-
     text.setOpaque(false);
 
     if (UIUtil.isUnderNimbusLookAndFeel()) {
@@ -258,7 +255,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
 
     text.setBorder(null);
-    text.setPreferredSize(size);
 
     final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
 
