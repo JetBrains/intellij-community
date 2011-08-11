@@ -32,7 +32,6 @@ public class PyTypeCheckerInspection extends PyInspection {
       session.putUserData(TIME_KEY, System.nanoTime());
     }
     return new PyInspectionVisitor(holder) {
-      // TODO: Show types in tooltips for variables
       // TODO: Visit decorators with arguments
       @Override
       public void visitPyCallExpression(PyCallExpression node) {
@@ -69,17 +68,29 @@ public class PyTypeCheckerInspection extends PyInspection {
         // TODO: Support operators besides PyBinaryExpression
         final PsiReference ref = node.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
         final PyExpression arg = node.getRightExpression();
-        if (ref != null && arg != null) {
-          final PsiElement resolved = ref.resolve();
+        checkSingleArgumentFunction(ref, arg);
+      }
+
+      @Override
+      public void visitPySubscriptionExpression(PySubscriptionExpression node) {
+        // TODO: Support slice PySliceExpressions
+        final PsiReference ref = node.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
+        final PyExpression arg = node.getIndexExpression();
+        checkSingleArgumentFunction(ref, arg);
+      }
+
+      private void checkSingleArgumentFunction(PsiReference functionReference, PyExpression argument) {
+        if (functionReference != null && argument != null) {
+          final PsiElement resolved = functionReference.resolve();
           if (resolved instanceof PyFunction) {
             final PyFunction fun = (PyFunction)resolved;
             final PyParameter[] parameters = fun.getParameterList().getParameters();
             if (parameters.length == 2) {
               final PyNamedParameter p = parameters[1].getAsNamed();
               if (p != null) {
-                final PyType argType = arg.getType(myTypeEvalContext);
+                final PyType argType = argument.getType(myTypeEvalContext);
                 final PyType paramType = p.getType(myTypeEvalContext);
-                checkTypes(paramType, argType, arg, myTypeEvalContext);
+                checkTypes(paramType, argType, argument, myTypeEvalContext);
               }
             }
           }

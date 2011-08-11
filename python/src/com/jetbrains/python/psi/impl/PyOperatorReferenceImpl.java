@@ -16,19 +16,25 @@ import java.util.List;
  * @author vlan
  */
 public class PyOperatorReferenceImpl extends PyReferenceImpl {
-  public PyOperatorReferenceImpl(PyBinaryExpression element, @NotNull PyResolveContext context) {
+  public PyOperatorReferenceImpl(PyQualifiedExpression element, @NotNull PyResolveContext context) {
     super(element, context);
   }
 
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    final PyBinaryExpression binaryExpr = (PyBinaryExpression)myElement;
-    final String name = binaryExpr.getReferencedName();
-    List<RatedResolveResult> res;
-    res = resolveMember(binaryExpr.getLeftExpression(), name);
-    if (res.isEmpty()) {
-      res = resolveMember(binaryExpr.getRightExpression(), leftToRightOperatorName(name));
+    List<RatedResolveResult> res = new ArrayList<RatedResolveResult>();
+    if (myElement instanceof PyBinaryExpression) {
+      final PyBinaryExpression expr = (PyBinaryExpression)myElement;
+      final String name = expr.getReferencedName();
+      res = resolveMember(expr.getLeftExpression(), name);
+      if (res.isEmpty()) {
+        res = resolveMember(expr.getRightExpression(), leftToRightOperatorName(name));
+      }
+    }
+    else if (myElement instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression expr = (PySubscriptionExpression)myElement;
+      res = resolveMember(expr.getOperand(), expr.getReferencedName());
     }
     return res;
   }

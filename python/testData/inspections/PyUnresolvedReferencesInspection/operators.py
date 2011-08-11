@@ -74,3 +74,36 @@ def test_builtins():
     xs <warning descr="Unresolved attribute reference '^' for class 'list'">^</warning> o #fail
     xs <warning descr="Unresolved attribute reference '//' for class 'list'">//</warning> o #fail
     o < xs < o, o <= xs <= o, xs == o, xs != o, o in xs #pass
+
+def test_subscription():
+    class C(object):
+        def __getitem__(self, key, value):
+            pass
+
+        def __setitem__(self, item):
+            pass
+
+        def __delitem__(self, item):
+            pass
+
+    class D(object):
+        pass
+
+    class E(object):
+        def __getitem__(self, item):
+            pass
+
+    c = C()
+    c[0] = 0
+    print(c[0])
+    del c[0]
+
+    d = D()
+    d<warning descr="Unresolved attribute reference '[' for class 'D'">[</warning>0] = 0
+    print(d<warning descr="Unresolved attribute reference '[' for class 'D'">[</warning>0])
+    del d<warning descr="Unresolved attribute reference '[' for class 'D'">[</warning>0]
+
+    e = E()
+    e<warning descr="Unresolved attribute reference '[' for class 'E'">[</warning>0] = 0
+    print(e[0])
+    del e<warning descr="Unresolved attribute reference '[' for class 'E'">[</warning>0]

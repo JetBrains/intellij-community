@@ -76,6 +76,8 @@ public class PyNames {
   public static final String LEN = "__len__";
   public static final String CALL = "__call__";
   public static final String GETITEM = "__getitem__";
+  public static final String SETITEM = "__setitem__";
+  public static final String DELITEM = "__delitem__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
