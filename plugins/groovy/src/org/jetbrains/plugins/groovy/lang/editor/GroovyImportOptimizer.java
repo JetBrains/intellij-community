@@ -59,7 +59,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
   }
 
   public List<GrImportStatement> findUnusedImports(GroovyFile file, Set<GrImportStatement> usedImports) {
-    return new MyProcessor(file, true).findUnusedImports(new HashSet<String>(), new HashSet<String>(),usedImports, new HashSet<String>());
+    return new MyProcessor(file, true).findUnusedImports(new HashSet<String>(), new HashSet<String>(),usedImports, new HashSet<String>(), new HashSet<String>());
   }
 
   public boolean supports(PsiFile file) {
@@ -85,8 +85,9 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final Set<String> staticallyImportedMembers = new LinkedHashSet<String>();
       final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
       final Set<String> implicitlyImported = new LinkedHashSet<String>();
+      final HashSet<String> innerClasses = new HashSet<String>();
       final List<GrImportStatement> oldImports =
-        findUnusedImports(importedClasses, staticallyImportedMembers, usedImports, implicitlyImported);
+        findUnusedImports(importedClasses, staticallyImportedMembers, usedImports, implicitlyImported, innerClasses);
       if (myRemoveUnusedOnly) {
         for (GrImportStatement oldImport : oldImports) {
           if (!usedImports.contains(oldImport)) {
@@ -106,7 +107,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       }
 
       // Add new import statements
-      GrImportStatement[] newImports = prepare(importedClasses, staticallyImportedMembers, implicitlyImported);
+      GrImportStatement[] newImports = prepare(importedClasses, staticallyImportedMembers, implicitlyImported, innerClasses);
       if (oldImports.isEmpty() && newImports.length == 0 && aliased.isEmpty()) {
         return;
       }
@@ -128,7 +129,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     public List<GrImportStatement> findUnusedImports(final Set<String> importedClasses,
                                                      final Set<String> staticallyImportedMembers,
                                                      final Set<GrImportStatement> usedImports,
-                                                     final Set<String> implicitlyImported) {
+                                                     final Set<String> implicitlyImported,
+                                                     final Set<String> innerClasses) {
       myFile.accept(new GroovyRecursiveElementVisitor() {
         public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
           visitRefElement(refElement);
@@ -183,8 +185,12 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
                 if (importStatement.isStatic()) {
                   staticallyImportedMembers.add(importedName);
-                } else {
+                }
+                else {
                   importedClasses.add(importedName);
+                  if (element instanceof PsiClass && ((PsiClass)element).getContainingClass() != null) {
+                    innerClasses.add(importedName);
+                  }
                 }
               }
             } else if (context == null && !(refElement.getParent() instanceof GrImportStatement) && refElement.getQualifier() == null) {
@@ -212,7 +218,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       return null;
     }
 
-    private GrImportStatement[] prepare(Set<String> importedClasses, Set<String> staticallyImportedMembers, Set<String> implicitlyImported) {
+    private GrImportStatement[] prepare(Set<String> importedClasses,
+                                        Set<String> staticallyImportedMembers,
+                                        Set<String> implicitlyImported,
+                                        Set<String> innerClasses) {
       final Project project = myFile.getProject();
       final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
@@ -221,10 +230,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       TObjectIntHashMap<String> classCountMap = new TObjectIntHashMap<String>();
 
       for (String importedClass : importedClasses) {
-        if (implicitlyImported.contains(importedClass)) {
-          continue;
-        }
-
+        if (implicitlyImported.contains(importedClass) || innerClasses.contains(importedClass)) continue;
+        
         final String packageName = StringUtil.getPackageName(importedClass);
 
         if (!packageCountMap.containsKey(packageName)) packageCountMap.put(packageName, 0);
