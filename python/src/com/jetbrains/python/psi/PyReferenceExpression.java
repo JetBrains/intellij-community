@@ -2,7 +2,6 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PyReferenceExpression extends PyQualifiedExpression {
+public interface PyReferenceExpression extends PyQualifiedExpression, PyReferenceOwner {
   PyReferenceExpression[] EMPTY_ARRAY = new PyReferenceExpression[0];
 
   /**
@@ -31,7 +30,4 @@ public interface PyReferenceExpression extends PyQualifiedExpression {
 
   @NotNull
   PsiPolyVariantReference getReference();
-
-  @NotNull
-  PsiPolyVariantReference getReference(PyResolveContext context);
 }

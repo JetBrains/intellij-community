@@ -14,7 +14,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -146,10 +146,11 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
 
   private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences) {
     final PsiReference[] references;
-    if (element instanceof PyReferenceExpression) {
+    if (element instanceof PyReferenceOwner) {
       final PyResolveContext context = PyResolveContext.defaultContext()
         .withTypeEvalContext(TypeEvalContext.fast(element.getContainingFile()));
-      references = new PsiReference[] { ((PyReferenceExpression) element).getReference(context)};
+      final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(context);
+      references = reference == null ? PsiReference.EMPTY_ARRAY : new PsiReference[] {reference};
     }
     else {
       references = element.getReferences();
