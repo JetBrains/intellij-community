@@ -73,6 +73,12 @@ public class PyUnionType implements PyType {
 
   @Nullable
   public static PyType union(PyType type1, PyType type2) {
+    if (type2 == null) {
+      return type1;
+    }
+    if (type1 == null) {
+      return type2;
+    }
     if (type1 instanceof PyTupleType && type2 instanceof PyTupleType) {
       final PyTupleType tupleType1 = (PyTupleType)type1;
       final PyTupleType tupleType2 = (PyTupleType)type2;
