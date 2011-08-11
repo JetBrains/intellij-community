@@ -63,6 +63,9 @@ public class GradleApiFacadeManager {
 
   private final GradleLibraryManager myGradleLibraryManager = GradleLibraryManager.INSTANCE;
 
+  // Please note that we don't use RemoteGradleProcessSettings as the 'Configuration' type parameter here because we need
+  // to apply the settings to the newly created process. I.e. every time new process is created we need to call
+  // 'GradleApiFacade.applySettings()'. So, we need to hold reference to the last returned 'GradleApiFacade' stub anyway.
   private final RemoteProcessSupport<Object, GradleApiFacade, Object> mySupport;
   private final GradleApiFacade                                       myApiFacade;
 
