@@ -500,7 +500,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
 
   private void setPackage(final PsiPackage aPackage) {
     if (aPackage == null) return;
-    ((LabeledComponent<TextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE)).getComponent()
+    ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE)).getComponent()
       .setText(aPackage.getQualifiedName());
   }
 
