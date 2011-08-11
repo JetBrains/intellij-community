@@ -460,8 +460,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       final Throwable throwable = message.getThrowable();
       ErrorReportSubmitter submitter = getSubmitter(throwable);
       if (submitter == null) {
+        PluginId pluginId = findPluginId(throwable);
+        IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+        if (plugin == null) {
+          LOG.warn("Neither submitter nor plugin found for plugin id " + plugin);
+          myForeignPluginWarningLabel.setVisible(false);
+          return;
+        }
         myForeignPluginWarningLabel.setVisible(true);
-        final IdeaPluginDescriptor plugin = PluginManager.getPlugin(findPluginId(throwable));
         String vendor = plugin.getVendor();
         String contactInfo = plugin.getVendorUrl();
         if (StringUtil.isEmpty(contactInfo)) {
