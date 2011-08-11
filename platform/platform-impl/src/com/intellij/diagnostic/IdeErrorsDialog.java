@@ -463,7 +463,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         PluginId pluginId = findPluginId(throwable);
         IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
         if (plugin == null) {
-          LOG.warn("Neither submitter nor plugin found for plugin id " + plugin);
+          // unknown plugin
           myForeignPluginWarningLabel.setVisible(false);
           return;
         }
