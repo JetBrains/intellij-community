@@ -20,6 +20,7 @@
  */
 package com.intellij.execution.junit2.inspection;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
@@ -29,9 +30,11 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
 
 public class JUnitEntryPoint extends EntryPoint {
   public boolean ADD_JUNIT_TO_ENTRIES = true;
@@ -77,5 +80,10 @@ public class JUnitEntryPoint extends EntryPoint {
     if (!ADD_JUNIT_TO_ENTRIES) {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
+  }
+
+  @Override
+  public String[] getIgnoreAnnotations() {
+    return new String[]{Rule.class.getName()};
   }
 }
