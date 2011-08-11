@@ -1451,7 +1451,7 @@ public class UIUtil {
   }
 
   public static Color getBorderColor() {
-    return BORDER_COLOR;
+    return UIManager.getColor("Separator.foreground");
   }
 
   public static Font getBorderFont() {
