@@ -22,7 +22,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
 
   public PyInspectionVisitor(@Nullable final ProblemsHolder holder) {
     myHolder = holder;
-    myTypeEvalContext = TypeEvalContext.fastStubOnly();
+    myTypeEvalContext = TypeEvalContext.fastStubOnly(holder == null ? null : holder.getFile());
   }
 
   public PyInspectionVisitor(@Nullable ProblemsHolder problemsHolder,
