@@ -72,14 +72,14 @@ public abstract class CompletionPhase implements Disposable {
     return false;
   }
 
-  public static class AutoPopupAlarm extends CompletionPhase {
+  public static class CommittingDocuments extends CompletionPhase {
     final boolean copyCommit;
     private boolean actionsHappened;
     private final Editor myEditor;
     private final Expirable focusStamp;
     private final Project myProject;
 
-    public AutoPopupAlarm(boolean copyCommit, Editor editor) {
+    public CommittingDocuments(boolean copyCommit, Editor editor) {
       super(null);
       this.copyCommit = copyCommit;
       myEditor = editor;
@@ -107,7 +107,7 @@ public abstract class CompletionPhase implements Disposable {
 
     @Override
     public String toString() {
-      return "AutoPopupAlarm{copyCommit=" + copyCommit + '}';
+      return "CommittingDocuments{copyCommit=" + copyCommit + '}';
     }
   }
   public static class Synchronous extends CompletionPhase {

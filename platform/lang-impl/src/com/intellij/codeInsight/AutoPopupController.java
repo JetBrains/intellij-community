@@ -107,7 +107,7 @@ public class AutoPopupController implements Disposable {
       currentCompletion.closeAndFinish(!shouldBeFast);
     }
 
-    final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(false, editor);
+    final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(false, editor);
     CompletionServiceImpl.setCompletionPhase(phase);
 
     Runnable request = new Runnable() {

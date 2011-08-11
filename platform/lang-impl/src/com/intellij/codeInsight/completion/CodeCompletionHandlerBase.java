@@ -504,7 +504,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final Project project = hostFile.getProject();
 
     if (!invokedExplicitly) {
-      final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm(true, hostEditor);
+      final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(true, hostEditor);
       CompletionServiceImpl.setCompletionPhase(phase);
 
       ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {

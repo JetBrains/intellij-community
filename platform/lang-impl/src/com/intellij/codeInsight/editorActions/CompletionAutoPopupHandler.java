@@ -73,13 +73,13 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
     if (!Character.isLetter(charTyped) && charTyped != '_') {
-      if (CompletionServiceImpl.isPhase(CompletionPhase.EmptyAutoPopup.class, CompletionPhase.AutoPopupAlarm.class)) {
+      if (CompletionServiceImpl.isPhase(CompletionPhase.EmptyAutoPopup.class, CompletionPhase.CommittingDocuments.class)) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
       }
       return Result.CONTINUE;
     }
 
-    if (!CompletionServiceImpl.isPhase(CompletionPhase.AutoPopupAlarm.class, CompletionPhase.NoCompletion.getClass())) {
+    if (!CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class, CompletionPhase.NoCompletion.getClass())) {
       return Result.CONTINUE;
     }
 
