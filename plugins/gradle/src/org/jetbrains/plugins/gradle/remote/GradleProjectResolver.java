@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.remote.api;
+package org.jetbrains.plugins.gradle.remote;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.GradleProject;

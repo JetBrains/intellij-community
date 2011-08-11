@@ -1,6 +1,6 @@
 package com.intellij.lang.properties.xml;
 
-import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileContentImpl;
 import junit.framework.TestCase;
 
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.util.Map;
 public class XmlPropertiesIndexTest extends TestCase {
 
   public void testIndex() throws Exception {
-    Map<XmlPropertiesIndex.Key, String> map = new XmlPropertiesIndex().map(new FileContent(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+    Map<XmlPropertiesIndex.Key, String> map = new XmlPropertiesIndex().map(new FileContentImpl(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                                                                                             "<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n" +
                                                                                             "<properties>\n" +
                                                                                             "<comment>Hi</comment>\n" +
@@ -27,7 +27,7 @@ public class XmlPropertiesIndexTest extends TestCase {
   }
 
   public void testSystemId() throws Exception {
-    Map<XmlPropertiesIndex.Key, String> map = new XmlPropertiesIndex().map(new FileContent(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+    Map<XmlPropertiesIndex.Key, String> map = new XmlPropertiesIndex().map(new FileContentImpl(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                                                                                             "<!DOCTYPE properties SYSTEM \"unknown\">\n" +
                                                                                             "<properties>\n" +
                                                                                             "<comment>Hi</comment>\n" +

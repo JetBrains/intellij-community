@@ -3,6 +3,7 @@ package com.intellij.diagnostic.errordialog;
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -16,7 +17,7 @@ public class DetailsTabForm {
   private JPanel myDetailsHolder;
   private JButton myAnalyzeStacktraceButton;
 
-  public DetailsTabForm(Action analyzeAction) {
+  public DetailsTabForm(@Nullable Action analyzeAction) {
     myCommentsArea.setTitle(DiagnosticBundle.message("error.dialog.comment.prompt"));
     myDetailsPane.setBackground(UIUtil.getTextFieldBackground());
     myDetailsHolder.setBorder(IdeBorderFactory.createBorder());

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.libraries;
 
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -29,14 +28,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class LibraryNavigatable implements Navigatable {
   private final Module module;
-  private NamedLibraryElement element;
+  private OrderEntry element;
 
   public LibraryNavigatable(@NotNull Library library, @NotNull Module module) {
     this.module = module;
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry) {
         if (((LibraryOrderEntry)entry).getLibrary() == library) {
-          element = new NamedLibraryElement(module, entry);
+          element = entry;
         }
       }
     }
@@ -44,7 +43,7 @@ public class LibraryNavigatable implements Navigatable {
 
   @Override
   public void navigate(boolean requestFocus) {
-    ProjectSettingsService.getInstance(module.getProject()).openProjectLibrarySettings(element);
+    ProjectSettingsService.getInstance(module.getProject()).openLibraryOrSdkSettings(element);
   }
 
   @Override

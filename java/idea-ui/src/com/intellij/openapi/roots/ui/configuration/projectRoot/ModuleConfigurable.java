@@ -130,7 +130,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     //do nothing
   }
 
-  ModuleEditor getModuleEditor() {
+  public ModuleEditor getModuleEditor() {
     return myConfigurator.getModuleEditor(myModule);
   }
 

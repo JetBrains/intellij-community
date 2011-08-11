@@ -35,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
@@ -517,24 +516,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     }
     return myModified || myFacetsConfigurator.isModified();
-  }
-
-  public static boolean showSdkSettings(@NotNull Project project, final Sdk sdk) {
-    final ProjectStructureConfigurable configurable = ProjectStructureConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-      public void run() {
-        configurable.select(sdk, true);
-      }
-    });
-  }
-
-  public static boolean showLibrarySettings(@NotNull Project project, @NotNull final LibraryOrderEntry library) {
-    final ProjectStructureConfigurable configurable = ProjectStructureConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-      public void run() {
-        configurable.select(library, true);
-      }
-    });
   }
 
   public static boolean showArtifactSettings(@NotNull Project project, @Nullable final Artifact artifact) {

@@ -149,7 +149,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
         assert builder != null;
 
-        data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), inputData.getProject());
+        data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), ((FileContentImpl)inputData).getProject());
       }
       else {
         final LanguageFileType filetype = (LanguageFileType)fileType;

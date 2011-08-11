@@ -3,10 +3,10 @@ package org.jetbrains.plugins.gradle.remote.impl;
 import com.intellij.execution.rmi.RemoteServer;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.remote.api.GradleApiFacade;
-import org.jetbrains.plugins.gradle.remote.api.GradleProjectResolver;
-import org.jetbrains.plugins.gradle.remote.api.RemoteGradleProcessSettings;
-import org.jetbrains.plugins.gradle.remote.api.RemoteGradleService;
+import org.jetbrains.plugins.gradle.remote.GradleApiFacade;
+import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
+import org.jetbrains.plugins.gradle.remote.RemoteGradleProcessSettings;
+import org.jetbrains.plugins.gradle.remote.RemoteGradleService;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

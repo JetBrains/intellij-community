@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.importing.model.GradleProject;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
-import org.jetbrains.plugins.gradle.remote.api.GradleProjectResolver;
+import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleLog;
@@ -134,10 +135,12 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       throw new ConfigurationException(GradleBundle.message("gradle.import.text.error.directory.instead.file"));
     }
     try {
-      ProgressManager.getInstance().run(new Task.Modal(null, GradleBundle.message("gradle.import.progress.text"), true) {
+      // TODO den derive target project for 'import module from gradle'.
+      Project project = ProjectManager.getInstance().getDefaultProject();
+      ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
+          GradleApiFacadeManager manager = ServiceManager.getService(getProject(), GradleApiFacadeManager.class);
           try {
             GradleProjectResolver resolver = manager.getFacade().getResolver();
             myGradleProject = resolver.resolveProjectInfo(myProjectFile.getAbsolutePath());

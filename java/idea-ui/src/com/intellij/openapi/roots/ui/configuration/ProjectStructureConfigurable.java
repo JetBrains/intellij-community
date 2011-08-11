@@ -20,6 +20,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
@@ -30,6 +31,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable;
@@ -420,13 +422,30 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   public ActionCallback select(@NotNull LibraryOrderEntry libraryOrderEntry, final boolean requestFocus) {
     final Library lib = libraryOrderEntry.getLibrary();
     if (lib == null || lib.getTable() == null) {
-      Place place = createPlaceFor(myModulesConfig);
-      place.putPath(BaseStructureConfigurable.TREE_OBJECT, libraryOrderEntry.getOwnerModule());
-      return navigateTo(place, requestFocus);
+      return selectOrderEntry(libraryOrderEntry.getOwnerModule(), libraryOrderEntry);
     }
     Place place = createPlaceFor(getConfigurableFor(lib));
     place.putPath(BaseStructureConfigurable.TREE_NAME, libraryOrderEntry.getLibraryName());
     return navigateTo(place, requestFocus);
+  }
+
+  public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
+    return select(module.getName(), null, true).doWhenDone(new Runnable() {
+      public void run() {
+        final MasterDetailsComponent.MyNode node = ModuleStructureConfigurable.getInstance(myProject).findModuleNode(module);
+        if (node != null) {
+          ModuleConfigurable moduleConfigurable = (ModuleConfigurable)node.getConfigurable();
+          ModuleEditor moduleEditor = moduleConfigurable.getModuleEditor();
+          moduleEditor.setSelectedTabName(ClasspathEditor.NAME);
+          if (orderEntry != null) {
+            ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.NAME);
+            if (editor instanceof ClasspathEditor) {
+              ((ClasspathEditor)editor).selectOrderEntry(orderEntry);
+            }
+          }
+        }
+      }
+    });
   }
 
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {

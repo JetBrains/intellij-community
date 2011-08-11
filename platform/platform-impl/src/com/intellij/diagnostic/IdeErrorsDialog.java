@@ -82,6 +82,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private ClearFatalsAction myClearAction = new ClearFatalsAction();
   private BlameAction myBlameAction = new BlameAction();
+  @Nullable
   private AnalyzeAction myAnalyzeAction;
   private boolean myMute;
 
@@ -121,6 +122,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         rebuildHeaders();
+        updateControls();
       }
     });
   }
@@ -218,7 +220,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myDetailsTabForm.setCommentsAreaVisible(false);
     }
     else {
-      myAnalyzeAction = new AnalyzeAction(ActionManager.getInstance().getAction("AnalyzeStacktraceOnError"));
+      final AnAction analyzePlatformAction = ActionManager.getInstance().getAction("AnalyzeStacktraceOnError");
+      if (analyzePlatformAction != null) {
+        myAnalyzeAction = new AnalyzeAction(analyzePlatformAction);
+      }
       myDetailsTabForm = new DetailsTabForm(myAnalyzeAction);
       myDetailsTabForm.setCommentsAreaVisible(true);
       myDetailsTabForm.addCommentsListener(commentsListener);
@@ -459,8 +464,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       final Throwable throwable = message.getThrowable();
       ErrorReportSubmitter submitter = getSubmitter(throwable);
       if (submitter == null) {
+        PluginId pluginId = findPluginId(throwable);
+        IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+        if (plugin == null) {
+          // unknown plugin
+          myForeignPluginWarningLabel.setVisible(false);
+          return;
+        }
         myForeignPluginWarningLabel.setVisible(true);
-        final IdeaPluginDescriptor plugin = PluginManager.getPlugin(findPluginId(throwable));
         String vendor = plugin.getVendor();
         String contactInfo = plugin.getVendorUrl();
         if (StringUtil.isEmpty(contactInfo)) {
@@ -574,7 +585,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     for (final ArrayList<AbstractMessage> abstractMessages : hash2Messages.values()) {
       myMergedMessages.add(abstractMessages);
     }
-    updateControls();
   }
 
   private void markAllAsRead() {

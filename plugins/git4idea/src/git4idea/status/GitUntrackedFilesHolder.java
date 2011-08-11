@@ -312,18 +312,21 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   private void asyncRefreshFiles(final Set<VirtualFile> filesCreated) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
-        for (VirtualFile file : filesCreated) {
-          if (belongsToThisRepository(file) && !myChangeListManager.isIgnoredFile(file)) {
-            filesToRefresh.add(file);
-          }
-        }
-        rescanFiles(filesToRefresh);
-        myDirtyScopeManager.filesDirty(filesToRefresh, null); // make ChangeListManager capture new info
+    final Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
+    for (VirtualFile file : filesCreated) {
+      if (belongsToThisRepository(file) && !myChangeListManager.isIgnoredFile(file)) {
+        filesToRefresh.add(file);
       }
-    });
+    }
+
+    if (!filesToRefresh.isEmpty()) {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          rescanFiles(filesToRefresh);
+          myDirtyScopeManager.filesDirty(filesToRefresh, null); // make ChangeListManager capture new info
+        }
+      });
+    }
   }
 
   private boolean belongsToThisRepository(VirtualFile file) {
