@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.InvalidDataException;
@@ -45,9 +46,14 @@ public class PlaybackCallFacade {
     final Ref<ProjectManagerListener> listener = new Ref<ProjectManagerListener>();
     listener.set(new ProjectManagerAdapter() {
       @Override
-      public void projectOpened(Project project) {
-        pm.removeProjectManagerListener(listener.get());
-        result.setDone("opened successfully: " + project.getProjectFilePath());
+      public void projectOpened(final Project project) {
+        StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+          @Override
+          public void run() {
+            pm.removeProjectManagerListener(listener.get());
+            result.setDone("opened successfully: " + project.getProjectFilePath());
+          }
+        });
       }
     });
     pm.addProjectManagerListener(listener.get());

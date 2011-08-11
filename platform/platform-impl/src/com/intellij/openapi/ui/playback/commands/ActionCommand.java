@@ -77,7 +77,12 @@ public class ActionCommand extends TypeCommand {
     robot.delay(Registry.intValue("actionSystem.playback.autodelay"));
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        ActionManager.getInstance().tryToExecute(action, input, null, null, false).notify(result);
+        ActionManager.getInstance().tryToExecute(action, input, null, null, false).doWhenProcessed(new Runnable() {
+          @Override
+          public void run() {
+            result.setDone();
+          }
+        });
       }
     });
 

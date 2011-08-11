@@ -42,6 +42,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -263,7 +264,12 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     }
 
     private void queueUpdate() {
-      myTreeBuilder.refilter();
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          myTreeBuilder.refilter();
+        }
+      });
     }
 
     public void dispose() {
