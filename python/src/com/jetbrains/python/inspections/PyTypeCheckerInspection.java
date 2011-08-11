@@ -73,6 +73,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       @Override
       public void visitPySubscriptionExpression(PySubscriptionExpression node) {
+        // TODO: Support slice PySliceExpressions
         final PsiReference ref = node.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
         final PyExpression arg = node.getIndexExpression();
         checkSingleArgumentFunction(ref, arg);
