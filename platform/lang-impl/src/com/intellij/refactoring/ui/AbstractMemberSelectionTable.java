@@ -360,6 +360,8 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
             setIcon(null);
           }
       }
+      setIconOpaque(false);
+      setOpaque(false);
       final boolean cellEditable = myTable.myMemberInfoModel.isMemberEnabled(memberInfo);
       setEnabled(cellEditable);
 
