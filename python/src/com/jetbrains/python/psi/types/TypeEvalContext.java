@@ -30,8 +30,8 @@ public class TypeEvalContext {
     return myAllowDataFlow || element.getContainingFile() == myOrigin;
   }
 
-  public boolean allowReturnTypes() {
-    return myAllowDataFlow;
+  public boolean allowReturnTypes(PsiElement element) {
+    return myAllowDataFlow || element.getContainingFile() == myOrigin;
   }
 
   public boolean allowStubToAST() {
