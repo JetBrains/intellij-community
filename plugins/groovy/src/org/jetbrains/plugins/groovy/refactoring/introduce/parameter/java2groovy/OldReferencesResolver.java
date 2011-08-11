@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +30,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.List;
@@ -57,7 +60,7 @@ public class OldReferencesResolver {
   private final HashMap<GrExpression, String> myTempVars;
   private final GrExpression myInstanceRef;
   private final GrClosureSignatureUtil.ArgInfo<PsiElement>[] myActualArgs;
-  private final PsiMethod myMethodToReplaceIn;
+  private final GrCodeBlock myToReplaceIn;
   private final Project myProject;
   private final int myReplaceFieldsWithGetters;
   private final PsiElement myParameterInitializer;
@@ -67,19 +70,20 @@ public class OldReferencesResolver {
 
   public OldReferencesResolver(GrCall context,
                                GrExpression expr,
-                               PsiMethod methodToReplaceIn,
+                               GrCodeBlock toReplaceIn,
                                int replaceFieldsWithGetters,
                                PsiElement parameterInitializer,
                                final GrClosureSignature signature,
-                               final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs) throws IncorrectOperationException {
+                               final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs, PsiParameter[] parameters) throws IncorrectOperationException {
     myContext = context;
     myExpr = expr;
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
     myParameterInitializer = parameterInitializer;
+    myParameters = parameters;
     myTempVars = new HashMap<GrExpression, String>();
     mySignature = signature;
     myActualArgs = actualArgs;
-    myMethodToReplaceIn = methodToReplaceIn;
+    myToReplaceIn = toReplaceIn;
     myProject = myContext.getProject();
     myManager = myContext.getManager();
 
@@ -96,7 +100,6 @@ public class OldReferencesResolver {
     else {
       myInstanceRef = null;
     }
-    myParameters = myMethodToReplaceIn.getParameterList().getParameters();
   }
 
   public void resolve() throws IncorrectOperationException {
@@ -127,19 +130,15 @@ public class OldReferencesResolver {
       final PsiElement scope = getClassContainingResolve(adv);
       final PsiElement owner = PsiTreeUtil.getContextOfType(oldExpr, PsiClass.class);
 
-      if (owner != null && scope != null && PsiTreeUtil.isContextAncestor(owner, scope, false)) {
+      if (myToReplaceIn instanceof GrClosableBlock || (owner != null && scope != null && PsiTreeUtil.isContextAncestor(owner, scope, false))) {
 
         final PsiElement subj = adv.getElement();
 
         // Parameters
         if (subj instanceof PsiParameter) {
-          PsiParameterList parameterList = myMethodToReplaceIn.getParameterList();
-          PsiParameter[] parameters = parameterList.getParameters();
-
-          if (subj.getParent() != parameterList) return;
-          int index = parameterList.getParameterIndex((PsiParameter)subj);
+          int index = ArrayUtil.indexOf(myParameters, subj);
           if (index < 0) return;
-          if (index < parameters.length) {
+          if (index < myParameters.length) {
             GrExpression actualArg = getActualArg(index);
             int copyingSafetyLevel = GroovyRefactoringUtil.verifySafeCopyExpression(actualArg);
             if (copyingSafetyLevel == RefactoringUtil.EXPR_COPY_PROHIBITED) {
@@ -188,8 +187,8 @@ public class OldReferencesResolver {
       }
     }
     else if (oldExpr instanceof GrThisReferenceExpression &&
-             (((GrThisReferenceExpression)oldExpr).getQualifier() == null || myManager.areElementsEquivalent(
-               ((GrThisReferenceExpression)oldExpr).getQualifier().resolve(), myMethodToReplaceIn.getContainingClass()))) {
+             (((GrThisReferenceExpression)oldExpr).getQualifier() == null ||
+              myManager.areElementsEquivalent(((GrThisReferenceExpression)oldExpr).getQualifier().resolve(), PsiUtil.getContextClass(myToReplaceIn)))) {
       if (myInstanceRef != null) {
         newExpr.replace(getInstanceRef(factory));
       }

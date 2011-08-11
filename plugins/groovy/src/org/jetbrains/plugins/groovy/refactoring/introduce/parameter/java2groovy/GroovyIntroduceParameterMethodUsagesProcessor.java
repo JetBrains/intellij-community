@@ -112,8 +112,9 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       LOG.assertTrue(initializer instanceof GrExpression);
 
       GrExpression newArg = (GrExpression)argList.addAfter(initializer, anchor);
-      new OldReferencesResolver(callExpression, newArg, data.getMethodToReplaceIn(), data.getReplaceFieldsWithGetters(), initializer,
-                                signature, actualArgs).resolve();
+      final GrMethod methodToReplaceIn = (GrMethod)data.getMethodToReplaceIn();
+      new OldReferencesResolver(callExpression, newArg, methodToReplaceIn.getBlock(), data.getReplaceFieldsWithGetters(), initializer,
+                                signature, actualArgs, methodToReplaceIn.getParameters()).resolve();
       ChangeContextUtil.clearContextInfo(initializer);
     }
 

@@ -15,10 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -27,11 +30,15 @@ import com.intellij.util.ui.GridBag;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.HelpID;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyFieldValidator;
@@ -57,6 +64,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   private JPanel myGetterPanel;
   private JLabel myTypeLabel;
   private JLabel myNameLabel;
+  private JCheckBox myChangeVarUsages;
   private GrIntroduceParameterContext myContext;
   TObjectIntHashMap<JCheckBox> toRemoveCBs;
 
@@ -72,8 +80,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
 
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
 
-    final PsiElement[] occurrences = context.occurrences;
-    if (occurrences.length < 2) {
+    if (context.occurrences.length < 2) { //todo
       myReplaceAllOccurrencesCheckBox.setSelected(true);
       myReplaceAllOccurrencesCheckBox.setVisible(false);
     }
@@ -94,12 +101,8 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   }
 
   private void initReplaceFieldsWithGetters(JavaRefactoringSettings settings) {
-    if (myContext.expression == null) {
-      myGetterPanel.setVisible(false);
-      return;
-    }
-    final PsiField[] usedFields =
-      GroovyIntroduceParameterUtil.findUsedFieldsWithGetters(myContext.expression, myContext.methodToReplaceIn.getContainingClass());
+
+    final PsiField[] usedFields = GroovyIntroduceParameterUtil.findUsedFieldsWithGetters(myContext.expression, getContainingClass());
     myGetterPanel.setVisible(usedFields.length > 0);
     switch (settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS) {
       case REPLACE_FIELDS_WITH_GETTERS_ALL:
@@ -111,6 +114,17 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
       case REPLACE_FIELDS_WITH_GETTERS_NONE:
         myDoNotReplaceRadioButton.setSelected(true);
         break;
+    }
+  }
+
+  @Nullable
+  private PsiClass getContainingClass() {
+    final GrParametersOwner toReplaceIn = myContext.toReplaceIn;
+    if (toReplaceIn instanceof GrMethod) {
+      return ((GrMethod)toReplaceIn).getContainingClass();
+    }
+    else {
+      return PsiTreeUtil.getContextOfType(toReplaceIn, PsiClass.class);
     }
   }
 
@@ -131,7 +145,15 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
       getParametersToRemove(),
       getReplaceFieldsWithGetter(),
       myRemoveLocalVariableCheckBox.isSelected());
-    invokeRefactoring(new GrIntroduceParameterProcessor(settings, myContext));
+
+    final BaseRefactoringProcessor processor;
+    if (myContext.toReplaceIn instanceof GrMethod) {
+      processor = new GrIntroduceParameterProcessor(settings, myContext);
+    }
+    else {
+      processor = new GrIntroduceClosureParameterProcessor(settings, myContext);
+    }
+    invokeRefactoring(processor);
   }
 
   private void saveSettings() {
@@ -194,7 +216,8 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     myTypeComboBox = new GrTypeComboBox(myContext.var != null ? myContext.var.getDeclaredType() : myContext.expression.getType(), true);
 
     String[] possibleNames;
-    final GroovyFieldValidator validator = new GroovyFieldValidator(myContext);
+    final GrIntroduceContext introduceContext = new GrIntroduceContext(myProject, null, myContext.expression, PsiElement.EMPTY_ARRAY, myContext.toReplaceIn, myContext.var);
+    final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
     if (myContext.expression != null) {
       possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, validator, true);
     }

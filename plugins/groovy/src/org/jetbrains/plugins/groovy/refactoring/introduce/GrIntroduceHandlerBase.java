@@ -141,7 +141,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Nullable
-  private static GrVariable findVariableAtCaret(final PsiFile file, final Editor editor, final int offset) {
+  public static GrVariable findVariableAtCaret(final PsiFile file, final Editor editor, final int offset) {
     final int correctOffset = correctOffset(editor, offset);
     final PsiElement elementAtCaret = file.findElementAt(correctOffset);
     final GrVariable variable = PsiTreeUtil.getParentOfType(elementAtCaret, GrVariable.class);
@@ -267,8 +267,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       return true;
     }
     catch (GrIntroduceRefactoringError e) {
-      CommonRefactoringUtil
-        .showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
       return false;
     }
   }

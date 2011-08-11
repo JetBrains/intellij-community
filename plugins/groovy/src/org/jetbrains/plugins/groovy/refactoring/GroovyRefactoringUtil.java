@@ -115,8 +115,7 @@ public abstract class GroovyRefactoringUtil {
     if (element2 == null || element1 == null) return null;
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
     assert commonParent != null;
-    final T element = ReflectionCache.isAssignable(klass, commonParent.getClass())
-        ? (T) commonParent : PsiTreeUtil.getParentOfType(commonParent, klass);
+    final T element = ReflectionCache.isAssignable(klass, commonParent.getClass()) ? (T) commonParent : PsiTreeUtil.getParentOfType(commonParent, klass);
     if (element == null || element.getTextRange().getStartOffset() != startOffset) {
       return null;
     }
@@ -124,6 +123,10 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
+    return getExpressionOccurrences(expr, scope, false);
+  }
+
+  public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope, boolean gotoInner) {
     ArrayList<PsiElement> occurrences = new ArrayList<PsiElement>();
     Comparator<PsiElement> comparator = new Comparator<PsiElement>() {
       public int compare(PsiElement element1, PsiElement element2) {

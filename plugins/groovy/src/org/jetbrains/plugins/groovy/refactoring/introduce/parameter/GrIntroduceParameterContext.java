@@ -15,20 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
-import com.intellij.psi.PsiMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 
 /**
  * @author Maxim.Medvedev
  */
 public class GrIntroduceParameterContext extends GrIntroduceContext {
-  public final PsiMethod methodToSearchFor;
-  public final GrMethod methodToReplaceIn;
+  public final PsiElement toSearchFor;
+  public final GrParametersOwner toReplaceIn;
 
-  public GrIntroduceParameterContext(GrIntroduceContext context, GrMethod methodToReplaceIn, PsiMethod methodToSearchFor) {
+  public GrIntroduceParameterContext(GrIntroduceContext context, GrParametersOwner toReplaceIn, PsiElement toSearchFor) {
     super(context.project, context.editor, context.expression, context.occurrences, context.scope, context.var);
-    this.methodToReplaceIn = methodToReplaceIn;
-    this.methodToSearchFor = methodToSearchFor;
+    this.toReplaceIn = toReplaceIn;
+    this.toSearchFor = toSearchFor;
   }
 }

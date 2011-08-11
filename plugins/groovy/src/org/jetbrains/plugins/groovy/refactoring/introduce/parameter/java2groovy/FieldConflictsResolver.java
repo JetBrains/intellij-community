@@ -25,7 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import java.util.ArrayList;
@@ -37,12 +37,12 @@ import java.util.List;
  */
 public class FieldConflictsResolver {
   //  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.FieldConflictsResolver");
-  private final GrOpenBlock myScope;
+  private final GrCodeBlock myScope;
   private final PsiField myField;
   private final List<GrReferenceExpression> myReferenceExpressions;
   private PsiClass myQualifyingClass;
 
-  public FieldConflictsResolver(String name, GrOpenBlock scope) {
+  public FieldConflictsResolver(String name, GrCodeBlock scope) {
     myScope = scope;
     if (myScope == null) {
       myField = null;

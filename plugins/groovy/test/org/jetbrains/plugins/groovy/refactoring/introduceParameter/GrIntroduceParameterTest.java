@@ -17,16 +17,20 @@ package org.jetbrains.plugins.groovy.refactoring.introduceParameter;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.*;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -37,27 +41,25 @@ import java.io.File;
  */
 public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   
-    protected String getBasePath() {
+  protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/introduceParameterGroovy/" + getTestName(true) + '/';
   }
 
-  private boolean doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal) {
-    return doTest(replaceFieldsWithGetters, removeUnusedParameters, searchForSuper, declareFinal, null);
+  private boolean doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean declareFinal) {
+    return doTest(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, null);
   }
 
   private boolean doTest(final int replaceFieldsWithGetters,
                          final boolean removeUnusedParameters,
-                         boolean searchForSuper,
                          final boolean declareFinal,
-                         final String conflicts) {
-    return doTest(replaceFieldsWithGetters, removeUnusedParameters, searchForSuper, declareFinal, conflicts, false);
+                         @Nullable final String conflicts) {
+    return doTest(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, false);
   }
 
   private boolean doTest(final int replaceFieldsWithGetters,
                          final boolean removeUnusedParameters,
-                         boolean searchForSuper,
                          final boolean declareFinal,
-                         final String conflicts,
+                         @Nullable final String conflicts,
                          final boolean generateDelegate) {
     final String beforeGroovy = getTestName(false)+"Before.groovy";
     final String afterGroovy = getTestName(false) + "After.groovy";
@@ -70,7 +72,8 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     }
     myFixture.configureByFile(clazz);
 
-    execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, generateDelegate);
+    execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, generateDelegate, getProject(),
+            myFixture.getEditor(), myFixture.getFile());
 
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     myFixture.getEditor().getSelectionModel().removeSelection();
@@ -84,17 +87,21 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     return true;
   }
 
+
   private boolean exists(String sourceFilePath) {
     File file = new File(getTestDataPath() + "/" + sourceFilePath);
     return file.exists();
   }
 
-  private void execute(final int replaceFieldsWithGetters,
-                       final boolean removeUnusedParameters,
-                       final boolean declareFinal,
-                       final String conflicts,
-                       final boolean generateDelegate) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+  static void execute(final int replaceFieldsWithGetters,
+                      final boolean removeUnusedParameters,
+                      final boolean declareFinal,
+                      final String conflicts,
+                      final boolean generateDelegate,
+                      final Project project,
+                      final Editor editor,
+                      final PsiFile file) {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -103,30 +110,20 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
             try {
               final GrIntroduceParameterHandler hackedHandler = new GrIntroduceParameterHandler() {
                 @Override
-                protected GrIntroduceDialog<GrIntroduceParameterSettings> getDialog(final GrIntroduceContext context) {
+                protected void showDialog(final GrIntroduceParameterContext context) {
                   final GrIntroduceParameterSettings hackedSettings =
                     getSettings(context, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
-
-
-                  return new GrIntroduceDialog<GrIntroduceParameterSettings>() {
-                    @Override
-                    public GrIntroduceParameterSettings getSettings() {
-                      return null;
-                    }
-
-                    @Override
-                    public void show() {
-                      new GrIntroduceParameterProcessor(hackedSettings, (GrIntroduceParameterContext)context).run();
-                    }
-
-                    @Override
-                    public boolean isOK() {
-                      return false;
-                    }
-                  };
+                  BaseRefactoringProcessor processor;
+                  if (context.toReplaceIn instanceof GrMethod) {
+                    processor = new GrIntroduceParameterProcessor(hackedSettings, context);
+                  }
+                  else {
+                    processor = new GrIntroduceClosureParameterProcessor(hackedSettings, context);
+                  }
+                  processor.run();
                 }
               };
-              hackedHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), null);
+              hackedHandler.invoke(project, editor, file, null);
               if (conflicts != null) fail("Conflicts were expected");
             }
             catch (Exception e) {
@@ -142,7 +139,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     }, "introduce Parameter", null);
   }
 
-  private static GrIntroduceParameterSettings getSettings(final GrIntroduceContext context,
+  private static GrIntroduceParameterSettings getSettings(final GrIntroduceParameterContext context,
                                                           final boolean removeUnusedParameters,
                                                           final int replaceFieldsWithGetters,
                                                           final boolean declareFinal,
@@ -201,75 +198,75 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   
   
   public void testSimpleOverridedMethod() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
   public void testOverridedMethodWithRemoveUnusedParameters() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false);
   }
 
   public void testSimpleUsage() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
   public void testMethodWithoutParams() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
   public void testParameterSubstitution() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
   public void testThisSubstitution() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
   public void testThisSubstitutionInQualifier() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, "field <b><code>Test.i</code></b> is not accessible from method <b><code>XTest.n()</code></b>. Value for introduced parameter in that method call will be incorrect.");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, "field <b><code>Test.i</code></b> is not accessible from method <b><code>XTest.n()</code></b>. Value for introduced parameter in that method call will be incorrect.");
   }
 
   public void testFieldAccess() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
   public void testMethodAccess() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
   public void testStaticFieldAccess() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
   public void testFieldWithGetterReplacement() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, false, false);
   }
 
   public void testFieldWithInaccessibleGetterReplacement() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
   public void testWeirdQualifier() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
   public void testSuperInExpression() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class.");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class.");
   }
 
   public void testWeirdQualifierAndParameter() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
   public void testImplicitSuperCall() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
   public void testImplicitDefaultConstructor() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
   public void testInternalSideEffect() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
 /*  public void testAnonymousClass() {
@@ -277,11 +274,11 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   }*/
 
   public void testSuperWithSideEffect() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class.");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class.");
   }
 
   public void testConflictingField() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, true, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
   /*public void testParameterJavaDoc1() {
@@ -301,7 +298,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   }*/
 
   public void testRemoveParameterInHierarchy() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false);
   }
 
   /*public void testRemoveParameterWithJavadoc() {
@@ -309,25 +306,25 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   }*/
 
   public void testVarargs() {   // IDEADEV-16828
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
   public void testMethodUsageInThisMethodInheritor() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
   public void testIncorrectArgumentList() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, true);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, true);
   }
 
   public void testClosure() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
   public void testDelegate1() {doDelegateTest();}
   public void testDelegate2() {doDelegateTest();}
 
   private void doDelegateTest() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, null, true);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, true);
   }
 }

@@ -15,20 +15,29 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,20 +46,23 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public class GroovyIntroduceParameterUtil {
+  private static final Logger LOG = Logger.getInstance(GroovyIntroduceParameterUtil.class);
+
   private GroovyIntroduceParameterUtil() {
   }
 
   public static PsiField[] findUsedFieldsWithGetters(GrExpression expression, PsiClass containingClass) {
+    if (containingClass == null) return PsiField.EMPTY_ARRAY;
     final FieldSearcher searcher = new FieldSearcher(containingClass);
     expression.accept(searcher);
     return searcher.getResult();
   }
 
-  public static TObjectIntHashMap<GrParameter> findParametersToRemove(GrIntroduceContext context) {
+  public static TObjectIntHashMap<GrParameter> findParametersToRemove(GrIntroduceParameterContext context) {
     TObjectIntHashMap<GrParameter> toRemove = new TObjectIntHashMap<GrParameter>();
     if (context.var == null) {
-      final GrMethod method = (GrMethod)context.scope;
-      final GrParameter[] parameters = method.getParameters();
+      final GrParametersOwner parametersOwner = context.toReplaceIn;
+      final GrParameter[] parameters = parametersOwner.getParameters();
       final GrExpression expr = context.expression;
       for (int i = 0; i < parameters.length; i++) {
         GrParameter parameter = parameters[i];
@@ -68,6 +80,80 @@ public class GroovyIntroduceParameterUtil {
       }
     }
     return toRemove;
+  }
+
+  @Nullable
+  public static PsiParameter getAnchorParameter(PsiParameterList parameterList, boolean isVarArgs) {
+    final PsiParameter[] parameters = parameterList.getParameters();
+    final int length = parameters.length;
+    if (isVarArgs) {
+      return length > 1 ? parameters[length - 2] : null;
+    }
+    else {
+      return length > 0 ? parameters[length - 1] : null;
+    }
+  }
+
+  public static void removeParametersFromCall(final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs, final TIntArrayList parametersToRemove) {
+    parametersToRemove.forEach(new TIntProcedure() {
+      public boolean execute(final int paramNum) {
+        try {
+          final GrClosureSignatureUtil.ArgInfo<PsiElement> actualArg = actualArgs[paramNum];
+          for (PsiElement arg : actualArg.args) {
+            arg.delete();
+          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+        return true;
+      }
+    });
+  }
+
+  public static void removeParamsFromUnresolvedCall(GrCall callExpression, PsiParameter[] parameters, TIntArrayList parametersToRemove) {
+    final GrExpression[] arguments = callExpression.getExpressionArguments();
+    final GrClosableBlock[] closureArguments = callExpression.getClosureArguments();
+    final GrNamedArgument[] namedArguments = callExpression.getNamedArguments();
+
+    final boolean hasNamedArgs;
+    if (namedArguments.length > 0) {
+      if (parameters.length > 0) {
+        final PsiType type = parameters[0].getType();
+        hasNamedArgs = InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);
+      }
+      else {
+        hasNamedArgs = false;
+      }
+    }
+    else {
+      hasNamedArgs = false;
+    }
+
+    parametersToRemove.forEachDescending(new TIntProcedure() {
+      public boolean execute(int paramNum) {
+        try {
+          if (paramNum == 0 && hasNamedArgs) {
+            for (GrNamedArgument namedArgument : namedArguments) {
+              namedArgument.delete();
+            }
+          }
+          else {
+            if (hasNamedArgs) paramNum--;
+            if (paramNum < arguments.length) {
+              arguments[paramNum].delete();
+            }
+            else if (paramNum < arguments.length + closureArguments.length) {
+              closureArguments[paramNum - arguments.length].delete();
+            }
+          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+        return true;
+      }
+    });
   }
 
   private static class FieldSearcher extends GroovyRecursiveElementVisitor {
