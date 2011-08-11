@@ -19,17 +19,23 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -53,11 +59,18 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
       .addKind("Interface", GroovyIcons.INTERFACE, GROOVY_INTERFACE)
       .addKind("Enum", GroovyIcons.ENUM, GROOVY_ENUM)
       .addKind("Annotation", GroovyIcons.ANNOTATION_TYPE, GROOVY_ANNOTATION);
+
+    for (FileTemplate template : FileTemplateManager.getInstance().getAllTemplates()) {
+      FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
+      if (fileType.equals(GroovyFileType.GROOVY_FILE_TYPE) && JavaDirectoryService.getInstance().getPackage(directory) != null) {
+        builder.addKind(template.getName(), GroovyIcons.CLASS, template.getName());
+      }
+    }
   }
 
   @Override
   protected boolean isAvailable(DataContext dataContext) {
-    return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(DataKeys.MODULE.getData(dataContext));
+    return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(LangDataKeys.MODULE.getData(dataContext));
   }
 
   @Override
