@@ -53,7 +53,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.List;
 
-public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, Disposable, TypeSafeDataProvider {
+public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class.getName());
   private static final boolean INTERNAL_MODE = ApplicationManagerEx.getApplicationEx().isInternal();
   @NonNls private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
@@ -198,7 +198,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     forwardToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myNextButtonPanel.add(forwardToolbar.getComponent(), BorderLayout.CENTER);
 
-    myTabs = new TabbedPaneWrapper(this);
+    myTabs = new TabbedPaneWrapper(getDisposable());
     final LabeledTextComponent.TextListener commentsListener = new LabeledTextComponent.TextListener() {
       @Override
       public void textChanged(String newText) {
@@ -367,11 +367,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-
-  @Override
-  public void dispose() {
-    super.dispose();
-  }
 
   private void updateCredentialsPane(AbstractMessage message) {
     if (message != null) {
