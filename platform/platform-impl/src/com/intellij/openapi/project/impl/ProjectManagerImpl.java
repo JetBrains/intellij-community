@@ -333,8 +333,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
   @NotNull
   public synchronized Project getDefaultProject() {
-    // TODO: uncomment this as soon as http://youtrack.jetbrains.net/issue/IDEA-71686 will be fixed!
-    //LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project was already disposed!");
+    LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
     if (myDefaultProject == null) {
       try {
         myDefaultProject = createAndInitProject(null, null, true, ApplicationManager.getApplication().isUnitTestMode(), null);
