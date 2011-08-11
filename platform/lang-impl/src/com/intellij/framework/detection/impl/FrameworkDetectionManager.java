@@ -33,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
@@ -230,7 +231,15 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
   private void showSetupFrameworksDialog(Notification notification) {
     IdentityHashMap<DetectedFrameworkDescription, Integer> frameworksToId = new IdentityHashMap<DetectedFrameworkDescription, Integer>();
-    List<? extends DetectedFrameworkDescription> descriptions = getValidDetectedFrameworks(frameworksToId);
+    List<? extends DetectedFrameworkDescription> descriptions;
+    try {
+      descriptions = getValidDetectedFrameworks(frameworksToId);
+    }
+    catch (IndexNotReadyException e) {
+      DumbService.getInstance(myProject).showDumbModeNotification("Information about detected frameworks is not available until indices are built");
+      return;
+    }
+
     if (descriptions.isEmpty()) {
       Messages.showInfoMessage(myProject, "No frameworks are detected", "Framework Detection");
       return;
