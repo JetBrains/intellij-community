@@ -9,6 +9,7 @@
   <depends>org.intellij.groovy</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportProvider"/>
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportBuilder"/>
     <projectConfigurable instance="org.jetbrains.plugins.gradle.config.GradleConfigurable"/>
