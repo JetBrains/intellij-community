@@ -2,19 +2,27 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author max
@@ -105,5 +113,54 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     }
     //noinspection unchecked
     return (T)child;
+  }
+
+  /**
+   * Overrides the findReferenceAt() logic in order to provide a resolve context with origin file for returned references.
+   * The findReferenceAt() is usually invoked from UI operations, and it helps to be able to do deeper analysis in the
+   * current file for such operations.
+   *
+   * @param offset the offset to find the reference at
+   * @return the reference or null.
+   */
+  @Override
+  public PsiReference findReferenceAt(int offset) {
+    // copy/paste from SharedPsiElementImplUtil
+    PsiElement element = findElementAt(offset);
+    if (element == null || element instanceof OuterLanguageElement) return null;
+    offset = getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
+
+    List<PsiReference> referencesList = new ArrayList<PsiReference>();
+    while (element != null) {
+      addReferences(offset, element, referencesList);
+      offset = element.getStartOffsetInParent() + offset;
+      if (element instanceof PsiFile) break;
+      element = element.getParent();
+    }
+
+    if (referencesList.isEmpty()) return null;
+    if (referencesList.size() == 1) return referencesList.get(0);
+    return new PsiMultiReference(referencesList.toArray(new PsiReference[referencesList.size()]),
+                                 referencesList.get(referencesList.size() - 1).getElement());
+  }
+
+  private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences) {
+    final PsiReference[] references;
+    if (element instanceof PyReferenceExpression) {
+      final PyResolveContext context = PyResolveContext.defaultContext()
+        .withTypeEvalContext(TypeEvalContext.fast(element.getContainingFile()));
+      references = new PsiReference[] { ((PyReferenceExpression) element).getReference(context)};
+    }
+    else {
+      references = element.getReferences();
+    }
+    for (final PsiReference reference : references) {
+      for (TextRange range : ReferenceRange.getRanges(reference)) {
+        assert range != null : reference;
+        if (range.containsOffset(offset)) {
+          outReferences.add(reference);
+        }
+      }
+    }
   }
 }
