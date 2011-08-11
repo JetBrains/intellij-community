@@ -288,7 +288,7 @@
     <consoleFilterProvider implementation="com.intellij.execution.filters.DefaultConsoleFiltersProvider"/>
 
 
-    <selectInTarget implementation="com.intellij.ide.impl.ProjectSettingsSelectInTarget"/>
+    <selectInTarget implementation="com.intellij.ide.impl.ProjectStructureSelectInTarget"/>
 
     <OrderRootTypeUI key="JAVADOC"
                      implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.JavadocOrderRootTypeUIFactory"/>
