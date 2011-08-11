@@ -20,6 +20,8 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
@@ -85,6 +87,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
       public void run() {
         myAlarm.cancelAllRequests();
         if (myCanceled) return;
+        if (myPopup.isDisposed()) return;
         ArrayList<PsiElement> data = new ArrayList<PsiElement>();
         synchronized (lock) {
           if (comparator != null) {
@@ -96,7 +99,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
         myPopup.setCaption(getCaption(getCurrentSize()));
         myPopup.pack(true, true);
       }
-    }, 10, ModalityState.stateForComponent(myPopup.getContent()));
+    }, 200, ModalityState.stateForComponent(myPopup.getContent()));
   }
 
   public int getCurrentSize() {
