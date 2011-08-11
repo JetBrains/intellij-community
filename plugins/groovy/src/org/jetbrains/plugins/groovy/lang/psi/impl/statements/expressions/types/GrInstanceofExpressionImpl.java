@@ -17,15 +17,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
@@ -49,10 +47,12 @@ public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrIn
     return getTypeByFQName("java.lang.Boolean");
   }
 
+  @Nullable
   public GrTypeElement getTypeElement() {
     return findChildByClass(GrTypeElement.class);
   }
 
+  @Nullable
   public GrExpression getOperand() {
     return findChildByClass(GrExpression.class);
   }

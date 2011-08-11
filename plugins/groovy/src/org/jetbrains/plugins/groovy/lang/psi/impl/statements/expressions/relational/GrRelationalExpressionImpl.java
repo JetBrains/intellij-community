@@ -17,12 +17,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_BOOLEAN;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMPARE_TO;
 
 /**
  * @author ilyas
@@ -32,13 +34,7 @@ public class GrRelationalExpressionImpl extends GrBinaryExpressionImpl {
   private static final Function<GrBinaryExpressionImpl,PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
     @Override
     public PsiType fun(GrBinaryExpressionImpl binary) {
-      final String typeName;
-      if (GroovyTokenTypes.mCOMPARE_TO.equals(binary.getOperationTokenType())) {
-        typeName = CommonClassNames.JAVA_LANG_INTEGER;
-      }
-      else {
-        typeName = CommonClassNames.JAVA_LANG_BOOLEAN;
-      }
+      final String typeName = mCOMPARE_TO == binary.getOperationTokenType() ? JAVA_LANG_INTEGER : JAVA_LANG_BOOLEAN;
       return binary.getTypeByFQName(typeName);
     }
   };

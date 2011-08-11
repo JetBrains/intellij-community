@@ -36,10 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -51,6 +48,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ven
@@ -142,11 +141,8 @@ public class GroovyExpectedTypesProvider {
           final GrNamedArgument[] namedArgs = argumentList == null ? GrNamedArgument.EMPTY_ARRAY : argumentList.getNamedArguments();
           final GrExpression[] expressionArgs = argumentList == null ? GrExpression.EMPTY_ARRAY : argumentList.getExpressionArguments();
           addConstraintsFromMap(constraints,
-                                GrClosureSignatureUtil.mapArgumentsToParameters(variant, methodCall, true,
-                                                                                namedArgs,
-                                                                                expressionArgs,
-                                                                                closureArgs
-                                ),
+                                GrClosureSignatureUtil.mapArgumentsToParameters(variant, methodCall, true, namedArgs, expressionArgs,
+                                                                                closureArgs),
                                 closureIndex == closureArgs.length - 1);
         }
         if (!constraints.isEmpty()) {
@@ -219,6 +215,45 @@ public class GroovyExpectedTypesProvider {
       }
       if (!constraints.isEmpty()) {
         myResult = constraints.toArray(new TypeConstraint[constraints.size()]);
+      }
+    }
+
+    @Override
+    public void visitBinaryExpression(GrBinaryExpression expression) {
+      final IElementType type = expression.getOperationTokenType();
+      final GrExpression left = expression.getLeftOperand();
+      final GrExpression right = expression.getRightOperand();
+      
+
+      if (type == mREGEX_FIND || type == mREGEX_MATCH) {
+        final PsiClassType string = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, expression);
+        myResult = new TypeConstraint[]{new SubtypeConstraint(string, string)};
+        return;
+      }
+
+      final GrExpression other = myExpression == left ? right : left;
+      final PsiType otherType = other != null ? other.getType() : null;
+
+      if (otherType == null) return;
+      
+      if (type== mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        final PsiClassType obj = TypesUtil.getJavaLangObject(expression);
+        myResult = new TypeConstraint[]{new SubtypeConstraint(obj, obj)};
+        return;
+      }
+
+      myResult = new TypeConstraint[]{new SubtypeConstraint(otherType, otherType)};
+    }
+
+    @Override
+    public void visitInstanceofExpression(GrInstanceOfExpression expression) {
+      final GrExpression operand = expression.getOperand();
+      final GrTypeElement typeElement = expression.getTypeElement();
+      if (typeElement == null) return;
+
+      if (myExpression == operand) {
+        final PsiType type = typeElement.getType();
+        myResult = new TypeConstraint[]{new SupertypeConstraint(type, type)};
       }
     }
 
