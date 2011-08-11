@@ -25,6 +25,7 @@ import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -111,11 +112,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     if (element != null) {
       //if (element instanceof PsiPackage) return;
 
-      impls = getSelfAndImplementations(editor, element, new ImplementationSearcher.FirstImplementationsSearcher() {
-        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
-          return ShowImplementationsAction.filterElements(targetElements);
-        }
-      });
+      impls = getSelfAndImplementations(editor, element, createImplementationsSearcher());
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
@@ -142,17 +139,31 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     showImplementations(impls, project, text, editor, file, element, isInvokedFromEditor);
   }
 
+  private static ImplementationSearcher createImplementationsSearcher() {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      return new ImplementationSearcher.FirstImplementationsSearcher() {
+        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
+          return ShowImplementationsAction.filterElements(targetElements);
+        }
+      };
+    }
+    else {
+      return new ImplementationSearcher() {
+        @Override
+        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, int offset) {
+          return ShowImplementationsAction.filterElements(targetElements);
+        }
+      };
+    }
+  }
+
   protected void updateElementImplementations(final PsiElement element, final Editor editor, final Project project, final PsiFile file) {
     PsiElement[] impls = null;
     String text = "";
     if (element != null) {
      // if (element instanceof PsiPackage) return;
 
-      impls = getSelfAndImplementations(editor, element, new ImplementationSearcher.FirstImplementationsSearcher() {
-        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
-          return ShowImplementationsAction.filterElements(targetElements);
-        }
-      });
+      impls = getSelfAndImplementations(editor, element, createImplementationsSearcher());
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 

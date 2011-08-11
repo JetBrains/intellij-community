@@ -19,6 +19,7 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
@@ -42,11 +44,15 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     int offset = editor.getCaretModel().getOffset();
     PsiElement source = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     if (source == null) return null;
-    final GotoData gotoData = new GotoData(source, new ImplementationSearcher.FirstImplementationsSearcher().searchImplementations(editor,
-                                                                                                                                   source,
-                                                                                                                                   offset),
-                                           Collections.<AdditionalAction>emptyList());
-    gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset);
+    final GotoData gotoData;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      gotoData = new GotoData(source, new ImplementationSearcher.FirstImplementationsSearcher().searchImplementations(editor, source, offset),
+                              Collections.<AdditionalAction>emptyList());
+      gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset);
+    } else {
+      gotoData = new GotoData(source, new ImplementationSearcher().searchImplementations(editor, source, offset),
+                              Collections.<AdditionalAction>emptyList());
+    }
     return gotoData;
   }
 
