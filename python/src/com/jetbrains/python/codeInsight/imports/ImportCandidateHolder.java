@@ -105,7 +105,7 @@ class ImportCandidateHolder implements Comparable {
       parent = myImportElement.getParent();
     }
     if (myImportable instanceof PyFunction) {
-      sb.append(((PyFunction)myImportable).getParameterList().getPresentableText(true));
+      sb.append(((PyFunction)myImportable).getParameterList().getPresentableText(false));
     }
     else if (myImportable instanceof PyClass) {
       PyClass[] supers = ((PyClass)myImportable).getSuperClasses();
