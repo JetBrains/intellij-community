@@ -405,4 +405,13 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testMro() {  // PY-3989
     doTest();
   }
+  
+  public void testNamedTuple() {  //
+    final String testName = "completion/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    final List<String> strings = myFixture.getLookupElementStrings();
+    assertTrue(strings.contains("lat"));
+    assertTrue(strings.contains("long"));
+  }
 }

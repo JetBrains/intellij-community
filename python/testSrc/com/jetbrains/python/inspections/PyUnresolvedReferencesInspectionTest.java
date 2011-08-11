@@ -55,6 +55,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyLightFixtureTestCase
   public void testBinaryOperators() {
     doTest();
   }
+  
+  public void testNamedTuple() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");

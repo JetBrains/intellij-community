@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -12,6 +13,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -27,6 +29,17 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   private Properties myStdlibTypes3 = new Properties();
   private Project myProject = null;
   private Map<String, PyType> myTypeCache = new HashMap<String, PyType>();
+
+  @Override
+  public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
+    if (referenceTarget instanceof PyFunction &&
+        PyNames.NAMEDTUPLE.equals(((PyFunction) referenceTarget).getName()) &&
+        PyNames.COLLECTIONS_PY.equals(referenceTarget.getContainingFile().getName()) &&
+        anchor instanceof PyCallExpression) {
+      return PyNamedTupleType.fromCall((PyCallExpression) anchor);
+    }
+    return null;
+  }
 
   @Override
   public PyType getReturnType(PyFunction function, @Nullable PyReferenceExpression callSite, TypeEvalContext context) {

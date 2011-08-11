@@ -80,6 +80,9 @@ public class PyNames {
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
 
+  public static final String NAMEDTUPLE = "namedtuple";
+  public static final String COLLECTIONS_PY = "collections.py";
+
   /**
    * Contains all known predefined names of "__foo__" form.
    */

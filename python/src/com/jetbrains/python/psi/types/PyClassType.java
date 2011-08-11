@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,7 +30,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyClassType extends UserDataHolderBase implements PyType {
+public class PyClassType extends UserDataHolderBase implements PyCallableType {
 
   protected final PyClass myClass;
   protected final boolean myIsDefinition;
@@ -186,6 +185,14 @@ public class PyClassType extends UserDataHolderBase implements PyType {
       }
     }
     return Collections.emptyList();
+  }
+
+  @Override
+  public PyType getCallType() {
+    if (isDefinition()) {
+      return new PyClassType(getPyClass(), false);
+    }
+    return null;
   }
 
   @Nullable
