@@ -16,8 +16,9 @@ import java.io.Serializable;
 public class RemoteGradleProcessSettings implements Serializable {
 
   private static final long serialVersionUID = 1L;
-  
+
   private final String myGradleHome;
+  private       long   myTtlInMs;
 
   public RemoteGradleProcessSettings(@NotNull String gradleHome) {
     myGradleHome = gradleHome;
@@ -26,6 +27,17 @@ public class RemoteGradleProcessSettings implements Serializable {
   @NotNull
   public String getGradleHome() {
     return myGradleHome;
+  }
+
+  /**
+   * @return    ttl in milliseconds for the remote process (positive value); non-positive value if undefined
+   */
+  public long getTtlInMs() {
+    return myTtlInMs;
+  }
+
+  public void setTtlInMs(long ttlInMs) {
+    myTtlInMs = ttlInMs;
   }
 
   @Override

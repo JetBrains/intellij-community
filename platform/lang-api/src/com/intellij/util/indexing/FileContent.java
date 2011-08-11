@@ -30,8 +30,10 @@ public interface FileContent extends UserDataHolder {
   @NotNull
   FileType getFileType();
 
+  @NotNull
   VirtualFile getFile();
 
+  @NotNull
   String getFileName();
 
   byte[] getContent();

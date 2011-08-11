@@ -31,15 +31,16 @@ import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 /**
  * @author nik
  */
-public class FileContentImpl extends UserDataHolderBase implements FileContent {
+public final class FileContentImpl extends UserDataHolderBase implements FileContent {
   private final VirtualFile myFile;
-  private final String fileName;
+  private final String myFileName;
   private final FileType myFileType;
   private final Charset myCharset;
   private byte[] myContent;
@@ -96,19 +97,14 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     this(file, null, null, null);
   }
 
-  @TestOnly
-  public FileContentImpl(byte[] content) {
-    this(null, null, content, null);
-  }
-
-  private FileContentImpl(VirtualFile file, CharSequence contentAsText, byte[] content, Charset charset) {
+  private FileContentImpl(@NotNull VirtualFile file, CharSequence contentAsText, byte[] content, Charset charset) {
     myFile = file;
     myContentAsText = contentAsText;
     myContent = content;
     myCharset = charset;
-    myFileType = file == null ? null : FileTypeManager.getInstance().getFileTypeByFile(file);
+    myFileType = FileTypeManager.getInstance().getFileTypeByFile(file);
     // remember name explicitly because the file could be renamed afterwards
-    fileName = file == null ? null : file.getName();
+    myFileName = file.getName();
   }
 
   @NotNull
@@ -122,6 +118,16 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     return substituteFileType(myFile, myFileType);
   }
 
+  @TestOnly
+  public static FileContent createByFile(@NotNull VirtualFile file) {
+    try {
+      return new FileContentImpl(file, file.contentsToByteArray());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public FileType getFileTypeWithoutSubstitution() {
     return myFileType;
   }
@@ -132,14 +138,16 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     return getSubstitutedFileType();
   }
 
+  @NotNull
   @Override
   public VirtualFile getFile() {
     return myFile;
   }
 
+  @NotNull
   @Override
   public String getFileName() {
-    return fileName;
+    return myFileName;
   }
 
   public Charset getCharset() {
@@ -176,6 +184,6 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
 
   @Override
   public String toString() {
-    return fileName;
+    return myFileName;
   }
 }
