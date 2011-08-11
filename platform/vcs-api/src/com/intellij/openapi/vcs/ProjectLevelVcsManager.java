@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.VcsEnvironmentsProxyCreator;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
@@ -250,6 +251,9 @@ public abstract class ProjectLevelVcsManager {
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
 
   public abstract void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator);
+  
+  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator,
+                                      @Nullable PairProcessor<VirtualFile, VirtualFile[]> directoryFilter);
 
   @Nullable
   public abstract AbstractVcs findVersioningVcs(VirtualFile file);
