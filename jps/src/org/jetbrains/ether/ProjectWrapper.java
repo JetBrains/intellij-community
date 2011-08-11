@@ -470,6 +470,10 @@ public class ProjectWrapper {
                 return myOutputStatus.equals("ok");
             }
 
+            public boolean outputEmpty() {
+                return myOutputStatus.equals("empty");
+            }
+
             public boolean isOutdated() {
                 return (!emptySource() && !outputOk());
             }
@@ -479,11 +483,11 @@ public class ProjectWrapper {
         final Properties mySource;
         final Properties myTest;
 
-        final Set<String> myExcludes;
-
-        final Module myModule;
         List<ClasspathItemWrapper> myDependsOn;
+        List<ClasspathItemWrapper> myTestDependsOn;
 
+        final Set<String> myExcludes;
+        final Module myModule;
         final Set<LibraryWrapper> myLibraries;
 
         public Set<StringCache.S> getOutdatedSources() {
@@ -535,7 +539,15 @@ public class ProjectWrapper {
 
             final List<ClasspathItemWrapper> weakened = new ArrayList<ClasspathItemWrapper>();
 
-            for (ClasspathItemWrapper cpiw : dependsOn()) {
+            for (ClasspathItemWrapper cpiw : dependsOn(false)) {
+                weakened.add(weaken(cpiw));
+            }
+
+            RW.writeln(w, weakened);
+
+            weakened.clear();
+
+            for (ClasspathItemWrapper cpiw : dependsOn(true)) {
                 weakened.add(weaken(cpiw));
             }
 
@@ -560,12 +572,14 @@ public class ProjectWrapper {
 
             RW.readTag(r, "Dependencies:");
             myDependsOn = (List<ClasspathItemWrapper>) RW.readMany(r, myWeakClasspathItemWrapperReader, new ArrayList<ClasspathItemWrapper>());
+            myTestDependsOn = (List<ClasspathItemWrapper>) RW.readMany(r, myWeakClasspathItemWrapperReader, new ArrayList<ClasspathItemWrapper>());
         }
 
         public ModuleWrapper(final Module m) {
             m.forceInit();
             myModule = m;
             myDependsOn = null;
+            myTestDependsOn = null;
             myName = m.getName();
             myExcludes = (Set<String>) getRelativePaths(m.getExcludes(), new HashSet<String>());
             mySource = new Properties(m.getSourceRoots(), m.getOutputPath(), myExcludes);
@@ -580,6 +594,30 @@ public class ProjectWrapper {
 
         public String getName() {
             return myName;
+        }
+
+        public Set<StringCache.S> getOutdatedFiles(final boolean tests) {
+            if (tests) {
+                return myTest.outputEmpty() ? getTests() : getOutdatedTests();
+            }
+
+            return mySource.outputEmpty() ? getSources() : getOutdatedSources();
+        }
+
+        public Set<StringCache.S> getRemovedFiles(final boolean tests) {
+            if (tests) {
+                return getRemovedTests();
+            }
+
+            return getRemovedSources();
+        }
+
+        public Set<StringCache.S> getSources(final boolean tests) {
+            if (tests) {
+                return myTest.getFiles();
+            }
+
+            return mySource.getFiles();
         }
 
         public Set<String> getSourceRoots() {
@@ -618,25 +656,38 @@ public class ProjectWrapper {
             return myTest.getOutputPath();
         }
 
-        public List<ClasspathItemWrapper> dependsOn() {
-            if (myDependsOn != null)
+        public List<ClasspathItemWrapper> dependsOn(final boolean tests) {
+            if (tests) {
+                if (myTestDependsOn != null) {
+                    return myTestDependsOn;
+                }
+            }
+            else if (myDependsOn != null) {
                 return myDependsOn;
+            }
 
-            myDependsOn = new ArrayList<ClasspathItemWrapper>();
+            final List<ClasspathItemWrapper> result = new ArrayList<ClasspathItemWrapper>();
 
-            final ClasspathKind kind = myProject.getCompileClasspathKind(true);
+            final ClasspathKind kind = myProject.getCompileClasspathKind(tests);
 
             for (ClasspathItem cpi : myModule.getClasspath(kind)) {
                 if (cpi instanceof Module) {
-                    myDependsOn.add(getModule(((Module) cpi).getName()));
+                    result.add(getModule(((Module) cpi).getName()));
                 } else if (cpi instanceof Library) {
-                    myDependsOn.add(new LibraryWrapper((Library) cpi));
+                    result.add(new LibraryWrapper((Library) cpi));
                 } else {
-                    myDependsOn.add(new GenericClasspathItemWrapper(cpi));
+                    result.add(new GenericClasspathItemWrapper(cpi));
                 }
             }
 
-            return myDependsOn;
+            if (tests) {
+                myTestDependsOn = result;
+            }
+            else {
+                myDependsOn = result;
+            }
+
+            return result;
         }
 
         public List<String> getClassPath(final ClasspathKind kind) {
@@ -686,18 +737,21 @@ public class ProjectWrapper {
         }
 
         public boolean isOutdated(final boolean tests, final ProjectWrapper history) {
-            if (history == null)
+            if (history == null) {
                 return true;
+            }
 
             final ModuleWrapper past = history.getModule(myName);
-            if (past == null)
-                return true;
 
-            final boolean outputChanged = !safeEquals(past.getOutputPath(), getOutputPath());
+            if (past == null) {
+                return true;
+            }
+
+            final boolean outputChanged = !tests && !safeEquals(past.getOutputPath(), getOutputPath());
             final boolean testOutputChanged = tests && !safeEquals(past.getTestOutputPath(), getTestOutputPath());
-            final boolean sourceChanged = !past.getSourceFiles().equals(getSourceFiles());
+            final boolean sourceChanged = !tests && !past.getSourceFiles().equals(getSourceFiles());
             final boolean testSourceChanged = tests && !past.getTestSourceFiles().equals(getTestSourceFiles());
-            final boolean sourceOutdated = mySource.isOutdated() || !mySource.getOutdatedFiles(past.mySource).isEmpty();
+            final boolean sourceOutdated = !tests && (mySource.isOutdated() || !mySource.getOutdatedFiles(past.mySource).isEmpty());
             final boolean testSourceOutdated = tests && (myTest.isOutdated() || !myTest.getOutdatedFiles(past.myTest).isEmpty());
             final boolean unsafeDependencyChange = (
                     new Object() {
@@ -716,7 +770,7 @@ public class ProjectWrapper {
                                     return true;
                             }
                         }
-                    }.run(dependsOn(), past.dependsOn())
+                    }.run(dependsOn(tests), past.dependsOn(tests))
             );
 
             return sourceOutdated ||
@@ -972,8 +1026,12 @@ public class ProjectWrapper {
 
     public void clean() {
         myProject.clean();
-        for (ModuleWrapper m : myModules.values())
+
+        for (ModuleWrapper m : myModules.values()) {
             m.updateOutputStatus();
+        }
+
+        new File(myProjectSnapshot).delete();
     }
 
     public void rebuild() {
@@ -1003,7 +1061,7 @@ public class ProjectWrapper {
             this.builder = builder;
         }
 
-        BuildStatus iterativeCompile(final ModuleChunk chunk, final boolean tests, final Set<StringCache.S> sources, final Set<StringCache.S> outdated, final Set<StringCache.S> removed, final Flags flags) {
+        BuildStatus iterativeCompile(final ModuleChunk chunk, final Set<StringCache.S> sources, final Set<StringCache.S> outdated, final Set<StringCache.S> removed, final Flags flags) {
             final Collection<StringCache.S> filesToCompile = DefaultGroovyMethods.intersect(affectedFiles, sources);
             final Set<StringCache.S> safeFiles = new HashSet<StringCache.S>();
 
@@ -1085,7 +1143,7 @@ public class ProjectWrapper {
                 boolean buildException = false;
 
                 try {
-                    builder.buildChunk(chunk, tests, filesToCompile, deltaBackend, ProjectWrapper.this);
+                    builder.buildChunk(chunk, flags.tests(), filesToCompile, deltaBackend, ProjectWrapper.this);
                 } catch (Exception e) {
                     e.printStackTrace();
                     buildException = true;
@@ -1101,7 +1159,9 @@ public class ProjectWrapper {
 
                     if (!incremental) {
                         affectedFiles.addAll(sources);
-                        final BuildStatus result = iterativeCompile(chunk, tests, sources, null, null, flags);
+                        affectedFiles.removeAll(compiledFiles);
+
+                        final BuildStatus result = iterativeCompile(chunk, sources, null, null, flags);
 
                         if (result == BuildStatus.FAILURE) {
                             return result;
@@ -1110,22 +1170,22 @@ public class ProjectWrapper {
                         return BuildStatus.CONSERVATIVE;
                     }
 
-                    return iterativeCompile(chunk, tests, sources, null, null, flags);
+                    return iterativeCompile(chunk, sources, null, null, flags);
                 } else {
                     return BuildStatus.FAILURE;
                 }
             } else {
                 for (Module m : chunk.getElements()) {
-                    Reporter.reportBuildSuccess(m, tests);
+                    Reporter.reportBuildSuccess(m, flags.tests());
                 }
             }
 
             return BuildStatus.INCREMENTAL;
         }
 
-        public BuildStatus build(final Collection<Module> modules, final boolean tests, final Flags flags) {
+        public BuildStatus build(final Collection<Module> modules, final Flags flags) {
             boolean incremental = flags.incremental();
-            final List<ModuleChunk> chunks = myProject.getChunks(tests);
+            final List<ModuleChunk> chunks = myProject.getChunks(flags.tests());
 
             for (final ModuleChunk c : chunks) {
                 final Set<Module> chunkModules = c.getElements();
@@ -1139,12 +1199,13 @@ public class ProjectWrapper {
 
                         for (Module m : chunkModules) {
                             final ModuleWrapper mw = getModule(m.getName());
-                            outdatedSources.addAll(tests ? mw.getOutdatedTests() : mw.getOutdatedSources());
-                            chunkSources.addAll(tests ? mw.getTests() : mw.getSources());
-                            removedSources.addAll(tests ? mw.getRemovedTests() : mw.getRemovedSources());
+
+                            outdatedSources.addAll(mw.getOutdatedFiles(flags.tests()));
+                            chunkSources.addAll(mw.getSources(flags.tests()));
+                            removedSources.addAll(mw.getRemovedFiles(flags.tests()));
                         }
 
-                        final BuildStatus result = iterativeCompile(c, tests, chunkSources, outdatedSources, removedSources, flags);
+                        final BuildStatus result = iterativeCompile(c, chunkSources, outdatedSources, removedSources, flags);
 
                         incremental = result == BuildStatus.INCREMENTAL;
 
@@ -1161,7 +1222,7 @@ public class ProjectWrapper {
 
                         for (Module m : chunkModules) {
                             final ModuleWrapper mw = getModule(m.getName());
-                            removedSources.addAll(tests ? mw.getRemovedTests() : mw.getRemovedSources());
+                            removedSources.addAll(flags.tests() ? mw.getRemovedTests() : mw.getRemovedSources());
                         }
 
                         final Set<Module> toClean = new HashSet<Module>();
@@ -1172,7 +1233,7 @@ public class ProjectWrapper {
                             }
                         }
 
-                        if (!toClean.isEmpty()) {
+                        if (!toClean.isEmpty() && !flags.tests()) {
                             builder.clearChunk(new ModuleChunk(toClean), null, ProjectWrapper.this);
                             cleared.addAll(toClean);
                         }
@@ -1181,7 +1242,7 @@ public class ProjectWrapper {
                         final Callbacks.Backend deltaCallback = delta.getCallback();
 
                         try {
-                            builder.buildChunk(c, tests, null, deltaCallback, ProjectWrapper.this);
+                            builder.buildChunk(c, flags.tests(), null, deltaCallback, ProjectWrapper.this);
                         } catch (Exception e) {
                             e.printStackTrace();
                             return BuildStatus.FAILURE;
@@ -1189,10 +1250,14 @@ public class ProjectWrapper {
 
                         for (Module m : c.getElements()) {
                             final ModuleWrapper module = getModule(m.getName());
-                            affectedFiles.removeAll(tests ? module.getTests() : module.getSources());
+                            affectedFiles.removeAll(module.getSources(flags.tests()));
                         }
 
                         dependencyMapping.integrate(delta, removedSources);
+
+                        for (Module m : chunkModules) {
+                            Reporter.reportBuildSuccess(m, flags.tests());
+                        }
                     }
                 }
             }
@@ -1202,7 +1267,31 @@ public class ProjectWrapper {
     }
 
     private void makeModules(final Collection<Module> initial, final Flags flags) {
-        if (myHistory == null) {
+        mainPass(initial, new Flags() {
+            public boolean tests() {
+                return false;
+            }
+
+            public boolean incremental() {
+                return flags.incremental();
+            }
+
+            public boolean force() {
+                return flags.force();
+            }
+
+            public PrintStream logStream() {
+                return flags.logStream();
+            }
+        });
+
+        if (flags.tests()) {
+            mainPass(initial, flags);
+        }
+    }
+
+    private void mainPass(final Collection<Module> initial, final Flags flags) {
+        if (myHistory == null && !flags.tests()) {
             clean();
         }
 
@@ -1305,9 +1394,20 @@ public class ProjectWrapper {
                     final Boolean property = visited.get(moduleName);
 
                     if (property == null || !property && force) {
-                        if (force || getModule(moduleName).isOutdated(flags.tests(), myHistory)) {
+                        final boolean outdated = getModule(moduleName).isOutdated(flags.tests(), myHistory);
+
+                        if (flags.logStream() != null) {
+                            flags.logStream().println("Module " + moduleName + " is " + (outdated ? "" : "not ") + "outdated.");
+                            flags.logStream().println("forced == " + force);
+                        }
+
+                        if (force || outdated) {
                             visited.put(moduleName, true);
                             modules.add(myProject.getModules().get(moduleName));
+                            if (flags.logStream() != null) {
+                                flags.logStream().println("Module " + moduleName + " added to the propagated list.");
+                                flags.logStream().println("Forced switched to true.");
+                            }
                             run(reversedDependencies.get(moduleName), true);
                         } else {
                             if (property == null) {
@@ -1339,11 +1439,7 @@ public class ProjectWrapper {
 
         builder.buildStart();
 
-        final BuildStatus result = beaver.build(modules, false, flags);
-
-        if (flags.tests()) {
-            beaver.build(modules, true, flags);
-        }
+        beaver.build(modules, flags);
 
         builder.buildStop();
 

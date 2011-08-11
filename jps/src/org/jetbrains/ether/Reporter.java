@@ -83,17 +83,20 @@ public class Reporter {
     }
 
     public static void reportBuildSuccess(final Module m, final boolean tests) {
-        write(getOkFlag(m), "dummy");
-
         if (tests) {
             write(getOkTestFlag(m), "dummy");
+        }
+        else {
+            write(getOkFlag(m), "dummy");
         }
     }
 
     public static void reportBuildFailure(final Module m, final boolean tests, final String reason) {
-        write(getFailFlag(m), reason);
         if (tests) {
             write(getFailTestFlag(m), reason);
+        }
+        else {
+            write(getFailFlag(m), reason);
         }
     }
 }
