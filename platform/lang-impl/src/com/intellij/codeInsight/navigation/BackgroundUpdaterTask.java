@@ -65,6 +65,13 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   public void init(AbstractPopup popup, T component) {
     myPopup = popup;
     myComponent = component;
+
+    myPopup.addPopupListener(new JBPopupAdapter() {
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        setCanceled();
+      }
+    });
   }
 
   public abstract String getCaption(int size);
@@ -77,6 +84,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   public void updateComponent(PsiElement element, @Nullable final Comparator comparator) {
     if (myCanceled) return;
+    if (myPopup.isDisposed()) return;
 
     synchronized (lock) {
       myData.add(element);
