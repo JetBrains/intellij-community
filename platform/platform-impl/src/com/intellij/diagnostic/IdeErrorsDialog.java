@@ -82,6 +82,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private ClearFatalsAction myClearAction = new ClearFatalsAction();
   private BlameAction myBlameAction = new BlameAction();
+  @Nullable
   private AnalyzeAction myAnalyzeAction;
   private boolean myMute;
 
@@ -219,7 +220,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myDetailsTabForm.setCommentsAreaVisible(false);
     }
     else {
-      myAnalyzeAction = new AnalyzeAction(ActionManager.getInstance().getAction("AnalyzeStacktraceOnError"));
+      final AnAction analyzePlatformAction = ActionManager.getInstance().getAction("AnalyzeStacktraceOnError");
+      if (analyzePlatformAction != null) {
+        myAnalyzeAction = new AnalyzeAction(analyzePlatformAction);
+      }
       myDetailsTabForm = new DetailsTabForm(myAnalyzeAction);
       myDetailsTabForm.setCommentsAreaVisible(true);
       myDetailsTabForm.addCommentsListener(commentsListener);
