@@ -19,13 +19,18 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.NavigatableWithText;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -36,20 +41,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PsiFileNode extends BasePsiNode<PsiFile>{
+public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWithText {
 
   public PsiFileNode(Project project, PsiFile value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   public Collection<AbstractTreeNode> getChildrenImpl() {
-    if (isArchive()) {
-      VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(getVirtualFile());
-      if (jarRoot != null) {
-        PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(jarRoot);
-        if (psiDirectory != null) {
-          return ProjectViewDirectoryHelper.getInstance(getProject()).getDirectoryChildren(psiDirectory, getSettings(), true);
-        }
+    VirtualFile jarRoot = getJarRoot();
+    if (jarRoot != null) {
+      PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(jarRoot);
+      if (psiDirectory != null) {
+        return ProjectViewDirectoryHelper.getInstance(getProject()).getDirectoryChildren(psiDirectory, getSettings(), true);
       }
     }
 
@@ -70,6 +73,52 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   public VirtualFile getVirtualFile() {
     PsiFile value = getValue();
     return value != null ? value.getVirtualFile() : null;
+  }
+
+  @Override
+  public boolean canNavigate() {
+    return isNavigatableLibraryRoot() || super.canNavigate();
+  }
+
+  private boolean isNavigatableLibraryRoot() {
+    VirtualFile jarRoot = getJarRoot();
+    final Project project = getProject();
+    if (jarRoot != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
+      final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(jarRoot, project);
+      return orderEntry != null && ProjectSettingsService.getInstance(project).canOpenLibraryOrSdkSettings(orderEntry);
+    }
+    return false;
+  }
+
+  @Nullable
+  private VirtualFile getJarRoot() {
+    final VirtualFile file = getVirtualFile();
+    if (file == null || !file.isValid() || !(file.getFileType() instanceof ArchiveFileType)) {
+      return null;
+    }
+    return JarFileSystem.getInstance().getJarRootForLocalFile(file);
+  }
+
+  @Override
+  public void navigate(boolean requestFocus) {
+    VirtualFile jarRoot = getJarRoot();
+    final Project project = getProject();
+    if (jarRoot != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
+      final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(jarRoot, project);
+      if (orderEntry != null) {
+        ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(orderEntry);
+        return;
+      }
+    }
+    super.navigate(requestFocus);
+  }
+
+  @Override
+  public String getNavigateActionText(boolean focusEditor) {
+    if (isNavigatableLibraryRoot()) {
+      return "Open Library Settings";
+    }
+    return null;
   }
 
   public int getWeight() {

@@ -21,9 +21,9 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +38,14 @@ import java.util.List;
 public abstract class CustomLibraryActionBase extends DumbAwareAction {
   protected final CustomLibraryCreator myCreator;
   protected final StructureConfigurableContext myContext;
-  protected final ModuleStructureConfigurable myModuleStructureConfigurable;
-  protected Module myModule;
+  protected final ProjectStructureConfigurable myProjectStructureConfigurable;
+  protected final Module myModule;
 
   protected CustomLibraryActionBase(String text, String description, Icon icon, StructureConfigurableContext context,
-                                    ModuleStructureConfigurable moduleStructureConfigurable, CustomLibraryCreator creator, Module module) {
+                                    ProjectStructureConfigurable projectStructureConfigurable, CustomLibraryCreator creator, Module module) {
     super(text, description, icon);
     myContext = context;
-    myModuleStructureConfigurable = moduleStructureConfigurable;
+    myProjectStructureConfigurable = projectStructureConfigurable;
     myCreator = creator;
     myModule = module;
   }
