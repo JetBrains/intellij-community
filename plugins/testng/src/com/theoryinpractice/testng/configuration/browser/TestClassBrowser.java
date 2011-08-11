@@ -73,7 +73,7 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
     return editor.getModuleSelector().findClass(className);
   }
 
-  protected ClassFilter.ClassFilterWithScope getFilter() throws MessageInfoException {
+  public ClassFilter.ClassFilterWithScope getFilter() throws MessageInfoException {
     TestNGConfiguration config = new TestNGConfiguration("<no-name>", getProject(), TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
     editor.applyEditorTo(config);
     GlobalSearchScope scope = getSearchScope(config.getModules());

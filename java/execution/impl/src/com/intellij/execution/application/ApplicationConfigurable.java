@@ -16,6 +16,7 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
@@ -26,6 +27,10 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,6 +114,17 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
 
   private void createUIComponents() {
     myMainClass = new LabeledComponent<EditorTextFieldWithBrowseButton>();
-    myMainClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true));
+    myMainClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {
+      @Override
+      public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
+        if (declaration instanceof PsiClass) {
+          final PsiClass aClass = (PsiClass)declaration;
+          if (ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null) {
+            return Visibility.VISIBLE;
+          }
+        }
+        return Visibility.NOT_VISIBLE;
+      }
+    }));
   }
 }

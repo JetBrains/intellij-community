@@ -43,12 +43,15 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.TextFieldCompletionProvider;
+import com.theoryinpractice.testng.MessageInfoException;
 import com.theoryinpractice.testng.configuration.browser.*;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -310,7 +313,21 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     classTest.setSelected(false);
     classTest.setEnabled(true);
 
-    classField.setComponent(new EditorTextFieldWithBrowseButton(project, true));
+    classField.setComponent(new EditorTextFieldWithBrowseButton(project, true, new JavaCodeFragment.VisibilityChecker() {
+      @Override
+      public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
+        try {
+          if (declaration instanceof PsiClass && 
+              new TestClassBrowser(project, TestNGConfigurationEditor.this).getFilter().isAccepted((PsiClass)declaration)) {
+            return Visibility.VISIBLE;
+          }
+        }
+        catch (MessageInfoException e) {
+          return Visibility.NOT_VISIBLE;
+        }
+        return Visibility.NOT_VISIBLE;
+      }
+    }));
 
     final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true);
     new TextFieldCompletionProvider() {
