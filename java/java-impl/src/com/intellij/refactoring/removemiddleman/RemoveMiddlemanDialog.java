@@ -64,7 +64,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
-    final MemberSelectionPanel selectionPanel = new MemberSelectionPanel("Methods to inline", delegateMethods, "Delete");
+    final MemberSelectionPanel selectionPanel = new MemberSelectionPanel("&Methods to inline", delegateMethods, "Delete");
     final MemberSelectionTable table = selectionPanel.getTable();
     table.setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(table.getMemberInfoModel()) {
       @Override
