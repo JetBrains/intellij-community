@@ -32,9 +32,6 @@ public class PyTypeCheckerInspection extends PyInspection {
       session.putUserData(TIME_KEY, System.nanoTime());
     }
     return new PyInspectionVisitor(holder) {
-      final TypeEvalContext fastContext = TypeEvalContext.fast();
-      final TypeEvalContext slowContext = TypeEvalContext.slow();
-
       // TODO: Show types in tooltips for variables
       // TODO: Visit decorators with arguments
       @Override
@@ -42,18 +39,16 @@ public class PyTypeCheckerInspection extends PyInspection {
         List<PyFunction> functions = new ArrayList<PyFunction>();
         final PyExpression callee = node.getCallee();
         if (callee instanceof PyReferenceExpression) {
-          PsiElement e = ((PyReferenceExpression)callee).followAssignmentsChain(slowContext).getElement();
+          PsiElement e = ((PyReferenceExpression)callee).followAssignmentsChain(myTypeEvalContext).getElement();
           if (e instanceof PyFunction) {
             functions.add((PyFunction)e);
           }
         }
         if (!functions.isEmpty()) {
           PyFunction fun = functions.get(0);
-          final TypeEvalContext context = fun.getContainingFile() == node.getContainingFile() ?
-                                          slowContext : fastContext;
           final PyArgumentList args = node.getArgumentList();
           if (args != null) {
-            final PyArgumentList.AnalysisResult res = args.analyzeCall(context);
+            final PyArgumentList.AnalysisResult res = args.analyzeCall(myTypeEvalContext);
             final Map<PyExpression, PyNamedParameter> mapped = res.getPlainMappedParams();
             for (Map.Entry<PyExpression, PyNamedParameter> entry : mapped.entrySet()) {
               final PyNamedParameter p = entry.getValue();
@@ -61,9 +56,9 @@ public class PyTypeCheckerInspection extends PyInspection {
                 // TODO: Support *args, **kwargs
                 continue;
               }
-              final PyType argType = entry.getKey().getType(slowContext);
-              final PyType paramType = p.getType(context);
-              checkTypes(paramType, argType, entry.getKey(), context);
+              final PyType argType = entry.getKey().getType(myTypeEvalContext);
+              final PyType paramType = p.getType(myTypeEvalContext);
+              checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext);
             }
           }
         }
@@ -72,7 +67,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       @Override
       public void visitPyBinaryExpression(PyBinaryExpression node) {
         // TODO: Support operators besides PyBinaryExpression
-        final PsiReference ref = node.getReference(PyResolveContext.noImplicits().withTypeEvalContext(slowContext));
+        final PsiReference ref = node.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
         final PyExpression arg = node.getRightExpression();
         if (ref != null && arg != null) {
           final PsiElement resolved = ref.resolve();
@@ -80,13 +75,11 @@ public class PyTypeCheckerInspection extends PyInspection {
             final PyFunction fun = (PyFunction)resolved;
             final PyParameter[] parameters = fun.getParameterList().getParameters();
             if (parameters.length == 2) {
-              final TypeEvalContext context = fun.getContainingFile() == node.getContainingFile() ?
-                                              slowContext : fastContext;
               final PyNamedParameter p = parameters[1].getAsNamed();
               if (p != null) {
-                final PyType argType = arg.getType(slowContext);
-                final PyType paramType = p.getType(context);
-                checkTypes(paramType, argType, arg, context);
+                final PyType argType = arg.getType(myTypeEvalContext);
+                final PyType paramType = p.getType(myTypeEvalContext);
+                checkTypes(paramType, argType, arg, myTypeEvalContext);
               }
             }
           }
@@ -98,7 +91,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           if (!PyTypeChecker.match(superType, subType, context)) {
             registerProblem(node, String.format("Expected type '%s', got '%s' instead",
                                                 PythonDocumentationProvider.getTypeName(superType, context),
-                                                PythonDocumentationProvider.getTypeName(subType, slowContext)));
+                                                PythonDocumentationProvider.getTypeName(subType, myTypeEvalContext)));
           }
         }
       }
