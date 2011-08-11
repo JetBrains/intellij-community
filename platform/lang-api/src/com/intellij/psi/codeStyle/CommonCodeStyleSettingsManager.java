@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -43,7 +44,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
   private static final String LANGUAGE_ATTR = "language";
 
 
-  public CommonCodeStyleSettingsManager(CodeStyleSettings parentSettings) {
+  CommonCodeStyleSettingsManager(CodeStyleSettings parentSettings) {
     myParentSettings = parentSettings;
   }
 
@@ -98,6 +99,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
         CommonCodeStyleSettings initialSettings = provider.getDefaultCommonSettings();
         if (initialSettings != null) {
           initialSettings.copyNonDefaultValuesFrom(myParentSettings);
+          initialSettings.setRootSettings(myParentSettings);
           registerCommonSettings(provider.getLanguage(), initialSettings);
         }
       }
@@ -111,7 +113,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
 
   private void registerCommonSettings(@NotNull Language lang, @NotNull CommonCodeStyleSettings settings) {
     if (!myCommonSettingsMap.containsKey(lang)) {
-      settings.setRootAndIndentSettings(myParentSettings);
+      assert settings.getRootSettings() != null;
       myCommonSettingsMap.put(lang, settings);
     }
   }
@@ -121,7 +123,8 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
     if (myCommonSettingsMap != null && myCommonSettingsMap.size() > 0) {
       settingsManager.initCommonSettingsMap();
       for (Map.Entry<Language, CommonCodeStyleSettings> entry : myCommonSettingsMap.entrySet()) {
-        settingsManager.registerCommonSettings(entry.getKey(), entry.getValue().clone());
+        CommonCodeStyleSettings clonedSettings = entry.getValue().clone(parentSettings);
+        settingsManager.registerCommonSettings(entry.getKey(), clonedSettings);
       }
     }
     return settingsManager;
@@ -140,10 +143,20 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
             Language target = Language.findLanguageByID(languageId);
             boolean isKnownLanguage = target != null;
             if (isKnownLanguage) {
-              final CommonCodeStyleSettings settings = LanguageCodeStyleSettingsProvider.getDefaultCommonSettings(target);
-              if (settings != null) {
-                settings.readExternal(commonSettingsElement);
-                registerCommonSettings(target, settings);
+              final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(target);              
+              if (provider != null) {
+                CommonCodeStyleSettings settings = provider.getDefaultCommonSettings();
+                if (settings != null) {
+                  settings.readExternal(commonSettingsElement);
+                  FileType fileType = provider.getLanguage().getAssociatedFileType();
+                  CommonCodeStyleSettings.IndentOptions fileTypeOptions = myParentSettings.getAdditionalIndentOptions(fileType);
+                  if (settings.getIndentOptions() != null && fileTypeOptions != null) {
+                    settings.importOldIndentOptions(myParentSettings);
+                    myParentSettings.unregisterAdditionalIndentOptions(fileType);
+                  }
+                  settings.setRootSettings(myParentSettings);
+                  registerCommonSettings(target, settings);
+                }
               }
               else {
                 isKnownLanguage = false;

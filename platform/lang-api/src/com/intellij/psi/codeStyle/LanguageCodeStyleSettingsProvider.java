@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -33,7 +34,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
     ExtensionPointName.create("com.intellij.langCodeStyleSettingsProvider");
 
   public enum SettingsType {
-    BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, LANGUAGE_SPECIFIC
+    BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS, LANGUAGE_SPECIFIC
   }
 
   @NotNull
@@ -194,6 +195,11 @@ public abstract class LanguageCodeStyleSettingsProvider {
     LanguageCodeStyleSettingsProvider langProvider = forLanguage(language);
     if (langProvider == null) return DisplayPriority.LANGUAGE_SETTINGS;
     return langProvider.getDisplayPriority();
+  }
+
+  @Nullable
+  public IndentOptionsEditor getIndentOptionsEditor() {
+    return null;
   }
 
 }

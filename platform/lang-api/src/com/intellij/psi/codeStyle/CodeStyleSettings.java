@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +29,7 @@ import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -656,16 +658,33 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     myCommonSettingsManager.writeExternal(element);
   }
 
+  @Override
+  @Nullable
+  public IndentOptions getIndentOptions() {
+    return OTHER_INDENT_OPTIONS;
+  }
+
   public IndentOptions getIndentOptions(FileType fileType) {
+    IndentOptions indentOptions = getLanguageIndentOptions(fileType);
+    if (indentOptions != null) return indentOptions;
+
     if (USE_SAME_INDENTS || fileType == null) return OTHER_INDENT_OPTIONS;
 
     if (!myLoadedAdditionalIndentOptions) {
       loadAdditionalIndentOptions();
     }
-    final IndentOptions indentOptions = myAdditionalIndentOptions.get(fileType);
+    indentOptions = myAdditionalIndentOptions.get(fileType);
     if (indentOptions != null) return indentOptions;
 
     return OTHER_INDENT_OPTIONS;
+  }
+  
+  @Nullable
+  private IndentOptions getLanguageIndentOptions(FileType fileType) {
+    if (fileType == null || !(fileType instanceof LanguageFileType)) return null;
+    Language lang = ((LanguageFileType)fileType).getLanguage();
+    CommonCodeStyleSettings langSettings = getCommonSettings(lang);
+    return langSettings == this ? null : langSettings.getIndentOptions();
   }
 
   public boolean isSmartTabs(FileType fileType) {
@@ -790,6 +809,10 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     if (!exist) {
       myAdditionalIndentOptions.put(fileType, options);
     }
+  }
+  
+  public void unregisterAdditionalIndentOptions(FileType fileType) {
+    myAdditionalIndentOptions.remove(fileType);
   }
 
   public IndentOptions getAdditionalIndentOptions(FileType fileType) {

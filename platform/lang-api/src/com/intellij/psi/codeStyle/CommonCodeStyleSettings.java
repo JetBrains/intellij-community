@@ -43,25 +43,29 @@ public class CommonCodeStyleSettings {
 
   public CommonCodeStyleSettings(Language language) {
     myLanguage = language;
-    myIndentOptions = new IndentOptions();
     if (language != null) {
       myFileType = language.getAssociatedFileType();
     }
   }
-
-  void setRootAndIndentSettings(@NotNull CodeStyleSettings rootSettings) {
+  
+  void setRootSettings(CodeStyleSettings rootSettings) {
     myRootSettings = rootSettings;
-    if (myRootSettings.USE_SAME_INDENTS) {
-      myIndentOptions = rootSettings.OTHER_INDENT_OPTIONS;
-    }
-    else if (myFileType != null) {
+  }
+
+  void importOldIndentOptions(CodeStyleSettings rootSettings) {
+    if (myFileType != null && myIndentOptions != null) {
+      IndentOptions indentOptions = rootSettings.OTHER_INDENT_OPTIONS;
       if (getFileTypeIndentOptionsProvider() == null) {
-        IndentOptions fileTypeOptions = myRootSettings.getIndentOptions(myFileType);
-        if (!myRootSettings.USE_SAME_INDENTS) {
-          myIndentOptions = (IndentOptions)fileTypeOptions.clone();
-        }
+        indentOptions = rootSettings.getIndentOptions(myFileType);
       }
+      myIndentOptions.copyFrom(indentOptions);
     }
+  }
+  
+  @NotNull
+  public IndentOptions initIndentOptions() {
+    myIndentOptions = new IndentOptions();
+    return myIndentOptions;
   }
 
   @Nullable
@@ -80,14 +84,20 @@ public class CommonCodeStyleSettings {
     return myRootSettings;
   }
 
+  @Nullable
   public IndentOptions getIndentOptions() {
     return myIndentOptions;
   }
 
-  public CommonCodeStyleSettings clone() {
+  public CommonCodeStyleSettings clone(CodeStyleSettings rootSettings) {
+    assert rootSettings != null;
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage);
     copyPublicFields(this, commonSettings);
-    commonSettings.getIndentOptions().copyFrom(myIndentOptions);
+    commonSettings.setRootSettings(rootSettings);
+    if (myIndentOptions != null) {
+      IndentOptions targetIndentOptions = commonSettings.initIndentOptions();
+      targetIndentOptions.copyFrom(myIndentOptions);
+    }
     return commonSettings;
   }
 
@@ -153,12 +163,14 @@ public class CommonCodeStyleSettings {
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    myIndentOptions.readExternal(element);
+    if (myIndentOptions != null) {
+      myIndentOptions.readExternal(element);
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CommonCodeStyleSettings>(this, getDefaultSettings()));
-    if (myRootSettings != null && !myRootSettings.USE_SAME_INDENTS) {
+    if (myIndentOptions != null) {
       myIndentOptions.writeExternalWithNonDefaults(element);
     }
   }

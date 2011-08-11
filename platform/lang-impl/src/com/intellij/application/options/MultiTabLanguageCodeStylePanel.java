@@ -19,6 +19,7 @@ import com.intellij.application.options.codeStyle.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.Configurable;
@@ -26,6 +27,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +55,10 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
   protected void initTabs(CodeStyleSettings settings) {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
     if (provider != null && !provider.usesSharedPreview()) {
+      MyIndentOptionsWrapper indentOptionsWrapper = new MyIndentOptionsWrapper(settings, provider);
+      if (indentOptionsWrapper.isValid()) {
+        addTab(indentOptionsWrapper);
+      }
       addTab(new MySpacesPanel(settings));
       addTab(new MyBlankLinesPanel(settings));
       addTab(new MyWrappingAndBracesPanel(settings));
@@ -261,7 +267,7 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
 
   //========================================================================================================================================
 
-  private static class ConfigurableWrapper extends CodeStyleAbstractPanel {
+  private class ConfigurableWrapper extends CodeStyleAbstractPanel {
 
     private Configurable myConfigurable;
 
@@ -287,6 +293,11 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
     protected FileType getFileType() {
       Language language = getDefaultLanguage();
       return language != null ? language.getAssociatedFileType() : FileTypes.PLAIN_TEXT;
+    }
+
+    @Override
+    public Language getDefaultLanguage() {
+      return MultiTabLanguageCodeStylePanel.this.getDefaultLanguage();
     }
 
     @Override
@@ -323,6 +334,105 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
     @Override
     protected void resetImpl(CodeStyleSettings settings) {
       myConfigurable.reset();
+    }
+  }
+  
+  //========================================================================================================================================
+  
+  private class MyIndentOptionsWrapper extends CodeStyleAbstractPanel {
+
+    private final IndentOptionsEditor myEditor;
+    private final LanguageCodeStyleSettingsProvider myProvider;
+    private JPanel myTopPanel;
+    private JPanel myLeftPanel;
+    private JPanel myRightPanel;
+
+    protected MyIndentOptionsWrapper(CodeStyleSettings settings, LanguageCodeStyleSettingsProvider provider) {
+      super(settings);
+      myProvider = provider;
+      myTopPanel = new JPanel();
+      myTopPanel.setLayout(new BorderLayout());
+      myLeftPanel = new JPanel();
+      myTopPanel.add(myLeftPanel, BorderLayout.WEST);
+      myRightPanel = new JPanel();
+      installPreviewPanel(myRightPanel);
+      myEditor = provider.getIndentOptionsEditor();
+      if (myEditor != null) {
+        myLeftPanel.add(myEditor.createPanel());
+      }
+      myTopPanel.add(myRightPanel, BorderLayout.CENTER);
+    }
+
+    @Override
+    protected int getRightMargin() {
+      return getSettings().RIGHT_MARGIN;
+    }
+
+    @Override
+    protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+      //noinspection NullableProblems
+      return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @NotNull
+    @Override
+    protected FileType getFileType() {
+      Language language = MultiTabLanguageCodeStylePanel.this.getDefaultLanguage();
+      return language != null ? language.getAssociatedFileType() : FileTypes.PLAIN_TEXT;
+    }
+
+    @Override
+    protected String getPreviewText() {
+      return myProvider != null ? myProvider.getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS) : "Loading...";
+    }
+
+    @Override
+    public void apply(CodeStyleSettings settings) {
+      CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions(settings);
+      if (indentOptions == null) return;
+      myEditor.apply(settings, indentOptions);
+    }
+
+    @Override
+    public boolean isModified(CodeStyleSettings settings) {
+      CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions(settings);
+      if (indentOptions == null) return false;
+      return myEditor.isModified(settings, indentOptions);
+    }
+
+    @Override
+    public JComponent getPanel() {
+      return myTopPanel;
+    }
+
+    @Override
+    protected void resetImpl(CodeStyleSettings settings) {
+      CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions(settings);
+      if (indentOptions == null) {
+        myEditor.setEnabled(false);
+        indentOptions = settings.getIndentOptions(myProvider.getLanguage().getAssociatedFileType());
+      }
+      myEditor.reset(settings, indentOptions);
+    }
+
+    @Nullable
+    private CommonCodeStyleSettings.IndentOptions getIndentOptions(CodeStyleSettings settings) {
+      return settings.getCommonSettings(getDefaultLanguage()).getIndentOptions();
+    }
+
+    @Override
+    public Language getDefaultLanguage() {
+      return MultiTabLanguageCodeStylePanel.this.getDefaultLanguage();
+    }
+
+    public boolean isValid() {
+      return myEditor != null;
+    }
+
+    @Override
+    protected String getTabTitle() {
+      return "Tabs and Indents";
     }
   }
 }
