@@ -121,6 +121,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         rebuildHeaders();
+        updateControls();
       }
     });
   }
@@ -574,7 +575,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     for (final ArrayList<AbstractMessage> abstractMessages : hash2Messages.values()) {
       myMergedMessages.add(abstractMessages);
     }
-    updateControls();
   }
 
   private void markAllAsRead() {
