@@ -36,8 +36,7 @@ setProperty("pluginFilter", [
             "webDeployment",
             "jdbc-console", "django-db-config",
             "database-impl", "DatabaseSupport",
-            "sql",
-            "relaxng"
+            "sql"
             ])
 
 private List platformImplementationModules() {
@@ -54,6 +53,7 @@ private List platformImplementationModules() {
           "testFramework",
           "tests_bootstrap",
           "xml",
+          "relaxng",
           "lvcs-impl",
           "images",
           "spellchecker",
