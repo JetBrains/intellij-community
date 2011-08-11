@@ -32,7 +32,6 @@ public class PyTypeCheckerInspection extends PyInspection {
       session.putUserData(TIME_KEY, System.nanoTime());
     }
     return new PyInspectionVisitor(holder) {
-      // TODO: Show types in tooltips for variables
       // TODO: Visit decorators with arguments
       @Override
       public void visitPyCallExpression(PyCallExpression node) {

@@ -53,7 +53,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
 
   public boolean isOperator(String chars) {
     ASTNode child = getNode().getFirstChildNode();
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     while (child != null) {
       IElementType elType = child.getElementType();
       if (elType instanceof PyElementType && PyElementTypes.BINARY_OPS.contains(elType)) {
@@ -80,7 +80,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   public void deleteChildInternal(@NotNull ASTNode child) {
     PyExpression left = getLeftExpression();
     PyExpression right = getRightExpression();
-    if (left == child.getPsi()) {
+    if (left == child.getPsi() && right != null) {
       replace(right);
     }
     else if (right == child.getPsi()) {
@@ -96,10 +96,11 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     return getReference(PyResolveContext.noImplicits());
   }
 
-  public PsiPolyVariantReference getReference(PyResolveContext resolveContext) {
+  @Override
+  public PsiPolyVariantReference getReference(PyResolveContext context) {
     final PyElementType t = getOperator();
     if (t != null && t.getSpecialMethodName() != null) {
-      return new PyOperatorReferenceImpl(this, resolveContext);
+      return new PyOperatorReferenceImpl(this, context);
     }
     return null;
   }
@@ -113,9 +114,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       if (ref != null) {
         final PsiElement resolved = ref.resolve();
         if (resolved instanceof Callable) {
-          final TypeEvalContext returnTypeContext = resolved.getContainingFile() == getContainingFile() ?
-                                                    context : TypeEvalContext.fast();
-          return ((Callable)resolved).getReturnType(returnTypeContext, null);
+          return ((Callable)resolved).getReturnType(context, null);
         }
       }
     }
