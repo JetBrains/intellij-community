@@ -462,7 +462,7 @@ public class ToolEditorDialog extends DialogWrapper {
 
   private JPanel getShowInPanel() {
     JPanel panel = new JPanel(new GridLayout(2, 2, 10, 3));
-    panel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(ToolsBundle.message("tools.menu.group")));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.menu.group"), false, true));
     panel.add(myShowInMainMenuCheckbox);
     panel.add(myShowInEditorCheckbox);
     panel.add(myShowInProjectTreeCheckbox);

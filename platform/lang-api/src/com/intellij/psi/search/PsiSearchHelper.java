@@ -147,7 +147,7 @@ public interface PsiSearchHelper extends PsiTodoSearchHelper {
   SearchCostResult isCheapEnoughToSearch(@NotNull String name,
                                          @NotNull GlobalSearchScope scope,
                                          @Nullable PsiFile fileToIgnoreOccurencesIn,
-                                         ProgressIndicator progress);
+                                         @Nullable ProgressIndicator progress);
 
   enum SearchCostResult {
     ZERO_OCCURRENCES, FEW_OCCURRENCES, TOO_MANY_OCCURRENCES

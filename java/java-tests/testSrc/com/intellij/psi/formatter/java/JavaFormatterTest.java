@@ -83,7 +83,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testCastInsideElse() throws Exception {
     final CommonCodeStyleSettings settings = getSettings();
-    final CodeStyleSettings.IndentOptions indentOptions = settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA);
+    final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA);
     indentOptions.CONTINUATION_INDENT_SIZE = 2;
     indentOptions.INDENT_SIZE = 2;
     indentOptions.LABEL_INDENT_SIZE = 0;
@@ -1009,7 +1009,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     getSettings().ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().getRootSettings().RIGHT_MARGIN = 37;
 
-    final CodeStyleSettings.IndentOptions options = getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
+    final CommonCodeStyleSettings.IndentOptions options = getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
     options.INDENT_SIZE = 2;
     options.CONTINUATION_INDENT_SIZE = 2;
 
@@ -2707,7 +2707,7 @@ public void testSCR260() throws Exception {
   }
 
   public void testSCR3115() throws Exception {
-    final CodeStyleSettings.IndentOptions indentOptions = getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
     indentOptions.USE_TAB_CHARACTER = true;
     indentOptions.SMART_TABS = true;
 

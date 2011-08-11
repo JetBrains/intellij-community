@@ -5,7 +5,7 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,7 +65,7 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
     else {
       entry = null;
     }
-    ModuleStructureConfigurable.getInstance(myContext.getProject()).selectOrderEntry(myModule, entry);
+    ProjectStructureConfigurable.getInstance(myContext.getProject()).selectOrderEntry(myModule, entry);
   }
 
   @Override

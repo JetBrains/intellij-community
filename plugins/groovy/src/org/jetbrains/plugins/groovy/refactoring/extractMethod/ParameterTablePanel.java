@@ -65,7 +65,7 @@ public class ParameterTablePanel extends JPanel {
 
   void init(GroovyExtractMethodDialog dialog, ExtractMethodInfoHelper helper) {
 
-    setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent(GroovyRefactoringBundle.message("parameters.border.title")));
+    setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("parameters.border.title"), false, false));
 
     myDialog = dialog;
     myProject = helper.getProject();

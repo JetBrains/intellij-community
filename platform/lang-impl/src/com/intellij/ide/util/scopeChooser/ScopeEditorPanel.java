@@ -165,6 +165,7 @@ public class ScopeEditorPanel {
   private void onTextChange() {
     if (!myIsInUpdate) {
       myUpdateAlarm.cancelAllRequests();
+      myTextChanged = true;
       final String text = myPatternField.getText();
       myCurrentScope = new InvalidPackageSet(text);
       try {
@@ -172,13 +173,12 @@ public class ScopeEditorPanel {
           myCurrentScope = PackageSetFactory.getInstance().compile(text);
         }
         myErrorMessage = null;
-        myTextChanged = true;
-        rebuild(false);
       }
       catch (Exception e) {
         myErrorMessage = e.getMessage();
         showErrorMessage();
       }
+      rebuild(false);
     }
     else if (!invalidScopeInside(myCurrentScope)){
       myErrorMessage = null;
@@ -404,15 +404,21 @@ public class ScopeEditorPanel {
       public void run() {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
-            myIsInUpdate = true;
             if (updateText) {
               final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                  myPatternField.setText(text);
+                  try {
+                    myIsInUpdate = true;
+                    myPatternField.setText(text);
+                  }
+                  finally {
+                    myIsInUpdate = false;
+                  }
                 }
               });
             }
+
             try {
               if (!myProject.isDisposed()) {
                 updateTreeModel(requestFocus);
@@ -424,7 +430,6 @@ public class ScopeEditorPanel {
             if (runnable != null) {
               runnable.run();
             }
-            myIsInUpdate = false;
           }
         });
       }

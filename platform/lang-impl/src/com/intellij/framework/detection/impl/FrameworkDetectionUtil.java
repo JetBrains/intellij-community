@@ -25,10 +25,12 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,25 +51,36 @@ public class FrameworkDetectionUtil {
     return null;
   }
 
-  public static List<DetectedFrameworkDescription> getDisabledDescriptions(@NotNull List<? extends DetectedFrameworkDescription> allDescriptions) {
+  public static List<? extends DetectedFrameworkDescription> removeDisabled(List<DetectedFrameworkDescription> descriptions) {
+    return removeDisabled(descriptions, Collections.<DetectedFrameworkDescription>emptyList());
+  }
+
+  public static List<DetectedFrameworkDescription> getDisabledDescriptions(@NotNull List<? extends DetectedFrameworkDescription> currentDescriptions,
+                                                                           @NotNull List<? extends DetectedFrameworkDescription> otherDescriptions) {
+    return doGetDisabledDescriptions(currentDescriptions, ContainerUtil.concat(currentDescriptions, otherDescriptions));
+  }
+
+  private static List<DetectedFrameworkDescription> doGetDisabledDescriptions(@NotNull List<? extends DetectedFrameworkDescription> currentDescriptions,
+                                                                              @NotNull List<? extends DetectedFrameworkDescription> allDescriptions) {
     List<DetectedFrameworkDescription> disabled = new ArrayList<DetectedFrameworkDescription>();
-    for (DetectedFrameworkDescription description : allDescriptions) {
+    for (DetectedFrameworkDescription description : currentDescriptions) {
       if (!description.canSetupFramework(allDescriptions)) {
         disabled.add(description);
       }
     }
     if (!disabled.isEmpty()) {
-      List<DetectedFrameworkDescription> remaining = new ArrayList<DetectedFrameworkDescription>(allDescriptions);
+      List<DetectedFrameworkDescription> remaining = new ArrayList<DetectedFrameworkDescription>(currentDescriptions);
       remaining.removeAll(disabled);
-      disabled.addAll(getDisabledDescriptions(remaining));
+      disabled.addAll(doGetDisabledDescriptions(remaining, allDescriptions));
     }
     return disabled;
   }
 
-  public static List<? extends DetectedFrameworkDescription> removeDisabled(@NotNull List<? extends DetectedFrameworkDescription> allDescriptions) {
-    final List<DetectedFrameworkDescription> disabled = getDisabledDescriptions(allDescriptions);
-    if (disabled.isEmpty()) return allDescriptions;
-    final List<DetectedFrameworkDescription> descriptions = new ArrayList<DetectedFrameworkDescription>(allDescriptions);
+  public static List<? extends DetectedFrameworkDescription> removeDisabled(@NotNull List<? extends DetectedFrameworkDescription> currentDescriptions,
+                                                                            @NotNull List<? extends DetectedFrameworkDescription> otherDescriptions) {
+    final List<DetectedFrameworkDescription> disabled = getDisabledDescriptions(currentDescriptions, otherDescriptions);
+    if (disabled.isEmpty()) return currentDescriptions;
+    final List<DetectedFrameworkDescription> descriptions = new ArrayList<DetectedFrameworkDescription>(currentDescriptions);
     descriptions.removeAll(disabled);
     return descriptions;
   }

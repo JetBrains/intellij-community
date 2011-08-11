@@ -41,7 +41,7 @@ public class FileContentPattern extends ObjectPattern<FileContent, FileContentPa
     return with(new PatternCondition<FileContent>("withName") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
-        return name.equals(fileContent.getFile().getName());
+        return name.equals(fileContent.getFileName());
       }
     });
   }
@@ -50,7 +50,7 @@ public class FileContentPattern extends ObjectPattern<FileContent, FileContentPa
     return with(new PatternCondition<FileContent>("withName") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
-        return namePattern.accepts(fileContent.getFile().getName());
+        return namePattern.accepts(fileContent.getFileName());
       }
     });
   }

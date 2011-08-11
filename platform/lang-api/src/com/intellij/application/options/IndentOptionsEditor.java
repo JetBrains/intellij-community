@@ -18,6 +18,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.OptionGroup;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,7 +85,7 @@ public class IndentOptionsEditor extends OptionGroup {
     }
   }
 
-  public boolean isModified(final CodeStyleSettings settings, CodeStyleSettings.IndentOptions options) {
+  public boolean isModified(final CodeStyleSettings settings, CommonCodeStyleSettings.IndentOptions options) {
     boolean isModified;
     isModified = isFieldModified(myTabSizeField, options.TAB_SIZE);
     isModified |= isFieldModified(myCbUseTab, options.USE_TAB_CHARACTER);
@@ -101,13 +102,13 @@ public class IndentOptionsEditor extends OptionGroup {
     return getFieldValue(myTabSizeField, 1, 4);
   }
 
-  public void apply(final CodeStyleSettings settings, CodeStyleSettings.IndentOptions options) {
+  public void apply(final CodeStyleSettings settings, CommonCodeStyleSettings.IndentOptions options) {
     options.INDENT_SIZE = getUIIndent();
     options.TAB_SIZE = getUITabSize();
     options.USE_TAB_CHARACTER = myCbUseTab.isSelected();
   }
 
-  public void reset(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings.IndentOptions options) {
+  public void reset(@NotNull CodeStyleSettings settings, @NotNull CommonCodeStyleSettings.IndentOptions options) {
     myTabSizeField.setText(String.valueOf(options.TAB_SIZE));
     myCbUseTab.setSelected(options.USE_TAB_CHARACTER);
 

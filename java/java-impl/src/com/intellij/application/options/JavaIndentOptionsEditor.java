@@ -17,6 +17,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,7 +49,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     add(myCbUseRelativeIndent);
   }
 
-  public boolean isModified(final CodeStyleSettings settings, final CodeStyleSettings.IndentOptions options) {
+  public boolean isModified(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
     boolean isModified = super.isModified(settings, options);
 
     isModified |= isFieldModified(myLabelIndent, options.LABEL_INDENT_SIZE);
@@ -59,7 +60,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     return isModified;
   }
 
-  public void apply(final CodeStyleSettings settings, final CodeStyleSettings.IndentOptions options) {
+  public void apply(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
     super.apply(settings, options);
     options.LABEL_INDENT_SIZE = getFieldValue(myLabelIndent, 0, options.LABEL_INDENT_SIZE);
 
@@ -68,7 +69,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     options.USE_RELATIVE_INDENTS = myCbUseRelativeIndent.isSelected();
   }
 
-  public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CodeStyleSettings.IndentOptions options) {
+  public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
     super.reset(settings, options);
     myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
     myLabelIndentAbsolute.setSelected(options.LABEL_INDENT_ABSOLUTE);

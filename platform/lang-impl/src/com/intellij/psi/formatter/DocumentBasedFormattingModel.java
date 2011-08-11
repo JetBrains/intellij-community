@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -199,7 +200,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
 
   private void createWhiteSpace(final int whiteSpaceLength, StringBuffer buffer) {
     if (whiteSpaceLength < 0) return;
-    final CodeStyleSettings.IndentOptions indentOptions = getIndentOptions();
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions();
     if (indentOptions.USE_TAB_CHARACTER) {
       int tabs = whiteSpaceLength / indentOptions.TAB_SIZE;
       int spaces = whiteSpaceLength - tabs * indentOptions.TAB_SIZE;
@@ -211,7 +212,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     }
   }
 
-  private CodeStyleSettings.IndentOptions getIndentOptions() {
+  private CommonCodeStyleSettings.IndentOptions getIndentOptions() {
     return mySettings.getIndentOptions(myFileType);
   }
 

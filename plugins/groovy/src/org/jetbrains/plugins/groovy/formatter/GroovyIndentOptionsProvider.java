@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.formatter;
 
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.PsiFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.application.options.IndentOptionsEditor;
@@ -27,8 +27,8 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  * @author ilyas
  */
 public class GroovyIndentOptionsProvider implements FileTypeIndentOptionsProvider {
-  public CodeStyleSettings.IndentOptions createIndentOptions() {
-    return new CodeStyleSettings.IndentOptions();
+  public CommonCodeStyleSettings.IndentOptions createIndentOptions() {
+    return new CommonCodeStyleSettings.IndentOptions();
   }
 
   public FileType getFileType() {

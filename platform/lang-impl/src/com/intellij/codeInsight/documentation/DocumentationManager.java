@@ -26,7 +26,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
@@ -848,7 +847,7 @@ public class DocumentationManager {
         final VirtualFile virtualFile = containingFile.getVirtualFile();
         final OrderEntry libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
         if (libraryEntry != null) {
-          ProjectSettingsService.getInstance(myProject).openProjectLibrarySettings(new NamedLibraryElement(libraryEntry.getOwnerModule(), libraryEntry));
+          ProjectSettingsService.getInstance(myProject).openLibraryOrSdkSettings(libraryEntry);
         }
       }
     } else if (url.startsWith(PSI_ELEMENT_PROTOCOL)) {

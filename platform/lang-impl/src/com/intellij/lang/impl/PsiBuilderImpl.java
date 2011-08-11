@@ -29,6 +29,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.CharTableImpl;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.*;
@@ -1504,6 +1505,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @Override
   public <T> T getUserDataUnprotected(@NotNull final Key<T> key) {
+    if (key == FileContextUtil.CONTAINING_FILE_KEY) return (T)myFile;
     //noinspection unchecked
     return myUserData != null ? (T)myUserData.get(key) : null;
   }

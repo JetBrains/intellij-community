@@ -17,7 +17,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
@@ -29,7 +28,6 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,22 +70,20 @@ public class ProjectSettingsService {
     return false;
   }
 
-  public void openProjectLibrarySettings(final NamedLibraryElement value) {
-    Configurable additionalSettingsConfigurable = getLibrarySettingsConfigurable(value);
+  public void openLibraryOrSdkSettings(final @NotNull OrderEntry orderEntry) {
+    Configurable additionalSettingsConfigurable = getLibrarySettingsConfigurable(orderEntry);
     if (additionalSettingsConfigurable != null) {
-      LibraryOrderEntry entry = (LibraryOrderEntry) value.getOrderEntry();
-      ShowSettingsUtil.getInstance()
-        .showSettingsDialog(entry.getOwnerModule().getProject(), additionalSettingsConfigurable.getDisplayName());
+      ShowSettingsUtil.getInstance().showSettingsDialog(orderEntry.getOwnerModule().getProject(),
+                                                        additionalSettingsConfigurable.getDisplayName());
     }
   }
 
-  public boolean canOpenProjectLibrarySettings(final NamedLibraryElement value) {
-    return getLibrarySettingsConfigurable(value) != null;
+  public boolean canOpenLibraryOrSdkSettings(final OrderEntry orderEntry) {
+    return getLibrarySettingsConfigurable(orderEntry) != null;
   }
 
   @Nullable
-  private static Configurable getLibrarySettingsConfigurable(NamedLibraryElement value) {
-    OrderEntry orderEntry = value.getOrderEntry();
+  private static Configurable getLibrarySettingsConfigurable(OrderEntry orderEntry) {
     if (!(orderEntry instanceof LibraryOrderEntry)) return null;
     LibraryOrderEntry libOrderEntry = (LibraryOrderEntry)orderEntry;
     Library lib = libOrderEntry.getLibrary();

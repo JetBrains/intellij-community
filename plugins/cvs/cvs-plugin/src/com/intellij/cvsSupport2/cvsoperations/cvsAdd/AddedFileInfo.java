@@ -76,16 +76,12 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
     return myProject;
   }
 
-  public void setIncluded(boolean aBoolean) {
+  public void setIncluded(boolean included) {
+    if (myIncluded == included) return;
 
-    if (myIncluded == aBoolean) return;
-
-    myIncluded = aBoolean;
-
-    if (!myIncluded) {
-      excludeAllChildren();
-    }
-    else {
+    myIncluded = included;
+    setIncludedChildren(myIncluded);
+    if (myIncluded) {
       includeAllParents();
     }
 
@@ -97,9 +93,9 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
     if (myParent != null) myParent.setIncluded(true);
   }
 
-  private void excludeAllChildren() {
+  private void setIncludedChildren(boolean included) {
     for (int i = 0; i < getChildCount(); i++) {
-      ((AddedFileInfo)getChildAt(i)).setIncluded(false);
+      ((AddedFileInfo)getChildAt(i)).setIncluded(included);
     }
   }
 

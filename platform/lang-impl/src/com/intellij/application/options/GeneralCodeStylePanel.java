@@ -28,10 +28,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.DisplayPriority;
-import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -235,7 +232,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
       for(Map.Entry<FileType, IndentOptionsEditor> entry : myAdditionalIndentOptions.entrySet()) {
         FileType fileType = entry.getKey();
-        CodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(fileType);
+        CommonCodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(fileType);
         if (additionalIndentOptions == null) {
           continue;
         }
@@ -301,7 +298,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
       for(Map.Entry<FileType, IndentOptionsEditor> entry : myAdditionalIndentOptions.entrySet()) {
         FileType fileType = entry.getKey();
-        CodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(fileType);
+        CommonCodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(fileType);
         if (additionalIndentOptions == null) {
           continue;
         }
@@ -337,7 +334,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       }
       else {
         FileType type = entry.getKey();
-        CodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(type);
+        CommonCodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(type);
         if (additionalIndentOptions != null) {
           editor.reset(settings, additionalIndentOptions);
         }

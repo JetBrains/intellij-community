@@ -1455,7 +1455,7 @@ public class UIUtil {
   }
 
   public static Font getBorderFont() {
-    return UIManager.getFont("TitledBorder.font");
+    return UIUtil.getFont(FontSize.SMALL, UIManager.getFont("TitledBorder.font"));
   }
 
   /**

@@ -38,7 +38,7 @@ public class SubstitutedFileType extends LanguageFileType{
     this.fileType = substitutionFileType;
   }
 
-
+  @NotNull
   public static FileType substituteFileType(VirtualFile file, @NotNull FileType fileType, Project project) {
     if (project == null) {
       return fileType;

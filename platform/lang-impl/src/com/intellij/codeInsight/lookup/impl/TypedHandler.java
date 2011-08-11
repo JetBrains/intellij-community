@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
+import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import org.jetbrains.annotations.NotNull;
@@ -127,30 +128,37 @@ public class TypedHandler extends TypedActionHandlerBase {
     SelectionModel sm = editor.getSelectionModel();
     final boolean smartUndo = !sm.hasSelection() && !sm.hasBlockSelection() && process != null && process.isAutopopupCompletion();
     final Runnable restore = CodeCompletionHandlerBase.rememberDocumentState(editor);
-    if (smartUndo) {
+    final ScrollingModelEx scrollingModel = (ScrollingModelEx)editor.getScrollingModel();
+    scrollingModel.accumulateViewportChanges();
+    try {
+      if (smartUndo) {
+        CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
+          @Override
+          public void run() {
+            lookup.performGuardedChange(baseChange);
+          }
+        }, null, "Just insert the completion char");
+      }
+
       CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
         @Override
         public void run() {
-          lookup.performGuardedChange(baseChange);
+          if (smartUndo) {
+            AccessToken token = WriteAction.start();
+            try {
+              lookup.performGuardedChange(restore);
+            }
+            finally {
+              token.finish();
+            }
+          }
+          lookup.finishLookup(charTyped);
         }
-      }, null, "Just insert the completion char");
+      }, null, "Undo inserting the completion char and select the item");
     }
-
-    CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        if (smartUndo) {
-          AccessToken token = WriteAction.start();
-          try {
-            lookup.performGuardedChange(restore);
-          }
-          finally {
-            token.finish();
-          }
-        }
-        lookup.finishLookup(charTyped);
-      }
-    }, null, "Undo inserting the completion char and select the item");
+    finally {
+      scrollingModel.flushViewportChanges();
+    }
   }
 
   static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {

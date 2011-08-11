@@ -121,7 +121,7 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
     kbConfig.add(modifiers);
     kbConfig.add(hold);
 
-    kbConfig.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent("Keyboard Configuration"));
+    kbConfig.setBorder(IdeBorderFactory.createTitledBorder("Keyboard Configuration", false, true));
 
     box.add(kbConfig);
 
@@ -178,7 +178,7 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
     hasConflicts |= printConflict(c, KeyEvent.VK_ENTER, QuickAccessSettings.SWITCH_APPLY);
 
     if (hasConflicts) {
-      myConflicts.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent("Conflicts"));
+      myConflicts.setBorder(IdeBorderFactory.createTitledBorder("Conflicts", false, true));
       c.gridx = 0;
       c.gridy++;
       c.gridwidth = 2;

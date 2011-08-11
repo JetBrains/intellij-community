@@ -155,14 +155,14 @@ public class ResolveClassTest extends ResolveTestCase {
     assertNull(target);
   }
 
-  public void _testStaticImportInTheSameClass() throws Exception {
+  public void testStaticImportInTheSameClass() throws Exception {
     PsiReference ref = configure();
     long start = System.currentTimeMillis();
     assertNull(ref.resolve());
     PlatformTestUtil.assertTiming("exponent?", 20000, System.currentTimeMillis() - start);
   }
 
-  public void _testStaticImportNetwork() throws Exception {
+  public void testStaticImportNetwork() throws Exception {
     PsiReference ref = configure();
     int count = 20;
 

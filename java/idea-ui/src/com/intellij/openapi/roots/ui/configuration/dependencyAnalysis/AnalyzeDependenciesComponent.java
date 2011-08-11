@@ -26,7 +26,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleSourceOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -39,8 +39,8 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.PathUtil;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -269,13 +269,12 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
       if (module == null) {
         return;
       }
-      ModuleStructureConfigurable c = ModuleStructureConfigurable.getInstance(module.getProject());
       final ModuleDependenciesAnalyzer.OrderPathElement element = e.getData(ORDER_PATH_ELEMENT_KEY);
       if (element != null && element instanceof ModuleDependenciesAnalyzer.OrderEntryPathElement) {
         final ModuleDependenciesAnalyzer.OrderEntryPathElement o = (ModuleDependenciesAnalyzer.OrderEntryPathElement)element;
         final OrderEntry entry = o.entry();
         final Module m = entry.getOwnerModule();
-        c.selectOrderEntry(m, entry);
+        ProjectStructureConfigurable.getInstance(module.getProject()).selectOrderEntry(m, entry);
       }
     }
   }

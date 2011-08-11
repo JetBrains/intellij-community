@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
@@ -54,7 +55,7 @@ import java.util.List;
 
 public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, Disposable, TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class.getName());
-  private /*static final*/ boolean INTERNAL_MODE = false; //ApplicationManagerEx.getApplicationEx().isInternal();
+  private static final boolean INTERNAL_MODE = ApplicationManagerEx.getApplicationEx().isInternal();
   @NonNls private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
   public static DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
 
@@ -81,6 +82,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private ClearFatalsAction myClearAction = new ClearFatalsAction();
   private BlameAction myBlameAction = new BlameAction();
+  @Nullable
   private AnalyzeAction myAnalyzeAction;
   private boolean myMute;
 
@@ -120,6 +122,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         rebuildHeaders();
+        updateControls();
       }
     });
   }
@@ -217,7 +220,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myDetailsTabForm.setCommentsAreaVisible(false);
     }
     else {
-      myAnalyzeAction = new AnalyzeAction(ActionManager.getInstance().getAction("AnalyzeStacktraceOnError"));
+      final AnAction analyzePlatformAction = ActionManager.getInstance().getAction("AnalyzeStacktraceOnError");
+      if (analyzePlatformAction != null) {
+        myAnalyzeAction = new AnalyzeAction(analyzePlatformAction);
+      }
       myDetailsTabForm = new DetailsTabForm(myAnalyzeAction);
       myDetailsTabForm.setCommentsAreaVisible(true);
       myDetailsTabForm.addCommentsListener(commentsListener);
@@ -458,8 +464,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       final Throwable throwable = message.getThrowable();
       ErrorReportSubmitter submitter = getSubmitter(throwable);
       if (submitter == null) {
+        PluginId pluginId = findPluginId(throwable);
+        IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+        if (plugin == null) {
+          // unknown plugin
+          myForeignPluginWarningLabel.setVisible(false);
+          return;
+        }
         myForeignPluginWarningLabel.setVisible(true);
-        final IdeaPluginDescriptor plugin = PluginManager.getPlugin(findPluginId(throwable));
         String vendor = plugin.getVendor();
         String contactInfo = plugin.getVendorUrl();
         if (StringUtil.isEmpty(contactInfo)) {
@@ -508,6 +520,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
             // take first line
             msg = msg.substring(0, i);
           }
+          msg = StringUtil.first(msg, 200, true);
           myCommentsTabForm.setErrorText(msg);
         }
         else {
@@ -572,7 +585,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     for (final ArrayList<AbstractMessage> abstractMessages : hash2Messages.values()) {
       myMergedMessages.add(abstractMessages);
     }
-    updateControls();
   }
 
   private void markAllAsRead() {

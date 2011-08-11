@@ -102,7 +102,7 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   }
 
   private static String getPackageName(VirtualFile file, ProjectFileIndex fileIndex) {
-    return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(file.getParent()), file.getNameWithoutExtension());
+    return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(file.isDirectory() ? file :  file.getParent()), file.getNameWithoutExtension());
   }
 
   public PackageSet createCopy() {

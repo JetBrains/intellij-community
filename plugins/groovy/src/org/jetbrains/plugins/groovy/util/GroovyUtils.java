@@ -67,7 +67,7 @@ public abstract class GroovyUtils {
   }
 
   public static boolean isAcceptableModuleType(ModuleType type) {
-    return type instanceof JavaModuleType || PLUGIN_MODULE_ID.equals(type.getId());
+    return type instanceof JavaModuleType || PLUGIN_MODULE_ID.equals(type.getId()) || "ANDROID_MODULE".equals(type.getId());
   }
 
   @Nullable

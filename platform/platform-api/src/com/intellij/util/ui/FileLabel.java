@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,20 +25,18 @@ import java.io.File;
 public class FileLabel extends JLabel {
   protected File myFile;
   private boolean myShowIcon = true;
-  private static final int PREFFERED_TEXT_LENGTH = 50;
+  private static final int PREFERRED_TEXT_LENGTH = 50;
   private final FilePathSplittingPolicy myPolicy = FilePathSplittingPolicy.SPLIT_BY_SEPARATOR;
 
-  public FileLabel() {
-  }
-
-  public void setShowIcon(boolean showIcon) {
-    myShowIcon = showIcon;
-  }
+  public FileLabel() {}
 
   public FileLabel(File file) {
     myFile = file;
   }
 
+  public void setShowIcon(boolean showIcon) {
+    myShowIcon = showIcon;
+  }
 
   public static String getFilePath(File file) {
     return file.getPath();
@@ -62,12 +60,11 @@ public class FileLabel extends JLabel {
   }
 
   public void pack() {
-    int packedWidth = getIconWidth() + getPrefferregWidth();
-    setPreferredSize(new Dimension(packedWidth, getPreferredSize().height));
+    setPreferredSize(new Dimension(getPreferredWidth(), getPreferredSize().height));
   }
 
-  private int getPrefferregWidth() {
-    return getFontMetrics(getFont()).stringWidth(myPolicy.getPresentableName(myFile, PREFFERED_TEXT_LENGTH));
+  protected int getPreferredWidth() {
+    return getIconWidth() + getFontMetrics(getFont()).stringWidth(myPolicy.getPresentableName(myFile, PREFERRED_TEXT_LENGTH));
   }
 
   public int getIconWidth() {

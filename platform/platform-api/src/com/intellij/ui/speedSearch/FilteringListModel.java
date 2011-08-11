@@ -20,6 +20,7 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.ui.CollectionListModel;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -114,6 +115,17 @@ public class FilteringListModel<T> extends AbstractListModel {
     return myOriginalModel;
   }
 
+  public void addAll(List elements) {
+    myData.addAll(elements);
+    ((CollectionListModel)myOriginalModel).add(elements);
+  }
+
+  public void replaceAll(List elements) {
+    myData.clear();
+    myData.addAll(elements);
+    ((CollectionListModel)myOriginalModel).replaceAll(elements);
+  }
+  
   public void remove(int index) {
     ((DefaultListModel)myOriginalModel).removeElement(myData.get(index));
   }

@@ -23,7 +23,7 @@ import java.util.List;
 
 public class CompositeBlockWrapper extends AbstractBlockWrapper{
   private List<AbstractBlockWrapper> myChildren;
-  //private static final CodeStyleSettings.IndentOptions DEF_OPTIONS = new CodeStyleSettings.IndentOptions();
+  //private static final CommonCodeStyleSettings.IndentOptions DEF_OPTIONS = new CommonCodeStyleSettings.IndentOptions();
 
   /**
    * Shortcut for calling {@link #CompositeBlockWrapper(Block, WhiteSpace, CompositeBlockWrapper, TextRange)} with

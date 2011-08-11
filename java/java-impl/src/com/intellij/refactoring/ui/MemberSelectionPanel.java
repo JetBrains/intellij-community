@@ -47,7 +47,7 @@ public class MemberSelectionPanel extends JPanel {
    */
   public MemberSelectionPanel(String title, List<MemberInfo> memberInfo, String abstractColumnHeader) {
     super();
-    Border border = IdeBorderFactory.createTitledBorderSimpleWithoutIndent(title);
+    Border border = IdeBorderFactory.createTitledBorder(title, false, false);
     setBorder(border);
     setLayout(new BorderLayout());
 

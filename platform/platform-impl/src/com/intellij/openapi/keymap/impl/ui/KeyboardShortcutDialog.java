@@ -97,7 +97,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     JPanel previewPanel = new JPanel(new BorderLayout());
     previewPanel.setBorder(
       BorderFactory.createCompoundBorder(
-        IdeBorderFactory.createTitledBorderSimpleWithIndent(KeyMapBundle.message("shortcut.preview.ide.border.factory.title")),
+        IdeBorderFactory.createTitledBorder(KeyMapBundle.message("shortcut.preview.ide.border.factory.title"), false, true),
         BorderFactory.createEmptyBorder(5,5,5,5)
       )
     );
@@ -110,7 +110,8 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     // Conflicts
 
     JPanel conflictsPanel = new JPanel(new BorderLayout());
-    conflictsPanel.setBorder(IdeBorderFactory.createTitledBorderSimpleWithIndent(KeyMapBundle.message("conflicts.ide.border.factory.title")));
+    conflictsPanel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("conflicts.ide.border.factory.title"),
+                                                                 false, true));
     myConflictInfoArea.setEditable(false);
     myConflictInfoArea.setBackground(panel.getBackground());
     myConflictInfoArea.setLineWrap(true);
@@ -248,7 +249,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
       setLayout(new BorderLayout());
       setBorder(
         BorderFactory.createCompoundBorder(
-          IdeBorderFactory.createTitledBorderSimpleWithIndent(borderText),
+          IdeBorderFactory.createTitledBorder(borderText, false, true),
           BorderFactory.createEmptyBorder(5,5,5,5)
         )
       );

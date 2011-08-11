@@ -206,7 +206,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     });
     final JScrollPane textScrollPane = ScrollPaneFactory.createScrollPane(textArea);
     panel.add(textScrollPane, BorderLayout.CENTER);
-    textScrollPane.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent(VcsBundle.message("border.selected.revision.commit.message")));
+    textScrollPane.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.selected.revision.commit.message"), false, false));
     return panel;
   }
 
@@ -302,7 +302,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
     JPanel jPanel = new JPanel(new BorderLayout());
     final JScrollPane textScrollPane = ScrollPaneFactory.createScrollPane(textArea);
-    textScrollPane.setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent(VcsBundle.message("border.selected.revision.commit.message")));
+    textScrollPane.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.selected.revision.commit.message"), false, false));
     jPanel.add(textScrollPane, BorderLayout.SOUTH);
 
     jPanel.setPreferredSize(new Dimension(300, 100));

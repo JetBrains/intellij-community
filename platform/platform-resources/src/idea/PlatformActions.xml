@@ -209,13 +209,14 @@
         <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
         <group id="UIToggleActions">
           <separator/>
-          <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
-          <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
-          <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
           <reference ref="EditorToggleShowWhitespaces"/>
           <reference ref="EditorToggleShowLineNumbers"/>
           <reference ref="EditorToggleShowIndentLines"/>
           <reference ref="EditorToggleUseSoftWraps"/>
+          <separator/>
+          <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
+          <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
+          <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
         </group>
       </group>
 

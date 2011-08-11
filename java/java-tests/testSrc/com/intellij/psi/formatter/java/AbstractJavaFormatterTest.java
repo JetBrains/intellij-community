@@ -89,7 +89,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     return rootSettings.getCommonSettings(JavaLanguage.INSTANCE);
   }
 
-  public static CodeStyleSettings.IndentOptions getIndentOptions() {
+  public static CommonCodeStyleSettings.IndentOptions getIndentOptions() {
     return getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
   }
 

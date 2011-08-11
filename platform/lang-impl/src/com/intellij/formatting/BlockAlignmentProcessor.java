@@ -16,7 +16,7 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -67,14 +67,14 @@ public interface BlockAlignmentProcessor {
     @NotNull public final LeafBlockWrapper                                     targetBlock;
     @NotNull public final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings;
     @NotNull public final Map<LeafBlockWrapper, Set<LeafBlockWrapper>>         backwardShiftedAlignedBlocks;
-    @NotNull public final CodeStyleSettings.IndentOptions                      indentOptions;
+    @NotNull public final CommonCodeStyleSettings.IndentOptions                      indentOptions;
 
     public Context(@NotNull Document document,
                    @NotNull AlignmentImpl alignment,
                    @NotNull LeafBlockWrapper targetBlock,
                    @NotNull Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings,
                    @NotNull Map<LeafBlockWrapper, Set<LeafBlockWrapper>> backwardShiftedAlignedBlocks,
-                   @NotNull CodeStyleSettings.IndentOptions indentOptions)
+                   @NotNull CommonCodeStyleSettings.IndentOptions indentOptions)
     {
       this.document = document;
       this.alignment = alignment;

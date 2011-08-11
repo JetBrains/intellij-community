@@ -675,6 +675,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           @Override
           public void run() {
             CommandProcessor.getInstance().setCurrentCommandGroupId(myEditor.getDocument());
+            ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
             actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
           }
         }, null, DocCommandGroupId.noneGroupId(myEditor.getDocument()));

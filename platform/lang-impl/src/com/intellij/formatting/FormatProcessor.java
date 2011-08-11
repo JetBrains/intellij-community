@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -59,7 +60,7 @@ class FormatProcessor {
   private CompositeBlockWrapper               myRootBlockWrapper;
   private TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
 
-  private final CodeStyleSettings.IndentOptions myIndentOption;
+  private final CommonCodeStyleSettings.IndentOptions myIndentOption;
   private final CodeStyleSettings               mySettings;
   private final Document                        myDocument;
 
@@ -109,7 +110,7 @@ class FormatProcessor {
   
   private WhiteSpace                      myLastWhiteSpace;
   private boolean                         myDisposed;
-  private CodeStyleSettings.IndentOptions myJavaIndentOptions;
+  private CommonCodeStyleSettings.IndentOptions myJavaIndentOptions;
   
   @NotNull
   private State myCurrentState;
@@ -117,7 +118,7 @@ class FormatProcessor {
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
                          CodeStyleSettings settings,
-                         CodeStyleSettings.IndentOptions indentOptions,
+                         CommonCodeStyleSettings.IndentOptions indentOptions,
                          @Nullable FormatTextRanges affectedRanges,
                          @NotNull FormattingProgressCallback progressCallback)
   {
@@ -127,7 +128,7 @@ class FormatProcessor {
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
                          CodeStyleSettings settings,
-                         CodeStyleSettings.IndentOptions indentOptions,
+                         CommonCodeStyleSettings.IndentOptions indentOptions,
                          @Nullable FormatTextRanges affectedRanges,
                          int interestingOffset,
                          @NotNull FormattingProgressCallback progressCallback) 
@@ -271,7 +272,7 @@ class FormatProcessor {
     }
   }
   
-  public void setJavaIndentOptions(final CodeStyleSettings.IndentOptions javaIndentOptions) {
+  public void setJavaIndentOptions(final CommonCodeStyleSettings.IndentOptions javaIndentOptions) {
     myJavaIndentOptions = javaIndentOptions;
   }
 
@@ -287,7 +288,7 @@ class FormatProcessor {
    */
   @SuppressWarnings({"deprecation"})
   private static boolean applyChangesAtBulkMode(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
-                                                CodeStyleSettings.IndentOptions indentOption) 
+                                                CommonCodeStyleSettings.IndentOptions indentOption)
   {
     FormattingDocumentModel documentModel = model.getDocumentModel();
     Document document = documentModel.getDocument();
@@ -333,7 +334,7 @@ class FormatProcessor {
                                        @NotNull final LeafBlockWrapper block,
                                        int shift,
                                        final CharSequence _newWhiteSpace,
-                                       final CodeStyleSettings.IndentOptions options
+                                       final CommonCodeStyleSettings.IndentOptions options
   ) {
     final WhiteSpace whiteSpace = block.getWhiteSpace();
     final TextRange textRange = whiteSpace.getTextRange();
@@ -1110,7 +1111,7 @@ class FormatProcessor {
   }
 
   private static int calcShift(final IndentInside lastLineIndent, final IndentInside whiteSpaceIndent,
-                               final CodeStyleSettings.IndentOptions options
+                               final CommonCodeStyleSettings.IndentOptions options
   ) {
     if (lastLineIndent.equals(whiteSpaceIndent)) return 0;
     if (options.USE_TAB_CHARACTER) {

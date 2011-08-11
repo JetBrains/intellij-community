@@ -44,7 +44,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactorySimpleWithoutIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithoutIndent"/>
         </clientProperties>
         <border type="etched" title-resource-bundle="messages/RefactoringBundle" title-key="refactoring.extract.method.dialog.parameters"/>
         <children>

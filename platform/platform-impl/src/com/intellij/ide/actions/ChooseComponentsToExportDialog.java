@@ -27,6 +27,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
@@ -203,12 +204,13 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     }
 
     public String toString() {
-      String result = "";
-
+      Set<String> names = new LinkedHashSet<String>();
+      
       for (final ExportableComponent component : myComponents) {
-        result += (result.length() == 0 ? "" : ", ") + component.getPresentableName();
+        names.add(component.getPresentableName());
       }
-      return result;
+
+      return StringUtil.join(names.toArray(new String[names.size()]), ", ");
     }
   }
 

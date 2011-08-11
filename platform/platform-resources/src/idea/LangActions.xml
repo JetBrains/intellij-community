@@ -124,15 +124,12 @@
     </group>
 
     <!-- View -->
-    <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
-      <add-to-group group-id="ViewMenu" relative-to-action="ViewStatusBar" anchor="after"/>
-    </action>
+    <group id="QuickActions">
+      <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
+      <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction"/>
 
-    <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction">
-      <add-to-group group-id="ViewMenu" relative-to-action="EditorToggleShowLineNumbers" anchor="after"/>
-    </action>
-
-    <action id="ShowUsagesSettings" class="com.intellij.find.actions.ShowUsagesAction$ShowSettings"/>
+      <add-to-group group-id="ViewMenu" anchor="first"/>
+    </group>
 
     <group id="CodeEditorBaseGroup">
       <group id="CodeEditorViewGroup">
@@ -144,16 +141,26 @@
         <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
         <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
         <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction"/>
-        <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
-      </group>
-      <separator/>
-
-      <group id="ProjectViewGroup">
-        <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
       </group>
       <separator/>
 
       <add-to-group group-id="ViewMenu" relative-to-action="QuickActions" anchor="after"/>
+    </group>
+
+    <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
+      <add-to-group group-id="ViewMenu" relative-to-action="ViewStatusBar" anchor="after"/>
+    </action>
+
+    <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction">
+      <add-to-group group-id="ViewMenu" relative-to-action="EditorToggleShowLineNumbers" anchor="after"/>
+    </action>
+
+    <action id="ShowUsagesSettings" class="com.intellij.find.actions.ShowUsagesAction$ShowSettings"/>
+
+    <group id="ProjectViewGroup">
+      <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
+      <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
+      <add-to-group group-id="ViewMenu" relative-to-action="QuickChangeScheme" anchor="after"/>
     </group>
 
     <group id="FoldingGroup" popup="true">
@@ -170,13 +177,6 @@
       <add-to-group group-id="ViewMenu" relative-to-action="UIToggleActions" anchor="before"/>
     </group>
 
-    <group id="QuickActions">
-      <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
-      <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction"/>
-
-      <add-to-group group-id="ViewMenu" anchor="first"/>
-    </group>
-
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
       <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
       <add-to-group group-id="ViewRecentActions" anchor="last"/>
@@ -188,7 +188,7 @@
       <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
       <action id="CallHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction"/>
       <separator/>
-      <add-to-group group-id="ViewMenu" relative-to-action="UIToggleActions" anchor="before"/>
+      <add-to-group group-id="ViewMenu" relative-to-action="CodeEditorBaseGroup" anchor="after"/>
     </group>
 
     <!-- Go To -->
@@ -226,7 +226,7 @@
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
       <action id="GotoTest" class="com.intellij.testIntegration.GotoTestOrCodeAction"/>
-      <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedFileAction" text="_Related File"/>
+      <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedFileAction"/>
       <separator/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GoToErrorGroup"/>

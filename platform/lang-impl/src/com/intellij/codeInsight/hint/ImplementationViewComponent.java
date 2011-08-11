@@ -364,7 +364,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private void updateTextElement(final PsiElement elt) {
     final String newText = getNewText(elt);
-    if (newText == null) return;
+    if (newText == null || Comparing.strEqual(newText, myEditor.getDocument().getText())) return;
     CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -453,6 +453,14 @@ public class ImplementationViewComponent extends JPanel {
   private void goForward() {
     myIndex++;
     updateControls();
+  }
+
+  public int getIndex() {
+    return myIndex;
+  }
+
+  public PsiElement[] getElements() {
+    return myElements;
   }
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {

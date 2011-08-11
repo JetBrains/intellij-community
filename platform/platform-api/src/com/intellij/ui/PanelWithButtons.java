@@ -31,7 +31,7 @@ public abstract class PanelWithButtons extends JPanel {
 
     String labelText = getLabelText();
     if (labelText != null) {
-      setBorder(IdeBorderFactory.createTitledBorderSimpleWithoutIndent(labelText));
+      setBorder(IdeBorderFactory.createTitledBorder(labelText, false, false));
     }
 
     add(

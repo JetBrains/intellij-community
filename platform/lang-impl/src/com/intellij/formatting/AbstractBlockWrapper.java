@@ -17,7 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -134,7 +134,7 @@ public abstract class AbstractBlockWrapper {
     if (wrap != null) wrap.reset();
   }
 
-  public IndentData getChildOffset(AbstractBlockWrapper child, CodeStyleSettings.IndentOptions options, int targetBlockStartOffset) {
+  public IndentData getChildOffset(AbstractBlockWrapper child, CommonCodeStyleSettings.IndentOptions options, int targetBlockStartOffset) {
     final boolean childStartsNewLine = child.getWhiteSpace().containsLineFeeds();
     IndentImpl.Type childIndentType = child.getIndent().getType();
     IndentData childIndent;
@@ -304,7 +304,7 @@ public abstract class AbstractBlockWrapper {
       myParent.arrangeStartOffset(getStartOffset());
     }
   }
-  public IndentData calculateChildOffset(final CodeStyleSettings.IndentOptions indentOption, final ChildAttributes childAttributes,
+  public IndentData calculateChildOffset(final CommonCodeStyleSettings.IndentOptions indentOption, final ChildAttributes childAttributes,
                                          int index) {
     IndentImpl childIndent = (IndentImpl)childAttributes.getChildIndent();
 
@@ -406,7 +406,7 @@ public abstract class AbstractBlockWrapper {
     return new IndentData(indentSpaces, symbolsBeforeCurrent.getSpaces());
   }
 
-  private static IndentData getIndent(final CodeStyleSettings.IndentOptions options, final int index, IndentImpl indent) {
+  private static IndentData getIndent(final CommonCodeStyleSettings.IndentOptions options, final int index, IndentImpl indent) {
     if (indent.getType() == Indent.Type.CONTINUATION) {
       return new IndentData(options.CONTINUATION_INDENT_SIZE);
     }
@@ -432,7 +432,7 @@ public abstract class AbstractBlockWrapper {
    * value is defined (not <code>null</code>).
    * <p/>
    * This property is used later during
-   * {@link LeafBlockWrapper#calculateOffset(CodeStyleSettings.IndentOptions)} leaf block offset calculation}.
+   * {@link LeafBlockWrapper#calculateOffset(CommonCodeStyleSettings.IndentOptions)} leaf block offset calculation}.
    *
    * @param indentFromParent    indent value to apply
    */

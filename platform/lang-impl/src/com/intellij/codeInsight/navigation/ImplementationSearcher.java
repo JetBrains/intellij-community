@@ -18,19 +18,33 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.DefinitionsSearch;
+import com.intellij.util.CommonProcessors;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ImplementationSearcher {
+
+  public static final String SEARCHING_FOR_IMPLEMENTATIONS = CodeInsightBundle.message("searching.for.implementations");
+
   public PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
     final TargetElementUtilBase targetElementUtil = TargetElementUtilBase.getInstance();
-    boolean onRef = targetElementUtil.findTargetElement(editor, getFlags() & ~TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
+    boolean onRef = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return targetElementUtil.findTargetElement(editor, getFlags() & ~TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
+      }
+    });
     return searchImplementations(element, offset, onRef && targetElementUtil.includeSelfInGotoImplementation(element), onRef);
   }
 
@@ -69,14 +83,18 @@ public class ImplementationSearcher {
           result[0] = DefinitionsSearch.search(element).toArray(PsiElement.EMPTY_ARRAY);
         }
         catch (IndexNotReadyException e) {
-          DumbService.getInstance(element.getProject()).showDumbModeNotification("Implementation information isn't available while indices are built");
+          dumbModeNotification(element);
           result[0] = null;
         }
       }
-    }, CodeInsightBundle.message("searching.for.implementations"), true, element.getProject())) {
+    }, SEARCHING_FOR_IMPLEMENTATIONS, true, element.getProject())) {
       return null;
     }
     return result[0];
+  }
+
+  public static void dumbModeNotification(PsiElement element) {
+    DumbService.getInstance(element.getProject()).showDumbModeNotification("Implementation information isn't available while indices are built");
   }
 
   protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
@@ -85,5 +103,51 @@ public class ImplementationSearcher {
 
   public static int getFlags() {
     return TargetElementUtilBase.getInstance().getDefinitionSearchFlags();
+  }
+
+  public static class FirstImplementationsSearcher extends ImplementationSearcher {
+    @Override
+    protected PsiElement[] searchDefinitions(final PsiElement element) {
+      final PsiElement[][] result = new PsiElement[1][];
+      final PsiElementProcessor.CollectElementsWithLimit<PsiElement> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiElement>(2, new THashSet<PsiElement>());
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          try {
+            DefinitionsSearch.search(element).forEach(new PsiElementProcessorAdapter<PsiElement>(collectProcessor));
+            result[0] = collectProcessor.toArray();
+          }
+          catch (IndexNotReadyException e) {
+            ImplementationSearcher.dumbModeNotification(element);
+            result[0] = null;
+          }
+        }
+      }, SEARCHING_FOR_IMPLEMENTATIONS, true, element.getProject())) {
+        return null;
+      }
+      return result[0];
+    }
+  }
+
+  public static abstract class BackgroundableImplementationSearcher extends ImplementationSearcher {
+    @Override
+    protected PsiElement[] searchDefinitions(final PsiElement element) {
+      final CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<PsiElement>() {
+        @Override
+        public boolean process(PsiElement element) {
+          processElement(element);
+          return super.process(element);
+        }
+      };
+      try {
+        DefinitionsSearch.search(element).forEach(processor);
+      }
+      catch (IndexNotReadyException e) {
+        ImplementationSearcher.dumbModeNotification(element);
+        return null;
+      }
+      return processor.toArray(PsiElement.EMPTY_ARRAY);
+    }
+
+    protected abstract void processElement(PsiElement element);
   }
 }

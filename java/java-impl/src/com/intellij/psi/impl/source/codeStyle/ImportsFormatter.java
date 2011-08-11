@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -36,7 +37,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportsFormatter");
   
   private final FormattingDocumentModelImpl myDocumentModel;
-  private final CodeStyleSettings.IndentOptions myIndentOptions;
+  private final CommonCodeStyleSettings.IndentOptions myIndentOptions;
   private static final @NonNls String PAGE_DIRECTIVE = "page";
   private static final @NonNls String IMPORT_ATT = "import";
 
