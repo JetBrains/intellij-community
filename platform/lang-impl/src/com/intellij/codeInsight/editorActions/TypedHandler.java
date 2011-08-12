@@ -21,8 +21,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
@@ -188,19 +186,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
 
     if (editor.getSelectionModel().hasSelection()){
-      //todo[peter] a better way of clearing selection in a guarded way
-      final Editor finalEditor = editor;
-      Runnable runnable = new Runnable() {
-        public void run() {
-          EditorModificationUtil.deleteSelectedText(finalEditor);
-        }
-      };
-      final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      if (lookup == null) {
-        runnable.run();
-      } else {
-        lookup.performGuardedChange(runnable);
-      }
+      EditorModificationUtil.deleteSelectedText(editor);
     }
 
     FileType fileType = getFileType(file, editor);
