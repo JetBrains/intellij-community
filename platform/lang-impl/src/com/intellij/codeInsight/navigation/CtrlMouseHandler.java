@@ -383,7 +383,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
     else if (browseMode == BrowseMode.Declaration) {
       final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
-      final PsiElement resolvedElement = ref != null ? resolve(ref) : null;
+      final List<PsiElement> resolvedElement = ref != null ? resolve(ref) : Collections.<PsiElement>emptyList();
 
       final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset);
       final PsiElement elementAtPointer = file.findElementAt(offset);
@@ -402,8 +402,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
       }
 
-      if (resolvedElement != null) {
-        return new InfoSingle(ref, resolvedElement);
+      if (resolvedElement.size() == 1) {
+        return new InfoSingle(ref, resolvedElement.get(0));
+      }
+      else if (resolvedElement.size() > 1) {
+        return new InfoMultiple(elementAtPointer);
       }
     }
     else if (browseMode == BrowseMode.Implementation) {
@@ -447,21 +450,21 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return null;
   }
 
-  @Nullable
-  private static PsiElement resolve(final PsiReference ref) {
+  private static List<PsiElement> resolve(final PsiReference ref) {
     // IDEA-56727 try resolve first as in GotoDeclarationAction
     PsiElement resolvedElement = ref.resolve();
 
     if (resolvedElement == null && ref instanceof PsiPolyVariantReference) {
+      List<PsiElement> result = new ArrayList<PsiElement>();
       final ResolveResult[] psiElements = ((PsiPolyVariantReference)ref).multiResolve(false);
-      if (psiElements.length > 0) {
-        final ResolveResult resolveResult = psiElements[0];
-        if (resolveResult != null) {
-          resolvedElement = resolveResult.getElement();
+      for (ResolveResult resolveResult : psiElements) {
+        if (resolveResult.getElement() != null) {
+          result.add(resolveResult.getElement());
         }
       }
+      return result;
     }
-    return resolvedElement;
+    return resolvedElement == null ? Collections.<PsiElement>emptyList() : Collections.singletonList(resolvedElement);
   }
 
   private void disposeHighlighter() {
