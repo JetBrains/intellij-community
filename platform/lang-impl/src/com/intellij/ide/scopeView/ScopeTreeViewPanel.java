@@ -414,7 +414,11 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
           TreeUtil.sort(rootToReload, getNodeComparator());
         }
       };
-      SwingUtilities.invokeLater(runnable);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        runnable.run();
+      } else {
+        SwingUtilities.invokeLater(runnable);
+      }
     }
     else {
       TreeUtil.sort(treeModel, getNodeComparator());
