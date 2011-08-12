@@ -40,6 +40,7 @@ import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.PositionTracker;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -77,6 +78,7 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
     initOccurrencesMarkers();
   }
 
+  @Nullable
   protected abstract JComponent getComponent();
 
   public void setOccurrenceMarkers(List<RangeMarker> occurrenceMarkers) {
