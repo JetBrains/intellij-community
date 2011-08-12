@@ -25,7 +25,7 @@ public class SystemInfo {
   public static final String JAVA_VERSION = System.getProperty("java.version");
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
   public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
-  public static final String SUN_DESKTOP = System.getProperty("sun.desktop");
+  public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
   private static final String _OS_NAME = OS_NAME.toLowerCase();
   public static final boolean isWindows = _OS_NAME.startsWith("windows");
@@ -44,8 +44,8 @@ public class SystemInfo {
   public static final boolean isUnix = !isWindows && !isOS2;
 
   private static final String _SUN_DESKTOP = SUN_DESKTOP.toLowerCase();
-  public static final boolean isKDE = SUN_DESKTOP != null && _SUN_DESKTOP.contains("kde");
-  public static final boolean isGnome = SUN_DESKTOP != null && _SUN_DESKTOP.contains("gnome");
+  public static final boolean isKDE = _SUN_DESKTOP.contains("kde");
+  public static final boolean isGnome = _SUN_DESKTOP.contains("gnome");
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
