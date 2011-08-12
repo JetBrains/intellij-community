@@ -83,7 +83,7 @@ public abstract class CompletionPhase implements Disposable {
       super(prevIndicator);
       myEditor = editor;
       myProject = editor.getProject();
-      focusStamp = IdeFocusManager.getInstance(myProject).getTimestamp(false);
+      focusStamp = IdeFocusManager.getInstance(myProject).getTimestamp(true);
       ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
         @Override
         public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
