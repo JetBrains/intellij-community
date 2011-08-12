@@ -27,6 +27,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitExecutionException;
@@ -93,6 +95,9 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   private Set<VirtualFile> myUntrackedFiles = new HashSet<VirtualFile>();
   private final Object LOCK = new Object();
+  
+  private final QueueProcessor<Set<VirtualFile>> myRescanQueue;
+  
 
   public GitUntrackedFilesHolder(@NotNull VirtualFile root, @NotNull Project project) {
     myRoot = root;
@@ -101,6 +106,8 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     myChangeListManager = ChangeListManager.getInstance(project);
     myRepositoryManager = GitRepositoryManager.getInstance(project);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+
+    myRescanQueue = new QueueProcessor<Set<VirtualFile>>(new Rescanner(), myProject.getDisposed());
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, this);
@@ -320,17 +327,19 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     }
 
     if (!filesToRefresh.isEmpty()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          rescanFiles(filesToRefresh);
-          myDirtyScopeManager.filesDirty(filesToRefresh, null); // make ChangeListManager capture new info
-        }
-      });
+      myRescanQueue.add(filesToRefresh);
     }
   }
-
+  
   private boolean belongsToThisRepository(VirtualFile file) {
     final GitRepository repository = myRepositoryManager.getRepositoryForFile(file);
     return repository != null && repository.getRoot().equals(myRoot);
+  }
+  
+  private class Rescanner implements Consumer<Set<VirtualFile>> {
+     @Override public void consume(Set<VirtualFile> filesToRefresh) {
+       rescanFiles(filesToRefresh);
+       myDirtyScopeManager.filesDirty(filesToRefresh, null); // make ChangeListManager capture new info
+     }
   }
 }
