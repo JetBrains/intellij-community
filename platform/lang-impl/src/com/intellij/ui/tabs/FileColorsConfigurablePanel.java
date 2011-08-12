@@ -146,7 +146,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     final JButton editScopes = new JButton("Manage Scopes...");
     editScopes.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        EditScopesDialog.editConfigurable(myManager.getProject(), null, true);
+        EditScopesDialog.showDialog(myManager.getProject(), null, true);
       }
     });
     infoPanel.add(editScopes, BorderLayout.EAST);

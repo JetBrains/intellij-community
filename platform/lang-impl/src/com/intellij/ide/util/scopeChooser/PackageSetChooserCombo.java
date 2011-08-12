@@ -84,12 +84,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
             }
           }
           else {
-            final ScopeChooserConfigurable configurable = ScopeChooserConfigurable.getInstance(myProject);
-            final EditScopesDialog dlg = EditScopesDialog.editConfigurable(myProject, new Runnable() {
-              public void run() {
-                configurable.selectNodeInTree(scope.getName());
-              }
-            }, true);
+            final EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, scope.getName(), true);
             if (dlg.isOK()) {
               rebuild();
               final NamedScope namedScope = dlg.getSelectedScope();

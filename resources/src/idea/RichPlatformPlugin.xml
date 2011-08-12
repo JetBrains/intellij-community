@@ -257,8 +257,7 @@
     <projectConfigurable instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"/>
 
     <!-- Scopes -->
-    <!-- This is registered as a top-level configurable in IDEA, and as a service (accessible from certain dialogs) in platform. -->
-    <projectConfigurable implementation="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable"/>
+    <projectConfigurable instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable"/>
 
     <!-- Application Configurables -->
 

@@ -35,8 +35,10 @@ public class EditScopesDialog extends SingleConfigurableEditor {
   private NamedScope mySelectedScope;
   private final boolean myCheckShared;
 
-  public EditScopesDialog(final Project project, final boolean checkShared) {
-    super(project, ScopeChooserConfigurable.getInstance(project), "scopes");
+  public EditScopesDialog(final Project project,
+                          final ScopeChooserConfigurable configurable,
+                          final boolean checkShared) {
+    super(project, configurable, "scopes");
     myCheckShared = checkShared;
   }
 
@@ -77,14 +79,15 @@ public class EditScopesDialog extends SingleConfigurableEditor {
   }
 
 
-  public static EditScopesDialog editConfigurable(final Project project, @Nullable final Runnable advancedInitialization){
-    return editConfigurable(project, advancedInitialization, false);
+  public static EditScopesDialog showDialog(final Project project, @Nullable final String scopeToSelect) {
+    return showDialog(project, scopeToSelect, false);
   }
 
-  public static EditScopesDialog editConfigurable(final Project project, @Nullable final Runnable advancedInitialization, final boolean checkShared){
-    final EditScopesDialog dialog = new EditScopesDialog(project, checkShared);
-    if (advancedInitialization != null) {
-      advancedInitialization.run();
+  public static EditScopesDialog showDialog(final Project project, @Nullable final String scopeToSelect, final boolean checkShared) {
+    final ScopeChooserConfigurable configurable = new ScopeChooserConfigurable(project);
+    final EditScopesDialog dialog = new EditScopesDialog(project, configurable, checkShared);
+    if (scopeToSelect != null) {
+      configurable.selectNodeInTree(scopeToSelect);
     }
     dialog.show();
     return dialog;
