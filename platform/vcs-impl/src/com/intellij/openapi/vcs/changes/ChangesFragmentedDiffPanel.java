@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ShiftedSimpleContent;
 import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.openapi.diff.ex.DiffPanelEx;
+import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.ContentChangeListener;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.highlighting.FragmentedDiffPanelState;
@@ -80,6 +82,10 @@ public class ChangesFragmentedDiffPanel implements Disposable {
         final DiffPanel diffPanel = new DiffPanelImpl(null, myProject, false, myConfiguration.SHORT_DIFF_HORISONTALLY);
         ((DiffPanelImpl) diffPanel).setDiffPanelState(new FragmentedDiffPanelState((ContentChangeListener)diffPanel, project,
                                                                                    ! myConfiguration.SHORT_DIFF_HORISONTALLY));
+        diffPanel.enableToolbar(false);
+        diffPanel.removeStatusBar();
+        DiffPanelOptions o = ((DiffPanelEx)diffPanel).getOptions();
+        o.setRequestFocusOnNewContent(false);
         return diffPanel;
       }
     };
@@ -191,7 +197,6 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     diffPanel.setContents(new SimpleContent(sbOld.toString()), new SimpleContent(sbNew.toString()));
     ((DiffPanelImpl) diffPanel).setLineNumberConvertors(oldConvertor, newConvertor);
     ((DiffPanelImpl) diffPanel).prefferedSizeByContents(-1);
-    diffPanel.removeStatusBar();
     return diffPanel;
   }
 
