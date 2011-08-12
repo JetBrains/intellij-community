@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -19,6 +20,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex;
@@ -72,7 +74,8 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       }
     }
     else if (myContext.allowImplicits() && canQualifyAnImplicitName(qualifier, qualifierType)) {
-      final Collection functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
+      final Project project = myElement.getProject();
+      final Collection functions = PyFunctionNameIndex.find(referencedName, project, PyClassNameIndex.projectWithLibrariesScope(project));
       for (Object function : functions) {
         if (!(function instanceof PyFunction)) {
           FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
@@ -85,7 +88,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         }
       }
       
-      final Collection attributes = PyInstanceAttributeIndex.find(referencedName, myElement.getProject());
+      final Collection attributes = PyInstanceAttributeIndex.find(referencedName, project, PyClassNameIndex.projectWithLibrariesScope(project));
       for (Object attribute : attributes) {
         if (!(attribute instanceof PyTargetExpression)) {
           FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,

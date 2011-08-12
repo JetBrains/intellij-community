@@ -1,7 +1,7 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
@@ -20,7 +20,7 @@ public class PyInstanceAttributeIndex extends StringStubIndexExtension<PyTargetE
     return KEY;
   }
 
-  public static Collection<PyTargetExpression> find(String name, Project project) {
-    return StubIndex.getInstance().get(KEY, name, project, ProjectScope.getAllScope(project));
+  public static Collection<PyTargetExpression> find(String name, Project project, GlobalSearchScope scope) {
+    return StubIndex.getInstance().get(KEY, name, project, scope);
   }
 }
