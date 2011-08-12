@@ -101,19 +101,18 @@ public class SpockVariableDescriptor {
         type = PsiType.getJavaLangObject(manager, myNavigationElement.getResolveScope());
       }
 
-      myVariable = new SpockVariable(null, manager, myName, type, myNavigationElement);
+      myVariable = new SpockVariable(manager, myName, type, myNavigationElement);
     }
 
     return myVariable;
   }
 
   private static class SpockVariable extends GrLightVariable {
-    public SpockVariable(@Nullable PsiModifierList modifierList,
-                         PsiManager manager,
+    public SpockVariable(PsiManager manager,
                          @NonNls String name,
                          @NotNull PsiType type,
                          @NotNull PsiElement navigationElement) {
-      super(modifierList, manager, name, type, navigationElement);
+      super(manager, name, type, navigationElement);
     }
 
     @Override

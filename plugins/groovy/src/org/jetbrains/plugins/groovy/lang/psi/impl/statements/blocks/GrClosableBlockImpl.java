@@ -219,7 +219,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
           type = TypesUtil.getJavaLangObject(GrClosableBlockImpl.this);
         }
 
-        PsiVariable owner = new GrLightVariable(null, getManager(), OWNER_NAME, type, GrClosableBlockImpl.this);
+        PsiVariable owner = new GrLightVariable(getManager(), OWNER_NAME, type, GrClosableBlockImpl.this);
         return Result.create(owner, PsiModificationTracker.MODIFICATION_COUNT);
       }
     });

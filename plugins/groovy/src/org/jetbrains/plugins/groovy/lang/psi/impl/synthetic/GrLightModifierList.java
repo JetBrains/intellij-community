@@ -22,18 +22,21 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 public class GrLightModifierList extends LightElement implements GrModifierList {
 
+  public static final String[] PUBLIC_STATIC = {PsiModifier.PUBLIC, PsiModifier.STATIC};
+  public static final String[] PRIVATE_STATIC_FINAL = {PsiModifier.PRIVATE, PsiModifier.STATIC, PsiModifier.FINAL};
+  public static final String[] PRIVATE = {PsiModifier.PRIVATE};
+
   private String[] myModifiers;
 
   private final PsiElement myParent;
 
-  public GrLightModifierList(@NotNull PsiElement parent, String[] modifiers) {
+  public GrLightModifierList(@NotNull PsiElement parent, @NotNull String[] modifiers) {
     super(parent.getManager(), parent.getLanguage());
     myModifiers = modifiers;
     myParent = parent;
@@ -46,6 +49,10 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
 
   public void addModifier(String modifier) {
     myModifiers = ArrayUtil.append(myModifiers, modifier, ArrayUtil.STRING_ARRAY_FACTORY);
+  }
+
+  public void setModifiers(String[] modifiers) {
+    myModifiers = modifiers;
   }
 
   public void clearModifiers() {

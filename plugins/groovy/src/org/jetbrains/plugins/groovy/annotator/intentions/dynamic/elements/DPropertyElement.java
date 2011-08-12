@@ -16,21 +16,17 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitProperty;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.LightModifierList;
-
-import java.lang.reflect.Modifier;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 20.12.2007
  */
 public class DPropertyElement extends DItemElement {
-  private PsiVariable myPsi;
+  private GrDynamicImplicitProperty myPsi;
 
   //Do not use directly! Persistence component uses default constructor for deserializable
   public DPropertyElement() {
@@ -50,19 +46,23 @@ public class DPropertyElement extends DItemElement {
     if (myPsi != null) return myPsi;
 
     Boolean isStatic = isStatic();
-    int modifiers = (isStatic != null && isStatic.booleanValue()) ? ModifierFlags.STATIC_MASK : 0;
 
     String type = getType();
     if (type == null || type.trim().length() == 0) {
       type = CommonClassNames.JAVA_LANG_OBJECT;
     }
-    myPsi = new GrDynamicImplicitProperty(manager, getName(), type, containingClassName, new LightModifierList(manager, modifiers), null) {
+    myPsi = new GrDynamicImplicitProperty(manager, getName(), type, containingClassName, null) {
       @Override
       public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
         DynamicManager.getInstance(getProject()).replaceDynamicPropertyName(containingClassName, getName(), name);
         return super.setName(name);
       }
     };
+
+    if (isStatic != null && isStatic.booleanValue()) {
+      myPsi.getModifierList().addModifier(PsiModifier.STATIC);
+    }
+
     return myPsi;
   }
 }

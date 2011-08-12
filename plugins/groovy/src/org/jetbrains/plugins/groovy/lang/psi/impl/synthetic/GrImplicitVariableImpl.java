@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightVariableBase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -13,17 +14,18 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  * @author ilyas
  */
 public class GrImplicitVariableImpl extends LightVariableBase implements GrImplicitVariable {
-  private PsiModifierList myInnerModifierList;
-
-  public GrImplicitVariableImpl(PsiModifierList modifierList, PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
+  public GrImplicitVariableImpl(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
     super(manager, nameIdentifier, GroovyFileType.GROOVY_LANGUAGE, type, writable, scope);
-        myInnerModifierList = modifierList != null ? modifierList : myModifierList;
-    }
+  }
 
-  public GrImplicitVariableImpl(PsiModifierList modifierList, PsiManager manager, @NonNls String name, @NonNls @NotNull String type, PsiElement referenceExpression) {
-    this(modifierList, manager, null, JavaPsiFacade.getElementFactory(manager.getProject()).
+  public GrImplicitVariableImpl(PsiManager manager, @NonNls String name, @NonNls @NotNull String type, PsiElement referenceExpression) {
+    this(manager, new GrLightIdentifier(manager, name), JavaPsiFacade.getElementFactory(manager.getProject()).
       createTypeFromText(type, referenceExpression), false, referenceExpression);
-    myNameIdentifier = new GrLightIdentifier(myManager, name);
+  }
+
+  @Override
+  protected PsiModifierList createModifierList() {
+    return new GrLightModifierList(this, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   public String toString() {
@@ -31,13 +33,9 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
   }
 
   @Override
-  public PsiModifierList getModifierList() {
-    return myInnerModifierList;
-  }
-
-  @Override
-  public boolean hasModifierProperty(@NotNull String modifier) {
-    return myInnerModifierList.hasModifierProperty(modifier);
+  @NotNull
+  public GrLightModifierList getModifierList() {
+    return (GrLightModifierList)myModifierList;
   }
 
   @Override

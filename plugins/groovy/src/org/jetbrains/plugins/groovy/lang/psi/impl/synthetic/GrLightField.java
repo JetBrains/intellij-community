@@ -32,22 +32,20 @@ public class GrLightField extends GrLightVariable implements PsiField {
   private final PsiClass myContainingClass;
 
   public GrLightField(@NotNull PsiClass containingClass,
-                      PsiModifierList modifierList,
                       PsiManager manager,
                       @NonNls String name,
                       @NonNls @NotNull String type,
                       @NotNull PsiElement element) {
-    super(modifierList, manager, name, type, element);
+    super(manager, name, type, element);
     myContainingClass = containingClass;
   }
 
   public GrLightField(@NotNull PsiClass containingClass,
-                      PsiModifierList modifierList,
                       PsiManager manager,
                       @NonNls String name,
                       @NotNull PsiType type,
                       @NotNull PsiElement element) {
-    super(modifierList, manager, name, type, element);
+    super(manager, name, type, element);
     myContainingClass = containingClass;
   }
 

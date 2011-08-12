@@ -25,38 +25,35 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
 
   private Object myCreatorKey;
 
-  public GrLightVariable(@Nullable PsiModifierList modifierList,
-                       PsiManager manager,
-                       @NonNls String name,
-                       @NonNls @NotNull String type,
-                       @NotNull PsiElement navigationElement) {
-    this(modifierList, manager, name, type, Collections.singletonList(navigationElement), getDeclarationScope(navigationElement));
+  public GrLightVariable(PsiManager manager,
+                         @NonNls String name,
+                         @NonNls @NotNull String type,
+                         @NotNull PsiElement navigationElement) {
+    this(manager, name, type, Collections.singletonList(navigationElement), getDeclarationScope(navigationElement));
   }
 
-  public GrLightVariable(@Nullable PsiModifierList modifierList,
-                       PsiManager manager,
-                       @NonNls String name,
-                       @NonNls @NotNull String type,
-                       @NotNull List<PsiElement> declarations,
-                       @NotNull PsiElement scope) {
-    this(modifierList, manager, name, JavaPsiFacade.getElementFactory(manager.getProject()).createTypeFromText(type, scope), declarations, scope);
+  public GrLightVariable(PsiManager manager,
+                         @NonNls String name,
+                         @NonNls @NotNull String type,
+                         @NotNull List<PsiElement> declarations,
+                         @NotNull PsiElement scope) {
+    this(manager, name, JavaPsiFacade.getElementFactory(manager.getProject()).createTypeFromText(type, scope), declarations,
+         scope);
   }
 
-  public GrLightVariable(@Nullable PsiModifierList modifierList,
-                       PsiManager manager,
-                       @NonNls String name,
-                       @NotNull PsiType type,
-                       @NotNull PsiElement navigationElement) {
-    this(modifierList, manager, name, type, Collections.singletonList(navigationElement), getDeclarationScope(navigationElement));
+  public GrLightVariable(PsiManager manager,
+                         @NonNls String name,
+                         @NotNull PsiType type,
+                         @NotNull PsiElement navigationElement) {
+    this(manager, name, type, Collections.singletonList(navigationElement), getDeclarationScope(navigationElement));
   }
 
-  public GrLightVariable(PsiModifierList modifierList,
-                       PsiManager manager,
-                       @NonNls String name,
-                       @NotNull PsiType type,
-                       @NotNull List<PsiElement> declarations,
-                       @NotNull PsiElement scope) {
-    super(modifierList, manager, new GrLightIdentifier(manager, name), type, false, scope);
+  public GrLightVariable(PsiManager manager,
+                         @NonNls String name,
+                         @NotNull PsiType type,
+                         @NotNull List<PsiElement> declarations,
+                         @NotNull PsiElement scope) {
+    super(manager, new GrLightIdentifier(manager, name), type, false, scope);
     assert declarations.size() > 0;
     this.myDeclarations = declarations;
   }
