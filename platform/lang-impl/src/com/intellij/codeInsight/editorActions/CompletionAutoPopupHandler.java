@@ -16,13 +16,11 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -60,31 +58,28 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
   @Override
   public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
-    if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) return Result.CONTINUE;
-    if (PowerSaveMode.isEnabled()) return Result.CONTINUE;
-
-    if (LookupManager.getActiveLookup(editor) != null) {
-      return Result.CONTINUE;
-    }
-
     CompletionPhase oldPhase = CompletionServiceImpl.getCompletionPhase();
     if (oldPhase instanceof CompletionPhase.EmptyAutoPopup && ((CompletionPhase.EmptyAutoPopup)oldPhase).editor != editor) {
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     }
 
-    if (!Character.isLetter(charTyped) && charTyped != '_') {
-      if (CompletionServiceImpl.isPhase(CompletionPhase.EmptyAutoPopup.class, CompletionPhase.CommittingDocuments.class)) {
-        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-      }
-      return Result.CONTINUE;
+    if (oldPhase instanceof CompletionPhase.CommittingDocuments && ((CompletionPhase.CommittingDocuments)oldPhase).restartCompletion()) {
+      return Result.STOP;
     }
 
-    if (!CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class, CompletionPhase.NoCompletion.getClass())) {
-      return Result.CONTINUE;
+    if (LookupManager.getInstance(project).getActiveLookup() != null) {
+      return Result.STOP;
     }
 
-    AutoPopupController.getInstance(project).scheduleAutoPopup(editor, null);
-    return Result.STOP;
+    if (Character.isLetter(charTyped) || charTyped == '_') {
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, null);
+      return Result.STOP;
+    }
+
+    if (CompletionServiceImpl.isPhase(CompletionPhase.EmptyAutoPopup.class, CompletionPhase.CommittingDocuments.class)) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+    }
+    return Result.CONTINUE;
   }
 
   public static void invokeCompletion(CompletionType completionType,
@@ -104,7 +99,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
     Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
     try {
-      new CodeCompletionHandlerBase(completionType, false, autopopup).invokeCompletion(project, newEditor, time, false);
+      new CodeCompletionHandlerBase(completionType, false, autopopup, false).invokeCompletion(project, newEditor, time, false);
     }
     catch (IndexNotReadyException ignored) {
     }

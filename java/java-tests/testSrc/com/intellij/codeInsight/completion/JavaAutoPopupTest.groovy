@@ -726,7 +726,7 @@ class Foo {
     assert !lookup
   }
   
-  public void _testChoosingItemDuringCopyCommit() {
+  public void testChoosingItemDuringCopyCommit() {
     registerContributor(LongReplacementOffsetContributor)
 
     myFixture.configureByText("a.java", """ class Foo { { int iteraaa; <caret> } } """)

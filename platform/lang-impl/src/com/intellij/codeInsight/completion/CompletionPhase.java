@@ -73,15 +73,14 @@ public abstract class CompletionPhase implements Disposable {
   }
 
   public static class CommittingDocuments extends CompletionPhase {
-    final boolean copyCommit;
+    boolean replaced;
     private boolean actionsHappened;
     private final Editor myEditor;
     private final Expirable focusStamp;
     private final Project myProject;
 
-    public CommittingDocuments(boolean copyCommit, Editor editor) {
-      super(null);
-      this.copyCommit = copyCommit;
+    public CommittingDocuments(@Nullable CompletionProgressIndicator prevIndicator, Editor editor) {
+      super(prevIndicator);
       myEditor = editor;
       myProject = editor.getProject();
       focusStamp = IdeFocusManager.getInstance(myProject).getTimestamp(false);
@@ -93,21 +92,46 @@ public abstract class CompletionPhase implements Disposable {
       }, this);
     }
 
-    public boolean isExpired() {
-      if (ApplicationManager.getApplication().isWriteAccessAllowed()) return true; //it will fail anyway
-      if (actionsHappened) return true;
-      return CompletionServiceImpl.getCompletionPhase() != this || focusStamp.isExpired() || DumbService.getInstance(myProject).isDumb() || myEditor.isDisposed();
+    public boolean checkExpired() {
+      if (CompletionServiceImpl.getCompletionPhase() != this) {
+        return true;
+      }
+
+      if (actionsHappened || focusStamp.isExpired() || DumbService.getInstance(myProject).isDumb() ||
+          myEditor.isDisposed() ||
+          ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        CompletionServiceImpl.setCompletionPhase(NoCompletion);
+        return true;
+      }
+
+      return false;
+    }
+
+    public boolean restartCompletion() {
+      if (indicator != null) {
+        replaced = true;
+        indicator.scheduleRestart();
+        assert this != CompletionServiceImpl.getCompletionPhase();
+        CompletionServiceImpl.assertPhase(CommittingDocuments.class);
+      }
+      return replaced;
     }
 
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
-      CompletionServiceImpl.setCompletionPhase(NoCompletion);
       return time;
     }
 
     @Override
+    public void dispose() {
+      if (!replaced && indicator != null) {
+        indicator.closeAndFinish(true);
+      }
+    }
+
+    @Override
     public String toString() {
-      return "CommittingDocuments{copyCommit=" + copyCommit + '}';
+      return "CommittingDocuments{hasIndicator=" + (indicator != null) + '}';
     }
   }
   public static class Synchronous extends CompletionPhase {
@@ -162,17 +186,6 @@ public abstract class CompletionPhase implements Disposable {
     @Override
     public boolean fillInCommonPrefix() {
       return indicator.fillInCommonPrefix(true);
-    }
-  }
-  public static class Restarted extends CompletionPhase {
-    public Restarted(CompletionProgressIndicator indicator) {
-      super(indicator);
-    }
-
-    @Override
-    public int newCompletionStarted(int time, boolean repeated) {
-      indicator.closeAndFinish(false);
-      return indicator.nextInvocationCount(time, repeated);
     }
   }
 

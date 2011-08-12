@@ -22,9 +22,8 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -90,24 +89,27 @@ public class AutoPopupController implements Disposable {
   }
 
   public void scheduleAutoPopup(final Editor editor, @Nullable final Condition<PsiFile> condition) {
-    if (ApplicationManager.getApplication().isUnitTestMode() &&
-        !CompletionAutoPopupHandler.ourTestingAutopopup) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
       return;
     }
 
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) {
       return;
     }
-
-    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    boolean shouldBeFast = lookup != null && lookup.isShown();
+    if (PowerSaveMode.isEnabled()) {
+      return;
+    }
+    
+    if (!CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class, CompletionPhase.NoCompletion.getClass())) {
+      return;
+    }
 
     final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
-      currentCompletion.closeAndFinish(!shouldBeFast);
+      currentCompletion.closeAndFinish(true);
     }
 
-    final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(false, editor);
+    final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(null, editor);
     CompletionServiceImpl.setCompletionPhase(phase);
 
     Runnable request = new Runnable() {
@@ -116,7 +118,7 @@ public class AutoPopupController implements Disposable {
         CompletionAutoPopupHandler.runLaterWithCommitted(myProject, editor.getDocument(), new Runnable() {
           @Override
           public void run() {
-            if (phase.isExpired()) return;
+            if (phase.checkExpired()) return;
 
             PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
             if (file != null && condition != null && !condition.value(file)) return;
@@ -126,11 +128,7 @@ public class AutoPopupController implements Disposable {
         });
       }
     };
-    if (shouldBeFast) {
-      request.run();
-    } else {
-      addRequest(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
-    }
+    addRequest(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
   }
 
   @TestOnly

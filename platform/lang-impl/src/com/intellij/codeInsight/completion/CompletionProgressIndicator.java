@@ -429,7 +429,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     LOG.assertTrue(currentCompletion == this, currentCompletion + "!=" + this);
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
 
-    CompletionServiceImpl.assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class, CompletionPhase.Restarted.class);
+    CompletionServiceImpl.assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class, CompletionPhase.CommittingDocuments.class);
+    if (CompletionServiceImpl.getCompletionPhase() instanceof CompletionPhase.CommittingDocuments) {
+      LOG.assertTrue(CompletionServiceImpl.getCompletionPhase().indicator != null, CompletionServiceImpl.getCompletionPhase());
+      ((CompletionPhase.CommittingDocuments)CompletionServiceImpl.getCompletionPhase()).replaced = true;
+    }
     CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     if (disposeOffsetMap) {
       disposeOffsetMaps();
@@ -628,23 +632,25 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     LOG.assertTrue(this == current, current + "!=" + this);
 
-    final CompletionPhase phase = new CompletionPhase.Restarted(this);
+    final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(this, myEditor);
     CompletionServiceImpl.setCompletionPhase(phase);
 
     final Project project = getProject();
-    CompletionAutoPopupHandler.runLaterWithCommitted(project, myEditor.getDocument(), new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (phase != CompletionServiceImpl.getCompletionPhase()) {
-          return;
-        }
-
-        closeAndFinish(false);
-
-        CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
-                                                    isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount());
+        CompletionAutoPopupHandler.runLaterWithCommitted(project, myEditor.getDocument(), new Runnable() {
+          @Override
+          public void run() {
+            if (phase.checkExpired()) return;
+    
+            CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
+                                                        isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount());
+          }
+        });
       }
-    });
+    }, project.getDisposed());
+    
   }
 
   @Override
