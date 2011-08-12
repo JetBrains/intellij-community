@@ -21,7 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Max Medvedev
@@ -31,11 +33,30 @@ public abstract class AstTransformContributor {
 
   public abstract void getMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector);
 
+  private static final ThreadLocal<Set<GrTypeDefinition>> IN_PROGRESS = new ThreadLocal<Set<GrTypeDefinition>>();
 
   public static Collection<PsiMethod> runContributors(@NotNull final GrTypeDefinition clazz, List<PsiMethod> collector) {
-    for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
-      contributor.getMethods(clazz, collector);
+    Set<GrTypeDefinition> inProgress = IN_PROGRESS.get();
+    if (inProgress == null) {
+      inProgress = new HashSet<GrTypeDefinition>();
+      IN_PROGRESS.set(inProgress);
     }
+
+    boolean added = inProgress.add(clazz);
+    assert added;
+
+    try {
+      for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
+        contributor.getMethods(clazz, collector);
+      }
+    }
+    finally {
+      inProgress.remove(clazz);
+      //if (inProgress.isEmpty()) {
+      //  IN_PROGRESS.remove();       Don't remove empty set, ThreadLocal automatically removes value when thread stop.
+      //}
+    }
+
     return collector;
   }
 }
