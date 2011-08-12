@@ -50,7 +50,9 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   @NotNull
   private GradleProject doResolve(@NotNull String projectPath) {
     ProjectConnection connection = getConnection(projectPath);
-    OfflineIdeaProject project = connection.getModel(OfflineIdeaProject.class);
+    IdeaProject project = connection.getModel(IdeaProject.class);
+    // TODO den use OfflineIdeaProject as soon as gradle guys provide support for non-resolved libraries there.
+    //OfflineIdeaProject project = connection.getModel(OfflineIdeaProject.class);
     GradleProjectImpl result = populateProject(project, projectPath);
     populateModules(project, result);
     return result;

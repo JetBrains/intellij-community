@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,81 +27,28 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvide
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetDirectoriesListViaUpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvider {
   protected final CvsEnvironment myEnvironment;
-  protected final boolean myShowFiles;
-  protected final boolean myShowModules;
 
-  protected AbstractVcsDataProvider(CvsEnvironment environment,
-                                 boolean showFiles,
-                                 boolean showModules) {
+  protected AbstractVcsDataProvider(CvsEnvironment environment) {
     myEnvironment = environment;
-    myShowFiles = showFiles;
-    myShowModules = showModules;
   }
 
-  public void fillContentFor(CvsElement element, Project project, GetContentCallback callback) {
-    collectTreeElementsTo(element, project, callback);
-  }
-
-  private void collectTreeElementsTo(CvsElement parent,
-                                       Project project,
-                                       GetContentCallback callback) {
-    fillDirectoryContent(parent, parent.getElementPath(), callback, project);
-  }
-
-
-  private void fillDirectoryContent(final CvsElement parent,
-                                   String path,
-                                   final GetContentCallback callback,
-                                   final Project project) {
+  public void fillContentFor(final GetContentCallback callback) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      executeCommand(createDirectoryContentProvider(path), callback, parent, project);
+      executeCommand(createDirectoryContentProvider(callback.getElementPath()), callback);
     } else {
-      final GetDirectoriesListViaUpdateOperation provider = new GetDirectoriesListViaUpdateOperation(myEnvironment, path);
-      final MyBufferedConsumer consumer = new MyBufferedConsumer(new Consumer<DirectoryContent>() {
+      final GetDirectoriesListViaUpdateOperation provider =
+        new GetDirectoriesListViaUpdateOperation(myEnvironment, callback.getElementPath());
+      final Consumer<DirectoryContent> consumer = new Consumer<DirectoryContent>() {
         public void consume(final DirectoryContent directoryContent) {
-          final ArrayList<CvsElement> elements = directoryContentToElements(directoryContent, parent, project);
-          if (!elements.isEmpty()) {
-            callback.appendDirectoryContent(elements);
-          }
+          callback.appendDirectoryContent(directoryContent);
         }
-      });
+      };
       provider.setStepByStepListener(consumer);
-      executeCommand(provider, callback, parent, project);
-      consumer.flush();
-    }
-  }
-
-  private static class MyBufferedConsumer implements Consumer<DirectoryContent> {
-    private static final int ourSize = 15;
-    private final DirectoryContent myBuffer;
-    private final Consumer<DirectoryContent> myDelegate;
-
-    private MyBufferedConsumer(final Consumer<DirectoryContent> delegate) {
-      myDelegate = delegate;
-      myBuffer = new DirectoryContent();
-    }
-
-    public void consume(final DirectoryContent directoryContent) {
-      myBuffer.copyDataFrom(directoryContent);
-      if (myBuffer.getTotalSize() >= ourSize) {
-        myDelegate.consume(myBuffer);
-        myBuffer.clear();
-      }
-    }
-
-    public void flush() {
-      if (myBuffer.getTotalSize() > 0) {
-        myDelegate.consume(myBuffer);
-      }
+      executeCommand(provider, callback);
     }
   }
 
@@ -125,95 +72,25 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     }
   }
 
-  private void executeCommand(final DirectoryContentProvider command,
-                                final GetContentCallback callback,
-                                final CvsElement parent,
-                                final Project project) {
-    final CvsOperationExecutor executor1 = new CvsOperationExecutor(false, project,
-                                                                    ModalityState.stateForComponent(
-                                                                      parent.getTree()));
-    executor1.setIsQuietOperation(true);
+  private static void executeCommand(final DirectoryContentProvider command, final GetContentCallback callback) {
+    final CvsOperationExecutor executor = new CvsOperationExecutor(false, callback.getProject(), callback.getModalityState());
+    executor.setIsQuietOperation(true);
 
     final MyCancellableCvsHandler cvsHandler =
         new MyCancellableCvsHandler(CvsBundle.message("browse.repository.operation.name"), (CvsOperation) command);
 
     callback.useForCancel(cvsHandler.getProgressListener());
 
-    executor1.performActionSync(cvsHandler,
-      new CvsOperationExecutorCallback() {
-        public void executionFinished(boolean successfully) {
-          callback.finished();
-          DirectoryContent directoryContent = command.getDirectoryContent();
-          ArrayList<CvsElement> children = directoryContentToElements(directoryContent, parent, project);
-          callback.fillDirectoryContent(children);
-        }
+    executor.performActionSync(cvsHandler, new CvsOperationExecutorCallback() {
+      public void executionFinished(boolean successfully) {
+        callback.finished();
+      }
 
-        public void executeInProgressAfterAction(ModalityContext modaityContext) {
-        }
+      public void executeInProgressAfterAction(ModalityContext modalityContext) {
+      }
 
-        public void executionFinishedSuccessfully() {
-        }
-      });
-  }
-
-  private ArrayList<CvsElement> directoryContentToElements(final DirectoryContent directoryContent, final CvsElement parent, final Project project) {
-    ArrayList<CvsElement> children = new ArrayList<CvsElement>();
-    if (myShowModules) {
-      children.addAll(addModules(directoryContent, parent, project));
-    }
-    children.addAll(addSubDirectories(directoryContent, parent, project));
-    if (myShowFiles) {
-      children.addAll(addFiles(directoryContent, parent, project));
-    }
-    return children;
-  }
-
-  private ArrayList<CvsElement> addFiles(DirectoryContent children, CvsElement element, Project project) {
-    return createCvsNodesOn(children.getFiles(), element,
-                            CvsElementFactory.FILE_ELEMENT_FACTORY,
-                            RemoteResourceDataProvider.NOT_EXPANDABLE, project);
-  }
-
-  private ArrayList<CvsElement> addSubDirectories(DirectoryContent children,
-                                                  CvsElement element,
-                                                  Project project) {
-    return createCvsNodesOn(children.getSubDirectories(), element,
-                            CvsElementFactory.FOLDER_ELEMENT_FACTORY, getChildrenDataProvider(),
-                            project);
-  }
-
-  private ArrayList<CvsElement> addModules(DirectoryContent children, CvsElement element, Project project) {
-    Collection<String> modules = children.getSubModules();
-    return createCvsNodesOn(modules, element,
-                            CvsElementFactory.MODULE_ELEMENT_FACTORY,
-                            new ModuleDataProvider(myEnvironment, myShowFiles),
-                            project);
-  }
-
-  protected ArrayList<CvsElement> createCvsNodesOn(Collection<String> children,
-                                                   CvsElement element,
-                                                   CvsElementFactory elementFactory,
-                                                   RemoteResourceDataProvider dataProvider,
-                                                   Project project) {
-    ArrayList<CvsElement> result = new ArrayList<CvsElement>();
-    for (final String name: children) {
-      result.add(setElementDetails(elementFactory.createElement(name, myEnvironment, project), name, element, dataProvider));
-    }
-    return result;
-  }
-
-  private static CvsElement setElementDetails(CvsElement result, String name,
-                                              CvsElement parent, RemoteResourceDataProvider dataProvider) {
-    result.setDataProvider(dataProvider);
-    result.setName(name);
-    result.setPath(getPathForName(name, parent));
-    result.setModel(parent.getModel());
-    return result;
-  }
-
-  protected abstract AbstractVcsDataProvider getChildrenDataProvider();
-
-  private static String getPathForName(String name, CvsElement parent) {
-    return parent.createPathForChild(name);
+      public void executionFinishedSuccessfully() {
+      }
+    });
   }
 }

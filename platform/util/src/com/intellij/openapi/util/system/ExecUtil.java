@@ -106,7 +106,7 @@ public class ExecUtil {
       return execAndGetResult("xterm", "-T", "Install", "-e", sudo.getAbsolutePath());
     }
     else {
-      throw new UnsupportedOperationException("Unsupported OS/desktop: " + System.getProperty("os.name") + '/' + SystemInfo.SUN_DESKTOP);
+      throw new UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);
     }
   }
 }

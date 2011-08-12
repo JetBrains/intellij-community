@@ -9,9 +9,9 @@ import org.jetbrains.annotations.PropertyKey;
  */
 public class GradleBundle extends AbstractBundle {
 
-  private static final GradleBundle BUNDLE = new GradleBundle();
+  public static final String PATH_TO_BUNDLE = "i18n.GradleBundle";
   
-  private static final String PATH_TO_BUNDLE = "i18n.GradleBundle";
+  private static final GradleBundle BUNDLE = new GradleBundle();
   
   public GradleBundle() {
     super(PATH_TO_BUNDLE);

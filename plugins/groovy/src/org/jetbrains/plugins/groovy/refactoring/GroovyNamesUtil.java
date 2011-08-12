@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.refactoring;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -37,7 +38,7 @@ public class GroovyNamesUtil {
   private GroovyNamesUtil() {
   }
 
-  public static boolean isIdentifier(String text) {
+  public static boolean isIdentifier(@Nullable String text) {
     if (text == null) return false;
 
     Lexer lexer = new GroovyLexer();

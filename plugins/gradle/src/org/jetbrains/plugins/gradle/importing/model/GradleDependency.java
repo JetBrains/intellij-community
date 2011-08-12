@@ -9,12 +9,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/10/11 6:31 PM
  */
-public interface GradleDependency {
+public interface GradleDependency extends GradleEntity {
   
   boolean isExported();
 
   @NotNull
   DependencyScope getScope();
-  
-  void invite(@NotNull GradleDependencyVisitor visitor);
 }

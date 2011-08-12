@@ -17,6 +17,7 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.*;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -55,8 +56,9 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
   protected void initTabs(CodeStyleSettings settings) {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
     if (provider != null && !provider.usesSharedPreview()) {
-      MyIndentOptionsWrapper indentOptionsWrapper = new MyIndentOptionsWrapper(settings, provider);
-      if (indentOptionsWrapper.isValid()) {
+      IndentOptionsEditor indentOptionsEditor = provider.getIndentOptionsEditor();
+      if (indentOptionsEditor != null) {
+        MyIndentOptionsWrapper indentOptionsWrapper = new MyIndentOptionsWrapper(settings, provider, indentOptionsEditor);
         addTab(indentOptionsWrapper);
       }
       addTab(new MySpacesPanel(settings));
@@ -193,6 +195,10 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
       tab.resetImpl(settings);
     }
   }
+
+
+
+  //========================================================================================================================================
 
   private class MySpacesPanel extends CodeStyleSpacesPanel {
 
@@ -347,7 +353,7 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
     private JPanel myLeftPanel;
     private JPanel myRightPanel;
 
-    protected MyIndentOptionsWrapper(CodeStyleSettings settings, LanguageCodeStyleSettingsProvider provider) {
+    protected MyIndentOptionsWrapper(CodeStyleSettings settings, LanguageCodeStyleSettingsProvider provider, IndentOptionsEditor editor) {
       super(settings);
       myProvider = provider;
       myTopPanel = new JPanel();
@@ -356,7 +362,7 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
       myTopPanel.add(myLeftPanel, BorderLayout.WEST);
       myRightPanel = new JPanel();
       installPreviewPanel(myRightPanel);
-      myEditor = provider.getIndentOptionsEditor();
+      myEditor = editor;
       if (myEditor != null) {
         myLeftPanel.add(myEditor.createPanel());
       }
@@ -426,13 +432,16 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
       return MultiTabLanguageCodeStylePanel.this.getDefaultLanguage();
     }
 
-    public boolean isValid() {
-      return myEditor != null;
+    @Override
+    protected String getTabTitle() {
+      return ApplicationBundle.message("title.tabs.and.indents");
     }
 
     @Override
-    protected String getTabTitle() {
-      return "Tabs and Indents";
+    public void onSomethingChanged() {
+      super.onSomethingChanged();
+      myEditor.setEnabled(true);
     }
+
   }
 }

@@ -19,17 +19,21 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.*;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharSequenceSubSequence;
@@ -107,9 +111,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
       final PsiFile psiFile = viewProvider.getPsi(language);
       if (psiFile != null) {
         if (markAsCopy) {
-          final TreeElement node = (TreeElement)psiFile.getNode();
-          assert node != null;
-          node.acceptTree(new GeneratedMarkerVisitor());
+          markGenerated(psiFile);
         }
         return psiFile;
       }
@@ -134,9 +136,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
       final PsiFile psiFile = viewProvider.getPsi(targetLanguage);
       if (psiFile != null) {
         if(markAsCopy) {
-          final TreeElement node = (TreeElement)psiFile.getNode();
-          assert node != null;
-          node.acceptTree(new GeneratedMarkerVisitor());
+          markGenerated(psiFile);
         }
         return psiFile;
       }
@@ -179,5 +179,34 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
       file.putUserData(ORIGINAL_FILE, original);
     }
     return file;
+  }
+
+  @Nullable
+  public PsiElement createElementFromText(@Nullable final String text,
+                                          @NotNull final Language language,
+                                          @NotNull final IElementType type,
+                                          @NotNull final PsiElement context) {
+    if (text == null) return null;
+    final DummyHolder result = DummyHolderFactory.createHolder(context.getManager(), language, context);
+    final FileElement holder = result.getTreeElement();
+
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    if (parserDefinition == null) {
+      throw new AssertionError("No parser definition for " + language);
+    }
+    final Project project = context.getProject();
+    final Lexer lexer = parserDefinition.createLexer(project);
+    final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, holder, lexer, language, text);
+    final ASTNode node = parserDefinition.createParser(project).parse(type, builder);
+    holder.rawAddChildren((TreeElement)node);
+    markGenerated(result);
+    return node.getPsi();
+  }
+
+
+  public static void markGenerated(PsiElement element) {
+    final TreeElement node = (TreeElement)element.getNode();
+    assert node != null;
+    node.acceptTree(new GeneratedMarkerVisitor());
   }
 }

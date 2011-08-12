@@ -57,7 +57,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
     this(elements, marked, true);
   }
 
-  private ElementsChooser(List<T> elements, boolean marked, boolean elementsCanBeMarked) {
+  private ElementsChooser(@Nullable List<T> elements, boolean marked, boolean elementsCanBeMarked) {
     super(new BorderLayout());
 
     myTableModel = new MyTableModel(elementsCanBeMarked);
@@ -452,7 +452,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
       fireTableRowsInserted(row, row);
     }
 
-    protected void addElements(List<T> elements, boolean isMarked) {
+    protected void addElements(@Nullable List<T> elements, boolean isMarked) {
       if (elements == null || elements.size() == 0) {
         return;
       }

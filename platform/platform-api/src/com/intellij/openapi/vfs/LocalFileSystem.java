@@ -31,6 +31,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL = "file";
   @NonNls public static final String PROTOCOL_PREFIX = PROTOCOL + "://";
 
+  @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
   private static class LocalFileSystemHolder {
     private static final LocalFileSystem ourInstance = (LocalFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
@@ -39,7 +40,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return LocalFileSystemHolder.ourInstance;
   }
 
-  public boolean isSymLink(VirtualFile file) {
+  public boolean isSymLink(@NotNull final VirtualFile file) {
     return false;
   }
 
@@ -56,8 +57,9 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public abstract VirtualFile refreshAndFindFileByIoFile(final IFile ioFile);
 
   /**
-   * Performs a nonrecursive synchronous refresh of specified files
-   * @param files files to refresh
+   * Performs a non-recursive synchronous refresh of specified files.
+   *
+   * @param files files to refresh.
    * @since 6.0
    */
   public abstract void refreshIoFiles(Iterable<File> files);
@@ -65,8 +67,9 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public abstract void refreshIoFiles(Iterable<File> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   /**
-   * Performs a nonrecursive synchronous refresh of specified files
-   * @param files files to refresh
+   * Performs a non-recursive synchronous refresh of specified files.
+   *
+   * @param files files to refresh.
    * @since 6.0
    */
   public abstract void refreshFiles(Iterable<VirtualFile> files);
@@ -74,23 +77,27 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public abstract void refreshFiles(Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   public abstract byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException;
+
   public abstract long physicalLength(final VirtualFile virtualFile) throws IOException;
 
   public interface WatchRequest {
-    @NotNull String getRootPath();
+    @NotNull
+    String getRootPath();
 
-    @NotNull String getFileSystemRootPath();
+    @NotNull
+    String getFileSystemRootPath();
 
     boolean isToWatchRecursively();
 
-    boolean dominates (WatchRequest other);
+    boolean dominates(WatchRequest other);
   }
 
   /**
-   * Adds this rootFile as the watch root for file system
-   * @param rootPath
-   * @param toWatchRecursively whether the whole subtree should be monitored
-   * @return request handle or null if rootFile does not belong to this file system
+   * Adds this rootFile as the watch root for file system.
+   *
+   * @param rootPath           path to watch.
+   * @param toWatchRecursively whether the whole subtree should be monitored.
+   * @return request handle or null if rootFile does not belong to this file system.
    */
   @Nullable
   public abstract WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean toWatchRecursively);
@@ -103,6 +110,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public abstract void removeWatchedRoot(@NotNull final WatchRequest watchRequest);
 
   public abstract void registerAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler);
+
   public abstract void unregisterAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler);
 
   public abstract boolean processCachedFilesInSubtree(final VirtualFile file, Processor<VirtualFile> processor);

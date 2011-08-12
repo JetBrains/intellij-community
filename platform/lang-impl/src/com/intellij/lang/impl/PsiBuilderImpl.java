@@ -698,13 +698,18 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public final boolean eof() {
-    markTokenTypeChecked();
-    skipWhitespace();
+    if (!markTokenTypeChecked()) {
+      skipWhitespace();
+    }
     return myCurrentLexeme >= myLexemeCount;
   }
 
-  private void markTokenTypeChecked() {
-    myTokenTypeChecked = true;
+  public boolean markTokenTypeChecked() {
+    if (!myTokenTypeChecked) {
+      myTokenTypeChecked = true;
+      return false;
+    }
+    return true;
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})

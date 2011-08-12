@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,13 @@ public abstract class CvsElementFactory {
 
   public static final CvsElementFactory FOLDER_ELEMENT_FACTORY = new CvsElementFactory(){
     public CvsElement createElement(String name, CvsEnvironment env, Project project) {
-      return new CvsElement(TREE_CLOSE,  TREE_OPEN, project);
+      return new CvsElement(name, TREE_CLOSE,  TREE_OPEN);
     }
   };
 
   public static final CvsElementFactory MODULE_ELEMENT_FACTORY = new CvsElementFactory(){
     public CvsElement createElement(String name, CvsEnvironment env, Project project) {
-      return new CvsModule(MODULE_CLOSE,  MODULE_OPEN, project);
+      return new CvsModule(name, MODULE_CLOSE,  MODULE_OPEN);
     }
   };
 

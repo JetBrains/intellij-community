@@ -673,7 +673,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        EditScopesDialog.editConfigurable(myProject, null);
+        EditScopesDialog.showDialog(myProject, null);
         if (!getValidScopeNames().contains(myType2ScopeMap.get(myCurrentViewType))) {
           selectScope(SCOPE_ALL);
         }

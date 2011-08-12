@@ -17,42 +17,58 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author sergey.evdokimov
  */
-public class GrLightField extends GrLightVariable implements PsiField {
+public class GrLightField extends GrLightVariable implements GrField {
+
+  private GrAccessorMethod mySetter;
+  private GrAccessorMethod[] myGetters;
+
+  private boolean mySetterInitialized = false;
 
   private final PsiClass myContainingClass;
 
   public GrLightField(@NotNull PsiClass containingClass,
-                      PsiModifierList modifierList,
-                      PsiManager manager,
                       @NonNls String name,
                       @NonNls @NotNull String type,
                       @NotNull PsiElement element) {
-    super(modifierList, manager, name, type, element);
+    super(containingClass.getManager(), name, type, element);
     myContainingClass = containingClass;
   }
 
   public GrLightField(@NotNull PsiClass containingClass,
-                      PsiModifierList modifierList,
-                      PsiManager manager,
                       @NonNls String name,
                       @NotNull PsiType type,
                       @NotNull PsiElement element) {
-    super(modifierList, manager, name, type, element);
+    super(containingClass.getManager(), name, type, element);
     myContainingClass = containingClass;
   }
 
+  public GrLightField(@NotNull PsiClass containingClass,
+                      @NonNls String name,
+                      @NotNull String type) {
+    super(containingClass.getManager(), name, type, containingClass);
+    myContainingClass = containingClass;
+    setNavigationElement(this);
+  }
+
   @Override
-  public PsiDocComment getDocComment() {
+  public GrDocComment getDocComment() {
     return null;
   }
 
@@ -75,5 +91,77 @@ public class GrLightField extends GrLightVariable implements PsiField {
   @Override
   public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
     throw new IncorrectOperationException();
+  }
+
+  @Override
+  public boolean isProperty() {
+    return PsiUtil.isProperty(this);
+  }
+
+  @Override
+  public GrAccessorMethod getSetter() {
+    if (mySetterInitialized) return mySetter;
+
+    mySetter = GrAccessorMethodImpl.createSetterMethod(this);
+    mySetterInitialized = true;
+
+    return mySetter;
+  }
+
+  @NotNull
+  @Override
+  public GrAccessorMethod[] getGetters() {
+    if (myGetters == null) {
+      myGetters = GrAccessorMethodImpl.createGetterMethods(this);
+    }
+
+    return myGetters;
+  }
+
+  @NotNull
+  @Override
+  public String[] getNamedParametersArray() {
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  @Override
+  public GrExpression getInitializerGroovy() {
+    return null;
+  }
+
+  @Override
+  public void setType(@Nullable PsiType type) throws IncorrectOperationException {
+    throw new IncorrectOperationException();
+  }
+
+  @Override
+  public GrTypeElement getTypeElementGroovy() {
+    return null;
+  }
+
+  @Override
+  public PsiType getTypeGroovy() {
+    return getType();
+  }
+
+  @Override
+  public PsiType getDeclaredType() {
+    return getType();
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNameIdentifierGroovy() {
+    return myNameIdentifier;
+  }
+
+  @Override
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitField(this);
+  }
+
+  @Override
+  public void acceptChildren(GroovyElementVisitor visitor) {
+
   }
 }

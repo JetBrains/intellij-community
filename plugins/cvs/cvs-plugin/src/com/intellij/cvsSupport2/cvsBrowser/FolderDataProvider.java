@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,11 @@ package com.intellij.cvsSupport2.cvsBrowser;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 
 public class FolderDataProvider extends AbstractVcsDataProvider {
-  public FolderDataProvider(CvsEnvironment environment, boolean showFiles, boolean showModules) {
-    super(environment, showFiles, showModules);
+  public FolderDataProvider(CvsEnvironment environment) {
+    super(environment);
   }
 
-  protected AbstractVcsDataProvider getChildrenDataProvider() {
+  public AbstractVcsDataProvider getChildrenDataProvider() {
     return this;
   }
-
 }

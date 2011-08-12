@@ -706,14 +706,15 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private Runnable createUpdateRunnable() {
     return new Runnable() {
       public void run() {
+        if (myDisposed || !myProject.isInitialized()) return;
+        if (PowerSaveMode.isEnabled()) return;
         Editor active = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
 
         Runnable runnable = new Runnable() {
           public void run() {
             PassExecutorService.log(myUpdateProgress, null, "Update Runnable. myUpdateByTimerEnabled:",myUpdateByTimerEnabled," something disposed:",PowerSaveMode.isEnabled() || myDisposed || !myProject.isInitialized()," activeEditors:",myProject.isDisposed() ? null : myDaemonListeners.getSelectedEditors());
             if (!myUpdateByTimerEnabled) return;
-            if (PowerSaveMode.isEnabled()) return;
-            if (myDisposed || !myProject.isInitialized()) return;
+            if (myDisposed) return;
             ApplicationManager.getApplication().assertIsDispatchThread();
 
             final Collection<FileEditor> activeEditors = myDaemonListeners.getSelectedEditors();

@@ -3,10 +3,7 @@ package org.jetbrains.plugins.gradle.importing.model.impl;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.importing.model.GradleContentRoot;
-import org.jetbrains.plugins.gradle.importing.model.GradleDependency;
-import org.jetbrains.plugins.gradle.importing.model.GradleModule;
-import org.jetbrains.plugins.gradle.importing.model.SourceType;
+import org.jetbrains.plugins.gradle.importing.model.*;
 
 import java.io.File;
 import java.io.Serializable;
@@ -82,6 +79,11 @@ public class GradleModuleImpl implements GradleModule, Serializable {
     myDependencies.add(dependency);
   }
 
+  @Override
+  public void invite(@NotNull GradleEntityVisitor visitor) {
+    visitor.visit(this);
+  }
+  
   @Override
   public String toString() {
     return String.format(

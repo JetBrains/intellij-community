@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.importing.model.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.GradleContentRoot;
+import org.jetbrains.plugins.gradle.importing.model.GradleEntityVisitor;
 import org.jetbrains.plugins.gradle.importing.model.SourceType;
 
 import java.io.File;
@@ -51,6 +52,11 @@ public class GradleContentRootImpl implements Serializable, GradleContentRoot {
     return myRootPath;
   }
 
+  @Override
+  public void invite(@NotNull GradleEntityVisitor visitor) {
+    visitor.visit(this);
+  }
+  
   @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();

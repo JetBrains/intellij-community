@@ -862,13 +862,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public <T> T runReadAction(@NotNull final Computable<T> computation) {
-    final Ref<T> ref = Ref.create(null);
-    runReadAction(new Runnable() {
-      public void run() {
-        ref.set(computation.compute());
-      }
-    });
-    return ref.get();
+    final AccessToken token = acquireReadActionLock();
+
+    try {
+      return computation.compute();
+    }
+    finally {
+      token.finish();
+    }
   }
 
   public void runWriteAction(@NotNull final Runnable action) {
@@ -882,13 +883,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public <T> T runWriteAction(@NotNull final Computable<T> computation) {
-    final Ref<T> ref = Ref.create(null);
-    runWriteAction(new Runnable() {
-      public void run() {
-        ref.set(computation.compute());
-      }
-    });
-    return ref.get();
+    final AccessToken token = acquireWriteActionLock(computation.getClass());
+    try {
+      return computation.compute();
+    }
+    finally {
+      token.finish();
+    }
   }
 
   public boolean hasWriteAction(@Nullable Class<?> actionClass) {

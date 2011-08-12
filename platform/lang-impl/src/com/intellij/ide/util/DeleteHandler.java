@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -132,7 +130,7 @@ public class DeleteHandler {
       boolean anyDirectories = false;
       String directoryName = null;
       for (PsiElement psiElement : elementsToDelete) {
-        if (psiElement instanceof PsiDirectory) {
+        if (psiElement instanceof PsiDirectory && !PsiUtilBase.isSymLink((PsiDirectory)psiElement)) {
           anyDirectories = true;
           directoryName = ((PsiDirectory)psiElement).getName();
           break;
@@ -171,8 +169,7 @@ public class DeleteHandler {
           if (!elementToDelete.isValid()) continue; //was already deleted
           if (elementToDelete instanceof PsiDirectory) {
             VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
-            if (virtualFile.isInLocalFileSystem()) {
-
+            if (virtualFile.isInLocalFileSystem() && !virtualFile.isSymLink()) {
               ArrayList<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
               getReadOnlyVirtualFiles(virtualFile, readOnlyFiles, ftManager);
 
@@ -191,7 +188,8 @@ public class DeleteHandler {
               }
             }
           }
-          else if (!elementToDelete.isWritable()) {
+          else if (!elementToDelete.isWritable() &&
+                   !(elementToDelete instanceof PsiFileSystemItem && PsiUtilBase.isSymLink((PsiFileSystemItem)elementToDelete))) {
             final PsiFile file = elementToDelete.getContainingFile();
             if (file != null) {
               final VirtualFile virtualFile = file.getVirtualFile();

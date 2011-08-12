@@ -63,12 +63,18 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     super.init();
 
     JPanel optionsPanel = new JPanel(new GridBagLayout());
-    optionsPanel.add(createKeepBlankLinesPanel(),
-                     new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                            new Insets(0, 0, 0, 0), 0, 0));
-    optionsPanel.add(createBlankLinesPanel(),
-                     new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                            new Insets(0, 0, 0, 0), 0, 0));
+    JPanel keepBlankLinesPanel = createKeepBlankLinesPanel();
+    if (keepBlankLinesPanel != null) {
+      optionsPanel.add(keepBlankLinesPanel,
+                       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                                              new Insets(0, 0, 0, 0), 0, 0));
+    }
+    JPanel blankLinesPanel = createBlankLinesPanel();
+    if (blankLinesPanel != null) {
+      optionsPanel.add(blankLinesPanel,
+                       new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                                              new Insets(0, 0, 0, 0), 0, 0));
+    }
     optionsPanel.add(new JPanel(),
                      new GridBagConstraints(0, 2, 1, 1, 0, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,
                                             0));
@@ -100,6 +106,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     return LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINES_SETTINGS;
   }
 
+  @Nullable
   private JPanel createBlankLinesPanel() {
     OptionGroup optionGroup = new OptionGroup(BLANK_LINES);
 
@@ -117,10 +124,13 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.method"), "BLANK_LINES_AROUND_METHOD");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.method.body"), "BLANK_LINES_BEFORE_METHOD_BODY");
     initCustomOptions(optionGroup, BLANK_LINES);
+    
+    if (optionGroup.getComponents().length == 0) return null;
 
     return optionGroup.createPanel();
   }
 
+  @Nullable
   private JPanel createKeepBlankLinesPanel() {
     OptionGroup optionGroup = new OptionGroup(BLANK_LINES_KEEP);
 
@@ -128,6 +138,8 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.in.code"), "KEEP_BLANK_LINES_IN_CODE");
     createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.before.rbrace"), "KEEP_BLANK_LINES_BEFORE_RBRACE");
     initCustomOptions(optionGroup, BLANK_LINES_KEEP);
+
+    if (optionGroup.getComponents().length == 0) return null;
 
     return optionGroup.createPanel();
   }

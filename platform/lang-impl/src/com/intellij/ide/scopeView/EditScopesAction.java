@@ -18,11 +18,14 @@ package com.intellij.ide.scopeView;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 
 /**
  * User: anna
@@ -41,7 +44,7 @@ public class EditScopesAction extends AnAction implements DumbAware {
     LOG.assertTrue(project != null);
     final String scopeName = ProjectView.getInstance(project).getCurrentProjectViewPane().getSubId();
     LOG.assertTrue(scopeName != null);
-    final ScopeChooserConfigurable scopeChooserConfigurable = ScopeChooserConfigurable.getInstance(project);
+    final ScopeChooserConfigurable scopeChooserConfigurable = new ScopeChooserConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, scopeChooserConfigurable, new Runnable(){
       public void run() {
         scopeChooserConfigurable.selectNodeInTree(scopeName);

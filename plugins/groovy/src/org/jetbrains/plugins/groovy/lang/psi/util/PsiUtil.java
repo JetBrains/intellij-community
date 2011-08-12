@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -1209,5 +1210,13 @@ public class PsiUtil {
     }
 
     return null;
+  }
+
+  public static boolean isProperty(GrField field) {
+    final PsiClass clazz = field.getContainingClass();
+    if (clazz == null) return false;
+    if (clazz.isInterface()) return false;
+    final GrModifierList modifierList = field.getModifierList();
+    return modifierList == null || !modifierList.hasExplicitVisibilityModifiers();
   }
 }

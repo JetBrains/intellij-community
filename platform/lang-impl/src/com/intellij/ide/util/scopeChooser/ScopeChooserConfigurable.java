@@ -20,11 +20,9 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.*;
@@ -66,15 +64,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private final NamedScopesHolder mySharedScopesManager;
 
   private final Project myProject;
-
-  public static ScopeChooserConfigurable getInstance(Project project) {
-    // in platform, ScopeChooserConfigurable is registered as a service, not as a top-level configurable
-    Factory factory = ServiceManager.getService(project, Factory.class);
-    if (factory != null) {
-      return factory.getInstance();
-    }
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, ScopeChooserConfigurable.class);
-  }
 
   public ScopeChooserConfigurable(final Project project) {
     super(new ScopeChooserConfigurableState());
@@ -516,21 +505,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedObject() instanceof NamedScope);
-    }
-  }
-
-  // workaround: ScopeChooserConfigurable is a MasterDetailsComponent which is a PersistentStateComponent,
-  // but it doesn't have (and doesn't need) a @State annotation. so we get an exception if we load it as a service
-  // directly
-  public static class Factory {
-    private final ScopeChooserConfigurable myConfigurable;
-
-    public Factory(Project project) {
-      myConfigurable = new ScopeChooserConfigurable(project);
-    }
-
-    public ScopeChooserConfigurable getInstance() {
-      return myConfigurable;
     }
   }
 

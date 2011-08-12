@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ import java.util.Locale;
  * @author Dmitry Avdeev
  */
 public abstract class LocalFileSystemBase extends LocalFileSystem {
-
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
+
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
 
   @Nullable
@@ -169,7 +169,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     File ioFile = convertToIOFile(file);
-    if (file.isSymLink() && isRecursiveSymLink(ioFile)) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (file.isSymLink() && isRecursiveSymLink(ioFile)) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
 
     final String[] names = ioFile.list();
     return names != null ? names : ArrayUtil.EMPTY_STRING_ARRAY;
@@ -338,10 +340,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static void delete(File physicalFile) throws IOException {
-    File[] list = physicalFile.listFiles();
-    if (list != null) {
-      for (File aList : list) {
-        delete(aList);
+    if (!SymLinkUtil.isSymLink(physicalFile)) {
+      File[] list = physicalFile.listFiles();
+      if (list != null) {
+        for (File aList : list) {
+          delete(aList);
+        }
       }
     }
     if (!physicalFile.delete()) {
@@ -408,6 +412,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws FileNotFoundException {
     final File ioFile = convertToIOFile(file);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final OutputStream stream = shallUseSafeStream(requestor, ioFile) ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       public void close() throws IOException {

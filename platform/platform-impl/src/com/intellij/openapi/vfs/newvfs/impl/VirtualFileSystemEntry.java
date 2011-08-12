@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
@@ -31,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
@@ -41,15 +38,22 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+/**
+ * @author max
+ */
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
+
   protected static final PersistentFS ourPersistence = (PersistentFS)ManagingFS.getInstance();
+
   private static final byte DIRTY_FLAG = 0x01;
   private static final String EMPTY = "";
 
-  private volatile Object myName;  // either a String or byte[]. Possibly should be concated with one of the entries in the {@link #wellKnownSuffixes}
+  /** Either a String or byte[]. Possibly should be concatenated with one of the entries in the {@link #wellKnownSuffixes}. */
+  private volatile Object myName;
   private volatile VirtualDirectoryImpl myParent;
-  private volatile byte myFlags = 0;       /** also, high three bits are used as an index into the {@link #wellKnownSuffixes} array */
+  /** Also, high three bits are used as an index into the {@link #wellKnownSuffixes} array. */
+  private volatile byte myFlags = 0;
   private volatile int myId;
 
   public VirtualFileSystemEntry(@NotNull String name, final VirtualDirectoryImpl parent, int id) {
@@ -415,5 +419,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       return nameWithoutExtension.length() == 0 ? getName() : nameWithoutExtension;
     }
     return getName();
+  }
+
+  @Override
+  public boolean isSymLink() {
+    final NewVirtualFileSystem fs = getFileSystem();
+    return fs instanceof LocalFileSystem && ((LocalFileSystem)fs).isSymLink(this);
   }
 }

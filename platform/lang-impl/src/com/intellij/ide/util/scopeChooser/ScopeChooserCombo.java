@@ -143,14 +143,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final String selection = getSelectedScopeName();
-        final ScopeChooserConfigurable chooserConfigurable = ScopeChooserConfigurable.getInstance(myProject);
-        final EditScopesDialog dlg = EditScopesDialog.editConfigurable(myProject, new Runnable() {
-          public void run() {
-            if (selection != null) {
-              chooserConfigurable.selectNodeInTree(selection);
-            }
-          }
-        });
+        final EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
         if (dlg.isOK()){
           rebuildModel();
           final NamedScope namedScope = dlg.getSelectedScope();

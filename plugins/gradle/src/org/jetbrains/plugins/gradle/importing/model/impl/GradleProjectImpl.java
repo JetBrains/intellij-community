@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.importing.model.impl;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.importing.model.GradleEntityVisitor;
 import org.jetbrains.plugins.gradle.importing.model.GradleModule;
 import org.jetbrains.plugins.gradle.importing.model.GradleProject;
 
@@ -85,6 +86,11 @@ public class GradleProjectImpl implements Serializable, GradleProject {
   @Override
   public Set<? extends GradleModule> getModules() {
     return myModules;
+  }
+
+  @Override
+  public void invite(@NotNull GradleEntityVisitor visitor) {
+    visitor.visit(this);
   }
 
   @Override

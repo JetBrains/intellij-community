@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,30 +19,33 @@ import com.intellij.openapi.util.text.StringUtil;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class SystemInfo {
-  private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
+  public static final String OS_NAME = System.getProperty("os.name");
   public static final String OS_VERSION = System.getProperty("os.version").toLowerCase();
   public static final String OS_ARCH = System.getProperty("os.arch");
   public static final String JAVA_VERSION = System.getProperty("java.version");
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
   public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
-  public static final String SUN_DESKTOP = System.getProperty("sun.desktop");
+  public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
-  public static final boolean isWindows = OS_NAME.startsWith("windows");
-  public static final boolean isWindowsNT = OS_NAME.startsWith("windows nt");
-  public static final boolean isWindows2000 = OS_NAME.startsWith("windows 2000");
-  public static final boolean isWindows2003 = OS_NAME.startsWith("windows 2003");
-  public static final boolean isWindowsXP = OS_NAME.startsWith("windows xp");
-  public static final boolean isWindowsVista = OS_NAME.startsWith("windows vista");
-  public static final boolean isWindows7 = OS_NAME.startsWith("windows 7");
-  public static final boolean isWindows9x = OS_NAME.startsWith("windows 9") || OS_NAME.startsWith("windows me");
-  public static final boolean isOS2 = OS_NAME.startsWith("os/2") || OS_NAME.startsWith("os2");
-  public static final boolean isMac = OS_NAME.startsWith("mac");
-  public static final boolean isFreeBSD = OS_NAME.startsWith("freebsd");
-  public static final boolean isLinux = OS_NAME.startsWith("linux");
+  private static final String _OS_NAME = OS_NAME.toLowerCase();
+  public static final boolean isWindows = _OS_NAME.startsWith("windows");
+  public static final boolean isWindowsNT = _OS_NAME.startsWith("windows nt");
+  public static final boolean isWindows2000 = _OS_NAME.startsWith("windows 2000");
+  public static final boolean isWindows2003 = _OS_NAME.startsWith("windows 2003");
+  public static final boolean isWindowsXP = _OS_NAME.startsWith("windows xp");
+  public static final boolean isWindowsVista = _OS_NAME.startsWith("windows vista");
+  public static final boolean isWindows7 = _OS_NAME.startsWith("windows 7");
+  public static final boolean isWindows9x = _OS_NAME.startsWith("windows 9") || _OS_NAME.startsWith("windows me");
+  public static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
+  public static final boolean isMac = _OS_NAME.startsWith("mac");
+  public static final boolean isFreeBSD = _OS_NAME.startsWith("freebsd");
+  public static final boolean isLinux = _OS_NAME.startsWith("linux");
+  public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
   public static final boolean isUnix = !isWindows && !isOS2;
 
-  public static final boolean isKDE = SUN_DESKTOP != null && SUN_DESKTOP.toLowerCase().indexOf("kde") >= 0;
-  public static final boolean isGnome = SUN_DESKTOP != null && SUN_DESKTOP.toLowerCase().indexOf("gnome") >= 0;
+  private static final String _SUN_DESKTOP = SUN_DESKTOP.toLowerCase();
+  public static final boolean isKDE = _SUN_DESKTOP.contains("kde");
+  public static final boolean isGnome = _SUN_DESKTOP.contains("gnome");
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 

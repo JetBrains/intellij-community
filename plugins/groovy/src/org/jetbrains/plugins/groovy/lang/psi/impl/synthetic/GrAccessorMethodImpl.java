@@ -26,8 +26,11 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ven
@@ -115,4 +118,71 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     if (!((GrAccessorMethod)another).getName().equals(getName())) return false;
     return getManager().areElementsEquivalent(myProperty, ((GrAccessorMethod)another).getProperty());
   }
+
+  @Nullable
+  public static GrAccessorMethod createSetterMethod(GrField field) {
+    if (field.isProperty() && !field.hasModifierProperty(PsiModifier.FINAL)) {
+      String fieldName = field.getName();
+      assert fieldName != null;
+
+      String name = GroovyPropertyUtils.getSetterName(fieldName);
+      final GrAccessorMethod setter = new GrAccessorMethodImpl(field, true, name);
+      final PsiClass clazz = field.getContainingClass();
+      if (!hasContradictingMethods(setter, fieldName, clazz)) {
+        return setter;
+      }
+    }
+
+    return null;
+  }
+
+  public static GrAccessorMethod[] createGetterMethods(GrField field) {
+    if (field.isProperty()) {
+      String fieldName = field.getName();
+      assert fieldName != null;
+
+      final PsiClass clazz = field.getContainingClass();
+      GrAccessorMethod getter1 = new GrAccessorMethodImpl(field, false, GroovyPropertyUtils.getGetterNameNonBoolean(fieldName));
+      if (!hasContradictingMethods(getter1, fieldName, clazz)) {
+        GrAccessorMethod getter2 = null;
+        if (PsiType.BOOLEAN.equals(field.getDeclaredType())) {
+          getter2 = new GrAccessorMethodImpl(field, false, GroovyPropertyUtils.getGetterNameBoolean(fieldName));
+          if (hasContradictingMethods(getter2, fieldName, clazz)) {
+            getter2 = null;
+          }
+        }
+
+        if (getter2 != null) {
+          return new GrAccessorMethod[]{getter1, getter2};
+        }
+        else {
+          return new GrAccessorMethod[]{getter1};
+        }
+      }
+    }
+
+    return GrAccessorMethod.EMPTY_ARRAY;
+  }
+
+  private static boolean hasContradictingMethods(GrAccessorMethod proto, String fieldName, PsiClass clazz) {
+    if (clazz == null) return false;
+    PsiMethod[] methods = clazz instanceof GrTypeDefinition
+                          ? ((GrTypeDefinition)clazz).findCodeMethodsBySignature(proto, true)
+                          : clazz.findMethodsBySignature(proto, true);
+    for (PsiMethod method : methods) {
+      if (clazz.equals(method.getContainingClass())) return true;
+
+      if (PsiUtil.isAccessible(clazz, method) && method.hasModifierProperty(PsiModifier.FINAL)) return true;
+    }
+
+    //final property in supers
+    PsiClass aSuper = clazz.getSuperClass();
+    if (aSuper != null) {
+      PsiField field = aSuper.findFieldByName(fieldName, true);
+      if (field instanceof GrField && ((GrField)field).isProperty() && field.hasModifierProperty(PsiModifier.FINAL)) return true;
+    }
+
+    return false;
+  }
+
 }

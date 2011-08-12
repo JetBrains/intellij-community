@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.importing.model.impl;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.importing.model.GradleDependencyVisitor;
+import org.jetbrains.plugins.gradle.importing.model.GradleEntityVisitor;
 import org.jetbrains.plugins.gradle.importing.model.GradleLibraryDependency;
 import org.jetbrains.plugins.gradle.importing.model.LibraryPathType;
 
@@ -44,8 +44,8 @@ public class GradleLibraryDependencyImpl extends AbstractGradleDependency implem
   }
 
   @Override
-  public void invite(@NotNull GradleDependencyVisitor visitor) {
-    visitor.visit(this); 
+  public void invite(@NotNull GradleEntityVisitor visitor) {
+    visitor.visit(this);
   }
 
   @Override

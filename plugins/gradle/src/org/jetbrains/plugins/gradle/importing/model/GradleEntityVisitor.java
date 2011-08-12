@@ -4,9 +4,13 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 8/10/11 6:31 PM
+ * @since 8/12/11 12:49 PM
  */
-public interface GradleDependencyVisitor {
+public interface GradleEntityVisitor {
+
+  void visit(@NotNull GradleProject project);
+  void visit(@NotNull GradleModule module);
+  void visit(@NotNull GradleContentRoot contentRoot);
   void visit(@NotNull GradleModuleDependency dependency);
   void visit(@NotNull GradleLibraryDependency dependency);
 }
