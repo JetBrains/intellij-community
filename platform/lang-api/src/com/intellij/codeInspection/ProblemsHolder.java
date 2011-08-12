@@ -147,6 +147,15 @@ public class ProblemsHolder {
     registerProblem(reference, message, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
   }
 
+  /**
+   * Creates highlighter for the specified place in the file.
+   * @param psiElement The highlighter will be created at the text range od this element. This psiElement must be in the current file.
+   * @param message Message for this highlighter. Will also serve as a tooltip.
+   * @param highlightType The level of highlighter.
+   * @param rangeInElement The (sub)range (must be inside (0..psiElement.getTextRange().getLength()) to create highlighter in.
+   *                       If you want to highlight only part of the supplied psiElement. Pass null otherwise.
+   * @param fixes (Optional) fixes to appear for this highlighter.
+   */
   public void registerProblem(@NotNull final PsiElement psiElement,
                               @NotNull final String message,
                               final ProblemHighlightType highlightType,
