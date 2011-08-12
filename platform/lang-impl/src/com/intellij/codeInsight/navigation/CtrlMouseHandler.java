@@ -383,7 +383,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
     else if (browseMode == BrowseMode.Declaration) {
       final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
-      final List<PsiElement> resolvedElement = ref != null ? resolve(ref) : Collections.<PsiElement>emptyList();
+      final List<PsiElement> resolvedElements = ref != null ? resolve(ref) : Collections.<PsiElement>emptyList();
+      final PsiElement resolvedElement = resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
 
       final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset);
       final PsiElement elementAtPointer = file.findElementAt(offset);
@@ -402,10 +403,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
       }
 
-      if (resolvedElement.size() == 1) {
-        return new InfoSingle(ref, resolvedElement.get(0));
+      if (resolvedElements.size() == 1) {
+        return new InfoSingle(ref, resolvedElements.get(0));
       }
-      else if (resolvedElement.size() > 1) {
+      else if (resolvedElements.size() > 1) {
         return new InfoMultiple(elementAtPointer);
       }
     }
@@ -579,7 +580,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
 
       if (info.isValid(myEditor.getDocument())) {
-        myHighlighter = installHightlighterSet(info, myEditor);
+        myHighlighter = installHighlighterSet(info, myEditor);
 
         String text = info.getInfo();
 
@@ -597,7 +598,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   }
 
-  private HighlightersSet installHightlighterSet(Info info, Editor editor) {
+  private HighlightersSet installHighlighterSet(Info info, Editor editor) {
     final JComponent internalComponent = editor.getContentComponent();
     internalComponent.addKeyListener(myEditorKeyListener);
     editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
