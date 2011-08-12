@@ -16,6 +16,7 @@
 package git4idea.commands;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +24,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.status.GitUntrackedFilesHolder;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -184,5 +186,19 @@ public class GitFileUtils {
     }
     return path;
   }
+
+  /**
+   * Checks if two file paths are different only by case in a case insensitive OS.
+   * @return true if the difference between paths should probably be ignored, i.e. the OS is case-insensitive, and case is the only
+   *         difference between paths.
+   */
+  public static boolean shouldIgnoreCaseChange(@NotNull String onePath, @NotNull String secondPath) {
+    return !SystemInfo.isFileSystemCaseSensitive && onlyCaseChanged(onePath, secondPath);
+  }
+  
+  private static boolean onlyCaseChanged(@NotNull String one, @NotNull String second) {
+    return one.compareToIgnoreCase(second) == 0;
+  }
+  
 
 }

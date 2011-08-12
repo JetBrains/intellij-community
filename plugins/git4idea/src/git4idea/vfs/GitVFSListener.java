@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
@@ -263,18 +262,14 @@ public class GitVFSListener extends VcsVFSListener {
     // because git does not tracks moves, the file are just added and deleted.
     ArrayList<FilePath> added = new ArrayList<FilePath>();
     ArrayList<FilePath> removed = new ArrayList<FilePath>();
-    for (MovedFileInfo m : movedFiles) {
-      if (SystemInfo.isFileSystemCaseSensitive || !onlyCaseChanged(m)) {
-        added.add(VcsUtil.getFilePath(m.myNewPath));
-        removed.add(VcsUtil.getFilePath(m.myOldPath));
+    for (MovedFileInfo info : movedFiles) {
+      if (!GitFileUtils.shouldIgnoreCaseChange(info.myNewPath, info.myOldPath)) {
+        added.add(VcsUtil.getFilePath(info.myNewPath));
+        removed.add(VcsUtil.getFilePath(info.myOldPath));
       }
     }
     performAdding(added);
     performDeletion(removed);
-  }
-
-  private static boolean onlyCaseChanged(MovedFileInfo movedFileInfo) {
-    return movedFileInfo.myNewPath.compareToIgnoreCase(movedFileInfo.myOldPath) == 0;
   }
 
   protected boolean isDirectoryVersioningSupported() {
