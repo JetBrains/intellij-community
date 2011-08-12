@@ -29,11 +29,11 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.Git;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitFileUtils;
 import git4idea.i18n.GitBundle;
-import git4idea.status.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -102,7 +102,7 @@ public class GitVFSListener extends VcsVFSListener {
           final List<VirtualFile> files = e.getValue();
           pi.setText(root.getPresentableUrl());
           try {
-            retainedFiles.addAll(GitUntrackedFilesHolder.retrieveUntrackedFiles(myProject, root, files));
+            retainedFiles.addAll(Git.untrackedFiles(myProject, root, files));
           }
           catch (final VcsException ex) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {

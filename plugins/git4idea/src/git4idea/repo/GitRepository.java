@@ -152,7 +152,6 @@ public final class GitRepository implements Disposable {
     
     myUntrackedFilesHolder = new GitUntrackedFilesHolder(rootDir, project);
     Disposer.register(this, myUntrackedFilesHolder);
-    myUntrackedFilesHolder.asyncRescan();
 
     myMessageBus = project.getMessageBus();
     update(TrackedTopic.ALL);

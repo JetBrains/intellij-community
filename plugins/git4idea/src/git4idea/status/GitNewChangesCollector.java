@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.Git;
 import git4idea.GitContentRevision;
 import git4idea.GitFormatException;
 import git4idea.GitRevisionNumber;
@@ -59,7 +60,7 @@ class GitNewChangesCollector extends GitChangesCollector {
   private static final Logger LOG = Logger.getInstance(GitNewChangesCollector.class);
   private final GitRepository myRepository;
   private final Collection<Change> myChanges = new HashSet<Change>();
-  private Set<VirtualFile> myUnversionedFiles;
+  private final Set<VirtualFile> myUnversionedFiles = new HashSet<VirtualFile>();
 
   /**
    * Collects the changes from git command line and returns the instance of GitNewChangesCollector from which these changes can be retrieved.
@@ -73,11 +74,7 @@ class GitNewChangesCollector extends GitChangesCollector {
   @Override
   @NotNull
   Collection<VirtualFile> getUnversionedFiles() {
-    if (myRepository != null) {
-      return myRepository.getUntrackedFilesHolder().getUntrackedFiles();
-    } else { // GitRepository was not initialized at the time of creation of the GitNewChangesCollector => we've already collected unversioned files by hands.
-      return myUnversionedFiles;
-    }
+    return myUnversionedFiles;
   }
 
   @NotNull
@@ -93,10 +90,30 @@ class GitNewChangesCollector extends GitChangesCollector {
     myRepository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(vcsRoot);
 
     Collection<FilePath> dirtyPaths = dirtyPaths(true);
-    if (dirtyPaths.isEmpty()) {
-      return;
+    if (!dirtyPaths.isEmpty()) {
+      collectChanges(dirtyPaths);
+      collectUnversionedFiles();
     }
+  }
 
+  // calls 'git status' and parses the output, feeding myChanges.
+  private void collectChanges(Collection<FilePath> dirtyPaths) throws VcsException {
+    GitSimpleHandler handler = statusHandler(dirtyPaths);
+    String output = handler.run();
+    parseOutput(output, handler);
+  }
+
+  private void collectUnversionedFiles() throws VcsException {
+    if (myRepository == null) {
+      // if GitRepository was not initialized at the time of creation of the GitNewChangesCollector => collecting unversioned files by hands.
+      myUnversionedFiles.addAll(Git.untrackedFiles(myProject, myVcsRoot, null));
+    } else {
+      GitUntrackedFilesHolder untrackedFilesHolder = myRepository.getUntrackedFilesHolder();
+      myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFiles());
+    }
+  }
+
+  private GitSimpleHandler statusHandler(Collection<FilePath> dirtyPaths) {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.STATUS);
     final String[] params = {"--porcelain", "-z", "--untracked-files=no"};   // untracked files are stored separately
     handler.addParameters(params);
@@ -114,13 +131,7 @@ class GitNewChangesCollector extends GitChangesCollector {
       handler.setStdoutSuppressed(true);
       handler.endOptions();
     }
-    String output = handler.run();
-    parseOutput(output, handler);
-
-    // if GitRepository was not initialized at the time of creation of the GitNewChangesCollector => collecting unversioned files by hands.
-    if (myRepository == null) {
-      myUnversionedFiles = GitUntrackedFilesHolder.retrieveUntrackedFiles(myProject, myVcsRoot, null);
-    }
+    return handler;
   }
 
   /**
