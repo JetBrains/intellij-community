@@ -34,16 +34,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
@@ -57,7 +54,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   private GrAccessorMethod[] myGetters;
 
   private boolean mySetterInitialized = false;
-  private boolean myGettersInitialized = false;
 
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
@@ -151,77 +147,25 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   public GrAccessorMethod getSetter() {
     if (mySetterInitialized) return mySetter;
 
-    mySetter = null;
-
-    if (isProperty() && !hasModifierProperty(PsiModifier.FINAL)) {
-      String name = GroovyPropertyUtils.getSetterName(getName());
-      final GrAccessorMethod setter = new GrAccessorMethodImpl(this, true, name);
-      final PsiClass clazz = getContainingClass();
-      if (!hasContradictingMethods(setter, clazz)) {
-        mySetter = setter;
-      }
-
-    }
-
+    mySetter = GrAccessorMethodImpl.createSetterMethod(this);
     mySetterInitialized = true;
+
     return mySetter;
   }
 
   public void clearCaches() {
-    mySetterInitialized = myGettersInitialized = false;
+    mySetterInitialized = false;
     mySetter = null;
-    myGetters = GrAccessorMethod.EMPTY_ARRAY;
+    myGetters = null;
   }
 
   @NotNull
   public GrAccessorMethod[] getGetters() {
-    if (myGettersInitialized) return myGetters;
-
-    myGetters = GrAccessorMethod.EMPTY_ARRAY;
-
-    if (isProperty()) {
-      String name = getName();
-      final PsiClass clazz = getContainingClass();
-      GrAccessorMethod getter1 = new GrAccessorMethodImpl(this, false, GroovyPropertyUtils.getGetterNameNonBoolean(name));
-      if (!hasContradictingMethods(getter1, clazz)) {
-        GrAccessorMethod getter2 = null;
-        if (PsiType.BOOLEAN.equals(getDeclaredType())) {
-          getter2 = new GrAccessorMethodImpl(this, false, GroovyPropertyUtils.getGetterNameBoolean(name));
-          if (hasContradictingMethods(getter2, clazz)) getter2 = null;
-        }
-
-        if (getter2 != null) {
-          myGetters = new GrAccessorMethod[]{getter1, getter2};
-        }
-        else {
-          myGetters = new GrAccessorMethod[]{getter1};
-        }
-      }
+    if (myGetters == null) {
+      myGetters = GrAccessorMethodImpl.createGetterMethods(this);
     }
 
-    myGettersInitialized = true;
     return myGetters;
-  }
-
-  private boolean hasContradictingMethods(GrAccessorMethod proto, PsiClass clazz) {
-    if (clazz == null) return false;
-    PsiMethod[] methods = clazz instanceof GrTypeDefinition
-                          ? ((GrTypeDefinition)clazz).findCodeMethodsBySignature(proto, true)
-                          : clazz.findMethodsBySignature(proto, true);
-    for (PsiMethod method : methods) {
-      if (clazz.equals(method.getContainingClass())) return true;
-
-      if (PsiUtil.isAccessible(clazz, method) && method.hasModifierProperty(PsiModifier.FINAL)) return true;
-    }
-
-    //final property in supers
-    PsiClass aSuper = clazz.getSuperClass();
-    if (aSuper != null) {
-      PsiField field = aSuper.findFieldByName(getName(), true);
-      if (field instanceof GrField && ((GrField)field).isProperty() && field.hasModifierProperty(PsiModifier.FINAL)) return true;
-    }
-
-    return false;
   }
 
   @NotNull

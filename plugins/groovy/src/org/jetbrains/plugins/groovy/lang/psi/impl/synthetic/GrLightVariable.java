@@ -9,7 +9,6 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
@@ -37,8 +36,7 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
                          @NonNls @NotNull String type,
                          @NotNull List<PsiElement> declarations,
                          @NotNull PsiElement scope) {
-    this(manager, name, JavaPsiFacade.getElementFactory(manager.getProject()).createTypeFromText(type, scope), declarations,
-         scope);
+    this(manager, name, JavaPsiFacade.getElementFactory(manager.getProject()).createTypeFromText(type, scope), declarations, scope);
   }
 
   public GrLightVariable(PsiManager manager,
@@ -54,18 +52,18 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
                          @NotNull List<PsiElement> declarations,
                          @NotNull PsiElement scope) {
     super(manager, new GrLightIdentifier(manager, name), type, false, scope);
-    assert declarations.size() > 0;
-    this.myDeclarations = declarations;
+
+    myDeclarations = declarations;
+    setNavigationElement(myDeclarations.get(0));
   }
 
   private static PsiElement getDeclarationScope(PsiElement navigationElement) {
     return navigationElement.getContainingFile();
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
-    return myDeclarations.get(0);
+  public boolean isWritable() {
+    return getNavigationElement() != this;
   }
 
   @Override
