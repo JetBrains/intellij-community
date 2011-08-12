@@ -24,10 +24,12 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jdom.JDOMException;
 
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -40,6 +42,20 @@ import java.util.*;
  */
 public class PlaybackCallFacade {
 
+
+  public static AsyncResult<String> openProjectClone(final PlaybackContext context, String path) {
+    try {
+      File parentDir = FileUtil.createTempDirectory("funcTest", "");
+      File sourceDir = new File(path);
+      FileUtil.copyDir(sourceDir, parentDir);
+      File projectDir = new File(parentDir, sourceDir.getName());
+      return openProject(context, projectDir.getAbsolutePath());
+    }
+    catch (IOException e) {
+      return new AsyncResult.Rejected<String>("Cannot create temp directory for clone");
+    }
+  }
+  
   public static AsyncResult<String> openProject(final PlaybackContext context, String path) {
     final AsyncResult<String> result = new AsyncResult<String>();
     final ProjectManager pm = ProjectManager.getInstance();
