@@ -7,15 +7,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -56,31 +56,37 @@ public class PyTypeCheckerInspection extends PyInspection {
       public void visitPyBinaryExpression(PyBinaryExpression node) {
         // TODO: Support operators besides PyBinaryExpression
         final PsiReference ref = node.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
-        final PyExpression arg = node.getRightExpression();
-        checkSingleArgumentFunction(ref, arg);
+        if (ref != null) {
+          final PsiElement resolved = ref.resolve();
+          if (resolved instanceof PyFunction) {
+            final PyFunction fun = (PyFunction)resolved;
+            final PyExpression arg = PyNames.isRightOperatorName(fun.getName()) ? node.getLeftExpression() : node.getRightExpression();
+            checkSingleArgumentFunction(fun, arg);
+          }
+        }
       }
 
       @Override
       public void visitPySubscriptionExpression(PySubscriptionExpression node) {
         // TODO: Support slice PySliceExpressions
         final PsiReference ref = node.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
-        final PyExpression arg = node.getIndexExpression();
-        checkSingleArgumentFunction(ref, arg);
+        if (ref != null) {
+          final PsiElement resolved = ref.resolve();
+          if (resolved instanceof PyFunction) {
+            checkSingleArgumentFunction((PyFunction)resolved, node.getIndexExpression());
+          }
+        }
       }
 
-      private void checkSingleArgumentFunction(PsiReference functionReference, PyExpression argument) {
-        if (functionReference != null && argument != null) {
-          final PsiElement resolved = functionReference.resolve();
-          if (resolved instanceof PyFunction) {
-            final PyFunction fun = (PyFunction)resolved;
-            final PyParameter[] parameters = fun.getParameterList().getParameters();
-            if (parameters.length == 2) {
-              final PyNamedParameter p = parameters[1].getAsNamed();
-              if (p != null) {
-                final PyType argType = argument.getType(myTypeEvalContext);
-                final PyType paramType = p.getType(myTypeEvalContext);
-                checkTypes(paramType, argType, argument, myTypeEvalContext);
-              }
+      private void checkSingleArgumentFunction(@NotNull PyFunction fun, @Nullable PyExpression argument) {
+        if (argument != null) {
+          final PyParameter[] parameters = fun.getParameterList().getParameters();
+          if (parameters.length == 2) {
+            final PyNamedParameter p = parameters[1].getAsNamed();
+            if (p != null) {
+              final PyType argType = argument.getType(myTypeEvalContext);
+              final PyType paramType = p.getType(myTypeEvalContext);
+              checkTypes(paramType, argType, argument, myTypeEvalContext);
             }
           }
         }

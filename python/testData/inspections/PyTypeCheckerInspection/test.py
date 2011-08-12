@@ -331,3 +331,9 @@ def test_comparison_operators():
     f(<warning descr="Expected type 'str', got 'list' instead">c > 1</warning>)
     f(<warning descr="Expected type 'str', got 'bool' instead">c == 1</warning>)
     f(<warning descr="Expected type 'str', got 'bool' instead">c in [1, 2, 3]</warning>)
+
+def test_right_operators():
+    o = object()
+    xs = [
+        <warning descr="Expected type 'one of (int, long)', got 'object' instead">o</warning> * [],
+    ]
