@@ -57,7 +57,7 @@ public interface ItemPresentation {
   /**
    * Returns the text attributes for rendering the item text.
    *
-   * @return the text attributrs, or null if default text attributes should be used
+   * @return the text attributes, or null if default text attributes should be used
    */
   @Nullable
   TextAttributesKey getTextAttributesKey();
