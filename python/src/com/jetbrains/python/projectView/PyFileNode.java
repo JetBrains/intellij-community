@@ -33,4 +33,9 @@ public class PyFileNode extends PsiFileNode {
     }
     return children;
   }
+
+  @Override
+  public boolean expandOnDoubleClick() {
+    return false;
+  }
 }
