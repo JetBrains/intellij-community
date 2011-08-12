@@ -50,9 +50,8 @@ public class TitledSeparator extends JPanel {
                                new Insets(3, 0, 0, 0), 0, 0));
     setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
 
+    setTitleFont(UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont));
     setText(text);
-    setSmallFont(smallFont);
-    setBoldFont(boldFont);
   }
 
   public String getText() {
@@ -81,12 +80,12 @@ public class TitledSeparator extends JPanel {
 
   public void setBoldFont(boolean boldFont) {
     this.boldFont = boldFont;
-    this.setTitleFont(this.getTitleFont().deriveFont(boldFont ? Font.BOLD : Font.PLAIN));
+    setTitleFont(UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont));
   }
 
   public void setSmallFont(boolean smallFont) {
     this.smallFont = smallFont;
-    this.setTitleFont(UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL));
+    setTitleFont(UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont));
   }
 
 }

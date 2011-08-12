@@ -290,10 +290,16 @@ public class UIUtil {
   }
 
   @NotNull
-  public static Font getBorderFont(@NotNull FontSize size) {
-    Font defFont = getBorderFont();
-    if (size == FontSize.SMALL) {
-      return defFont.deriveFont(defFont.getSize() * 0.9f);
+  public static Font getBorderFont(@NotNull UIUtil.FontSize size, boolean isBold) {
+    Font defFont = UIUtil.getBorderFont();
+    if (size == UIUtil.FontSize.SMALL) {
+      if (isBold) {
+        return defFont.deriveFont((float)Math.max(defFont.getSize() - 2, 11)).deriveFont(Font.BOLD);
+      }
+      return defFont.deriveFont((float)Math.max(defFont.getSize() - 1, 11));
+    }
+    if (isBold) {
+      return defFont.deriveFont(Font.BOLD);
     }
     return defFont;
   }

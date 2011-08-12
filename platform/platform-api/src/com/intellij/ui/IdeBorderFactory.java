@@ -58,19 +58,17 @@ public class IdeBorderFactory {
   }
 
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont) {
-    Font font = UIUtil.getBorderFont(hasSmallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL);
-    if (hasBoldFont) {
-      font = font.deriveFont(Font.BOLD);
-    }
+    Font font = UIUtil.getBorderFont(hasSmallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, hasBoldFont);
     int indent = hasIndent ? (hasBoldFont ? 18 : 15) : 0;
-    Insets insets = hasBoldFont ? new Insets(5,0,10,0) : new Insets(3,0,6,0);
+    Insets insets = hasBoldFont ? new Insets(5, 0, 10, 0) : new Insets(3, 0, 6, 0);
     return new IdeaTitledBorder(title, font, UIUtil.getBorderColor(), indent, 1, insets);
   }
 
   @Deprecated
   // Don't remove, used in TeamCity plugin.
   public static TitledBorder createTitledHeaderBorder(String title) {
-    return new IdeaTitledBorder(title, UIUtil.getBorderFont().deriveFont(Font.BOLD), UIUtil.getBorderColor(), 10, 1, new Insets(5,0,10,0));
+    return new IdeaTitledBorder(title, UIUtil.getBorderFont().deriveFont(Font.BOLD), UIUtil.getBorderColor(), 10, 1,
+                                new Insets(5, 0, 10, 0));
   }
 
   private static Color getBorderColor() {
@@ -78,11 +76,16 @@ public class IdeBorderFactory {
   }
 
 
-
   public static class SimpleWithIndent {
     private SimpleWithIndent() {
     }
-    public static TitledBorder createTitledBorder(Border border, String title, int titleJustification, int titlePosition, Font titleFont, Color titleColor) {
+
+    public static TitledBorder createTitledBorder(Border border,
+                                                  String title,
+                                                  int titleJustification,
+                                                  int titlePosition,
+                                                  Font titleFont,
+                                                  Color titleColor) {
       return IdeBorderFactory.createTitledBorder(title, false, true, true);
     }
   }
@@ -90,7 +93,13 @@ public class IdeBorderFactory {
   public static class SimpleWithoutIndent {
     private SimpleWithoutIndent() {
     }
-    public static TitledBorder createTitledBorder(Border border, String title, int titleJustification, int titlePosition, Font titleFont, Color titleColor) {
+
+    public static TitledBorder createTitledBorder(Border border,
+                                                  String title,
+                                                  int titleJustification,
+                                                  int titlePosition,
+                                                  Font titleFont,
+                                                  Color titleColor) {
       return IdeBorderFactory.createTitledBorder(title, false, false, true);
     }
   }
@@ -98,7 +107,13 @@ public class IdeBorderFactory {
   public static class BoldWithIndent {
     private BoldWithIndent() {
     }
-    public static TitledBorder createTitledBorder(Border border, String title, int titleJustification, int titlePosition, Font titleFont, Color titleColor) {
+
+    public static TitledBorder createTitledBorder(Border border,
+                                                  String title,
+                                                  int titleJustification,
+                                                  int titlePosition,
+                                                  Font titleFont,
+                                                  Color titleColor) {
       return IdeBorderFactory.createTitledBorder(title, true, true, true);
     }
   }
@@ -106,9 +121,14 @@ public class IdeBorderFactory {
   public static class BoldWithoutIndent {
     private BoldWithoutIndent() {
     }
-    public static TitledBorder createTitledBorder(Border border, String title, int titleJustification, int titlePosition, Font titleFont, Color titleColor) {
+
+    public static TitledBorder createTitledBorder(Border border,
+                                                  String title,
+                                                  int titleJustification,
+                                                  int titlePosition,
+                                                  Font titleFont,
+                                                  Color titleColor) {
       return IdeBorderFactory.createTitledBorder(title, true, false, true);
     }
   }
-
 }
