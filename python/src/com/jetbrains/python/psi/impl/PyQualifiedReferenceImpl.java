@@ -89,6 +89,14 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     final Project project = myElement.getProject();
     final GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
     final Collection functions = PyFunctionNameIndex.find(referencedName, project, scope);
+    final PsiFile containingFile = myElement.getContainingFile();
+    final List<PyQualifiedName> imports;
+    if (containingFile instanceof PyFile) {
+      imports = collectImports((PyFile) containingFile);
+    }
+    else {
+      imports = Collections.emptyList();
+    }
     for (Object function : functions) {
       if (!(function instanceof PyFunction)) {
         FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
@@ -97,7 +105,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       }
       PyFunction pyFunction = (PyFunction) function;
       if (pyFunction.getContainingClass() != null) {
-        ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction)));
+        ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction, imports)));
       }
     }
 
@@ -108,19 +116,42 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
                                                      new Throwable("found non-target expression object " + attribute + " in target expression list"));
         break;
       }
-      ret.add(new ImplicitResolveResult((PyTargetExpression) attribute, getImplicitResultRate((PyTargetExpression)attribute)));
+      ret.add(new ImplicitResolveResult((PyTargetExpression) attribute, getImplicitResultRate((PyTargetExpression)attribute, imports)));
     }
   }
 
-  private int getImplicitResultRate(PyElement target) {
+  private static List<PyQualifiedName> collectImports(PyFile containingFile) {
+    List<PyQualifiedName> imports = new ArrayList<PyQualifiedName>();
+    for (PyFromImportStatement anImport : containingFile.getFromImports()) {
+      final PyQualifiedName source = anImport.getImportSourceQName();
+      if (source != null) {
+        imports.add(source);
+      }
+    }
+    for (PyImportElement importElement : containingFile.getImportTargets()) {
+      final PyQualifiedName qName = importElement.getImportedQName();
+      if (qName != null) {
+        imports.add(qName.removeLastComponent());
+      }
+    }
+    return imports;
+  }
+
+  private int getImplicitResultRate(PyElement target, List<PyQualifiedName> imports) {
     int rate = RatedResolveResult.RATE_LOW;
     if (target.getContainingFile() == myElement.getContainingFile()) {
       rate += 200;
     }
     else {
       final VirtualFile vFile = target.getContainingFile().getVirtualFile();
-      if (vFile != null && ProjectScope.getProjectScope(myElement.getProject()).contains(vFile)) {
-        rate += 80;
+      if (vFile != null) {
+        if (ProjectScope.getProjectScope(myElement.getProject()).contains(vFile)) {
+          rate += 80;
+        }
+        final PyQualifiedName qName = ResolveImportUtil.findShortestImportableQName(myElement, vFile);
+        if (qName != null && imports.contains(qName)) {
+          rate += 70;
+        }
       }
     }
     if (myElement.getParent() instanceof PyCallExpression) {
