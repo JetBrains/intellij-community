@@ -418,8 +418,8 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       return null;
     }
 
-    final PsiElement parent = getParent();
-    if (parent instanceof PyStatementList) {
+    PsiElement parent = PsiTreeUtil.getParentOfType(this, PyStatementList.class);
+    if (parent != null) {
       PsiElement pparent = parent.getParent();
       if (pparent instanceof PyClass) {
         return (PyClass)pparent;
