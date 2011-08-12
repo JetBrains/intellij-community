@@ -42,11 +42,11 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
         if (ex instanceof PyTargetExpression) {
           final PyTargetExpression target = (PyTargetExpression)ex;
           List<String> quals = PyResolveUtil.unwindQualifiersAsStrList(target);
-          List<PyTargetExpression> qualsExpr = PyResolveUtil.unwindQualifiers(target);
+          List<PyExpression> qualsExpr = PyResolveUtil.unwindQualifiers(target);
           if (quals != null) {
             if (quals.size() == my_qualifier.size() + 1 && PyResolveUtil.pathsMatchStr(quals, my_qualifier)) {
               // a new attribute follows last qualifier; collect it.
-              PyTargetExpression last_elt = qualsExpr.get(qualsExpr.size() - 1); // last item is the outermost, new, attribute.
+              PyExpression last_elt = qualsExpr.get(qualsExpr.size() - 1); // last item is the outermost, new, attribute.
               String last_elt_name = last_elt.getName();
               if (!my_seen_names.contains(last_elt_name)) { // no dupes, only remember the latest
                 my_result.add(last_elt);

@@ -150,11 +150,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   public PyQualifiedName asQualifiedName() {
-    final List<PyReferenceExpression> components = PyResolveUtil.unwindQualifiers((PyReferenceExpression)this);
-    if (components == null) {
-      return null;
-    }
-    return PyQualifiedName.fromReferenceChain(components);
+    return PyQualifiedName.fromReferenceChain(PyResolveUtil.unwindQualifiers(this));
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,

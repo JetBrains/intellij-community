@@ -67,7 +67,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
 
       // enrich the type info with any fields assigned nearby
       if (qualifier instanceof PyQualifiedExpression && ret.isEmpty()) {
-        if (addAssignedAttributes(ret, referencedName, qualifier)) return ret;
+        if (addAssignedAttributes(ret, referencedName, (PyQualifiedExpression)qualifier)) return ret;
       }
     }
     else if (myContext.allowImplicits() && canQualifyAnImplicitName(qualifier, qualifierType)) {
@@ -104,10 +104,10 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     return true;
   }
 
-  private static boolean addAssignedAttributes(ResolveResultList ret, String referencedName, PyExpression qualifier) {
-    List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
+  private static boolean addAssignedAttributes(ResolveResultList ret, String referencedName, PyQualifiedExpression qualifier) {
+    List<PyExpression> qualifier_path = PyResolveUtil.unwindQualifiers(qualifier);
     if (qualifier_path != null) {
-      for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
+      for (PyExpression ex : collectAssignedAttributes(qualifier)) {
         if (referencedName.equals(ex.getName())) {
           ret.poke(ex, RatedResolveResult.RATE_NORMAL);
           return true;

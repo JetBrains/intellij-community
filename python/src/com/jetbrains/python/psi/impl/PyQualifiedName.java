@@ -5,6 +5,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,10 +27,10 @@ public class PyQualifiedName {
   }
 
   @Nullable
-  public static PyQualifiedName fromReferenceChain(List<PyReferenceExpression> components) {
+  public static PyQualifiedName fromReferenceChain(List<PyExpression> components) {
     PyQualifiedName qName = new PyQualifiedName(components.size());
-    for (PyReferenceExpression component : components) {
-      final String refName = component.getReferencedName();
+    for (PyExpression component : components) {
+      final String refName = (component instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)component).getReferencedName() : null;
       if (refName == null) {
         return null;
       }
