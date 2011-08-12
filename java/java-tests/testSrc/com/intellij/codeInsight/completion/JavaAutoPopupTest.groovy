@@ -732,6 +732,7 @@ class Foo {
     myFixture.configureByText("a.java", """ class Foo { { int iteraaa; <caret> } } """)
     type 'ite'
     assert !('iter' in myFixture.lookupElementStrings)
+    assert 'iteraaa' in myFixture.lookupElementStrings
     myFixture.type 'r'
     joinCommit()
     myFixture.type 'a.'

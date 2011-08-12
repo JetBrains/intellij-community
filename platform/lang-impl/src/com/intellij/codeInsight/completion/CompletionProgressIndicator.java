@@ -662,7 +662,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   protected void handleEmptyLookup(final boolean awaitSecondInvocation) {
-    assert !isAutopopupCompletion();
+    LOG.assertTrue(!isAutopopupCompletion());
 
     if (ApplicationManager.getApplication().isUnitTestMode() || !myHandler.invokedExplicitly) {
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
