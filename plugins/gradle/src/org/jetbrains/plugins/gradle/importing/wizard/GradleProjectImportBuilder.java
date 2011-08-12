@@ -25,6 +25,7 @@ import org.jetbrains.plugins.gradle.util.GradleLog;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -53,14 +54,12 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
 
   @Override
   public List<GradleProject> getList() {
-    // TODO den implement
-    return null;
+    return Arrays.asList(myGradleProject);
   }
 
   @Override
   public boolean isMarked(GradleProject element) {
-    // TODO den implement
-    return false;
+    return true;
   }
 
   @Override
@@ -140,6 +139,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(true);
           GradleApiFacadeManager manager = ServiceManager.getService(getProject(), GradleApiFacadeManager.class);
           try {
             GradleProjectResolver resolver = manager.getFacade().getResolver();
@@ -161,5 +161,10 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
         GradleBundle.message("gradle.import.title.error.resolve.generic")
       );
     } 
+  }
+
+  @Nullable
+  public GradleProject getGradleProject() {
+    return myGradleProject;
   }
 }

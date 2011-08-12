@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.importing.wizard;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.projectImport.ProjectImportProvider;
+import org.jetbrains.plugins.gradle.importing.wizard.adjust.GradleAdjustImportSettingsStep;
+import org.jetbrains.plugins.gradle.importing.wizard.select.GradleSelectProjectStep;
 
 /**
  * @author Denis Zhdanov
@@ -11,13 +13,11 @@ import com.intellij.projectImport.ProjectImportProvider;
 public class GradleProjectImportProvider extends ProjectImportProvider {
 
   public GradleProjectImportProvider(GradleProjectImportBuilder builder) {
-    // TODO den implement
     super(builder);
   }
 
   @Override
   public ModuleWizardStep[] createSteps(WizardContext context) {
-    // TODO den implement
-    return new ModuleWizardStep[] { new GradleSelectProjectStep(context), new GradleDefineProjectToImportStep(context) };
+    return new ModuleWizardStep[] { new GradleSelectProjectStep(context), new GradleAdjustImportSettingsStep(context) };
   }
 }

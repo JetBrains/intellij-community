@@ -13,10 +13,7 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 8/8/11 12:05 PM
  */
-public interface GradleProject {
-
-  @NotNull
-  String getName();
+public interface GradleProject extends Named, GradleEntity {
 
   @NotNull
   String getCompileOutputPath();

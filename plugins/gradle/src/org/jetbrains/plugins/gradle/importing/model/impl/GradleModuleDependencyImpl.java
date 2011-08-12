@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.gradle.importing.model.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.model.GradleDependencyVisitor;
+import org.jetbrains.plugins.gradle.importing.model.GradleEntityVisitor;
 import org.jetbrains.plugins.gradle.importing.model.GradleModule;
 import org.jetbrains.plugins.gradle.importing.model.GradleModuleDependency;
 
@@ -28,8 +28,8 @@ public class GradleModuleDependencyImpl extends AbstractGradleDependency impleme
   }
 
   @Override
-  public void invite(@NotNull GradleDependencyVisitor visitor) {
-    visitor.visit(this); 
+  public void invite(@NotNull GradleEntityVisitor visitor) {
+    visitor.visit(this);
   }
 
   @Override

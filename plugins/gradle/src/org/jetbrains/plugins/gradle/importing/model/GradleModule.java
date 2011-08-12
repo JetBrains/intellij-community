@@ -13,10 +13,7 @@ import java.util.Collection;
  * @author Denis Zhdanov
  * @since 8/8/11 12:10 PM
  */
-public interface GradleModule {
-  
-  @NotNull
-  String getName();
+public interface GradleModule extends Named, GradleEntity {
   
   @NotNull
   Collection<? extends GradleContentRoot> getContentRoots();

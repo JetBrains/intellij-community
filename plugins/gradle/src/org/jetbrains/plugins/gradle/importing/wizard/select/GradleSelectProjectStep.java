@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing.wizard;
+package org.jetbrains.plugins.gradle.importing.wizard.select;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.importing.wizard.AbstractImportFromGradleWizardStep;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
@@ -23,7 +24,7 @@ import java.awt.*;
  * @author Denis Zhdanov
  * @since 8/1/11 4:15 PM
  */
-public class GradleSelectProjectStep extends GradleImportWizardStep {
+public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep {
 
   private final JPanel myComponent = new JPanel(new GridBagLayout());
   private final TextFieldWithBrowseButton myProjectPathComponent;
@@ -58,7 +59,7 @@ public class GradleSelectProjectStep extends GradleImportWizardStep {
   @Override
   public void updateStep() {
     if (isPathChanged()) {
-      myProjectPathComponent.setText(getBuilder().getProjectPath(getWizardContext()));
+      myProjectPathComponent.setText(getBuilder().getProjectPath(getContext()));
     }
   }
 
@@ -85,6 +86,6 @@ public class GradleSelectProjectStep extends GradleImportWizardStep {
   }
 
   private boolean isPathChanged() {
-    return !StringUtil.equals(myProjectPathComponent.getText(), getBuilder().getProjectPath(getWizardContext()));
+    return !StringUtil.equals(myProjectPathComponent.getText(), getBuilder().getProjectPath(getContext()));
   }
 }

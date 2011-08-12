@@ -10,7 +10,7 @@ import java.util.Collection;
  * @author Denis Zhdanov
  * @since 8/9/11 6:39 PM
  */
-public interface GradleContentRoot {
+public interface GradleContentRoot extends GradleEntity {
 
   @NotNull
   String getRootPath();

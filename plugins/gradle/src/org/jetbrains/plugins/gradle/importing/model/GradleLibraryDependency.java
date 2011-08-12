@@ -9,11 +9,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  * @since 8/10/11 6:32 PM
  */
-public interface GradleLibraryDependency extends GradleDependency {
+public interface GradleLibraryDependency extends GradleDependency, Named {
 
-  @NotNull
-  String getName();
-  
   /**
    * Allows to ask for the target path configured for the current library dependency.
    * 
