@@ -9,8 +9,9 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 public class InvertIfConditionTest extends LightIntentionActionTestCase {
 
@@ -30,7 +31,7 @@ public class InvertIfConditionTest extends LightIntentionActionTestCase {
   @Override
   protected void beforeActionStarted(final String testName, final String contents) {
     super.beforeActionStarted(testName, contents);
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     myElseOnNewLine = settings.ELSE_ON_NEW_LINE;
     settings.ELSE_ON_NEW_LINE = !contents.contains("else on the same line");
   }
@@ -38,7 +39,7 @@ public class InvertIfConditionTest extends LightIntentionActionTestCase {
   @Override
   protected void afterActionCompleted(final String testName, final String contents) {
     super.afterActionCompleted(testName, contents);
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = myElseOnNewLine;
   }
 
