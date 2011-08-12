@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.diff.impl;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.CalledInAwt;
-import com.intellij.openapi.vcs.CalledInBackground;
+import com.intellij.openapi.editor.event.VisibleAreaListener;
 
 import javax.swing.*;
 
 /**
- * @author irengrig
- *         Date: 7/5/11
- *         Time: 2:49 PM
+ * Created by IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 8/12/11
+ * Time: 12:05 PM
+ * To change this template use File | Settings | File Templates.
  */
-public interface VcsChangeDetailsProvider<T> {
-  String getProgressTitle();
-  @CalledInAwt
-  boolean canComment(final Change change);
-  @CalledInBackground
-  T load(final Change change);
-  @CalledInAwt
-  Pair<RefreshablePanel, Disposable> comment(final Change change, final T t);
+public interface DiffSplitterI {
+  void redrawDiffs();
+
+  VisibleAreaListener getVisibleAreaListener();
+
+  JComponent getComponent();
 }

@@ -15,6 +15,7 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.diff.impl.CaptionIcon;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
@@ -25,7 +26,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.UIVcsUtil;
-import git4idea.history.browser.CaptionIcon;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SymbolicRefs;
 import org.jetbrains.annotations.NotNull;

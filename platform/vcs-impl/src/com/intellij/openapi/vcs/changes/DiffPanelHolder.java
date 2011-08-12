@@ -63,6 +63,12 @@ public class DiffPanelHolder {
     return diffPanel;
   }
 
+  public DiffPanel createAndCache() {
+    final DiffPanel diffPanel = create();
+    myOwnList.addLast(diffPanel);
+    return diffPanel;
+  }
+
   protected DiffPanel create() {
     final DiffPanel diffPanel = DiffManager.getInstance().createDiffPanel(null, myProject);
     diffPanel.enableToolbar(false);

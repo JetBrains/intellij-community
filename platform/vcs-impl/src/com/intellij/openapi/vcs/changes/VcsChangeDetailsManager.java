@@ -56,7 +56,7 @@ public class VcsChangeDetailsManager {
   // todo also check for size
   private final LinkedList<DiffPanel> myDiffPanelCache;
   private final Project myProject;
-  private Details<Change, Pair<JPanel, Disposable>> myDetails;
+  private Details<Change, Pair<RefreshablePanel, Disposable>> myDetails;
   private final BackgroundTaskQueue myQueue;
 
   public VcsChangeDetailsManager(final Project project) {
@@ -79,7 +79,7 @@ public class VcsChangeDetailsManager {
     });
   }
 
-  public void setDetails(Details<Change, Pair<JPanel, Disposable>> details) {
+  public void setDetails(Details<Change, Pair<RefreshablePanel, Disposable>> details) {
     myDetails = details;
   }
 
@@ -111,10 +111,10 @@ public class VcsChangeDetailsManager {
     private T myResult;
     private final VcsChangeDetailsProvider<T> myProvider;
     private final Change myChange;
-    private final Details<Change, Pair<JPanel, Disposable>> myDetails;
+    private final Details<Change, Pair<RefreshablePanel, Disposable>> myDetails;
 
     private LoaderTask(@Nullable Project project, final VcsChangeDetailsProvider provider, final Change change,
-                       final Details<Change, Pair<JPanel, Disposable>> consumer) {
+                       final Details<Change, Pair<RefreshablePanel, Disposable>> consumer) {
       super(project, provider.getProgressTitle(), false, BackgroundFromStartOption.getInstance());
       myProvider = provider;
       myChange = change;
@@ -132,7 +132,7 @@ public class VcsChangeDetailsManager {
     public void onSuccess() {
       if (myProject.isDisposed() || ! myProject.isOpen()) return;
       if (myResult != null) {
-        final Pair<JPanel, Disposable> pair = myProvider.comment(myChange, myResult);
+        final Pair<RefreshablePanel, Disposable> pair = myProvider.comment(myChange, myResult);
         myDetails.take(myChange, pair);
       }
       // todo else?
@@ -161,14 +161,14 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
-    public Pair<JPanel, Disposable> comment(Change change, ValueWithVcsException<List<BeforeAfter<DiffContent>>> value) {
+    public Pair<RefreshablePanel, Disposable> comment(Change change, ValueWithVcsException<List<BeforeAfter<DiffContent>>> value) {
       final List<BeforeAfter<DiffContent>> contents;
       try {
         contents = value.get();
         if (contents == null) throw new VcsException("Can not load content");
       }
       catch (VcsException e) {
-        return new Pair<JPanel, Disposable>(UIVcsUtil.errorPanel(e.getMessage(), true), null);
+        return new Pair<RefreshablePanel, Disposable>(new NotRefreshablePanel(UIVcsUtil.errorPanel(e.getMessage(), true)), null);
       }
       if (contents.isEmpty()) return noDifferences();
       assert contents.size() == 1;
@@ -190,7 +190,7 @@ public class VcsChangeDetailsManager {
       //wholeWrapper.add(new JBScrollPane(panel.getComponent()), BorderLayout.CENTER);
       wholeWrapper.add(panel.getComponent(), BorderLayout.CENTER);
 
-      return new Pair<JPanel, Disposable>(wholeWrapper, new Disposable() {
+      return new Pair<RefreshablePanel, Disposable>(new NotRefreshablePanel(wholeWrapper), new Disposable() {
         @Override
         public void dispose() {
           myDiffPanelHolder.resetPanels();
@@ -222,9 +222,10 @@ public class VcsChangeDetailsManager {
     protected abstract T computeImpl() throws VcsException;
   }
 
-  private static Pair<JPanel, Disposable> noDifferences() {
-    return new Pair<JPanel, Disposable>(
-      UIVcsUtil.errorPanel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"), false), null);
+  private static Pair<RefreshablePanel, Disposable> noDifferences() {
+    return new Pair<RefreshablePanel, Disposable>(
+      new NotRefreshablePanel(
+        UIVcsUtil.errorPanel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"), false)), null);
   }
 
   private static class FragmentedDiffDetailsProvider implements VcsChangeDetailsProvider<ValueWithVcsException<FragmentedContent>> {
@@ -260,7 +261,7 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
-    public Pair<JPanel, Disposable> comment(Change change, ValueWithVcsException<FragmentedContent> value) {
+    public Pair<RefreshablePanel, Disposable> comment(Change change, ValueWithVcsException<FragmentedContent> value) {
       final FragmentedContent requestForChange;
       try {
         requestForChange = value.get();
@@ -270,13 +271,13 @@ public class VcsChangeDetailsManager {
         }
       }
       catch (VcsException e) {
-        return new Pair<JPanel, Disposable>(UIVcsUtil.errorPanel(e.getMessage(), true), null);
+        return new Pair<RefreshablePanel, Disposable>(new NotRefreshablePanel(UIVcsUtil.errorPanel(e.getMessage(), true)), null);
       }
 
       final ChangesFragmentedDiffPanel panel =
         new ChangesFragmentedDiffPanel(myProject, requestForChange, myDiffPanelCache, changeDescription(change));
       panel.buildUi();
-      return new Pair<JPanel, Disposable>(panel.getPanel(), panel);
+      return new Pair<RefreshablePanel, Disposable>(panel.getRefreshablePanel(), panel);
     }
   }
 

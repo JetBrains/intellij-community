@@ -29,6 +29,7 @@ import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -65,9 +66,10 @@ public class ChangesDiffCalculator {
       return Collections.emptyList();
     }
 
+    final FragmentHighlighterImpl fragmentHighlighter = new FragmentHighlighterImpl(myOldMarkup, myNewMarkup);
     for (Iterator<LineFragment> iterator = lineFragments.iterator(); iterator.hasNext();) {
       LineFragment fragment = iterator.next();
-      final FragmentHighlighterImpl fragmentHighlighter = new FragmentHighlighterImpl(myOldMarkup, myNewMarkup, !iterator.hasNext());
+      fragmentHighlighter.setIsLast(!iterator.hasNext());
       fragment.highlight(fragmentHighlighter);
     }
 
@@ -117,7 +119,7 @@ public class ChangesDiffCalculator {
     }
 
     @Override
-    public void highlightText(Fragment fragment, boolean drawBorder) {
+    public void highlightText(Fragment fragment, boolean drawBorder, GutterIconRenderer gutterIconRenderer) {
     }
 
 
@@ -139,7 +141,7 @@ public class ChangesDiffCalculator {
     }
 
     @Override
-    public void highlightText(Fragment fragment, boolean drawBorder) {
+    public void highlightText(Fragment fragment, boolean drawBorder, GutterIconRenderer gutterIconRenderer) {
       TextRange currentRange = fragment.getRange(FragmentSide.SIDE2);
       if (INTERESTED_DIFF_TYPES.contains(fragment.getType())) {
         ranges.add(currentRange);

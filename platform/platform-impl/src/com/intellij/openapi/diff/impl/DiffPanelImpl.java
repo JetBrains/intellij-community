@@ -32,6 +32,7 @@ import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
+import com.intellij.openapi.diff.impl.processing.HorisontalDiffSplitter;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.diff.impl.util.*;
@@ -67,7 +68,7 @@ import java.util.LinkedList;
 public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSidesContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.DiffPanelImpl");
 
-  private final DiffSplitter mySplitter;
+  private final DiffSplitterI mySplitter;
   private final DiffPanelOutterComponent myPanel;
 
   private final Window myOwnerWindow;
@@ -95,11 +96,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private boolean myDisposed = false;
   private final GenericDataProvider myDataProvider;
   private Project myProject;
+  private final boolean myIsHorisontal;
   private static final Key<CanNotCalculateDiffPanel> PANEL_KEY = new Key<CanNotCalculateDiffPanel>("DiffPanelImpl.CanNotCalculateDiffPanel");
   private CanNotCalculateDiffPanel myNotCalculateDiffPanel;
 
-  public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar) {
+  public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar, boolean horisontal) {
     myProject = project;
+    myIsHorisontal = horisontal;
     myOptions = new DiffPanelOptions(this);
     myPanel = new DiffPanelOutterComponent(TextDiffType.DIFF_TYPES, TOOL_BAR);
     myPanel.disableToolbar(!enableToolbar);
@@ -112,9 +115,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myDiffUpdater = new Rediffers(this);
 
     myData = new DiffPanelState(this, project);
-    mySplitter = new DiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent(),
+    if (horisontal) {
+      mySplitter = new DiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent(),
                                   new DiffDividerPaint(this, FragmentSide.SIDE1));
-    myPanel.insertDiffComponent(mySplitter, new MyScrollingPanel());
+    } else {
+      mySplitter = new HorisontalDiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent());
+    }
+
+    myPanel.insertDiffComponent(mySplitter.getComponent(), new MyScrollingPanel());
     myDataProvider = new MyGenericDataProvider(this);
     myPanel.setDataProvider(myDataProvider);
 
@@ -124,6 +132,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     if (defaultComparisonPolicy != null && comparisonPolicy != defaultComparisonPolicy) {
       setComparisonPolicy(defaultComparisonPolicy);
     }
+  }
+
+  public boolean isHorisontal() {
+    return myIsHorisontal;
   }
 
   public void setDiffPanelState(DiffPanelState data) {
@@ -138,7 +150,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myIsSynchScroll = false;
   }
 
-  public DiffSplitter getSplitter() {
+  public DiffSplitterI getSplitter() {
     return mySplitter;
   }
 
@@ -332,7 +344,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myDiffUpdater.contentRemoved(source);
     final EditorEx editor = source.getEditor();
     final FileEditor fileEditor = source.getFileEditor();
-    if (source.getSide() == FragmentSide.SIDE1 && editor != null) {
+    if (myIsHorisontal && source.getSide() == FragmentSide.SIDE1 && editor != null) {
       editor.setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
     }
     DiffSideView viewSide = getSideView(source.getSide());
@@ -359,7 +371,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     final VisibleAreaListener visibleAreaListener = mySplitter.getVisibleAreaListener();
     final ScrollingModel scrollingModel = editor.getScrollingModel();
-    scrollingModel.addVisibleAreaListener(visibleAreaListener);
+    if (visibleAreaListener != null) {
+      scrollingModel.addVisibleAreaListener(visibleAreaListener);
+    }
     myFontSizeSynchronizer.synchronize(editor);
     source.addDisposable(new Disposable() {
       public void dispose() {
@@ -368,7 +382,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     });
     source.addDisposable(new Disposable() {
       public void dispose() {
-        scrollingModel.removeVisibleAreaListener(visibleAreaListener);
+        if (visibleAreaListener != null) {
+          scrollingModel.removeVisibleAreaListener(visibleAreaListener);
+        }
       }
     });
   }

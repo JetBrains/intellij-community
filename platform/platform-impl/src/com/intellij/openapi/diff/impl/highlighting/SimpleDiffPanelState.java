@@ -70,9 +70,10 @@ public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements 
   private LineBlocks addMarkup(final ArrayList<LineFragment> lines) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        final FragmentHighlighterImpl fragmentHighlighter = new FragmentHighlighterImpl(myAppender1, myAppender2);
         for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext();) {
           LineFragment line = iterator.next();
-          final FragmentHighlighterImpl fragmentHighlighter = new FragmentHighlighterImpl(myAppender1, myAppender2, !iterator.hasNext());
+          fragmentHighlighter.setIsLast(!iterator.hasNext());
           line.highlight(fragmentHighlighter);
         }
       }

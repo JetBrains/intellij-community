@@ -115,7 +115,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   }
 
   public DiffPanel createDiffPanel(Window window, Project project) {
-    return new DiffPanelImpl(window, project, true);
+    return new DiffPanelImpl(window, project, true, true);
   }
 
   public static DiffManagerImpl getInstanceEx() {

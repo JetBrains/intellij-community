@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.ContentChangeListener;
-import com.intellij.openapi.diff.impl.fragments.FragmentHighlighterImpl;
 import com.intellij.openapi.diff.impl.fragments.FragmentListImpl;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
@@ -42,22 +41,25 @@ import java.util.List;
 public class FragmentedDiffPanelState extends DiffPanelState {
   // fragment _start_ lines
   private List<BeforeAfter<Integer>> myRanges;
+  private NumberedFragmentHighlighter myFragmentHighlighter;
 
-  public FragmentedDiffPanelState(ContentChangeListener changeListener, Project project) {
+  public FragmentedDiffPanelState(ContentChangeListener changeListener, Project project, boolean drawNumber) {
     super(changeListener, project);
+    myFragmentHighlighter = new NumberedFragmentHighlighter(myAppender1, myAppender2, drawNumber);
   }
 
   @Override
   public void setContents(DiffContent content1, DiffContent content2) {
     myAppender1.setContent(content1);
     myAppender2.setContent(content2);
+    myFragmentHighlighter.reset();
   }
 
   private LineBlocks addMarkup(final List<LineFragment> lines) {
     for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext();) {
       LineFragment line = iterator.next();
-      final FragmentHighlighterImpl fragmentHighlighter = new FragmentHighlighterImpl(myAppender1, myAppender2, !iterator.hasNext());
-      line.highlight(fragmentHighlighter);
+      myFragmentHighlighter.setIsLast(!iterator.hasNext());
+      line.highlight(myFragmentHighlighter);
     }
     ArrayList<LineFragment> allLineFragments = new ArrayList<LineFragment>();
     for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext();) {

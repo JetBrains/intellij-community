@@ -60,7 +60,7 @@ public abstract class DiffMarkup implements EditorSource {
     return editor == null ? null : editor.getMarkupModel();
   }
 
-  public void highlightText(Fragment fragment, boolean drawBorder) {
+  public void highlightText(Fragment fragment, boolean drawBorder, GutterIconRenderer gutterIconRenderer) {
     final TextDiffTypeEnum diffTypeEnum = fragment.getType();
     if (diffTypeEnum == null) return;
     TextDiffType type = TextDiffType.create(diffTypeEnum);
@@ -76,6 +76,9 @@ public abstract class DiffMarkup implements EditorSource {
     else {
       rangeMarker = getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), LAYER,
                                                          attributes, HighlighterTargetArea.EXACT_RANGE);
+    }
+    if (gutterIconRenderer != null) {
+      rangeMarker.setGutterIconRenderer(gutterIconRenderer);
     }
     Color stripeBarColor = attributes.getErrorStripeColor();
     if (stripeBarColor != null) {

@@ -101,17 +101,17 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
   private Splitter mySplitter;
   private DetailsPanel myDetailsPanel;
-  private GenericDetailsLoader<Change, Pair<JPanel, Disposable>> myDetailsLoader;
+  private GenericDetailsLoader<Change, Pair<RefreshablePanel, Disposable>> myDetailsLoader;
   private boolean myDetailsOn;
   private ChangesViewManager.MyFileListener myFileListener;
-  private final SLRUMap<FilePath, Pair<JPanel, Disposable>> myDetailsCache;
+  private final SLRUMap<FilePath, Pair<RefreshablePanel, Disposable>> myDetailsCache;
   private FilePath myDetailsFilePath;
   private final MyDocumentListener myDocumentListener;
   private ZipperUpdater myDetailsUpdater;
   private Runnable myUpdateDetails;
   private MessageBusConnection myConnection;
   private ChangesViewManager.ToggleDetailsAction myToggleDetailsAction;
-  private PairConsumer<Change,Pair<JPanel, Disposable>> myDetailsConsumer;
+  private PairConsumer<Change,Pair<RefreshablePanel, Disposable>> myDetailsConsumer;
   private final TreeSelectionListener myTsl;
 
   public static ChangesViewI getInstance(Project project) {
@@ -128,9 +128,9 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myFileListener = new MyFileListener();
     myDocumentListener = new MyDocumentListener();
-    myDetailsCache = new SLRUMap<FilePath, Pair<JPanel, Disposable>>(10, 10) {
+    myDetailsCache = new SLRUMap<FilePath, Pair<RefreshablePanel, Disposable>>(10, 10) {
       @Override
-      protected void onDropFromCache(FilePath key, Pair<JPanel, Disposable> value) {
+      protected void onDropFromCache(FilePath key, Pair<RefreshablePanel, Disposable> value) {
         if (value.getSecond() != null) {
           Disposer.dispose(value.getSecond());
         }
@@ -264,11 +264,11 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   private void initDetailsLoader() {
-    final PairConsumer<Change, Pair<JPanel, Disposable>> cacheConsumer = new PairConsumer<Change, Pair<JPanel, Disposable>>() {
+    final PairConsumer<Change, Pair<RefreshablePanel, Disposable>> cacheConsumer = new PairConsumer<Change, Pair<RefreshablePanel, Disposable>>() {
       @Override
-      public void consume(Change change, Pair<JPanel, Disposable> pair) {
+      public void consume(Change change, Pair<RefreshablePanel, Disposable> pair) {
         final FilePath filePath = ChangesUtil.getFilePath(change);
-        final Pair<JPanel, Disposable> old = myDetailsCache.get(filePath);
+        final Pair<RefreshablePanel, Disposable> old = myDetailsCache.get(filePath);
         if (old == null) {
           myDetailsCache.put(filePath, pair);
         } else if (old != pair) {
@@ -278,19 +278,20 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         }
       }
     };
-    myDetailsConsumer = new PairConsumer<Change, Pair<JPanel, Disposable>>() {
+    myDetailsConsumer = new PairConsumer<Change, Pair<RefreshablePanel, Disposable>>() {
       @Override
-      public void consume(Change change, Pair<JPanel, Disposable> pair) {
+      public void consume(Change change, Pair<RefreshablePanel, Disposable> pair) {
         cacheConsumer.consume(change, pair);
-        myDetailsPanel.data(pair.getFirst());
+        pair.getFirst().refresh();
+        myDetailsPanel.data(pair.getFirst().getPanel());
         myDetailsPanel.layout();
       }
     };
-    myDetailsLoader = new GenericDetailsLoader<Change, Pair<JPanel, Disposable>>(new Consumer<Change>() {
+    myDetailsLoader = new GenericDetailsLoader<Change, Pair<RefreshablePanel, Disposable>>(new Consumer<Change>() {
       @Override
       public void consume(Change change) {
         final FilePath filePath = ChangesUtil.getFilePath(change);
-        Pair<JPanel, Disposable> details = myDetailsCache.get(filePath);
+        Pair<RefreshablePanel, Disposable> details = myDetailsCache.get(filePath);
         if (details != null) {
           myDetailsConsumer.consume(change, details);
         } else if (myVcsChangeDetailsManager.getPanel(change)) {

@@ -23,7 +23,7 @@ import com.intellij.openapi.ui.Splitter;
 import javax.swing.*;
 import java.awt.*;
 
-class DiffSplitter extends Splitter {
+class DiffSplitter extends Splitter implements DiffSplitterI {
   private final DiffDividerPaint myPaint;
 
   private final VisibleAreaListener myVisibleAreaListener = new VisibleAreaListener() {
@@ -48,11 +48,18 @@ class DiffSplitter extends Splitter {
     };
   }
 
+  @Override
   public void redrawDiffs() {
     getDivider().repaint();
   }
 
+  @Override
   public VisibleAreaListener getVisibleAreaListener() {
     return myVisibleAreaListener;
+  }
+
+  @Override
+  public JComponent getComponent() {
+    return this;
   }
 }

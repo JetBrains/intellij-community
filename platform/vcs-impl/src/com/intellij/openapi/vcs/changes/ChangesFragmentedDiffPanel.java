@@ -33,8 +33,12 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -58,15 +62,24 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   private final FragmentedContent myFragmentedContent;
   private final String myFilePath;
   private final DiffPanelHolder myMyDiffPanelHolder;
+  private VcsConfiguration myConfiguration;
+  private final RefreshablePanel myRefreshablePanel;
+
+  private DiffPanel myHorizontal;
+  private DiffPanel myVertical;
+  private boolean myCurrentHorizontal;
+  private JPanel myTopPanel;
 
   public ChangesFragmentedDiffPanel(final Project project, final FragmentedContent fragmentedContent,
                                     final LinkedList<DiffPanel> cache, String filePath) {
     myProject = project;
+    myConfiguration = VcsConfiguration.getInstance(myProject);
     myMyDiffPanelHolder = new DiffPanelHolder(cache, myProject) {
       @Override
       protected DiffPanel create() {
-        final DiffPanel diffPanel = super.create();
-        ((DiffPanelImpl) diffPanel).setDiffPanelState(new FragmentedDiffPanelState((ContentChangeListener)diffPanel, project));
+        final DiffPanel diffPanel = new DiffPanelImpl(null, myProject, false, myConfiguration.SHORT_DIFF_HORISONTALLY);
+        ((DiffPanelImpl) diffPanel).setDiffPanelState(new FragmentedDiffPanelState((ContentChangeListener)diffPanel, project,
+                                                                                   ! myConfiguration.SHORT_DIFF_HORISONTALLY));
         return diffPanel;
       }
     };
@@ -75,26 +88,40 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     assert ! myFragmentedContent.getRanges().isEmpty();
 
     myPanel = new JPanel(new BorderLayout());
+    myRefreshablePanel = new RefreshablePanel() {
+    @Override
+    public void refresh() {
+      ensurePresentation();
+    }
+
+    @Override
+    public JPanel getPanel() {
+      return myPanel;
+    }
+  };
   }
 
   @Override
   public void dispose() {
-    myMyDiffPanelHolder.resetPanels();
     // to remove links to editor that is in scrolling helper
     myPanel.removeAll();
+    myHorizontal = null;
+    myVertical = null;
+
+    myMyDiffPanelHolder.resetPanels();
   }
 
   public void buildUi() {
-    final JPanel topPanel = new JPanel(new BorderLayout());
+    myTopPanel = new JPanel(new BorderLayout());
     final JPanel wrapper = new JPanel();
-    final BoxLayout boxLayout = new BoxLayout(wrapper, BoxLayout.X_AXIS);
-    wrapper.setLayout(boxLayout);
+    //final BoxLayout boxLayout = new BoxLayout(wrapper, BoxLayout.X_AXIS);
+    wrapper.setLayout(new BorderLayout());
     final JLabel label = new JLabel(myFilePath);
     label.setBorder(BorderFactory.createEmptyBorder(1,2,0,0));
-    wrapper.add(label);
-    topPanel.add(wrapper, BorderLayout.CENTER);
+    wrapper.add(label, BorderLayout.WEST);
+    wrapper.add(new MyShowSettingsButton(), BorderLayout.EAST);      // todo should be one button for all..
 
-    myPanel.add(topPanel, BorderLayout.NORTH);
+    myTopPanel.add(wrapper, BorderLayout.CENTER);
 
     final JPanel wrapperDiffs = new JPanel(new GridBagLayout());
     final JPanel oneMore = new JPanel(new BorderLayout());
@@ -133,14 +160,39 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     ranges.add(new BeforeAfter<Integer>(lines.getBefore() == 0 ? 0 : lines.getBefore() - 1,
                                         lines.getAfter() == 0 ? 0 : lines.getAfter() - 1));
 
-    final DiffPanel diffPanel = myMyDiffPanelHolder.getOrCreate();
+    final DiffPanel diffPanel = createPanel(oldConvertor, newConvertor, sbOld, sbNew, ranges);
+    myCurrentHorizontal = myConfiguration.SHORT_DIFF_HORISONTALLY;
+    savePanel(diffPanel);
+    myConfiguration.SHORT_DIFF_HORISONTALLY = ! myConfiguration.SHORT_DIFF_HORISONTALLY;
+    final DiffPanel diffPanel2 = createPanel(oldConvertor, newConvertor, sbOld, sbNew, ranges);
+    savePanel(diffPanel2);
+    myConfiguration.SHORT_DIFF_HORISONTALLY = ! myConfiguration.SHORT_DIFF_HORISONTALLY;
+
+    myPanel.add(myTopPanel, BorderLayout.NORTH);
+    myPanel.add(diffPanel.getComponent(), BorderLayout.CENTER);
+  }
+
+  private void savePanel(DiffPanel diffPanel) {
+    if (myConfiguration.SHORT_DIFF_HORISONTALLY) {
+      myHorizontal = diffPanel;
+    } else {
+      myVertical = diffPanel;
+    }
+  }
+
+  private DiffPanel createPanel(LineNumberConvertor oldConvertor,
+                                LineNumberConvertor newConvertor,
+                                StringBuilder sbOld,
+                                StringBuilder sbNew,
+                                List<BeforeAfter<Integer>> ranges) {
+    final DiffPanel diffPanel = myMyDiffPanelHolder.createAndCache();
     final FragmentedDiffPanelState diffPanelState = (FragmentedDiffPanelState)((DiffPanelImpl) diffPanel).getDiffPanelState();
     diffPanelState.setRanges(ranges);
     diffPanel.setContents(new SimpleContent(sbOld.toString()), new SimpleContent(sbNew.toString()));
     ((DiffPanelImpl) diffPanel).setLineNumberConvertors(oldConvertor, newConvertor);
     ((DiffPanelImpl) diffPanel).prefferedSizeByContents(-1);
-
-    myPanel.add(diffPanel.getComponent(), BorderLayout.CENTER);
+    diffPanel.removeStatusBar();
+    return diffPanel;
   }
 
   private static class LineNumberConvertor implements Convertor<Integer, Integer> {
@@ -350,42 +402,84 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     }
   }
 
-  public JPanel getPanel() {
-    return myPanel;
+  public RefreshablePanel getRefreshablePanel() {
+    return myRefreshablePanel;
+  }
+
+  private class PopupAction extends AnAction {
+    private Component myParent;
+    private AnAction myUsual;
+    private AnAction myNumbered;
+
+    private PopupAction() {
+      myUsual = new AnAction("Vertical") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
+          myConfiguration.SHORT_DIFF_HORISONTALLY = false;
+          if (was) {
+            ensurePresentation();
+          }
+        }
+      };
+      myNumbered = new AnAction("Horizontal") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
+          myConfiguration.SHORT_DIFF_HORISONTALLY = true;
+          if (! was) {
+            ensurePresentation();
+          }
+        }
+      };
+    }
+
+    public void setParent(Component parent) {
+      myParent = parent;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final DefaultActionGroup dag = new DefaultActionGroup();
+      dag.add(myUsual);
+      dag.add(myNumbered);
+      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, dag, e.getDataContext(),
+                                                                                       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                                                                       false);
+      final Dimension dimension = popup.getContent().getPreferredSize();
+      final Point at = new Point(-dimension.width / 2, 0);
+      popup.show(new RelativePoint(myParent, at));
+    }
   }
 
   private class MyShowSettingsButton extends ActionButton {
     MyShowSettingsButton() {
-      this(new MyShowSettingsAction(), new Presentation(), ActionPlaces.CHANGES_LOCAL_DIFF_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      this(new PopupAction(), new Presentation(), ActionPlaces.CHANGES_LOCAL_DIFF_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
     MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
       super(action, presentation, place, minimumSize);
+      ((PopupAction) getAction()).setParent(this);
       myPresentation.setIcon(IconLoader.getIcon("/general/secondaryGroup.png"));
-    }
-
-    public void hideSettings() {
-      /*if (!mySettingsPanel.isVisible()) {
-        return;
-      }
-      AnActionEvent event = new AnActionEvent(
-        null, EMPTY_DATA_CONTEXT, ActionPlaces.JAVADOC_INPLACE_SETTINGS, myPresentation, ActionManager.getInstance(), 0
-      );
-      myAction.actionPerformed(event);*/
     }
   }
 
-  private class MyShowSettingsAction extends ToggleAction {
-    private boolean myIsSelected;
+  private void ensurePresentation() {
+    if (myCurrentHorizontal != myConfiguration.SHORT_DIFF_HORISONTALLY) {
+      final DiffPanel panel;
+      if (myConfiguration.SHORT_DIFF_HORISONTALLY) {
+        panel = myHorizontal;
+      } else {
+        panel = myVertical;
+      }
 
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myIsSelected;
-    }
+      myPanel.removeAll();
+      myPanel.add(myTopPanel, BorderLayout.NORTH);
+      myPanel.add(panel.getComponent(), BorderLayout.CENTER);
+      myPanel.revalidate();
+      myPanel.repaint();
 
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myIsSelected = ! myIsSelected;
+      myCurrentHorizontal = myConfiguration.SHORT_DIFF_HORISONTALLY;
     }
   }
 }

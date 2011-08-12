@@ -25,27 +25,34 @@ import com.intellij.openapi.util.TextRange;
 import java.util.Iterator;
 
 public class FragmentHighlighterImpl implements FragmentHighlighter {
-  private final DiffMarkup myAppender1;
-  private final DiffMarkup myAppender2;
-  private final boolean myIsLast;
+  protected final DiffMarkup myAppender1;
+  protected final DiffMarkup myAppender2;
+  private boolean myIsLast;
 
-  public FragmentHighlighterImpl(DiffMarkup appender1, DiffMarkup appender2, boolean isLast) {
+  public FragmentHighlighterImpl(DiffMarkup appender1, DiffMarkup appender2) {
     myAppender1 = appender1;
     myAppender2 = appender2;
+    myIsLast = false;
+  }
+
+  public void setIsLast(boolean isLast) {
     myIsLast = isLast;
   }
 
   public void highlightInline(final InlineFragment fragment) {
-    myAppender1.highlightText(fragment, true);
-    myAppender2.highlightText(fragment, true);
+    highlightFragmentImpl(fragment, true);
+  }
+
+  protected void highlightFragmentImpl(final Fragment fragment, final boolean drawBorder) {
+    myAppender1.highlightText(fragment, drawBorder, null);
+    myAppender2.highlightText(fragment, drawBorder, null);
   }
 
   public void highlightLine(final LineFragment fragment) {
     addModifyActions(fragment, myAppender1, myAppender2);
     final Iterator<Fragment> iterator = fragment.getChildrenIterator();
     if (iterator == null) {
-      myAppender1.highlightText(fragment, false);
-      myAppender2.highlightText(fragment, false);
+      highlightFragmentImpl(fragment, false);
     }
     else {
       for (; iterator.hasNext();) {
