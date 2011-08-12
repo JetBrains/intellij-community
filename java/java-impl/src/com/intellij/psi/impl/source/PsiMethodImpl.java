@@ -17,8 +17,10 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -335,7 +337,12 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @NotNull
   public SearchScope getUseScope() {
-    return PsiImplUtil.getMemberUseScope(this);
+    return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return PsiImplUtil.getMemberUseScope(PsiMethodImpl.this);
+      }
+    });
   }
 
   public void putInfo(Map<String, String> info) {
