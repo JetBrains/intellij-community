@@ -249,6 +249,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("tostr", true, true, false, "java.lang.String"));
   }
 
+  public void testCollapsedToDiamond() throws Exception {
+    doTest(new MockIntroduceVariableHandler("a", true, true, true, "java.util.ArrayList<java.lang.String>"));
+  }
+
   public void testSiblingInnerClassType() throws Exception {
     doTest(new MockIntroduceVariableHandler("vari", true, false, false, "A.B") {
       @Override

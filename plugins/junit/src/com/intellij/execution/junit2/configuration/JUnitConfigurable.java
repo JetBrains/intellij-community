@@ -24,6 +24,7 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
@@ -44,9 +45,7 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.InsertPathAction;
@@ -335,7 +334,21 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     myPackage.setComponent(new EditorTextFieldWithBrowseButton(myProject, false));
 
     myClass = new LabeledComponent<EditorTextFieldWithBrowseButton>();
-    myClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true));
+    final TestClassBrowser classBrowser = new TestClassBrowser(myProject);
+    myClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {
+      @Override
+      public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
+        try {
+          if (declaration instanceof PsiClass && classBrowser.getFilter().isAccepted(((PsiClass)declaration))) {
+            return Visibility.VISIBLE;
+          }
+        }
+        catch (ClassBrowser.NoFilterException e) {
+          return Visibility.NOT_VISIBLE;
+        }
+        return Visibility.NOT_VISIBLE;
+      }
+    }));
 
     myMethod = new LabeledComponent<EditorTextFieldWithBrowseButton>();
     final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(myProject, true);
@@ -500,7 +513,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
 
   private void setPackage(final PsiPackage aPackage) {
     if (aPackage == null) return;
-    ((LabeledComponent<TextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE)).getComponent()
+    ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE)).getComponent()
       .setText(aPackage.getQualifiedName());
   }
 

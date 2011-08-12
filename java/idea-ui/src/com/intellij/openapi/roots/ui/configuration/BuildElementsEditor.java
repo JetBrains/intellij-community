@@ -136,7 +136,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(ProjectBundle.message("project.roots.output.compiler.title"), false,
-                                                        true));
+                                                        true, true));
     panel.add(outputPathsPanel, BorderLayout.NORTH);
     return panel;
   }

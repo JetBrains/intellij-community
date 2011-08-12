@@ -18,13 +18,21 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
   protected String getFeatureUsedKey() {
@@ -36,8 +44,16 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     int offset = editor.getCaretModel().getOffset();
     PsiElement source = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     if (source == null) return null;
-    return new GotoData(source, new ImplementationSearcher().searchImplementations(editor, source, offset),
-                        Collections.<AdditionalAction>emptyList());
+    final GotoData gotoData;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      gotoData = new GotoData(source, new ImplementationSearcher.FirstImplementationsSearcher().searchImplementations(editor, source, offset),
+                              Collections.<AdditionalAction>emptyList());
+      gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset);
+    } else {
+      gotoData = new GotoData(source, new ImplementationSearcher().searchImplementations(editor, source, offset),
+                              Collections.<AdditionalAction>emptyList());
+    }
+    return gotoData;
   }
 
   protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
@@ -49,4 +65,33 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return CodeInsightBundle.message("goto.implementation.notFound");
   }
 
+  private class ImplementationsUpdaterTask extends ListBackgroundUpdaterTask {
+    private Editor myEditor;
+    private int myOffset;
+    private GotoData myGotoData;
+    private final Map<Object, PsiElementListCellRenderer> renderers = new HashMap<Object, PsiElementListCellRenderer>();
+
+    public ImplementationsUpdaterTask(GotoData gotoData, Editor editor, int offset) {
+      super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
+      myEditor = editor;
+      myOffset = offset;
+      myGotoData = gotoData;
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      super.run(indicator);
+      new ImplementationSearcher.BackgroundableImplementationSearcher() {
+        protected void processElement(PsiElement element) {
+          myGotoData.addTarget(element);
+          updateComponent(element, createComparator(renderers, myGotoData));
+        }
+      }.searchImplementations(myEditor, myGotoData.source, myOffset);
+    }
+
+    @Override
+    public String getCaption(int size) {
+      return getChooserTitle(myGotoData.source, ((PsiNamedElement)myGotoData.source).getName(), size);
+    }
+  }
 }

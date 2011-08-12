@@ -559,7 +559,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    Runnable runnable = new ExpirableRunnable.ForProject(myProject) {
+    final Runnable runnable = new ExpirableRunnable.ForProject(myProject) {
       @Override
       public void run() {
         final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
@@ -571,8 +571,19 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (now) {
       runnable.run();
     } else {
-      getFocusManager().doWhenFocusSettlesDown(runnable);
-
+      final FocusRequestor requestor = getFocusManager().getFurtherRequestor();
+      getFocusManager().doWhenFocusSettlesDown(new Runnable() {
+        @Override
+        public void run() {
+          requestor.requestFocus(new FocusCommand() {
+            @Override
+            public ActionCallback run() {
+              runnable.run();
+              return new ActionCallback.Done();
+            }
+          }, forced);
+        }
+      });
     }
   }
 

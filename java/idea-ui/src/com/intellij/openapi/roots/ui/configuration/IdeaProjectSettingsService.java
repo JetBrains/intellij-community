@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -85,21 +84,20 @@ public class IdeaProjectSettingsService extends ProjectSettingsService {
     ShowSettingsUtil.getInstance().editConfigurable(myProject, ProjectStructureConfigurable.getInstance(myProject), new Runnable() {
       @Override
       public void run() {
-        ModuleStructureConfigurable.getInstance(myProject).selectOrderEntry(module, orderEntry);
+        ProjectStructureConfigurable.getInstance(myProject).selectOrderEntry(module, orderEntry);
       }
     });
   }
 
   @Override
-  public boolean canOpenProjectLibrarySettings(NamedLibraryElement value) {
+  public boolean canOpenLibraryOrSdkSettings(OrderEntry orderEntry) {
     return true;
   }
 
-  public void openProjectLibrarySettings(final NamedLibraryElement element) {
+  public void openLibraryOrSdkSettings(@NotNull final OrderEntry orderEntry) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
     ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
       public void run() {
-        final OrderEntry orderEntry = element.getOrderEntry();
         if (orderEntry instanceof JdkOrderEntry) {
           config.select(((JdkOrderEntry)orderEntry).getJdk(), true);
         } else {

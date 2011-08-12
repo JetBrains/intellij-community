@@ -50,10 +50,6 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     super(project, value, viewSettings);
   }
 
-  public NamedLibraryElementNode(final Project project, final Object value, final ViewSettings viewSettings) {
-    this(project, (NamedLibraryElement)value, viewSettings);
-  }
-
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
@@ -107,22 +103,24 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
       final JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
       final Sdk projectJdk = jdkOrderEntry.getJdk();
       if (projectJdk != null) { //jdk not specified
-        presentation.setLocationString(FileUtil.toSystemDependentName(projectJdk.getHomePath()));
+        final String path = projectJdk.getHomePath();
+        if (path != null) {
+          presentation.setLocationString(FileUtil.toSystemDependentName(path));
+        }
       }
+      presentation.setTooltip(IdeBundle.message("node.projectview.jdk"));
+    }
+    else {
+      presentation.setTooltip(StringUtil.capitalize(IdeBundle.message("node.projectview.library", ((LibraryOrderEntry)orderEntry).getLibraryLevel())));
     }
   }
 
-  protected String getToolTip() {
-    OrderEntry orderEntry = getValue().getOrderEntry();
-    return orderEntry instanceof JdkOrderEntry ? IdeBundle.message("node.projectview.jdk") : StringUtil.capitalize(IdeBundle.message("node.projectview.library", ((LibraryOrderEntry)orderEntry).getLibraryLevel()));
-  }
-
   public void navigate(final boolean requestFocus) {
-    ProjectSettingsService.getInstance(myProject).openProjectLibrarySettings(getValue());
+    ProjectSettingsService.getInstance(myProject).openLibraryOrSdkSettings(getValue().getOrderEntry());
   }
 
   public boolean canNavigate() {
-    return ProjectSettingsService.getInstance(myProject).canOpenProjectLibrarySettings(getValue());
+    return ProjectSettingsService.getInstance(myProject).canOpenLibraryOrSdkSettings(getValue().getOrderEntry());
   }
 
   @Override

@@ -20,7 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 
 import javax.swing.*;
@@ -29,15 +29,15 @@ import javax.swing.*;
  * @author nik
  */
 public class AddExistingCustomLibraryAction extends CustomLibraryActionBase {
-  private Library myLibrary;
+  private final Library myLibrary;
 
   public AddExistingCustomLibraryAction(Library library,
                                         Icon icon,
                                         CustomLibraryCreator creator,
                                         StructureConfigurableContext context,
-                                        ModuleStructureConfigurable moduleStructureConfigurable,
+                                        ProjectStructureConfigurable projectStructureConfigurable,
                                         Module module) {
-    super(library.getName(), null, icon, context, moduleStructureConfigurable, creator, module);
+    super(library.getName(), null, icon, context, projectStructureConfigurable, creator, module);
     myLibrary = library;
   }
 
@@ -48,6 +48,6 @@ public class AddExistingCustomLibraryAction extends CustomLibraryActionBase {
       return;
     }
     final LibraryOrderEntry orderEntry = rootModel.addLibraryEntry(myLibrary);
-    myModuleStructureConfigurable.selectOrderEntry(myModule, orderEntry);
+    myProjectStructureConfigurable.selectOrderEntry(myModule, orderEntry);
   }
 }

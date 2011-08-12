@@ -91,12 +91,12 @@ public class CodeStyleImportsPanel extends JPanel {
                                                                          "<% page import=\"com.company.Far\"%>");
     final JPanel labelPanel = new JPanel(new BorderLayout());
     labelPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(20, 10, 0, 0), IdeBorderFactory.createTitledBorder(
-      ApplicationBundle.message("title.preview"), false, false)));
+      ApplicationBundle.message("title.preview"), false, false, true)));
 
     JPanel resultPanel = new JPanel(new BorderLayout());
     resultPanel.add(btnPanel, BorderLayout.NORTH);
     resultPanel.add(labelPanel, BorderLayout.CENTER);
-    resultPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.jsp.imports.layout"), true, true));
+    resultPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.jsp.imports.layout"), true, true, true));
 
 
     ActionListener actionListener = new ActionListener() {
@@ -143,7 +143,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JPanel createPackagesPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with"), true, false));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with"), true, false, true));
 
     panel.add(createPackagesTable(), BorderLayout.CENTER);
     panel.add(createPackagesButtonsPanel(), BorderLayout.EAST);
@@ -152,7 +152,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JPanel createImportLayoutPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), true, false));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), true, false, true));
     myCbLayoutStaticImportsSeparately = new JCheckBox("Layout static imports separately");
 
     myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener(){

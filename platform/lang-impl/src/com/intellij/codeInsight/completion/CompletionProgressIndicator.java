@@ -134,6 +134,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.setCalculating(true);
 
     myQueue = new MergingUpdateQueue("completion lookup progress", 200, true, myEditor.getContentComponent());
+    myQueue.setPassThrough(false);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
@@ -386,7 +387,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myItemSorters.put(item.getLookupElement(), (CompletionSorterImpl) item.getSorter());
     myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher());
     myCount++;
-    if (unitTestMode) return;
 
     if (myCount == 1) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {

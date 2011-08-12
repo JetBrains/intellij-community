@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -88,11 +87,14 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
     fail("Too long completion")
   }
 
-  protected def joinCommit() {
+  protected def joinCommit(Closure cl = {}) {
     final AtomicBoolean committed = new AtomicBoolean()
     edt {
       PsiDocumentManager.getInstance(project).cancelAndRunWhenAllCommitted("wait for all comm") {
-        ApplicationManager.application.invokeLater { committed.set(true) }
+        ApplicationManager.application.invokeLater {
+          cl()
+          committed.set(true) 
+        }
       }
     }
     def start = System.currentTimeMillis()

@@ -36,7 +36,7 @@ public class VisibilityPanel extends JPanel {
   private final JRadioButton myRbPublic;
 
   public VisibilityPanel() {
-    setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("visibility.border.title"), false, true));
+    setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("visibility.border.title"), false, true, true));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     ButtonGroup bg = new ButtonGroup();
 

@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ResolveCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveCache");
   private final Map<PsiPolyVariantReference,Reference<ResolveResult[]>>[] myPolyVariantResolveMaps = new Map[4];
-  private final Map<PsiReference,Reference<PsiElement>>[] myResolveMaps = new Map[4];
+  private final Map<PsiReference,Reference>[] myResolveMaps = new Map[4];
   private final AtomicInteger myClearCount = new AtomicInteger(0);
   private final RecursionGuard myGuard = RecursionManager.createGuard("resolveCache");
 
@@ -58,13 +58,13 @@ public class ResolveCache {
   public ResolveCache(@NotNull MessageBus messageBus) {
     myPolyVariantResolveMaps[0] = new ConcurrentWeakHashMap<PsiPolyVariantReference,Reference<ResolveResult[]>>();
     myPolyVariantResolveMaps[1] = new ConcurrentWeakHashMap<PsiPolyVariantReference,Reference<ResolveResult[]>>();
-    myResolveMaps[0] = new ConcurrentWeakHashMap<PsiReference, Reference<PsiElement>>();
-    myResolveMaps[1] = new ConcurrentWeakHashMap<PsiReference, Reference<PsiElement>>();
+    myResolveMaps[0] = new ConcurrentWeakHashMap<PsiReference, Reference>();
+    myResolveMaps[1] = new ConcurrentWeakHashMap<PsiReference, Reference>();
 
     myPolyVariantResolveMaps[2] = new ConcurrentWeakHashMap<PsiPolyVariantReference, Reference<ResolveResult[]>>();
     myPolyVariantResolveMaps[3] = new ConcurrentWeakHashMap<PsiPolyVariantReference, Reference<ResolveResult[]>>();
-    myResolveMaps[2] = new ConcurrentWeakHashMap<PsiReference, Reference<PsiElement>>();
-    myResolveMaps[3] = new ConcurrentWeakHashMap<PsiReference, Reference<PsiElement>>();
+    myResolveMaps[2] = new ConcurrentWeakHashMap<PsiReference, Reference>();
+    myResolveMaps[3] = new ConcurrentWeakHashMap<PsiReference, Reference>();
 
     messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -136,7 +136,15 @@ public class ResolveCache {
                                        @NotNull Resolver resolver,
                                        boolean needToPreventRecursion,
                                        boolean incompleteCode) {
-    return resolve(ref, resolver, myResolveMaps, needToPreventRecursion, incompleteCode, false);
+    return resolve(ref, resolver, (Map[]) myResolveMaps, needToPreventRecursion, incompleteCode, false);
+  }
+
+  @Nullable
+  public <TRef extends PsiReference, TResult>TResult resolveWithCaching(@NotNull TRef ref,
+                                       @NotNull AbstractResolver<TRef, TResult> resolver,
+                                       boolean needToPreventRecursion,
+                                       boolean incompleteCode) {
+    return (TResult)resolve(ref, resolver, (Map[]) myResolveMaps, needToPreventRecursion, incompleteCode, false);
   }
 
   private static int getIndex(boolean physical, boolean incompleteCode){

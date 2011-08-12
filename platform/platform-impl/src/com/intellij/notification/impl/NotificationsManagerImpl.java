@@ -18,7 +18,6 @@ package com.intellij.notification.impl;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
@@ -83,7 +82,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
   @Override
   public <T extends Notification> T[] getNotificationsOfType(Class<T> klass, @Nullable final Project project) {
-    final List<Notification> notifications = getModel().getByType(null, createFilter(project, false));
+    final List<Notification> notifications = myModel.getByType(null, createFilter(project, false));
     final List<T> result = new ArrayList<T>();
     for (final Notification notification : notifications) {
       if (klass.isInstance(notification)) {
@@ -111,10 +110,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
   public void clear(@Nullable Project project) {
     myModel.clear(createFilter(project, true));
-  }
-
-  public NotificationModel getModel() {
-    return myModel;
   }
 
   public void disposeComponent() {
@@ -245,12 +240,9 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       text.addHyperlinkListener(listener);
     }
 
-    text.setText(NotificationsUtil.buildHtml(notification));
-
-    final JLabel label = new JLabel(text.getText());
-    final Dimension size = label.getPreferredSize();
+    final JLabel label = new JLabel(NotificationsUtil.buildHtml(notification, null));
+    text.setText(NotificationsUtil.buildHtml(notification, "width:" + Math.min(400, label.getPreferredSize().width) + "px;"));
     text.setEditable(false);
-
     text.setOpaque(false);
 
     if (UIUtil.isUnderNimbusLookAndFeel()) {
@@ -258,7 +250,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
 
     text.setBorder(null);
-    text.setPreferredSize(size);
 
     final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
 
@@ -297,32 +288,9 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     return project == null ? APPLICATION : new ProjectFilter(project, strict);
   }
 
-  public boolean hasNotifications(@Nullable final Project project) {
-    return myModel.getCount(createFilter(project, false)) > 0;
-  }
-
-  public void removeListener(@NotNull final NotificationModelListener notificationListener) {
-    myModel.removeListener(notificationListener);
-  }
-
-  public void addListener(@NotNull final NotificationModelListener notificationListener) {
-    myModel.addListener(notificationListener);
-  }
-  public void addListener(@NotNull final NotificationModelListener notificationListener, @NotNull Disposable parentDisposable) {
-    myModel.addListener(notificationListener,parentDisposable);
-  }
-
-  public int count(@Nullable final Project project) {
-    return myModel.getCount(createFilter(project, false));
-  }
-
   @Nullable
   public Notification remove(Notification notification) {
     return myModel.remove(notification);
-  }
-
-  public void remove(@NotNull final Notification[] notification) {
-    myModel.remove(notification);
   }
 
   public Collection<Notification> getByType(@Nullable final NotificationType type, @Nullable final Project project) {

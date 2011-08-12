@@ -17,10 +17,7 @@
 package com.intellij.ui;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -33,7 +30,7 @@ public class CollectionListModel extends AbstractListModel {
   }
 
   public CollectionListModel(final Object... items) {
-    myItems = Arrays.asList(items);
+    myItems = new ArrayList(Arrays.asList(items));
   }
 
   public int getSize() {
@@ -48,6 +45,12 @@ public class CollectionListModel extends AbstractListModel {
     int i = myItems.size();
     myItems.add(element);
     fireIntervalAdded(this, i, i);
+  }
+
+  public void add(List elements) {
+    int i = myItems.size();
+    myItems.addAll(elements);
+    fireIntervalAdded(this, i, i + elements.size() - 1);
   }
 
   public void remove(Object element) {
@@ -83,5 +86,11 @@ public class CollectionListModel extends AbstractListModel {
 
   public List getItems() {
     return Collections.unmodifiableList(myItems);
+  }
+
+  public void replaceAll(List elements) {
+    myItems.clear();
+    myItems.addAll(elements);
+    fireIntervalAdded(this, 0, elements.size() - 1);
   }
 }

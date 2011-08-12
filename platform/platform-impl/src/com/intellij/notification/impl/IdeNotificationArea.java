@@ -97,9 +97,8 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
   }
 
   public String getTooltipText() {
-    final NotificationsManagerImpl manager = NotificationsManagerImpl.getNotificationsManagerImpl();
-    if (manager.hasNotifications(getProject())) {
-      final int count = manager.count(getProject());
+    int count = EventLog.getLogModel(getProject()).getNotifications().size();
+    if (count > 0) {
       return String.format("%s notification%s pending", count, count == 1 ? "" : "s");
     }
 

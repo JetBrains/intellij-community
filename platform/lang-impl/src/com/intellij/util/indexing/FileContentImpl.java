@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.indexing;
 
 import com.intellij.lang.Language;
@@ -32,16 +31,16 @@ import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: Mar 28, 2008
+ * @author nik
  */
-public final class FileContent extends UserDataHolderBase {
+public final class FileContentImpl extends UserDataHolderBase implements FileContent {
   private final VirtualFile myFile;
-  private final String fileName;
+  private final String myFileName;
   private final FileType myFileType;
   private final Charset myCharset;
   private byte[] myContent;
@@ -56,6 +55,8 @@ public final class FileContent extends UserDataHolderBase {
   /**
    * @return psiFile associated with the content. If the file was not set on FileContentCreation, it will be created on the spot
    */
+  @NotNull
+  @Override
   public PsiFile getPsiFile() {
     PsiFile psi = getUserData(FileBasedIndex.PSI_FILE);
 
@@ -84,62 +85,76 @@ public final class FileContent extends UserDataHolderBase {
     }
   }
 
-  public FileContent(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset) {
+  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset) {
     this(file, contentAsText, null, charset);
   }
 
-  public FileContent(@NotNull final VirtualFile file, @NotNull final byte[] content) {
+  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content) {
     this(file, null, content, LoadTextUtil.detectCharsetAndSetBOM(file, content));
   }
 
-  public FileContent(@NotNull final VirtualFile file) {
+  public FileContentImpl(@NotNull final VirtualFile file) {
     this(file, null, null, null);
   }
 
-  @TestOnly
-  public FileContent(byte[] content) {
-    this(null, null, content, null);
-  }
-
-  private FileContent(VirtualFile file, CharSequence contentAsText, byte[] content, Charset charset) {
+  private FileContentImpl(@NotNull VirtualFile file, CharSequence contentAsText, byte[] content, Charset charset) {
     myFile = file;
     myContentAsText = contentAsText;
     myContent = content;
     myCharset = charset;
-    myFileType = file == null ? null : FileTypeManager.getInstance().getFileTypeByFile(file);
+    myFileType = FileTypeManager.getInstance().getFileTypeByFile(file);
     // remember name explicitly because the file could be renamed afterwards
-    fileName = file == null ? null : file.getName();
+    myFileName = file.getName();
   }
 
+  @NotNull
   private FileType substituteFileType(VirtualFile file, FileType fileType) {
     Project project = getProject();
     return SubstitutedFileType.substituteFileType(file, fileType, project);
   }
 
+  @NotNull
   public FileType getSubstitutedFileType() {
     return substituteFileType(myFile, myFileType);
+  }
+
+  @TestOnly
+  public static FileContent createByFile(@NotNull VirtualFile file) {
+    try {
+      return new FileContentImpl(file, file.contentsToByteArray());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public FileType getFileTypeWithoutSubstitution() {
     return myFileType;
   }
 
+  @NotNull
+  @Override
   public FileType getFileType() {
     return getSubstitutedFileType();
   }
 
+  @NotNull
+  @Override
   public VirtualFile getFile() {
     return myFile;
   }
 
+  @NotNull
+  @Override
   public String getFileName() {
-    return fileName;
+    return myFileName;
   }
 
   public Charset getCharset() {
     return myCharset;
   }
 
+  @Override
   public byte[] getContent() {
     if (myContent == null) {
       if (myContentAsText != null) {
@@ -154,6 +169,7 @@ public final class FileContent extends UserDataHolderBase {
     return myContent;
   }
 
+  @Override
   public CharSequence getContentAsText() {
     if (myFileType.isBinary()) {
       throw new IllegalDataException("Cannot obtain text for binary file type : " + myFileType.getDescription());
@@ -168,6 +184,6 @@ public final class FileContent extends UserDataHolderBase {
 
   @Override
   public String toString() {
-    return fileName;
+    return myFileName;
   }
 }

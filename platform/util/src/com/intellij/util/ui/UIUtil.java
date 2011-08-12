@@ -1451,11 +1451,11 @@ public class UIUtil {
   }
 
   public static Color getBorderColor() {
-    return BORDER_COLOR;
+    return UIManager.getColor("Separator.foreground");
   }
 
   public static Font getBorderFont() {
-    return UIUtil.getFont(FontSize.SMALL, UIManager.getFont("TitledBorder.font"));
+    return UIManager.getFont("TitledBorder.font");
   }
 
   /**

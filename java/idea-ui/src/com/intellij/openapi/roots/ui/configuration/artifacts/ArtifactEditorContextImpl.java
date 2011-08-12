@@ -30,7 +30,6 @@ import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ArtifactType;
@@ -124,7 +123,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
             final ModuleLibraryOrderEntryImpl libraryEntry = (ModuleLibraryOrderEntryImpl)entry;
             if (libraryName != null && libraryName.equals(libraryEntry.getLibraryName())
                || libraryName == null && library.equals(libraryEntry.getLibrary())) {
-              ModuleStructureConfigurable.getInstance(getProject()).selectOrderEntry(module, libraryEntry);
+              ProjectStructureConfigurable.getInstance(getProject()).selectOrderEntry(module, libraryEntry);
               return;
             }
           }

@@ -20,12 +20,11 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
+import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -34,35 +33,36 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class TypedHandler extends TypedActionHandlerBase {
+public class LookupTypedHandler extends TypedHandlerDelegate {
   private static boolean inside = false;
 
-  public TypedHandler(TypedActionHandler originalHandler){
-    super(originalHandler);
+  @Override
+  public Result checkAutoPopup(char charTyped, Project project, Editor editor, PsiFile file) {
+    return LookupManager.getActiveLookup(editor) != null ? Result.STOP : Result.CONTINUE;
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-  public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext){
+  @Override
+  public Result beforeCharTyped(final char charTyped,
+                                Project project,
+                                final Editor editor,
+                                PsiFile file,
+                                FileType fileType) {
     assert !inside;
     inside = true;
     try {
       final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup == null){
-        if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
-        return;
-      }
-
-      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
-        return;
+        return Result.CONTINUE;
       }
 
       final CharFilter.Result result = getLookupAction(charTyped, lookup);
@@ -85,13 +85,13 @@ public class TypedHandler extends TypedActionHandlerBase {
           AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor, null);
         }
 
-        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStamp);
+        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, null, modificationStamp);
 
         final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
         if (completion != null) {
           completion.prefixUpdated();
         }
-        return;
+        return Result.STOP;
       }
 
       if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
@@ -109,12 +109,12 @@ public class TypedHandler extends TypedActionHandlerBase {
           finally {
             ((CommandProcessorEx)CommandProcessor.getInstance()).leaveModal();
           }
-          return;
+          return Result.STOP;
         }
       }
 
       lookup.hide();
-      if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
+      return Result.CONTINUE;
     }
     finally {
       inside = false;

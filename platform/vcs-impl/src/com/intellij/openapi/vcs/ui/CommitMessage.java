@@ -62,7 +62,7 @@ public class CommitMessage extends JPanel implements Disposable {
 
     JPanel labelPanel = new JPanel(new BorderLayout());
     labelPanel.setBorder(BorderFactory.createEmptyBorder());
-    JComponent separator = SeparatorFactory.createSeparatorWithBoldTitle(VcsBundle.message("label.commit.comment"), myEditorField.getComponent());
+    JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent(), true, true);
     JPanel separatorPanel = new JPanel(new BorderLayout());
     separatorPanel.add(separator, BorderLayout.SOUTH);
     separatorPanel.add(Box.createVerticalGlue(), BorderLayout.NORTH);

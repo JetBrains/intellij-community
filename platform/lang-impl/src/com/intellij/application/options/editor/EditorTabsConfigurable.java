@@ -42,6 +42,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   private JRadioButton myActivateMRUEditorOnCloseRadio;
   private JCheckBox myCbModifiedTabsMarkedWithAsterisk;
   private JCheckBox myShowCloseButtonOnCheckBox;
+  private JCheckBox myShowDirectoryInTabCheckBox;
 
   public EditorTabsConfigurable() {
     myEditorTabPlacement.setModel(new DefaultComboBoxModel(new Object[]{
@@ -63,7 +64,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
   private void revalidateSingleRowCheckbox() {
     final int i = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
-    if (SwingUtilities.TOP != i) {
+    if (SwingConstants.TOP != i) {
       myScrollTabLayoutInEditorCheckBox.setSelected(true);
       myScrollTabLayoutInEditorCheckBox.setEnabled(false);
     } else {
@@ -95,6 +96,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myScrollTabLayoutInEditorCheckBox.setSelected(uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR);
     myEditorTabPlacement.setSelectedItem(uiSettings.EDITOR_TAB_PLACEMENT);
     myHideKnownExtensions.setSelected(uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS);
+    myShowDirectoryInTabCheckBox.setSelected(uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES);
     myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
     myShowCloseButtonOnCheckBox.setSelected(uiSettings.SHOW_CLOSE_BUTTON);
 
@@ -132,6 +134,10 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     if (uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS != hide) uiSettingsChanged = true;
     uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS = hide;
 
+    boolean dir = myShowDirectoryInTabCheckBox.isSelected();
+    if (uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES != hide) uiSettingsChanged = true;
+    uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = myShowDirectoryInTabCheckBox.isSelected();
+
     uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST = myCloseNonModifiedFilesFirstRadio.isSelected();
     uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE = myActivateMRUEditorOnCloseRadio.isSelected();
 
@@ -157,6 +163,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
     isModified |= tabPlacement != uiSettings.EDITOR_TAB_PLACEMENT;
     isModified |= myHideKnownExtensions.isSelected() != uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS;
+    isModified |= myShowDirectoryInTabCheckBox.isSelected() != uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES;
 
     isModified |= myScrollTabLayoutInEditorCheckBox.isSelected() != uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR;
     isModified |= myShowCloseButtonOnCheckBox.isSelected() != uiSettings.SHOW_CLOSE_BUTTON;

@@ -34,9 +34,17 @@ public class NotificationsUtil {
   private NotificationsUtil() {
   }
 
-  public static String buildHtml(@NotNull final Notification notification) {
-    return new StringBuilder().append("<html><b>").append(notification.getTitle()).append("</b><p>").append(notification.getContent())
-      .append("</p></html>").toString();
+  public static String buildHtml(@NotNull final Notification notification, @Nullable String style) {
+    String result = "<html>";
+    if (style != null) {
+      result += "<div style=\"" + style + "\">";
+    }
+    result += "<b>" + notification.getTitle() + "</b><p>" + notification.getContent() + "</p>";
+    if (style != null) {
+      result += "</div>";
+    }
+    result += "</html>";
+    return result;
   }
 
   @Nullable

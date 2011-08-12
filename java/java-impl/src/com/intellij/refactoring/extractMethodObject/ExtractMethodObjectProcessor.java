@@ -202,7 +202,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         memberInfos.add(new MemberInfo((PsiMethod)usage.getElement()));
       }
 
-      final MemberSelectionPanel panel = new MemberSelectionPanel("Methods to move to the extracted class", memberInfos, null);
+      final MemberSelectionPanel panel = new MemberSelectionPanel("&Methods to move to the extracted class", memberInfos, null);
       DialogWrapper dlg = new DialogWrapper(myProject, false) {
         {
           init();

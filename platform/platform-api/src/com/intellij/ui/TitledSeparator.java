@@ -25,29 +25,35 @@ import java.awt.*;
  * @author cdr
  */
 public class TitledSeparator extends JPanel {
-  protected final JLabel myLabel = new JLabel();
+  protected final JLabel myLabel;
+  private boolean boldFont;
+  private boolean smallFont;
 
   public TitledSeparator() {
-    setLayout(new GridBagLayout());
-    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
+    this("");
+  }
 
+  public TitledSeparator(String text) {
+    this(text, false, true);
+  }
+  
+  public TitledSeparator(String text, boolean boldFont, boolean smallFont) {
+    setLayout(new GridBagLayout());
+    this.myLabel = new JLabel();
+    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
     Color oldColor = UIManager.getColor("Separator.foreground");
     UIManager.put("Separator.foreground", UIUtil.getBorderColor());
     JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
     UIManager.put("Separator.foreground", oldColor);
-
     add(separator,
         new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                               new Insets(3, 0, 0, 2), 0, 0));
-
-    setTitleFont(UIUtil.getBorderFont());
-
+                               new Insets(3, 0, 0, 0), 0, 0));
     setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
-  }
 
-  public TitledSeparator(String text) {
-    this();
     setText(text);
+    setTitleFont(UIUtil.getBorderFont());
+    setBoldFont(boldFont);
+    setSmallFont(smallFont);
   }
 
   public String getText() {
@@ -64,6 +70,24 @@ public class TitledSeparator extends JPanel {
 
   public Font getTitleFont() {
     return myLabel.getFont();
+  }
+
+  public boolean isBoldFont() {
+    return boldFont;
+  }
+
+  public boolean isSmallFont() {
+    return smallFont;
+  }
+
+  public void setBoldFont(boolean boldFont) {
+    this.boldFont = boldFont;
+    this.setTitleFont(this.getTitleFont().deriveFont(boldFont ? Font.BOLD : Font.PLAIN));
+  }
+
+  public void setSmallFont(boolean smallFont) {
+    this.smallFont = smallFont;
+    this.setTitleFont(UIUtil.getFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, this.getTitleFont()));
   }
 
 }

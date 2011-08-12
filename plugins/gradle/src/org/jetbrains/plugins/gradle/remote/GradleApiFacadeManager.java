@@ -24,13 +24,12 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiBundle;
+import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.remote.api.GradleApiFacade;
-import org.jetbrains.plugins.gradle.remote.api.RemoteGradleProcessSettings;
 import org.jetbrains.plugins.gradle.remote.impl.GradleApiFacadeImpl;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
@@ -57,6 +56,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GradleApiFacadeManager {
 
+  private static final String REMOTE_PROCESS_TTL_IN_MS_KEY = "gradle.remote.process.ttl.ms";
+  
   private static final String MAIN_CLASS_NAME                      = GradleApiFacadeImpl.class.getName();
   private static final int    REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER = 3;
 
@@ -65,6 +66,9 @@ public class GradleApiFacadeManager {
 
   private final GradleLibraryManager myGradleLibraryManager = GradleLibraryManager.INSTANCE;
 
+  // Please note that we don't use RemoteGradleProcessSettings as the 'Configuration' type parameter here because we need
+  // to apply the settings to the newly created process. I.e. every time new process is created we need to call
+  // 'GradleApiFacade.applySettings()'. So, we need to hold reference to the last returned 'GradleApiFacade' stub anyway.
   private final RemoteProcessSupport<Object, GradleApiFacade, Object> mySupport;
   private final GradleApiFacade                                       myApiFacade;
 
@@ -114,6 +118,7 @@ public class GradleApiFacadeManager {
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(THashSet.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(LanguageLevel.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(PsiBundle.class), classPath);
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Alarm.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(getClass()), classPath);
         for (File library : gradleLibraries) {
           classPath.add(library.getAbsolutePath());
@@ -134,6 +139,7 @@ public class GradleApiFacadeManager {
         return new DefaultExecutionResult(null, processHandler, AnAction.EMPTY_ARRAY);
       }
 
+      @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();
         Sdk sdk = params.getJdk();
@@ -195,6 +201,7 @@ public class GradleApiFacadeManager {
         return pair.first;
       }
       mySupport.stopAll(true);
+      myFacade.compareAndSet(pair, null);
     }
 
     GradleApiFacade result = mySupport.acquire(this, "");
@@ -229,7 +236,18 @@ public class GradleApiFacadeManager {
   @NotNull
   private RemoteGradleProcessSettings getRemoteSettings() {
     File gradleHome = myGradleLibraryManager.getGradleHome();
-    return new RemoteGradleProcessSettings(gradleHome.getAbsolutePath());
+    RemoteGradleProcessSettings result = new RemoteGradleProcessSettings(gradleHome.getAbsolutePath());
+    String ttlAsString = System.getProperty(REMOTE_PROCESS_TTL_IN_MS_KEY);
+    if (ttlAsString != null) {
+      try {
+        long ttl = Long.parseLong(ttlAsString.trim());
+        result.setTtlInMs(ttl);
+      }
+      catch (NumberFormatException e) {
+        GradleLog.LOG.warn("Incorrect remote process ttl value detected. Expected to find number, found '" + ttlAsString + "'");
+      }
+    }
+    return result;
   }
   
   private class MyHandler implements InvocationHandler {

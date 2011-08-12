@@ -66,10 +66,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.*;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.psi.search.scope.packageSet.PackageSetBase;
+import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -122,6 +119,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         final Object component = treePath.getLastPathComponent();
         if (component instanceof PackageDependenciesNode) {
           ((PackageDependenciesNode)component).updateColor();
+          for (int i = 0; i< ((PackageDependenciesNode)component).getChildCount(); i++) {
+            ((PackageDependenciesNode)((PackageDependenciesNode)component).getChildAt(i)).updateColor();
+          }
         }
       }
     }
@@ -264,12 +264,12 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   private void refreshScope(@Nullable NamedScope scope) {
     FileTreeModelBuilder.clearCaches(myProject);
-    if (scope == null || scope.getValue() == null) { //was deleted
+    if (scope == null) { //was deleted
       scope = DefaultScopesProvider.getAllScope();
     }
     LOG.assertTrue(scope != null);
     final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager);
-    final PackageSet packageSet = scope.getValue();
+    final PackageSet packageSet = scope.getValue() != null ? scope.getValue() : new InvalidPackageSet("");
     final DependenciesPanel.DependencyPanelSettings settings = new DependenciesPanel.DependencyPanelSettings();
     settings.UI_FILTER_LEGALS = true;
     settings.UI_GROUP_BY_SCOPE_TYPE = false;
@@ -401,14 +401,24 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     if (rootToReload != null) {
       final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myTree, new TreePath(rootToReload.getPath()));
       ((DefaultTreeModel)myTree.getModel()).reload(rootToReload);
-      TreePath path = new TreePath(rootToReload.getPath());
-      if (!myTree.isCollapsed(path)) {
-        myTree.collapsePath(path);
-        for (TreePath treePath : treePaths) {
-          myTree.expandPath(treePath);
+      final TreePath path = new TreePath(rootToReload.getPath());
+      final boolean wasCollapsed = myTree.isCollapsed(path);
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          if (!wasCollapsed) {
+            myTree.collapsePath(path);
+            for (TreePath treePath : treePaths) {
+              myTree.expandPath(treePath);
+            }
+          }
+          TreeUtil.sort(rootToReload, getNodeComparator());
         }
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        runnable.run();
+      } else {
+        SwingUtilities.invokeLater(runnable);
       }
-      TreeUtil.sort(rootToReload, getNodeComparator());
     }
     else {
       TreeUtil.sort(treeModel, getNodeComparator());
@@ -487,7 +497,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
     private void processNodeCreation(final PsiElement psiElement) {
       if (psiElement instanceof PsiFile && !isInjected((PsiFile)psiElement)) {
-        reload(myBuilder.addFileNode((PsiFile)psiElement));
+        final PackageDependenciesNode rootToReload = myBuilder.addFileNode((PsiFile)psiElement);
+        if (rootToReload != null) {
+          reload(rootToReload);
+        }
       }
       else if (psiElement instanceof PsiDirectory) {
         final PsiElement[] children = psiElement.getChildren();
@@ -527,7 +540,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
               if (virtualFile != null) {
                 final PsiFile newFile = file.isValid() ? file : PsiManager.getInstance(myProject).findFile(virtualFile);
                 if (newFile != null) {
-                  reload(myBuilder.addFileNode(newFile));
+                  final PackageDependenciesNode rootToReload = myBuilder.addFileNode(newFile);
+                  if (rootToReload != null) {
+                    reload(rootToReload);
+                  }
                 }
               }
             }

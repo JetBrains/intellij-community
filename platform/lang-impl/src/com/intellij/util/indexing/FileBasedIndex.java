@@ -1196,7 +1196,7 @@ public class FileBasedIndex implements ApplicationComponent {
               return;
             }
 
-            final FileContent newFc = new FileContent(vFile, contentText, vFile.getCharset());
+            final FileContentImpl newFc = new FileContentImpl(vFile, contentText, vFile.getCharset());
 
             if (dominantContentFile != null) {
               dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
@@ -1341,7 +1341,7 @@ public class FileBasedIndex implements ApplicationComponent {
   public void indexFileContent(@Nullable Project project, com.intellij.ide.caches.FileContent content) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
     final VirtualFile file = content.getVirtualFile();
-    FileContent fc = null;
+    FileContentImpl fc = null;
 
     PsiFile psiFile = null;
 
@@ -1355,7 +1355,7 @@ public class FileBasedIndex implements ApplicationComponent {
           catch (IOException e) {
             currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
           }
-          fc = new FileContent(file, currentBytes);
+          fc = new FileContentImpl(file, currentBytes);
 
           psiFile = content.getUserData(PSI_FILE);
           if (psiFile != null) {
@@ -1524,7 +1524,7 @@ public class FileBasedIndex implements ApplicationComponent {
             if (getInputFilter(indexId).acceptInput(file)) {
               try {
                 if (fileContent == null) {
-                  fileContent = new FileContent(file);
+                  fileContent = new FileContentImpl(file);
                 }
                 updateSingleIndex(indexId, file, fileContent);
               }
@@ -1814,7 +1814,7 @@ public class FileBasedIndex implements ApplicationComponent {
                 oldStuff = false;
                 try {
                   if (fileContent == null) {
-                    fileContent = new FileContent(file);
+                    fileContent = new FileContentImpl(file);
                   }
                   updateSingleIndex(indexId, file, fileContent);
                 }

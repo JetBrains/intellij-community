@@ -99,6 +99,10 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   }
 
   @Override
+  public void revalidateFocus(@NotNull ExpirableRunnable runnable) {
+  }
+
+  @Override
   public Component getFocusOwner() {
     return null;
   }

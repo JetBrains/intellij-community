@@ -16,6 +16,12 @@ import java.util.Set;
 public interface GradleProject {
 
   @NotNull
+  String getName();
+
+  @NotNull
+  String getCompileOutputPath();
+  
+  @NotNull
   String getJdkName();
   
   @NotNull

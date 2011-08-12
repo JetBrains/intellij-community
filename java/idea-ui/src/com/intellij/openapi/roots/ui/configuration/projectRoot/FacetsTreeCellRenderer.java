@@ -64,7 +64,7 @@ public class FacetsTreeCellRenderer extends GroupedElementsRenderer.Tree impleme
         }
         final JComponent component = configureComponent(configurable.getDisplayName(), null, icon, icon, selected, showSeparator, null,
                                                         width);
-        myTextLabel.setOpaque(selected);
+        myTextLabel.setOpaque(true);
         return component;
       }
     }

@@ -86,7 +86,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     else if (node instanceof ModuleNode) {
       if (!recursively) return null;
       final String modulePattern = ((ModuleNode)node).getModuleName();
-      return new FilePatternPackageSet(modulePattern, "*//*");
+      return new FilePatternPackageSet(modulePattern, "*/");
     }
 
     else if (node instanceof DirectoryNode) {

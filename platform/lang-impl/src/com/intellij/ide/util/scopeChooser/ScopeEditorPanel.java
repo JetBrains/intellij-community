@@ -41,6 +41,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,6 +135,16 @@ public class ScopeEditorPanel {
     });
 
     initTree(myPackageTree);
+    new UiNotifyConnector(myPanel, new Activatable() {
+      @Override
+      public void showNotify() {
+      }
+
+      @Override
+      public void hideNotify() {
+        cancelCurrentProgress();
+      }
+    });
   }
 
   private void updateCaretPositionText() {
@@ -165,6 +177,7 @@ public class ScopeEditorPanel {
   private void onTextChange() {
     if (!myIsInUpdate) {
       myUpdateAlarm.cancelAllRequests();
+      myTextChanged = true;
       final String text = myPatternField.getText();
       myCurrentScope = new InvalidPackageSet(text);
       try {
@@ -172,13 +185,12 @@ public class ScopeEditorPanel {
           myCurrentScope = PackageSetFactory.getInstance().compile(text);
         }
         myErrorMessage = null;
-        myTextChanged = true;
-        rebuild(false);
       }
       catch (Exception e) {
         myErrorMessage = e.getMessage();
         showErrorMessage();
       }
+      rebuild(false);
     }
     else if (!invalidScopeInside(myCurrentScope)){
       myErrorMessage = null;
@@ -404,15 +416,21 @@ public class ScopeEditorPanel {
       public void run() {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
-            myIsInUpdate = true;
             if (updateText) {
               final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                  myPatternField.setText(text);
+                  try {
+                    myIsInUpdate = true;
+                    myPatternField.setText(text);
+                  }
+                  finally {
+                    myIsInUpdate = false;
+                  }
                 }
               });
             }
+
             try {
               if (!myProject.isDisposed()) {
                 updateTreeModel(requestFocus);
@@ -424,7 +442,6 @@ public class ScopeEditorPanel {
             if (runnable != null) {
               runnable.run();
             }
-            myIsInUpdate = false;
           }
         });
       }
@@ -508,7 +525,7 @@ public class ScopeEditorPanel {
   }
 
   protected PanelProgressIndicator createProgressIndicator(final boolean requestFocus) {
-    return new MyPanelProgressIndicator(true, requestFocus);
+    return new MyPanelProgressIndicator(requestFocus);
   }
 
   public void cancelCurrentProgress(){
@@ -641,16 +658,14 @@ public class ScopeEditorPanel {
   }
 
   protected class MyPanelProgressIndicator extends PanelProgressIndicator {
-    private final boolean myCheckVisible;
     private final boolean myRequestFocus;
 
-    public MyPanelProgressIndicator(final boolean checkVisible, final boolean requestFocus) {
+    public MyPanelProgressIndicator(final boolean requestFocus) {
       super(new Consumer<JComponent>() {
         public void consume(final JComponent component) {
           setToComponent(component, requestFocus);
         }
       });
-      myCheckVisible = checkVisible;
       myRequestFocus = requestFocus;
     }
 
@@ -660,7 +675,7 @@ public class ScopeEditorPanel {
     }
 
     public boolean isCanceled() {
-      return super.isCanceled() || myTextChanged || (myCheckVisible && !myPanel.isShowing());
+      return super.isCanceled() || myTextChanged;
     }
 
     public void stop() {

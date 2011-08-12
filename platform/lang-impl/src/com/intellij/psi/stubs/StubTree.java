@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileContentImpl;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +111,7 @@ public class StubTree {
     }
 
     try {
-      final FileContent fc = new FileContent(vFile, vFile.contentsToByteArray());
+      final FileContent fc = new FileContentImpl(vFile, vFile.contentsToByteArray());
       fc.putUserData(FileBasedIndex.PROJECT, project);
       final StubElement element = StubUpdatingIndex.buildStubTree(fc);
       if (element instanceof PsiFileStub) {
