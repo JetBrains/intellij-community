@@ -236,7 +236,7 @@ public class VcsChangeDetailsManager {
                                           final LinkedList<DiffPanel> diffPanelCache) {
       myRequestFromChange = new FragmentedDiffRequestFromChange(project);
       myProject = project;
-      myDiffPanelCache = new LinkedList<DiffPanel>();
+      myDiffPanelCache = diffPanelCache;
     }
 
     @Override
