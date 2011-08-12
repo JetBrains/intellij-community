@@ -149,7 +149,7 @@ public class ResolveCache {
                                        @NotNull AbstractResolver<TRef, TResult> resolver,
                                        boolean needToPreventRecursion,
                                        boolean incompleteCode) {
-    return resolve(ref, resolver, (Map[]) myResolveMaps, needToPreventRecursion, incompleteCode, false);
+    return (TResult)resolve(ref, resolver, (Map[]) myResolveMaps, needToPreventRecursion, incompleteCode, false);
   }
 
   private static int getIndex(boolean physical, boolean incompleteCode){
