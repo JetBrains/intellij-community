@@ -172,7 +172,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
                 final int answer = Messages.showCheckboxMessageDialog(
                   DebuggerBundle.message("hotswap.dialog.hang.warning"),
                   DebuggerBundle.message("hotswap.dialog.title"),
-                  new String[]{CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText()},
+                  new String[]{"Perform &Reload Classes", "&Skip Reload Classes"},
                   CommonBundle.message("dialog.options.do.not.show"),
                   false, 1, 1, Messages.getWarningIcon(),
                   new PairFunction<Integer, JCheckBox, Integer>() {
