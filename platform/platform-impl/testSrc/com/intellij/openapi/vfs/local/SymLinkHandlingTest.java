@@ -1,0 +1,135 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.openapi.vfs.local;
+
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
+
+import java.io.File;
+import java.io.IOException;
+
+public class SymLinkHandlingTest extends LightPlatformTestCase {
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  public SymLinkHandlingTest() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
+
+  public void testBadLinksAreIgnored() throws Exception {
+    if (!SystemInfo.areSymLinksSupported) return;
+
+    final File missingFile = new File(FileUtil.getTempDirectory(), "missing_file");
+    assertTrue(missingFile.getAbsolutePath(), !missingFile.exists() || missingFile.delete());
+    final File missingLinkFile = createTempLink(missingFile.getAbsolutePath(), "missing_link");
+    final VirtualFile missingLinkVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(missingLinkFile);
+    assertNull(missingLinkVFile);
+
+    final File selfLinkFile = createTempLink("self_link", "self_link");
+    final VirtualFile selfLinkVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(selfLinkFile);
+    assertNull(selfLinkVFile);
+  }
+
+  public void testTargetIsWriteable() throws Exception {
+    if (!SystemInfo.areSymLinksSupported) return;
+
+    final File targetFile = FileUtil.createTempFile("target", "");
+    final File linkFile = createTempLink(targetFile.getAbsolutePath(), "link");
+    final VirtualFile linkVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkFile);
+    assertTrue("link=" + linkFile + ", vLink=" + linkVFile, linkVFile != null && !linkVFile.isDirectory() && linkVFile.isSymLink());
+
+    assertTrue(targetFile.getAbsolutePath(), targetFile.setWritable(true, false) && targetFile.canWrite());
+    linkVFile.refresh(false, false);
+    assertTrue(linkVFile.getPath(), linkVFile.isWritable());
+    assertTrue(targetFile.getAbsolutePath(), targetFile.setWritable(false, false) && !targetFile.canWrite());
+    linkVFile.refresh(false, false);
+    assertFalse(linkVFile.getPath(), linkVFile.isWritable());
+
+    final File targetDir = FileUtil.createTempDirectory("targetDir", "");
+    final File linkDir = createTempLink(targetDir.getAbsolutePath(), "linkDir");
+    final VirtualFile linkVDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkDir);
+    assertTrue("link=" + linkDir + ", vLink=" + linkVDir, linkVDir != null && linkVDir.isDirectory() && linkVDir.isSymLink());
+
+    assertTrue(targetDir.getAbsolutePath(), targetDir.setWritable(true, false) && targetDir.canWrite());
+    linkVDir.refresh(false, true);
+    assertTrue(linkVDir.getPath(), linkVDir.isWritable());
+    assertTrue(targetDir.getAbsolutePath(), targetDir.setWritable(false, false) && !targetDir.canWrite());
+    linkVDir.refresh(false, true);
+    assertFalse(linkVDir.getPath(), linkVDir.isWritable());
+  }
+
+  public void testLinkDeleteIsSafe() throws Exception {
+    if (!SystemInfo.areSymLinksSupported) return;
+
+    final File targetFile = FileUtil.createTempFile("target", "");
+    final File linkFile = createTempLink(targetFile.getAbsolutePath(), "link");
+    final VirtualFile linkVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkFile);
+    assertTrue("link=" + linkFile + ", vLink=" + linkVFile, linkVFile != null && !linkVFile.isDirectory() && linkVFile.isSymLink());
+
+    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+    try {
+      linkVFile.delete(this);
+    }
+    finally {
+      token.finish();
+    }
+    assertFalse(linkVFile.toString(), linkVFile.isValid());
+    assertFalse(linkFile.exists());
+    assertTrue(targetFile.exists());
+
+    final File targetDir = FileUtil.createTempDirectory("targetDir", "");
+    final File childFile = new File(targetDir, "child.txt");
+    assertTrue(childFile.getAbsolutePath(), childFile.exists() || childFile.createNewFile());
+    final File linkDir = createTempLink(targetDir.getAbsolutePath(), "linkDir");
+    final VirtualFile linkVDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkDir);
+    assertTrue("link=" + linkDir + ", vLink=" + linkVDir,
+               linkVDir != null && linkVDir.isDirectory() && linkVDir.isSymLink() && linkVDir.getChildren().length == 1);
+
+    token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+    try {
+      linkVDir.delete(this);
+    }
+    finally {
+      token.finish();
+    }
+    assertFalse(linkVDir.toString(), linkVDir.isValid());
+    assertFalse(linkDir.exists());
+    assertTrue(targetDir.exists());
+    assertTrue(childFile.exists());
+  }
+
+  // todo[r.sh] use NIO2 API after migration to JDK 7
+  private static File createTempLink(final String target, final String link) throws IOException, InterruptedException {
+    final File linkFile = new File(FileUtil.getTempDirectory(), link);
+    assertTrue(link, !linkFile.exists() || linkFile.delete());
+    final File parentDir = linkFile.getParentFile();
+    assertTrue("link=" + link + ", parent=" + parentDir, parentDir != null && (parentDir.isDirectory() || parentDir.mkdirs()));
+
+    final ProcessBuilder builder = new ProcessBuilder("ln", "-s", target, linkFile.getAbsolutePath());
+    final Process process = builder.start();
+    final int res = process.waitFor();
+    assertTrue(builder.command() + ": " + res, res == 0);
+    final File targetFile = new File(target);
+    assertTrue("target=" + target + ", link=" + linkFile,
+               linkFile.exists() == targetFile.exists() &&
+               linkFile.getCanonicalPath().equals(targetFile.getAbsolutePath()) == targetFile.exists());
+    return linkFile;
+  }
+}

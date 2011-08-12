@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.intellij.ide.util;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,7 +49,10 @@ public class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
     public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
       if (location instanceof DeleteTypeDescriptionLocation) {
         final boolean plural = ((DeleteTypeDescriptionLocation)location).isPlural();
-        int count = plural ? 2 : 1;
+        final int count = plural ? 2 : 1;
+        if (element instanceof PsiFileSystemItem && PsiUtilBase.isSymLink((PsiFileSystemItem)element)) {
+          return IdeBundle.message("prompt.delete.symlink", count);
+        }
         if (element instanceof PsiFile) {
           return IdeBundle.message("prompt.delete.file", count);
         }

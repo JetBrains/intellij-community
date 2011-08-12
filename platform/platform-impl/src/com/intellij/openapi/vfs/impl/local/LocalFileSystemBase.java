@@ -340,10 +340,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static void delete(File physicalFile) throws IOException {
-    File[] list = physicalFile.listFiles();
-    if (list != null) {
-      for (File aList : list) {
-        delete(aList);
+    if (!SymLinkUtil.isSymLink(physicalFile)) {
+      File[] list = physicalFile.listFiles();
+      if (list != null) {
+        for (File aList : list) {
+          delete(aList);
+        }
       }
     }
     if (!physicalFile.delete()) {

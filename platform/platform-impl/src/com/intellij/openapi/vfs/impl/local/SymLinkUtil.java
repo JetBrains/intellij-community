@@ -25,6 +25,7 @@ import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.lang.reflect.Method;
 
 // todo[r.sh] use NIO2 API after migration to JDK 7
@@ -61,7 +62,11 @@ public class SymLinkUtil {
 
   private SymLinkUtil() { }
 
-  public static boolean isSymLink(final String path) {
+  public static boolean isSymLink(@NotNull final File file) {
+    return isSymLink(file.getAbsolutePath());
+  }
+
+  public static boolean isSymLink(@NotNull final String path) {
     try {
       return ourMediator != null && ourMediator.isSymLink(path);
     }

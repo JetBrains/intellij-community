@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import javax.swing.*;
 import java.util.Collection;
 
 public class PsiUtilBase {
+  @SuppressWarnings("ConstantConditions")
   public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
       @NotNull
       public Project getProject() {
@@ -626,9 +627,15 @@ public class PsiUtilBase {
     if (collection.isEmpty()) return PsiElement.EMPTY_ARRAY;
     return collection.toArray(new PsiElement[collection.size()]);
   }
+
   @NotNull
   public static PsiFile[] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
     if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
     return collection.toArray(new PsiFile[collection.size()]);
+  }
+
+  public static boolean isSymLink(@NotNull final PsiFileSystemItem element) {
+    final VirtualFile virtualFile = element.getVirtualFile();
+    return virtualFile != null && virtualFile.isSymLink();
   }
 }

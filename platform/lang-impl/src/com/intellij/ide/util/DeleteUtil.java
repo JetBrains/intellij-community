@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
 
 import java.text.MessageFormat;
 import java.util.Map;
@@ -31,23 +30,12 @@ import java.util.Map;
  * @author dsl
  */
 public class DeleteUtil {
-  private DeleteUtil() {}
-
-  public static void appendMessage(int count, @NonNls String propertyKey, StringBuffer buffer) {
-    if (count > 0) {
-      if (buffer.length() > 0) {
-        buffer.append(" ").append(IdeBundle.message("prompt.delete.and")).append(" ");
-      }
-      buffer.append(count);
-      buffer.append(' ');
-      buffer.append(IdeBundle.message(propertyKey, count));
-    }
-  }
+  private DeleteUtil() { }
 
   public static String generateWarningMessage(String messageTemplate, final PsiElement[] elements) {
     if (elements.length == 1) {
-      String name = ElementDescriptionUtil.getElementDescription(elements [0], DeleteNameDescriptionLocation.INSTANCE);
-      String type = ElementDescriptionUtil.getElementDescription(elements [0], DeleteTypeDescriptionLocation.SINGULAR);
+      String name = ElementDescriptionUtil.getElementDescription(elements[0], DeleteNameDescriptionLocation.INSTANCE);
+      String type = ElementDescriptionUtil.getElementDescription(elements[0], DeleteTypeDescriptionLocation.SINGULAR);
       return MessageFormat.format(messageTemplate, type + " \"" + name + "\"");
     }
 
@@ -71,7 +59,7 @@ public class DeleteUtil {
       }
     }
 
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
       if (buffer.length() > 0) {
         if (buffer.length() > 0) {
