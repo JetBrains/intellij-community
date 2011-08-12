@@ -32,6 +32,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,15 +57,15 @@ public class ResolveCache {
   }
 
   public ResolveCache(@NotNull MessageBus messageBus) {
-    myPolyVariantResolveMaps[0] = new ConcurrentWeakHashMap<PsiPolyVariantReference,Reference<ResolveResult[]>>();
-    myPolyVariantResolveMaps[1] = new ConcurrentWeakHashMap<PsiPolyVariantReference,Reference<ResolveResult[]>>();
-    myResolveMaps[0] = new ConcurrentWeakHashMap<PsiReference, Reference>();
-    myResolveMaps[1] = new ConcurrentWeakHashMap<PsiReference, Reference>();
+    myPolyVariantResolveMaps[0] = createWeakMap();
+    myPolyVariantResolveMaps[1] = createWeakMap();
+    myResolveMaps[0] = createWeakMap();
+    myResolveMaps[1] = createWeakMap();
 
-    myPolyVariantResolveMaps[2] = new ConcurrentWeakHashMap<PsiPolyVariantReference, Reference<ResolveResult[]>>();
-    myPolyVariantResolveMaps[3] = new ConcurrentWeakHashMap<PsiPolyVariantReference, Reference<ResolveResult[]>>();
-    myResolveMaps[2] = new ConcurrentWeakHashMap<PsiReference, Reference>();
-    myResolveMaps[3] = new ConcurrentWeakHashMap<PsiReference, Reference>();
+    myPolyVariantResolveMaps[2] = createWeakMap();
+    myPolyVariantResolveMaps[3] = createWeakMap();
+    myResolveMaps[2] = createWeakMap();
+    myResolveMaps[3] = createWeakMap();
 
     messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -76,6 +77,10 @@ public class ResolveCache {
       public void afterPsiChanged(boolean isPhysical) {
       }
     });
+  }
+
+  private static <K,V> ConcurrentWeakHashMap<K, V> createWeakMap() {
+    return new ConcurrentWeakHashMap<K,V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), TObjectHashingStrategy.CANONICAL);
   }
 
   public void clearCache(boolean isPhysical) {
@@ -160,10 +165,17 @@ public class ResolveCache {
 
   private <TRef extends PsiReference, TResult> void cache(TRef ref, TResult result, Map<? super TRef,Reference<TResult>>[] maps, boolean physical, boolean incompleteCode, final int clearCountOnStart) {
     if (clearCountOnStart != myClearCount.intValue() && result != null) return;
-
-    int index = getIndex(physical, incompleteCode);
-    maps[index].put(ref, new SoftReference<TResult>(result/*, myQueue*/));
     PsiElement element = result instanceof ResolveResult ? ((ResolveResult)result).getElement() : null;
     LOG.assertTrue(element == null || element.isValid(), result);
+
+    int index = getIndex(physical, incompleteCode);
+    // optimization: lower contention
+    Map<? super TRef, Reference<TResult>> map = maps[index];
+    Reference<TResult> cached = map.get(ref);
+    if (cached != null && cached.get() == result) {
+      return;
+    }
+
+    map.put(ref, new SoftReference<TResult>(result/*, myQueue*/));
   }
 }

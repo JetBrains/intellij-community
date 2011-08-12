@@ -54,14 +54,14 @@ public class JavaResolveCache {
   private final ConcurrentMap<PsiExpression, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
   private final ConcurrentMap<PsiElement, PsiType> myCachedReferencesInPsiTypes = new ConcurrentWeakHashMap<PsiElement, PsiType>();
 
-  private final Map<PsiVariable,Object> myVarToConstValueMap1;
-  private final Map<PsiVariable,Object> myVarToConstValueMap2;
+  private final Map<PsiVariable,Object> myVarToConstValueMapPhysical;
+  private final Map<PsiVariable,Object> myVarToConstValueMapNonPhysical;
 
   private static final Object NULL = Key.create("NULL");
 
   public JavaResolveCache(MessageBus messageBus) {
-    myVarToConstValueMap1 = new ConcurrentWeakHashMap<PsiVariable, Object>();
-    myVarToConstValueMap2 = new ConcurrentWeakHashMap<PsiVariable, Object>();
+    myVarToConstValueMapPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
+    myVarToConstValueMapNonPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
 
     messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -79,9 +79,9 @@ public class JavaResolveCache {
     myCalculatedTypes.clear();
     myCachedReferencesInPsiTypes.clear();
     if (isPhysical) {
-      myVarToConstValueMap1.clear();
+      myVarToConstValueMapPhysical.clear();
     }
-    myVarToConstValueMap2.clear();
+    myVarToConstValueMapNonPhysical.clear();
   }
 
   public boolean isTypeCached(@NotNull PsiExpression expr) {
@@ -112,7 +112,7 @@ public class JavaResolveCache {
     if (DebugUtil.DO_EXPENSIVE_CHECKS) {
       if (type instanceof PsiClassReferenceType) {
         PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
-        myCachedReferencesInPsiTypes.put(reference, type);
+        ConcurrencyUtil.cacheOrGet(myCachedReferencesInPsiTypes, reference, type);
         DebugUtil.trackInvalidation(reference, "Reference inside PsiClassReferenceType was invalidated", new Processor<PsiElement>() {
           @Override
           public boolean process(PsiElement element) {
@@ -153,7 +153,7 @@ public class JavaResolveCache {
   public Object computeConstantValueWithCaching(@NotNull PsiVariable variable, @NotNull ConstValueComputer computer, Set<PsiVariable> visitedVars){
     boolean physical = variable.isPhysical();
 
-    Map<PsiVariable, Object> map = physical ? myVarToConstValueMap1 : myVarToConstValueMap2;
+    Map<PsiVariable, Object> map = physical ? myVarToConstValueMapPhysical : myVarToConstValueMapNonPhysical;
     Object cached = map.get(variable);
     if (cached == NULL) return null;
     if (cached != null) return cached;

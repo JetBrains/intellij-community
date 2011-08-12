@@ -131,6 +131,10 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     myMap = new ConcurrentHashMap();
   }
 
+  public ConcurrentWeakHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, TObjectHashingStrategy<K> hashingStrategy) {
+    myMap = new ConcurrentHashMap(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+
   public ConcurrentWeakHashMap(Map t) {
     this(Math.max(2 * t.size(), 11), 0.75f);
     putAll(t);
