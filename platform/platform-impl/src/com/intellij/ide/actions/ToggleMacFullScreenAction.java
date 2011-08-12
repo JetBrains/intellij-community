@@ -45,7 +45,7 @@ public class ToggleMacFullScreenAction extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
     final Presentation p = e.getPresentation();
-    p.setVisible(SystemInfo.isMac);
-    p.setEnabled(SystemInfo.isMac);
+    p.setVisible(SystemInfo.isMac && SystemInfo.isMacOSLion);
+    p.setEnabled(SystemInfo.isMac && SystemInfo.isMacOSLion);
   }
 }
