@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -74,35 +75,41 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       }
     }
     else if (myContext.allowImplicits() && canQualifyAnImplicitName(qualifier, qualifierType)) {
-      final Project project = myElement.getProject();
-      final Collection functions = PyFunctionNameIndex.find(referencedName, project, PyClassNameIndex.projectWithLibrariesScope(project));
-      for (Object function : functions) {
-        if (!(function instanceof PyFunction)) {
-          FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
-                                                       new Throwable("found non-function object " + function + " in function list"));
-          break;
-        }
-        PyFunction pyFunction = (PyFunction) function;
-        if (pyFunction.getContainingClass() != null) {
-          ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction)));
-        }
-      }
-      
-      final Collection attributes = PyInstanceAttributeIndex.find(referencedName, project, PyClassNameIndex.projectWithLibrariesScope(project));
-      for (Object attribute : attributes) {
-        if (!(attribute instanceof PyTargetExpression)) {
-          FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
-                                                       new Throwable("found non-target expression object " + attribute + " in target expression list"));
-          break;
-        }
-        ret.add(new ImplicitResolveResult((PyTargetExpression) attribute, getImplicitResultRate((PyTargetExpression)attribute)));
-      }
+      addImplicitResolveResults(referencedName, ret);
     }
+
     // special case of __doc__
     if ("__doc__".equals(referencedName)) {
       addDocReference(ret, qualifier, qualifierType);
     }
     return ret;
+  }
+
+  private void addImplicitResolveResults(String referencedName, ResolveResultList ret) {
+    final Project project = myElement.getProject();
+    final GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
+    final Collection functions = PyFunctionNameIndex.find(referencedName, project, scope);
+    for (Object function : functions) {
+      if (!(function instanceof PyFunction)) {
+        FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
+                                                     new Throwable("found non-function object " + function + " in function list"));
+        break;
+      }
+      PyFunction pyFunction = (PyFunction) function;
+      if (pyFunction.getContainingClass() != null) {
+        ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction)));
+      }
+    }
+
+    final Collection attributes = PyInstanceAttributeIndex.find(referencedName, project, scope);
+    for (Object attribute : attributes) {
+      if (!(attribute instanceof PyTargetExpression)) {
+        FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
+                                                     new Throwable("found non-target expression object " + attribute + " in target expression list"));
+        break;
+      }
+      ret.add(new ImplicitResolveResult((PyTargetExpression) attribute, getImplicitResultRate((PyTargetExpression)attribute)));
+    }
   }
 
   private int getImplicitResultRate(PyElement target) {
