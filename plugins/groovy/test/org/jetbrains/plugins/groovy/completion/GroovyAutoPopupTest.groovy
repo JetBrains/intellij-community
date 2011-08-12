@@ -121,5 +121,21 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert myFixture.lookupElementStrings == ['xxxxx']
   }
 
+  public void testTypingNonImportedClassName() {
+    CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.ALWAYS
+
+    try {
+      myFixture.addClass("package foo; public class Foo239 {} ")
+      myFixture.addClass("class Foo239Util {} ")
+      myFixture.configureByText "a.groovy", "<caret>"
+      type 'Foo239 '
+      myFixture.checkResult 'Foo239 <caret>'
+    }
+    finally {
+      CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.SMART
+    }
+  }
+
+
 
 }

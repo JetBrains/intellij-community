@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.codeInsight.completion.JavaCharFilter;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +39,10 @@ public class GroovyReferenceCharFilter extends CharFilter {
 
     if (Character.isJavaIdentifierPart(c) || c == '\'') {
       return Result.ADD_TO_PREFIX;
+    }
+
+    if ((c == '[' || c == '<' || c == '.' || c == ' ') && JavaCharFilter.isNonImportedClassEntered((LookupImpl)lookup)) {
+      return Result.HIDE_LOOKUP;
     }
 
     if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;

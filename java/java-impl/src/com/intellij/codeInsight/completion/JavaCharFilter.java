@@ -40,6 +40,28 @@ public class JavaCharFilter extends CharFilter {
     return psiElement != null && psiElement.getParent() instanceof PsiLiteralExpression;
   }
 
+  public static boolean isNonImportedClassEntered(LookupImpl lookup) {
+    if (lookup.isSelectionTouched() || !lookup.isCompletion()) return false;
+
+    CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
+    if (process == null || !process.isAutopopupCompletion()) return false;
+
+    LookupElement item = lookup.getCurrentItem();
+    if (item == null) return false;
+
+    PsiFile file = lookup.getPsiFile();
+    if (file == null) return false;
+    
+    Object o = item.getObject();
+    if (o instanceof PsiClass && ((PsiClass)o).getName().length() > lookup.itemPattern(item).length()) {
+      if (JavaPsiFacade.getInstance(file.getProject()).getShortNamesCache().getClassesByName(lookup.itemPattern(item), file.getResolveScope()).length > 0) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
     if (!lookup.isCompletion()) return null;
 
@@ -63,6 +85,11 @@ public class JavaCharFilter extends CharFilter {
       return null;
     }
     if (c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
+
+    if ((c == '[' || c == '<' || c == '.' || c == ' ') && isNonImportedClassEntered((LookupImpl)lookup)) {
+      return Result.HIDE_LOOKUP;
+    }
+    
     if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '<' && o instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '(' && o instanceof PsiClass) {

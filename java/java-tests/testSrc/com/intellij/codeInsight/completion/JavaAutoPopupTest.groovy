@@ -1037,4 +1037,21 @@ class LiveComplete {
     assert myFixture.lookupElementStrings == ['iterator']
   }
 
+  public void testTypingNonImportedClassName() {
+    myFixture.addClass("package foo; public class Foo239 {} ")
+    myFixture.addClass("class Foo239Util {} ")
+    myFixture.addClass("class Foo239Util2 {} ")
+
+    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
+    type 'Foo239 '
+    assert myFixture.file.text.contains('Foo239 ')
+    
+    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
+    type 'Foo239'
+    edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN }
+    type ' '
+    assert myFixture.file.text.contains('Foo239Util2 ')
+  }
+
+
 }
