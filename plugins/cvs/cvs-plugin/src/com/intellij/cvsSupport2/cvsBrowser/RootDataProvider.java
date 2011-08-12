@@ -41,23 +41,21 @@ class RootDirectoryContentProvider extends CompositeOperation implements Directo
     return result;
   }
 }
-
 public class RootDataProvider extends AbstractVcsDataProvider{
 
   public static RootDataProvider createTestInstance(CvsEnvironment environment){
-    return new RootDataProvider(environment, true, true);
+    return new RootDataProvider(environment);
   }
 
-  public RootDataProvider(CvsEnvironment environment, boolean showFiles, boolean showModules) {
-    super(environment, showFiles, showModules);
+  public RootDataProvider(CvsEnvironment environment) {
+    super(environment);
   }
 
-  protected AbstractVcsDataProvider getChildrenDataProvider() {
-    return new FolderDataProvider(myEnvironment, myShowFiles, myShowModules);
+  public AbstractVcsDataProvider getChildrenDataProvider() {
+    return new FolderDataProvider(myEnvironment);
   }
 
   public DirectoryContentProvider createDirectoryContentProvider(String path) {
     return new RootDirectoryContentProvider(myEnvironment);
   }
-
 }

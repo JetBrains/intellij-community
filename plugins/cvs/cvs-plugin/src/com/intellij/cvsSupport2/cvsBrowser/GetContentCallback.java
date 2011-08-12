@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,25 @@
  */
 package com.intellij.cvsSupport2.cvsBrowser;
 
+import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContent;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
-
-import java.util.List;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
 
 /**
  * author: lesya
  */
 public interface GetContentCallback {
-  void appendDirectoryContent(List<CvsElement> directoryContent);
 
-  void fillDirectoryContent(List<CvsElement> directoryContent);
+  ModalityState getModalityState();
 
-  void loginAborted();
+  void appendDirectoryContent(DirectoryContent directoryContent);
 
   void finished();
 
   void useForCancel(final CvsListenerWithProgress listener);
+
+  Project getProject();
+
+  String getElementPath();
 }

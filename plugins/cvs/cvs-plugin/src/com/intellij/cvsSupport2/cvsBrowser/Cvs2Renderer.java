@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,15 @@ public class Cvs2Renderer extends ColoredTreeCellRenderer {
                                     boolean leaf,
                                     int row,
                                     boolean hasFocus) {
-    append(value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
-                                                      UIUtil.getTreeForeground()));
     if (value instanceof CvsElement) {
       final CvsElement element = (CvsElement)value;
-      if (element.isLoading()) {
-        append(" (Loading...)", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
-                                                      UIUtil.getInactiveTextColor()));
-      }
+      append(value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
+                                                        UIUtil.getTreeForeground()));
       setIcon(element.getIcon(expanded));
     } else if (value instanceof LoadingNode) {
       setIcon(((LoadingNode)value).getIcon());
+      append(value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
+                                                        UIUtil.getInactiveTextColor()));
     }
   }
 }

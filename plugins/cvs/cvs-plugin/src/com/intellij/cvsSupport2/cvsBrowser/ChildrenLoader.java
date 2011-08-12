@@ -15,14 +15,9 @@
  */
 package com.intellij.cvsSupport2.cvsBrowser;
 
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
+import javax.swing.tree.MutableTreeNode;
 
-public class FolderDataProvider extends AbstractVcsDataProvider {
-  public FolderDataProvider(CvsEnvironment environment) {
-    super(environment);
-  }
+public interface ChildrenLoader {
 
-  public AbstractVcsDataProvider getChildrenDataProvider() {
-    return this;
-  }
+  void loadChildren(MutableTreeNode element, String elementPath, RemoteResourceDataProvider dataProvider);
 }

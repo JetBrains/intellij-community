@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class CvsFile extends CvsElement {
   private final Project myProject;
 
   public CvsFile(String name, CvsEnvironment env, Project project) {
-    super(getFileIcon(name), project);
+    super(name, getFileIcon(name));
     myEnvironment = env;
     myProject = project;
   }
@@ -57,11 +57,9 @@ public class CvsFile extends CvsElement {
 
   private VirtualFile createVirtualFile() {
     return new VcsVirtualFile(myPath,
-                              new ComparableVcsRevisionOnOperation(new GetFileContentOperation(getCvsLightFile(),
-                                                                                               myEnvironment,
-                                                                                               myEnvironment.getRevisionOrDate()
-                              ),
-                                                                   myProject),
+                              new ComparableVcsRevisionOnOperation(
+                                new GetFileContentOperation(getCvsLightFile(), myEnvironment, myEnvironment.getRevisionOrDate()),
+                                myProject),
                               VcsFileSystem.getInstance());
   }
 
@@ -72,7 +70,6 @@ public class CvsFile extends CvsElement {
   public boolean isLeaf() {
     return true;
   }
-
 
   public int getChildCount() {
     return 0;

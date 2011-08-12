@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.intellij.cvsSupport2.cvsBrowser;
 
-import com.intellij.openapi.project.Project;
-
 import javax.swing.*;
 
 /**
@@ -24,8 +22,8 @@ import javax.swing.*;
  */
 public class CvsModule extends CvsElement{
 
-  public CvsModule(Icon icon, Icon expandedIcon, Project project) {
-    super(icon, expandedIcon, project);
+  public CvsModule(String name, Icon icon, Icon expandedIcon) {
+    super(name, icon, expandedIcon);
   }
 
   public String createPathForChild(String name) {
