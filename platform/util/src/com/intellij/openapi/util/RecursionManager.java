@@ -86,6 +86,8 @@ public class RecursionManager {
           }
         }
 
+        int oldHash = realKey.hashCode();
+
         final int sizeBefore = stack.progressMap.size();
         stack.beforeComputation(realKey);
         final int sizeAfter = stack.progressMap.size();
@@ -102,6 +104,10 @@ public class RecursionManager {
         }
         finally {
           stack.afterComputation(realKey, sizeBefore, sizeAfter);
+
+          if (oldHash != realKey.hashCode()) {
+            throw new AssertionError("Object has changed its hashCode: " + key);
+          }
         }
       }
 
@@ -153,6 +159,8 @@ public class RecursionManager {
     private final Set<MyKey> toMemoize = new THashSet<MyKey>();
     private final THashMap<MyKey, MyKey> key2ReentrancyDuringItsCalculation = new THashMap<MyKey, MyKey>();
     private final SoftHashMap<MyKey, SoftHashMap<MyKey, SoftReference>> intermediateCache = new SoftHashMap<MyKey, SoftHashMap<MyKey, SoftReference>>();
+    private int enters = 0;
+    private int exits = 0;
 
     boolean checkReentrancy(MyKey realKey) {
       if (progressMap.containsKey(realKey)) {
@@ -186,6 +194,8 @@ public class RecursionManager {
     }
 
     final void beforeComputation(MyKey realKey) {
+      enters++;
+      
       if (progressMap.isEmpty()) {
         assert reentrancyCount == 0 : "Non-zero stamp with empty stack: " + reentrancyCount;
       }
@@ -217,6 +227,7 @@ public class RecursionManager {
     }
 
     final void afterComputation(MyKey realKey, int sizeBefore, int sizeAfter) {
+      exits++;
       if (sizeAfter != progressMap.size()) {
         LOG.error("Map size changed: " + progressMap.size() + " " + sizeAfter + " " + realKey.second);
       }
@@ -285,7 +296,7 @@ public class RecursionManager {
       int oldDepth = depth;
       if (oldDepth != progressMap.size()) {
         depth = progressMap.size();
-        throw new AssertionError("Inconsistent depth " + s + "; depth=" + oldDepth + "; map=" + progressMap);
+        throw new AssertionError("Inconsistent depth " + s + "; depth=" + oldDepth + "; enters=" + enters + "; exits=" + exits + "; map=" + progressMap);
       }
     }
 
