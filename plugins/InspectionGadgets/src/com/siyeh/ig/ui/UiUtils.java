@@ -30,13 +30,23 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 
 public class UiUtils {
 
     private UiUtils() {}
+
+    public static void setScrollPaneSize(JScrollPane scrollPane,
+                                         int rows, int columns) {
+        final Component view = scrollPane.getViewport().getView();
+        final FontMetrics fontMetrics = view.getFontMetrics(view.getFont());
+        final int width = fontMetrics.charWidth('m') * columns;
+        scrollPane.setPreferredSize(
+                new Dimension(width, fontMetrics.getHeight() * rows));
+    }
 
     public static ActionToolbar createAddRemoveToolbar(ListTable table) {
         final AnAction addAction = new AddAction(table);

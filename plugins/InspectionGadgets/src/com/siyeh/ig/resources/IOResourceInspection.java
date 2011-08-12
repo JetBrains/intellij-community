@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class IOResourceInspection extends ResourceInspection {
                         InspectionGadgetsBundle.message(
                                 "ignored.io.resource.types")));
         final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-
+        UiUtils.setScrollPaneSize(scrollPane, 7, 25);
         final ActionToolbar toolbar =
                 UiUtils.createAddRemoveTreeClassChooserToolbar(table,
                         InspectionGadgetsBundle.message(

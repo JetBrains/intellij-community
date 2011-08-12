@@ -89,7 +89,7 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
                 InspectionGadgetsBundle.message("method.name.pattern")));
         final JScrollPane scrollPane =
                 ScrollPaneFactory.createScrollPane(table);
-
+        UiUtils.setScrollPaneSize(scrollPane, 7, 25);
         final ActionToolbar toolbar =
                 UiUtils.createAddRemoveToolbar(table);
 

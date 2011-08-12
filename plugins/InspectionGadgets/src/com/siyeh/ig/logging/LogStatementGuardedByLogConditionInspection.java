@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 Bas Leijdekkers
+ * Copyright 2008-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ public class LogStatementGuardedByLogConditionInspection
                 InspectionGadgetsBundle.message("log.condition.text")));
         final JScrollPane scrollPane =
                 ScrollPaneFactory.createScrollPane(table);
+        UiUtils.setScrollPaneSize(scrollPane, 7, 25);
         final ActionToolbar toolbar = UiUtils.createAddRemoveToolbar(table);
 
         final GridBagConstraints constraints = new GridBagConstraints();

@@ -93,10 +93,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
                         InspectionGadgetsBundle.message(
                                 "exception.class.column.name")));
         final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-        final FontMetrics fontMetrics = table.getFontMetrics(table.getFont());
-        scrollPane.setPreferredSize(new Dimension(0, fontMetrics.getHeight() * 7));
-        scrollPane.setMinimumSize(new Dimension(0, fontMetrics.getHeight() * 3));
-
+        UiUtils.setScrollPaneSize(scrollPane, 7, 25);
         final ActionToolbar toolbar =
                 UiUtils.createAddRemoveTreeClassChooserToolbar(table,
                         InspectionGadgetsBundle.message(

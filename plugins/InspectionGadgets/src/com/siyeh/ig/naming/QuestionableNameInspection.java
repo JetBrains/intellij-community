@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class QuestionableNameInspection extends BaseInspection {
                 "questionable.name.column.title")));
         final JScrollPane scrollPane =
                 ScrollPaneFactory.createScrollPane(table);
-        scrollPane.setMinimumSize(new Dimension(-1, 100));
+        UiUtils.setScrollPaneSize(scrollPane, 7, 25);
         final ActionToolbar toolbar =
                 UiUtils.createAddRemoveToolbar(table);
 

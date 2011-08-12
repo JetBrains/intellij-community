@@ -56,6 +56,7 @@ public abstract class SerializableInspection extends BaseInspection {
                 "ignore.classes.in.hierarchy.column.name")));
         final JScrollPane scrollPane =
                 ScrollPaneFactory.createScrollPane(table);
+        UiUtils.setScrollPaneSize(scrollPane, 7, 25);
         final ActionToolbar toolbar =
                 UiUtils.createAddRemoveTreeAnnotationChooserToolbar(table,
                         InspectionGadgetsBundle.message(
