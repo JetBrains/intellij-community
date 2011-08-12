@@ -28,6 +28,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -53,6 +54,8 @@ import javax.swing.*;
 import java.util.*;
 
 public class LineMarkersPass extends ProgressableTextEditorHighlightingPass implements LineMarkersProcessor, DumbAware {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LineMarkersPass");
+
   private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
   private final int myStartOffset;
@@ -114,7 +117,20 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
 
       for (int j = 0, providersSize = providers.size(); j < providersSize; j++) {
         LineMarkerProvider provider = providers.get(j);
-        LineMarkerInfo info = provider.getLineMarkerInfo(element);
+        LineMarkerInfo info;
+        try {
+          info = provider.getLineMarkerInfo(element);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (IndexNotReadyException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          continue;
+        }
         if (info != null) {
           result.add(info);
         }
