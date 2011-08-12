@@ -152,8 +152,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                   removed.add(change.getBeforeRevision().getFile());
                   break;
                 case MOVED:
-                  added.add(change.getAfterRevision().getFile());
-                  removed.add(change.getBeforeRevision().getFile());
+                  FilePath afterPath = change.getAfterRevision().getFile();
+                  FilePath beforePath = change.getBeforeRevision().getFile();
+                  added.add(afterPath);
+                  if (!GitFileUtils.shouldIgnoreCaseChange(afterPath.getPath(), beforePath.getPath())) {
+                    removed.add(beforePath);
+                  }
                   break;
                 default:
                   throw new IllegalStateException("Unknown change type: " + change.getType());
@@ -202,7 +206,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     return exceptions;
   }
-
+  
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant());
   }
