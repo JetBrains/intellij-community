@@ -620,17 +620,20 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void scheduleRestart() {
-    if (isAutopopupCompletion() && (!myLookup.isShown() || hideAutopopupIfMeaningless())) {
-      AutoPopupController.getInstance(getProject()).scheduleAutoPopup(myEditor, null);
-      return;
-    }
-
-    cancel();
-
     ApplicationManager.getApplication().assertIsDispatchThread();
+    cancel();
 
     final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     LOG.assertTrue(this == current, current + "!=" + this);
+
+    if (isAutopopupCompletion() && (!myLookup.isShown() || hideAutopopupIfMeaningless())) {
+      if (CompletionServiceImpl.getCompletionService().getCurrentCompletion() == this) {
+        closeAndFinish(true);
+      }
+      
+      AutoPopupController.getInstance(getProject()).scheduleAutoPopup(myEditor, null);
+      return;
+    }
 
     final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(this, myEditor);
     CompletionServiceImpl.setCompletionPhase(phase);
