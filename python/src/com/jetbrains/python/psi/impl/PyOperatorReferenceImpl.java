@@ -58,6 +58,16 @@ public class PyOperatorReferenceImpl extends PyReferenceImpl {
     return "PyOperatorReferenceImpl(" + myElement + "," + myContext + ")";
   }
 
+  public String getReadableOperatorName() {
+    final String name = myElement.getReferencedName();
+    if (PyNames.SUBCRIPTION_OPERATORS.contains(name)) {
+      return "[]";
+    }
+    else {
+      return getRangeInElement().substring(myElement.getText());
+    }
+  }
+
   private static String leftToRightOperatorName(String name) {
     return name.replaceFirst("__([a-z]+)__", "__r$1__");
   }

@@ -11,34 +11,34 @@ class C(object):
 def test_object():
     o1 = object()
     o2 = object()
-    o1 <warning descr="Unresolved attribute reference '+' for class 'object'">+</warning> o2 #fail
-    o1 <warning descr="Unresolved attribute reference '-' for class 'object'">-</warning> o2 #fail
-    o1 <warning descr="Unresolved attribute reference '*' for class 'object'">*</warning> o2 #fail
-    o1 <warning descr="Unresolved attribute reference '/' for class 'object'">/</warning> o2 #fail
-    o1 <warning descr="Unresolved attribute reference '%' for class 'object'">%</warning> o2 #fail
-    o1 <warning descr="Unresolved attribute reference '**' for class 'object'">**</warning> o2 #fail
-    o1 <warning descr="Unresolved attribute reference '<<' for class 'object'"><<</warning> o2 #fail
-    o1 <warning descr="Unresolved attribute reference '>>' for class 'object'">>></warning> o2 #fail
-    o1 <warning descr="Unresolved attribute reference '&' for class 'object'">&</warning> o2 #fail
-    o1 <warning descr="Unresolved attribute reference '|' for class 'object'">|</warning> o2 #fail
-    o1 <warning descr="Unresolved attribute reference '^' for class 'object'">^</warning> o2 #fail
-    o1 <warning descr="Unresolved attribute reference '//' for class 'object'">//</warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__add__', so the '+' operator cannot be used on its instances">+</warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__sub__', so the '-' operator cannot be used on its instances">-</warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__mul__', so the '*' operator cannot be used on its instances">*</warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__div__', so the '/' operator cannot be used on its instances">/</warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__mod__', so the '%' operator cannot be used on its instances">%</warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__pow__', so the '**' operator cannot be used on its instances">**</warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__lshift__', so the '<<' operator cannot be used on its instances"><<</warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__rshift__', so the '>>' operator cannot be used on its instances">>></warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__and__', so the '&' operator cannot be used on its instances">&</warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__or__', so the '|' operator cannot be used on its instances">|</warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__xor__', so the '^' operator cannot be used on its instances">^</warning> o2 #fail
+    o1 <warning descr="Class 'object' does not define '__floordiv__', so the '//' operator cannot be used on its instances">//</warning> o2 #fail
     o2 < o1 < o2, o2 <= o1 <= o2, o1 == o2, o1 != o2, o2 in o1 #pass
 
 def test_custom_class():
     c = C()
     o = object()
     c + o, c | o, o - c #pass
-    c <warning descr="Unresolved attribute reference '-' for class 'C'">-</warning> o #fail
-    c <warning descr="Unresolved attribute reference '*' for class 'C'">*</warning> o #fail
-    c <warning descr="Unresolved attribute reference '/' for class 'C'">/</warning> o #fail
-    c <warning descr="Unresolved attribute reference '%' for class 'C'">%</warning> o #fail
-    c <warning descr="Unresolved attribute reference '**' for class 'C'">**</warning> o #fail
-    c <warning descr="Unresolved attribute reference '<<' for class 'C'"><<</warning> o #fail
-    c <warning descr="Unresolved attribute reference '>>' for class 'C'">>></warning> o #fail
-    c <warning descr="Unresolved attribute reference '&' for class 'C'">&</warning> o #fail
-    c <warning descr="Unresolved attribute reference '^' for class 'C'">^</warning> o #fail
-    c <warning descr="Unresolved attribute reference '//' for class 'C'">//</warning> o #fail
+    c <warning descr="Class 'C' does not define '__sub__', so the '-' operator cannot be used on its instances">-</warning> o #fail
+    c <warning descr="Class 'C' does not define '__mul__', so the '*' operator cannot be used on its instances">*</warning> o #fail
+    c <warning descr="Class 'C' does not define '__div__', so the '/' operator cannot be used on its instances">/</warning> o #fail
+    c <warning descr="Class 'C' does not define '__mod__', so the '%' operator cannot be used on its instances">%</warning> o #fail
+    c <warning descr="Class 'C' does not define '__pow__', so the '**' operator cannot be used on its instances">**</warning> o #fail
+    c <warning descr="Class 'C' does not define '__lshift__', so the '<<' operator cannot be used on its instances"><<</warning> o #fail
+    c <warning descr="Class 'C' does not define '__rshift__', so the '>>' operator cannot be used on its instances">>></warning> o #fail
+    c <warning descr="Class 'C' does not define '__and__', so the '&' operator cannot be used on its instances">&</warning> o #fail
+    c <warning descr="Class 'C' does not define '__xor__', so the '^' operator cannot be used on its instances">^</warning> o #fail
+    c <warning descr="Class 'C' does not define '__floordiv__', so the '//' operator cannot be used on its instances">//</warning> o #fail
     o < c < o, o <= c <= o, c == o, c != o, o in c #pass
 
 def test_builtins():
@@ -50,29 +50,29 @@ def test_builtins():
 
     s = 'foo'
     s + o, s * o, s % o #pass
-    s <warning descr="Unresolved attribute reference '-' for class 'str'">-</warning> o #fail
-    s <warning descr="Unresolved attribute reference '/' for class 'str'">/</warning> o #fail
-    s <warning descr="Unresolved attribute reference '**' for class 'str'">**</warning> o #fail
-    s <warning descr="Unresolved attribute reference '<<' for class 'str'"><<</warning> o #fail
-    s <warning descr="Unresolved attribute reference '>>' for class 'str'">>></warning> o #fail
-    s <warning descr="Unresolved attribute reference '&' for class 'str'">&</warning> o #fail
-    s <warning descr="Unresolved attribute reference '|' for class 'str'">|</warning> o #fail
-    s <warning descr="Unresolved attribute reference '^' for class 'str'">^</warning> o #fail
-    s <warning descr="Unresolved attribute reference '//' for class 'str'">//</warning> o #fail
+    s <warning descr="Class 'str' does not define '__sub__', so the '-' operator cannot be used on its instances">-</warning> o #fail
+    s <warning descr="Class 'str' does not define '__div__', so the '/' operator cannot be used on its instances">/</warning> o #fail
+    s <warning descr="Class 'str' does not define '__pow__', so the '**' operator cannot be used on its instances">**</warning> o #fail
+    s <warning descr="Class 'str' does not define '__lshift__', so the '<<' operator cannot be used on its instances"><<</warning> o #fail
+    s <warning descr="Class 'str' does not define '__rshift__', so the '>>' operator cannot be used on its instances">>></warning> o #fail
+    s <warning descr="Class 'str' does not define '__and__', so the '&' operator cannot be used on its instances">&</warning> o #fail
+    s <warning descr="Class 'str' does not define '__or__', so the '|' operator cannot be used on its instances">|</warning> o #fail
+    s <warning descr="Class 'str' does not define '__xor__', so the '^' operator cannot be used on its instances">^</warning> o #fail
+    s <warning descr="Class 'str' does not define '__floordiv__', so the '//' operator cannot be used on its instances">//</warning> o #fail
     o < s < o, o <= s <= o, s == o, s != o, o in s #pass
 
     xs = []
     xs + o, xs * o #pass
-    xs <warning descr="Unresolved attribute reference '-' for class 'list'">-</warning> o #fail
-    xs <warning descr="Unresolved attribute reference '/' for class 'list'">/</warning> o #fail
-    xs <warning descr="Unresolved attribute reference '%' for class 'list'">%</warning> o #fail
-    xs <warning descr="Unresolved attribute reference '**' for class 'list'">**</warning> o #fail
-    xs <warning descr="Unresolved attribute reference '<<' for class 'list'"><<</warning> o #fail
-    xs <warning descr="Unresolved attribute reference '>>' for class 'list'">>></warning> o #fail
-    xs <warning descr="Unresolved attribute reference '&' for class 'list'">&</warning> o #fail
-    xs <warning descr="Unresolved attribute reference '|' for class 'list'">|</warning> o #fail
-    xs <warning descr="Unresolved attribute reference '^' for class 'list'">^</warning> o #fail
-    xs <warning descr="Unresolved attribute reference '//' for class 'list'">//</warning> o #fail
+    xs <warning descr="Class 'list' does not define '__sub__', so the '-' operator cannot be used on its instances">-</warning> o #fail
+    xs <warning descr="Class 'list' does not define '__div__', so the '/' operator cannot be used on its instances">/</warning> o #fail
+    xs <warning descr="Class 'list' does not define '__mod__', so the '%' operator cannot be used on its instances">%</warning> o #fail
+    xs <warning descr="Class 'list' does not define '__pow__', so the '**' operator cannot be used on its instances">**</warning> o #fail
+    xs <warning descr="Class 'list' does not define '__lshift__', so the '<<' operator cannot be used on its instances"><<</warning> o #fail
+    xs <warning descr="Class 'list' does not define '__rshift__', so the '>>' operator cannot be used on its instances">>></warning> o #fail
+    xs <warning descr="Class 'list' does not define '__and__', so the '&' operator cannot be used on its instances">&</warning> o #fail
+    xs <warning descr="Class 'list' does not define '__or__', so the '|' operator cannot be used on its instances">|</warning> o #fail
+    xs <warning descr="Class 'list' does not define '__xor__', so the '^' operator cannot be used on its instances">^</warning> o #fail
+    xs <warning descr="Class 'list' does not define '__floordiv__', so the '//' operator cannot be used on its instances">//</warning> o #fail
     o < xs < o, o <= xs <= o, xs == o, xs != o, o in xs #pass
 
 def test_subscription():
@@ -99,11 +99,11 @@ def test_subscription():
     del c[0]
 
     d = D()
-    d<warning descr="Unresolved attribute reference '[' for class 'D'">[</warning>0] = 0
-    print(d<warning descr="Unresolved attribute reference '[' for class 'D'">[</warning>0])
-    del d<warning descr="Unresolved attribute reference '[' for class 'D'">[</warning>0]
+    d<warning descr="Class 'D' does not define '__setitem__', so the '[]' operator cannot be used on its instances">[</warning>0] = 0
+    print(d<warning descr="Class 'D' does not define '__getitem__', so the '[]' operator cannot be used on its instances">[</warning>0])
+    del d<warning descr="Class 'D' does not define '__delitem__', so the '[]' operator cannot be used on its instances">[</warning>0]
 
     e = E()
-    e<warning descr="Unresolved attribute reference '[' for class 'E'">[</warning>0] = 0
+    e<warning descr="Class 'E' does not define '__setitem__', so the '[]' operator cannot be used on its instances">[</warning>0] = 0
     print(e[0])
-    del e<warning descr="Unresolved attribute reference '[' for class 'E'">[</warning>0]
+    del e<warning descr="Class 'E' does not define '__delitem__', so the '[]' operator cannot be used on its instances">[</warning>0]

@@ -118,6 +118,12 @@ public class PyNames {
     "__contains__"
   );
 
+  public static ImmutableSet<String> SUBCRIPTION_OPERATORS = ImmutableSet.of(
+    GETITEM,
+    SETITEM,
+    DELITEM
+  );
+
   public static class BuiltinDescription {
     private final String mySignature;
 
