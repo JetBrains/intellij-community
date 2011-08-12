@@ -4,11 +4,11 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -80,7 +80,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         }
         PyFunction pyFunction = (PyFunction) function;
         if (pyFunction.getContainingClass() != null) {
-          ret.add(new ImplicitResolveResult(pyFunction));
+          ret.add(new ImplicitResolveResult(pyFunction, getFunctionRate(pyFunction)));
         }
       }
     }
@@ -89,6 +89,20 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       addDocReference(ret, qualifier, qualifierType);
     }
     return ret;
+  }
+
+  private int getFunctionRate(PyFunction pyFunction) {
+    int rate = RatedResolveResult.RATE_LOW;
+    if (pyFunction.getContainingFile() == myElement.getContainingFile()) {
+      rate += 200;
+    }
+    else {
+      final VirtualFile vFile = pyFunction.getContainingFile().getVirtualFile();
+      if (vFile != null && ProjectScope.getProjectScope(myElement.getProject()).contains(vFile)) {
+        rate += 80;
+      }
+    }
+    return rate;
   }
 
   private static boolean canQualifyAnImplicitName(@NotNull PyExpression qualifier, @Nullable PyType qualType) {
