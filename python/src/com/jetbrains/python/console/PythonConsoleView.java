@@ -24,7 +24,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
   public PythonConsoleView(final Project project, final String title) {
     super(project, new PythonLanguageConsole(project, title));
     getPythonLanguageConsole().setPythonConsoleView(this);
-    getPythonLanguageConsole().setPrompt(PyPromptUtil.ORDINARY_PROMPT);
+    getPythonLanguageConsole().setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
     setUpdateFoldingsEnabled(false);
   }
 

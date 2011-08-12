@@ -1,11 +1,14 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author traff
  */
-public class PyPromptUtil {
+public class PyConsoleUtil {
   public static final String ORDINARY_PROMPT =      ">>> ";
   public static final String INPUT_PROMPT =      ">? ";
   public static final String INDENT_PROMPT =        "... ";
@@ -16,8 +19,10 @@ public class PyPromptUtil {
     INDENT_PROMPT,
     HELP_PROMPT
   };
+  public static final String DOUBLE_QUOTE_MULTILINE = "\"\"\"";
+  public static final String SINGLE_QUOTE_MULTILINE = "'''";
 
-  private PyPromptUtil() {
+  private PyConsoleUtil() {
   }
 
   static String processPrompts(final LanguageConsoleImpl languageConsole, String string) {
@@ -46,10 +51,32 @@ public class PyPromptUtil {
         final String trimmedPrompt = prompt.trim();
         if (!currentPrompt.equals(trimmedPrompt)) {
           languageConsole.setPrompt(trimmedPrompt);
+          scrollDown(languageConsole.getCurrentEditor());
         }
         break;
       }
     }
     return string;
+  }
+
+  public static boolean isMultilineStarts(String line, String substring) {
+    return StringUtils.countMatches(line, substring) % 2 == 1;
+  }
+
+  public static void scrollDown(final Editor currentEditor) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
+      }
+    });
+  }
+
+  public static boolean isSingleQuoteMultilineStarts(String line) {
+    return isMultilineStarts(line, SINGLE_QUOTE_MULTILINE);
+  }
+
+  public static boolean isDoubleQuoteMultilineStarts(String line) {
+    return isMultilineStarts(line, DOUBLE_QUOTE_MULTILINE);
   }
 }
