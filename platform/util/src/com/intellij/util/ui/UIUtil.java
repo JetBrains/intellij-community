@@ -289,6 +289,15 @@ public class UIUtil {
     }
   }
 
+  @NotNull
+  public static Font getBorderFont(@NotNull FontSize size) {
+    Font defFont = getBorderFont();
+    if (size == FontSize.SMALL) {
+      return defFont.deriveFont(defFont.getSize() * 0.9f);
+    }
+    return defFont;
+  }
+
   public static Font getLabelFont() {
     return UIManager.getFont("Label.font");
   }
