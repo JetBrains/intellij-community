@@ -35,30 +35,19 @@ public class PyTypeCheckerInspection extends PyInspection {
       // TODO: Visit decorators with arguments
       @Override
       public void visitPyCallExpression(PyCallExpression node) {
-        List<PyFunction> functions = new ArrayList<PyFunction>();
-        final PyExpression callee = node.getCallee();
-        if (callee instanceof PyReferenceExpression) {
-          PsiElement e = ((PyReferenceExpression)callee).followAssignmentsChain(myTypeEvalContext).getElement();
-          if (e instanceof PyFunction) {
-            functions.add((PyFunction)e);
-          }
-        }
-        if (!functions.isEmpty()) {
-          PyFunction fun = functions.get(0);
-          final PyArgumentList args = node.getArgumentList();
-          if (args != null) {
-            final PyArgumentList.AnalysisResult res = args.analyzeCall(myTypeEvalContext);
-            final Map<PyExpression, PyNamedParameter> mapped = res.getPlainMappedParams();
-            for (Map.Entry<PyExpression, PyNamedParameter> entry : mapped.entrySet()) {
-              final PyNamedParameter p = entry.getValue();
-              if (p.isPositionalContainer() || p.isKeywordContainer()) {
-                // TODO: Support *args, **kwargs
-                continue;
-              }
-              final PyType argType = entry.getKey().getType(myTypeEvalContext);
-              final PyType paramType = p.getType(myTypeEvalContext);
-              checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext);
+        final PyArgumentList args = node.getArgumentList();
+        if (args != null) {
+          final PyArgumentList.AnalysisResult res = args.analyzeCall(myTypeEvalContext);
+          final Map<PyExpression, PyNamedParameter> mapped = res.getPlainMappedParams();
+          for (Map.Entry<PyExpression, PyNamedParameter> entry : mapped.entrySet()) {
+            final PyNamedParameter p = entry.getValue();
+            if (p.isPositionalContainer() || p.isKeywordContainer()) {
+              // TODO: Support *args, **kwargs
+              continue;
             }
+            final PyType argType = entry.getKey().getType(myTypeEvalContext);
+            final PyType paramType = p.getType(myTypeEvalContext);
+            checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext);
           }
         }
       }
