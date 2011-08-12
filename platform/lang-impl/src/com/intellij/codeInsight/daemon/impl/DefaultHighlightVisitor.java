@@ -27,6 +27,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -131,6 +132,8 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         if (dumb && !DumbService.isDumbAware(annotator)) {
           continue;
         }
+
+        ProgressManager.checkCanceled();
 
         annotator.annotate(element, annotationHolder);
       }
