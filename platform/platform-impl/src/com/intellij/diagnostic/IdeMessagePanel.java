@@ -36,22 +36,18 @@ import java.util.concurrent.TimeUnit;
 
 public class IdeMessagePanel extends JPanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
-  private final IconPane myIdeFatal;
+  private final IdeFatalErrorsIcon myIdeFatal;
 
-  private final IconPane[] myIcons;
-  private static final String INTERNAL_ERROR_NOTICE = DiagnosticBundle.message("error.notification.tooltip");
+  static final String INTERNAL_ERROR_NOTICE = DiagnosticBundle.message("error.notification.tooltip");
 
   private IdeErrorsDialog myDialog;
   private boolean myOpeningInProgress;
   private final MessagePool myMessagePool;
   private boolean myNotificationPopupAlreadyShown = false;
-  private final Icon myIcon = IconLoader.getIcon("/ide/fatalError.png");
-  private final Icon myEmptyIcon = IconLoader.getIcon("/ide/emptyFatalError.png");
 
   public IdeMessagePanel(MessagePool messagePool) {
     super(new BorderLayout());
-    myIdeFatal = new IconPane(myIcon, myEmptyIcon,
-                              DiagnosticBundle.message("error.notification.empty.text"), new ActionListener() {
+    myIdeFatal = new IdeFatalErrorsIcon(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         openFatals(null);
       }
@@ -59,13 +55,11 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
 
     myIdeFatal.setVerticalAlignment(SwingConstants.CENTER);
 
-    myIcons = new IconPane[]{myIdeFatal};
     add(myIdeFatal, BorderLayout.CENTER);
 
     myMessagePool = messagePool;
     messagePool.addListener(this);
 
-    JobScheduler.getScheduler().scheduleAtFixedRate(new Blinker(), (long)1, (long)1, TimeUnit.SECONDS);
     updateFatalErrorsIcon();
 
     setOpaque(false);
@@ -129,6 +123,12 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
             super.doCancelAction();
             disposeDialog(this);
           }
+
+          @Override
+          protected void updateOnSubmit() {
+            super.updateOnSubmit();
+            myIdeFatal.setState(computeState());
+          }
         };
 
         myMessagePool.addListener(myDialog);
@@ -178,32 +178,45 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     return null;
   }
 
-  private void updateFatalErrorsIcon() {
-    final List<AbstractMessage> errors = myMessagePool.getFatalErrors(false, false);
+  private IdeFatalErrorsIcon.State computeState() {
+    final List<AbstractMessage> errors = myMessagePool.getFatalErrors(true, false);
     if (errors.isEmpty()) {
-      myNotificationPopupAlreadyShown = false;
-      myIdeFatal.deactivate();
+      return IdeFatalErrorsIcon.State.NoErrors;
     }
     else {
-      myIdeFatal.activate(INTERNAL_ERROR_NOTICE);
-      if (!myNotificationPopupAlreadyShown) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            String notificationText = tryGetFromMessages(errors);
-            if (notificationText == null) {
-              notificationText = INTERNAL_ERROR_NOTICE;
-            }
-            final JLabel label = new JLabel(notificationText);
-            label.setIcon(myIcon);
-            new NotificationPopup(IdeMessagePanel.this, label, LightColors.RED, false, new ActionListener() {
-              public void actionPerformed(ActionEvent e) {
-                _openFatals(null);
-              }
-            }, true);
-          }
-        });
-        myNotificationPopupAlreadyShown = true;
+      for (AbstractMessage error : errors) {
+        if (!error.isRead()) {
+          return IdeFatalErrorsIcon.State.UnreadErrors;
+        }
       }
+      return IdeFatalErrorsIcon.State.ReadErrors;
+    }
+  }
+
+  private void updateFatalErrorsIcon() {
+    final IdeFatalErrorsIcon.State state = computeState();
+    myIdeFatal.setState(state);
+
+    if (state == IdeFatalErrorsIcon.State.NoErrors) {
+      myNotificationPopupAlreadyShown = false;
+    }
+    else if (state == IdeFatalErrorsIcon.State.UnreadErrors && !myNotificationPopupAlreadyShown) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          String notificationText = tryGetFromMessages(myMessagePool.getFatalErrors(false, false));
+          if (notificationText == null) {
+            notificationText = INTERNAL_ERROR_NOTICE;
+          }
+          final JLabel label = new JLabel(notificationText);
+          label.setIcon(IdeFatalErrorsIcon.UNREAD_ERROR_ICON);
+          new NotificationPopup(IdeMessagePanel.this, label, LightColors.RED, false, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+              _openFatals(null);
+            }
+          }, true);
+        }
+      });
+      myNotificationPopupAlreadyShown = true;
     }
   }
 
@@ -230,21 +243,6 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       }
     }
     return result;
-  }
-
-  private class Blinker implements Runnable {
-    boolean myVisible = false;
-
-    public void run() {
-      myVisible = !myVisible;
-      setBlinkedIconsVisibilityTo(myVisible);
-    }
-
-    private void setBlinkedIconsVisibilityTo(boolean aVisible) {
-      for (final IconPane each : myIcons) {
-        each.getIconWrapper().setVisible(aVisible || !each.shouldBlink());
-      }
-    }
   }
 
   private class IconPane extends JLabel {
