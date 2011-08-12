@@ -38,7 +38,7 @@ public class PyTokenTypes {
   public static final PyElementType GLOBAL_KEYWORD = new PyElementType("GLOBAL_KEYWORD");
   public static final PyElementType IF_KEYWORD = new PyElementType("IF_KEYWORD");
   public static final PyElementType IMPORT_KEYWORD = new PyElementType("IMPORT_KEYWORD");
-  public static final PyElementType IN_KEYWORD = new PyElementType("IN_KEYWORD");
+  public static final PyElementType IN_KEYWORD = new PyElementType("IN_KEYWORD", "__contains__");
   public static final PyElementType IS_KEYWORD = new PyElementType("IS_KEYWORD");
   public static final PyElementType LAMBDA_KEYWORD = new PyElementType("LAMBDA_KEYWORD");
   public static final PyElementType NOT_KEYWORD = new PyElementType("NOT_KEYWORD");

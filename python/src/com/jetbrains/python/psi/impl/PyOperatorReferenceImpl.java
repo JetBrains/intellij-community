@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -27,9 +28,14 @@ public class PyOperatorReferenceImpl extends PyReferenceImpl {
     if (myElement instanceof PyBinaryExpression) {
       final PyBinaryExpression expr = (PyBinaryExpression)myElement;
       final String name = expr.getReferencedName();
-      res = resolveMember(expr.getLeftExpression(), name);
-      if (res.isEmpty()) {
-        res = resolveMember(expr.getRightExpression(), leftToRightOperatorName(name));
+      if (PyNames.CONTAINS.equals(name)) {
+        res = resolveMember(expr.getRightExpression(), name);
+      }
+      else {
+        res = resolveMember(expr.getLeftExpression(), name);
+        if (res.isEmpty()) {
+          res = resolveMember(expr.getRightExpression(), leftToRightOperatorName(name));
+        }
       }
     }
     else if (myElement instanceof PySubscriptionExpression) {
