@@ -17,6 +17,7 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.*;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -194,6 +195,10 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
       tab.resetImpl(settings);
     }
   }
+
+
+
+  //========================================================================================================================================
 
   private class MySpacesPanel extends CodeStyleSpacesPanel {
 
@@ -429,7 +434,13 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
 
     @Override
     protected String getTabTitle() {
-      return "Tabs and Indents";
+      return ApplicationBundle.message("title.tabs.and.indents");
+    }
+
+    @Override
+    public void onSomethingChanged() {
+      super.onSomethingChanged();
+      myEditor.setEnabled(true);
     }
 
   }
