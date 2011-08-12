@@ -747,11 +747,11 @@ public class ProjectWrapper {
                 return true;
             }
 
-            final boolean outputChanged = !tests && !safeEquals(past.getOutputPath(), getOutputPath());
+            final boolean outputChanged = !safeEquals(past.getOutputPath(), getOutputPath());
             final boolean testOutputChanged = tests && !safeEquals(past.getTestOutputPath(), getTestOutputPath());
-            final boolean sourceChanged = !tests && !past.getSourceFiles().equals(getSourceFiles());
+            final boolean sourceChanged = !past.getSourceFiles().equals(getSourceFiles());
             final boolean testSourceChanged = tests && !past.getTestSourceFiles().equals(getTestSourceFiles());
-            final boolean sourceOutdated = !tests && (mySource.isOutdated() || !mySource.getOutdatedFiles(past.mySource).isEmpty());
+            final boolean sourceOutdated = mySource.isOutdated() || !mySource.getOutdatedFiles(past.mySource).isEmpty();
             final boolean testSourceOutdated = tests && (myTest.isOutdated() || !myTest.getOutdatedFiles(past.myTest).isEmpty());
             final boolean unsafeDependencyChange = (
                     new Object() {
@@ -1267,30 +1267,6 @@ public class ProjectWrapper {
     }
 
     private void makeModules(final Collection<Module> initial, final Flags flags) {
-        mainPass(initial, new Flags() {
-            public boolean tests() {
-                return false;
-            }
-
-            public boolean incremental() {
-                return flags.incremental();
-            }
-
-            public boolean force() {
-                return flags.force();
-            }
-
-            public PrintStream logStream() {
-                return flags.logStream();
-            }
-        });
-
-        if (flags.tests()) {
-            mainPass(initial, flags);
-        }
-    }
-
-    private void mainPass(final Collection<Module> initial, final Flags flags) {
         if (myHistory == null && !flags.tests()) {
             clean();
         }
@@ -1438,6 +1414,26 @@ public class ProjectWrapper {
         final BusyBeaver beaver = new BusyBeaver(builder);
 
         builder.buildStart();
+
+        if (flags.tests()) {
+            beaver.build(modules, new Flags() {
+                public boolean tests() {
+                    return false;
+                }
+
+                public boolean incremental() {
+                    return flags.incremental();
+                }
+
+                public boolean force() {
+                    return flags.force();
+                }
+
+                public PrintStream logStream() {
+                    return flags.logStream();
+                }
+            });
+        }
 
         beaver.build(modules, flags);
 

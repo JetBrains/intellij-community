@@ -247,6 +247,15 @@ class GroovyStubGenerator implements ModuleBuilder {
             }
         }
 
+        if (state.incremental) {
+            Set<File> excluded = state.excludes.collect { new File(it.toString()) }
+            List<File> filesToCompile = new LinkedList<File>()
+
+            JavaFileCollector.collectRecursively(new File(stubsRoot), filesToCompile, excluded)
+
+            filesToCompile.each {state.sourceFiles << it.getAbsolutePath()}
+        }
+
         state.sourceRoots << stubsRoot
         state.tempRootsToDelete << stubsRoot
     }
