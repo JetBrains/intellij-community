@@ -174,12 +174,16 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
           ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(cachedResult);
 
           anchor.putUserData(INJECTED_PSI_IN_CONCATENATION, cachedValue);
-          anchor.putUserData(NO_CONCAT_INJECTION_TIMESTAMP, null);
+          if (anchor.getUserData(NO_CONCAT_INJECTION_TIMESTAMP) != null) {
+            anchor.putUserData(NO_CONCAT_INJECTION_TIMESTAMP, null);
+          }
         }
       }
       else {
         // cache no-injection flag
-        anchor.putUserData(INJECTED_PSI_IN_CONCATENATION, null);
+        if (anchor.getUserData(INJECTED_PSI_IN_CONCATENATION) != null) {
+          anchor.putUserData(INJECTED_PSI_IN_CONCATENATION, null);
+        }
         anchor.putUserData(NO_CONCAT_INJECTION_TIMESTAMP, (int)modificationCount);
       }
     }
