@@ -21,10 +21,12 @@ import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -63,11 +65,21 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     }
 
+
     if (oldPhase instanceof CompletionPhase.CommittingDocuments && ((CompletionPhase.CommittingDocuments)oldPhase).restartCompletion()) {
       return Result.STOP;
     }
 
-    if (LookupManager.getInstance(project).getActiveLookup() != null) {
+    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+    if (lookup != null) {
+      if (editor.getSelectionModel().hasSelection()) {
+        lookup.performGuardedChange(new Runnable() {
+          @Override
+          public void run() {
+            EditorModificationUtil.deleteSelectedText(editor);
+          }
+        });
+      }
       return Result.STOP;
     }
 

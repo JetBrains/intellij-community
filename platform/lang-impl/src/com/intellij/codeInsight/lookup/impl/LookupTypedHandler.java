@@ -47,21 +47,6 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
   private static boolean inside = false;
 
   @Override
-  public Result checkAutoPopup(char charTyped, Project project, final Editor editor, PsiFile file) {
-    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup != null && editor.getSelectionModel().hasSelection()) {
-      lookup.performGuardedChange(new Runnable() {
-        @Override
-        public void run() {
-          EditorModificationUtil.deleteSelectedText(editor);
-        }
-      });
-    }
-    
-    return lookup != null ? Result.STOP : Result.CONTINUE;
-  }
-
-  @Override
   public Result beforeCharTyped(final char charTyped,
                                 Project project,
                                 final Editor editor,
