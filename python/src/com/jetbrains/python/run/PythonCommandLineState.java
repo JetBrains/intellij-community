@@ -106,7 +106,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   private TextConsoleBuilder createConsoleBuilder(Project project) {
     if (isDebug()) {
-      return new PyDebugConsoleBuilder(project);
+      return new PyDebugConsoleBuilder(project, PythonSdkType.findSdkByPath(myConfig.getSdkHome()));
     }
     else {
       return TextConsoleBuilderFactory.getInstance().createBuilder(project);

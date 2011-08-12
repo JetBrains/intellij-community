@@ -164,7 +164,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   @Override
   protected PythonConsoleView createConsoleView() {
-    PythonConsoleView consoleView = new PythonConsoleView(getProject(), getConsoleTitle());
+    PythonConsoleView consoleView = new PythonConsoleView(getProject(), getConsoleTitle(), mySdk);
     consoleView.addMessageFilter(new PythonTracebackFilter(getProject()));
     return consoleView;
   }

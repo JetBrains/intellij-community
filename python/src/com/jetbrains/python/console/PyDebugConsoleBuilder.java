@@ -21,7 +21,9 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.run.PythonTracebackFilter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -31,9 +33,11 @@ import java.util.ArrayList;
 public class PyDebugConsoleBuilder extends TextConsoleBuilder {
   private final Project myProject;
   private final ArrayList<Filter> myFilters = Lists.newArrayList();
+  private final Sdk mySdk;
 
-  public PyDebugConsoleBuilder(final Project project) {
+  public PyDebugConsoleBuilder(final Project project, @Nullable Sdk sdk) {
     myProject = project;
+    this.mySdk = sdk;
   }
 
   public ConsoleView getConsole() {
@@ -45,7 +49,7 @@ public class PyDebugConsoleBuilder extends TextConsoleBuilder {
   }
 
   protected  ConsoleView createConsole() {
-    PythonDebugLanguageConsoleView consoleView = new PythonDebugLanguageConsoleView(myProject);
+    PythonDebugLanguageConsoleView consoleView = new PythonDebugLanguageConsoleView(myProject, mySdk);
     consoleView.addMessageFilter(new PythonTracebackFilter(myProject));
     return consoleView;
   }
