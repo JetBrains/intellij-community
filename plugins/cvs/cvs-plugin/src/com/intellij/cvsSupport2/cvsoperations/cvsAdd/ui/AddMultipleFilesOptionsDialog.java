@@ -73,8 +73,9 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
     }
 
     public void setValue(Object o, Object aValue) {
-      ((AddedFileInfo)o).setIncluded(((Boolean)aValue).booleanValue());
-      myTreeTable.repaint();
+      final AddedFileInfo node = (AddedFileInfo)o;
+      node.setIncluded(((Boolean)aValue).booleanValue());
+      myModel.nodeChanged(node);
     }
 
     public int getWidth(JTable table) {
@@ -135,6 +136,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
   private final ColumnInfo[] COLUMNS = new ColumnInfo[]{INCLUDED, FILE, KEYWORD_SUBSTITUTION};
 
   private TreeTable myTreeTable;
+  private ListTreeTableModelOnColumns myModel;
   private static final JPanel J_PANEL = new JPanel();
   private static final TableCellRenderer TABLE_CELL_RENDERER = new TableCellRenderer() {
     public Component getTableCellRendererComponent(JTable table,
@@ -206,8 +208,8 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
       root.add(myRoot);
     }
 
-    ListTreeTableModelOnColumns model = new ListTreeTableModelOnColumns(root, COLUMNS);
-    myTreeTable = new TreeTableView(model);
+    myModel = new ListTreeTableModelOnColumns(root, COLUMNS);
+    myTreeTable = new TreeTableView(myModel);
 
     int comboHeight = new JComboBox().getPreferredSize().height;
     int checkBoxHeight = new JCheckBox().getPreferredSize().height;
@@ -227,10 +229,14 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
             return;
           }
           final int[] selectedRows = myTreeTable.getSelectedRows();
+          if (selectedRows.length == 0) {
+            return;
+          }
+          final boolean included = !((AddedFileInfo)myTreeTable.getValueAt(selectedRows[0], 1)).included();
           for (int selectedRow : selectedRows) {
             final AddedFileInfo addedFileInfo = (AddedFileInfo)myTreeTable.getValueAt(selectedRow, 1);
-            addedFileInfo.setIncluded(!addedFileInfo.included());
-            myTreeTable.repaint();
+            addedFileInfo.setIncluded(included);
+            myModel.nodeChanged(addedFileInfo);
           }
         }
       }
@@ -264,7 +270,6 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
       for (AddedFileInfo addedFileInfo : getAllFileInfos()) {
         addedFileInfo.setIncluded(includedValue());
       }
-
       AddMultipleFilesOptionsDialog.this.myTreeTable.repaint();
     }
 
