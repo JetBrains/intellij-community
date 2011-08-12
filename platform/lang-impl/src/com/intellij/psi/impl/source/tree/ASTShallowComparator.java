@@ -51,6 +51,10 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
       return compareTreeToText((TreeElement)oldNode, newText) ? ThreeState.YES : ThreeState.UNSURE;
     }
 
+    if (oldNode instanceof ForeignLeafPsiElement && newNode instanceof ForeignLeafPsiElement) {
+      return oldNode.getText().equals(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
+    }
+
     if (oldNode instanceof LeafElement) {
       return ((LeafElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
     }
