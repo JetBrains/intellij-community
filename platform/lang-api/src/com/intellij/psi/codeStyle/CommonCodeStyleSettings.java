@@ -169,9 +169,11 @@ public class CommonCodeStyleSettings {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CommonCodeStyleSettings>(this, getDefaultSettings()));
+    CommonCodeStyleSettings defaultSettings = getDefaultSettings(); 
+    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CommonCodeStyleSettings>(this, defaultSettings));
     if (myIndentOptions != null) {
-      myIndentOptions.writeExternalWithNonDefaults(element);
+      IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
+      myIndentOptions.writeExternalWithNonDefaults(element, defaultIndentOptions);
     }
   }
 
@@ -819,8 +821,15 @@ public class CommonCodeStyleSettings {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
 
-    public void writeExternalWithNonDefaults(Element element) {
-      XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters());
+    public void writeExternalWithNonDefaults(Element element, final IndentOptions defaultOptions) {
+      XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters() {
+        @Override
+        protected void configure(Object o) {
+          if (o instanceof IndentOptions && defaultOptions != null) {
+            ((IndentOptions)o).copyFrom(defaultOptions);
+          }
+        }
+      });
     }
 
     public Object clone() {
