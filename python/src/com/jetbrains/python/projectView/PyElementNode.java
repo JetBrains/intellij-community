@@ -60,4 +60,9 @@ public class PyElementNode extends BasePsiNode<PyElement> {
     }
     return getValue() instanceof PyClass ? 10 : 20;
   }
+
+  @Override
+  public boolean expandOnDoubleClick() {
+    return false;
+  }
 }

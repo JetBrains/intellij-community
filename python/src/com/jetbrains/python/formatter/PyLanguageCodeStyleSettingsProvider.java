@@ -100,5 +100,5 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                 "long_parameter_2):\n" +
                                                 "    pass\n\n" +
                                                 "xyzzy('long_string_constant1',\n" +
-                                                "    'long_string_constant2'";
+                                                "    'long_string_constant2')";
 }

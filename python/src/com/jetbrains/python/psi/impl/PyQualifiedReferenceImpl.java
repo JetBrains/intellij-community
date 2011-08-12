@@ -3,12 +3,14 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -19,8 +21,10 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,28 +71,96 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
 
       // enrich the type info with any fields assigned nearby
       if (qualifier instanceof PyQualifiedExpression && ret.isEmpty()) {
-        if (addAssignedAttributes(ret, referencedName, qualifier)) return ret;
+        if (addAssignedAttributes(ret, referencedName, (PyQualifiedExpression)qualifier)) return ret;
       }
     }
     else if (myContext.allowImplicits() && canQualifyAnImplicitName(qualifier, qualifierType)) {
-      final Collection functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
-      for (Object function : functions) {
-        if (!(function instanceof PyFunction)) {
-          FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
-                                                       new Throwable("found non-function object " + function + " in function list"));
-          break;
-        }
-        PyFunction pyFunction = (PyFunction) function;
-        if (pyFunction.getContainingClass() != null) {
-          ret.add(new ImplicitResolveResult(pyFunction));
-        }
-      }
+      addImplicitResolveResults(referencedName, ret);
     }
+
     // special case of __doc__
     if ("__doc__".equals(referencedName)) {
       addDocReference(ret, qualifier, qualifierType);
     }
     return ret;
+  }
+
+  private void addImplicitResolveResults(String referencedName, ResolveResultList ret) {
+    final Project project = myElement.getProject();
+    final GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
+    final Collection functions = PyFunctionNameIndex.find(referencedName, project, scope);
+    final PsiFile containingFile = myElement.getContainingFile();
+    final List<PyQualifiedName> imports;
+    if (containingFile instanceof PyFile) {
+      imports = collectImports((PyFile) containingFile);
+    }
+    else {
+      imports = Collections.emptyList();
+    }
+    for (Object function : functions) {
+      if (!(function instanceof PyFunction)) {
+        FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
+                                                     new Throwable("found non-function object " + function + " in function list"));
+        break;
+      }
+      PyFunction pyFunction = (PyFunction) function;
+      if (pyFunction.getContainingClass() != null) {
+        ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction, imports)));
+      }
+    }
+
+    final Collection attributes = PyInstanceAttributeIndex.find(referencedName, project, scope);
+    for (Object attribute : attributes) {
+      if (!(attribute instanceof PyTargetExpression)) {
+        FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
+                                                     new Throwable("found non-target expression object " + attribute + " in target expression list"));
+        break;
+      }
+      ret.add(new ImplicitResolveResult((PyTargetExpression) attribute, getImplicitResultRate((PyTargetExpression)attribute, imports)));
+    }
+  }
+
+  private static List<PyQualifiedName> collectImports(PyFile containingFile) {
+    List<PyQualifiedName> imports = new ArrayList<PyQualifiedName>();
+    for (PyFromImportStatement anImport : containingFile.getFromImports()) {
+      final PyQualifiedName source = anImport.getImportSourceQName();
+      if (source != null) {
+        imports.add(source);
+      }
+    }
+    for (PyImportElement importElement : containingFile.getImportTargets()) {
+      final PyQualifiedName qName = importElement.getImportedQName();
+      if (qName != null) {
+        imports.add(qName.removeLastComponent());
+      }
+    }
+    return imports;
+  }
+
+  private int getImplicitResultRate(PyElement target, List<PyQualifiedName> imports) {
+    int rate = RatedResolveResult.RATE_LOW;
+    if (target.getContainingFile() == myElement.getContainingFile()) {
+      rate += 200;
+    }
+    else {
+      final VirtualFile vFile = target.getContainingFile().getVirtualFile();
+      if (vFile != null) {
+        if (ProjectScope.getProjectScope(myElement.getProject()).contains(vFile)) {
+          rate += 80;
+        }
+        final PyQualifiedName qName = ResolveImportUtil.findShortestImportableQName(myElement, vFile);
+        if (qName != null && imports.contains(qName)) {
+          rate += 70;
+        }
+      }
+    }
+    if (myElement.getParent() instanceof PyCallExpression) {
+      if (target instanceof PyFunction) rate += 50;      
+    }
+    else {
+      if (!(target instanceof PyFunction)) rate += 50;
+    }
+    return rate;
   }
 
   private static boolean canQualifyAnImplicitName(@NotNull PyExpression qualifier, @Nullable PyType qualType) {
@@ -104,10 +176,10 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     return true;
   }
 
-  private static boolean addAssignedAttributes(ResolveResultList ret, String referencedName, PyExpression qualifier) {
-    List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
+  private static boolean addAssignedAttributes(ResolveResultList ret, String referencedName, PyQualifiedExpression qualifier) {
+    List<PyExpression> qualifier_path = PyResolveUtil.unwindQualifiers(qualifier);
     if (qualifier_path != null) {
-      for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
+      for (PyExpression ex : collectAssignedAttributes(qualifier)) {
         if (referencedName.equals(ex.getName())) {
           ret.poke(ex, RatedResolveResult.RATE_NORMAL);
           return true;

@@ -190,7 +190,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   public Iterable<PyElement> iterateNames() {
     PyElement ret = getAsNameElement();
     if (ret == null) {
-      List<PyReferenceExpression> unwound_path = PyResolveUtil.unwindQualifiers(getImportReference());
+      List<PyExpression> unwound_path = PyResolveUtil.unwindQualifiers(getImportReference());
       if ((unwound_path != null) && (unwound_path.size() > 0)) ret = unwound_path.get(0);
     }
     if (ret == null) {

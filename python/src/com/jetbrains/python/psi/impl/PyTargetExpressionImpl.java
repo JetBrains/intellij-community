@@ -12,6 +12,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -27,6 +28,8 @@ import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -395,5 +398,44 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       return new LocalSearchScope(container);
     }
     return super.getUseScope();
+  }
+
+  @Override
+  public PyClass getContainingClass() {
+    final PyTargetExpressionStub stub = getStub();
+    if (stub != null) {
+      final StubElement parentStub = stub.getParentStub();
+      if (parentStub instanceof PyClassStub) {
+        return ((PyClassStub)parentStub).getPsi();
+      }
+      if (parentStub instanceof PyFunctionStub) {
+        final StubElement functionParent = parentStub.getParentStub();
+        if (functionParent instanceof PyClassStub) {
+          return ((PyClassStub) functionParent).getPsi();
+        }
+      }
+
+      return null;
+    }
+
+    PsiElement parent = PsiTreeUtil.getParentOfType(this, PyStatementList.class);
+    if (parent != null) {
+      PsiElement pparent = parent.getParent();
+      if (pparent instanceof PyClass) {
+        return (PyClass)pparent;
+      }
+      if (pparent instanceof PyFunction) {
+        return ((PyFunction) pparent).getContainingClass();
+      }
+    }
+    return null;
+  }
+
+  protected String getElementLocation() {
+    final PyClass containingClass = getContainingClass();
+    if (containingClass != null) {
+      return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
+    }
+    return super.getElementLocation();
   }
 }

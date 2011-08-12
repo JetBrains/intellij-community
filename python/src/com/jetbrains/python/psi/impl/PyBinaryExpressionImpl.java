@@ -8,8 +8,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +55,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
 
   public boolean isOperator(String chars) {
     ASTNode child = getNode().getFirstChildNode();
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     while (child != null) {
       IElementType elType = child.getElementType();
       if (elType instanceof PyElementType && PyElementTypes.BINARY_OPS.contains(elType)) {
@@ -80,7 +82,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   public void deleteChildInternal(@NotNull ASTNode child) {
     PyExpression left = getLeftExpression();
     PyExpression right = getRightExpression();
-    if (left == child.getPsi()) {
+    if (left == child.getPsi() && right != null) {
       replace(right);
     }
     else if (right == child.getPsi()) {
@@ -96,10 +98,11 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     return getReference(PyResolveContext.noImplicits());
   }
 
-  public PsiPolyVariantReference getReference(PyResolveContext resolveContext) {
+  @Override
+  public PsiPolyVariantReference getReference(PyResolveContext context) {
     final PyElementType t = getOperator();
     if (t != null && t.getSpecialMethodName() != null) {
-      return new PyOperatorReferenceImpl(this, resolveContext);
+      return new PyOperatorReferenceImpl(this, context);
     }
     return null;
   }
@@ -113,10 +116,14 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       if (ref != null) {
         final PsiElement resolved = ref.resolve();
         if (resolved instanceof Callable) {
-          final TypeEvalContext returnTypeContext = resolved.getContainingFile() == getContainingFile() ?
-                                                    context : TypeEvalContext.fast();
-          return ((Callable)resolved).getReturnType(returnTypeContext, null);
+          final PyType res = ((Callable)resolved).getReturnType(context, null);
+          if (res != null && !(res instanceof PyNoneType)) {
+            return res;
+          }
         }
+      }
+      if (PyNames.COMPARISON_OPERATORS.contains(getReferencedName())) {
+        return PyBuiltinCache.getInstance(this).getBoolType();
       }
     }
     return null;

@@ -52,7 +52,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyLightFixtureTestCase
     doTest();
   }
 
-  public void testBinaryOperators() {
+  public void testOperators() {
+    doTest();
+  }
+  
+  public void testNamedTuple() {
     doTest();
   }
 

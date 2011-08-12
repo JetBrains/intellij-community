@@ -13,10 +13,14 @@ import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 public class PyResolveTest extends PyResolveTestCase {
   @Override
   protected PsiElement doResolve() {
+    final PsiReference ref = findReferenceByMarker();
+    return ref.resolve();
+  }
+
+  private PsiReference findReferenceByMarker() {
     myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
     int offset = findMarkerOffset(myFixture.getFile());
-    final PsiReference ref = myFixture.getFile().findReferenceAt(offset);
-    return ref.resolve();
+    return myFixture.getFile().findReferenceAt(offset);
   }
 
   protected PsiElement resolve() {
@@ -26,7 +30,7 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   private ResolveResult[] multiResolve() {
-    PsiReference ref = configureByFile("resolve/" + getTestName(false) + ".py");
+    PsiReference ref = findReferenceByMarker();
     assertTrue(ref instanceof PsiPolyVariantReference);
     return ((PsiPolyVariantReference)ref).multiResolve(false);
   }
@@ -420,5 +424,12 @@ public class PyResolveTest extends PyResolveTestCase {
   
   public void testKeywordArgument() {
     assertResolvesTo(PyNamedParameter.class, "bar");
+  }
+  
+  public void testImplicitResolveInstanceAttribute() {
+    ResolveResult[] resolveResults = multiResolve();
+    assertEquals(1, resolveResults.length);
+    final PsiElement psiElement = resolveResults[0].getElement();
+    assertTrue(psiElement instanceof PyTargetExpression && "xyzzy".equals(((PyTargetExpression)psiElement).getName()));
   }
 }

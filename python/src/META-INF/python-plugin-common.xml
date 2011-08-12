@@ -66,6 +66,7 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PySuperClassIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyVariableNameIndex"/>
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex"/>
 
     <fileTypeIndentOptionsProvider implementation="com.jetbrains.python.formatter.PyIndentOptionsProvider"/>
 
@@ -292,14 +293,14 @@
 
     <problemFileHighlightFilter implementation="com.jetbrains.python.codeInsight.PyProblemFileHighlightFilter"/>
 
-    <editorSmartKeysConfigurable implementation="com.jetbrains.python.codeInsight.PySmartKeysOptions"/>
-    <editorSmartKeysConfigurable implementation="com.jetbrains.python.codeInsight.PySpecificSmartKeysOptions"/>
+    <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySmartKeysOptions"/>
+    <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySpecificSmartKeysOptions"/>
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor"/>
 
     <applicationService serviceInterface="com.jetbrains.python.documentation.PythonDocumentationMap"
                         serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
-    <applicationConfigurable implementation="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
+    <applicationConfigurable instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.configuration.PyIntegratedToolsConfigurable"/>
     <projectService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                     serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
