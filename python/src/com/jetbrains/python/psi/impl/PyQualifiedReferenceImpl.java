@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,8 +81,18 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         }
         PyFunction pyFunction = (PyFunction) function;
         if (pyFunction.getContainingClass() != null) {
-          ret.add(new ImplicitResolveResult(pyFunction, getFunctionRate(pyFunction)));
+          ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction)));
         }
+      }
+      
+      final Collection attributes = PyInstanceAttributeIndex.find(referencedName, myElement.getProject());
+      for (Object attribute : attributes) {
+        if (!(attribute instanceof PyTargetExpression)) {
+          FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
+                                                       new Throwable("found non-target expression object " + attribute + " in target expression list"));
+          break;
+        }
+        ret.add(new ImplicitResolveResult((PyTargetExpression) attribute, getImplicitResultRate((PyTargetExpression)attribute)));
       }
     }
     // special case of __doc__
@@ -91,16 +102,22 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     return ret;
   }
 
-  private int getFunctionRate(PyFunction pyFunction) {
+  private int getImplicitResultRate(PyElement target) {
     int rate = RatedResolveResult.RATE_LOW;
-    if (pyFunction.getContainingFile() == myElement.getContainingFile()) {
+    if (target.getContainingFile() == myElement.getContainingFile()) {
       rate += 200;
     }
     else {
-      final VirtualFile vFile = pyFunction.getContainingFile().getVirtualFile();
+      final VirtualFile vFile = target.getContainingFile().getVirtualFile();
       if (vFile != null && ProjectScope.getProjectScope(myElement.getProject()).contains(vFile)) {
         rate += 80;
       }
+    }
+    if (myElement.getParent() instanceof PyCallExpression) {
+      if (target instanceof PyFunction) rate += 50;      
+    }
+    else {
+      if (!(target instanceof PyFunction)) rate += 50;
     }
     return rate;
   }
