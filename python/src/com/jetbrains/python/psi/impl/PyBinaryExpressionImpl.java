@@ -8,8 +8,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -114,8 +116,14 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       if (ref != null) {
         final PsiElement resolved = ref.resolve();
         if (resolved instanceof Callable) {
-          return ((Callable)resolved).getReturnType(context, null);
+          final PyType res = ((Callable)resolved).getReturnType(context, null);
+          if (res != null && !(res instanceof PyNoneType)) {
+            return res;
+          }
         }
+      }
+      if (PyNames.COMPARISON_OPERATORS.contains(getReferencedName())) {
+        return PyBuiltinCache.getInstance(this).getBoolType();
       }
     }
     return null;

@@ -277,7 +277,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (element instanceof PyReferenceExpression) {
         PyReferenceExpression refex = (PyReferenceExpression)element;
         String refname = refex.getReferencedName();
-        if (myIgnoredIdentifiers.contains(refname) || PyNames.OPERATORS_WITH_FALLBACK.contains(refname)) {
+        if (myIgnoredIdentifiers.contains(refname) || PyNames.COMPARISON_OPERATORS.contains(refname)) {
           return;
         }
         if (refex.getQualifier() != null) {
@@ -352,7 +352,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         boolean marked_qualified = false;
         if (element instanceof PyQualifiedExpression) {
           final PyQualifiedExpression qexpr = (PyQualifiedExpression)element;
-          if (PyNames.OPERATORS_WITH_FALLBACK.contains(qexpr.getReferencedName())) {
+          if (PyNames.COMPARISON_OPERATORS.contains(qexpr.getReferencedName())) {
             return;
           }
           final PyExpression qualifier = qexpr.getQualifier();

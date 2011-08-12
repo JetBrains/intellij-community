@@ -107,10 +107,7 @@ public class PyNames {
     "__version__"
   );
 
-  /**
-   * These operators have a fallback implementation if they are not defined for a class
-   */
-  public static ImmutableSet<String> OPERATORS_WITH_FALLBACK = ImmutableSet.of(
+  public static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of(
     "__eq__",
     "__ne__",
     "__lt__",
