@@ -86,6 +86,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   private Set<VirtualFile> myDefinitelyUntrackedFiles = new HashSet<VirtualFile>();
   private Set<VirtualFile> myPossiblyUntrackedFiles = new HashSet<VirtualFile>();
+  private Set<VirtualFile> myPossiblyTrackedFiles = new HashSet<VirtualFile>();
   private boolean myReady;   // if false, total refresh is needed
   private final Object LOCK = new Object();
 
@@ -106,6 +107,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     synchronized (LOCK) {
       myDefinitelyUntrackedFiles.clear();
       myPossiblyUntrackedFiles.clear();
+      myPossiblyTrackedFiles.clear();
     }
   }
 
@@ -177,17 +179,8 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     synchronized (LOCK) {
       myDefinitelyUntrackedFiles = untrackedFiles;
       myPossiblyUntrackedFiles.clear();
+      myPossiblyTrackedFiles.clear();
       myReady = true;
-    }
-  }
-
-  /**
-   * @return a copy of the set containing files, that are possibly untracked. Thus these files need to be re-checked by querying Git.
-   */
-  @NotNull
-  private Set<VirtualFile> getPossiblyUntrackedFiles() {
-    synchronized (LOCK) {
-      return new HashSet<VirtualFile>(myPossiblyUntrackedFiles);
     }
   }
 
@@ -204,10 +197,22 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
    * Queries Git to check the status of {@code myPossiblyUntrackedFiles} and moves them to {@code myDefinitelyUntrackedFiles}.
    */
   private void verifyPossiblyUntrackedFiles() throws VcsException {
-    Set<VirtualFile> untrackedFiles = Git.untrackedFiles(myProject, myRoot, getPossiblyUntrackedFiles());
+    Set<VirtualFile> suspiciousFiles = new HashSet<VirtualFile>();
+    synchronized (LOCK) {
+      suspiciousFiles.addAll(myPossiblyUntrackedFiles);
+      suspiciousFiles.addAll(myPossiblyTrackedFiles);
+    }
+
+    Set<VirtualFile> untrackedFiles = Git.untrackedFiles(myProject, myRoot, suspiciousFiles);
+    suspiciousFiles.removeAll(untrackedFiles);
+    // files that were suspicious (and thus passed to 'git ls-files'), but are not untracked, are definitely tracked.
+    Set<VirtualFile> trackedFiles  = suspiciousFiles;
+
     synchronized (LOCK) {
       myPossiblyUntrackedFiles.clear();
+      myPossiblyTrackedFiles.clear();
       myDefinitelyUntrackedFiles.addAll(untrackedFiles);
+      myDefinitelyUntrackedFiles.removeAll(trackedFiles);
     }
   }
 
@@ -239,7 +244,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
     // if index has changed, no need to refresh specific files - we get the full status of all files
     if (indexChanged) {
-      myDirtyScopeManager.dirDirtyRecursively(myRoot);
+        myDirtyScopeManager.dirDirtyRecursively(myRoot);
       synchronized (LOCK) {
         myReady = false;
       }
