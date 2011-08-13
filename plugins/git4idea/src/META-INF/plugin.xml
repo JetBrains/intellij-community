@@ -20,10 +20,6 @@
 
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
       <reference ref="CheckinFiles"/>
-      <!-- <reference id="CheckinProject"/>
-   <reference id="UpdateFiles"/>
-   <reference id="Compare.SameVersion"/>
-   <reference id="IntegrateFiles"/>  -->
       <reference ref="Annotate"/>
       <reference ref="Show.Current.Revision"/>
       <reference ref="Compare.SameVersion"/>
@@ -32,19 +28,15 @@
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction" text="Compare with Branch" />
-      <!-- <reference id="ChangesView.Browse"/> -->
       <separator/>
 
-      <action id="Git.Branching" class="git4idea.ui.branch.GitBranchesAction" text="_Branches"/>
+      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches"/>
       <action id="Git.CurrentBranch" class="git4idea.actions.GitCurrentBranch" text="Current Branch..."/>
       <action id="Git.Checkout" class="git4idea.actions.GitCheckout" text="Checkout Branch..."/>
       <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="/actions/include.png">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
       <action id="Git.Revert" class="git4idea.actions.GitRevert" text="Revert File" icon="/actions/rollback.png"/>
-      <!--<action id="Resolve" class="org.jetbrains.idea.perforce.actions.ResolveAction"/>-->
-      <!--<action id="ResolveAll" class="org.jetbrains.idea.perforce.actions.ResolveAllAction"/>-->
-      <!-- <action id="TimeLapseView" class="org.jetbrains.idea.perforce.actions.TimeLapseViewAction"/> -->
       <separator/>
 
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag Files..."/>
@@ -68,7 +60,6 @@
 
       <add-to-group group-id="VcsGroup" anchor="last"/>
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
-      <!--           <add-to-group anchor="last" group-id="VcsGlobalGroup" /> -->
     </group>
   </actions>
 
