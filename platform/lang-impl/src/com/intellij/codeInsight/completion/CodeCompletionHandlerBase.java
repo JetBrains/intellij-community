@@ -95,6 +95,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (invokedExplicitly) {
       assert synchronous;
     }
+    if (autopopup) {
+      assert !invokedExplicitly;
+    }
   }
 
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
@@ -282,14 +285,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     indicator.addMapToDispose(hostMap);
     indicator.addMapToDispose(context.getOffsetMap());
 
-    boolean sync =
-      (invokedExplicitly || ApplicationManager.getApplication().isUnitTestMode()) && !CompletionAutoPopupHandler.ourTestingAutopopup;
-
-    CompletionServiceImpl.setCompletionPhase(sync ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
+    CompletionServiceImpl.setCompletionPhase(synchronous ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
 
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator, initContext);
 
-    if (!sync) {
+    if (!synchronous) {
       return;
     }
 

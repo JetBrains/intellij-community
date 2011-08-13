@@ -529,7 +529,7 @@
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler" order="after hide-hints"/>
 
   <typedHandler implementation="com.intellij.codeInsight.lookup.impl.LookupTypedHandler" id="lookup" order="first"/>
-  <typedHandler implementation="com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler" id="completionAutoPopup"/>
+  <typedHandler implementation="com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler" id="completionAutoPopup" order="first"/>
   <typedHandler implementation="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler"/>
 
   <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.DirectoryTemplateCompletionProcessor"/>
