@@ -41,7 +41,10 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -215,7 +218,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       }
 
       // Calculate anchor to insert before
-      GrExpression enclosingExpr = addBlockIntoParent(replaced);
+      GrExpression enclosingExpr = GroovyRefactoringUtil.addBlockIntoParent(replaced);
       GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(enclosingExpr, GrVariableDeclarationOwner.class);
       assert owner != null;
       PsiElement element = enclosingExpr;
@@ -323,65 +326,6 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       manager.doPostponedOperationsAndUnblockDocument(document);
       CodeStyleManager.getInstance(project).adjustLineIndent(file, owner.getTextRange());
     }
-  }
-
-  /**
-   *  adds block statement in parent of expr if needed. For Example:
-   *    while (true) a=foo()
-   *  will be replaced with
-   *    while(true) {a=foo()}
-   * @param expr
-   * @return corresponding expr inside block if it has been created or expr itself.
-   * @throws IncorrectOperationException
-   */
-
-  private static GrExpression addBlockIntoParent(GrExpression expr) throws IncorrectOperationException {
-
-    PsiElement parent = expr.getParent();
-    PsiElement child = expr;
-    while (!(parent instanceof GrLoopStatement) &&
-           !(parent instanceof GrIfStatement) &&
-           !(parent instanceof GrVariableDeclarationOwner) &&
-           parent != null) {
-      parent = parent.getParent();
-      child = child.getParent();
-    }
-    if (parent instanceof GrWhileStatement && child == ((GrWhileStatement)parent).getCondition() ||
-        parent instanceof GrIfStatement && child == ((GrIfStatement)parent).getCondition()) {
-      parent = parent.getParent();
-    }
-    assert parent != null;
-    if (parent instanceof GrVariableDeclarationOwner) {
-      return expr;
-    }
-
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
-    PsiElement tempStmt = expr;
-    while (parent != tempStmt.getParent()) {
-      tempStmt = tempStmt.getParent();
-    }
-    GrStatement toAdd = (GrStatement)tempStmt.copy();
-    GrBlockStatement blockStatement = factory.createBlockStatement();
-    if (parent instanceof GrLoopStatement) {
-      ((GrLoopStatement)parent).replaceBody(blockStatement);
-    }
-    else {
-      GrIfStatement ifStatement = (GrIfStatement)parent;
-      if (tempStmt == ifStatement.getThenBranch()) {
-        ifStatement.replaceThenBranch(blockStatement);
-      }
-      else if (tempStmt == ifStatement.getElseBranch()) {
-        ifStatement.replaceElseBranch(blockStatement);
-      }
-    }
-    GrStatement statement = blockStatement.getBlock().addStatementBefore(toAdd, null);
-    if (statement instanceof GrReturnStatement) {
-      expr = ((GrReturnStatement)statement).getReturnValue();
-    }
-    else {
-      expr = (GrExpression)statement;
-    }
-    return expr;
   }
 
 

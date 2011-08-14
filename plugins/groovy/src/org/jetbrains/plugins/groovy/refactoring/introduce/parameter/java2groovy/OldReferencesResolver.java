@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -93,6 +94,9 @@ public class OldReferencesResolver {
       if (methodExpression instanceof GrReferenceExpression) {
         myInstanceRef = ((GrReferenceExpression)methodExpression).getQualifierExpression();
       }
+      else if (methodExpression instanceof GrMethodCall) {
+        myInstanceRef = getQualifierFromGetterCall((GrMethodCall)methodExpression);
+      }
       else {
         myInstanceRef = null;
       }
@@ -100,6 +104,21 @@ public class OldReferencesResolver {
     else {
       myInstanceRef = null;
     }
+  }
+
+  /**
+   * checks for the case: qualifier.getFoo()(args)
+   * @param methodExpression
+   */
+  @Nullable
+  private static GrExpression getQualifierFromGetterCall(GrMethodCall methodExpression) {
+    final GroovyResolveResult result = methodExpression.advancedResolve();
+    if (!(result.getElement() instanceof GrAccessorMethod) || result.isInvokedOnProperty()) return null;
+
+    final GrExpression invoked = methodExpression.getInvokedExpression();
+    if (invoked instanceof GrReferenceExpression) return ((GrReferenceExpression)invoked).getQualifier();
+
+    return null;
   }
 
   public void resolve() throws IncorrectOperationException {

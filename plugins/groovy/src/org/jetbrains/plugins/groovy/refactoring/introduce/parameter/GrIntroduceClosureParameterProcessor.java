@@ -19,7 +19,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -50,9 +50,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
@@ -185,7 +188,13 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
 
     if (!mySettings.generateDelegate() && toSearchFor != null) {
-      Collection<PsiReference> refs = ReferencesSearch.search(toSearchFor, GlobalSearchScope.projectScope(myProject), true).findAll();
+      Collection<PsiReference> refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope(), true).findAll();
+      if (toSearchFor instanceof GrField) {
+        final GrAccessorMethod[] getters = ((GrField)toSearchFor).getGetters();
+        for (GrAccessorMethod getter : getters) {
+          refs.addAll(MethodReferencesSearch.search(getter, getter.getResolveScope(), true).findAll());
+        }
+      }
 
       for (PsiReference ref1 : refs) {
         PsiElement ref = ref1.getElement();
@@ -308,6 +317,22 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   private void processExternalUsage(UsageInfo usage) {
     GrCall callExpression = GroovyRefactoringUtil.getCallExpressionByMethodReference(usage.getElement());
     LOG.assertTrue(callExpression != null);
+
+    //check for x.getFoo()(args)
+    if (callExpression instanceof GrMethodCall) {
+      final GrExpression invoked = ((GrMethodCall)callExpression).getInvokedExpression();
+      if (invoked instanceof GrReferenceExpression) {
+        final GroovyResolveResult result = ((GrReferenceExpression)invoked).advancedResolve();
+        final PsiElement resolved = result.getElement();
+        if (resolved instanceof GrAccessorMethod && !result.isInvokedOnProperty()) {
+          PsiElement actualCallExpression = callExpression.getParent();
+          if (actualCallExpression instanceof GrCall) {
+            callExpression = (GrCall)actualCallExpression;
+          }
+        }
+      }
+    }
+    
     GrArgumentList argList = callExpression.getArgumentList();
     LOG.assertTrue(argList != null);
     GrExpression[] oldArgs = argList.getExpressionArguments();
@@ -328,8 +353,8 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       LOG.assertTrue(initializer instanceof GrExpression);
 
       GrExpression newArg = (GrExpression)argList.addAfter(initializer, anchor);
-      new OldReferencesResolver(callExpression, newArg, toReplaceIn, mySettings.replaceFieldsWithGetters(), initializer, signature, actualArgs, toReplaceIn.getParameters())
-        .resolve();
+      new OldReferencesResolver(callExpression, newArg, toReplaceIn, mySettings.replaceFieldsWithGetters(), initializer, signature,
+                                actualArgs, toReplaceIn.getParameters()).resolve();
       ChangeContextUtil.clearContextInfo(initializer);
     }
 

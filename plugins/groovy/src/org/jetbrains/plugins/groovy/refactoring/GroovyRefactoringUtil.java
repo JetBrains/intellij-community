@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.refactoring;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -51,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
@@ -62,6 +64,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 
 import java.util.*;
 
@@ -73,6 +76,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
  * @author ilyas
  */
 public abstract class GroovyRefactoringUtil {
+  private static final Logger LOG = Logger.getInstance(GroovyRefactoringUtil.class);
 
   public static final Collection<String> KEYWORDS = ContainerUtil.map(
       TokenSets.KEYWORDS.getTypes(), StringUtil.createToStringFunction(IElementType.class));
@@ -431,9 +435,11 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static String createTempVar(GrExpression expr, final GroovyPsiElement context, boolean declareFinal) {
-    GrStatement anchorStatement = (GrStatement)getParentStatement(context, true);
-    assert (anchorStatement != null && anchorStatement.getParent() != null);
-//    LOG.assertTrue(anchorStatement != null && anchorStatement.getParent() != null);
+    expr = addBlockIntoParent(expr);
+    final GrVariableDeclarationOwner block = PsiTreeUtil.getParentOfType(expr, GrVariableDeclarationOwner.class);
+    LOG.assertTrue(block != null);
+    final PsiElement anchorStatement = PsiTreeUtil.findPrevParent(block, expr);
+    LOG.assertTrue(anchorStatement instanceof GrStatement);
 
     Project project = expr.getProject();
     String[] suggestedNames =GroovyNameSuggestionUtil.suggestVariableNames(expr, new NameValidator() {
@@ -463,32 +469,9 @@ public abstract class GroovyRefactoringUtil {
 /*    if (declareFinal) {
       com.intellij.psi.util.PsiUtil.setModifierProperty((decl.getMembers()[0]), PsiModifier.FINAL, true);
     }*/
-    ((GrStatementOwner)anchorStatement.getParent()).addStatementBefore(decl, anchorStatement);
+    ((GrStatementOwner)anchorStatement.getParent()).addStatementBefore(decl, (GrStatement)anchorStatement);
 
     return id;
-  }
-
-  @Nullable
-  public static PsiElement getParentStatement(GroovyPsiElement place, boolean skipScopingStatements) {
-    PsiElement parent = place;
-    while (!(parent instanceof GrStatement)) {
-      parent = parent.getParent();
-      if (parent == null) return null;
-    }
-    PsiElement parentStatement = parent;
-    parent = parentStatement.getParent();
-    while (parent instanceof GrStatement) {
-      if (!skipScopingStatements &&
-          ((parent instanceof GrForStatement && parentStatement == ((GrForStatement)parent).getBody()) ||
-           (parent instanceof GrWhileStatement && parentStatement == ((GrWhileStatement)parent).getBody()) ||
-           (parent instanceof GrIfStatement &&
-            (parentStatement == ((GrIfStatement)parent).getThenBranch() || parentStatement == ((GrIfStatement)parent).getElseBranch())))) {
-        return parentStatement;
-      }
-      parentStatement = parent;
-      parent = parent.getParent();
-    }
-    return parentStatement;
   }
 
   public static GrExpression convertJavaExpr2GroovyExpr(PsiElement expr) {
@@ -678,5 +661,64 @@ public abstract class GroovyRefactoringUtil {
     });
 
     return hasSideEffect.get();
+  }
+
+  /**
+   *  adds block statement in parent of expr if needed. For Example:
+   *    while (true) a=foo()
+   *  will be replaced with
+   *    while(true) {a=foo()}
+   * @param expr
+   * @return corresponding expr inside block if it has been created or expr itself.
+   * @throws com.intellij.util.IncorrectOperationException
+   */
+
+  public static GrExpression addBlockIntoParent(GrExpression expr) throws IncorrectOperationException {
+
+    PsiElement parent = expr.getParent();
+    PsiElement child = expr;
+    while (!(parent instanceof GrLoopStatement) &&
+           !(parent instanceof GrIfStatement) &&
+           !(parent instanceof GrVariableDeclarationOwner) &&
+           parent != null) {
+      parent = parent.getParent();
+      child = child.getParent();
+    }
+    if (parent instanceof GrWhileStatement && child == ((GrWhileStatement)parent).getCondition() ||
+        parent instanceof GrIfStatement && child == ((GrIfStatement)parent).getCondition()) {
+      parent = parent.getParent();
+    }
+    assert parent != null;
+    if (parent instanceof GrVariableDeclarationOwner) {
+      return expr;
+    }
+
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
+    PsiElement tempStmt = expr;
+    while (parent != tempStmt.getParent()) {
+      tempStmt = tempStmt.getParent();
+    }
+    GrStatement toAdd = (GrStatement)tempStmt.copy();
+    GrBlockStatement blockStatement = factory.createBlockStatement();
+    if (parent instanceof GrLoopStatement) {
+      ((GrLoopStatement)parent).replaceBody(blockStatement);
+    }
+    else {
+      GrIfStatement ifStatement = (GrIfStatement)parent;
+      if (tempStmt == ifStatement.getThenBranch()) {
+        ifStatement.replaceThenBranch(blockStatement);
+      }
+      else if (tempStmt == ifStatement.getElseBranch()) {
+        ifStatement.replaceElseBranch(blockStatement);
+      }
+    }
+    GrStatement statement = blockStatement.getBlock().addStatementBefore(toAdd, null);
+    if (statement instanceof GrReturnStatement) {
+      expr = ((GrReturnStatement)statement).getReturnValue();
+    }
+    else {
+      expr = (GrExpression)statement;
+    }
+    return expr;
   }
 }
