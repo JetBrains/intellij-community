@@ -17,11 +17,11 @@
 package org.jetbrains.plugins.groovy.completion;
 
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 
 /**
  * @author Maxim.Medvedev
@@ -824,5 +824,9 @@ class X {
     myFixture.configureFromExistingVirtualFile file.virtualFile
     myFixture.completeBasic()
     assertFalse(myFixture.lookupElementStrings.contains('Foo'))
+  }
+
+  public void testClassNameBeforeParentheses(){
+    doBasicTest()
   }
 }

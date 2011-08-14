@@ -396,10 +396,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     final Kind kind = getKind();
     switch (kind) {
       case TYPE_OR_PROPERTY:
+      case METHOD_OR_PROPERTY_OR_TYPE:
         if (resolve() instanceof PsiPackage) return true;
         break;
       case METHOD_OR_PROPERTY:
         break;
+
     }
     final GrExpression qualifier = getQualifier();
     if (!(qualifier instanceof GrReferenceExpressionImpl)) return false;
@@ -649,6 +651,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         return resolveMethodOrProperty(false, null, genericsMatter);
       case TYPE_OR_PROPERTY:
         return resolveTypeOrProperty();
+      case METHOD_OR_PROPERTY_OR_TYPE:
+        GroovyResolveResult[] results = resolveMethodOrProperty(false, null, genericsMatter);
+        if (results.length == 0) results = resolveTypeOrProperty();
+        return results;
       default:
         return GroovyResolveResult.EMPTY_ARRAY;
     }
@@ -667,7 +673,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   enum Kind {
     TYPE_OR_PROPERTY,
-    METHOD_OR_PROPERTY
+    METHOD_OR_PROPERTY,
+    METHOD_OR_PROPERTY_OR_TYPE
   }
 
   Kind getKind() {
@@ -675,7 +682,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     PsiElement parent = getParent();
     if (parent instanceof GrMethodCallExpression || parent instanceof GrApplicationStatement) {
-      return Kind.METHOD_OR_PROPERTY;
+      return Kind.METHOD_OR_PROPERTY_OR_TYPE;
     }
 
     return Kind.TYPE_OR_PROPERTY;
