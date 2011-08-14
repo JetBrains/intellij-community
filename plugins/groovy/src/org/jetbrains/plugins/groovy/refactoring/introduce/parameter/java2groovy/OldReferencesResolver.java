@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -61,7 +60,7 @@ public class OldReferencesResolver {
   private final HashMap<GrExpression, String> myTempVars;
   private final GrExpression myInstanceRef;
   private final GrClosureSignatureUtil.ArgInfo<PsiElement>[] myActualArgs;
-  private final GrCodeBlock myToReplaceIn;
+  private final PsiElement myToReplaceIn;
   private final Project myProject;
   private final int myReplaceFieldsWithGetters;
   private final PsiElement myParameterInitializer;
@@ -71,7 +70,7 @@ public class OldReferencesResolver {
 
   public OldReferencesResolver(GrCall context,
                                GrExpression expr,
-                               GrCodeBlock toReplaceIn,
+                               PsiElement toReplaceIn,
                                int replaceFieldsWithGetters,
                                PsiElement parameterInitializer,
                                final GrClosureSignature signature,
