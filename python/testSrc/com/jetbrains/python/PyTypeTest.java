@@ -212,12 +212,28 @@ public class PyTypeTest extends PyLightFixtureTestCase {
            "    expr = var");
   }
 
-  private void doTest(final String expectedType, final String text) {
+  public void testUnknownTypeInUnion() {
+    final String text = "def f(c, x):\n" +
+                        "    if c:\n" +
+                        "        return 1\n" +
+                        "    return x\n" +
+                        "expr = f(1, 2)\n";
+    PyExpression expr = parseExpr(text);
+    PyType t = expr.getType(TypeEvalContext.slow());
+    assertTrue(PyTypeChecker.isUnknown(t));
+    doTest("int", text);
+  }
+
+  private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
-    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    PyType expected = PyTypeParser.getTypeByName(expr, expectedType);
+    return myFixture.findElementByText("expr", PyExpression.class);
+  }
+
+  private void doTest(final String expectedType, final String text) {
+    PyExpression expr = parseExpr(text);
     TypeEvalContext context = TypeEvalContext.slow();
     PyType actual = expr.getType(context);
+    PyType expected = PyTypeParser.getTypeByName(expr, expectedType);
     if (expected != null) {
       assertNotNull(actual);
       assertTrue(PyTypeChecker.match(expected, actual, context));
