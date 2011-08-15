@@ -283,7 +283,7 @@ public class ParameterInfoController {
       myHandler.updateParameterInfo(elementForUpdating, context);
       if (myHint.isVisible() && myEditor.getComponent().getRootPane() != null) {
         myComponent.update();
-        Pair<Point,Short> pos = myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating, offset, true, HintManager.ABOVE);
+        Pair<Point,Short> pos = myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating, offset, true, HintManager.UNDER);
         HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
       }
     }
