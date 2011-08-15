@@ -527,13 +527,17 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     final InputValidator validator = new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurenceManager);
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, originalType, expr, occurrences);
 
+    final boolean[] wasSucceed = new boolean[]{true};
     final Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
       @Override
       public void pass(final OccurrencesChooser.ReplaceChoice choice) {
         final Ref<SmartPsiElementPointer<PsiVariable>> variable = new Ref<SmartPsiElementPointer<PsiVariable>>();
         final IntroduceVariableSettings settings =
           getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
-        if (!settings.isOK()) return;
+        if (!settings.isOK()) {
+          wasSucceed[0] = false;
+          return;
+        }
         final boolean allOccurences = choice != OccurrencesChooser.ReplaceChoice.NO;
         typeSelectorManager.setAllOccurences(allOccurences);
         final TypeExpression expression = new TypeExpression(project, allOccurences ? typeSelectorManager.getTypesForAll() : typeSelectorManager.getTypesForOne());
@@ -576,7 +580,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     else {
       new OccurrencesChooser(editor).showChooser(callback, occurrencesMap);
     }
-    return true;
+    return wasSucceed[0];
   }
 
 
