@@ -72,6 +72,7 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
   protected boolean isAbstractColumnEditable(int rowIndex) {
     MemberInfo info = myMemberInfos.get(rowIndex);
     if (!(info.getMember() instanceof PsiMethod)) return false;
+    if (info.isStatic()) return false;
 
     PsiMethod method = (PsiMethod)info.getMember();
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
