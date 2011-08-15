@@ -16,8 +16,10 @@
 
 package com.intellij.util.xml.reflect;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.PomTarget;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
@@ -48,4 +50,7 @@ public interface AbstractDomChildrenDescription extends AnnotatedElement, PomTar
 
   @Nullable
   ElementPresentationTemplate getPresentationTemplate();
+
+  @Nullable
+  PsiElement getDeclaration(Project project);
 }

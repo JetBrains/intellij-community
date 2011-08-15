@@ -15,16 +15,15 @@
  */
 package com.intellij.xml.impl.dom;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
-import com.intellij.util.xml.reflect.DomExtension;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,20 +54,7 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor {
 
   @Nullable
   public PsiElement getDeclaration() {
-    final DomAnchor anchor = myChildrenDescription.getUserData(DomExtension.KEY_DECLARATION);
-    if (anchor != null) {
-      final DomElement declaration = anchor.retrieveDomElement();
-      if (declaration != null) {
-        final DomTarget target = DomTarget.getTarget(declaration);
-        if (target != null) {
-          return PomService.convertToPsi(target);
-        }
-        return declaration.getXmlElement();
-      }
-      return anchor.getContainingFile();
-    }
-
-    return PomService.convertToPsi(myManager.getProject(), myChildrenDescription);
+    return myChildrenDescription.getDeclaration(myManager.getProject());
   }
 
   @NonNls
@@ -174,6 +160,11 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor {
       public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
           throw new UnsupportedOperationException("Method getAnnotation not implemented in " + getClass());
         }
+
+    @Nullable
+    public PsiElement getDeclaration(final Project project) {
+      return null;
+    }
   }
 
 }

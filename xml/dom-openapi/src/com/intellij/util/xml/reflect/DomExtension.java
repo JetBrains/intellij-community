@@ -17,6 +17,7 @@
 package com.intellij.util.xml.reflect;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomAnchor;
 import com.intellij.util.xml.DomElement;
@@ -35,7 +36,9 @@ public interface DomExtension {
   Type getType();
 
   DomExtension setDeclaringElement(@NotNull DomElement declaringElement);
-  
+
+  DomExtension setDeclaringElement(@NotNull PsiElement declaringElement);
+
   DomExtension setConverter(@NotNull Converter converter);
 
   DomExtension setConverter(@NotNull Converter converter, boolean soft);
