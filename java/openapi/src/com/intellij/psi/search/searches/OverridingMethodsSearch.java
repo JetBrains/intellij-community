@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -73,7 +75,12 @@ public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, O
   }
 
   public static Query<PsiMethod> search(final PsiMethod method, final boolean checkDeep) {
-    return search(method, method.getUseScope(), checkDeep);
+    return search(method, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return method.getUseScope();
+      }
+    }), checkDeep);
   }
 
   public static Query<PsiMethod> search(final PsiMethod method) {
