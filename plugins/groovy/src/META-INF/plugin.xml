@@ -30,6 +30,7 @@
   <extensionPoints>
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
     <extensionPoint name="astTransformContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor"/>
+    <extensionPoint name="astTransformFieldContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.AstTransformFieldContributor"/>
     <extensionPoint name="closureMissingMethodContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer"/>
     <extensionPoint name="referenceTypeEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrReferenceTypeEnhancer"/>

@@ -583,4 +583,17 @@ public class TypesUtil {
     return facade.getElementFactory().createType(listClass, facade.getElementFactory().createType(elements));
   }
 
+  @NotNull
+  public static PsiType createSetType(@NotNull PsiElement context, @NotNull PsiType type) {
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
+    GlobalSearchScope resolveScope = context.getResolveScope();
+
+    PsiClass setClass = facade.findClass(CommonClassNames.JAVA_UTIL_SET, resolveScope);
+    if (setClass != null) {
+      return facade.getElementFactory().createType(setClass, type);
+    }
+
+    return facade.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_SET, resolveScope);
+  }
+
 }

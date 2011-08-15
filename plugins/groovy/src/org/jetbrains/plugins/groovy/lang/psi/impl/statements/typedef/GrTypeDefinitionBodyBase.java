@@ -67,7 +67,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     super.subtreeChanged();
     myFields = null;
     for (GrField field : getFields()) {
-      ((GrFieldImpl) field).clearCaches();
+      field.clearCaches();
     }
   }
 

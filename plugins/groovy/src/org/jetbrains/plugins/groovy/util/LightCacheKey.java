@@ -21,32 +21,37 @@ public class LightCacheKey<T> {
   public T getCachedValue(PsiElement holder) {
     Pair<Long, T> userData = holder.getUserData(key);
 
-    if (userData == null || holder.getManager().getModificationTracker().getModificationCount() != userData.first) {
+    if (userData == null || getModificationCount(holder) != userData.first) {
       return null;
     }
 
     return userData.second;
   }
 
+  protected long getModificationCount(PsiElement holder) {
+    return holder.getManager().getModificationTracker().getModificationCount();
+  }
+
   public T putCachedValue(PsiElement holder, @NotNull T value) {
-    long modificationCount = holder.getManager().getModificationTracker().getModificationCount();
+    long modificationCount = getModificationCount(holder);
 
     Pair<Long, T> pair = Pair.create(modificationCount, value);
 
-    Pair<Long, T> oldValue = ((UserDataHolderEx)holder).putUserDataIfAbsent(key, pair);
-    if (oldValue == pair) {
+    Pair<Long, T> puttedValue = ((UserDataHolderEx)holder).putUserDataIfAbsent(key, pair);
+    if (puttedValue == pair) {
       return value;
     }
 
-    if (oldValue.first == modificationCount) {
-      return oldValue.second;
+    if (puttedValue.first == modificationCount) {
+      return puttedValue.second;
     }
 
-    if (((UserDataHolderEx)holder).replace(key, oldValue, pair)) {
+    if (((UserDataHolderEx)holder).replace(key, puttedValue, pair)) {
       return value;
     }
 
     Pair<Long, T> createdFromOtherThreadValue = holder.getUserData(key);
+    //noinspection ConstantConditions
     assert createdFromOtherThreadValue.first == modificationCount;
 
     return createdFromOtherThreadValue.second;
@@ -54,6 +59,15 @@ public class LightCacheKey<T> {
 
   public static <T> LightCacheKey<T> create() {
     return new LightCacheKey<T>();
+  }
+
+  public static <T> LightCacheKey<T> createByJavaModificationCount() {
+    return new LightCacheKey<T>() {
+      @Override
+      protected long getModificationCount(PsiElement holder) {
+        return holder.getManager().getModificationTracker().getJavaStructureModificationCount();
+      }
+    };
   }
 
 }

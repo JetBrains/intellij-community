@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
@@ -52,6 +53,12 @@ public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement,
 
   @NotNull
   GrField[] getFields();
+
+  @NotNull
+  GrField[] getCodeFields();
+
+  @Nullable
+  PsiField findCodeFieldByName(String name, boolean checkBases);
 
   @NotNull
   GrClassInitializer[] getInitializers();

@@ -71,8 +71,12 @@ public class CollectClassMembersUtil {
     return getCachedMembers(aClass, includeSynthetic).getThird();
   }
 
+  public static Map<String, CandidateInfo> getAllFields(final PsiClass aClass, boolean includeSynthetic) {
+    return getCachedMembers(aClass, includeSynthetic).getFirst();
+  }
+
   public static Map<String, CandidateInfo> getAllFields(final PsiClass aClass) {
-    return getCachedMembers(aClass, false).getFirst();
+    return getAllFields(aClass, true);
   }
 
   private static CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> buildCache(final PsiClass aClass, final boolean includeSynthetic) {
@@ -93,7 +97,9 @@ public class CollectClassMembersUtil {
 
     if (!visitedClasses.add(aClass)) return;
 
-    for (PsiField field : aClass.getFields()) {
+    for (PsiField field : includeSynthetic || !(aClass instanceof GrTypeDefinition)
+                          ? aClass.getFields()
+                          : ((GrTypeDefinition)aClass).getCodeFields()) {
       String name = field.getName();
       if (!allFields.containsKey(name)) {
         allFields.put(name, new CandidateInfo(field, substitutor));
