@@ -44,7 +44,8 @@ public class PyElementNode extends BasePsiNode<PyElement> {
   @Override
   protected void updateImpl(PresentationData data) {
     PyElement value = getValue();
-    StringBuilder presentableText = new StringBuilder(value.getName());
+    final String name = value.getName();
+    StringBuilder presentableText = new StringBuilder(name != null ? name : "<unnamed>");
     if (value instanceof PyFunction) {
       presentableText.append(((PyFunction) value).getParameterList().getPresentableText(false));
     }

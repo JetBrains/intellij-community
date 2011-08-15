@@ -160,6 +160,7 @@ public class PyNames {
     //_BuiltinMethods.put("__class__", _only_self_descr);
     _BuiltinMethods.put("__cmp__", _self_other_descr);
     _BuiltinMethods.put("__coerce__", _self_other_descr);
+    _BuiltinMethods.put("__complex__", _only_self_descr);
     _BuiltinMethods.put("__contains__", _self_item_descr);
     //_BuiltinMethods.put("__debug__", _only_self_descr);
     _BuiltinMethods.put("__del__", _only_self_descr);
@@ -192,6 +193,7 @@ public class PyNames {
     _BuiltinMethods.put("__ilshift__", _self_other_descr);
     _BuiltinMethods.put("__imod__", _self_other_descr);
     _BuiltinMethods.put("__imul__", _self_other_descr);
+    _BuiltinMethods.put("__index__", _only_self_descr);
     _BuiltinMethods.put(INIT, _only_self_descr);
     _BuiltinMethods.put("__int__", _only_self_descr);
     _BuiltinMethods.put("__invert__", _only_self_descr);
@@ -235,6 +237,7 @@ public class PyNames {
     _BuiltinMethods.put("__ror__", _self_other_descr);
     _BuiltinMethods.put("__rpow__", new BuiltinDescription("(self, power, modulo=None)"));
     _BuiltinMethods.put("__rrshift__", _self_other_descr);
+    _BuiltinMethods.put("__rshift__", _self_other_descr);
     _BuiltinMethods.put("__rsub__", _self_other_descr);
     _BuiltinMethods.put("__rtruediv__", _self_other_descr);
     _BuiltinMethods.put("__rxor__", _self_other_descr);

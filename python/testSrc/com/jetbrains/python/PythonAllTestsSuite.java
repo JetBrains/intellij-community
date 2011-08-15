@@ -1,10 +1,7 @@
 package com.jetbrains.python;
 
 import com.jetbrains.python.codeInsight.PyCompletionPatternsTest;
-import com.jetbrains.python.inspections.PyArgumentListInspectionTest;
-import com.jetbrains.python.inspections.PyCompatibilityInspectionTest;
-import com.jetbrains.python.inspections.PyUnresolvedReferencesInspectionTest;
-import com.jetbrains.python.inspections.PyUnusedImportTest;
+import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.refactoring.*;
 import com.jetbrains.python.refactoring.classes.PyExtractSuperclassTest;
 import com.jetbrains.python.refactoring.classes.PyPullUpTest;
@@ -80,6 +77,7 @@ public class PythonAllTestsSuite {
     PyCompletionPatternsTest.class,
     PyCompatibilityInspectionTest.class,
     PyUnresolvedReferencesInspectionTest.class,
+    PyCallingNonCallableTest.class,
     PyUnusedImportTest.class,
     PyDeprecationTest.class,
     PythonHighlightingLexerTest.class
