@@ -1,0 +1,536 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Web Forms 1.0 markup                  #
+# #####################################################################
+
+## Shared attributes for form controls
+
+	common-form.attrs =
+		(	common-form.attrs.name?
+		&	common-form.attrs.disabled?
+		)
+		
+	common-form.attrs.name = 
+		attribute name {
+			string #REVISIT should this be restricted somehow? No & and = perhaps?
+		}
+
+	common-form.attrs.disabled = 
+		attribute disabled {
+			w:string "disabled" | w:string ""
+		}
+
+	shared-form.attrs.readonly = 
+		attribute readonly {
+			w:string "readonly" | w:string ""
+		}
+
+	shared-form.attrs.maxlength = 
+		attribute maxlength {
+			common.data.integer.non-negative
+		}
+
+	shared-form.attrs.size = 
+		attribute size {
+			common.data.integer.positive
+		}
+	
+	# REVISIT tabindex goes in common.attrs
+
+## Shared attributes for <input>
+	
+	input.attrs.checked = 
+		attribute checked {
+			w:string "checked" | w:string ""
+		}
+
+## Text Field: <input type='text'>
+
+	input.text.elem = 
+		element input { input.text.attrs }
+	input.text.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.text.attrs.type?
+		&	shared-form.attrs.maxlength? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.size?
+		&	input.text.attrs.value? 
+		&	(	common.attrs.aria
+			|	common.attrs.aria.implicit.input
+			)?
+		)		
+		input.text.attrs.type = 
+			attribute type {
+				w:string "text"
+			}
+		input.text.attrs.value =
+			attribute value {
+				form.data.stringwithoutlinebreaks
+			}
+		
+	input.elem = input.text.elem
+
+## Password Field: <input type='password'>
+
+	input.password.elem = 
+		element input { input.password.attrs }
+	input.password.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.password.attrs.type
+		&	shared-form.attrs.maxlength? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.size?
+		&	input.password.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)
+		input.password.attrs.type = 
+			attribute type {
+				w:string "password"
+			}
+		input.password.attrs.value =
+			attribute value {
+				form.data.stringwithoutlinebreaks
+			}
+		
+	input.elem |= input.password.elem
+		
+## Checkbox: <input type='checkbox'>
+
+	input.checkbox.elem = 
+		element input { input.checkbox.attrs }
+	input.checkbox.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.checkbox.attrs.type
+		&	input.attrs.checked? 
+		&	input.checkbox.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)
+		input.checkbox.attrs.type = 
+			attribute type {
+				w:string "checkbox"
+			}
+		input.checkbox.attrs.value =
+			attribute value {
+				string #REVISIT require non-empty value?
+			}
+		
+	input.elem |= input.checkbox.elem
+	
+## Radiobutton: <input type='radio'>
+
+	input.radio.elem = 
+		element input { input.radio.attrs }
+	input.radio.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.radio.attrs.type
+		&	input.attrs.checked? 
+		&	input.radio.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)
+		input.radio.attrs.type = 
+			attribute type {
+				w:string "radio"
+			}
+		input.radio.attrs.value =
+			attribute value {
+				string #REVISIT require non-empty value?
+			}
+		
+	input.elem |= input.radio.elem
+	
+## Scripting Hook Button: <input type='button'>
+
+	input.button.elem = 
+		element input { input.button.attrs }
+	input.button.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.button.attrs.type
+		&	input.button.attrs.value? 
+		&	(	common.attrs.aria
+			|	common.attrs.aria.implicit.button
+			)?
+		)
+		input.button.attrs.type = 
+			attribute type {
+				w:string "button"
+			}
+		input.button.attrs.value =
+			attribute value {
+				string #REVISIT require non-empty value?
+			}
+		
+	input.elem |= input.button.elem
+	#REVISIT should this be enabled by a scripting module only?
+	
+## Submit Button: <input type='submit'>
+
+	input.submit.elem = 
+		element input { input.submit.attrs }
+	input.submit.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.submit.attrs.type
+		&	input.submit.attrs.value? 
+		&	common.attrs.aria.implicit.button?
+		)
+		input.submit.attrs.type = 
+			attribute type {
+				w:string "submit"
+			}
+		input.submit.attrs.value =
+			attribute value {
+				string #REVISIT require non-empty value?
+			}
+		
+	input.elem |= input.submit.elem
+		
+## Reset Button: <input type='reset'>
+
+	input.reset.elem = 
+		element input { input.reset.attrs }
+	input.reset.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.reset.attrs.type
+		&	input.reset.attrs.value? 
+		&	common.attrs.aria.implicit.button?
+		)
+		input.reset.attrs.type = 
+			attribute type {
+				w:string "reset"
+			}
+		input.reset.attrs.value =
+			attribute value {
+				string #REVISIT require non-empty value?
+			}
+		
+	input.elem |= input.reset.elem
+	# REVISIT does reset make sense outside a form?
+		
+## File Upload: <input type='file'>
+
+	input.file.elem = 
+		element input { input.file.attrs }
+	input.file.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.file.attrs.type
+		&	input.file.attrs.accept?
+		&	common.attrs.aria.implicit.input?
+		)
+		input.file.attrs.type = 
+			attribute type {
+				w:string "file"
+			}
+		input.file.attrs.accept = 
+			attribute accept {
+				form.data.mimetypelist
+			}
+
+	input.elem |= input.file.elem
+	
+## Hidden String: <input type='hidden'>
+
+	input.hidden.elem = 
+		element input { input.hidden.attrs }
+	input.hidden.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.hidden.attrs.type
+		&	input.hidden.attrs.value? 
+		)
+		input.hidden.attrs.type = 
+			attribute type {
+				w:string "hidden"
+			}
+		input.hidden.attrs.value =
+			attribute value {
+				string
+			}
+		
+	input.elem |= input.hidden.elem
+		
+## Image Submit Button: <input type='image'>
+
+	input.image.elem = 
+		element input { input.image.attrs }
+	input.image.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.image.attrs.type
+		&	input.image.attrs.alt 
+		&	input.image.attrs.src? 
+		&	(	common.attrs.aria
+			|	common.attrs.aria.implicit.button
+			)?
+		)	
+		input.image.attrs.type = 
+			attribute type {
+				w:string "image"
+			}
+		input.image.attrs.alt = 
+			attribute alt {
+				form.data.nonemptystring
+			}
+		input.image.attrs.src = 
+			attribute src {
+				common.data.uri.non-empty
+			}
+	
+	input.elem |= input.image.elem
+	
+	common.elem.phrasing |= input.elem
+
+## Text Area: <textarea>
+
+	textarea.elem =
+		element textarea { textarea.inner & textarea.attrs }
+	textarea.attrs =
+		(	common.attrs
+		&	common-form.attrs
+		&	shared-form.attrs.readonly?
+		&	textarea.attrs.rows-and-cols-wf1
+		&	common.attrs.aria.implicit.input?
+		#FIXME onfocus, onblur, onselect,onchange
+		)
+		# This is ugly. 
+		textarea.attrs.rows-and-cols-wf1 = 
+			textarea.attrs.rows-and-cols-wf1.inner	
+		textarea.attrs.rows-and-cols-wf1.inner =
+			(	textarea.attrs.cols
+			&	textarea.attrs.rows
+			)
+		textarea.attrs.cols = 
+			attribute cols {
+				common.data.integer.positive
+			}
+		textarea.attrs.rows = 
+			attribute rows {
+				common.data.integer.positive
+			}
+	textarea.inner =
+		( text )
+
+	common.elem.phrasing |= textarea.elem
+
+# Due to limitations with interleave, handling single/multiple selection
+# enforcement in RELAX NG seems to be possible but really awkward.
+# Tried it. Leaving it to Schematron.
+
+## Select menu option: <option selected>
+
+	option.elem =
+		element option { option.inner & option.attrs }
+	option.attrs =
+		(	common.attrs
+		&	common-form.attrs.disabled?
+		&	option.attrs.selected?
+		&	option.attrs.label?
+		&	option.attrs.value?
+		&	common.attrs.aria.implicit.input?
+		)
+		option.attrs.selected =
+			attribute selected {
+				w:string "selected" | w:string ""
+			}
+		option.attrs.label =
+			attribute label {
+				string
+			}		
+		option.attrs.value =
+			attribute value {
+				string
+			}		
+	option.inner =
+		( text )
+
+## Option Group: <optgroup>
+
+	optgroup.elem =
+		element optgroup { optgroup.inner & optgroup.attrs }
+	optgroup.attrs = 
+		(	common.attrs
+		&	optgroup.attrs.label
+		&	common-form.attrs.disabled?
+		)
+		optgroup.attrs.label =
+			attribute label {
+				string
+			}
+	optgroup.inner =
+		( option.elem* )
+
+## Selection Menu: <select>
+
+	select.elem =
+		element select { select.inner & select.attrs }	
+	select.attrs =
+		(	common.attrs
+		&	common-form.attrs
+		&	select.attrs.size?
+		&	select.attrs.multiple?
+		# FIXME onfocus, onblur, onchange
+		)
+		select.attrs.size =
+			attribute size {
+				common.data.integer.positive
+			}
+		select.attrs.multiple =
+			attribute multiple {
+				w:string "multiple" | w:string ""
+			}
+	select.inner =
+		(	optgroup.elem*
+		&	option.elem*
+		)
+
+	common.elem.phrasing |= select.elem
+	
+## Shared Definitions for Complex Button
+	
+	button.attrs.value =
+		attribute value {
+			string
+		}
+	button.inner = 
+		( common.inner.phrasing )
+	
+## Complex Submit Button: <button type='submit'>
+
+	button.submit.elem =
+		element button { button.inner & button.submit.attrs }	
+	button.submit.attrs =
+		(	common.attrs
+		&	common-form.attrs
+		&	button.submit.attrs.type?
+		&	button.attrs.value?
+		&	common.attrs.aria.implicit.button?
+		)
+		button.submit.attrs.type =
+			attribute type {
+				w:string "submit"
+			}
+
+	button.elem = button.submit.elem
+	
+## Complex Reset Button: <button type='reset'>
+
+	button.reset.elem =
+		element button { button.inner & button.reset.attrs }	
+	button.reset.attrs =
+		(	common.attrs
+		&	common-form.attrs
+		&	button.reset.attrs.type
+		&	button.attrs.value? #REVISIT I guess this still affects the DOM
+		&	common.attrs.aria.implicit.button?
+		)
+		button.reset.attrs.type =
+			attribute type {
+				w:string "reset"
+			}
+
+	button.elem |= button.reset.elem
+	
+## Complex Push Button: <button type='button'>
+
+	button.button.elem =
+		element button { button.inner & button.button.attrs }	
+	button.button.attrs =
+		(	common.attrs
+		&	common-form.attrs
+		&	button.button.attrs.type
+		&	button.attrs.value? #REVISIT I guess this still affects the DOM
+		&	(	common.attrs.aria
+			|	common.attrs.aria.implicit.button
+			)?
+		)
+		button.button.attrs.type =
+			attribute type {
+				w:string "button"
+			}
+
+	button.elem |= button.button.elem
+
+	common.elem.phrasing |= button.elem
+
+## Form: <form>
+
+	form.elem =
+		element form { form.inner & form.attrs }
+	form.attrs =
+		(	common.attrs
+		&	form.attrs.action? #REVISIT Should this be required anyway?
+		&	form.attrs.method?
+		&	form.attrs.enctype?
+		&	common-form.attrs.name?
+		&	form.attrs.accept-charset?
+		&	(	common.attrs.aria
+			|	common.attrs.aria.implicit.region
+			)?
+		)
+		form.attrs.action =
+			attribute action {
+				common.data.uri.non-empty
+			}
+		form.attrs.method =
+			attribute method {
+				form.attrs.method.data
+			}
+			form.attrs.method.data = 
+				( w:string "get" | w:string "post" )
+		form.attrs.enctype =
+			attribute enctype {
+				form.attrs.enctype.data
+			}
+			form.attrs.enctype.data = 
+				(	w:string "application/x-www-form-urlencoded" 
+				|	w:string "multipart/form-data"
+				)
+		form.attrs.accept-charset =
+			attribute accept-charset {
+				form.data.charsetlist
+			}	
+	form.inner =
+		( common.inner.flow )
+
+	common.elem.flow |= form.elem
+
+## Fieldset: <fieldset>
+
+	fieldset.elem =
+		element fieldset { fieldset.inner & fieldset.attrs }
+	fieldset.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.group?
+		)	
+	fieldset.inner =
+		(	legend.elem? #REVISIT should this be required?
+		,	common.inner.flow
+		)
+
+	common.elem.flow |= fieldset.elem
+	
+## Label: <label>
+
+	label.elem =
+		element label { label.inner & label.attrs }
+	label.attrs =
+		(	common.attrs
+		&	label.attrs.for?
+		&	common.attrs.aria.implicit.region?
+		)
+		label.attrs.for =
+			attribute for {
+				common.data.idref
+			}
+	label.inner =
+		( common.inner.phrasing ) #REVISIT making obvious guess
+
+	common.elem.phrasing |= label.elem
+

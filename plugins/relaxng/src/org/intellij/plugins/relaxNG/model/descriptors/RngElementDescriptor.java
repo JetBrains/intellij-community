@@ -26,8 +26,7 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -42,10 +41,7 @@ import org.kohsuke.rngom.nc.NameClassVisitor;
 import org.xml.sax.Locator;
 
 import javax.xml.namespace.QName;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class RngElementDescriptor implements XmlElementDescriptor {
   private static final Key<ParameterizedCachedValue<XmlElementDescriptor, RngElementDescriptor>> DESCR_KEY = Key.create("DESCR");
@@ -89,8 +85,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     }
 
     final List<DElementPattern> patterns = ChildElementFinder.find(2, pattern);
-    final List<DElementPattern> list = ContainerUtil.findAll(patterns, NamedPatternFilter.INSTANCE);
-    return RngNsDescriptor.convertElementDescriptors(list, myNsDescriptor);
+    return myNsDescriptor.convertElementDescriptors(patterns);
   }
 
   protected XmlElementDescriptor findElementDescriptor(XmlTag childTag) {
@@ -136,13 +131,25 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   }
 
   protected XmlAttributeDescriptor[] computeAttributeDescriptors(final Map<DAttributePattern, Pair<? extends Map<String, String>, Boolean>> map) {
-    final List<DAttributePattern> list = ContainerUtil.findAll(map.keySet(), NamedPatternFilter.INSTANCE);
-    return ContainerUtil.map2Array(list, XmlAttributeDescriptor.class, new Function<DAttributePattern, XmlAttributeDescriptor>() {
-      public XmlAttributeDescriptor fun(DAttributePattern dAttributePattern) {
-        final Pair<? extends Map<String, String>, Boolean> pair = map.get(dAttributePattern);
-        return new RngXmlAttributeDescriptor(RngElementDescriptor.this, dAttributePattern, pair.first, pair.second);
+    final Map<QName, RngXmlAttributeDescriptor> name2descriptor = new HashMap<QName, RngXmlAttributeDescriptor>();
+
+    for (DAttributePattern pattern : map.keySet()) {
+      final Pair<? extends Map<String, String>, Boolean> value = map.get(pattern);
+      for (QName name : pattern.getName().listNames()) {
+        RngXmlAttributeDescriptor descriptor = name2descriptor.get(name);
+        final RngXmlAttributeDescriptor newDescriptor = new RngXmlAttributeDescriptor(this, pattern, value.first, value.second);
+        if (descriptor == null) {
+          descriptor = newDescriptor;
+        }
+        else {
+          descriptor = descriptor.mergeWith(newDescriptor);
+        }
+        name2descriptor.put(name, descriptor);
       }
-    });
+    }
+
+    final Collection<RngXmlAttributeDescriptor> result = name2descriptor.values();
+    return result.toArray(new RngXmlAttributeDescriptor[result.size()]);
   }
 
   public final XmlAttributeDescriptor getAttributeDescriptor(String attributeName, @Nullable XmlTag context) {

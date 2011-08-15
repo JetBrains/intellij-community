@@ -35,7 +35,7 @@ class ChildElementFinder extends RecursionSaveWalker {
   }
 
   public Void onRef(DRefPattern p) {
-    if (myDepth < myTargetDepth) {
+    if (myDepth < myTargetDepth || myTargetDepth == -1) {
       return super.onRef(p);
     }
     return null;
@@ -44,9 +44,9 @@ class ChildElementFinder extends RecursionSaveWalker {
   public Void onElement(DElementPattern p) {
     myDepth++;
     try {
-      if (myDepth == myTargetDepth) {
+      if (myDepth == myTargetDepth || myTargetDepth == -1) {
         myRoots.add(p);
-        return null;
+        return myTargetDepth != -1 ? null : super.onElement(p);
       } else {
         return super.onElement(p);
       }

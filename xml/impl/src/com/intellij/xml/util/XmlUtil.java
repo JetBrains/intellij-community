@@ -65,10 +65,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.xml.*;
-import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
-import com.intellij.xml.impl.schema.TypeDescriptor;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.impl.schema.*;
 import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import org.jetbrains.annotations.NonNls;
@@ -1025,10 +1022,22 @@ public class XmlUtil {
   }
 
   public static final String HTML5_SCHEMA_LOCATION;
+  public static final String XHTML5_SCHEMA_LOCATION;
   
   static {
-    URL schemaLocationURL = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
-    HTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(schemaLocationURL.toExternalForm()));
+    final Html5SchemaProvider[] providers = Html5SchemaProvider.EP_NAME.getExtensions();
+    final URL htmlSchemaLocationURL;
+    final URL xhtmlSchemaLocationURL;
+    if (providers.length > 0) {
+      htmlSchemaLocationURL = providers[0].getHtmlSchemaLocation();
+      xhtmlSchemaLocationURL = providers[0].getXhtmlSchemaLocation();
+    }
+    else {
+      htmlSchemaLocationURL = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
+      xhtmlSchemaLocationURL = htmlSchemaLocationURL;
+    }
+    HTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(htmlSchemaLocationURL.toExternalForm()));
+    XHTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(xhtmlSchemaLocationURL.toExternalForm()));
   }
   
   @Nullable
@@ -1052,7 +1061,9 @@ public class XmlUtil {
           return HTML4_LOOSE_URI;
         }
         else if (HtmlUtil.isHtml5Doctype(doctype)) {
-          docType = HTML5_SCHEMA_LOCATION;
+          docType = doctype.getLanguage() instanceof HTMLLanguage
+                    ? HTML5_SCHEMA_LOCATION
+                    : XHTML5_SCHEMA_LOCATION;
         }
       }
       return docType;

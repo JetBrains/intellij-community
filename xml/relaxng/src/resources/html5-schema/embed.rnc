@@ -1,0 +1,570 @@
+datatypes w = "http://whattf.org/datatype-draft"
+namespace local = ""
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Embedded Content                      #
+# #####################################################################
+
+#######################################################################
+## Replaced Content
+
+## Images: <img>
+
+	img.elem =
+		element img { img.inner & img.attrs }
+	img.attrs =
+		(	common.attrs
+		&	img.attrs.src
+		&	img.attrs.alt?
+		&	img.attrs.height?
+		&	img.attrs.width?
+		&	img.attrs.usemap?
+		&	img.attrs.ismap?
+		& img.attrs.border? # obsolete
+		&	common.attrs.aria?
+		)
+		img.attrs.src =
+			attribute src {
+				common.data.uri.non-empty
+			}
+		img.attrs.alt =
+			attribute alt {
+				text
+			}
+		img.attrs.height =
+			attribute height {
+				common.data.integer.non-negative
+			}
+		img.attrs.width =
+			attribute width {
+				common.data.integer.non-negative
+			}
+		img.attrs.usemap =
+			attribute usemap {
+				common.data.hash-name
+			}
+		img.attrs.ismap =
+			attribute ismap {
+				w:string "ismap" | w:string ""
+			}
+		img.attrs.border =
+			attribute border {
+				common.data.zero
+			}
+	img.inner =
+		empty
+
+	common.elem.phrasing |= img.elem
+
+## Plug-ins: <embed>
+
+	embed.elem =
+		element embed { embed.inner & embed.attrs }
+	embed.attrs =
+		(	common.attrs
+		&	embed.attrs.src?
+		&	embed.attrs.type?
+		&	embed.attrs.height?
+		&	embed.attrs.width?
+		&	embed.attrs.other*
+		)
+		embed.attrs.src =
+			attribute src {
+				common.data.uri.non-empty
+			}
+		embed.attrs.type =
+			attribute type {
+				common.data.mimetype
+			}
+		embed.attrs.height =
+			attribute height {
+				common.data.integer.non-negative
+			}
+		embed.attrs.width =
+			attribute width {
+				common.data.integer.non-negative
+			}
+		embed.attrs.other = # REVISIT common.attrs
+			attribute local:* - ( src 
+			                    | type 
+			                    | height 
+			                    | width 
+			                    | id 
+			                    | class
+			                    | title 
+			                    | dir 
+			                    | lang 
+			                    | style 
+			                    | tabindex 
+			                    | contextmenu 
+			                    | contenteditable 
+			                    | draggable 
+			                    | dropzone
+			                    | hidden
+			                    | onabort
+			                    | onblur
+			                    | oncanplay
+			                    | oncanplaythrough
+			                    | onchange
+			                    | onclick
+			                    | oncontextmenu
+			                    | ondblclick
+			                    | ondrag
+			                    | ondragend
+			                    | ondragenter
+			                    | ondragleave
+			                    | ondragover
+			                    | ondragstart
+			                    | ondrop
+			                    | ondurationchange
+			                    | onemptied
+			                    | onended
+			                    | onerror
+			                    | onfocus
+			                    | oninput
+			                    | oninvalid
+			                    | onkeydown
+			                    | onkeypress
+			                    | onkeyup
+			                    | onload
+			                    | onloadeddata
+			                    | onloadedmetadata
+			                    | onloadstart
+			                    | onmousedown
+			                    | onmousemove
+			                    | onmouseout
+			                    | onmouseover
+			                    | onmouseup
+			                    | onmousewheel
+			                    | onpause
+			                    | onplay
+			                    | onplaying
+			                    | onprogress
+			                    | onratechange
+			                    | onreadystatechange
+			                    | onreset
+			                    | onscroll
+			                    | onseeked
+			                    | onseeking
+			                    | onselect
+			                    | onshow
+			                    | onstalled
+			                    | onsubmit
+			                    | onsuspend
+			                    | ontimeupdate
+			                    | onvolumechange
+			                    | onwaiting
+			                    | onafterprint
+			                    | onbeforeprint
+			                    | onbeforeunload
+			                    | onhashchange
+			                    | onmessage
+			                    | onoffline
+			                    | ononline
+			                    | onpopstate
+			                    | onredo
+			                    | onresize
+			                    | onstorage
+			                    | onundo
+			                    | onunload
+			                    | role
+			                    | aria-atomic
+			                    | aria-busy
+			                    | aria-controls
+			                    | aria-describedby
+			                    | aria-disabled
+			                    | aria-dropeffect
+			                    | aria-flowto
+			                    | aria-grabbed
+			                    | aria-haspopup
+			                    | aria-hidden
+			                    | aria-invalid
+			                    | aria-label
+			                    | aria-labelledby
+			                    | aria-live
+			                    | aria-owns
+			                    | aria-relevant
+			                    | aria-required	
+			                    | spellcheck
+			                    | accesskey
+			                    | itemref
+			                    | itemprop
+			                    | itemscope
+			                    | itemtype
+			                    | itemid
+			                    | name
+			                    | align
+			                    ) 
+			{
+				string
+			}
+	embed.inner =
+		empty
+
+	common.elem.phrasing |= embed.elem
+
+## Generic Objects: <object>
+
+	object.elem.flow =
+		element object { object.inner.flow & object.attrs }
+	object.elem.phrasing =
+		element object { object.inner.phrasing & object.attrs }
+	object.attrs =
+		(	common.attrs
+		&	(	(	object.attrs.data
+				&	object.attrs.type?
+				)
+			|	object.attrs.type
+			)
+#		&	object.attrs.classid?
+#		&	object.attrs.codebase?
+#		&	object.attrs.codetype?
+		&	object.attrs.height?
+		&	object.attrs.width?
+		&	object.attrs.usemap?
+		&	object.attrs.name?
+		&	common-form.attrs.form?
+		&	common.attrs.aria?
+		)
+		object.attrs.data =
+			attribute data {
+				common.data.uri.non-empty
+			}
+		object.attrs.type =
+			attribute type {
+				common.data.mimetype
+			}
+		object.attrs.height =
+			attribute height {
+				common.data.integer.non-negative
+			}
+		object.attrs.width =
+			attribute width {
+				common.data.integer.non-negative
+			}
+		object.attrs.usemap =
+			attribute usemap {
+				common.data.hash-name
+			}
+		object.attrs.name =
+			attribute name {
+				common.data.browsing-context
+			}
+	object.inner.flow =
+		(	param.elem*
+		,	common.inner.flow
+		)
+	object.inner.phrasing =
+		(	param.elem*
+		,	common.inner.phrasing
+		)
+
+	common.elem.flow |= object.elem.flow
+	common.elem.phrasing |= object.elem.phrasing
+
+## Initialization Parameters: <param>
+
+	param.elem =
+		element param { param.inner & param.attrs }
+	param.attrs =
+		(	common.attrs
+		&	param.attrs.name
+		&	param.attrs.value
+		)
+		param.attrs.name =
+			attribute name {
+				string
+			}
+		param.attrs.value =
+			attribute value {
+				string
+			}
+	param.inner =
+		( empty )
+
+## Inline Frame: <iframe>
+
+	iframe.elem =
+		element iframe { iframe.inner & iframe.attrs }
+	iframe.attrs =
+		(	common.attrs
+		&	iframe.attrs.src?
+		&	iframe.attrs.srcdoc?
+		&	iframe.attrs.name?
+		&	iframe.attrs.width?
+		&	iframe.attrs.height?
+		&	iframe.attrs.sandbox?
+		&	iframe.attrs.seamless?
+		&	(	common.attrs.aria
+			|	common.attrs.aria.implicit.region
+			)?
+		)
+		iframe.attrs.src =
+			attribute src {
+				common.data.uri.non-empty
+			}
+		iframe.attrs.srcdoc =
+			attribute srcdoc {
+				string #FIXME
+			}
+		iframe.attrs.name =
+			attribute name {
+				common.data.browsing-context
+			}
+		iframe.attrs.height =
+			attribute height {
+				common.data.integer.non-negative
+			}
+		iframe.attrs.width =
+			attribute width {
+				common.data.integer.non-negative
+			}
+		iframe.attrs.seamless =
+			attribute seamless {
+				w:string "seamless" | w:string ""
+			} & v5only
+		iframe.attrs.sandbox =
+			attribute sandbox
+				{	list 
+					{	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-scripts" )?
+					}
+				|	list 
+					{	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-forms" )?
+					}
+				|	list 
+					{	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-scripts" )?
+					}
+				|	list 
+					{	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-same-origin" )?
+					}
+				|	list 
+					{	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-forms" )?
+					}
+				|	list 
+					{	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-same-origin" )?
+					}
+				|	list 
+					{	( w:string "allow-same-origin" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-scripts" )?
+					}
+				|	list 
+					{	( w:string "allow-same-origin" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-forms" )?
+					}
+				|	list 
+					{	( w:string "allow-forms" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-scripts" )?
+					}
+				|	list 
+					{	( w:string "allow-forms" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-same-origin" )?
+					}
+				|	list 
+					{	( w:string "allow-scripts" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-forms" )?
+					}
+				|	list 
+					{	( w:string "allow-scripts" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-same-origin" )?
+					}
+				|	list 
+					{	( w:string "allow-same-origin" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-scripts" )?
+					}
+				|	list 
+					{	( w:string "allow-same-origin" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-forms" )?
+					}
+				|	list 
+					{	( w:string "allow-forms" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-scripts" )?
+					}
+				|	list 
+					{	( w:string "allow-forms" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-same-origin" )?
+					}
+				|	list 
+					{	( w:string "allow-scripts" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-forms" )?
+					}
+				|	list 
+					{	( w:string "allow-scripts" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-top-navigation" )?
+					,	( w:string "allow-same-origin" )?
+					}
+				|	list 
+					{	( w:string "allow-same-origin" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-top-navigation" )?
+					}
+				|	list 
+					{	( w:string "allow-same-origin" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-top-navigation" )?
+					}
+				|	list 
+					{	( w:string "allow-forms" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-top-navigation" )?
+					}
+				|	list 
+					{	( w:string "allow-forms" )?
+					,	( w:string "allow-scripts" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-top-navigation" )?
+					}
+				|	list 
+					{	( w:string "allow-scripts" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-top-navigation" )?
+					}
+				|	list 
+					{	( w:string "allow-scripts" )?
+					,	( w:string "allow-forms" )?
+					,	( w:string "allow-same-origin" )?
+					,	( w:string "allow-top-navigation" )?
+					}
+				} & v5only
+	iframe.inner =
+		( text )
+
+	common.elem.phrasing |= iframe.elem
+
+#######################################################################
+## Image Maps
+
+## Map Definition: <map>
+
+	map.elem.flow =
+		element map { map.inner.flow & map.attrs }
+	map.elem.phrasing  =
+		element map { map.inner.phrasing & map.attrs }
+	map.attrs =
+		(	common.attrs
+		&	map.attrs.name
+		) # REVISIT make id required in Schematron
+		map.attrs.name =
+			attribute name {
+				common.data.name
+			}
+	map.inner.flow =
+		( common.inner.flow )
+	map.inner.phrasing =
+		( common.inner.phrasing )
+
+	common.elem.flow |= map.elem.flow
+	common.elem.phrasing |= map.elem.phrasing
+
+## Map Area Definition: <area>
+
+	area.elem =
+		element area { area.inner & area.attrs }
+	area.attrs =
+		(	common.attrs
+		&	(	area.attrs.alt
+			&	shared-hyperlink.attrs.href
+			)?
+		&	shared-hyperlink.attrs.target?
+		&	shared-hyperlink.attrs.ping?
+		&	shared-hyperlink.attrs.rel?
+		&	shared-hyperlink.attrs.media?
+		&	shared-hyperlink.attrs.hreflang?
+		&	shared-hyperlink.attrs.type?
+		&	area.attrs.shape?
+		)
+		area.attrs.alt =
+			attribute alt {
+				text
+			}
+		area.attrs.shape =
+			(	( area.attrs.shape.rect?  & area.attrs.coords.rect   )
+			|	( area.attrs.shape.circle & area.attrs.coords.circle )
+			|	( area.attrs.shape.poly   & area.attrs.coords.poly   )
+			|	( area.attrs.shape.default )
+			)
+		area.attrs.shape.rect =
+			attribute shape {
+				w:string "rect"
+			}
+		area.attrs.coords.rect =
+			attribute coords {
+				w:rectangle
+#				xsd:token {
+#					pattern = "-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+"
+#				}
+			}
+		area.attrs.shape.circle =
+			attribute shape {
+				w:string "circle"
+			}
+		area.attrs.coords.circle =
+			attribute coords {
+				w:circle
+#				xsd:token {
+#					pattern = "-?[0-9]+,-?[0-9]+,[0-9]+"
+#				}
+			}
+		area.attrs.shape.poly =
+			attribute shape {
+				w:string "poly"
+			}
+		area.attrs.coords.poly =
+			attribute coords {
+				w:polyline
+#				xsd:token {
+#					pattern = "-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+,-?[0-9]+(,-?[0-9]+,-?[0-9]+)*"
+#				}
+			}
+		area.attrs.shape.default =
+			attribute shape {
+				w:string "default"
+			}
+	area.inner =
+		( empty )
+
+	common.elem.phrasing |= area.elem

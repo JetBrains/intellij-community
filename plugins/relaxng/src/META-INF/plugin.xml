@@ -1,38 +1,4 @@
-<idea-plugin version="2" url="http://www.jetbrains.net/confluence/display/CONTEST/RELAX-NG+Support">
-  <id>RelaxNG-Support</id>
-  <name>RELAX-NG Support</name>
-  <depends>com.intellij.modules.xml</depends>
-
-  <description><![CDATA[
-    Support for RELAX-NG XML schemas. See <a href="http://relaxng.org/">relaxng.org</a> and the corresponding
-    IntelliJ IDEA feature request: <a href="http://www.jetbrains.net/jira/browse/IDEA-13734">IDEA-13734</a>.
-    <p>
-    The plugin provides the following features:
-    </p>
-    <ul>
-    <li> Completion and validation of XML documents associated with RELAX-NG schemas</li>
-    <li> Editing RELAX-NG files in XML and compact syntax, including on-the-fly error checking, completion,
-         documentation lookup and more.</li>
-    <li> Conversion between different schema formats (including W3C XML Schema/XML 1.0 DTDs) using
-         <a href="http://www.thaiopensource.com/relaxng/trang.html">Trang</a></li>
-    </ul>
-  ]]></description>
-  <version>1.6</version>
-
-  <change-notes><![CDATA[
-     <ul>
-      <li>extreme index optimization</li>
-      <li>renameable xml prefixes</li>
-      <li>IDEA 9.x compatibility bugfixes</li>
-     </ul>
-     <p>
-      The complete list of changes in earlier versions is available
-      <a href="http://www.jetbrains.net/confluence/display/CONTEST/RELAX-NG+Support#RELAX-NGSupport-VersionHistory">here</a>
-     </p>
-]]></change-notes>
-
-  <vendor email="sascha.weinreuter@cit.de">Sascha Weinreuter</vendor>
-
+<idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
     <gotoSymbolContributor implementation="org.intellij.plugins.relaxNG.GotoSymbolContributor" />
@@ -76,6 +42,8 @@
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngGrammar" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngGrammarImpl"/>
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngInclude" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngIncludeImpl"/>
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngRef" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngRefImpl"/>
+    <xml.html5SchemaProvider implementation="org.intellij.plugins.relaxNG.xml.RngHtml5SchemaProvider"/>
+    <metaDataContributor implementation="org.intellij.html.RngHtml5MetaDataContributor"/>
   </extensions>
 
   <project-components>

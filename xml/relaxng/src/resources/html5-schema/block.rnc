@@ -1,0 +1,201 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Basic Prose Markup                    #
+# #####################################################################
+
+# #####################################################################
+## Paragraph-Level
+
+## Paragraph: <p>
+
+	p.elem =
+		element p { p.inner & p.attrs }
+	p.attrs =
+		(	common.attrs
+		&	common.attrs.aria?
+		)
+	p.inner =
+		( common.inner.phrasing ) # REVISIT lists in span?
+
+	common.elem.flow |= p.elem
+
+## Hint Transition: <hr>
+
+	hr.elem =
+		element hr { hr.inner & hr.attrs }
+	hr.attrs =
+		( common.attrs )
+	hr.inner =
+		( empty )
+
+	common.elem.flow |= hr.elem
+
+# #####################################################################
+## Preformatting Blocks
+
+## Preformatted Text: <pre>
+
+	pre.elem =
+		element pre { pre.inner & pre.attrs }
+	pre.attrs =
+		(	common.attrs
+		&	common.attrs.aria?
+		)
+	pre.inner =
+		( common.inner.phrasing )
+
+	common.elem.flow |= pre.elem
+
+# #####################################################################
+## Simple Lists
+
+## Unordered List: <ul>
+
+	ul.elem =
+		element ul { ul.inner & ul.attrs }
+	ul.attrs =
+		(	common.attrs
+		&	(	common.attrs.aria
+			|	common.attrs.aria.implicit.region
+			)?
+		)
+	ul.inner =
+		( li.elem* )
+
+	common.elem.flow |= ul.elem
+
+## Unordered List Item: <li>
+
+	li.elem =
+		element li { li.inner & li.attrs }
+	li.attrs =
+		(	common.attrs 
+		&	(	common.attrs.aria
+			|	common.attrs.aria.implicit.listitem
+			)?
+		)
+	li.inner =
+		( common.inner.flow )
+
+## Ordered List: <ol>
+
+	ol.elem =
+		element ol { ol.inner & ol.attrs }
+	ol.attrs =
+		(	common.attrs
+		&	ol.attrs.start?
+		&	ol.attrs.reversed?
+		&	ol.attrs.type?
+		&	(	common.attrs.aria
+			|	common.attrs.aria.implicit.region
+			)?
+		)
+		ol.attrs.start =
+			attribute start {
+				common.data.integer
+			}
+		ol.attrs.reversed =
+			attribute reversed {
+				w:string "reversed" | w:string ""
+			}
+		ol.attrs.type =
+			attribute type {
+				w:string "1" | w:string "a" | w:string "A" | w:string "i" | w:string "I"
+			}
+	ol.inner =
+		( oli.elem* )
+
+	common.elem.flow |= ol.elem
+
+## Ordered List Item: <li>
+
+	oli.elem =
+		element li { oli.inner & oli.attrs }
+	oli.attrs =
+		(	common.attrs
+		&	oli.attrs.value?
+		&	(	common.attrs.aria
+			|	common.attrs.aria.implicit.listitem
+			)?
+		)
+		oli.attrs.value =
+			attribute value {
+				common.data.integer
+			}
+	oli.inner =
+		( common.inner.flow )
+
+# #####################################################################
+## Definition Lists
+
+## Definition List: <dl>
+
+	dl.elem =
+		element dl { dl.inner & dl.attrs }
+	dl.attrs =
+		(	common.attrs
+		&	common.attrs.aria?
+		)
+	dl.inner =
+		(	(	dt.elem+
+			,	dd.elem+
+			)*
+		)
+
+	common.elem.flow |= dl.elem
+
+## Definition Term: <dt>
+
+	dt.elem =
+		element dt { dt.inner & dt.attrs }
+	dt.attrs =
+		(	common.attrs
+		&	common.attrs.aria?
+		)
+	dt.inner =
+		( common.inner.phrasing )
+
+## Definition Description: <dd>
+
+	dd.elem =
+		element dd { dd.inner & dd.attrs }
+	dd.elem.phrasing =
+		element dd { dd.inner.phrasing & dd.attrs }
+	dd.attrs =
+		(	common.attrs
+		&	common.attrs.aria?
+		)
+	dd.inner =
+		( common.inner.flow )
+	dd.inner.phrasing =
+		( common.inner.phrasing )
+
+# #####################################################################
+## Miscellaneous Elements
+
+## Generic Container: <div>
+
+	div.elem =
+		element div { div.inner & div.attrs }
+	div.attrs =
+		(	common.attrs
+		&	common.attrs.aria?
+		)
+	div.inner =
+		(	style.elem.scoped*
+		,	common.inner.flow 
+		)
+
+	common.elem.flow |= div.elem
+
+## Title or Explanatory Caption: <legend>
+
+	legend.elem =
+		element legend { legend.inner & legend.attrs }
+	legend.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.region?
+		)	
+	legend.inner =
+		( common.inner.phrasing )

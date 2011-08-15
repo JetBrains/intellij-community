@@ -1,0 +1,800 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Web Forms 2.0 markup                  #
+# #####################################################################
+
+## Shared attributes for form controls
+
+	common-form.attrs &=
+		( common-form.attrs.form? )
+
+	common-form.attrs.form |= 
+		attribute form {
+			common.data.idref
+		}
+
+	shared-form.attrs.formaction =
+		attribute formaction {
+			common.data.uri.non-empty
+		}
+
+	shared-form.attrs.formenctype =
+		attribute formenctype {
+			shared-form.attrs.formenctype.data
+		}
+		shared-form.attrs.formenctype.data = 
+			(	w:string "application/x-www-form-urlencoded" 
+			|	w:string "multipart/form-data"
+			|	w:string "text/plain"
+			)
+
+	shared-form.attrs.formmethod =
+		attribute formmethod {
+			shared-form.attrs.formmethod.data
+		}
+		shared-form.attrs.formmethod.data = 
+			( w:string "get"
+			| w:string "post"
+			)
+
+	shared-form.attrs.formtarget = 
+		attribute formtarget {
+			common.data.browsing-context-or-keyword
+		}
+
+	shared-form.attrs.formnovalidate = 
+		attribute formnovalidate {
+			w:string "formnovalidate" | w:string ""
+		}
+
+	shared-form.attrs.autofocus = 
+		attribute autofocus {
+			w:string "autofocus" | w:string ""
+		}
+	
+	shared-form.attrs.pattern = 
+		attribute pattern {
+			form.data.pattern
+		}
+
+	shared-form.attrs.template = 
+		attribute template {
+			common.data.idref
+		}
+
+	shared-form.attrs.required = 
+		attribute required {
+			w:string "required" | w:string ""
+		}
+
+	shared-form.attrs.placeholder = 
+		attribute placeholder {
+			form.data.stringwithoutlinebreaks
+		}
+
+	shared-form.attrs.dirname = 
+		attribute dirname {
+			form.data.nonemptystring
+		}
+
+## Shared attributes for <input>
+		
+	input.attrs.autocomplete = 
+		attribute autocomplete {
+			w:string "on" | w:string "off"
+		}
+	
+	input.attrs.list = 
+		attribute list {
+			common.data.idref
+		}
+	
+	input.attrs.step.float = 
+		attribute step {
+			w:string "any" | common.data.float.positive
+		}
+	
+	input.attrs.step.integer = 
+		attribute step {
+			w:string "any" | common.data.integer.positive 
+		}
+	
+	input.attrs.multiple = 
+		attribute multiple {
+			w:string "multiple" | w:string ""
+		}
+		
+## Text Field: <input type='text'>, Extensions
+
+	input.text.attrs &=
+		(	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	shared-form.attrs.pattern? 
+		&	shared-form.attrs.required? 
+		&	shared-form.attrs.placeholder?
+		&	shared-form.attrs.dirname?
+		)
+
+## Password Field: <input type='password'>, Extensions
+
+	input.password.attrs &=
+		(	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	shared-form.attrs.pattern? 
+		&	shared-form.attrs.required? 
+		&	shared-form.attrs.placeholder?
+		)
+
+## Checkbox <input type='checkbox'>, Extensions
+
+	input.checkbox.attrs &=
+		(	shared-form.attrs.autofocus? 
+		&	shared-form.attrs.required? 
+		)
+
+## Radiobutton: <input type='radio'>, Extensions
+
+	input.radio.attrs &=
+		(	shared-form.attrs.autofocus? 
+		&	shared-form.attrs.required? 
+		)
+
+## Scripting Hook Button: <input type='button'>, Extensions
+
+	input.button.attrs &=
+		( shared-form.attrs.autofocus? )
+
+## Submit Button: <input type='submit'>, Extensions
+
+	input.submit.attrs &=
+		(	shared-form.attrs.formaction? 
+		&	shared-form.attrs.autofocus? 
+		&	shared-form.attrs.formenctype? 
+		&	shared-form.attrs.formmethod? 
+		&	shared-form.attrs.formtarget? 
+		&	shared-form.attrs.formnovalidate? 
+		)
+
+## Reset Button: <input type='reset'>, Extensions
+
+	input.reset.attrs &=
+		( shared-form.attrs.autofocus? )
+
+## File Upload: <input type='file'>, Extensions
+
+	input.file.attrs &=
+		(	shared-form.attrs.autofocus? 
+		&	shared-form.attrs.required? 
+		&	input.attrs.multiple? 
+		)
+
+## Image Submit Button: <input type='image'>, Extensions
+
+	input.image.attrs &=
+		(	shared-form.attrs.formaction? 
+		&	shared-form.attrs.autofocus? 
+		&	shared-form.attrs.formenctype? 
+		&	shared-form.attrs.formmethod? 
+		&	shared-form.attrs.formtarget? 
+		&	shared-form.attrs.formnovalidate? 
+		&	input.image.attrs.height?
+		&	input.image.attrs.width?
+		)	
+		input.image.attrs.height =
+			attribute height {
+				common.data.integer.non-negative
+			}
+		input.image.attrs.width =
+			attribute width {
+				common.data.integer.non-negative
+			}
+
+## Global Date and Time: <input type='datetime'>
+
+	input.datetime.elem = 
+		element input { input.datetime.attrs }	
+	input.datetime.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.datetime.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	input.datetime.attrs.min? 
+		&	input.datetime.attrs.max? 
+		&	input.attrs.step.float? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.required? 
+		&	input.datetime.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.datetime.attrs.type = 
+			attribute type {
+				w:string "datetime"
+			}
+		input.datetime.attrs.min =
+			attribute min {
+				common.data.datetime
+			}
+		input.datetime.attrs.max =
+			attribute max {
+				common.data.datetime
+			}	
+		input.datetime.attrs.value =
+			attribute value {
+				common.data.datetime
+			}
+		
+	input.elem |= input.datetime.elem
+
+## Date and Time with No Time Zone Information: <input type='datetime-local'>
+
+	input.datetime-local.elem = 
+		element input { input.datetime-local.attrs }
+	input.datetime-local.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.datetime-local.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	input.datetime-local.attrs.min? 
+		&	input.datetime-local.attrs.max? 
+		&	input.attrs.step.float? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.required? 
+		&	input.datetime-local.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.datetime-local.attrs.type = 
+			attribute type {
+				w:string "datetime-local"
+			}
+		input.datetime-local.attrs.min =
+			attribute min {
+				form.data.datetime-local
+			}
+		input.datetime-local.attrs.max =
+			attribute max {
+				form.data.datetime-local			
+			}	
+		input.datetime-local.attrs.value =
+			attribute value {
+				form.data.datetime-local
+			}
+		
+	input.elem |= input.datetime-local.elem
+
+## Date: <input type='date'>
+
+	input.date.elem = 
+		element input { input.date.attrs }
+	input.date.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.date.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	input.date.attrs.min? 
+		&	input.date.attrs.max? 
+		&	input.attrs.step.integer? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.required? 
+		&	input.date.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.date.attrs.type = 
+			attribute type {
+				w:string "date"
+			}
+		input.date.attrs.min =
+			attribute min {
+				form.data.date
+			}
+		input.date.attrs.max =
+			attribute max {
+				form.data.date			
+			}	
+		input.date.attrs.value =
+			attribute value {
+				form.data.date
+			}
+		
+	input.elem |= input.date.elem
+
+## Year and Month: <input type='month'>
+
+	input.month.elem = 
+		element input { input.month.attrs }
+	input.month.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.month.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	input.month.attrs.min? 
+		&	input.month.attrs.max? 
+		&	input.attrs.step.integer? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.required? 
+		&	input.month.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.month.attrs.type = 
+			attribute type {
+				w:string "month"
+			}
+		input.month.attrs.min =
+			attribute min {
+				form.data.month
+			}
+		input.month.attrs.max =
+			attribute max {
+				form.data.month			
+			}	
+		input.month.attrs.value =
+			attribute value {
+				form.data.month
+			}
+		
+	input.elem |= input.month.elem
+
+## Time without Time Zone Information: <input type='time'>
+
+	input.time.elem = 
+		element input { input.time.attrs }
+	input.time.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.time.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	input.time.attrs.min? 
+		&	input.time.attrs.max? 
+		&	input.attrs.step.float? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.required? 
+		&	input.time.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.time.attrs.type = 
+			attribute type {
+				w:string "time"
+			}
+		input.time.attrs.min =
+			attribute min {
+				form.data.time
+			}
+		input.time.attrs.max =
+			attribute max {
+				form.data.time			
+			}	
+		input.time.attrs.value =
+			attribute value {
+				form.data.time
+			}
+		
+	input.elem |= input.time.elem
+
+## Year and Week: <input type='week'>
+
+	input.week.elem = 
+		element input { input.week.attrs }
+	input.week.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.week.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	input.week.attrs.min? 
+		&	input.week.attrs.max? 
+		&	input.attrs.step.integer? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.required? 
+		&	input.week.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.week.attrs.type = 
+			attribute type {
+				w:string "week"
+			}
+		input.week.attrs.min =
+			attribute min {
+				form.data.week
+			}
+		input.week.attrs.max =
+			attribute max {
+				form.data.week			
+			}	
+		input.week.attrs.value =
+			attribute value {
+				form.data.week
+			}
+		
+	input.elem |= input.week.elem
+
+## Number: <input type='number'>
+
+	input.number.elem = 
+		element input { input.number.attrs }
+	input.number.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.number.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	input.number.attrs.min? 
+		&	input.number.attrs.max? 
+		&	input.attrs.step.float? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.required? 
+		&	input.number.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.number.attrs.type = 
+			attribute type {
+				w:string "number"
+			}
+		input.number.attrs.min =
+			attribute min {
+				common.data.float
+			}
+		input.number.attrs.max =
+			attribute max {
+				common.data.float			
+			}	
+		input.number.attrs.value =
+			attribute value {
+				common.data.float
+			}
+		
+	input.elem |= input.number.elem
+
+## Imprecise Number: <input type='range'>
+
+	input.range.elem = 
+		element input { input.range.attrs }
+	input.range.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.range.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	input.range.attrs.min? 
+		&	input.range.attrs.max? 
+		&	input.attrs.step.float? 
+		&	input.range.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.range.attrs.type = 
+			attribute type {
+				w:string "range"
+			}
+		input.range.attrs.min =
+			attribute min {
+				common.data.float
+			}
+		input.range.attrs.max =
+			attribute max {
+				common.data.float			
+			}	
+		input.range.attrs.value =
+			attribute value {
+				common.data.float
+			}
+		
+	input.elem |= input.range.elem
+
+## Email Address: <input type='email'>
+
+	input.email.elem = 
+		element input { input.email.attrs }	
+	input.email.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.email.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	shared-form.attrs.maxlength? 
+		&	shared-form.attrs.pattern? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.required? 
+		&	shared-form.attrs.size?
+		&	shared-form.attrs.placeholder?
+		&	(	(	input.attrs.multiple
+				&	input.email.attrs.value.multiple?
+				)
+			|	input.email.attrs.value.single?
+			)?
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.email.attrs.type = 
+			attribute type {
+				w:string "email"
+			}
+		input.email.attrs.value.single =
+			attribute value {
+				form.data.emailaddress
+			}
+		input.email.attrs.value.multiple =
+			attribute value {
+				form.data.emailaddresslist
+			}
+		
+	input.elem |= input.email.elem
+
+## IRI: <input type='url'>
+
+	input.url.elem = 
+		element input { input.url.attrs }	
+	input.url.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.url.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	shared-form.attrs.maxlength? 
+		&	shared-form.attrs.pattern? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.required? 
+		&	shared-form.attrs.size?
+		&	shared-form.attrs.placeholder?
+		&	input.url.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.url.attrs.type = 
+			attribute type {
+				w:string "url"
+			}
+		input.url.attrs.value =
+			attribute value {
+				w:string "" | common.data.uri.absolute
+			}
+		
+	input.elem |= input.url.elem
+
+## Search: <input type='search'>
+
+	input.search.elem = 
+		element input { input.search.attrs }	
+	input.search.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.search.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	shared-form.attrs.maxlength? 
+		&	shared-form.attrs.pattern? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.required? 
+		&	shared-form.attrs.size?
+		&	shared-form.attrs.placeholder?
+		&	shared-form.attrs.dirname?
+		&	input.search.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.search.attrs.type = 
+			attribute type {
+				w:string "search"
+			}
+		input.search.attrs.value =
+			attribute value {
+				form.data.stringwithoutlinebreaks
+			}
+		
+	input.elem |= input.search.elem
+
+## Telephone Number: <input type='tel'>
+
+	input.tel.elem = 
+		element input { input.tel.attrs }	
+	input.tel.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.tel.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	shared-form.attrs.maxlength? 
+		&	shared-form.attrs.pattern? 
+		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.required? 
+		&	shared-form.attrs.size?
+		&	shared-form.attrs.placeholder?
+		&	input.tel.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.tel.attrs.type = 
+			attribute type {
+				w:string "tel"
+			}
+		input.tel.attrs.value =
+			attribute value {
+				form.data.stringwithoutlinebreaks
+			}
+		
+	input.elem |= input.tel.elem
+
+## Color: <input type='color'>
+
+	input.color.elem = 
+		element input { input.color.attrs }	
+	input.color.attrs = 
+		(	common.attrs
+		&	common-form.attrs
+		&	input.color.attrs.type
+		&	input.attrs.autocomplete? 
+		&	shared-form.attrs.autofocus? 
+		&	input.attrs.list? 
+		&	input.color.attrs.value? 
+		&	common.attrs.aria.implicit.input?
+		)	
+		input.color.attrs.type = 
+			attribute type {
+				w:string "color"
+			}
+		input.color.attrs.value =
+			attribute value {
+				form.data.color
+			}
+		
+	input.elem |= input.color.elem
+
+## Form Output: <output>
+
+	output.elem =
+		element output { output.inner & output.attrs }
+	output.attrs =
+		(	common.attrs
+		&	common-form.attrs.name?
+		&	common-form.attrs.form?
+		&	output.attrs.for?
+		&	common.attrs.aria.implicit.region?
+		)
+		output.attrs.for = 
+			attribute for {
+				common.data.idrefs #REVISIT spec says space--not whitespace
+			}
+	output.inner =
+		( common.inner.phrasing )
+
+	common.elem.phrasing |= output.elem
+
+## Text Area: <textarea>, extensions
+
+	textarea.attrs.rows-and-cols-wf1.inner &=
+		notAllowed
+	textarea.attrs.rows-and-cols-wf1 |= 
+		empty
+	textarea.attrs &=
+		(	shared-form.attrs.maxlength?
+		&	shared-form.attrs.autofocus? 
+		&	shared-form.attrs.required? 
+		&	shared-form.attrs.placeholder?
+		&	shared-form.attrs.dirname?
+		&	textarea.attrs.rows?
+		&	(	(	textarea.attrs.wrap.hard 
+				&	textarea.attrs.cols
+				)
+			|	(	textarea.attrs.wrap.soft?
+				&	textarea.attrs.cols?
+				)
+			)
+		)
+		textarea.attrs.wrap.hard =
+			attribute wrap {
+				w:string "hard"
+			}
+		textarea.attrs.wrap.soft =
+			attribute wrap {
+				w:string "soft"
+			}
+
+## List of Prefill Data: <datalist>
+
+	#REVISIT should the options in datalist be non-selectable?
+
+	datalist.elem =
+		element datalist { datalist.inner & datalist.attrs }
+	datalist.inner =
+		( option.elem* & common.inner.phrasing )
+	datalist.attrs =
+		( common.attrs )
+
+	common.elem.phrasing |= datalist.elem
+
+## Complex Submit Button: <button type='submit'>, extensions
+
+	button.submit.attrs &=
+		(	shared-form.attrs.formaction? 
+		&	shared-form.attrs.autofocus? 
+		&	shared-form.attrs.formenctype? 
+		&	shared-form.attrs.formmethod? 
+		&	shared-form.attrs.formtarget? 
+		&	shared-form.attrs.formnovalidate? 
+		)
+	
+## Complex Reset Button: <button type='reset'>, extensions
+
+	button.reset.attrs &=
+		( shared-form.attrs.autofocus? )
+	
+## Complex Push Button: <button type='button'>, extensions
+
+	button.button.attrs &=
+		( shared-form.attrs.autofocus? )
+
+## Form: <form>, extensions
+	form.attrs &= 
+		(	form.attrs.novalidate?
+		&	form.attrs.target?
+		&	form.attrs.autocomplete?
+		)
+		form.attrs.novalidate = 
+			attribute novalidate {
+				w:string "novalidate" | w:string ""
+			}
+		form.attrs.target = 
+			attribute target {
+				common.data.browsing-context-or-keyword
+			}
+		form.attrs.autocomplete = 
+			attribute autocomplete {
+				w:string "on" | w:string "off"
+			}
+		# REVISIT should this be case-insensitive in conforming XHTML documents?
+		form.attrs.enctype.data |= 
+			( w:string "text/plain" )
+
+## Fieldset: <fieldset>, extensions
+
+	fieldset.attrs &=
+		( common-form.attrs )
+
+## Label: <label>, extensions
+
+	label.attrs &=
+		( common-form.attrs.form? )
+
+## Key-pair generator/input control: <keygen>
+
+	keygen.elem =
+		element keygen { keygen.inner & keygen.attrs }
+	keygen.attrs =
+		(	common.attrs
+		&	keygen.attrs.challenge?
+		&	keygen.attrs.keytype?
+		&	shared-form.attrs.autofocus? 
+		&	common-form.attrs?
+		#REVISIT which ARIA attributes needed here
+		)
+		keygen.attrs.challenge =
+			attribute challenge {
+				string
+			}
+		keygen.attrs.keytype = 
+			attribute keytype {
+				w:string "rsa"
+			}
+	keygen.inner =
+		( empty )
+
+	common.elem.phrasing |= keygen.elem
+
+## Selection Menu: <select>, Extensions
+
+	select.attrs &=
+		(	shared-form.attrs.autofocus? 
+		&	shared-form.attrs.required? 
+		)

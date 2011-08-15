@@ -1,0 +1,9 @@
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Web Forms 2.0 Scripting               #
+# #####################################################################
+
+#	output.attrs &=
+#		(	scripting.attr.form.formchange?
+#		&	scripting.attr.form.forminput?
+#		&	scripting.attr.form.change?
+#		)

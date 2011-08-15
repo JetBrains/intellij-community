@@ -1,0 +1,52 @@
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Revision Annotations                  #
+# #####################################################################
+
+## Common Attributes
+
+	edit.attrs.cite =
+		attribute cite {
+			common.data.uri
+		}
+	edit.attrs.datetime =
+		attribute datetime {
+			common.data.datetime | common.data.date
+		}
+
+## Inserts: <ins>
+
+	ins.elem.flow =
+		element ins { ins.inner.flow & ins.attrs }
+	ins.elem.phrasing =
+		element ins { ins.inner.phrasing & ins.attrs }
+	ins.attrs =
+		(	common.attrs
+		&	edit.attrs.cite?
+		&	edit.attrs.datetime?
+		)
+	ins.inner.flow =
+		( common.inner.flow )
+	ins.inner.phrasing =
+		( common.inner.phrasing )
+
+	common.elem.flow |= ins.elem.flow
+	common.elem.phrasing |= ins.elem.phrasing
+
+## Deletions: <del>
+
+	del.elem.flow =
+		element del { del.inner.flow & del.attrs }
+	del.elem.phrasing =
+		element del { del.inner.phrasing & del.attrs }
+	del.attrs =
+		(	common.attrs
+		&	edit.attrs.cite?
+		&	edit.attrs.datetime?
+		)
+	del.inner.flow =
+		( common.inner.flow )
+	del.inner.phrasing =
+		( common.inner.phrasing )
+
+	common.elem.flow |= del.elem.flow
+	common.elem.phrasing |= del.elem.phrasing

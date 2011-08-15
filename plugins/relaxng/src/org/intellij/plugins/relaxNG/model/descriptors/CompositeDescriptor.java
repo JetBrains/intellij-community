@@ -61,8 +61,8 @@ public class CompositeDescriptor extends RngElementDescriptor {
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
     final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>(Arrays.asList(super.getElementsDescriptors(context)));
     for (DElementPattern pattern : myPatterns) {
-      final List<DElementPattern> list = ContainerUtil.findAll(ChildElementFinder.find(2, pattern), NamedPatternFilter.INSTANCE);
-      descriptors.addAll(Arrays.asList(RngNsDescriptor.convertElementDescriptors(list, myNsDescriptor)));
+      final List<DElementPattern> list = ChildElementFinder.find(2, pattern);
+      descriptors.addAll(Arrays.asList(myNsDescriptor.convertElementDescriptors(list)));
     }
     return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
   }

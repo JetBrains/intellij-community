@@ -35,8 +35,8 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.intellij.plugins.relaxNG.ApplicationLoader;
@@ -51,8 +51,10 @@ import org.kohsuke.rngom.digested.DPattern;
 import org.kohsuke.rngom.nc.NameClass;
 
 import javax.xml.namespace.QName;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -117,12 +119,17 @@ public class RngNsDescriptor implements XmlNSDescriptor, Validator {
   }
 
   private XmlElementDescriptor findRootDescriptorInner(XmlTag tag) {
-    return findDescriptor(tag, ChildElementFinder.find(myPattern));
+    final List<DElementPattern> patterns = ContainerUtil.findAll(ChildElementFinder.find(-1, myPattern), NamedPatternFilter.INSTANCE);
+    return findDescriptor(tag, patterns);
   }
 
   public XmlElementDescriptor findDescriptor(XmlTag tag, List<DElementPattern> list) {
     final QName qName = new QName(tag.getNamespace(), tag.getLocalName());
 
+    return findDescriptor(qName, list);
+  }
+
+  private XmlElementDescriptor findDescriptor(final QName qName, List<DElementPattern> list) {
     int max = -1;
     DElementPattern maxPattern = null;
     for (DElementPattern pattern : list) {
@@ -144,9 +151,9 @@ public class RngNsDescriptor implements XmlNSDescriptor, Validator {
 
     if (maxPattern != null) {
       if (patterns.size() > 1) {
-        return new CompositeDescriptor(this, maxPattern, patterns);
+        return initDescriptor(new CompositeDescriptor(this, maxPattern, patterns));
       } else {
-        return new RngElementDescriptor(this, maxPattern);
+        return initDescriptor(new RngElementDescriptor(this, maxPattern));
       }
     } else {
       return null;
@@ -159,16 +166,40 @@ public class RngNsDescriptor implements XmlNSDescriptor, Validator {
       return XmlElementDescriptor.EMPTY_ARRAY;
     }
 
-    final List<DElementPattern> list = ContainerUtil.findAll(ChildElementFinder.find(myPattern), NamedPatternFilter.INSTANCE);
-    return convertElementDescriptors(list, this);
+    final List<DElementPattern> list = ChildElementFinder.find(-1, myPattern);
+    return convertElementDescriptors(list);
   }
 
-  static XmlElementDescriptor[] convertElementDescriptors(List<DElementPattern> finder, final RngNsDescriptor nsDescriptor) {
-    return ContainerUtil.map2Array(finder, XmlElementDescriptor.class, new Function<DElementPattern, XmlElementDescriptor>() {
-      public XmlElementDescriptor fun(final DElementPattern elementPattern) {
-        return new RngElementDescriptor(nsDescriptor, elementPattern);
+  XmlElementDescriptor[] convertElementDescriptors(List<DElementPattern> patterns) {
+    patterns = ContainerUtil.findAll(patterns, NamedPatternFilter.INSTANCE);
+
+    final Map<QName, List<DElementPattern>> name2patterns = new HashMap<QName, List<DElementPattern>>();
+    for (DElementPattern pattern : patterns) {
+      for (QName qName : pattern.getName().listNames()) {
+        List<DElementPattern> dPatterns = name2patterns.get(qName);
+        if (dPatterns == null) {
+          dPatterns = new ArrayList<DElementPattern>();
+          name2patterns.put(qName, dPatterns);
+        }
+        dPatterns.add(pattern);
       }
-    });
+    }
+
+    final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
+
+    for (QName qName : name2patterns.keySet()) {
+      final List<DElementPattern> patternList = name2patterns.get(qName);
+      final XmlElementDescriptor descriptor = findDescriptor(qName, patternList);
+      if (descriptor != null) {
+        result.add(descriptor);
+      }
+    }
+
+    return result.toArray(new XmlElementDescriptor[result.size()]);
+  }
+
+  protected XmlElementDescriptor initDescriptor(@NotNull XmlElementDescriptor descriptor) {
+    return descriptor;
   }
 
   @NotNull
