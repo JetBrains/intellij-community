@@ -233,10 +233,6 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doHighlightingTest(PyCallByClassInspection.class); // ok, we can handle insanely long lines :)
   }
 
-  public void testPyCallingNonCallableInspection() {
-    doHighlightingTest(PyCallingNonCallableInspection.class, LanguageLevel.PYTHON26);
-  }
-
   private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass) {
     myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
     myFixture.enableInspections(inspectionClass);
