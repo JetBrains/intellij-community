@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -255,6 +256,10 @@ public class FileTreeModelBuilder {
     final VirtualFile containingDirectory = file.getParent();
     return getModuleDirNode(containingDirectory, myFileIndex.getModuleForFile(file), null);
   }
+  
+  public boolean hasFileNode(@NotNull VirtualFile file) {
+    return myModuleDirNodes.containsKey(file);
+  }
 
   @Nullable
   public DefaultMutableTreeNode removeNode(final PsiElement element, PsiDirectory parent) {
@@ -269,8 +274,16 @@ public class FileTreeModelBuilder {
       dirNode.removeFromParent();
       return moduleNode;
     }
-    DefaultMutableTreeNode dirNode = getModuleDirNode(parentVirtualFile, module, null);
+    DefaultMutableTreeNode dirNode = myModuleDirNodes.get(parentVirtualFile);
     if (dirNode == null) return null;
+    if (dirNode instanceof DirectoryNode) {
+      DirectoryNode wrapper = ((DirectoryNode)dirNode).getWrapper();
+      while (wrapper != null) {
+        dirNode = wrapper;
+        myModuleDirNodes.put(wrapper.getDirectory(), null);
+        wrapper = ((DirectoryNode)dirNode).getWrapper();
+      }
+    }
     final PackageDependenciesNode[] classOrDirNodes = findNodeForPsiElement((PackageDependenciesNode)dirNode, element);
     if (classOrDirNodes != null){
       for (PackageDependenciesNode classNode : classOrDirNodes) {
@@ -278,8 +291,13 @@ public class FileTreeModelBuilder {
       }
     }
 
+    DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)dirNode.getParent();
     DefaultMutableTreeNode node = dirNode;
-    DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)node.getParent();
+    if (element == parent) {
+      myModuleDirNodes.put(parentVirtualFile, null);
+      dirNode.removeFromParent();
+      node = parentNode;
+    }
     while (node != null && node.getChildCount() == 0) {
       PsiDirectory directory = parent.getParentDirectory();
       parentNode = (DefaultMutableTreeNode)node.getParent();
@@ -334,16 +352,44 @@ public class FileTreeModelBuilder {
     }
 
     PackageDependenciesNode dirNode = getFileParentNode(vFile);
-    dirNode.add(new FileNode(vFile, myProject, isMarked));
+    if (findNodeForPsiElement(dirNode, file) == null) {  //check if dir node already contains child
+      dirNode.add(new FileNode(vFile, myProject, isMarked));
+    }
     return rootToReload;
   }
 
-  public DefaultMutableTreeNode addDirNode(PsiDirectory dir) {
+  @Nullable
+  public PackageDependenciesNode addDirNode(PsiDirectory dir) {
     final VirtualFile vFile = dir.getVirtualFile();
-    boolean isMarked = myMarker != null && myMarker.isMarked(vFile);
-    if (!isMarked) return null;
-    myFileIndex.iterateContentUnderDirectory(vFile, new MyContentIterator());
-    return getModuleDirNode(vFile, myFileIndex.getModuleForFile(vFile), null);
+    if (myMarker == null) return null;
+    final boolean[] isMarked = new boolean[]{myMarker.isMarked(vFile)};
+    VirtualFile dirToReload = vFile.getParent();
+    PackageDependenciesNode rootToReload = myModuleDirNodes.get(dirToReload);
+    if (rootToReload == null && myFlattenPackages) {
+      final Module module = myFileIndex.getModuleForFile(vFile);
+      final boolean moduleNodeExist = myModuleNodes.get(module) != null;
+      rootToReload = getModuleNode(module);
+      if (!moduleNodeExist) {
+        rootToReload = null; //need to reload from parent / mostly for problems view
+      }
+    }
+    else {
+      while (rootToReload == null && dirToReload != null) {
+        dirToReload = dirToReload.getParent();
+        rootToReload = myModuleDirNodes.get(dirToReload);
+      }
+    }
+    myFileIndex.iterateContentUnderDirectory(vFile, new MyContentIterator() {
+      @Override
+      public boolean processFile(VirtualFile fileOrDir) {
+        isMarked[0] |= myMarker.isMarked(fileOrDir);
+        return super.processFile(fileOrDir);
+      }
+    });
+    if (!isMarked[0]) return null;
+
+    getModuleDirNode(vFile, myFileIndex.getModuleForFile(vFile), null);
+    return rootToReload;
   }
 
 
@@ -451,7 +497,8 @@ public class FileTreeModelBuilder {
         DirectoryNode parentDirectoryNode = myModuleDirNodes.get(directory);
         if (parentDirectoryNode != null
             || !myCompactEmptyMiddlePackages
-            || directory == sourceRoot || directory == contentRoot) {
+            || (sourceRoot != null && VfsUtil.isAncestor(directory, sourceRoot, false))
+            || directory == contentRoot) {
           getModuleDirNode(directory, module, (DirectoryNode)directoryNode).add(directoryNode);
         }
         else {

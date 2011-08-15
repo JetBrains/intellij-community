@@ -130,7 +130,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
       if (!virtualFile.isValid()) return;
       final PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
-      if (file != null) {
+      if (file != null && getCurrentScope().getValue().contains(file, NamedScopesHolder.getHolder(myProject, getCurrentScope().getName(),
+                                                                                                  myDependencyValidationManager))) {
+        if (!myBuilder.hasFileNode(virtualFile)) return;
         final PackageDependenciesNode node = myBuilder.getFileParentNode(virtualFile);
         final PackageDependenciesNode[] nodes = FileTreeModelBuilder.findNodeForPsiElement(node, file);
         if (nodes != null) {
@@ -262,7 +264,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  private void refreshScope(@Nullable NamedScope scope) {
+  public void refreshScope(@Nullable NamedScope scope) {
     FileTreeModelBuilder.clearCaches(myProject);
     if (scope == null) { //was deleted
       scope = DefaultScopesProvider.getAllScope();
@@ -302,7 +304,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     FileTreeModelBuilder.clearCaches(myProject);
   }
 
-  private NamedScope getCurrentScope() {
+  protected NamedScope getCurrentScope() {
     NamedScope scope = NamedScopesHolder.getScope(myProject, CURRENT_SCOPE_NAME);
     if (scope == null) {
       scope = DefaultScopesProvider.getAllScope();
@@ -520,27 +522,50 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       if (parent instanceof PsiDirectory && (child instanceof PsiFile && !isInjected((PsiFile)child) || child instanceof PsiDirectory)) {
         queueUpdate(new Runnable() {
           public void run() {
-            reload(myBuilder.removeNode(child, (PsiDirectory)parent));
+            final DefaultMutableTreeNode rootToReload = myBuilder.removeNode(child, (PsiDirectory)parent);
+            if (rootToReload != null) {
+              reload(rootToReload);
+            }
           }
         }, true);
       }
     }
 
-    public void childMoved(PsiTreeChangeEvent event) {
+    @Override
+    public void beforeChildMovement(PsiTreeChangeEvent event) {
       final PsiElement oldParent = event.getOldParent();
-      final PsiElement newParent = event.getNewParent();
       final PsiElement child = event.getChild();
-      if (oldParent instanceof PsiDirectory && newParent instanceof PsiDirectory) {
-        if (child instanceof PsiFile && !isInjected((PsiFile)child)) {
-          final PsiFile file = (PsiFile)child;
+      if (oldParent instanceof PsiDirectory) {
+        if (child instanceof PsiFileSystemItem && (!(child instanceof PsiFile) || !isInjected((PsiFile)child))) {
           queueUpdate(new Runnable() {
             public void run() {
-              reload(myBuilder.removeNode(child, (PsiDirectory)oldParent));
+              final DefaultMutableTreeNode rootToReload =
+                myBuilder.removeNode(child, child instanceof PsiDirectory ? (PsiDirectory)child : (PsiDirectory)oldParent);
+              if (rootToReload != null) {
+                reload(rootToReload);
+              }
+            }
+          }, true);
+        }
+      }
+    }
+
+    public void childMoved(PsiTreeChangeEvent event) {
+      final PsiElement newParent = event.getNewParent();
+      final PsiElement child = event.getChild();
+      if (newParent instanceof PsiDirectory) {
+        if (child instanceof PsiFileSystemItem && (!(child instanceof PsiFile) || !isInjected((PsiFile)child))) {
+          final PsiFileSystemItem file = (PsiFileSystemItem)child;
+          queueUpdate(new Runnable() {
+            public void run() {
               final VirtualFile virtualFile = file.getVirtualFile();
               if (virtualFile != null) {
-                final PsiFile newFile = file.isValid() ? file : PsiManager.getInstance(myProject).findFile(virtualFile);
+                final PsiFileSystemItem newFile = file.isValid() ? file :
+                                                  (file.isDirectory() ? PsiManager.getInstance(myProject).findDirectory(virtualFile)
+                                                                      : PsiManager.getInstance(myProject).findFile(virtualFile));
                 if (newFile != null) {
-                  final PackageDependenciesNode rootToReload = myBuilder.addFileNode(newFile);
+                  final PackageDependenciesNode rootToReload = newFile.isDirectory() ? myBuilder.addDirNode((PsiDirectory)newFile)
+                                                                                     : myBuilder.addFileNode((PsiFile)newFile);
                   if (rootToReload != null) {
                     reload(rootToReload);
                   }
@@ -560,8 +585,13 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         if (!file.getViewProvider().isPhysical() && !isInjected(file)) return;
         queueUpdate(new Runnable() {
           public void run() {
-            if (file.isValid()) {
-              reload(myBuilder.getFileParentNode(file.getVirtualFile()));
+            if (file.isValid() && file.getViewProvider().isPhysical()) {
+              final NamedScope scope = getCurrentScope();
+              final PackageSet packageSet = scope.getValue();
+              if (packageSet == null) return; //invalid scope selected
+              if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))){
+                reload(myBuilder.getFileParentNode(file.getVirtualFile()));
+              }
             }
           }
         }, false);
@@ -624,10 +654,13 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       final PackageSet packageSet = scope.getValue();
       if (packageSet == null) return; //invalid scope selected
       if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
-        reload(myBuilder.findNode(file, file));
+        reload(myBuilder.addFileNode(file));
       }
       else {
-        reload(myBuilder.removeNode(file, file.getParent()));
+        final DefaultMutableTreeNode rootToReload = myBuilder.removeNode(file, file.getParent());
+        if (rootToReload != null) {
+          reload(rootToReload);
+        }
       }
     }
 
