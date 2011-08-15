@@ -61,12 +61,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private JPanel myContentPane;
   private JPanel myBackButtonPanel;
-  private HyperlinkLabel myInfoLabel;
+  private HyperlinkLabel.Croppable myInfoLabel;
   private JPanel myNextButtonPanel;
   private JPanel myTabsPanel;
   private JLabel myCountLabel;
-  private HyperlinkLabel myForeignPluginWarningLabel;
-  private HyperlinkLabel myDisableLink;
+  private HyperlinkLabel.Croppable myForeignPluginWarningLabel;
+  private HyperlinkLabel.Croppable myDisableLink;
   private JPanel myCredentialsPanel;
   private HyperlinkLabel myCredentialsLabel;
 
