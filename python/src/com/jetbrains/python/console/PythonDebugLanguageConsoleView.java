@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,9 +43,10 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
   private ProcessHandler myProcessHandler;
 
-  public PythonDebugLanguageConsoleView(final Project project) {
+
+  public PythonDebugLanguageConsoleView(final Project project, Sdk sdk) {
     super(new CardLayout());
-    myPydevConsoleView = createConsoleView(project);
+    myPydevConsoleView = createConsoleView(project, sdk);
     myTextConsole = (ConsoleViewImpl)TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
     add(myTextConsole.getComponent(), TEXT_CONSOLE_PANEL);
@@ -58,8 +60,8 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
     getPydevConsoleView().executeCode(code);
   }
 
-  private static PythonConsoleView createConsoleView(Project project) {
-    return new PythonConsoleView(project, "");
+  private static PythonConsoleView createConsoleView(Project project, Sdk sdk) {
+    return new PythonConsoleView(project, "",  sdk);
   }
 
   private void doShowConsole(String type) {

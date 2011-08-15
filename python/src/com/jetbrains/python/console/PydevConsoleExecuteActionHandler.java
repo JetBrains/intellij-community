@@ -5,7 +5,6 @@ import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -22,7 +21,6 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.Scanner;
 
@@ -30,8 +28,6 @@ import java.util.Scanner;
  * @author traff
  */
 public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandler implements ConsoleCommunicationListener {
-  private static final String DOUBLE_QUOTE_MULTILINE = "\"\"\"";
-  private static final String SINGLE_QUOTE_MULTILINE = "'''";
 
   private final LanguageConsoleViewImpl myConsoleView;
 
@@ -90,34 +86,34 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
     // multiline strings handling
     if (myInMultilineStringState != null) {
-      if (isMultilineStarts(line, DOUBLE_QUOTE_MULTILINE)) {
+      if (PyConsoleUtil.isDoubleQuoteMultilineStarts(line)) {
         myInMultilineStringState = null;
         // restore language
         console.setLanguage(PythonLanguage.getInstance());
-        console.setPrompt(PyPromptUtil.ORDINARY_PROMPT);
+        console.setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
       }
       else {
         return;
       }
     }
     else {
-      if (isMultilineStarts(line, DOUBLE_QUOTE_MULTILINE)) {
-        myInMultilineStringState = DOUBLE_QUOTE_MULTILINE;
+      if (PyConsoleUtil.isDoubleQuoteMultilineStarts(line)) {
+        myInMultilineStringState = PyConsoleUtil.DOUBLE_QUOTE_MULTILINE;
       }
-      else if (isMultilineStarts(line, SINGLE_QUOTE_MULTILINE)) {
-        myInMultilineStringState = SINGLE_QUOTE_MULTILINE;
+      else if (PyConsoleUtil.isSingleQuoteMultilineStarts(line)) {
+        myInMultilineStringState = PyConsoleUtil.SINGLE_QUOTE_MULTILINE;
       }
       if (myInMultilineStringState != null) {
         // change language
         console.setLanguage(PlainTextLanguage.INSTANCE);
-        console.setPrompt(PyPromptUtil.INDENT_PROMPT);
+        console.setPrompt(PyConsoleUtil.INDENT_PROMPT);
         return;
       }
     }
 
     // Process line continuation
     if (line.endsWith("\\")) {
-      console.setPrompt(PyPromptUtil.INDENT_PROMPT);
+      console.setPrompt(PyConsoleUtil.INDENT_PROMPT);
       return;
     }
 
@@ -153,9 +149,9 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
           myInputBuffer = null;
           // Handle prompt
           if (interpreterResponse.need_input) {
-            if (!PyPromptUtil.INPUT_PROMPT.equals(console.getPrompt())) {
-              console.setPrompt(PyPromptUtil.INPUT_PROMPT);
-              scrollDown(currentEditor);
+            if (!PyConsoleUtil.INPUT_PROMPT.equals(console.getPrompt()) && !PyConsoleUtil.HELP_PROMPT.equals(console.getPrompt())) {
+              console.setPrompt(PyConsoleUtil.INPUT_PROMPT);
+              PyConsoleUtil.scrollDown(currentEditor);
             }
             myCurrentIndentSize = -1;
           }
@@ -180,17 +176,17 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       });
       // After requesting input we got no call back to change prompt, change it manually
       if (waitedForInputBefore && !myConsoleCommunication.isWaitingForInput()) {
-        console.setPrompt(PyPromptUtil.ORDINARY_PROMPT);
-        scrollDown(currentEditor);
+        console.setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
+        PyConsoleUtil.scrollDown(currentEditor);
       }
     }
   }
 
   private void ordinaryPrompt(LanguageConsoleImpl console, Editor currentEditor) {
     if (!myConsoleCommunication.isExecuting()) {
-      if (!PyPromptUtil.ORDINARY_PROMPT.equals(console.getPrompt())) {
-        console.setPrompt(PyPromptUtil.ORDINARY_PROMPT);
-        scrollDown(currentEditor);
+      if (!PyConsoleUtil.ORDINARY_PROMPT.equals(console.getPrompt())) {
+        console.setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
+        PyConsoleUtil.scrollDown(currentEditor);
       }
     }
     else {
@@ -198,18 +194,18 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     }
   }
 
-  private void executingPrompt(LanguageConsoleImpl console) {
-    console.setPrompt(PyPromptUtil.EXECUTING_PROMPT);
+  private static void executingPrompt(LanguageConsoleImpl console) {
+    console.setPrompt(PyConsoleUtil.EXECUTING_PROMPT);
   }
 
   private void more(LanguageConsoleImpl console, Editor currentEditor) {
-    if (!PyPromptUtil.INDENT_PROMPT.equals(console.getPrompt())) {
-      console.setPrompt(PyPromptUtil.INDENT_PROMPT);
-      scrollDown(currentEditor);
+    if (!PyConsoleUtil.INDENT_PROMPT.equals(console.getPrompt())) {
+      console.setPrompt(PyConsoleUtil.INDENT_PROMPT);
+      PyConsoleUtil.scrollDown(currentEditor);
     }
   }
 
-  public String getPrevCommandRunningMessage() {
+  public static String getPrevCommandRunningMessage() {
     return "Previous command is still running. Please wait or press Ctrl+C to interrupt.";
   }
 
@@ -218,10 +214,6 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     final LanguageConsoleImpl console = myConsoleView.getConsole();
     final Editor currentEditor = console.getCurrentEditor();
     ordinaryPrompt(console, currentEditor);
-  }
-
-  private static boolean isMultilineStarts(String line, String substring) {
-    return StringUtils.countMatches(line, substring) % 2 == 1;
   }
 
   @Override
@@ -269,15 +261,6 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   private Project getProject() {
     return myConsoleView.getConsole().getProject();
-  }
-
-  private static void scrollDown(final Editor currentEditor) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
-      }
-    });
   }
 
   @Override

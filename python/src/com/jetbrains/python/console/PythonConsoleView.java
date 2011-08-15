@@ -8,12 +8,16 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
@@ -21,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCodeExecutor {
   private ConsoleExecuteActionHandler myExecuteActionHandler;
 
-  public PythonConsoleView(final Project project, final String title) {
-    super(project, new PythonLanguageConsole(project, title));
+  public PythonConsoleView(final Project project, final String title, Sdk sdk) {
+    super(project, new PythonLanguageConsole(project, title, sdk));
     getPythonLanguageConsole().setPythonConsoleView(this);
-    getPythonLanguageConsole().setPrompt(PyPromptUtil.ORDINARY_PROMPT);
+    getPythonLanguageConsole().setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
     setUpdateFoldingsEnabled(false);
   }
 
@@ -64,10 +68,11 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     final ConsoleViewContentType outputType;
     if (attributes == ProcessOutputTypes.STDERR) {
       outputType = ConsoleViewContentType.ERROR_OUTPUT;
-    } else
-    if (attributes == ProcessOutputTypes.SYSTEM) {
+    }
+    else if (attributes == ProcessOutputTypes.SYSTEM) {
       outputType = ConsoleViewContentType.SYSTEM_OUTPUT;
-    } else {
+    }
+    else {
       outputType = ConsoleViewContentType.NORMAL_OUTPUT;
     }
     return outputType;
@@ -76,10 +81,18 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
   private static class PythonLanguageConsole extends LanguageConsoleImpl {
     private PythonConsoleView myPythonConsoleView;
 
-    public PythonLanguageConsole(final Project project, final String title) {
+    public PythonLanguageConsole(final Project project, final String title, final Sdk sdk) {
       super(project, title, PythonLanguage.getInstance());
+      initLanguageLevel(sdk);
       // Mark editor as console one, to prevent autopopup completion
       getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
+    }
+
+    private void initLanguageLevel(@Nullable Sdk sdk) {
+      if (myFile.getVirtualFile() != null) {
+        //noinspection ConstantConditions
+        myFile.getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
+      }
     }
 
     public void setPythonConsoleView(PythonConsoleView pythonConsoleView) {

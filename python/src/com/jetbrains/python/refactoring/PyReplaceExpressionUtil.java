@@ -68,6 +68,6 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
   @NotNull
   private static IElementType getOperationType(@NotNull final PyElement expr) {
     if (expr instanceof PyBinaryExpression) return ((PyBinaryExpression)expr).getOperator();
-    return ((PyPrefixExpression)expr).getOperationSign();
+    return ((PyPrefixExpression)expr).getOperator();
   }
 }

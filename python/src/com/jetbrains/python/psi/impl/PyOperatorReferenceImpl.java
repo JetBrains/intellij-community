@@ -42,6 +42,10 @@ public class PyOperatorReferenceImpl extends PyReferenceImpl {
       final PySubscriptionExpression expr = (PySubscriptionExpression)myElement;
       res = resolveMember(expr.getOperand(), expr.getReferencedName());
     }
+    else if (myElement instanceof PyPrefixExpression) {
+      final PyPrefixExpression expr = (PyPrefixExpression)myElement;
+      res = resolveMember(expr.getOperand(), expr.getReferencedName());
+    }
     return res;
   }
 
@@ -56,6 +60,19 @@ public class PyOperatorReferenceImpl extends PyReferenceImpl {
   @Override
   public String toString() {
     return "PyOperatorReferenceImpl(" + myElement + "," + myContext + ")";
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final PyOperatorReferenceImpl other = (PyOperatorReferenceImpl)o;
+    return myElement.equals(other.myElement) && myContext.equals(myContext);
+  }
+
+  @Override
+  public int hashCode() {
+    return myElement.hashCode();
   }
 
   public String getReadableOperatorName() {
