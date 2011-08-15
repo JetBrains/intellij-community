@@ -82,7 +82,7 @@ public class PyNegateComparisonIntention extends BaseIntentionAction {
           .createBinaryExpression(comparisonStrings.get(invertedOperator), binaryExpression.getLeftExpression(),
                                   binaryExpression.getRightExpression());
 
-        if (parent instanceof PyPrefixExpression && ((PyPrefixExpression)parent).getOperationSign() == PyTokenTypes.NOT_KEYWORD) {
+        if (parent instanceof PyPrefixExpression && ((PyPrefixExpression)parent).getOperator() == PyTokenTypes.NOT_KEYWORD) {
           parent.replace(newElement);
         }
         else {

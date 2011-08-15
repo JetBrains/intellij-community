@@ -5,8 +5,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PyPrefixExpression extends PyExpression {
+public interface PyPrefixExpression extends PyQualifiedExpression, PyReferenceOwner {
   @Nullable
   PyExpression getOperand();
-  PyElementType getOperationSign();
+  PyElementType getOperator();
 }

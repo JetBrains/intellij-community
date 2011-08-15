@@ -120,7 +120,7 @@ public class PyDemorganIntention extends BaseIntentionAction {
     if (!(expression instanceof PyPrefixExpression)) {
       return false;
     }
-    PyElementType op = ((PyPrefixExpression)expression).getOperationSign();
+    PyElementType op = ((PyPrefixExpression)expression).getOperator();
     return op == PyTokenTypes.NOT_KEYWORD;
   }
 

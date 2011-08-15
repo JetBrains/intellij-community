@@ -42,6 +42,10 @@ public class PyOperatorReferenceImpl extends PyReferenceImpl {
       final PySubscriptionExpression expr = (PySubscriptionExpression)myElement;
       res = resolveMember(expr.getOperand(), expr.getReferencedName());
     }
+    else if (myElement instanceof PyPrefixExpression) {
+      final PyPrefixExpression expr = (PyPrefixExpression)myElement;
+      res = resolveMember(expr.getOperand(), expr.getReferencedName());
+    }
     return res;
   }
 
