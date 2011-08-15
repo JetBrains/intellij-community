@@ -42,7 +42,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   @NonNls private static final String PROCESS_CANCELED_EXCEPTION = "idea.ProcessCanceledException";
 
   private static final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
-  private final AtomicInteger myCurrentProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
@@ -152,7 +151,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   }
 
   public boolean hasProgressIndicator() {
-    return myCurrentProgressCount.get() > 0;
+    return getProgressIndicator() != null;
   }
 
   public boolean hasUnsafeProgressIndicator() {
@@ -194,7 +193,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     ProgressIndicator oldIndicator = myThreadIndicator.get();
 
     if (progress != null) myThreadIndicator.set(progress);
-    myCurrentProgressCount.incrementAndGet();
 
     final boolean modal = progress != null && progress.isModal();
     if (modal) myCurrentModalProgressCount.incrementAndGet();
@@ -206,7 +204,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     finally {
       myThreadIndicator.set(oldIndicator);
 
-      myCurrentProgressCount.decrementAndGet();
       if (modal) myCurrentModalProgressCount.decrementAndGet();
       if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
 
