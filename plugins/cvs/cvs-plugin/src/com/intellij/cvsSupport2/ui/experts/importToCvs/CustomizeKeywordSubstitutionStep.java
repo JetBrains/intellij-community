@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,6 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
     EXTENSION_COLUMN, KEYWORD_SUBSTITUTION
   };
 
-  private final TableView myTable;
   private final ListTableModel<FileExtension> myModel;
   private final ImportConfiguration myImportConfiguration;
 
@@ -102,8 +101,6 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
                                           ImportConfiguration importConfiguration) {
     super(description, wizard);
     myModel = new ListTableModel<FileExtension>(COLUMNS);
-    myTable = new TableView(myModel);
-    myTable.setMinRowHeight(new JComboBox().getPreferredSize().height + 2);
     myImportConfiguration = importConfiguration;
     myModel.setItems(collectFileTypes());
     init();
@@ -141,12 +138,14 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
   }
 
   protected JComponent createComponent() {
-    return ScrollPaneFactory.createScrollPane(myTable);
+    TableView<FileExtension> myTable = new TableView<FileExtension>(myModel);
+    myTable.setMinRowHeight(new JComboBox().getPreferredSize().height + 2);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    scrollPane.setOpaque(false);
+    return scrollPane;
   }
 
   public List<FileExtension> getFileExtensions() {
     return myModel.getItems();
   }
-
-
 }

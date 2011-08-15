@@ -20,13 +20,11 @@ import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootException;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsTree;
-import com.intellij.cvsSupport2.cvsBrowser.LoginAbortedException;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsoperations.common.LoginPerformer;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
@@ -42,7 +40,6 @@ import java.util.Observer;
  */
 public class SelectCvsElementStep extends WizardStep {
   private CvsTree myCvsTree;
-  private CvsRootConfiguration myConfiguration;
   private final SelectCVSConfigurationStep mySelectCVSConfigurationStep;
   private final Project myProject;
   private final boolean myShowFiles;
@@ -53,9 +50,10 @@ public class SelectCvsElementStep extends WizardStep {
   public SelectCvsElementStep(String title, CvsWizard wizard,
                               Project project,
                               SelectCVSConfigurationStep selectCVSConfigurationStep,
-                              boolean showFiles,
+                              boolean allowRootSelection,
                               int selectionMode,
-                              boolean allowRootSelection, boolean showModules) {
+                              boolean showModules,
+                              boolean showFiles) {
     super(title, wizard);
     myShowModules = showModules;
     mySelectCVSConfigurationStep = selectCVSConfigurationStep;
@@ -79,8 +77,6 @@ public class SelectCvsElementStep extends WizardStep {
           errors.set(Boolean.TRUE);
         }
       });
-    /*final boolean logged = performer.loginAll(
-      new ModalityContextImpl(ModalityState.stateForComponent(mySelectCVSConfigurationStep.getComponent()), false), false);*/
     try {
       final boolean logged = performer.loginAll(new ModalityContextImpl(ModalityState.current(), false), false);
       return logged && errors.isNull();
@@ -93,36 +89,14 @@ public class SelectCvsElementStep extends WizardStep {
   @Override
   public boolean preNextCheck() {
     CvsRootConfiguration selectedConfiguration = mySelectCVSConfigurationStep.getSelectedConfiguration();
-    return isLogged(selectedConfiguration);
+    final boolean logged = isLogged(selectedConfiguration);
+    if (logged) {
+      myCvsTree.setCvsRootConfiguration(selectedConfiguration);
+    }
+    return logged;
   }
 
   public boolean setActive() {
-    CvsRootConfiguration selectedConfiguration =
-      mySelectCVSConfigurationStep.getSelectedConfiguration();
-
-    if (myCvsTree == null || !Comparing.equal(myConfiguration, selectedConfiguration)) {
-      myConfiguration = selectedConfiguration;
-      if (myConfiguration == null) return false;
-      if (myCvsTree != null) myCvsTree.dispose();
-      myCvsTree =
-      new CvsTree(myConfiguration, myProject, myShowFiles, mySelectionMode, myAllowRootSelection, myShowModules);
-      getStepComponent().removeAll();
-      getStepComponent().add(myCvsTree, BorderLayout.CENTER);
-      try {
-        myCvsTree.init();
-      }
-      catch (LoginAbortedException ex) {
-        return false;
-      }
-
-      myCvsTree.addSelectionObserver(new Observer() {
-        public void update(Observable o, Object arg) {
-          if (CvsTree.SELECTION_CHANGED.equals(arg)) {
-            getWizard().updateStep();
-          }
-        }
-      });
-    }
     return true;
   }
 
@@ -139,7 +113,16 @@ public class SelectCvsElementStep extends WizardStep {
   }
 
   protected JComponent createComponent() {
-    return new JPanel(new BorderLayout());
+    myCvsTree = new CvsTree(myProject, myAllowRootSelection, mySelectionMode, myShowModules, myShowFiles);
+    myCvsTree.init();
+    myCvsTree.addSelectionObserver(new Observer() {
+      public void update(Observable o, Object arg) {
+        if (CvsTree.SELECTION_CHANGED.equals(arg)) {
+          getWizard().updateStep();
+        }
+      }
+    });
+    return myCvsTree;
   }
 
   public CvsElement[] getSelectedCvsElements() {

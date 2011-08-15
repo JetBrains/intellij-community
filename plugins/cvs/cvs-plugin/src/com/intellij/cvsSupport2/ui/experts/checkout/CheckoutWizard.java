@@ -44,8 +44,8 @@ public class CheckoutWizard extends CvsWizard {
     super(CvsBundle.message("dialog.tittle.check.out.from.cvs.repository"), project);
     mySelectCVSConfigurationStep = new SelectCVSConfigurationStep(project, this);
     mySelectCvsElementStep = new SelectCvsElementStep(CvsBundle.message("dialog.title.select.cvs.element.to.check.out"),
-                                                      this, project, mySelectCVSConfigurationStep,
-                                                      true, TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, false, true);
+                                                      this, project, mySelectCVSConfigurationStep, false,
+                                                      TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, true, true);
 
     mySelectLocationStep = new MySelectLocationStep(project);
     myChooseModeStep = new ChooseCheckoutMode(this);

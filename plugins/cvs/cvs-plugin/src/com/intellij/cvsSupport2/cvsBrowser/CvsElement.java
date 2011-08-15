@@ -22,9 +22,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.io.File;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Vector;
+import java.util.*;
 
 public class CvsElement extends DefaultMutableTreeNode implements Comparable<CvsElement>{
 
@@ -34,7 +32,8 @@ public class CvsElement extends DefaultMutableTreeNode implements Comparable<Cvs
   private final Icon myIcon;
   private final Icon myExpandedIcon;
   private boolean myCanBeCheckedOut = true;
-  private ChildrenLoader myChildrenLoader;
+  private ChildrenLoader<CvsElement> myChildrenLoader;
+  private boolean myLoading;
 
   public CvsElement(String name, Icon icon, Icon expandedIcon) {
     myName = name;
@@ -46,12 +45,16 @@ public class CvsElement extends DefaultMutableTreeNode implements Comparable<Cvs
     this(name, icon, icon);
   }
 
-  public void setChildrenLoader(ChildrenLoader childrenLoader) {
+  public void setChildrenLoader(ChildrenLoader<CvsElement> childrenLoader) {
     myChildrenLoader = childrenLoader;
   }
 
   public void setDataProvider(RemoteResourceDataProvider dataProvider) {
     myDataProvider = dataProvider;
+  }
+
+  public RemoteResourceDataProvider getDataProvider() {
+    return myDataProvider;
   }
 
   public String getName() {
@@ -94,29 +97,20 @@ public class CvsElement extends DefaultMutableTreeNode implements Comparable<Cvs
 
   private Vector getMyChildren() {
     if (children == null) {
-      myChildrenLoader.loadChildren(this, myPath, myDataProvider);
+      myChildrenLoader.loadChildren(this);
     }
     return children;
   }
 
-  @Override
-  public void insert(MutableTreeNode newChild, int childIndex) {
-    if (!(newChild instanceof CvsElement)) {
-      super.insert(newChild, childIndex);
-      return;
-    }
-    final CvsElement cvsElement = (CvsElement)newChild;
-    cvsElement.setPath(createPathForChild(cvsElement.myName));
-    cvsElement.setChildrenLoader(myChildrenLoader);
+  public void insertSorted(MutableTreeNode newChild, Comparator comparator) {
     final int insertionPoint;
     if (children == null) {
-      insertionPoint = -1;
+      insert(newChild, 0);
     } else {
-      final int toIndex = children.size() - 1; // skip loading node
-      insertionPoint = Collections.binarySearch(children.subList(0, toIndex), newChild);
-    }
-    if (insertionPoint < 0) {
-      super.insert(newChild, -(insertionPoint + 1));
+      insertionPoint = Collections.binarySearch(children, newChild, comparator);
+      if (insertionPoint < 0) {
+        insert(newChild, -insertionPoint - 1);
+      }
     }
   }
 
@@ -167,5 +161,13 @@ public class CvsElement extends DefaultMutableTreeNode implements Comparable<Cvs
       return result;
     }
     return myName.compareTo(other.myName);
+  }
+
+  public boolean isLoading() {
+    return myLoading;
+  }
+
+  public void setLoading(boolean loading) {
+    myLoading = loading;
   }
 }
