@@ -474,7 +474,7 @@
   <editorCustomization implementation="com.intellij.ui.AdditionalPageAtBottomEditorCustomization"/>
   <editorCustomization implementation="com.intellij.ui.OneLineEditorCustomization"/>
   <!-- Colors & Fonts-->
-  <editorOptionsProvider implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>
+  <editorOptionsProvider instance="com.intellij.application.options.colors.ColorAndFontOptions"/>
   <editorOptionsProvider instance="com.intellij.application.options.editor.EditorTabsConfigurable"/>
   <editorOptionsProvider instance="com.intellij.application.options.editor.CodeFoldingConfigurable"/>
   <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionOptions"/>

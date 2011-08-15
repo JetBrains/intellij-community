@@ -151,8 +151,7 @@ public class SeverityEditorDialog extends DialogWrapper {
         }
       });
     } else {
-      ColorAndFontOptions colorAndFontOptions = ColorAndFontOptions.getColorAndFontsInstance();
-      assert colorAndFontOptions != null;
+      ColorAndFontOptions colorAndFontOptions = new ColorAndFontOptions();
       final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
       LOG.assertTrue(javaPage != null);
       ShowSettingsUtil.getInstance().editConfigurable(PlatformDataKeys.PROJECT.getData(dataContext), javaPage);

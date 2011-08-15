@@ -18,7 +18,6 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
-import com.intellij.application.options.editor.EditorOptionsProviderEP;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -38,7 +37,6 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ExternalizableScheme;
@@ -94,17 +92,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private boolean myDisposeCompleted = false;
   private final Disposable myDisposable = Disposer.newDisposable();
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.colors.ColorAndFontOptions");
-
-  public static ColorAndFontOptions getColorAndFontsInstance() {
-    ColorAndFontOptions colorAndFontOptions = null;
-    for (EditorOptionsProviderEP provider : Extensions.getExtensions(EditorOptionsProviderEP.EP_NAME)) {
-      if (ColorAndFontOptions.class.getName().equals(provider.implementationClass)) {
-        colorAndFontOptions = (ColorAndFontOptions)provider.createConfigurable();
-        break;
-      }
-    }
-    return colorAndFontOptions;
-  }
 
   public boolean isModified() {
     boolean listModified = isSchemeListModified();

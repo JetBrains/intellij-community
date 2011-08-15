@@ -161,7 +161,9 @@ public class InitialConfigurationDialog extends DialogWrapper {
       myColorPreviewPanel.remove(myPreviewEditor.getPanel());
       myPreviewEditor.disposeUIResources();
     }
-    myPreviewOptions = ColorAndFontOptions.getColorAndFontsInstance();
+    if (myPreviewOptions == null) {
+      myPreviewOptions = new ColorAndFontOptions();
+    }
     myPreviewOptions.reset();
     myPreviewOptions.selectScheme(((EditorColorsScheme)myColorSchemeComboBox.getSelectedItem()).getName());
     final NewColorAndFontPanel page = myPreviewOptions.findPage(myColorSettingsPage);
