@@ -36,10 +36,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
@@ -50,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -63,7 +61,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private PlaybackRunner myRunner;
 
-  private final DefaultListModel myMessage = new DefaultListModel();
+  private JEditorPane myLog;
 
   private final JTextField myScriptsPath = new JTextField();
 
@@ -76,7 +74,6 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private VirtualFileAdapter myVfsListener;
 
   private boolean myChanged;
-  private JList myList;
 
   private PlaybackDebuggerState myState;
   private static final FileChooserDescriptor FILE_DESCRIPTOR = new ScriptFileChooserDescriptor();
@@ -84,6 +81,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private void initUi() {
     myComponent = new JPanel(new BorderLayout());
+    myLog = new JEditorPane();
+    myLog.setEditorKit(new StyledEditorKit());
+    myLog.setEditable(false);
+
 
     myState = ServiceManager.getService(PlaybackDebuggerState.class);
 
@@ -139,21 +140,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       loadFrom(pathToFile());
     }
 
-    //final String text = System.getProperty("idea.playback.script");
-    //if (text != null) {
-    //  ApplicationManager.getApplication().runWriteAction(new Runnable() {
-    //    public void run() {
-    //      myDocument.setText(text);
-    //    }
-    //  });
-    //}
-
     final Splitter script2Log = new Splitter(true);
     script2Log.setFirstComponent(ScrollPaneFactory.createScrollPane(myCodeEditor));
 
-    myList = new JBList(myMessage);
-    myList.setCellRenderer(new MyListRenderer());
-    script2Log.setSecondComponent(ScrollPaneFactory.createScrollPane(myList));
+    script2Log.setSecondComponent(ScrollPaneFactory.createScrollPane(myLog));
 
     myComponent.add(script2Log, BorderLayout.CENTER);
 
@@ -344,7 +334,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private void activateAndRun() {
     assert myRunner == null;
 
-    myMessage.clear();
+    myLog.setText(null);
 
     final IdeFrameImpl frame = getFrame();
 
@@ -383,9 +373,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private void startWhenFrameActive() {
-    myMessage.clear();
+    myLog.setText(null);
 
-    addInfo("Waiting for IDE frame activation", -1);
+    addInfo("Waiting for IDE frame activation", -1, false);
     myRunner = new PlaybackRunner(myCodeEditor.getText(), this, false);
 
 
@@ -436,7 +426,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   public void message(final String text, final int currentLine) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
-        addInfo(text, currentLine);
+        addInfo(text, currentLine, false);
       }
     });
   }
@@ -484,62 +474,41 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   public void disposeUiResources() {
     myComponent = null;
     LocalFileSystem.getInstance().removeVirtualFileListener(myVfsListener);
-    //System.setProperty("idea.playback.script", myDocument.getText());
     myCurrentScript.setText("");
-    myMessage.clear();
+    myLog.setText(null);
   }
 
-  private void addInfo(String text, int line) {
-    myMessage.addElement(new ListElement(text, false, line));
+  private void addInfo(String text, int line, boolean isError) {
+    if (text == null || text.length() == 0) return;
+    Document doc = myLog.getDocument();
+    SimpleAttributeSet attr = new SimpleAttributeSet();
+    StyleConstants.setFontFamily(attr, UIManager.getFont("Label.font").getFontName());
+    StyleConstants.setFontSize(attr, UIManager.getFont("Label.font").getSize());
+    StyleConstants.setForeground(attr, isError ? Color.RED : Color.BLACK);
+    try {
+      String lineText = line > 0 ? "[" + line + "] ": "";
+      doc.insertString(doc.getLength(), lineText + text + "\n", attr);
+    }
+    catch (BadLocationException e) {
+      LOG.error(e);
+    }
     scrollToLast();
   }
 
   private void addError(String text, int line) {
-    myMessage.addElement(new ListElement(text, true, line));
+    addInfo(text, line, true);
     scrollToLast();
   }
 
   private void scrollToLast() {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (myMessage.size() == 0) return;
+        if (myLog.getDocument().getLength() == 0) return;
 
-        final Rectangle rec = myList.getCellBounds(myMessage.getSize() - 1, myMessage.getSize() - 1);
-        myList.scrollRectToVisible(rec);
+        Rectangle bounds = myLog.getBounds();
+        myLog.scrollRectToVisible(new Rectangle(0, (int)bounds.getMaxY(), (int)bounds.getWidth(), 1));
       }
     });
   }
 
-  private class ListElement {
-    private final String myText;
-    private final boolean myError;
-
-    private final int myLine;
-
-    public ListElement(String text, boolean isError, int line) {
-      myText = text;
-      myError = isError;
-      myLine = line;
-    }
-
-    public String getText() {
-      return myText;
-    }
-
-    public boolean isError() {
-      return myError;
-    }
-
-    public int getLine() {
-      return myLine;
-    }
-  }
-
-  private class MyListRenderer extends ColoredListCellRenderer  {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      final ListElement listElement = (ListElement)value;
-      final String text = (listElement.getLine() >= 0 ? "Line " + listElement.getLine() + ":" : "") + listElement.getText();
-      append(text, listElement.isError() ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    }
-  }
 }

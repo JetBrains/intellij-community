@@ -47,6 +47,10 @@ public class PlaybackCallFacade {
     try {
       File parentDir = FileUtil.createTempDirectory("funcTest", "");
       File sourceDir = new File(path);
+      if (!sourceDir.isAbsolute()) {
+        sourceDir = new File(System.getProperty("work.dir"), path);
+      }
+      
       FileUtil.copyDir(sourceDir, parentDir);
       File projectDir = new File(parentDir, sourceDir.getName());
       return openProject(context, projectDir.getAbsolutePath());
@@ -116,7 +120,7 @@ public class PlaybackCallFacade {
     final Map<String, String> expectedMap = new LinkedHashMap<String, String>();
 
     if (expected.length() > 0) {
-      final String[] keyValue = expected.split("|");
+      final String[] keyValue = expected.split("\\|");
       for (String each : keyValue) {
         final String[] eachPair = each.split("=");
         if (eachPair.length != 2) {
@@ -179,7 +183,9 @@ public class PlaybackCallFacade {
 
     result.setDone();
 
-    context.getCallback().message("Untested info: " + untestedText.toString(), context.getCurrentLine());
+    if (untestedText.length() > 0) {
+      context.getCallback().message("Untested focus info: " + untestedText.toString(), context.getCurrentLine());
+    }
   }
 
   private static LinkedHashMap<String, String> getFocusInfo() {
