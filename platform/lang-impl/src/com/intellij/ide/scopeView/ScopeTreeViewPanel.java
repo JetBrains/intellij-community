@@ -836,6 +836,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   private void queueUpdate(final VirtualFile fileToRefresh,
                            final Function<PsiFile, DefaultMutableTreeNode> rootToReloadGetter, final String scopeName) {
+    if (myProject.isDisposed()) return;
     AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
     if (pane == null || !ScopeViewPane.ID.equals(pane.getId()) ||
         !scopeName.equals(pane.getSubId())) {
