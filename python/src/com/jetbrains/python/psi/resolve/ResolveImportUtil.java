@@ -294,8 +294,8 @@ public class ResolveImportUtil {
       }
     }
 
-    List<PsiElement> results =
-      visitRoots(moduleQualifiedName, foothold.getManager(), ModuleUtil.findModuleForPsiElement(foothold), foothold, true);
+    final Module module = ModuleUtil.findModuleForPsiElement(foothold);
+    List<PsiElement> results = visitRoots(moduleQualifiedName, foothold.getManager(), module, foothold, true);
 
     if (cache != null) {
       cache.put(moduleQualifiedName, results);
