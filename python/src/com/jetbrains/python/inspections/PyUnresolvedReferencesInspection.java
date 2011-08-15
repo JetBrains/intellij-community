@@ -29,6 +29,7 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.DocStringParameterReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyOperatorReferenceImpl;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
@@ -274,9 +275,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final boolean ref_is_importable = PythonReferenceImporter.isImportable(element);
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
       if (ref_text.length() <= 0) return; // empty text, nothing to highlight
+      final String refname = (element instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)element).getReferencedName() : ref_text;
       if (element instanceof PyReferenceExpression) {
         PyReferenceExpression refex = (PyReferenceExpression)element;
-        String refname = refex.getReferencedName();
         if (myIgnoredIdentifiers.contains(refname) || PyNames.COMPARISON_OPERATORS.contains(refname)) {
           return;
         }
@@ -340,8 +341,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       if (reference instanceof DocStringParameterReference) {
-        String refname = reference.getCanonicalText();
-        if (myIgnoredIdentifiers.contains(refname))
+        if (myIgnoredIdentifiers.contains(reference.getCanonicalText()))
           return;
       }
       if (reference instanceof PsiReferenceEx) {
@@ -380,7 +380,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                     else actions.add(new AddFieldQuickFix(ref_text, cls, "None"));
                   }
                 }
-                description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
+                if (reference instanceof PyOperatorReferenceImpl) {
+                  description_buf.append(PyBundle.message("INSP.unresolved.operator.ref",
+                                                          qtype.getName(), refname,
+                                                          ((PyOperatorReferenceImpl)reference).getReadableOperatorName()));
+                }
+                else {
+                  description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
+                }
                 marked_qualified = true;
               }
               else if (qtype instanceof PyModuleType) {

@@ -3,6 +3,7 @@ package com.jetbrains.python;
 import com.google.common.collect.ImmutableSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -116,6 +117,12 @@ public class PyNames {
     "__ge__",
     "__cmp__",
     "__contains__"
+  );
+
+  public static ImmutableSet<String> SUBCRIPTION_OPERATORS = ImmutableSet.of(
+    GETITEM,
+    SETITEM,
+    DELITEM
   );
 
   public static class BuiltinDescription {
@@ -307,5 +314,7 @@ public class PyNames {
     return ! isReserved(name) && IDENTIFIER_PATTERN.matcher(name).matches(); 
   }
 
-
+  public static boolean isRightOperatorName(@Nullable String name) {
+    return name != null && name.matches("__r[a-z]+__");
+  }
 }
