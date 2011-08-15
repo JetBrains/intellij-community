@@ -16,24 +16,23 @@
 
 package com.intellij.conversion.impl.ui;
 
+import com.intellij.CommonBundle;
+import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.impl.ConversionContextImpl;
 import com.intellij.conversion.impl.ConversionRunner;
 import com.intellij.conversion.impl.ProjectConversionUtil;
-import com.intellij.conversion.CannotConvertException;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashSet;
-import com.intellij.CommonBundle;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.text.html.HTMLEditorKit;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -65,15 +64,10 @@ public class ConvertProjectDialog extends DialogWrapper {
     }
 
     myBackupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
-    myTextPane.setFont(UIUtil.getLabelFont());
-    myTextPane.setContentType("text/html");
-    final HTMLEditorKit editorKit = new HTMLEditorKit();
-    editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(UIUtil.getLabelFont(), UIUtil.getLabelForeground()));
-    myTextPane.setEditorKit(editorKit);
-    myTextPane.setEditable(false);
-    myTextPane.setBackground(UIUtil.getLabelBackground());
-    myTextPane.setForeground(UIUtil.getLabelForeground());
-    myTextPane.setText(IdeBundle.message("label.text.project.has.older.format", context.getProjectFile().getName(), myBackupDir.getAbsolutePath()));
+    myTextPane.setSize(new Dimension(350, Integer.MAX_VALUE));
+    final String message =
+      IdeBundle.message("label.text.project.has.older.format", context.getProjectFile().getName(), myBackupDir.getAbsolutePath());
+    Messages.configureMessagePaneUi(myTextPane, message, false);
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent e) {

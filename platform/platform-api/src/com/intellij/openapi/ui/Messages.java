@@ -948,13 +948,21 @@ public class Messages {
   }
 
   public static JTextPane configureMessagePaneUi(JTextPane messageComponent, String message) {
+    return configureMessagePaneUi(messageComponent, message, true);
+  }
+
+  public static JTextPane configureMessagePaneUi(JTextPane messageComponent,
+                                                 String message,
+                                                 final boolean addBrowserHyperlinkListener) {
     messageComponent.setFont(UIUtil.getLabelFont());
     if (BasicHTML.isHTMLString(message)) {
       final HTMLEditorKit editorKit = new HTMLEditorKit();
       editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(UIUtil.getLabelFont(), UIUtil.getLabelForeground()));
       messageComponent.setEditorKit(editorKit);
       messageComponent.setContentType("text/html");
-      messageComponent.addHyperlinkListener(new BrowserHyperlinkListener());
+      if (addBrowserHyperlinkListener) {
+        messageComponent.addHyperlinkListener(new BrowserHyperlinkListener());
+      }
     }
     messageComponent.setText(message);
     messageComponent.setEditable(false);
