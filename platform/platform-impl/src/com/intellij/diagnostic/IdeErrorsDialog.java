@@ -8,7 +8,6 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,11 +26,14 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ShadowAction;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.HeaderlessTabbedPane;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
@@ -74,7 +76,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private final List<ArrayList<AbstractMessage>> myMergedMessages = new ArrayList<ArrayList<AbstractMessage>>();
   private List<AbstractMessage> myRawMessages;
   private final MessagePool myMessagePool;
-  private TabbedPaneWrapper myTabs;
+  private HeaderlessTabbedPane myTabs;
   @Nullable
   private CommentsTabForm myCommentsTabForm;
   private DetailsTabForm myDetailsTabForm;
@@ -198,7 +200,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     forwardToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myNextButtonPanel.add(forwardToolbar.getComponent(), BorderLayout.CENTER);
 
-    myTabs = new TabbedPaneWrapper(getDisposable());
+    myTabs = new HeaderlessTabbedPane(getDisposable());
     final LabeledTextComponent.TextListener commentsListener = new LabeledTextComponent.TextListener() {
       @Override
       public void textChanged(String newText) {
@@ -250,7 +252,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     });
 
-    myTabsPanel.add(myTabs.getComponent(), BorderLayout.CENTER);
+    myTabsPanel.add(myTabs, BorderLayout.CENTER);
 
     myDisableLink.setHyperlinkText(UIUtil.removeMnemonic(DiagnosticBundle.message("error.list.disable.plugin")));
     myDisableLink.addHyperlinkListener(new HyperlinkListener() {
@@ -506,6 +508,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void updateTabs() {
     myMute = true;
     try {
+      if (INTERNAL_MODE) {
+        boolean hasAttachment = false;
+        for (ArrayList<AbstractMessage> merged : myMergedMessages) {
+          final AbstractMessage message = merged.get(0);
+          if (message instanceof LogMessageEx && !((LogMessageEx)message).getAttachments().isEmpty()) {
+            hasAttachment = true;
+            break;
+          }
+        }
+        myTabs.setHeaderVisible(hasAttachment);
+      }
+
       final AbstractMessage message = getSelectedMessage();
       if (myCommentsTabForm != null) {
         if (message != null) {
