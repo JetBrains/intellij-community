@@ -100,6 +100,8 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     MultiMap<PsiNamedElement, UsageInfo> propertyUsages = new MultiMap<PsiNamedElement, UsageInfo>();
     MultiMap<PsiNamedElement, UsageInfo> simpleUsages = new MultiMap<PsiNamedElement, UsageInfo>();
 
+    List<PsiReference> unknownUsages = new ArrayList<PsiReference>();
+
     for (UsageInfo usage : usages) {
       final PsiReference ref = usage.getReference();
       if (ref instanceof GrReferenceExpression) {
@@ -107,7 +109,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
         final PsiElement element = resolveResult.getElement();
         if (resolveResult.isInvokedOnProperty()) {
           if (element == null) {
-            handleElementRename(newName, ref, fieldName);
+            unknownUsages.add(ref);
           }
           else {
             propertyUsages.putValue((PsiNamedElement)element, usage);
@@ -118,11 +120,16 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
         }
       }
       else if (ref != null) {
-        handleElementRename(newName, ref, fieldName);
+        unknownUsages.add(ref);
       }
     }
 
+    for (PsiReference ref : unknownUsages) {
+      handleElementRename(newName, ref, fieldName);
+    }
+
     field.setName(newName);
+
     final GrAccessorMethod[] newGetters = field.getGetters();
     final GrAccessorMethod newSetter = field.getSetter();
     Map<String, PsiNamedElement> newElements = new HashMap<String, PsiNamedElement>();
