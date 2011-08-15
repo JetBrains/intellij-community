@@ -16,7 +16,10 @@
 package com.intellij.ui.mac;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
@@ -32,7 +35,7 @@ import static com.intellij.ui.mac.foundation.Foundation.*;
 /**
  * @author pegov
  */
-public class MacMessages {
+public class MacMessagesImpl extends MacMessages{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMessages");
 
   private static final Callback SHEET_DID_END = new Callback() {
@@ -111,7 +114,7 @@ public class MacMessages {
   private static final String MAC_SHEET_SUPPRESS = "mac_sheet_suppress";
   private static final String MAC_SHEET_ID = "mac_sheet_id";
 
-  private MacMessages() {
+  private MacMessagesImpl() {
   }
 
   static {
@@ -126,34 +129,40 @@ public class MacMessages {
     Foundation.registerObjcClassPair(delegateClass);
   }
 
-  public static void showOkMessageDialog(String title, String message, String okText, @Nullable Window window) {
+  @Override
+  public  void showOkMessageDialog(String title, String message, String okText, @Nullable Window window) {
     showMessageDialog(title, okText, null, null, message, window);
   }
 
-  public static void showOkMessageDialog(String title, String message, String okText) {
+  @Override
+  public  void showOkMessageDialog(String title, String message, String okText) {
     showMessageDialog(title, okText, null, null, message, null);
   }
 
-  public static int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window) {
+  @Override
+  public  int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window) {
     return showMessageDialog(title, yesButton, null, noButton, message, window);
   }
 
-  public static int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window,
-                                    @Nullable DoNotAskDialogOption doNotAskDialogOption) {
+  @Override
+  public  int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window,
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
     return showAlertDialog(title, yesButton, null, noButton, message, window, false, doNotAskDialogOption);
   }
 
-  public static void showErrorDialog(String title, String message, String okButton, @Nullable Window window) {
+  @Override
+  public  void showErrorDialog(String title, String message, String okButton, @Nullable Window window) {
     showAlertDialog(title, okButton, null, null, message, window, true, null);
   }
 
-  public static int showYesNoCancelDialog(String title,
+  @Override
+  public  int showYesNoCancelDialog(String title,
                                           String message,
                                           String defaultButton,
                                           String alternateButton,
                                           String otherButton,
                                           Window window,
-                                          @Nullable DoNotAskDialogOption doNotAskOption) {
+                                          @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return showAlertDialog(title, defaultButton, alternateButton, otherButton, message, window, false, doNotAskOption);
   }
 
@@ -164,7 +173,7 @@ public class MacMessages {
                                     String message,
                                     @Nullable Window window,
                                     boolean errorStyle,
-                                    @Nullable DoNotAskDialogOption doNotAskDialogOption) {
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
 
     JRootPane pane = null;
@@ -187,6 +196,8 @@ public class MacMessages {
     final ID focusedWindow = MacUtil.findWindowForTitle(_windowTitle);
     if (focusedWindow != null) {
       String fakeTitle = null;
+
+      final FocusTrackback[] focusTrackback = {new FocusTrackback(new Object(), _window, true)};
 
       ID pool = invoke("NSAutoreleasePool", "new");
       try {
@@ -271,6 +282,19 @@ public class MacMessages {
         
         pane.putClientProperty(MAC_SHEET_RESULT, null);
         pane.putClientProperty(MAC_SHEET_SUPPRESS, null);
+        
+        if (focusTrackback[0] != null && !(focusTrackback[0].isSheduledForRestore() || focusTrackback[0].isWillBeSheduledForRestore())) {
+          focusTrackback[0].setWillBeSheduledForRestore();
+
+          IdeFocusManager mgr = IdeFocusManager.findInstanceByComponent(_window);
+          Runnable r = new Runnable() {
+            public void run() {
+              if (focusTrackback[0] != null)  focusTrackback[0].restoreFocus();
+              focusTrackback[0] = null;
+            }
+          };
+          mgr.doWhenFocusSettlesDown(r);
+        }
         
         return code;
       }

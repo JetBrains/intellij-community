@@ -30,7 +30,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.mac.DoNotAskDialogOption;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.AwtVisitor;
@@ -1557,7 +1556,7 @@ public abstract class DialogWrapper {
     return myDisposable;
   }
 
-  public interface DoNotAskOption extends DoNotAskDialogOption {
+  public interface DoNotAskOption {
 
     boolean isToBeShown();
 

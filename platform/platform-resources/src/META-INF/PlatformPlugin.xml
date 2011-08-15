@@ -23,6 +23,9 @@
     <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
                         serviceImplementation="com.intellij.ui.DefaultIconDeferrer"/>
 
+    <applicationService serviceInterface="com.intellij.ui.mac.MacMessages"
+                        serviceImplementation="com.intellij.ui.mac.MacMessagesImpl"/>
+    
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.ExcludedFileIndex"
                     serviceImplementation="com.intellij.openapi.vcs.impl.DefaultExcludedFileIndex"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
