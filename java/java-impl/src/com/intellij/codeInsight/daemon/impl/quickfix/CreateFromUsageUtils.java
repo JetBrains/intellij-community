@@ -469,7 +469,9 @@ public class CreateFromUsageUtils {
       }
     };
 
-    parent.accept(visitor);
+    if (parent != null) {
+      parent.accept(visitor);
+    }
     return result.toArray(new PsiReferenceExpression[result.size()]);
   }
 

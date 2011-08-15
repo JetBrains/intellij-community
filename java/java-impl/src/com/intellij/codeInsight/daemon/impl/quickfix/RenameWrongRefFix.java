@@ -74,7 +74,7 @@ public class RenameWrongRefFix implements IntentionAction {
       return false;
     }
 
-    return !CreateFromUsageUtils.isValidReference(myRefExpr, false);
+    return !CreateFromUsageUtils.isValidReference(myRefExpr, false) && CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class).length > 0;
   }
 
   private class ReferenceNameExpression extends Expression {
