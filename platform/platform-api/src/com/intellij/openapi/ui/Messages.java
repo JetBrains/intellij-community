@@ -115,7 +115,7 @@ public class Messages {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
-    MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
+    MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false);
     dialog.show();
     return dialog.getExitCode();
   }
@@ -139,7 +139,7 @@ public class Messages {
       return ourTestImplementation.show(message);
     }
     else {
-      MessageDialog dialog = new MessageDialog(parent, message, title, options, defaultOptionIndex, defaultOptionIndex, icon);
+      MessageDialog dialog = new MessageDialog(parent, message, title, options, defaultOptionIndex, defaultOptionIndex, icon, false);
       dialog.show();
       return dialog.getExitCode();
     }
@@ -784,32 +784,42 @@ public class Messages {
     protected int myFocusedOptionIndex;
     protected Icon myIcon;
 
-    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
-      this(project, message, title, options, defaultOptionIndex, -1, icon);
+    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon, boolean canBeParent) {
+      this(project, message, title, options, defaultOptionIndex, -1, icon, canBeParent);
     }
 
     public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon,
-                         @Nullable DoNotAskOption doNotAskOption) {
-      super(project, false);
+                         @Nullable DoNotAskOption doNotAskOption, boolean canBeParent) {
+      super(project, canBeParent);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
     }
 
-    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon) {
-      super(project, false);
+    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon,
+                         boolean canBeParent) {
+      super(project, canBeParent);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
     }
 
     public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
-      this(parent, message, title, options, defaultOptionIndex, -1, icon);
+      this(parent, message, title, options, defaultOptionIndex, icon, false);
+    }
+    
+    public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon, boolean canBeParent) {
+      this(parent, message, title, options, defaultOptionIndex, -1, icon, canBeParent);
     }
 
-    public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon) {
-      super(parent, false);
+    public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon,
+                         boolean canBeParent) {
+      super(parent, canBeParent);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
     }
 
     public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
-      super(false);
+      this(message, title, options, defaultOptionIndex, icon, false);
+    }
+    
+    public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon, boolean canBeParent) {
+      super(canBeParent);
       _init(title, message, options, defaultOptionIndex, -1, icon, null);
     }
 
@@ -1036,7 +1046,7 @@ public class Messages {
 
     public InputDialog(Project project, String message, String title, @Nullable Icon icon, String initialValue,
                        @Nullable InputValidator validator, String[] options, int defaultOption) {
-      super(project, message, title, options, defaultOption, icon);
+      super(project, message, title, options, defaultOption, icon, true);
       myValidator = validator;
       myField.setText(initialValue);
     }
@@ -1046,13 +1056,13 @@ public class Messages {
     }
 
     public InputDialog(Component parent, String message, String title, @Nullable Icon icon, String initialValue, @Nullable InputValidator validator) {
-      super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
+      super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon, true);
       myValidator = validator;
       myField.setText(initialValue);
     }
 
     public InputDialog(String message, String title, @Nullable Icon icon, String initialValue, @Nullable InputValidator validator) {
-      super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
+      super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon, true);
       myValidator = validator;
       myField.setText(initialValue);
     }
@@ -1063,18 +1073,7 @@ public class Messages {
         String option = myOptions[i];
         final int exitCode = i;
         if (i == 0) { // "OK" is default button. It has index 0.
-          actions[i] = new AbstractAction(option) {
-            public void actionPerformed(ActionEvent e) {
-              String inputString = myField.getText().trim();
-              if (
-                myValidator == null ||
-                myValidator.checkInput(inputString) &&
-                myValidator.canClose(inputString)
-              ) {
-                close(exitCode);
-              }
-            }
-          };
+          actions[i] = getOKAction();
           actions[i].putValue(DEFAULT_ACTION, Boolean.TRUE);
           myField.getDocument().addDocumentListener(new DocumentAdapter() {
             public void textChanged(DocumentEvent event) {
@@ -1095,6 +1094,16 @@ public class Messages {
         }
       }
       return actions;
+    }
+
+    @Override
+    protected void doOKAction() {
+      String inputString = myField.getText().trim();
+      if (myValidator == null ||
+          myValidator.checkInput(inputString) &&
+          myValidator.canClose(inputString)) {
+        close(0);
+      }
     }
 
     protected JComponent createCenterPanel() {
@@ -1185,7 +1194,7 @@ public class Messages {
                         String initialValue,
                         String[] options,
                         int defaultOption) {
-      super(project, message, title, options, defaultOption, icon);
+      super(project, message, title, options, defaultOption, icon, true);
       myComboBox.setModel(new DefaultComboBoxModel(values));
       myComboBox.setSelectedItem(initialValue);
     }

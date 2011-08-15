@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.actionSystem.MacOtherAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.help.HelpManager;
@@ -345,6 +346,16 @@ public abstract class DialogWrapper {
     if (SystemInfo.isMacOSLeopard && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
+    }
+    
+    if (SystemInfo.isMac) {
+      for (Action action : actions) {
+        if (action instanceof MacOtherAction) {
+          leftSideActions = ArrayUtil.append(leftSideActions, action);
+          actions = ArrayUtil.remove(actions, action);
+          break;
+        }
+      }
     }
 
     JPanel panel = new JPanel(new BorderLayout());
