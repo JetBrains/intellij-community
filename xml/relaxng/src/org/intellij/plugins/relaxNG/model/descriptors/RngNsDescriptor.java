@@ -119,8 +119,10 @@ public class RngNsDescriptor implements XmlNSDescriptor, Validator {
   }
 
   private XmlElementDescriptor findRootDescriptorInner(XmlTag tag) {
-    final List<DElementPattern> patterns = ContainerUtil.findAll(ChildElementFinder.find(-1, myPattern), NamedPatternFilter.INSTANCE);
-    return findDescriptor(tag, patterns);
+    final List<DElementPattern> allNamedPatterns =
+      ContainerUtil.findAll(ChildElementFinder.find(-1, myPattern), NamedPatternFilter.INSTANCE);
+    XmlElementDescriptor descriptor = findDescriptor(tag, allNamedPatterns);
+    return descriptor != null ? descriptor : findDescriptor(tag, ChildElementFinder.find(myPattern));
   }
 
   public XmlElementDescriptor findDescriptor(XmlTag tag, List<DElementPattern> list) {
