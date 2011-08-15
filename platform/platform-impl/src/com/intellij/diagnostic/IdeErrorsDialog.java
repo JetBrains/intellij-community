@@ -751,7 +751,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           public void consume(SubmittedReportInfo submittedReportInfo) {
             logMessage.setSubmitting(false);
             logMessage.setSubmitted(submittedReportInfo);
-            updateOnSubmit();
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                updateOnSubmit();
+              }
+            });
           }
         });
       }
