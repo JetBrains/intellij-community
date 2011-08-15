@@ -16,7 +16,7 @@
 
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.ParsingTestCase;
 import org.intellij.plugins.relaxNG.compact.RncParserDefinition;
 
@@ -31,7 +31,7 @@ public abstract class AbstractParsingTest extends ParsingTestCase {
   }
 
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("relaxng") + "/testData/parsing";
+    return PathManager.getHomePath() + "/community/xml/relaxng/testData/parsing";
   }
 
 }

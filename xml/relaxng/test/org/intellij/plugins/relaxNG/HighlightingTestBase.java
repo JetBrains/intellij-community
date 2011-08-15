@@ -24,10 +24,7 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.mock.MockProgressIndicator;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -124,7 +121,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   }
 
   public static String getTestDataBasePath() {
-    return PluginPathManager.getPluginHomePath("relaxng") + "/testData/";
+    return PathManager.getHomePath() + "/community/xml/relaxng/testData/";
   }
 
   protected CodeInsightTestFixture createFixture(IdeaTestFixtureFactory factory) {
