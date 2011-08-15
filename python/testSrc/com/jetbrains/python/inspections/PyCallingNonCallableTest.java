@@ -31,8 +31,12 @@ public class PyCallingNonCallableTest extends PyLightFixtureTestCase {
     doTest();
   }
   
+  public void testNamedTupleCallable() {
+    doTest();
+  }
+  
   private void doTest() {
-    setLanguageLevel(LanguageLevel.PYTHON26);
+    setLanguageLevel(LanguageLevel.PYTHON27);
     try {
       myFixture.configureByFile("inspections/PyCallingNonCallableInspection/" + getTestName(true) + ".py");
       myFixture.enableInspections(PyCallingNonCallableInspection.class);
