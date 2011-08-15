@@ -355,8 +355,12 @@ public class JavaCoverageEngine extends CoverageEngine {
         return ((PsiClassOwner)srcFile).getClasses();
       }
     });
-    for (PsiClass psiClass : classes) {
-      final String className = psiClass.getName();
+    for (final PsiClass psiClass : classes) {
+      final String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        public String compute() {
+          return psiClass.getName();
+        }
+      });
       for (VirtualFile child : children) {
         if (child.getFileType().equals(StdFileTypes.CLASS)) {
           final String childName = child.getNameWithoutExtension();
