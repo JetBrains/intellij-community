@@ -24,6 +24,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
 import com.intellij.util.messages.Topic;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -100,11 +101,15 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     final Object handler = mySubscriptions.get(topic);
 
     try {
+      Method listenerMethod = message.getListenerMethod();
+      // Method.invoke must be faster when Method.override is set to true
+      listenerMethod.setAccessible(true);
+
       if (handler == myDefaultHandler) {
-        myDefaultHandler.handle(message.getListenerMethod(), message.getArgs());
+        myDefaultHandler.handle(listenerMethod, message.getArgs());
       }
       else {
-        message.getListenerMethod().invoke(handler, message.getArgs());
+        listenerMethod.invoke(handler, message.getArgs());
       }
     }
     catch (AbstractMethodError e) {

@@ -35,10 +35,12 @@ public final class Message {
     myArgs = args;
   }
 
+  @NotNull
   public Topic getTopic() {
     return myTopic;
   }
 
+  @NotNull
   public Method getListenerMethod() {
     return myListenerMethod;
   }
