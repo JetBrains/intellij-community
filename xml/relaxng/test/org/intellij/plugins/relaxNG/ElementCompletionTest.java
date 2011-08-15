@@ -31,7 +31,7 @@ public class ElementCompletionTest extends HighlightingTestBase {
   }
 
   public void testElementCompletionRoot() throws Throwable {
-    doTestCompletion("element-completion-root.xml", "completion-1", "completion-2", "completion-3", "x");
+    doTestCompletion("element-completion-root.xml", "bar", "baz", "completion-1", "completion-2", "completion-3", "foo", "x");
   }
 
   public void testElementCompletion1() throws Throwable {
