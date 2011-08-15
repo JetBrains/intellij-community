@@ -33,7 +33,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -177,7 +176,15 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
   }
 
   private static void handleElementRename(String newName, PsiReference ref, String fieldName) {
-    final String refText = ref.getCanonicalText();
+    final String refText;
+
+    if (ref instanceof PsiQualifiedReference) {
+      refText = ((PsiQualifiedReference)ref).getReferenceName();
+    }
+    else {
+      refText = ref.getCanonicalText();
+    }
+
     String toRename;
     if (fieldName.equals(refText)) {
       toRename = newName;
