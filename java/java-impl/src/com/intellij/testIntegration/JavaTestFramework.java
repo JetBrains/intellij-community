@@ -74,6 +74,11 @@ public abstract class JavaTestFramework implements TestFramework {
     return clazz instanceof PsiClass ? findOrCreateSetUpMethod((PsiClass)clazz) : null;
   }
 
+  @Override
+  public boolean isIgnoredMethod(PsiElement element) {
+    return false;
+  }
+
   @Nullable
   protected abstract PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException;
 }

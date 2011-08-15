@@ -62,6 +62,10 @@ public class InvokeTemplateAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
+    perform();
+  }
+
+  public void perform() {
     final Document document = myEditor.getDocument();
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {

@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.mac;
+package com.intellij.openapi.actionSystem;
 
 /**
+ * Marker interface for action buttons which should be left-aligned in dialogs
+ * 
  * @author pegov
  */
-public interface DoNotAskDialogOption {
-  boolean isToBeShown();
-
-  void setToBeShown(boolean value, int exitCode);
-
-  boolean canBeHidden();
-
-  boolean shouldSaveOptionsOnCancel();
-
-  String getDoNotShowMessage();
+public interface MacOtherAction {
 }

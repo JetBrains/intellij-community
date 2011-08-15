@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.actionSystem.MacOtherAction;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -139,7 +140,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     }
   }
 
-  private class PreviewAction extends AbstractAction {
+  private class PreviewAction extends AbstractAction implements MacOtherAction {
     public PreviewAction() {
       putValue(Action.NAME, RefactoringBundle.message("preview.button"));
     }

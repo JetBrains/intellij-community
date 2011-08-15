@@ -33,6 +33,10 @@ public class Cvs2Renderer extends ColoredTreeCellRenderer {
       final CvsElement element = (CvsElement)value;
       append(value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
                                                         UIUtil.getTreeForeground()));
+      if (element.isLoading()) {
+        append(" (Loading...)", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
+                                                         UIUtil.getInactiveTextColor()));
+      }
       setIcon(element.getIcon(expanded));
     } else if (value instanceof LoadingNode) {
       setIcon(((LoadingNode)value).getIcon());

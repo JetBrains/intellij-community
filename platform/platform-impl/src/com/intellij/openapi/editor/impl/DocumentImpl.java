@@ -770,7 +770,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     else {
       getPublisher().updateFinished(this);
-      normalizeRangeMarkers();
     }
   }
 
@@ -807,22 +806,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
     return myRangeMarkers.processOverlappingWith(start, end, processor);
-  }
-
-  public boolean processRangeMarkersOverlappingWith(int offset, @NotNull Processor<RangeMarker> processor) {
-    return myRangeMarkers.processOverlappingWith(offset, processor);
-  }
-
-  public void normalizeRangeMarkers() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myRangeMarkers.normalize();
-
-    MarkupModel model = getMarkupModel(null, false);
-    if (model != null) ((MarkupModelImpl)model).normalize();
-
-    for (MarkupModelImpl markupModel : myProjectToMarkupModelMap.values()) {
-      markupModel.normalize();
-    }
   }
 
   private static class MyCharArray extends CharArray {

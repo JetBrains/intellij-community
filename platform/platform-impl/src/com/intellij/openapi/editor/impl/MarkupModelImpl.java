@@ -224,12 +224,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     });
   }
 
-  public boolean processHighlightsOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
+  public boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
     return myHighlighterTree.processOverlappingWith(start, end, processor);
   }
 
   @Override
-  public boolean processHighlightsOverlappingOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
+  public boolean processRangeHighlightersOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
     return myHighlighterTree.processOverlappingWithOutside(start, end, processor);
   }
 
@@ -240,10 +240,5 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
     return myHighlighterTree.sweep(start, end, sweepProcessor);
-  }
-
-  public void normalize() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myHighlighterTree.normalize();
   }
 }

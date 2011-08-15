@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
@@ -313,7 +312,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   boolean finishCommit(@NotNull final Document document,
-                       final List<Processor<Document>> finishRunnables,
+                       @NotNull List<Processor<Document>> finishRunnables,
                        boolean synchronously,
                        @NotNull String reason,
                        @Nullable DocumentEvent event) {
@@ -343,7 +342,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       if (success) {
         myUncommittedDocuments.remove(document);
         myDocumentCommitThread.log("in PDI.finishDoc: removed doc",document, synchronously, success, myUncommittedDocuments);
-        ((DocumentImpl)document).normalizeRangeMarkers();
         InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
       }
       myIsCommitInProgress = false;

@@ -24,6 +24,7 @@ import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Ignore;
 
 import javax.swing.*;
 
@@ -95,6 +96,17 @@ public class JUnit4Framework extends JavaTestFramework {
     JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(method);
 
     return method;
+  }
+
+  @Override
+  public boolean isIgnoredMethod(PsiElement element) {
+    final PsiMethod testMethod = element instanceof PsiMethod ? JUnitUtil.getTestMethod(element) : null;
+    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, Ignore.class.getName(), false);
+  }
+
+  @Override
+  public boolean isTestMethod(PsiElement element) {
+    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element) != null;
   }
 
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {

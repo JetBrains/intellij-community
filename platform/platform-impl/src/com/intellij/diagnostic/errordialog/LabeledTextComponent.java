@@ -3,6 +3,7 @@ package com.intellij.diagnostic.errordialog;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -25,9 +26,10 @@ public class LabeledTextComponent {
   public LabeledTextComponent() {
     myTextPane = new JTextPane();
 
+    myComponent.getLabel().setMinimumSize(new Dimension(0, -1));
     myComponent.getComponent().setLayout(new BorderLayout());
     myTextPane.setBackground(UIUtil.getTextFieldBackground());
-    myComponent.getComponent().add(new JScrollPane(myTextPane));
+    myComponent.getComponent().add(new JBScrollPane(myTextPane));
     myComponent.getComponent().setBorder(IdeBorderFactory.createBorder());
   }
 

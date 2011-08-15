@@ -28,10 +28,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/4/11
- * Time: 2:05 PM
+ * @author Irina.Chernushina
+ * @since 4.08.2011
  */
 public class VcsContentAnnotationConfigurable implements Configurable {
   private final Project myProject;
@@ -89,7 +87,7 @@ public class VcsContentAnnotationConfigurable implements Configurable {
   public void apply() throws ConfigurationException {
     VcsContentAnnotationSettings settings = VcsContentAnnotationSettings.getInstance(myProject);
     settings.setShow(myHighlightRecentlyChanged.isSelected());
-    settings.setLimit(((Number) myHighlightInterval.getValue()).intValue());
+    settings.setLimit(((Number)myHighlightInterval.getValue()).intValue());
   }
 
   @Override

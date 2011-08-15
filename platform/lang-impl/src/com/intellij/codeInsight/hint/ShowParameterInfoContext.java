@@ -15,21 +15,21 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
-import com.intellij.codeInsight.lookup.LookupManager;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -117,7 +117,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart, true, HintManager.ABOVE);
+    final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart, true, HintManager.UNDER);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -179,8 +179,8 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     boolean p2Ok = p2.y >= 0;
 
     if (isLookupShown) {
-      if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
       if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
+      if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
     }
     else {
       if (preferredPosition != HintManager.DEFAULT) {

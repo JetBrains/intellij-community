@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public interface IntervalTree<T extends Interval> {
   boolean process(@NotNull Processor<? super T> processor);
   boolean processOverlappingWith(int start, int end, @NotNull Processor<? super T> processor);
-  boolean processOverlappingWith(int offset, @NotNull Processor<? super T> processor);
+  boolean processContaining(int offset, @NotNull Processor<? super T> processor);
 
   boolean removeInterval(@NotNull T interval);
 }

@@ -319,9 +319,4 @@ public class MockDocument implements DocumentEx {
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
     return false;
   }
-
-  @Override
-  public boolean processRangeMarkersOverlappingWith(int offset, @NotNull Processor<RangeMarker> processor) {
-    return false;
-  }
 }

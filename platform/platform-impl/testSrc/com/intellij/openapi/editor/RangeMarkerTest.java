@@ -865,6 +865,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     edit(document, 67,5,0,  1,0,4);
     delete(mm, 11);
   }
+  public void testE17() {
+    DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 100));
+
+    List<RangeMarker> mm = add(document, 15,85, 79,88, 90,94, 43,67, 54,89, 81,98, 1,34, 58,93, 22,23, 44,45, 63,84, 45,76, 58,87, 40,59, 5,81, 95,95, 12,61, 52,65, 80,95, 6,16, 7,67, 59,63, 91,96, 99,99, 50,96, 72,78, 78,78, 85,85, 5,51, 90,91
+    );
+    edit(document, 20,26,0,  15,0,4,  64,4,0);
+  }
 
   public void testRandomEdit_NoCommand() {
     final int N = 100;

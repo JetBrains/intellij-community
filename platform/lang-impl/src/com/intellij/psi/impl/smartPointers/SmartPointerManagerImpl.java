@@ -61,7 +61,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
       Document document = psiDocumentManager.getDocument(file);
       if (document instanceof DocumentImpl) {
-        ((DocumentImpl)document).normalizeRangeMarkers();
       }
 
       //noinspection ForLoopReplaceableByForEach
@@ -104,7 +103,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
       Document document = psiDocumentManager.getDocument(file);
       if (document instanceof DocumentImpl) {
-        ((DocumentImpl)document).normalizeRangeMarkers();
       }
 
       //noinspection ForLoopReplaceableByForEach

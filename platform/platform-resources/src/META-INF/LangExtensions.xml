@@ -125,6 +125,9 @@
 
   <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
                       serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
+  
+  <applicationService serviceInterface="com.intellij.ui.mac.MacMessages"
+                      serviceImplementation="com.intellij.ui.mac.MacMessagesImpl"/>
 
   <applicationService serviceInterface="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"
                       serviceImplementation="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>

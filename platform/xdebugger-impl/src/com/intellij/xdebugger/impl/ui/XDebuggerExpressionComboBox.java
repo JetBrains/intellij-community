@@ -21,12 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
-import com.intellij.xdebugger.XSourcePosition;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -132,7 +132,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   public String getText() {
-    return (String)myEditor.getItem();
+    return (String)(myComboBox.isPopupVisible() ? myComboBox.getPopup().getList().getSelectedValue() : myEditor.getItem());
   }
 
   public JComponent getPreferredFocusedComponent() {

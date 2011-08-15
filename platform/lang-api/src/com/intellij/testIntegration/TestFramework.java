@@ -61,4 +61,8 @@ public interface TestFramework {
   FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor();
 
   FileTemplateDescriptor getTestMethodFileTemplateDescriptor();
+
+  boolean isIgnoredMethod(PsiElement element);
+
+  boolean isTestMethod(PsiElement element);
 }

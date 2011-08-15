@@ -124,13 +124,13 @@ class MarkupModelWindow extends UserDataHolderBase implements MarkupModelEx {
     myHostModel.setRangeHighlighterAttributes(highlighter, textAttributes);
   }
 
-  public boolean processHighlightsOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
+  public boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
     //todo
     return false;
   }
 
   @Override
-  public boolean processHighlightsOverlappingOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
+  public boolean processRangeHighlightersOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
     //todo
     return false;
   }

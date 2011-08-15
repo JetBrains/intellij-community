@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,9 +67,10 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     myProject = project;
     myCvsRootConfiguration = configuration;
-    myTree = new CvsTree(configuration, project, true, TreeSelectionModel.SINGLE_TREE_SELECTION, false, true);
+    myTree = new CvsTree(project, false, TreeSelectionModel.SINGLE_TREE_SELECTION, true, true);
     add(myTree, BorderLayout.CENTER);
     myTree.init();
+    myTree.setCvsRootConfiguration(configuration);
     myCheckoutHelper = new CheckoutHelper(configuration, this);
 
     TreeUIHelper uiHelper = TreeUIHelper.getInstance();

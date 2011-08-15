@@ -49,12 +49,6 @@ public class MemberSelectionPanel extends JPanel {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
     add(SeparatorFactory.createSeparator(title, myTable), BorderLayout.NORTH);
     add(scrollPane, BorderLayout.CENTER);
-    myTable.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        TableUtil.ensureSelectionExists(myTable);
-      }
-    });
   }
 
   protected MemberSelectionTable createMemberSelectionTable(List<MemberInfo> memberInfo, String abstractColumnHeader) {

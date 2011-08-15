@@ -835,8 +835,4 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
     return myDelegate.processRangeMarkersOverlappingWith(start, end, processor);
   }
-
-  public boolean processRangeMarkersOverlappingWith(int offset, @NotNull Processor<RangeMarker> processor) {
-    return myDelegate.processRangeMarkersOverlappingWith(offset, processor);
-  }
 }

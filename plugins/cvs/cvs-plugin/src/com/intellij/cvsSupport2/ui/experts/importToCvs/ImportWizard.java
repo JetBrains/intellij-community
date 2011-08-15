@@ -43,8 +43,8 @@ public class ImportWizard extends CvsWizard {
     mySelectCVSConfigurationStep = new SelectCVSConfigurationStep(project, this);
     mySelectCvsElementStep = new SelectCvsElementStep(CvsBundle.message("dialog.title.select.directory.to.import.into"),this,
                                                       project,
-                                                      mySelectCVSConfigurationStep,
-                                                      false,TreeSelectionModel.SINGLE_TREE_SELECTION, true, false);
+                                                      mySelectCVSConfigurationStep, true, TreeSelectionModel.SINGLE_TREE_SELECTION, false,
+                                                      false);
 
     mySelectImportLocationStep = new SelectImportLocationStep(
                                             CvsBundle.message("dialog.title.select.import.directory"),

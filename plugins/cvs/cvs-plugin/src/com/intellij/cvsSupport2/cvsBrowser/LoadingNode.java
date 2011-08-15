@@ -17,7 +17,6 @@ package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.CommonBundle;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Alarm;
 
@@ -50,7 +49,7 @@ class LoadingNode extends DefaultMutableTreeNode {
     IconLoader.getIcon("/process/step_11.png"),
     IconLoader.getIcon("/process/step_12.png")
   };
-  private boolean stopped = false;
+  private volatile boolean stopped = false;
   private Runnable myPeriodRequest;
   private final DefaultTreeModel myModel;
 
@@ -66,10 +65,17 @@ class LoadingNode extends DefaultMutableTreeNode {
     return myText;
   }
 
-  public void updatePeriod() {
+  private void updatePeriod() {
     myPeriod++;
     myPeriod %= 12;
-    myModel.nodeChanged(this);
+    if (stopped) {
+      return;
+    }
+    try {
+      myModel.nodeChanged(this);
+    } catch (ArrayIndexOutOfBoundsException ignore) {
+      // catch unexplained exception on Mac OS X Lion jdk 1.6.0_26
+    }
   }
 
   public Icon getIcon() {
@@ -78,16 +84,10 @@ class LoadingNode extends DefaultMutableTreeNode {
 
   public static class Manager implements CvsTabbedWindow.DeactivateListener{
 
-    public Manager() {
-    }
-
     private final Alarm myPeriodAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     private final List<LoadingNode> loadingNodes = new ArrayList();
 
     public void addTo(final DefaultTreeModel model, MutableTreeNode parent) {
-      if (!ApplicationManager.getApplication().isDispatchThread()) {
-        throw new RuntimeException();
-      }
       final LoadingNode loadingNode = new LoadingNode(model);
       loadingNodes.add(loadingNode); // no synchronization necessary because only called from event thread.
       model.insertNodeInto(loadingNode, parent, 0);
@@ -105,18 +105,8 @@ class LoadingNode extends DefaultMutableTreeNode {
 
     @Override
     public void deactivated() {
-      for (LoadingNode loadingNode : loadingNodes) {
-        loadingNode.stop(myPeriodAlarm);
-      }
+      myPeriodAlarm.cancelAllRequests();
     }
-  }
-
-  private void stop(Alarm periodAlarm) {
-    stopped = true;
-    periodAlarm.cancelRequest(myPeriodRequest);
-    final TreeNode parent = getParent();
-    removeFromParent();
-    myModel.reload(parent);
   }
 
   private void start(final Alarm alarm) {
@@ -131,5 +121,13 @@ class LoadingNode extends DefaultMutableTreeNode {
       }
     };
     alarm.addRequest(myPeriodRequest, 100);
+  }
+
+  private void stop(Alarm periodAlarm) {
+    stopped = true;
+    periodAlarm.cancelRequest(myPeriodRequest);
+    final TreeNode parent = getParent();
+    removeFromParent();
+    myModel.reload(parent);
   }
 }
