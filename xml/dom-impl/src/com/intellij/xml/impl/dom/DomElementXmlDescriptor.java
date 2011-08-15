@@ -18,6 +18,7 @@ package com.intellij.xml.impl.dom;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -163,7 +164,7 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor {
 
     @Nullable
     public PsiElement getDeclaration(final Project project) {
-      return null;
+      return PomService.convertToPsi(project, this);
     }
   }
 
