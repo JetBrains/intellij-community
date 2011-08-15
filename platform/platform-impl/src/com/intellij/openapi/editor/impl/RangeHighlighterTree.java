@@ -23,28 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * User: cdr
  */
 public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
-  private final EqualStartIntervalComparator<IntervalNode> myComparator = new EqualStartIntervalComparator<IntervalNode>() {
-    @Override
-    public int compare(IntervalNode i1, IntervalNode i2) {
-      RHNode o1 = (RHNode)i1;
-      RHNode o2 = (RHNode)i2;
-      if (o1.myLayer != o2.myLayer) {
-        return o2.myLayer - o1.myLayer;
-      }
-      boolean greedyL1 = o1.isGreedyToLeft();
-      boolean greedyL2 = o2.isGreedyToLeft();
-      if (greedyL1 != greedyL2) return greedyL1 ? -1 : 1;
-
-      int d = o1.intervalEnd() - o1.intervalStart() - (o2.intervalEnd() - o2.intervalStart());
-      if (d != 0) return d;
-
-      boolean greedyR1 = o1.isGreedyToRight();
-      boolean greedyR2 = o2.isGreedyToRight();
-      if (greedyR1 != greedyR2) return greedyR1 ? -1 : 1;
-
-      return 0;
-    }
-  };
   private final MarkupModelImpl myMarkupModel;
 
   public RangeHighlighterTree(Document document, MarkupModelImpl markupModel) {
@@ -53,8 +31,13 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   }
 
   @Override
-  protected EqualStartIntervalComparator<IntervalNode> getComparator() {
-    return myComparator;
+  protected int compareEqualStartIntervals(@NotNull IntervalNode i1, @NotNull IntervalNode i2) {
+    RHNode o1 = (RHNode)i1;
+    RHNode o2 = (RHNode)i2;
+    if (o1.myLayer != o2.myLayer) {
+      return o2.myLayer - o1.myLayer;
+    }
+    return super.compareEqualStartIntervals(i1, i2);
   }
 
   @NotNull

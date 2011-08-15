@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -82,7 +81,7 @@ public class BorderEffect {
   }
 
   public void paintHighlighters(MarkupModelEx markupModel) {
-    markupModel.processHighlightsOverlappingWith(myStartOffset, myEndOffset, new Processor<RangeHighlighterEx>() {
+    markupModel.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx rangeHighlighter) {
         TextAttributes textAttributes = rangeHighlighter.getTextAttributes();

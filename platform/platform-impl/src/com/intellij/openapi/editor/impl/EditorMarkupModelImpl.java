@@ -197,12 +197,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     final int y = e.getY();
     int startOffset = yPositionToOffset(y -getMinHeight(), true);
     int endOffset = yPositionToOffset(y +getMinHeight(), false);
-    markupModel.processHighlightsOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       public boolean process(RangeHighlighterEx highlighter) {
         if (highlighter.getErrorStripeMarkColor() != null) {
           ProperTextRange range = offsetToYPosition(highlighter.getStartOffset(), highlighter.getEndOffset());
           if (range.getStartOffset() >= y - getMinHeight() * 2 &&
-            range.getEndOffset() <= y + getMinHeight() * 2) {
+              range.getEndOffset() <= y + getMinHeight() * 2) {
             nearest.add(highlighter);
           }
         }
@@ -459,7 +459,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
-      markup.processHighlightsOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+      markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
         public boolean process(RangeHighlighterEx highlighter) {
           Color color = highlighter.getErrorStripeMarkColor();
           if (color == null) return true;
@@ -513,7 +513,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
           return true;
         }
-
       });
 
       drawStripesEndingBefore(Integer.MAX_VALUE, thinEnds, thinStripes, g, width, thinYStart[0]);

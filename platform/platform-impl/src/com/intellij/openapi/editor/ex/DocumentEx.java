@@ -60,7 +60,6 @@ public interface DocumentEx extends Document {
 
   boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor);
   boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor);
-  boolean processRangeMarkersOverlappingWith(int offset, @NotNull Processor<RangeMarker> processor);
 }
 
 

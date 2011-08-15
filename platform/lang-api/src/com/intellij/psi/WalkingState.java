@@ -16,6 +16,7 @@
 
 package com.intellij.psi;
 
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -99,5 +100,22 @@ public class WalkingState<T> {
 
   public void stopWalking() {
     stopped = true;
+  }
+
+  public static <T> boolean processAll(@NotNull T root, @NotNull TreeGuide<T> treeGuide, @NotNull final Processor<T> processor) {
+    final boolean[] result = {true};
+    new WalkingState<T>(treeGuide){
+      @Override
+      public void visit(@NotNull T element) {
+        if (!processor.process(element)) {
+          stopWalking();
+          result[0] = false;
+        }
+        else {
+          super.visit(element);
+        }
+      }
+    }.visit(root);
+    return result[0];
   }
 }

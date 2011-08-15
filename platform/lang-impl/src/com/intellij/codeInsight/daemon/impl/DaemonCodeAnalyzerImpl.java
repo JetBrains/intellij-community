@@ -497,7 +497,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     MarkupModelEx model = (MarkupModelEx)document.getMarkupModel(project);
-    return model.processHighlightsOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+    return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       public boolean process(RangeHighlighterEx marker) {
         Object tt = marker.getErrorStripeTooltip();
         if (!(tt instanceof HighlightInfo)) return true;
@@ -519,7 +519,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     MarkupModelEx model = (MarkupModelEx)document.getMarkupModel(project);
-    return model.processHighlightsOverlappingOutside(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+    return model.processRangeHighlightersOutside(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       public boolean process(RangeHighlighterEx marker) {
         Object tt = marker.getErrorStripeTooltip();
         if (!(tt instanceof HighlightInfo)) return true;

@@ -1635,7 +1635,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void paintCustomRenderers(final Graphics2D g, final int clipStartOffset, final int clipEndOffset) {
-    myMarkupModel.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
+    myMarkupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx highlighter) {
         final CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
@@ -1760,8 +1760,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return true;
       }
     };
-    docMarkup.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, paintProcessor);
-    myMarkupModel.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, paintProcessor);
+    docMarkup.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, paintProcessor);
+    myMarkupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, paintProcessor);
   }
 
   private void paintSegmentHighlighterAfterEndOfLine(Graphics g,
@@ -2521,7 +2521,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                           @NotNull MarkupModelEx markupModel,
                                           int clipStartOffset,
                                           int clipEndOffset) {
-    markupModel.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
+    markupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx lineMarker) {
         paintLineMarkerSeparator(lineMarker, clip, g);
