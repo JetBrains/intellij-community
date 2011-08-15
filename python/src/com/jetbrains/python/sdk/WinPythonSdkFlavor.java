@@ -4,7 +4,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.Collection;
@@ -15,8 +14,6 @@ import java.util.TreeSet;
  * @author yole
  */
 public class WinPythonSdkFlavor extends PythonSdkFlavor {
-  @NonNls static final private String PYTHON_STR = "python";
-
   public static WinPythonSdkFlavor INSTANCE = new WinPythonSdkFlavor();
 
   private WinPythonSdkFlavor() {
@@ -25,12 +22,21 @@ public class WinPythonSdkFlavor extends PythonSdkFlavor {
   @Override
   public Collection<String> suggestHomePaths() {
     Set<String> candidates = new TreeSet<String>();
-    findSubdirInstallations(candidates, "C:\\", PYTHON_STR, "python.exe");
-    findSubdirInstallations(candidates, "C:\\Program Files\\", PYTHON_STR, "python.exe");
-    findSubdirInstallations(candidates, "C:\\", "jython", "jython.bat");
-    findInPath(candidates, "python.exe");
-    findInPath(candidates, "jython.bat");
+    findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     return candidates;
+  }
+
+  private static void findInCandidatePaths(Set<String> candidates, String... exe_names) {
+    for (String name : exe_names) {
+      findInstallations(candidates, name, "C:\\", "C:\\Program Files\\");
+      findInPath(candidates, name);
+    }
+  }
+
+  private static void findInstallations(Set<String> candidates, String exe_name, String... roots) {
+    for (String root : roots) {
+      findSubdirInstallations(candidates, root, FileUtil.getNameWithoutExtension(exe_name), exe_name);
+    }
   }
 
   public static void findInPath(Collection<String> candidates, String exeName) {
@@ -38,7 +44,7 @@ public class WinPythonSdkFlavor extends PythonSdkFlavor {
     for (String pathEntry : StringUtil.split(path, ";")) {
       if (pathEntry.startsWith("\"") && pathEntry.endsWith("\"")) {
         if (pathEntry.length() < 2) continue;
-        pathEntry = pathEntry.substring(1, pathEntry.length()-1);
+        pathEntry = pathEntry.substring(1, pathEntry.length() - 1);
       }
       File f = new File(pathEntry, exeName);
       if (f.exists()) {

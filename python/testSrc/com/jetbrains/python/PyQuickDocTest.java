@@ -82,8 +82,8 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement original_elt = marks.get("<the_ref>");
     PsiElement ref_elt = original_elt.getParent(); // ident -> expr
-    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
-    checkByHTML(myProvider.getQuickNavigateInfo(doc_owner, original_elt));
+    final PsiElement docOwner = ((PyReferenceExpression)ref_elt).getReference().resolve();
+    checkByHTML(myProvider.getQuickNavigateInfo(docOwner, ref_elt));
   }
 
   public void testDirectFunc() {
@@ -120,6 +120,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   public void testMethod() {
     checkRefDocPair();
+  }
+
+  // PY-3496
+  public void testVariable() {
+    checkHTMLOnly();
   }
 
   public void testInheritedMethod() {
@@ -205,6 +210,10 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testHoverOverMethod() {
+    checkHover();
+  }
+  
+  public void testHoverOverParameter() {
     checkHover();
   }
 }

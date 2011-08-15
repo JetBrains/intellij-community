@@ -10,7 +10,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.facet.FacetLibraryConfigurator;
@@ -112,10 +111,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     List<String> paths_from_script = null;
     if (facet_is_desired) {
       String script_name = mySettingsPanel.getScriptName();
-      VirtualFile script_file = LocalFileSystem.getInstance().findFileByPath(script_name);
-      if (script_file == null || script_file.isDirectory()) {
-        throw new ConfigurationException("Invalid script file '" + script_name + "'");
-      }
+      VirtualFile script_file = BuildoutConfigPanel.getScriptFile(script_name);
       paths_from_script = BuildoutFacet.extractBuildoutPaths(script_file);
       if (paths_from_script == null) {
         throw new ConfigurationException("Failed to extract paths from '" + script_file.getPresentableName() + "'");

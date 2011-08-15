@@ -237,9 +237,7 @@ public class PyTypeParser {
     PyType result = null;
     for (TextRange range : ranges) {
       final PyType t = parse(anchor, range.substring(type), types, fullRanges, offset + range.getStartOffset());
-      if (t != null) {
-        result = (result == null) ? t : PyUnionType.union(result, t);
-      }
+      result = (result == null) ? t : PyUnionType.union(result, t);
     }
     return result;
   }

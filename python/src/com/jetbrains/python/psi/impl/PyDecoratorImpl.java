@@ -67,7 +67,7 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     else {
       PyReferenceExpression node = PsiTreeUtil.getChildOfType(this, PyReferenceExpression.class);
       if (node != null) {
-        List<PyReferenceExpression> parts = PyResolveUtil.unwindQualifiers(node);
+        List<PyExpression> parts = PyResolveUtil.unwindQualifiers(node);
         if (parts != null) {
           //Collections.reverse(parts);
           return PyQualifiedName.fromReferenceChain(parts);

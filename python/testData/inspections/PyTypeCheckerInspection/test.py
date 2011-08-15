@@ -94,11 +94,11 @@ def test_builtin_numerics():
     float(False)
     complex(False)
     divmod(False, False)
-    divmod(<warning descr="Expected type 'one of (bool, int, long, float, complex)', got 'str' instead">'foo'</warning>,
-           <warning descr="Expected type 'one of (bool, int, long, float, complex)', got 'unicode' instead">u'bar'</warning>)
+    divmod(<warning descr="Expected type 'one of (int, long, float, complex)', got 'str' instead">'foo'</warning>,
+           <warning descr="Expected type 'one of (int, long, float, complex)', got 'unicode' instead">u'bar'</warning>)
     pow(False, True)
     round(False,
-          <warning descr="Expected type 'one of (bool, int, long, float, None)', got 'str' instead">'foo'</warning>)
+          <warning descr="Expected type 'one of (int, long, float, None)', got 'str' instead">'foo'</warning>)
 
 
 def test_generator():
@@ -211,3 +211,129 @@ def test_function_assignments():
     h = g
     h(<warning descr="Expected type 'int', got 'str' instead">"str"</warning>) #fail
 
+
+def test_old_style_classes():
+    class C:
+        pass
+    def f(x):
+        """
+        :type x: object
+        """
+        pass
+    f(C()) #pass
+
+
+def test_partly_unknown_type():
+    def f():
+        """
+        :rtype: None or unknown or int or long
+        """
+    def g(x):
+        """
+        :type x: object
+        """
+    g(f())
+
+
+def test_type_assertions():
+    def f_1():
+        """
+        :rtype: int or str or None
+        """
+    def f_2():
+        """
+        :rtype: int or None
+        """
+    def f_3():
+        """
+        :rtype: unknown
+        """
+    def f_4():
+        """
+        :rtype: object
+        """
+    def f_5():
+        """
+        :rtype: int or object
+        """
+    def f_6():
+        """
+        :rtype: int or unknown or float
+        """
+    def f_7():
+        """
+        :rtype: int or unknown
+        """
+    def print_int(x):
+        """
+        :type x: int
+        """
+        print(x)
+    def print_int_or_str(x):
+        """
+        :type x: int or str
+        """
+    x_1 = f_1()
+    print_int(<warning descr="Expected type 'int', got 'one of (int, str, None)' instead">x_1</warning>)
+    print_int_or_str(<warning descr="Expected type 'one of (int, str)', got 'one of (int, str, None)' instead">x_1</warning>)
+    if isinstance(x_1, int):
+        print_int(x_1)
+    if isinstance(x_1, str):
+        print_int_or_str(x_1)
+    x_7 = f_7()
+    print_int(x_7)
+
+
+def test_local_type_resolve():
+    class C():
+        def f(self):
+            return 2
+    c = C()
+    x = c.f()
+    y = x
+    return y + <warning descr="Expected type 'one of (int, long, float, complex)', got 'str' instead">'foo'</warning>
+
+
+def test_subscription():
+    def f(x):
+        """
+        :type x: str
+        """
+    class C(object):
+        def __getitem__(self, item):
+            """
+            :type item: str
+            :rtype: int
+            """
+    xs = [1, 2, 3]
+    x = xs[0]
+    f(<warning descr="Expected type 'str', got 'int' instead">x</warning>)
+    c = C()
+    c_0 = c[<warning descr="Expected type 'str', got 'int' instead">0</warning>]
+    f(<warning descr="Expected type 'str', got 'int' instead">c_0</warning>)
+
+def test_comparison_operators():
+    def f(x):
+        """
+        :type x: str
+        """
+        pass
+    class C(object):
+        def __gt__(self, other):
+            return []
+    o = object()
+    c = C()
+    f(<warning descr="Expected type 'str', got 'bool' instead">1 < 2</warning>)
+    f(<warning descr="Expected type 'str', got 'bool' instead">o == o</warning>)
+    f(<warning descr="Expected type 'str', got 'bool' instead">o >= o</warning>)
+    f(<warning descr="Expected type 'str', got 'bool' instead">'foo' > o</warning>)
+    f(<warning descr="Expected type 'str', got 'bool' instead">c < 1</warning>)
+    f(<warning descr="Expected type 'str', got 'list' instead">c > 1</warning>)
+    f(<warning descr="Expected type 'str', got 'bool' instead">c == 1</warning>)
+    f(<warning descr="Expected type 'str', got 'bool' instead">c in [1, 2, 3]</warning>)
+
+def test_right_operators():
+    o = object()
+    xs = [
+        <warning descr="Expected type 'one of (int, long)', got 'object' instead">o</warning> * [],
+    ]

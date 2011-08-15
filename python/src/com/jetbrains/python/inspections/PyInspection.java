@@ -44,20 +44,20 @@ public abstract class PyInspection extends LocalInspectionTool implements Custom
   }
 
   @Override
-  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
+  public SuppressIntentionAction[] getSuppressActions(@Nullable final PsiElement element) {
     List<SuppressIntentionAction> result = new ArrayList<SuppressIntentionAction>();
-    if (element != null) {
-      if (PsiTreeUtil.getParentOfType(element, PyStatementList.class, false, ScopeOwner.class) != null ||
-          PsiTreeUtil.getParentOfType(element, PyFunction.class, PyClass.class) == null) {
-        result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for statement", PyStatement.class));
+    result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for statement", PyStatement.class) {
+      @Override
+      protected PsiElement getContainer(PsiElement context) {
+        if (PsiTreeUtil.getParentOfType(context, PyStatementList.class, false, ScopeOwner.class) != null ||
+            PsiTreeUtil.getParentOfType(context, PyFunction.class, PyClass.class) == null) {
+          return super.getContainer(context);
+        }
+        return null;
       }
-      if (PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
-        result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for function", PyFunction.class));
-      }
-      if (PsiTreeUtil.getParentOfType(element, PyClass.class) != null) {
-        result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for class", PyClass.class));
-      }
-    }
+    });
+    result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for function", PyFunction.class));
+    result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for class", PyClass.class));
     return result.toArray(new SuppressIntentionAction[result.size()]);
   }
 

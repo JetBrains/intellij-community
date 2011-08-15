@@ -1,2 +1,3 @@
 import NonExistingModule
-N<ref>onExistingModule.foo()
+NonExistingModule.foo()
+#<ref>

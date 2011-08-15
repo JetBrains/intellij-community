@@ -53,6 +53,7 @@ public class PyElementType extends IElementType {
   /**
    * @return name of special method for operation marked by this token; e.g. "__add__" for "+".
    */
+  @Nullable
   public String getSpecialMethodName() {
     return mySpecialMethodName;
   }

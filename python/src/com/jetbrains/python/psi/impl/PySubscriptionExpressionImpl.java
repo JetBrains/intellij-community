@@ -1,14 +1,15 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PySubscriptionExpression;
-import com.jetbrains.python.psi.types.PyCollectionType;
-import com.jetbrains.python.psi.types.PySubscriptableType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,17 +35,66 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     pyVisitor.visitPySubscriptionExpression(this);
   }
 
+  @Nullable
+  @Override
   public PyType getType(@NotNull TypeEvalContext context) {
-    final PyExpression indexExpression = getIndexExpression();
-    if (indexExpression != null) {
-      final PyType type = context.getType(getOperand());
-      if (type instanceof PySubscriptableType) {
-        return ((PySubscriptableType)type).getElementType(indexExpression, context);
-      }
-      if (type instanceof PyCollectionType) {
-        return ((PyCollectionType) type).getElementType(context);
+    PyType res = null;
+    final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
+    if (ref != null) {
+      final PsiElement resolved = ref.resolve();
+      if (resolved instanceof Callable) {
+        res = ((Callable)resolved).getReturnType(context, null);
       }
     }
-    return null;
+    if (res == null || res instanceof PyNoneType) {
+      final PyExpression indexExpression = getIndexExpression();
+      if (indexExpression != null) {
+        final PyType type = context.getType(getOperand());
+        if (type instanceof PySubscriptableType) {
+          res = ((PySubscriptableType)type).getElementType(indexExpression, context);
+        }
+        else if (type instanceof PyCollectionType) {
+          res = ((PyCollectionType) type).getElementType(context);
+        }
+      }
+    }
+    return res;
+  }
+
+  @Override
+  public PsiReference getReference() {
+    return getReference(PyResolveContext.noImplicits());
+  }
+
+  @Override
+  public PsiPolyVariantReference getReference(PyResolveContext context) {
+    return new PyOperatorReferenceImpl(this, context);
+  }
+
+  @Override
+  public PyExpression getQualifier() {
+    return getOperand();
+  }
+
+  @Override
+  public String getReferencedName() {
+    String res = PyNames.GETITEM;
+    switch (AccessDirection.of(this)) {
+      case READ:
+        res = PyNames.GETITEM;
+        break;
+      case WRITE:
+        res = PyNames.SETITEM;
+        break;
+      case DELETE:
+        res = PyNames.DELITEM;
+        break;
+    }
+    return res;
+  }
+
+  @Override
+  public ASTNode getNameElement() {
+    return getNode().findChildByType(PyTokenTypes.LBRACKET);
   }
 }

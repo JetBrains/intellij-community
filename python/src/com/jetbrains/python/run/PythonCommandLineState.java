@@ -15,7 +15,6 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
-import com.intellij.execution.process.RunnerMediator;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
@@ -23,9 +22,11 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -35,7 +36,10 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.PythonSdkFlavor;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,6 +113,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
+  @NotNull
   protected ProcessHandler startProcess() throws ExecutionException {
     return startProcess(null);
   }
@@ -251,21 +256,40 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Collection<String> pythonPathList = Sets.newLinkedHashSet();
     pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
     if (module != null) {
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      addRoots(pythonPathList, moduleRootManager.getContentRoots());
-      addRoots(pythonPathList, moduleRootManager.getSourceRoots());
-
-      final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
-      for (Facet facet : facets) {
-        if (facet instanceof PythonPathContributingFacet) {
-          List<String> more_paths = ((PythonPathContributingFacet)facet).getAdditionalPythonPath();
-          if (more_paths != null) pythonPathList.addAll(more_paths);
-        }
+      Set<Module> dependencies = new HashSet<Module>();
+      ModuleUtil.getDependencies(module, dependencies);
+      for (Module dependency : dependencies) {
+        addRootsFromModule(dependency, pythonPathList);
       }
     }
     return pythonPathList;
   }
 
+  private static void addRootsFromModule(Module module, Collection<String> pythonPathList) {
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    addRoots(pythonPathList, moduleRootManager.getContentRoots());
+    addRoots(pythonPathList, moduleRootManager.getSourceRoots());
+
+    final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+    if (extension != null) {
+      final VirtualFile path = extension.getCompilerOutputPath();
+      if (path != null) {
+        pythonPathList.add(path.getPath());
+      }
+      final VirtualFile pathForTests = extension.getCompilerOutputPathForTests();
+      if (pathForTests != null) {
+        pythonPathList.add(pathForTests.getPath());
+      }
+    }
+
+    final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
+    for (Facet facet : facets) {
+      if (facet instanceof PythonPathContributingFacet) {
+        List<String> more_paths = ((PythonPathContributingFacet)facet).getAdditionalPythonPath();
+        if (more_paths != null) pythonPathList.addAll(more_paths);
+      }
+    }
+  }
 
   private static void addRoots(Collection<String> pythonPathList, VirtualFile[] roots) {
     for (VirtualFile root : roots) {

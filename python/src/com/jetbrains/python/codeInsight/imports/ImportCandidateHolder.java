@@ -13,7 +13,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,7 +105,7 @@ class ImportCandidateHolder implements Comparable {
       parent = myImportElement.getParent();
     }
     if (myImportable instanceof PyFunction) {
-      ParamHelper.appendParameterList(((PyFunction)myImportable).getParameterList(), sb);
+      sb.append(((PyFunction)myImportable).getParameterList().getPresentableText(false));
     }
     else if (myImportable instanceof PyClass) {
       PyClass[] supers = ((PyClass)myImportable).getSuperClasses();

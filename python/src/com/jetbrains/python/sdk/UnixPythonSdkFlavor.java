@@ -14,6 +14,8 @@ public class UnixPythonSdkFlavor extends PythonSdkFlavor {
   private UnixPythonSdkFlavor() {
   }
 
+  private final static String[] NAMES = new String[]{"python", "jython", "pypy"};
+
   public static UnixPythonSdkFlavor INSTANCE = new UnixPythonSdkFlavor();
 
   @Override
@@ -25,8 +27,11 @@ public class UnixPythonSdkFlavor extends PythonSdkFlavor {
       for (VirtualFile child : suspects) {
         if (!child.isDirectory()) {
           final String child_name = child.getName();
-          if (child_name.startsWith("python") || child_name.startsWith("jython")) {
-            if (! child_name.endsWith("-config")) candidates.add(child.getPath());
+          for (String name : NAMES) {
+            if (child_name.startsWith(name)) {
+              if (!child_name.endsWith("-config")) candidates.add(child.getPath());
+              break;
+            }
           }
         }
       }

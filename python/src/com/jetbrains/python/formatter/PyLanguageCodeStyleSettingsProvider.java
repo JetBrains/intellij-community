@@ -33,6 +33,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) {
       consumer.showStandardOptions("SPACE_BEFORE_METHOD_CALL_PARENTHESES",
+                                   "SPACE_BEFORE_METHOD_PARENTHESES",
                                    "SPACE_AROUND_ASSIGNMENT_OPERATORS",
                                    "SPACE_AROUND_EQUALITY_OPERATORS",
                                    "SPACE_AROUND_RELATIONAL_OPERATORS",
@@ -65,7 +66,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("KEEP_LINE_BREAKS",
-                                   "WRAP_LONG_LINES");
+                                   "WRAP_LONG_LINES",
+                                   "ALIGN_MULTILINE_PARAMETERS",
+                                   "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
     }
   }
 
@@ -92,5 +95,10 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                        "    def foo(self):\n" +
                                                        "        pass";
 
-  private static String WRAP_SETTINGS_PREVIEW = "long_expression = component_one + component_two + component_three + component_four + component_five + component_six";
+  private static String WRAP_SETTINGS_PREVIEW = "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n\n" +
+                                                "def xyzzy(long_parameter_1,\n" +
+                                                "long_parameter_2):\n" +
+                                                "    pass\n\n" +
+                                                "xyzzy('long_string_constant1',\n" +
+                                                "    'long_string_constant2')";
 }

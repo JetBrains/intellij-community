@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.django.facet.DjangoFacetType;
 import com.jetbrains.python.PyNames;
@@ -368,7 +369,7 @@ public class ResolveImportUtil {
                                                               @NotNull PyQualifiedName moduleQualifiedName) {
     ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, PsiManager.getInstance(module.getProject()), null,
                                                             true);
-    if (!visitModuleContentEntries(module, visitor)) {
+    if (visitModuleContentEntries(ModuleRootManager.getInstance(module), visitor)) {
       for (VirtualFile file : rootProvider.getFiles(OrderRootType.CLASSES)) {
         visitor.visitRoot(file);
       }
@@ -387,19 +388,23 @@ public class ResolveImportUtil {
     }
   }
 
-  public static void visitRoots(@NotNull Module module, RootVisitor visitor) {
-    // TODO: implement a proper module-like approach in PyCharm for "project's dirs on pythonpath", minding proper search order
-    // Module-based approach works only in the IDEA plugin.
-    if (visitModuleContentEntries(module, visitor)) return;
-    // else look in SDK roots
-    visitModuleSdkRoots(visitor, module);
+  public static void visitRoots(@NotNull Module module, final RootVisitor visitor) {
+    OrderEnumerator.orderEntries(module).recursively().forEach(new Processor<OrderEntry>() {
+      @Override
+      public boolean process(OrderEntry orderEntry) {
+        if (orderEntry instanceof ModuleSourceOrderEntry) {
+          return visitModuleContentEntries(((ModuleSourceOrderEntry)orderEntry).getRootModel(), visitor);
+        }
+        return visitOrderEntryRoots(visitor, orderEntry);
+      }
+    });
   }
 
   /**
    * Visits module content, sdk roots and libraries
    */
   public static void visitRoots(@NotNull Module module, @NotNull Sdk sdk, RootVisitor visitor) {
-    if (visitModuleContentEntries(module, visitor)) return;
+    if (!visitModuleContentEntries(ModuleRootManager.getInstance(module), visitor)) return;
     // else look in SDK roots
     if (visitSdkRoots(visitor, sdk)) return;
 
@@ -443,32 +448,19 @@ public class ResolveImportUtil {
   }
 
 
-  private static boolean visitModuleContentEntries(Module module, RootVisitor visitor) {
-    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+  private static boolean visitModuleContentEntries(ModuleRootModel rootModel, RootVisitor visitor) {
     // look in module sources
-    boolean sourceEntriesMissing = true;
     Set<VirtualFile> contentRoots = Sets.newHashSet();
-    for (ContentEntry entry : rootManager.getContentEntries()) {
+    for (ContentEntry entry : rootModel.getContentEntries()) {
       VirtualFile rootFile = entry.getFile();
 
-      if (rootFile != null && !visitor.visitRoot(rootFile)) return true;
+      if (rootFile != null && !visitor.visitRoot(rootFile)) return false;
       contentRoots.add(rootFile);
       for (VirtualFile folder : entry.getSourceFolderFiles()) {
-        sourceEntriesMissing = false;
-        if (!visitor.visitRoot(folder)) return true;
+        if (!visitor.visitRoot(folder)) return false;
       }
     }
-    if (sourceEntriesMissing) {
-      // fallback for a case without any source entries: use project root
-      VirtualFile projectRoot = module.getProject().getBaseDir();
-      if (projectRoot != null && !contentRoots.contains(projectRoot) && !visitor.visitRoot(projectRoot)) return true;
-    }
-    return false;
-  }
-
-  private static void visitModuleSdkRoots(@NotNull RootVisitor visitor, @NotNull Module module) {
-    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    rootManager.orderEntries().process(new SdkRootVisitingPolicy(visitor), null);
+    return true;
   }
 
   private static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
@@ -920,29 +912,6 @@ public class ResolveImportUtil {
       }
     }
     return null;
-  }
-
-  public static class SdkRootVisitingPolicy extends RootPolicy<PsiElement> {
-    private final RootVisitor myVisitor;
-
-    public SdkRootVisitingPolicy(RootVisitor visitor) {
-      myVisitor = visitor;
-    }
-
-    @Nullable
-    public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
-      if (value != null) return value;  // for chaining in processOrder()
-      visitOrderEntryRoots(myVisitor, jdkOrderEntry);
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public PsiElement visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, PsiElement value) {
-      if (value != null) return value;  // for chaining in processOrder()
-      visitOrderEntryRoots(myVisitor, libraryOrderEntry);
-      return null;
-    }
   }
 
   public static class LibraryRootVisitingPolicy extends RootPolicy<PsiElement> {

@@ -15,8 +15,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
@@ -34,7 +33,7 @@ public class PyDefUseUtil {
       throw new InstructionNotFoundException();
     }
     final boolean[] visited = new boolean[instructions.length];
-    final Collection<PyElement> result = new HashSet<PyElement>();
+    final Collection<PyElement> result = new LinkedHashSet<PyElement>();
     getLatestDefs(var, instructions, instr, visited, result);
     return result.toArray(new PyElement[result.size()]);
   }
@@ -56,9 +55,7 @@ public class PyDefUseUtil {
       }
       if (access.isWriteAccess() && Comparing.strEqual(name, var.getName())) {
         result.add((PyElement)element);
-        if (access != ReadWriteInstruction.ACCESS.WRITETYPE) {
-          return;
-        }
+        return;
       }
     }
     for (Instruction instruction : instructions[instr].allPred()) {

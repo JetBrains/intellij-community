@@ -147,7 +147,7 @@ public class PyResolveUtil {
       }
       // are we still under the roof?
       if ((roof != null) && (seeker != null) && !PsiTreeUtil.isAncestor(roof, seeker, false)) return null;
-      // maybe we're capped by a class? param lists are not capped though syntactically inside the function.  
+      // maybe we're capped by a class? param lists are not capped though syntactically inside the function.
       if (is_outside_param_list && refersFromMethodToClass(capFunction, seeker)) continue;
       // names defined in a comprehension element are only visible inside it or the list comp expressions directly above it
       if (seeker instanceof PyComprehensionElement && !PsiTreeUtil.isAncestor(seeker, elt, false)) {
@@ -294,55 +294,40 @@ public class PyResolveUtil {
   }
 
   /**
-   * Unwinds a [multi-level] qualified expression into a path, as seen in source text, i.e. outermost qualifier first.
-   * If any qualifier happens to be not a PyQualifiedExpression, or expr is null, null is returned.
+   * Unwinds a multi-level qualified expression into a path, as seen in source text, i.e. outermost qualifier first.
    *
    * @param expr an experssion to unwind.
-   * @return path as a list of ref expressions, or null.
+   * @return path as a list of ref expressions.
    */
-  @Nullable
-  public static <T extends PyQualifiedExpression> List<T> unwindQualifiers(final T expr) {
-    final List<T> path = new LinkedList<T>();
-    PyExpression maybe_step;
-    T step = expr;
-    try {
-      while (step != null) {
-        path.add(0, step);
-        maybe_step = step.getQualifier();
-        step = (T)maybe_step;
-      }
-    }
-    catch (ClassCastException e) {
-      return null;
+  public static List<PyExpression> unwindQualifiers(final PyQualifiedExpression expr) {
+    final List<PyExpression> path = new LinkedList<PyExpression>();
+    PyQualifiedExpression e = expr;
+    while (e != null) {
+      path.add(0, e);
+      final PyExpression q = e.getQualifier();
+      e = q instanceof PyQualifiedExpression ? (PyQualifiedExpression)q : null;
     }
     return path;
   }
 
-  @Nullable
   public static List<String> unwindQualifiersAsStrList(final PyQualifiedExpression expr) {
     final List<String> path = new LinkedList<String>();
-    PyExpression maybe_step;
-    PyQualifiedExpression step = expr;
-    try {
-      while (step != null) {
-        path.add(0, step.getText());
-        maybe_step = step.getQualifier();
-        step = (PyQualifiedExpression)maybe_step;
-      }
-    }
-    catch (ClassCastException e) {
-      return null;
+    PyQualifiedExpression e = expr;
+    while (e != null) {
+      path.add(0, e.getText());
+      final PyExpression q = e.getQualifier();
+      e = q instanceof PyQualifiedExpression ? (PyQualifiedExpression)q : null;
     }
     return path;
   }
 
   public static String toPath(PyQualifiedExpression expr, String separator) {
     if (expr == null) return "";
-    List<PyQualifiedExpression> path = unwindQualifiers(expr);
+    List<PyExpression> path = unwindQualifiers(expr);
     if (path != null) {
       StringBuilder buf = new StringBuilder();
       boolean is_not_first = false;
-      for (PyQualifiedExpression ex : path) {
+      for (PyExpression ex : path) {
         if (is_not_first) {
           buf.append(separator);
         }

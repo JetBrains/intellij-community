@@ -117,6 +117,25 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testSpaceInMethodDeclaration() {  // PY-4241
+    CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).SPACE_BEFORE_METHOD_PARENTHESES = true;
+    doTest();
+  }
+  
+  public void testOptionalAlignForMethodParameters() {  // PY-3995
+    CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).ALIGN_MULTILINE_PARAMETERS = false;
+    doTest();
+  }
+  
+  public void testNoAlignForMethodArguments() {  // PY-3995
+    doTest();
+  }
+
+  public void testAlignForMethodArguments() {  // PY-3995
+    CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest();
+  }
+
   public void testPsiFormatting() { // IDEA-69724
     String initial =
       "def method_name(\n" +
@@ -133,10 +152,10 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
 
     String expected =
       "def method_name(\n" +
-      "desired_impulse_response,\n" +
-      "desired_response_parameters,\n" +
-      "inverse_filter_length,\n" +
-      "observed_impulse_response):\n" +
+      "    desired_impulse_response,\n" +
+      "    desired_response_parameters,\n" +
+      "    inverse_filter_length,\n" +
+      "    observed_impulse_response):\n" +
       "#  Extract from here to ...\n" +
       "    desired_impulse_response = {'dirac, '\n" +
       "    gaussian\n" +

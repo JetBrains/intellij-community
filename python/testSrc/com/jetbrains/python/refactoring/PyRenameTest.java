@@ -73,6 +73,14 @@ public class PyRenameTest extends PyLightFixtureTestCase {
   public void testRenameGlobalWithoutToplevel() { // PY-3547
     doTest("bar");
   }
+  
+  public void testRenameSlots() {  // PY-4195
+    doTest("bacon");
+  }
+  
+  public void testRenameKeywordArgument() {  // PY-3890
+    doTest("baz");
+  }
 
   public void testClassNameConflict() {  // PY-2390
     doRenameConflictTest("Foo", "A class named 'Foo' is already defined in classNameConflict.py");

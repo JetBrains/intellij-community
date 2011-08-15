@@ -53,7 +53,7 @@ public class PyPushDownDialog extends RefactoringDialog {
 
     JPanel panel = new JPanel(new GridBagLayout());
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = new Insets(4, 0, 4, 8);
     gbConstraints.weighty = 1;
     gbConstraints.weightx = 1;
     gbConstraints.gridy = 0;

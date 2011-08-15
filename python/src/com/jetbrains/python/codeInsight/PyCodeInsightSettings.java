@@ -13,7 +13,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name="PyCodeInsightSettings",
   storages = {
     @Storage(
-      id="PyCodeInsightSettings",
       file="$APP_CONFIG$/other.xml"
     )}
 )

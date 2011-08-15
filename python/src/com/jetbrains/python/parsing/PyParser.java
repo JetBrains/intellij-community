@@ -27,7 +27,6 @@ public class PyParser implements PsiParser {
 
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
-    builder.setDebugMode(true);
     long start = System.currentTimeMillis();
     final PsiBuilder.Marker rootMarker = builder.mark();
     ParsingContext context = new ParsingContext(builder, myLanguageLevel, myFutureFlag);

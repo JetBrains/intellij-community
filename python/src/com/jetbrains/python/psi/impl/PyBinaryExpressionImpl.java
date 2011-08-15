@@ -2,15 +2,16 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyBinaryExpression;
-import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
 
   public boolean isOperator(String chars) {
     ASTNode child = getNode().getFirstChildNode();
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     while (child != null) {
       IElementType elType = child.getElementType();
       if (elType instanceof PyElementType && PyElementTypes.BINARY_OPS.contains(elType)) {
@@ -81,7 +82,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   public void deleteChildInternal(@NotNull ASTNode child) {
     PyExpression left = getLeftExpression();
     PyExpression right = getRightExpression();
-    if (left == child.getPsi()) {
+    if (left == child.getPsi() && right != null) {
       replace(right);
     }
     else if (right == child.getPsi()) {
@@ -92,34 +93,56 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     }
   }
 
+  @Override
+  public PsiReference getReference() {
+    return getReference(PyResolveContext.noImplicits());
+  }
+
+  @Override
+  public PsiPolyVariantReference getReference(PyResolveContext context) {
+    final PyElementType t = getOperator();
+    if (t != null && t.getSpecialMethodName() != null) {
+      return new PyOperatorReferenceImpl(this, context);
+    }
+    return null;
+  }
+
   public PyType getType(@NotNull TypeEvalContext context) {
-    PyExpression lhs = getLeftExpression();
-    PyExpression rhs = getRightExpression();
+    final PyExpression lhs = getLeftExpression();
+    final PyExpression rhs = getRightExpression();
     final PsiElement operator = getPsiOperator();
     if (lhs != null && rhs != null && operator != null) {
-      PyType lhsType = context.getType(lhs);
-      PyType rhsType = context.getType(rhs);
-      String op = operator.getText();
-      if (PyClassType.is("int", lhsType) && PyClassType.is("int", rhsType) && (op.equals("+") || op.equals("-")))  {
-        return lhsType;
+      final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
+      if (ref != null) {
+        final PsiElement resolved = ref.resolve();
+        if (resolved instanceof Callable) {
+          final PyType res = ((Callable)resolved).getReturnType(context, null);
+          if (res != null && !(res instanceof PyNoneType)) {
+            return res;
+          }
+        }
       }
-      final String eitherType = getEitherType(lhsType, rhsType, "str", "list");
-      if ((eitherType != null && op.equals("+"))) {
-        return PyBuiltinCache.getInstance(this).getObjectType(eitherType);
-      }
-      if (PyClassType.is("str", lhsType) && op.equals("%")) {
-        return lhsType;
+      if (PyNames.COMPARISON_OPERATORS.contains(getReferencedName())) {
+        return PyBuiltinCache.getInstance(this).getBoolType();
       }
     }
     return null;
   }
 
-  private static String getEitherType(PyType lhsType, PyType rhsType, final String... names) {
-    for(String name: names) {
-      if (PyClassType.is(name, lhsType) || PyClassType.is(name, rhsType)) {
-        return name;
-      }
-    }
-    return null;
+  @Override
+  public PyExpression getQualifier() {
+    return getLeftExpression();
+  }
+
+  @Override
+  public String getReferencedName() {
+    final PyElementType t = getOperator();
+    return t != null ? t.getSpecialMethodName() : null;
+  }
+
+  @Override
+  public ASTNode getNameElement() {
+    final PsiElement op = getPsiOperator();
+    return op != null ? op.getNode() : null;
   }
 }

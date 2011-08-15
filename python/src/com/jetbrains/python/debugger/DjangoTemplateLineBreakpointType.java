@@ -11,6 +11,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.django.lang.template.parsing.DjangoTemplateTokenTypes;
 import com.jetbrains.django.util.DjangoUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +19,12 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class DjangoTemplateLineBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
+  public static final String ID = "django-line";
+
   private final PyDebuggerEditorsProvider myEditorsProvider = new PyDebuggerEditorsProvider();
 
   public DjangoTemplateLineBreakpointType() {
-    super("django-line", "Django Line Breakpoint");
+    super(ID, "Django Line Breakpoint");
   }
 
   public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull final Project project) {
@@ -35,7 +38,8 @@ public class DjangoTemplateLineBreakpointType extends XLineBreakpointType<XBreak
                                        psiElement.getNode().getElementType() == DjangoTemplateTokenTypes.DJANGO_TAG_START)) {
               stoppable.set(true);
               return false;
-            } else {
+            }
+            else {
               return true;
             }
           }
@@ -59,5 +63,10 @@ public class DjangoTemplateLineBreakpointType extends XLineBreakpointType<XBreak
   @Override
   public XDebuggerEditorsProvider getEditorsProvider() {
     return myEditorsProvider;
+  }
+
+  @Override
+  public boolean shouldShowInBreakpointsDialog(@NotNull Project project) {
+    return DjangoFacet.isPresentInAnyModule(project);
   }
 }

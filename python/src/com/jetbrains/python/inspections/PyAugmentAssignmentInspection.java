@@ -7,7 +7,9 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.AugmentedAssignmentQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,8 +69,12 @@ public class PyAugmentAssignmentInspection extends PyInspection {
                 else {
                   PyType type = rightExpression.getType(myTypeEvalContext);
                   if (type != null) {
-                    if (type.isBuiltin(myTypeEvalContext) && "int".equals(type.getName()) || "str".equals(type.getName()))
+                    final PyBuiltinCache cache = PyBuiltinCache.getInstance(rightExpression);
+                    if (PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext) ||
+                        PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(rightExpression)), type,
+                                            myTypeEvalContext)) {
                       registerProblem(node, "Assignment can be replaced with augmented assignment", new AugmentedAssignmentQuickFix());
+                    }
                   }
                 }
               }

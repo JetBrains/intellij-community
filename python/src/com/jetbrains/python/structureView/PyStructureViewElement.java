@@ -12,7 +12,6 @@ import com.intellij.util.Function;
 import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -212,7 +211,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         if (myElement instanceof PyFunction) {
           PyParameterList argList = ((PyFunction) myElement).getParameterList();
           StringBuilder result = new StringBuilder(notNullize(myElement.getName(), unnamed));
-          ParamHelper.appendParameterList(argList, result);
+          result.append(argList.getPresentableText(true));
           return result.toString();
         }
         else if (myElement instanceof PyClass && myElement.isValid()) {

@@ -3,6 +3,7 @@ package com.jetbrains.python;
 import com.google.common.collect.ImmutableSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -76,8 +77,14 @@ public class PyNames {
   public static final String LEN = "__len__";
   public static final String CALL = "__call__";
   public static final String GETITEM = "__getitem__";
+  public static final String SETITEM = "__setitem__";
+  public static final String DELITEM = "__delitem__";
 
   public static final String NAME = "__name__";
+  public static final String ENTER = "__enter__";
+
+  public static final String NAMEDTUPLE = "namedtuple";
+  public static final String COLLECTIONS_PY = "collections.py";
 
   /**
    * Contains all known predefined names of "__foo__" form.
@@ -99,6 +106,23 @@ public class PyNames {
     "__self__",
     "__slots__",
     "__version__"
+  );
+
+  public static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of(
+    "__eq__",
+    "__ne__",
+    "__lt__",
+    "__le__",
+    "__gt__",
+    "__ge__",
+    "__cmp__",
+    "__contains__"
+  );
+
+  public static ImmutableSet<String> SUBCRIPTION_OPERATORS = ImmutableSet.of(
+    GETITEM,
+    SETITEM,
+    DELITEM
   );
 
   public static class BuiltinDescription {
@@ -159,12 +183,23 @@ public class PyNames {
     _BuiltinMethods.put("__hash__", _only_self_descr);
     _BuiltinMethods.put("__hex__", _only_self_descr);
     _BuiltinMethods.put("__iadd__", _self_other_descr);
+    _BuiltinMethods.put("__iand__", _self_other_descr);
+    _BuiltinMethods.put("__idiv__", _self_other_descr);
+    _BuiltinMethods.put("__ifloordiv__", _self_other_descr);
     //_BuiltinMethods.put("__import__", _only_self_descr);
+    _BuiltinMethods.put("__ilshift__", _self_other_descr);
+    _BuiltinMethods.put("__imod__", _self_other_descr);
     _BuiltinMethods.put("__imul__", _self_other_descr);
     _BuiltinMethods.put(INIT, _only_self_descr);
     _BuiltinMethods.put("__int__", _only_self_descr);
     _BuiltinMethods.put("__invert__", _only_self_descr);
+    _BuiltinMethods.put("__ior__", _self_other_descr);
+    _BuiltinMethods.put("__ipow__", _self_other_descr);
+    _BuiltinMethods.put("__irshift__", _self_other_descr);
+    _BuiltinMethods.put("__isub__", _self_other_descr);
     _BuiltinMethods.put("__iter__", _only_self_descr);
+    _BuiltinMethods.put("__itruediv__", _self_other_descr);
+    _BuiltinMethods.put("__ixor__", _self_other_descr);
     _BuiltinMethods.put("__le__", _self_other_descr);
     _BuiltinMethods.put("__len__", _only_self_descr);
     _BuiltinMethods.put("__long__", _only_self_descr);
@@ -279,5 +314,7 @@ public class PyNames {
     return ! isReserved(name) && IDENTIFIER_PATTERN.matcher(name).matches(); 
   }
 
-
+  public static boolean isRightOperatorName(@Nullable String name) {
+    return name != null && name.matches("__r[a-z]+__");
+  }
 }

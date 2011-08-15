@@ -52,6 +52,7 @@ public abstract class PythonSdkFlavor {
     }
     result.add(JythonSdkFlavor.INSTANCE);
     result.add(IronPythonSdkFlavor.INSTANCE);
+    result.add(PyPySdkFlavor.INSTANCE);
     return result;
   }
 

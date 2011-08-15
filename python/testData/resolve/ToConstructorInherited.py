@@ -6,4 +6,5 @@ class Foo:
 class Bar(Foo):
   pass
 
-<ref>Bar()
+Bar()
+#<ref>

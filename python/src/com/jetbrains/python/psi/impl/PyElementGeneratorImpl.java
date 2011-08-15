@@ -10,6 +10,7 @@ import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.django.util.DjangoStringUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
@@ -51,7 +52,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   public PyStringLiteralExpression createStringLiteralAlreadyEscaped(String str) {
-    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "a="+str);
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "a=" + str);
     final PyAssignmentStatement expressionStatement = (PyAssignmentStatement)dummyFile.getFirstChild();
     return (PyStringLiteralExpression)expressionStatement.getAssignedValue();
   }
@@ -162,7 +163,6 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
           exprNode.addChild(add);
         }
       }
-
     }
     else {
       ASTNode lastArgNode = afterThis.getNode();
@@ -191,7 +191,11 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   public PyExpression createExpressionFromText(final String text) {
-    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), text);
+    return createExpressionFromText(LanguageLevel.getDefault(), text);
+  }
+
+  public PyExpression createExpressionFromText(final LanguageLevel languageLevel, final String text) {
+    final PsiFile dummyFile = createDummyFile(languageLevel, text);
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     return expressionStatement.getExpression();
   }
@@ -238,7 +242,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return (T)ret;
   }
 
-  public PyExpressionStatement createDocstring(String content){
+  public PyExpressionStatement createDocstring(String content) {
     return createFromText(LanguageLevel.getDefault(),
                           PyExpressionStatement.class, content + "\n");
   }

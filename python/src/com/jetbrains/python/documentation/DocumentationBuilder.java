@@ -170,19 +170,14 @@ class DocumentationBuilder {
     else if (isAttribute()) {
       addAttributeDoc();
     }
-    else if (followed != null && outer instanceof PyReferenceExpression) {
-      Class[] uninteresting_classes = {PyTargetExpression.class, PyAugAssignmentStatement.class};
-      boolean is_interesting = myElement != null && ! PyUtil.instanceOf(myElement, uninteresting_classes);
-      if (is_interesting) {
-        PsiElement old_parent = myElement.getParent();
-        is_interesting = ! PyUtil.instanceOf(old_parent, uninteresting_classes);
-      }
-      if (is_interesting) {
-        myBody.add(combUp(PyUtil.getReadableRepr(followed, false)));
-      }
-    }
-    if (followed instanceof PyNamedParameter) {
+    else if (followed instanceof PyNamedParameter) {
+      myBody.add(combUp(PyUtil.getReadableRepr(followed, false)));
       addParameterDoc((PyNamedParameter) followed);
+    }
+    else if (followed != null && outer instanceof PyReferenceExpression) {
+      myBody
+        .add(BR)
+        .add(combUp(PythonDocumentationProvider.describeExpressionType((PyReferenceExpression)outer)));
     }
     if (myBody.isEmpty() && myEpilog.isEmpty()) return null; // got nothing substantial to say!
     else return myResult.toString();
@@ -457,11 +452,12 @@ class DocumentationBuilder {
       result.append("<br/><br/><b>Additional:</b><br/>");
       result.append("<table>");
       for (String tagName : additionalTags) {
-        final List<String> args = docString.getTagArguments(tagName);
-        for(String arg : args) {
+        final List<Substring> args = docString.getTagArguments(tagName);
+        for(Substring arg : args) {
+          final String s = arg.toString();
           result.append("<tr><td align=\"right\"><b>").append(tagName);
-          result.append(" ").append(arg).append(":</b>");
-          result.append("</td><td>").append(docString.getTagValue(tagName, arg)).append("</td></tr>");
+          result.append(" ").append(s).append(":</b>");
+          result.append("</td><td>").append(docString.getTagValue(tagName, s)).append("</td></tr>");
         }
         result.append("</table>");
       }

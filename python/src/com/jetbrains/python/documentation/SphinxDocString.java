@@ -1,14 +1,10 @@
 package com.jetbrains.python.documentation;
 
-import com.google.common.collect.Maps;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -23,54 +19,59 @@ public class SphinxDocString extends StructuredDocString {
     super(docstringText, ":");
   }
 
+  @Nullable
+  protected static String concatTrimmedLines(@Nullable Substring s) {
+    return s != null ? s.concatTrimmedLines(" ") : null;
+  }
+
   @Override
   public List<String> getParameters() {
-    return getTagArguments(EpydocString.PARAM_TAGS);
+    return toUniqueStrings(getParameterSubstrings());
   }
 
   @Override
   public List<String> getKeywordArguments() {
-    return getTagArguments(KEYWORD_ARGUMENT_TAGS);
+    return toUniqueStrings(getKeywordArgumentSubstrings());
   }
 
   @Override
   public String getKeywordArgumentDescription(String paramName) {
-    return getTagValue(KEYWORD_ARGUMENT_TAGS, paramName);
+    return concatTrimmedLines(getTagValue(KEYWORD_ARGUMENT_TAGS, paramName));
   }
 
   @Override
   public String getReturnType() {
-    return getTagValue("rtype");
+    return concatTrimmedLines(getReturnTypeSubstring());
   }
 
   @Override
   public String getParamType(@Nullable String paramName) {
-    return paramName == null ? getTagValue("type") : getTagValue("type", paramName);
+    return concatTrimmedLines(getParamTypeSubstring(paramName));
   }
 
   @Override
   public String getParamDescription(String paramName) {
-    return getTagValue("param", paramName);
+    return concatTrimmedLines(getTagValue("param", paramName));
   }
 
   @Override
   public String getReturnDescription() {
-    return getTagValue(EpydocString.RETURN_TAGS);
+    return concatTrimmedLines(getTagValue(EpydocString.RETURN_TAGS));
   }
 
   @Override
   public List<String> getRaisedExceptions() {
-    return getTagArguments(EpydocString.RAISES_TAGS);
+    return toUniqueStrings(getTagArguments(EpydocString.RAISES_TAGS));
   }
 
   @Override
   public String getRaisedExceptionDescription(String exceptionName) {
-    return getTagValue(EpydocString.RAISES_TAGS, exceptionName);
+    return concatTrimmedLines(getTagValue(EpydocString.RAISES_TAGS, exceptionName));
   }
 
   @Override
   public String getAttributeDescription() {
-    return getTagValue(EpydocString.VARIABLE_TAGS);
+    return concatTrimmedLines(getTagValue(EpydocString.VARIABLE_TAGS));
   }
 
   @Override
@@ -78,54 +79,26 @@ public class SphinxDocString extends StructuredDocString {
     return Collections.emptyList();
   }
 
-  protected int parseTag(String[] lines, int index, String tagPrefix) {
-    String line = lines[index].trim();
-    if (line.startsWith(tagPrefix)) {
-      line = line.substring(tagPrefix.length());
-      final Pattern tagPattern = Pattern.compile("([a-z]+)(.*):([^:]*)");
-      final Matcher tagMatcher = tagPattern.matcher(line);
-      if (tagMatcher.matches()) {
-        final String tagName = tagMatcher.group(1);
-        final String argName = tagMatcher.group(2).trim();
-        final StringBuilder builder = new StringBuilder();
-        builder.append(tagMatcher.group(3).trim());
-        for (index += 1; index < lines.length && !lines[index].trim().startsWith(tagPrefix); index++) {
-          builder.append(" ");
-          builder.append(lines[index].trim());
-        }
-        index--;
-        final String argValue = builder.toString().trim();
-        if (argName.isEmpty()) {
-          mySimpleTagValues.put(tagName, argValue);
-        }
-        else {
-          if ("param".equals(tagName) || "parameter".equals(tagName) ||
-              "arg".equals(tagName) || "argument".equals(tagName)) {
-            final Pattern argPattern = Pattern.compile("(.*) ([a-zA-Z_0-9]+)");
-            final Matcher argMatcher = argPattern.matcher(argName);
-            if (argMatcher.matches()) {
-              final String type = argMatcher.group(1).trim();
-              final String arg = argMatcher.group(2);
-              getTagValuesMap("type").put(arg, type);
-              getTagValuesMap(tagName).put(arg, argValue);
-            }
-          }
-          else {
-            getTagValuesMap(tagName).put(argName, argValue);
-          }
-        }
-      }
-    }
-    return index;
+  @Override
+  public List<Substring> getParameterSubstrings() {
+    final List<Substring> results = new ArrayList<Substring>();
+    results.addAll(getTagArguments(EpydocString.PARAM_TAGS));
+    results.addAll(getTagArguments(EpydocString.PARAM_TYPE_TAGS));
+    return results;
   }
 
-  @NotNull
-  private Map<String, String> getTagValuesMap(String key) {
-    Map<String, String> map = myArgTagValues.get(key);
-    if (map == null) {
-      map = Maps.newLinkedHashMap();
-      myArgTagValues.put(key, map);
-    }
-    return map;
+  @Override
+  public List<Substring> getKeywordArgumentSubstrings() {
+    return getTagArguments(KEYWORD_ARGUMENT_TAGS);
+  }
+
+  @Override
+  public Substring getReturnTypeSubstring() {
+    return getTagValue("rtype");
+  }
+
+  @Override
+  Substring getParamTypeSubstring(@Nullable String paramName) {
+    return paramName == null ? getTagValue("type") : getTagValue("type", paramName);
   }
 }

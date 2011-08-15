@@ -136,7 +136,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     if (docStringType != null) {
       return docStringType;
     }    
-    if (typeEvalContext.allowReturnTypes()) {
+    if (typeEvalContext.allowReturnTypes(getContainingFile())) {
       final PyType yieldType = getYieldStatementType(typeEvalContext);
       if (yieldType != null) {
         return yieldType;

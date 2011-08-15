@@ -144,7 +144,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
-    else if (parentType == PyElementTypes.ARGUMENT_LIST) {
+    else if (parentType == PyElementTypes.ARGUMENT_LIST || parentType == PyElementTypes.PARAMETER_LIST) {
       if (childType == PyTokenTypes.RPAR) {
         childIndent = Indent.getNoneIndent();
       }
@@ -227,8 +227,14 @@ public class PyBlock implements ASTBlock {
       return false;
     }
     if (_node.getElementType() == PyElementTypes.ARGUMENT_LIST) {
-      PyArgumentList argList = (PyArgumentList) _node.getPsi();
+      if (!mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS) {
+        return false;
+      }
+      PyArgumentList argList = (PyArgumentList)_node.getPsi();
       return argList != null && argList.getArguments().length > 1;
+    }
+    if (_node.getElementType() == PyElementTypes.PARAMETER_LIST) {
+      return mySettings.ALIGN_MULTILINE_PARAMETERS;
     }
     if (child.getElementType() == PyTokenTypes.COMMA) {
       return false;
@@ -380,6 +386,9 @@ public class PyBlock implements ASTBlock {
     }
     if (type2 == PyElementTypes.ARGUMENT_LIST) {
       return getSpacingForOption(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
+    }
+    if (type2 == PyElementTypes.PARAMETER_LIST) {
+      return getSpacingForOption(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
     }
 
     if (type1 == PyTokenTypes.EQ || type2 == PyTokenTypes.EQ) {
@@ -556,6 +565,9 @@ public class PyBlock implements ASTBlock {
   @Nullable
   private Alignment getChildAlignment() {
     if (ourListElementTypes.contains(_node.getElementType())) {
+      if (_node.getPsi() instanceof PyParameterList && !mySettings.ALIGN_MULTILINE_PARAMETERS) {
+        return null;
+      }
       if (_node.getPsi() instanceof PyDictLiteralExpression) {
         PyKeyValueExpression[] elements = ((PyDictLiteralExpression)_node.getPsi()).getElements();
         if (elements.length == 0) {

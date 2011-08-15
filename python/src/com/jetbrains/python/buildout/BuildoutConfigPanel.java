@@ -1,14 +1,22 @@
 package com.jetbrains.python.buildout;
 
+import com.intellij.facet.impl.ui.FacetErrorPanel;
+import com.intellij.facet.ui.FacetEditorValidator;
+import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,6 +32,7 @@ public class BuildoutConfigPanel extends JPanel {
   private ComboboxWithBrowseButton myScript;
   private JPanel myPanel;
   private JTextArea myNoticeTextArea;
+  private JPanel myErrorPanel;
   private final Module myModule;
   private BuildoutFacetConfiguration myConfiguration;
 
@@ -32,7 +41,7 @@ public class BuildoutConfigPanel extends JPanel {
     myConfiguration = config;
     setLayout(new BorderLayout());
     add(myPanel);
-    
+
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     //descriptor.setRoot(myConfiguration.getRoot());
     myScript.addBrowseFolderListener(
@@ -40,6 +49,35 @@ public class BuildoutConfigPanel extends JPanel {
       null, descriptor, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT, false
     );
     myScript.getComboBox().setEditable(true);
+
+    initErrorValidation();
+  }
+
+  private void initErrorValidation() {
+    FacetErrorPanel facetErrorPanel = new FacetErrorPanel();
+    myErrorPanel.add(facetErrorPanel.getComponent(), BorderLayout.CENTER);
+
+    facetErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
+      @Override
+      public ValidationResult check() {
+        return validateScriptName(getScriptName());
+      }
+    }, myScript);
+
+    facetErrorPanel.getValidatorsManager().validate();
+  }
+
+  private static ValidationResult validateScriptName(String scriptName) {
+    if (StringUtil.isEmpty(scriptName)) {
+      return new ValidationResult("Please specify buildout script");
+    }
+    try {
+      getScriptFile(scriptName);
+    }
+    catch (ConfigurationException e) {
+      return new ValidationResult(e.getMessage());
+    }
+    return ValidationResult.OK;
   }
 
   public boolean isModified(BuildoutFacetConfiguration configuration) {
@@ -49,7 +87,7 @@ public class BuildoutConfigPanel extends JPanel {
   }
 
   public String getScriptName() {
-    return (String) myScript.getComboBox().getEditor().getItem();
+    return (String)myScript.getComboBox().getEditor().getItem();
   }
 
   public void reset() {
@@ -77,4 +115,12 @@ public class BuildoutConfigPanel extends JPanel {
     myNoticeTextArea.setVisible(show);
   }
 
+  @NotNull
+  public static VirtualFile getScriptFile(String script_name) throws ConfigurationException {
+    VirtualFile script_file = LocalFileSystem.getInstance().findFileByPath(script_name);
+    if (script_file == null || script_file.isDirectory()) {
+      throw new ConfigurationException("Invalid script file '" + script_name + "'");
+    }
+    return script_file;
+  }
 }

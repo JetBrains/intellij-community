@@ -22,6 +22,8 @@ public class PyStackFrame extends XStackFrame {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyStackFrame");
 
+  private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
+
   private final PyDebugProcess myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
   private XSourcePosition myPosition;
@@ -30,6 +32,11 @@ public class PyStackFrame extends XStackFrame {
     myDebugProcess = debugProcess;
     myFrameInfo = frameInfo;
     myPosition = myDebugProcess.getPositionConverter().convert(frameInfo.getPosition());
+  }
+
+  @Override
+  public Object getEqualityObject() {
+    return STACK_FRAME_EQUALITY_OBJECT;
   }
 
   @Override

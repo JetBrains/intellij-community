@@ -66,6 +66,7 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PySuperClassIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyVariableNameIndex"/>
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex"/>
 
     <fileTypeIndentOptionsProvider implementation="com.jetbrains.python.formatter.PyIndentOptionsProvider"/>
 
@@ -250,9 +251,10 @@
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyClassNameCompletionContributor"/>
     <weigher key="completion" implementationClass="com.jetbrains.python.codeInsight.PythonCompletionWeigher" order="first"/>
     <typedHandler implementation="com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler" id="pydevBlockAutoPopup"
-                  order="before completionAutoPopup"/>
+                  order="first, before completionAutoPopup"/>
 
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyInitReferenceSearchExecutor"/>
+    <referencesSearch implementation="com.jetbrains.python.psi.search.PyKeywordArgumentSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyStringReferenceSearch"/>
     <findUsagesHandlerFactory implementation="com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory" id="Python"
                               order="last, before default"/>
@@ -276,6 +278,8 @@
 
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyStringLiteralExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionManipulator"/>
+    <lang.elementManipulator forClass="com.jetbrains.python.psi.PyKeywordArgument"
+                             implementationClass="com.jetbrains.python.psi.impl.PyKeywordArgumentManipulator"/>
 
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>
 
@@ -289,19 +293,25 @@
 
     <problemFileHighlightFilter implementation="com.jetbrains.python.codeInsight.PyProblemFileHighlightFilter"/>
 
-    <editorSmartKeysConfigurable implementation="com.jetbrains.python.codeInsight.PySmartKeysOptions"/>
-    <editorSmartKeysConfigurable implementation="com.jetbrains.python.codeInsight.PySpecificSmartKeysOptions"/>
+    <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySmartKeysOptions"/>
+    <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySpecificSmartKeysOptions"/>
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor"/>
 
     <applicationService serviceInterface="com.jetbrains.python.documentation.PythonDocumentationMap"
                         serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
-    <applicationConfigurable implementation="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
+    <applicationConfigurable instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.configuration.PyIntegratedToolsConfigurable"/>
     <projectService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                     serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.DocStringReferenceContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.DocStringTagCompletionContributor"/>
+
+    <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
+                    serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
+                    overrides="true"/>
+
+    <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
@@ -335,6 +345,7 @@
                     serviceImplementation="com.jetbrains.django.model.DjangoTagLibrary"/>
 
     <facetType implementation="com.jetbrains.django.facet.DjangoFacetType"/>
+    <framework.detector implementation="com.jetbrains.django.facet.DjangoFrameworkDetector"/>
 
     <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
@@ -420,8 +431,11 @@
       <category>Python</category>
     </intentionAction>
 
+    <lang.braceMatcher language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.highlighting.DjangoTemplateBraceMatcher"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
+    <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>
 
     <configurationType implementation="com.jetbrains.appengine.run.AppEngineServerRunConfigurationType"/>
 
@@ -445,6 +459,7 @@
 
     <!-- Buildout -->
     <facetType implementation="com.jetbrains.python.buildout.BuildoutFacetType"/>
+    <framework.detector implementation="com.jetbrains.python.buildout.BuildoutFrameworkDetector"/>
 
     <lang.parserDefinition language="BuildoutCfg" implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgParserDefinition"/>
     <fileTypeFactory implementation="com.jetbrains.python.buildout.config.BuildoutCfgFileTypeFactory"/>

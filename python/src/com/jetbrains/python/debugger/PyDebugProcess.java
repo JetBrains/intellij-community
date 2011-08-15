@@ -9,6 +9,8 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -24,6 +26,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandler;
 import com.jetbrains.python.debugger.pydev.*;
@@ -236,8 +239,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     dropFrameCaches();
     if (myDebugger.isConnected() && !mySuspendedThreads.isEmpty()) {
       final PySourcePosition pyPosition = myPositionConverter.convert(position);
+      String type = PyLineBreakpointType.ID;
+      final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
+      if (document != null) {
+        if (DjangoUtil.isDjangoTemplateDocument(document, getSession().getProject())) {
+          type = DjangoTemplateLineBreakpointType.ID;
+        }
+      }
       final SetBreakpointCommand command =
-        new SetBreakpointCommand(myDebugger, PyLineBreakpointType.ID, pyPosition.getFile(), pyPosition.getLine());
+        new SetBreakpointCommand(myDebugger, type, pyPosition.getFile(), pyPosition.getLine());
       myDebugger.execute(command);  // set temp. breakpoint
       resume(ResumeCommand.Mode.RESUME);
     }

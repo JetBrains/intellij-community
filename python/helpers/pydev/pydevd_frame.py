@@ -192,7 +192,11 @@ class PyDBFrame:
         try:
             django_stop = False
             if info.pydev_step_cmd == CMD_STEP_INTO:
-                stop = event in ('line', 'return')
+                if is_django_suspended(thread):
+                    django_stop = event == 'call' and is_django_render_call(frame)
+                    stop = False
+                else:
+                    stop = event in ('line', 'return')
 
             elif info.pydev_step_cmd == CMD_STEP_OVER:
                 if is_django_suspended(thread):

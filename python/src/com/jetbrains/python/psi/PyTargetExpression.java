@@ -38,4 +38,7 @@ public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedEleme
 
   @NotNull
   PsiReference getReference();
+  
+  @Nullable
+  PyClass getContainingClass();
 }

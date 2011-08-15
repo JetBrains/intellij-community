@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyExpression;
@@ -42,5 +43,14 @@ public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArg
   public PyType getType(@NotNull TypeEvalContext context) {
     final PyExpression e = getValueExpression();
     return e != null ? e.getType(context) : null;
+  }
+
+  @Override
+  public PsiReference getReference() {
+    final ASTNode keywordNode = getKeywordNode();
+    if (keywordNode != null) {
+      return new PyKeywordArgumentReference(this, keywordNode.getTextRange().shiftRight(-getTextRange().getStartOffset()));
+    }
+    return null;
   }
 }
