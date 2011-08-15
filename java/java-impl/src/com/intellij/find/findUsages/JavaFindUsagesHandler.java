@@ -619,7 +619,12 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   public static void addElementUsages(final PsiElement element, final Processor<UsageInfo> result, final FindUsagesOptions options) {
     final SearchScope searchScope = options.searchScope;
-    if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()){
+    if (element instanceof PsiMethod && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return ((PsiMethod)element).isConstructor();
+      }
+    })){
       PsiMethod method = (PsiMethod)element;
       final PsiClass parentClass = method.getContainingClass();
 
