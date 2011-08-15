@@ -350,7 +350,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
   public void commitSynchronously(@NotNull Document document, @NotNull Project project, PsiFile excludeFile) {
     assert !isDisposed;
 
-    if (!project.isInitialized()) {
+    if (!project.isInitialized() && !project.isDefault()) {
       @NonNls String s = project + "; Disposed: "+project.isDisposed()+"; Open: "+project.isOpen();
       s += "; SA Passed: ";
       try {
