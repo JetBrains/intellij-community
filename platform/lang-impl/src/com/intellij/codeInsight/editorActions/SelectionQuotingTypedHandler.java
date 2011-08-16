@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -24,13 +39,15 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       if (selectedText.length() < 1) {
         return super.checkAutoPopup(c, project, editor, psiFile);
       }
-      if (selectedText.length() > 1 && isDelimiter(selectedText.charAt(0)) &&
-          selectedText.charAt(selectedText.length()-1) == getMatchingDelimiter(selectedText.charAt(0))) {
-        selectedText = selectedText.substring(1, selectedText.length()-1);
-      }
       char c2 = getMatchingDelimiter(c);
+      if (selectedText.length() > 1) {
+        final char firstChar = selectedText.charAt(0);
+        if (isSimilarDelimiters(firstChar, c) && selectedText.charAt(selectedText.length() - 1) == getMatchingDelimiter(firstChar)) {
+          selectedText = selectedText.substring(1, selectedText.length() - 1);
+        }
+      }
       int caretOffset = editor.getSelectionModel().getSelectionStart();
-      String newText = String.valueOf(c) + selectedText + c2;
+      final String newText = String.valueOf(c) + selectedText + c2;
       EditorModificationUtil.insertStringAtCaret(editor, newText);
       myReplacedTextRange = new TextRange(caretOffset, caretOffset + newText.length());
       return Result.STOP;
@@ -48,7 +65,19 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   }
 
   private static boolean isDelimiter(final char c) {
-    return c == '(' || c == '{' || c == '[' || c == '<' || c == '"' || c == '\'';
+    return isBracket(c) || isQuote(c);
+  }
+
+  private static boolean isBracket(final char c) {
+    return c == '(' || c == '{' || c == '[' || c == '<';
+  }
+
+  private static boolean isQuote(final char c) {
+    return c == '"' || c == '\'';
+  }
+
+  private static boolean isSimilarDelimiters(final char c1, final char c2) {
+    return (isBracket(c1) && isBracket(c2)) || (isQuote(c1) && isQuote(c2));
   }
 
   public Result beforeCharTyped(final char charTyped, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
