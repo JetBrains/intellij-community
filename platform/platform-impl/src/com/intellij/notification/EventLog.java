@@ -375,15 +375,22 @@ public class EventLog implements Notifications {
 
     @Override
     public void navigate(Project project) {
-      Balloon balloon = myNotification.getBalloon();
-      if (balloon != null) {
-        balloon.hide();
+      hideBalloon(myNotification);
+
+      for (Notification notification : getLogModel(project).getNotifications()) {
+        hideBalloon(notification);
       }
 
       RelativePoint target = EventLog.getProjectComponent(project).myConsole.getHyperlinkLocation(this);
       if (target != null) {
-        balloon = NotificationsManagerImpl.createBalloon(myNotification, true, true, false);
-        balloon.show(target, Balloon.Position.above);
+        NotificationsManagerImpl.createBalloon(myNotification, true, true, false).show(target, Balloon.Position.above);
+      }
+    }
+
+    private static void hideBalloon(Notification notification1) {
+      Balloon balloon = notification1.getBalloon();
+      if (balloon != null) {
+        balloon.hide();
       }
     }
   }
