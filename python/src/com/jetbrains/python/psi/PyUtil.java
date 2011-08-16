@@ -923,29 +923,21 @@ public class PyUtil {
     if (klass == null) return false;
     PyExpression callee = node.getCallee();
     if (callee == null) return false;
-    PsiReference reference = callee.getReference();
-    if (reference == null) return false;
-    PsiElement resolved = reference.resolve();
-    if (resolved == null) return false;
-    ProjectFileIndex
-      ind = ProjectRootManager.getInstance(callee.getProject()).getFileIndex();
-    PsiFile file = resolved.getContainingFile();
-    if (file != null && ind.isInLibraryClasses(file.getVirtualFile())) {
-      String name = callee.getName();
-      if (PyNames.SUPER.equals(name)) {
-        PyExpression[] args = node.getArguments();
-        if (args.length > 0) {
-          String firstArg = args[0].getText();
-          if (firstArg.equals(klass.getName()) || firstArg.equals(PyNames.CANONICAL_SELF+"."+PyNames.CLASS))
-              return true;
-          for (PyClass s : klass.iterateAncestorClasses()) {
-            if (firstArg.equals(s.getName()))
-              return true;
-          }
+    String name = callee.getName();
+    PyBuiltinCache cache = PyBuiltinCache.getInstance(node);
+    if (PyNames.SUPER.equals(name) && cache.hasInBuiltins(callee)) {
+      PyExpression[] args = node.getArguments();
+      if (args.length > 0) {
+        String firstArg = args[0].getText();
+        if (firstArg.equals(klass.getName()) || firstArg.equals(PyNames.CANONICAL_SELF+"."+PyNames.CLASS))
+            return true;
+        for (PyClass s : klass.iterateAncestorClasses()) {
+          if (firstArg.equals(s.getName()))
+            return true;
         }
-        else
-          return true;
       }
+      else
+        return true;
     }
     return false;
   }
