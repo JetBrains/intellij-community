@@ -25,10 +25,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.MouseChecker;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -40,10 +40,9 @@ import com.intellij.openapi.vcs.ui.SearchFieldAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
@@ -121,6 +120,7 @@ public class GitLogUI implements Disposable {
   private final RequestsMerger mySelectionRequestsMerger;
 
   private final TableCellRenderer myAuthorRenderer;
+  private MyRootsAction myRootsAction;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -528,8 +528,6 @@ public class GitLogUI implements Disposable {
   }
 
   private JPanel createMainTable() {
-    final ActionToolbar actionToolbar = createToolbar();
-
     myJBTable = new JBTable(myTableModel) {
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
@@ -549,6 +547,7 @@ public class GitLogUI implements Disposable {
         return null;
       }
     };
+    final ActionToolbar actionToolbar = createToolbar();
     tableLinkListener.install(myJBTable);
     myJBTable.getExpandableItemsHandler().setEnabled(false);
     myJBTable.setShowGrid(false);
@@ -646,13 +645,21 @@ public class GitLogUI implements Disposable {
     group.add(new MyTextFieldAction());
     group.add(myBranchSelectorAction);
     group.add(myUsersFilterAction);
-    myStructureFilter = new MyStructureFilter(reloadCallback);
+    Getter<List<VirtualFile>> rootsGetter = new Getter<List<VirtualFile>>() {
+      @Override
+      public List<VirtualFile> get() {
+        return myRootsUnderVcs;
+      }
+    };
+    myStructureFilter = new MyStructureFilter(reloadCallback, rootsGetter);
     myStructureFilterAction = new StructureFilterAction(myProject, myStructureFilter);
     group.add(myStructureFilterAction);
     myCherryPickAction = new MyCherryPick();
     group.add(myCherryPickAction);
     group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
     myRefreshAction = new MyRefreshAction();
+    myRootsAction = new MyRootsAction(rootsGetter, myJBTable);
+    group.add(myRootsAction);
     group.add(myRefreshAction);
     myMoreAction = new MoreAction() {
       @Override
@@ -1352,9 +1359,11 @@ public class GitLogUI implements Disposable {
     private boolean myAllSelected;
     private final List<VirtualFile> myFiles;
     private final Runnable myReloadCallback;
+    private final Getter<List<VirtualFile>> myGetter;
 
-    private MyStructureFilter(Runnable reloadCallback) {
+    private MyStructureFilter(Runnable reloadCallback, final Getter<List<VirtualFile>> getter) {
       myReloadCallback = reloadCallback;
+      myGetter = getter;
       myFiles = new ArrayList<VirtualFile>();
       myAllSelected = true;
     }
@@ -1378,6 +1387,58 @@ public class GitLogUI implements Disposable {
     @Override
     public Collection<VirtualFile> getSelected() {
       return myFiles;
+    }
+
+    @Override
+    public List<VirtualFile> getRoots() {
+      return myGetter.get();
+    }
+  }
+
+  public void setProjectScope(boolean projectScope) {
+    myRootsAction.setEnabled(! projectScope);
+  }
+
+  private static class MyRootsAction extends AnAction {
+    private boolean myEnabled;
+    private final Getter<List<VirtualFile>> myRootsGetter;
+    private final JComponent myComponent;
+
+    private MyRootsAction(final Getter<List<VirtualFile>> rootsGetter, final JComponent component) {
+      super("Show roots", "Show roots", IconLoader.getIcon("/general/balloonInformation.png"));
+      myRootsGetter = rootsGetter;
+      myComponent = component;
+      myEnabled = false;
+    }
+
+    public void setEnabled(boolean enabled) {
+      myEnabled = enabled;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myEnabled);
+      e.getPresentation().setVisible(myEnabled);
+      super.update(e);
+    }
+
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      List<VirtualFile> virtualFiles = myRootsGetter.get();
+      assert virtualFiles != null && virtualFiles.size() > 0;
+      SortedListModel sortedListModel = new SortedListModel(null);
+      final JBList jbList = new JBList(sortedListModel);
+      sortedListModel.add("Roots:");
+      for (VirtualFile virtualFile : virtualFiles) {
+        sortedListModel.add(virtualFile.getPath());
+      }
+
+      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(jbList, jbList).createPopup();
+      if (e.getInputEvent() instanceof MouseEvent) {
+        popup.show(new RelativePoint((MouseEvent)e.getInputEvent()));
+      } else {
+        popup.showInBestPositionFor(e.getDataContext());
+      }
     }
   }
 }

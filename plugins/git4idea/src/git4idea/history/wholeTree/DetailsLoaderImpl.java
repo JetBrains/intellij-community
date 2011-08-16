@@ -12,6 +12,7 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -48,6 +49,7 @@ public class DetailsLoaderImpl implements DetailsLoader {
   private long myRefsReloadTick;
 
   private final Object myLock;
+  private ModalityState myState;
 
   public DetailsLoaderImpl(Project project, BackgroundTaskQueue queue) {
     myQueue = queue;
@@ -57,11 +59,11 @@ public class DetailsLoaderImpl implements DetailsLoader {
     myRefs = new HashMap<VirtualFile, SymbolicRefs>();
     myRefsReloadTick = 0;
     myLock = new Object();
-    scheduleRefs();
+    //scheduleRefs();
   }
 
   private void scheduleRefs() {
-    myQueue.run(new RefsLoader(myProject));
+    myQueue.run(new RefsLoader(myProject), myState, null);
   }
 
   public void setDetailsCache(DetailsCache detailsCache) {
@@ -93,9 +95,13 @@ public class DetailsLoaderImpl implements DetailsLoader {
       for (VirtualFile root : hashes.keySet()) {
         final CommitIdsHolder<AbstractHash> holder = myLoadIdsGatherer.get(root);
         holder.add(hashes.get(root));
-        myQueue.run(new Worker(myProject, root, myAccesses.get(root), myDetailsCache, myQueue));
+        myQueue.run(new Worker(myProject, root, myAccesses.get(root), myDetailsCache, myQueue), myState, null);
       }
     }
+  }
+
+  public void setModalityState(ModalityState state) {
+    myState = state;
   }
 
   private class RefsLoader extends Task.Backgroundable {
@@ -162,7 +168,7 @@ public class DetailsLoaderImpl implements DetailsLoader {
         }
       }
       if (holder.haveData()) {
-        myQueue.run(this);
+        myQueue.run(this, myState, null);
       }
     }
 

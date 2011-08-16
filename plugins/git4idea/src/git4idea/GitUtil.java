@@ -263,6 +263,10 @@ public class GitUtil {
     return getGitRootOrNull(filePath.getIOFile());
   }
 
+  public static boolean isGitRoot(final File file) {
+    return file != null && file.exists() && file.isDirectory() && new File(file, ".git").exists();
+  }
+
   @Nullable
   public static VirtualFile getGitRootOrNull(final File file) {
     File root = file;

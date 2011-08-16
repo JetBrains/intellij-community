@@ -59,7 +59,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(project != null && canShowDiff(changes));
   }
 
-  private static boolean canShowDiff(Change[] changes) {
+  protected static boolean canShowDiff(Change[] changes) {
     if (changes == null || changes.length == 0) return false;
     return !ChangesUtil.getFilePath(changes [0]).isDirectory();
   }

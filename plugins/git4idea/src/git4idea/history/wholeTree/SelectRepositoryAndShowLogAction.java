@@ -18,39 +18,240 @@ package git4idea.history.wholeTree;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.util.Function;
+import com.intellij.util.SmartList;
+import com.intellij.util.ui.AdjustComponentWhenShown;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
+import git4idea.config.GitVersion;
+import git4idea.history.browser.GitProjectLogManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author irengrig
  */
 public class SelectRepositoryAndShowLogAction extends AnAction {
+  public static final String ourTitle = "Show Git repository log";
+  public static final int MAX_REPOS = 10;
+
   public SelectRepositoryAndShowLogAction() {
-    super("Select and browse git repo");
+    super(ourTitle + "...");
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, new FileChooserDescriptor(false, true, false, true, false, false));
+    final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, new FileChooserDescriptor(false, true, false, true, false, true));
     if (virtualFiles.length == 0) return;
+    if (virtualFiles.length > MAX_REPOS) {
+      VcsBalloonProblemNotifier.showOverVersionControlView(project, "Too many roots (more than " + MAX_REPOS +
+        ") selected.", MessageType.ERROR);
+      return;
+    }
+    final List<VirtualFile> wrongRoots = new SmartList<VirtualFile>();
+    final List<VirtualFile> correctRoots = new SmartList<VirtualFile>();
+    for (VirtualFile vf : virtualFiles) {
+      if (! GitUtil.isGitRoot(new File(vf.getPath()))) {
+        wrongRoots.add(vf);
+      } else {
+        correctRoots.add(vf);
+      }
+    }
+    if (! wrongRoots.isEmpty()) {
+      VcsBalloonProblemNotifier.showOverVersionControlView(project, "These files are not Git repository roots:\n" +
+        StringUtil.join(wrongRoots, new Function<VirtualFile, String>() {
+                          @Override
+                          public String fun(VirtualFile virtualFile) {
+                            return virtualFile.getPath();
+                          }
+                        }, "\n"), MessageType.ERROR);
+    }
 
-    new MyDialog(project, virtualFiles).show();
+    if (wrongRoots.size() != virtualFiles.length) {
+      if (project == null || project.isDefault()) {
+        ProgressManager.getInstance().run(new MyPrepareToShowForDefaultProject(null, correctRoots));
+        return;
+      }
+
+      final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+      final Project finalProject = project;
+      Runnable showContent = new Runnable() {
+        @Override
+        public void run() {
+          ContentManager cm = window.getContentManager();
+          if (checkForProjectScope(cm, project, correctRoots)) return;
+
+          int cnt = 0;
+          Content[] contents = cm.getContents();
+          for (Content content : contents) {
+            final JComponent component = content.getComponent();
+            if (component instanceof MyContentComponent) {
+              cnt = Math.max(cnt, ((MyContentComponent)component).getCount());
+              List<VirtualFile> roots = ((MyContentComponent)component).getRoots();
+              if (Comparing.equal(roots, correctRoots)) {
+                cm.setSelectedContent(content);
+                alreadyOpened(project);
+                return;
+              }
+            }
+          }
+
+          LogFactoryService logFactoryService = LogFactoryService.getInstance(finalProject);
+          final GitLog gitLog = logFactoryService.createComponent(false);
+          gitLog.rootsChanged(correctRoots);
+          final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+          ++cnt;
+          MyContentComponent contentComponent = new MyContentComponent(new BorderLayout(), cnt);
+          contentComponent.setRoots(correctRoots);
+          contentComponent.add(gitLog.getVisualComponent(), BorderLayout.CENTER);
+          final Content content = contentFactory.createContent(contentComponent, "Log (" + cnt + ")", false);
+          content.setDescription("test!");
+          content.setCloseable(true);
+          Disposer.register(content, gitLog);
+          cm.addContent(content);
+          cm.setSelectedContent(content);
+        }
+      };
+      if (! window.isVisible()) {
+        window.activate(showContent, true);
+      } else {
+        showContent.run();
+      }
+    }
+  }
+
+  private static void alreadyOpened(final Project project) {
+    VcsBalloonProblemNotifier.showOverChangesView(project, "Already opened", MessageType.INFO);
+  }
+
+  private boolean checkForProjectScope(ContentManager cm, Project project, List<VirtualFile> correctRoots) {
+    VirtualFile[] rootsUnderVcs = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project));
+    if (Comparing.equal(correctRoots, Arrays.asList(rootsUnderVcs))) {
+      Content[] contents = cm.getContents();
+      for (Content content : contents) {
+        if (GitProjectLogManager.CONTENT_KEY.equals(content.getDisplayName())) {
+          cm.setSelectedContent(content);
+          alreadyOpened(project);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static class MyContentComponent extends JPanel {
+    private List<VirtualFile> myRoots;
+    private int myCount;
+
+    private MyContentComponent(LayoutManager layout, boolean isDoubleBuffered, int count) {
+      super(layout, isDoubleBuffered);
+      myCount = count;
+    }
+
+    private MyContentComponent(LayoutManager layout, int count) {
+      super(layout);
+      myCount = count;
+    }
+
+    private MyContentComponent(boolean isDoubleBuffered, int count) {
+      super(isDoubleBuffered);
+      myCount = count;
+    }
+
+    public int getCount() {
+      return myCount;
+    }
+
+    private MyContentComponent(int count) {
+      myCount = count;
+    }
+
+    public void setRoots(List<VirtualFile> roots) {
+      myRoots = roots;
+    }
+
+    public List<VirtualFile> getRoots() {
+      return myRoots;
+    }
+  }
+
+  private static class MyPrepareToShowForDefaultProject extends Task.Backgroundable {
+    private Project myProject;
+    private final List<VirtualFile> myCorrectRoots;
+
+    private MyPrepareToShowForDefaultProject(@Nullable Project project, List<VirtualFile> correctRoots) {
+      super(project, ourTitle, true, BackgroundFromStartOption.getInstance());
+      myCorrectRoots = correctRoots;
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      myProject = ProjectManager.getInstance().getDefaultProject();
+      GitVcs vcs = GitVcs.getInstance(myProject);
+      GitVersion version = vcs.getVersion();
+      if (version == null) {
+        vcs.checkVersion();
+      }
+      if (version == null) return;
+    }
+
+    @Override
+    public void onSuccess() {
+      if (myProject.isDisposed()) return;
+      new MyDialog(myProject, myCorrectRoots).show();
+    }
   }
 
   private static class MyDialog extends DialogWrapper {
     private GitLog myGitLog;
+    private final Project myProject;
+    private final List<VirtualFile> myVirtualFiles;
 
-    private MyDialog(Project project, final VirtualFile[] virtualFiles) {
+    private MyDialog(Project project, final List<VirtualFile> virtualFiles) {
       super(project, true);
-      myGitLog = LogFactoryService.getInstance(project).createComponent();
-      myGitLog.rootsChanged(Arrays.asList(virtualFiles));
+      myProject = project;
+      myVirtualFiles = virtualFiles;
+      myGitLog = new LogFactoryService(myProject).createComponent(false);
+      myGitLog.rootsChanged(myVirtualFiles);
+      Disposer.register(getDisposable(), myGitLog);
+      new AdjustComponentWhenShown() {
+        @Override
+        protected boolean init() {
+          myGitLog.setModalityState(ModalityState.current());
+          return true;
+        }
+      }.install(myGitLog.getVisualComponent());
+      setTitle("Git Log");
       init();
     }
 
@@ -60,21 +261,8 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
     }
 
     @Override
-    public void doCancelAction() {
-      // todo stop listener?
-      super.doCancelAction();
-    }
-
-    @Override
-    protected void doOKAction() {
-      // todo stop listener?
-      super.doOKAction();
-    }
-
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-     // myGitLogLongPanel.setModalityState(ModalityState.current());
-      return super.getPreferredFocusedComponent();
+    protected Action[] createActions() {
+      return new Action[0];
     }
   }
 }
