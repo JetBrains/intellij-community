@@ -70,7 +70,7 @@ public class EventLog implements Notifications {
   private final LogModel myModel = new LogModel(null);
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
-  private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=\"([^>]*)\"[^>]*>");
+  private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
 
   public EventLog() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, this);
@@ -117,7 +117,7 @@ public class EventLog implements Notifications {
     String mainText = notification.getTitle();
     boolean showMore = false;
     if (StringUtil.isNotEmpty(content)) {
-      if (content.startsWith("<")) {
+      if (content.startsWith("<") && !content.startsWith("<a ")) {
         showMore = true;
       }
       else {
@@ -361,7 +361,7 @@ public class EventLog implements Notifications {
         }
         catch (MalformedURLException ignored) {
         }
-        listener.hyperlinkUpdate(myNotification, new HyperlinkEvent(console, HyperlinkEvent.EventType.ACTIVATED, url, myHref));
+        listener.hyperlinkUpdate(myNotification, new HyperlinkEvent(console.getConsoleEditor().getContentComponent(), HyperlinkEvent.EventType.ACTIVATED, url, myHref));
       }
     }
   }
