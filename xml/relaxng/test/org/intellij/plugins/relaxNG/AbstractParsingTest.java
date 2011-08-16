@@ -16,22 +16,21 @@
 
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.plugins.relaxNG.compact.RncParserDefinition;
 
 /*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.08.2007
-*/
+ * Created by IntelliJ IDEA.
+ * User: sweinreuter
+ * Date: 24.08.2007
+ */
 public abstract class AbstractParsingTest extends ParsingTestCase {
   public AbstractParsingTest(String s) {
-    super("psi/"+s, "rnc", new RncParserDefinition());
+    super("psi/" + s, "rnc", new RncParserDefinition());
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/community/xml/relaxng/testData/parsing";
+    return PlatformTestUtil.getCommunityPath() + "/xml/relaxng/testData/parsing";
   }
-
 }
