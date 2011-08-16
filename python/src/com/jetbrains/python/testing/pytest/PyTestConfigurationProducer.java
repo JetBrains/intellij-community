@@ -75,13 +75,13 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
       if (pyClass != null)
         name = pyClass.getName() + "."+name;
       configuration.setKeywords(name);
-      configuration.setName(name + " in " + configuration.getName());
+      configuration.setName(name);
       myPsiElement = pyFunction;
     }
     else if (pyClass != null) {
       String name = pyClass.getName();
       configuration.setKeywords(name);
-      configuration.setName(name + " in " + configuration.getName());
+      configuration.setName(name);
       myPsiElement = pyClass;
     }
     configuration.setName(configuration.suggestedName());
