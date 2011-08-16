@@ -151,6 +151,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
+  @Override
+  protected void createDefaultActions() {
+    super.createDefaultActions();
+    getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
+  }
+
   private class ForwardAction extends AnAction implements DumbAware {
     public ForwardAction() {
       super("");
