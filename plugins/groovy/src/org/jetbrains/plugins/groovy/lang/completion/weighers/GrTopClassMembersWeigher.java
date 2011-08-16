@@ -22,13 +22,16 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
+ * set priority to current class members
+ *
  * @author Maxim.Medvedev
  */
 public class GrTopClassMembersWeigher extends CompletionWeigher {
   @Override
-  public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
+  public Integer weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
     Object o = element.getObject();
     if (o instanceof ResolveResult) {
       o = ((ResolveResult)o).getElement();
@@ -41,12 +44,16 @@ public class GrTopClassMembersWeigher extends CompletionWeigher {
     if (!(parent instanceof GrReferenceExpression)) return 0;
 
     final GrExpression qualifier = ((GrReferenceExpression)parent).getQualifierExpression();
-    if (qualifier == null) return 0;
+    final PsiClass psiClass;
+    if (qualifier == null) {
+      psiClass = PsiUtil.getContextClass(position);
+    }
+    else {
+      final PsiType type = qualifier.getType();
+      if (!(type instanceof PsiClassType)) return 0;
 
-    final PsiType type = qualifier.getType();
-    if (!(type instanceof PsiClassType)) return 0;
-
-    final PsiClass psiClass = ((PsiClassType)type).resolve();
+      psiClass = ((PsiClassType)type).resolve();
+    }
     if (psiClass == null) return 0;
 
     if (PsiManager.getInstance(location.getProject()).areElementsEquivalent(((PsiMember)o).getContainingClass(), psiClass)) {

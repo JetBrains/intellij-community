@@ -829,4 +829,12 @@ class X {
   public void testClassNameBeforeParentheses(){
     doBasicTest()
   }
+
+  public void testPropertyBeforeAccessor() {
+    doVariantableTest 'soSe', 'setSoSe'
+  }
+
+  public void testSortOrder0() {
+    doVariantableTest 'se', 'setSe', 'setMetaClass', 'setProperty'
+  }
 }
