@@ -89,6 +89,8 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
           myResultFiles = null;
           mySheetCallback = null;
         }
+        
+        Foundation.cfRelease(self);
       }
     };
 
