@@ -21,8 +21,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing.GroovyDocParsing.RESULT.*;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing.GroovyDocParsing.RESULT.*;
 
 /**
  * @author ilyas
@@ -49,8 +50,7 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
   @NonNls
   private static final String VALUE_TAG = "@value";
 
-  private final static TokenSet REFERENCE_BEGIN = TokenSet.create(mGDOC_TAG_VALUE_TOKEN,
-          mGDOC_TAG_VALUE_SHARP_TOKEN);
+  private final static TokenSet REFERENCE_BEGIN = TokenSet.create(mGDOC_TAG_VALUE_TOKEN, mGDOC_TAG_VALUE_SHARP_TOKEN);
 
   private boolean isInInlinedTag = false;
   private int myBraceCounter = 0;
@@ -58,7 +58,8 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
 
   public boolean parse(PsiBuilder builder) {
 
-    while (parseDataItem(builder)) ;
+    while (parseDataItem(builder)){ /*do nothing*/}
+
     if (builder.getTokenType() == mGDOC_COMMENT_END) {
       while (!builder.eof()) {
         builder.advanceLexer();
@@ -100,9 +101,7 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
     builder.advanceLexer();
 
     if (isInInlinedTag) {
-      if (LINK_TAG.equals(tagName) || LINKPLAIN_TAG.equals(tagName)) {
-        parseSeeOrLinkTagReference(builder);
-      } else if (VALUE_TAG.equals(tagName)) {
+      if (LINK_TAG.equals(tagName) || LINKPLAIN_TAG.equals(tagName) || VALUE_TAG.equals(tagName)) {
         parseSeeOrLinkTagReference(builder);
       }
     } else {
@@ -181,8 +180,12 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
       RESULT result = parseFieldOrMethod(builder);
       if (result == ERROR) {
         marker.drop();
-      } else {
-        marker.done(result == METHOD ? GDOC_METHOD_REF : GDOC_FIELD_REF);
+      }
+      else if (result == METHOD) {
+        marker.done(GDOC_METHOD_REF);
+      }
+      else {
+        marker.done(GDOC_FIELD_REF);
       }
       return true;
     }
