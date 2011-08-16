@@ -27,8 +27,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -82,19 +80,12 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     // Create Server process
     final Process process = createProcess(myProvider);
 
-    Application application = ApplicationManager.getApplication();
-
-    if (application.isDispatchThread()) {
-      initConsoleUI(process);
-    }
-    else {
-      application.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          initConsoleUI(process);
-        }
-      });
-    }
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        initConsoleUI(process);
+      }
+    });
   }
 
   private void initConsoleUI(Process process) {
