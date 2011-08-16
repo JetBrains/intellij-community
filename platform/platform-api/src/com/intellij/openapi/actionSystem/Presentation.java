@@ -334,4 +334,9 @@ public final class Presentation implements Cloneable {
   public void setWeight(double weight) {
     myWeight = weight;
   }
+
+  @Override
+  public String toString() {
+    return myText + " (" + myDescription + ")";
+  }
 }

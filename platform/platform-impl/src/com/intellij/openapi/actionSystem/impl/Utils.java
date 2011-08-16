@@ -178,8 +178,11 @@ public class Utils{
   private static boolean hasVisibleChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
     AnActionEvent event = new AnActionEvent(null, context, place, factory.getPresentation(group), ActionManager.getInstance(), 0);
     event.setInjectedContext(group.isInInjectedContext());
-    AnAction[] children = group.getChildren(event);
-    for (AnAction anAction : children) {
+    for (AnAction anAction : group.getChildren(event)) {
+      if (anAction == null) {
+        LOG.error("Null action found in group " + group + ", " + factory.getPresentation(group));
+        continue;
+      }
       if (anAction instanceof Separator) {
         continue;
       }
@@ -187,8 +190,6 @@ public class Utils{
       if (project != null && DumbService.getInstance(project).isDumb() && !anAction.isDumbAware()) {
         continue;
       }
-
-      LOG.assertTrue(anAction != null, "Null action found in group " + group);
 
       final Presentation presentation = factory.getPresentation(anAction);
       updateGroupChild(context, place, anAction, presentation);
