@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AndroidMavenUtil {
   @NonNls public static final String APKSOURCES_DEPENDENCY_TYPE = "apksources";
+  @NonNls public static final String APKLIB_DEPENDENCY_AND_PACKAGING_TYPE = "apklib";
 
   private AndroidMavenUtil() {
   }

@@ -56,18 +56,25 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
 
   @Override
   public boolean isApplicable(MavenProject mavenProject) {
-    return "apk".equalsIgnoreCase(mavenProject.getPackaging()) && super.isApplicable(mavenProject);
+    return ArrayUtil.find(getSupportedPackagingTypes(), mavenProject.getPackaging()) >= 0 &&
+           super.isApplicable(mavenProject);
   }
 
 
   @Override
   public void getSupportedPackagings(Collection<String> result) {
-    result.add("apk");
+    result.addAll(Arrays.asList(getSupportedPackagingTypes()));
+  }
+
+  @NotNull
+  private static String[] getSupportedPackagingTypes() {
+    return new String[] {"apk", AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE};
   }
 
   @Override
   public void getSupportedDependencyTypes(Collection<String> result, SupportedRequestType type) {
     result.add(AndroidMavenUtil.APKSOURCES_DEPENDENCY_TYPE);
+    result.add(AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE);
   }
 
   @Override
@@ -77,6 +84,10 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
     AndroidMavenProviderImpl.setPathsToDefault(mavenProject, facet.getModule(), facet.getConfiguration());
     AndroidMavenProviderImpl.configureAaptCompilation(mavenProject, facet.getModule(), facet.getConfiguration(),
                                                         AndroidMavenProviderImpl.hasApkSourcesDependency(mavenProject));
+
+    if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(mavenProject.getPackaging())) {
+      facet.getConfiguration().LIBRARY_PROJECT = true;
+    }
   }
 
   @Override
@@ -103,7 +114,6 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
     if (platformLib != null) {
       modelsProvider.getRootModel(facet.getModule()).setSdk(platformLib);
     }
-    //facet.getConfiguration().ADD_ANDROID_LIBRARY = false;
   }
 
   private boolean isAppropriateSdk(@NotNull Sdk sdk, MavenProject mavenProject) {
