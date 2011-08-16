@@ -26,12 +26,15 @@ import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -235,7 +238,12 @@ public class MarkerType {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       super.run(indicator);
-      ClassInheritorsSearch.search(myClass, myClass.getUseScope(), true).forEach(new CommonProcessors.CollectProcessor<PsiClass>() {
+      ClassInheritorsSearch.search(myClass, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+        @Override
+        public SearchScope compute() {
+          return myClass.getUseScope();
+        }
+      }), true).forEach(new CommonProcessors.CollectProcessor<PsiClass>() {
         @Override
         public boolean process(final PsiClass o) {
           updateComponent(o, myRenderer.getComparator());
@@ -266,7 +274,7 @@ public class MarkerType {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       super.run(indicator);
-      OverridingMethodsSearch.search(myMethod, myMethod.getUseScope(), true).forEach(
+      OverridingMethodsSearch.search(myMethod, true).forEach(
         new CommonProcessors.CollectProcessor<PsiMethod>() {
           @Override
           public boolean process(PsiMethod psiMethod) {
