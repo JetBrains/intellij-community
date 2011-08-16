@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.MacOtherAction;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
@@ -143,6 +144,10 @@ public abstract class RefactoringDialog extends DialogWrapper {
   private class PreviewAction extends AbstractAction implements MacOtherAction {
     public PreviewAction() {
       putValue(Action.NAME, RefactoringBundle.message("preview.button"));
+      
+      if (SystemInfo.isMac) {
+        putValue(FOCUSED_ACTION, Boolean.TRUE);
+      }
     }
 
     public void actionPerformed(ActionEvent e) {
