@@ -42,29 +42,65 @@ import java.util.List;
  * @author Rustam Vishnyakov
  */
 
-public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPanel {
+public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
 
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;
   private JTabbedPane myTabbedPane;
 
-  protected MultiTabLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+  protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
   }
 
+  /**
+   * Initializes all standard tabs: "Tabs and Indents", "Spaces", "Blank Lines" and "Wrapping and Braces" if relevant.
+   * For "Tabs and Indents" LanguageCodeStyleSettingsProvider must instantiate its own indent options, for other standard tabs it
+   * must return false in usesSharedPreview() method. You can override this method to add your own tabs by calling super.initTabs() and
+   * then addTab() methods or selectively add needed tabs with your own implementation.
+   * @param settings  Code style settings to be used with initialized panels.
+   * @see LanguageCodeStyleSettingsProvider
+   * @see #addIndentOptionsTab(com.intellij.psi.codeStyle.CodeStyleSettings)
+   * @see #addSpacesTab(com.intellij.psi.codeStyle.CodeStyleSettings)
+   * @see #addBlankLinesTab(com.intellij.psi.codeStyle.CodeStyleSettings)
+   * @see #addWrappingAndBracesTab(com.intellij.psi.codeStyle.CodeStyleSettings)
+   */
   protected void initTabs(CodeStyleSettings settings) {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
+    addIndentOptionsTab(settings);
     if (provider != null && !provider.usesSharedPreview()) {
+      addSpacesTab(settings);
+      addBlankLinesTab(settings);
+      addWrappingAndBracesTab(settings);
+    }
+  }
+
+  /**
+   * Adds "Tabs and Indents" tab if the language has its own LanguageCodeStyleSettings provider and instantiates indent options in 
+   * getDefaultSettings() method.
+   * @param settings CodeStyleSettings to be used with "Tabs and Indents" panel.
+   */
+  protected void addIndentOptionsTab(CodeStyleSettings settings) {
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
+    if (provider != null) {
       IndentOptionsEditor indentOptionsEditor = provider.getIndentOptionsEditor();
       if (indentOptionsEditor != null) {
         MyIndentOptionsWrapper indentOptionsWrapper = new MyIndentOptionsWrapper(settings, provider, indentOptionsEditor);
         addTab(indentOptionsWrapper);
       }
-      addTab(new MySpacesPanel(settings));
-      addTab(new MyBlankLinesPanel(settings));
-      addTab(new MyWrappingAndBracesPanel(settings));
     }
+  }
+
+  protected void addSpacesTab(CodeStyleSettings settings) {
+    addTab(new MySpacesPanel(settings));
+  }
+
+  protected void addBlankLinesTab(CodeStyleSettings settings) {
+    addTab(new MyBlankLinesPanel(settings));
+  }
+
+  protected void addWrappingAndBracesTab(CodeStyleSettings settings) {
+    addTab(new MyWrappingAndBracesPanel(settings));
   }
 
   private void ensureTabs() {
@@ -79,6 +115,10 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
     assert !myTabs.isEmpty();
   }
 
+  /**
+   * Adds a tab with the given CodeStyleAbstractPanel. Tab title is taken from getTabTitle() method.
+   * @param tab The panel to use in a tab.
+   */
   protected final void addTab(CodeStyleAbstractPanel tab) {
     myTabs.add(tab);
     tab.setShouldUpdatePreview(true);
@@ -94,6 +134,11 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
     addTab(wrapper);
   }
 
+  /**
+   * Creates and adds a tab from CodeStyleSettingsProvider. The provider may return false in hasSettingsPage() method in order not to be
+   * shown at top level of code style settings.
+   * @param provider The provider used to create a settings page.
+   */
   protected final void createTab(CodeStyleSettingsProvider provider) {
     if (provider.hasSettingsPage()) return;
     Configurable configurable = provider.createSettingsPage(getCurrentSettings(), getSettings());
@@ -204,7 +249,7 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
 
     public MySpacesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(MultiTabLanguageCodeStylePanel.this.getDefaultLanguage());
+      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
     }
 
     @Override
@@ -228,7 +273,7 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
 
     public MyBlankLinesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(MultiTabLanguageCodeStylePanel.this.getDefaultLanguage());
+      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
     }
 
     @Override
@@ -248,7 +293,7 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
 
     public MyWrappingAndBracesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(MultiTabLanguageCodeStylePanel.this.getDefaultLanguage());
+      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
     }
 
     @Override
@@ -303,7 +348,7 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
 
     @Override
     public Language getDefaultLanguage() {
-      return MultiTabLanguageCodeStylePanel.this.getDefaultLanguage();
+      return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
     }
 
     @Override
@@ -384,7 +429,7 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
     @NotNull
     @Override
     protected FileType getFileType() {
-      Language language = MultiTabLanguageCodeStylePanel.this.getDefaultLanguage();
+      Language language = TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
       return language != null ? language.getAssociatedFileType() : FileTypes.PLAIN_TEXT;
     }
 
@@ -429,7 +474,7 @@ public abstract class MultiTabLanguageCodeStylePanel extends CodeStyleAbstractPa
 
     @Override
     public Language getDefaultLanguage() {
-      return MultiTabLanguageCodeStylePanel.this.getDefaultLanguage();
+      return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
     }
 
     @Override

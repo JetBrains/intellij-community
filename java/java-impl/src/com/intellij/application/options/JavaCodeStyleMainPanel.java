@@ -23,7 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 /**
  * @author Rustam Vishnyakov
  */
-public class JavaCodeStyleMainPanel extends MultiTabLanguageCodeStylePanel {
+public class JavaCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
 
   protected JavaCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(JavaLanguage.INSTANCE, currentSettings, settings);
