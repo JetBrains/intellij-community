@@ -417,11 +417,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {
       g.setColor(TRACK_BACKGROUND);
-      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height + 1);
 
       g.setColor(TRACK_BORDER);
       int border = isMirrored() ? bounds.x + bounds.width - 1 : bounds.x;
-      g.drawLine(border, bounds.y, border, bounds.y + bounds.height);
+      g.drawLine(border, bounds.y, border, bounds.y + bounds.height + 1);
     }
 
     @Override
