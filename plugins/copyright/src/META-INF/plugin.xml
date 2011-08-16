@@ -14,6 +14,8 @@
       <projectConfigurable instance="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
       <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
       <checkinHandlerFactory implementation="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerFactory"/>
+      <applicationService serviceInterface="com.maddyhome.idea.copyright.util.FileTypeUtil"
+                          serviceImplementation="com.maddyhome.idea.copyright.util.FileTypeUtil"/>
       <projectService serviceInterface="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerState"
                       serviceImplementation="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerState"/>
     </extensions>

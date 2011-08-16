@@ -318,7 +318,7 @@ public abstract class AbstractFileProcessor {
     PsiFile[] locals = directory.getFiles();
     for (PsiFile local : locals) {
       CopyrightProfile opts = CopyrightManager.getInstance(project).getCopyrightOptions(local);
-      if (opts != null && FileTypeUtil.getInstance().isSupportedFile(local)) {
+      if (opts != null && FileTypeUtil.isSupportedFile(local)) {
         files.add(local);
       }
 

@@ -16,8 +16,10 @@
 
 package com.maddyhome.idea.copyright.util;
 
+import com.intellij.AppTopics;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.ProjectUtil;
@@ -25,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.messages.MessageBus;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 
@@ -34,12 +37,7 @@ public class FileTypeUtil
 {
     public static synchronized FileTypeUtil getInstance()
     {
-        if (instance == null)
-        {
-            instance = new FileTypeUtil();
-        }
-
-        return instance;
+      return ServiceManager.getService(FileTypeUtil.class);
     }
 
     public static String buildComment(FileType type, String template, LanguageOptions options)
@@ -235,7 +233,7 @@ public class FileTypeUtil
         return types.get(type.getName()) != null;
     }
 
-    public boolean isSupportedFile(PsiFile file)
+    public static boolean isSupportedFile(PsiFile file)
     {
         if (file == null || file instanceof PsiDirectory)
         {
@@ -292,20 +290,19 @@ public class FileTypeUtil
         return !noSeparators.contains(type);
     }
 
-    private FileTypeUtil()
+    public FileTypeUtil(MessageBus bus)
     {
         createMappings();
         loadFileTypes();
-        FileTypeManager.getInstance().addFileTypeListener(new FileTypeListener()
-        {
-            public void beforeFileTypesChanged(FileTypeEvent fileTypeEvent)
-            {
-            }
+        bus.connect().subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
+          @Override
+          public void beforeFileTypesChanged(FileTypeEvent event) {
+          }
 
-            public void fileTypesChanged(FileTypeEvent fileTypeEvent)
-            {
-                loadFileTypes();
-            }
+          @Override
+          public void fileTypesChanged(FileTypeEvent event) {
+            loadFileTypes();
+          }
         });
     }
 
@@ -435,7 +432,6 @@ public class FileTypeUtil
     }
 
     private final Map<String, FileType> types = new HashMap<String, FileType>();
-    private static FileTypeUtil instance;
     private final Map<FileType, Set<FileType>> mappings = new HashMap<FileType, Set<FileType>>();
     private final Set<FileType> noSeparators = new HashSet<FileType>();
 
