@@ -63,31 +63,35 @@ public class MessagePool {
   }
 
   public void addIdeFatalMessage(final IdeaLoggingEvent aEvent) {
-    final LogMessage message = aEvent.getData() instanceof LogMessage ? (LogMessage)aEvent.getData() : new LogMessage(aEvent);
+    Object data = aEvent.getData();
+    final LogMessage message = data instanceof LogMessage ? (LogMessage)data : new LogMessage(aEvent);
     if (myIdeFatals.size() < MAX_POOL_SIZE_FOR_FATALS) {
-      myFatalsGrouper.add(message);
-      String title = getTitle(message);
-      String notificationText = getNotificationText(message);
-      Notification notification = NOTIFICATION_GROUP.createNotification(title, notificationText, NotificationType.ERROR, new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          Object source = event.getSource();
-          if (source instanceof Component) {
-            Window window = SwingUtilities.getWindowAncestor((Component)source);
-            if (window instanceof IdeFrame) {
-              StatusBarWidget widget = ((IdeStatusBarImpl)((IdeFrame)window).getStatusBar()).getWidget(IdeMessagePanel.FATAL_ERROR);
-              if (widget instanceof IdeMessagePanel) {
-                ((IdeMessagePanel)widget).openFatals(message);
+      if (myFatalsGrouper.addToGroup(message)) {
+        String title = getTitle(message);
+        String notificationText = getNotificationText(message);
+        Notification notification =
+          NOTIFICATION_GROUP.createNotification(title, notificationText, NotificationType.ERROR, new NotificationListener() {
+            @Override
+            public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+              Object source = event.getSource();
+              if (source instanceof Component) {
+                Window window = SwingUtilities.getWindowAncestor((Component)source);
+                if (window instanceof IdeFrame) {
+                  StatusBarWidget widget = ((IdeStatusBarImpl)((IdeFrame)window).getStatusBar()).getWidget(IdeMessagePanel.FATAL_ERROR);
+                  if (widget instanceof IdeMessagePanel) {
+                    ((IdeMessagePanel)widget).openFatals(message);
+                  }
+                }
               }
             }
-          }
-        }
-      });
-      notification.notify(null);
-      message.setNotification(notification);
+          });
+        notification.notify(null);
+        message.setNotification(notification);
+      }
     } else if (myIdeFatals.size() == MAX_POOL_SIZE_FOR_FATALS) {
-      myFatalsGrouper.add(new LogMessage(new LoggingEvent(DiagnosticBundle.message("error.monitor.too.many.errors"),
-                                                          Category.getRoot(), Priority.ERROR, null, new TooManyErrorsException())));
+      String msg = DiagnosticBundle.message("error.monitor.too.many.errors");
+      myFatalsGrouper.addToGroup(new LogMessage(new LoggingEvent(msg, Category.getRoot(), Priority.ERROR, null, new TooManyErrorsException())));
+      NOTIFICATION_GROUP.createNotification(msg, NotificationType.ERROR).notify(null);
     }
   }
 
@@ -204,14 +208,16 @@ public class MessagePool {
       myAccumulatedTime = 0;
     }
 
-    public void add(AbstractMessage message) {
+    public boolean addToGroup(@NotNull AbstractMessage message) {
       myAccumulatedTime = 0;
+      boolean result = myMessages.isEmpty();
       synchronized(myMessages) {
         myMessages.add(message);
         if (myMessages.size() >= myMaxGroupSize) {
           post();
         }
       }
+      return result;
     }
   }
 
