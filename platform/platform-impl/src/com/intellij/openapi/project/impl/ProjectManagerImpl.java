@@ -484,7 +484,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
         try {
           if (indicator != null) {
-            indicator.setText(ProjectBundle.message("loading.components.for", filePath));
+            indicator.setText(ProjectBundle.message("loading.components.for", FileUtil.toSystemDependentName(filePath)));
             indicator.setIndeterminate(true);
           }
           project[0] = doLoadProject(filePath);
