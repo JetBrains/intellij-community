@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -121,7 +122,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
         final VirtualFile[] files = myLibrary.getFiles(OrderRootType.CLASSES);
         if (files.length > 0) {
           final VirtualFile file = files[0];
-          presentationData.setIcons(file.getIcon());
+          presentationData.setIcons(VirtualFilePresentation.getIcon(file));
           presentationData.addText(file.getName(), mainAttributes);
         }
         else {

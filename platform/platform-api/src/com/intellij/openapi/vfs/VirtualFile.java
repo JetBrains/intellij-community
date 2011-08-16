@@ -26,12 +26,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -261,13 +259,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     final VirtualFile child = findChild(name);
     if (child != null) return child;
     return createChildData(requestor, name);
-  }
-
-  public Icon getIcon() {
-    if (isDirectory() && isInLocalFileSystem()) {
-      return PlatformIcons.FOLDER_ICON;
-    }
-    return getFileType().getIcon();
   }
 
   /**

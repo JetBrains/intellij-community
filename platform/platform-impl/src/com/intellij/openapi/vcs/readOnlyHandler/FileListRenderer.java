@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.readOnlyHandler;
 
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -28,7 +29,7 @@ public class FileListRenderer extends ColoredListCellRenderer {
     mySelected = false;
     setBackground(null);
     VirtualFile vf = (VirtualFile) value;
-    setIcon(vf.getIcon());
+    setIcon(VirtualFilePresentation.getIcon(vf));
     append(vf.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     VirtualFile parent = vf.getParent();
     if (parent != null) {

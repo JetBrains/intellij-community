@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.DiffRequest;
@@ -102,7 +103,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   public Icon getIcon() {
-    return isContainer() ? PlatformIcons.FOLDER_ICON : myFile.getIcon();
+    return isContainer() ? PlatformIcons.FOLDER_ICON : VirtualFilePresentation.getIcon(myFile);
   }
 
   @Override

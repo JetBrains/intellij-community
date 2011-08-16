@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.merge;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffManager;
@@ -346,7 +347,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private static class VirtualFileRenderer extends ColoredTableCellRenderer {
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       VirtualFile vf = (VirtualFile)value;
-      setIcon(vf.getIcon());
+      setIcon(VirtualFilePresentation.getIcon(vf));
       append(FileUtil.toSystemDependentName(vf.getPresentableUrl()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }

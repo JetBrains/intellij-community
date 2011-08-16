@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vcs.changes.Change;
@@ -49,7 +50,7 @@ public class CommitCompletionContributor extends CompletionContributor {
               VirtualFile virtualFile = change.getVirtualFile();
               if (virtualFile != null) {
                 insensitive.addElement(LookupElementBuilder.create(virtualFile.getName()).
-                  setIcon(virtualFile.getIcon()));
+                  setIcon(VirtualFilePresentation.getIcon(virtualFile)));
               }
             }
           }

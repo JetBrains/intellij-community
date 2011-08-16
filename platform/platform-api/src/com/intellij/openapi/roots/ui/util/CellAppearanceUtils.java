@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.util;
 
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.IconLoader;
@@ -65,10 +66,10 @@ public class CellAppearanceUtils {
 
   public static Icon iconForFile(VirtualFile file) {
     if (file.getFileSystem().getProtocol().equals(JarFileSystem.PROTOCOL) && file.getParent() == null) {
-      return file.getIcon();
+      return VirtualFilePresentation.getIcon(file);
     }
     if (file.isDirectory()) return PlatformIcons.FOLDER_ICON;
-    return file.getIcon();
+    return VirtualFilePresentation.getIcon(file);
   }
 
   public static Icon excludeIcon(Icon icon) {

@@ -15,6 +15,7 @@
  */
 package git4idea.ui;
 
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -162,7 +163,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
       if (leaf) {
         VirtualFile parent = (VirtualFile)((CheckedTreeNode)node.getParent()).getUserObject();
         // the real file
-        Icon i = file.getIcon();
+        Icon i = VirtualFilePresentation.getIcon(file);
         if (i != null) {
           r.setIcon(i);
         }

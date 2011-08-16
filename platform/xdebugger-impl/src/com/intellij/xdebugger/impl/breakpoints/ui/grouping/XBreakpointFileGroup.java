@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class XBreakpointFileGroup extends XBreakpointGroup {
 
   @Nullable
   public Icon getIcon(final boolean isOpen) {
-    return myFile.getIcon();
+    return VirtualFilePresentation.getIcon(myFile);
   }
 
   @NotNull

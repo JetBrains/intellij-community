@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.dependencyAnalysis;
 
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
@@ -464,7 +465,7 @@ public class ModuleDependenciesAnalyzer {
     @Nullable
     public Icon getIcon() {
       VirtualFile file = getLocalFile();
-      return file == null ? MISSING_ICON : file.getIcon();
+      return file == null ? MISSING_ICON : VirtualFilePresentation.getIcon(file);
     }
 
     /**
