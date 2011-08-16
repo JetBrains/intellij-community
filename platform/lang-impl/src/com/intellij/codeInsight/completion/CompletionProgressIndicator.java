@@ -69,6 +69,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -118,6 +120,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final LinkedList<Runnable> myDelayQueue = new LinkedList<Runnable>();
   private volatile boolean myProcessingDelayedActions;
   private final Set<OffsetMap> myMapsToDispose = new THashSet<OffsetMap>();
+  private final PropertyChangeListener myLookupManagerListener;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, boolean hasModifiers) {
@@ -132,6 +135,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
+
+    myLookupManagerListener = new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getNewValue() != null) {
+          LOG.error("An attempt to change the lookup during completion");
+        }
+      }
+    };
+    LookupManager.getInstance(getProject()).addPropertyChangeListener(myLookupManagerListener);
 
     myQueue = new MergingUpdateQueue("completion lookup progress", 200, true, myEditor.getContentComponent());
     myQueue.setPassThrough(false);
@@ -416,6 +429,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     Disposer.dispose(myQueue);
+    LookupManager.getInstance(getProject()).removePropertyChangeListener(myLookupManagerListener);
 
     CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     LOG.assertTrue(currentCompletion == this, currentCompletion + "!=" + this);
