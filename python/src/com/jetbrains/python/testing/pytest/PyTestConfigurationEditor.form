@@ -16,7 +16,7 @@
         <border type="none"/>
         <children/>
       </grid>
-      <component id="f43db" class="javax.swing.JLabel">
+      <component id="f43db" class="javax.swing.JLabel" binding="myTargetLabel">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -24,13 +24,13 @@
           <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.pytest.target"/>
         </properties>
       </component>
-      <component id="b0d9e" class="javax.swing.JLabel">
+      <component id="b0d9e" class="javax.swing.JLabel" binding="myKeyLabel">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <labelFor value=""/>
-          <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.keywords"/>
+          <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.pytest.keywords"/>
         </properties>
       </component>
       <component id="a5967" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTestScriptTextField">
@@ -47,7 +47,7 @@
         </constraints>
         <properties/>
       </component>
-      <component id="e950" class="javax.swing.JLabel">
+      <component id="e950" class="javax.swing.JLabel" binding="myParamLabel">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

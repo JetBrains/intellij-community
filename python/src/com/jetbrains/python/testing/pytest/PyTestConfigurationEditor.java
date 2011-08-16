@@ -25,6 +25,9 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
   private JTextField myKeywordsTextField;
   private TextFieldWithBrowseButton myTestScriptTextField;
   private JTextField myParamsTextField;
+  private JLabel myKeyLabel;
+  private JLabel myTargetLabel;
+  private JLabel myParamLabel;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private final Project myProject;
 
@@ -38,6 +41,10 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
       .createSingleFileOrFolderDescriptor();
     fileChooserDescriptor.setTitle(title);
     myTestScriptTextField.addBrowseFolderListener(title, null, myProject, fileChooserDescriptor);
+
+    myKeyLabel.setLabelFor(myKeywordsTextField);
+    myParamLabel.setLabelFor(myParamsTextField);
+    myTargetLabel.setLabelFor(myTestScriptTextField);
   }
 
   protected void resetEditorFrom(PyTestRunConfiguration s) {
