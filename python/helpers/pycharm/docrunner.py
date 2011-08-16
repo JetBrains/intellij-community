@@ -207,34 +207,19 @@ def loadSource(fileName):
   return module
 
 def testfile(filename):
-    if PYTHON_VERSION_MAJOR == 3:
-      text, filename = doctest._load_testfile(filename, None, False, "utf-8")
-    else:
-      text, filename = doctest._load_testfile(filename, None, False)
+  if PYTHON_VERSION_MAJOR == 3:
+    text, filename = doctest._load_testfile(filename, None, False, "utf-8")
+  else:
+    text, filename = doctest._load_testfile(filename, None, False)
 
-    name = os.path.basename(filename)
-    globs = {'__name__': '__main__'}
+  name = os.path.basename(filename)
+  globs = {'__name__': '__main__'}
 
-    parser = doctest.DocTestParser()
-    # Read the file, convert it to a test, and run it.
-    test = parser.get_doctest(text, globs, name, filename, 0)
-    if test.examples:
-      runner.addTest(test)
-
-def walkModules(modules, dirname, names):
-  walkModulesUsingPattern(modules, dirname, names)
-
-def walkModulesUsingPattern(modules, dirname, names, pattern = ".*"):
-  prog = re.compile(pattern)
-  
-  for name in names:
-    path = os.path.join(dirname, name)
-    if prog.match(name):
-      if name.endswith(".py"):
-        modules.append(loadSource(path))
-      elif not name.endswith(".pyc") and not name.endswith("$py.class")\
-                                                  and os.path.isfile(path):
-        testfile(path)
+  parser = doctest.DocTestParser()
+  # Read the file, convert it to a test, and run it.
+  test = parser.get_doctest(text, globs, name, filename, 0)
+  if test.examples:
+    runner.addTest(test)
 
 def testFilesInFolder(folder):
   return testFilesInFolderUsingPattern(folder)
@@ -246,7 +231,7 @@ def testFilesInFolderUsingPattern(folder, pattern = ".*"):
   result = []
   prog = re.compile(pattern)
 
-  for root, dirs, files in os.walk(folder, walkModules, modules):
+  for root, dirs, files in os.walk(folder):
     for name in files:
       path = os.path.join(root, name)
       if prog.match(name):
