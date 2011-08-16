@@ -183,7 +183,9 @@ public class MacMessagesImpl extends MacMessages{
     String _windowTitle = null;
 
     final Window _window = window == null ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : window;
-    LOG.assertTrue(_window.isShowing(), "Window MUST BE showing in screen!");
+    
+    // TODO: uncomment
+    //LOG.assertTrue(_window.isShowing(), "Window MUST BE showing in screen!");
     
     if (_window instanceof JFrame) {
       JFrame frame = (JFrame)_window;
