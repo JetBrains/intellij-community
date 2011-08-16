@@ -574,6 +574,16 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension);
     if (fileType != FileTypes.UNKNOWN && fileType != FileTypes.PLAIN_TEXT && !myAdditionalIndentOptions.containsKey(fileType) && fileType.getDefaultExtension().length() != 0) {
       registerAdditionalIndentOptions(fileType, options);
+      //
+      // Upgrade to version 11
+      //
+      if (fileType instanceof LanguageFileType) {
+        Language lang = ((LanguageFileType)fileType).getLanguage();
+        CommonCodeStyleSettings langSettings = myCommonSettingsManager.getCommonSettings(lang);
+        if (langSettings != this && langSettings.getIndentOptions() != null) {
+          langSettings.importOldIndentOptions(this);
+        }
+      }
     }
   }
 

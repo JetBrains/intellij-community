@@ -53,7 +53,7 @@ public class CommonCodeStyleSettings {
   }
 
   void importOldIndentOptions(@NotNull CodeStyleSettings rootSettings) {
-    if (myFileType != null && myIndentOptions != null && !myIndentOptions.isFoundForLanguage()) {
+    if (myFileType != null && myIndentOptions != null) {
       if (getFileTypeIndentOptionsProvider() == null) {
         IndentOptions fileTypeIdentOptions = rootSettings.getAdditionalIndentOptions(myFileType);
         if (fileTypeIdentOptions != null) {
@@ -822,9 +822,7 @@ public class CommonCodeStyleSettings {
     public int LABEL_INDENT_SIZE = 0;
     public boolean LABEL_INDENT_ABSOLUTE = false;
     public boolean USE_RELATIVE_INDENTS = false;
-    
-    private boolean myFoundForLanguage = false;
-    
+
     private final static String INDENT_OPTIONS_TAG = "indentOptions";
 
     public void readExternal(Element element) throws InvalidDataException {
@@ -851,13 +849,8 @@ public class CommonCodeStyleSettings {
     public void deserialize(Element element) {
       Element indentOptionsElement = element.getChild(INDENT_OPTIONS_TAG);
       if (indentOptionsElement != null) {
-        myFoundForLanguage = true;
         XmlSerializer.deserializeInto(this, indentOptionsElement);
       }
-    }
-
-    public boolean isFoundForLanguage() {
-      return myFoundForLanguage;
     }
 
     public Object clone() {
