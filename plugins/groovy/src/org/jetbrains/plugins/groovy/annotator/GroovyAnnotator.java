@@ -161,6 +161,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
 
       checkSingleResolvedElement(myHolder, refElement, resolveResult, true);
+
+      if (resolveResult.getElement() == null) {
+        final GrPackageDefinition pack = PsiTreeUtil.getParentOfType(refElement, GrPackageDefinition.class);
+        if (pack != null) {
+          checkPackage(pack);
+        }
+      }
     }
   }
 
@@ -720,6 +727,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitPackageDefinition(GrPackageDefinition packageDefinition) {
     //todo: if reference isn't resolved it construct package definition
+    checkPackage(packageDefinition);
+    final GrModifierList modifierList = packageDefinition.getAnnotationList();
+    checkAnnotationList(myHolder, modifierList, GroovyBundle.message("package.definition.cannot.have.modifiers"));
+  }
+
+  private void checkPackage(GrPackageDefinition packageDefinition) {
     final PsiFile file = packageDefinition.getContainingFile();
     assert file != null;
 
@@ -729,13 +742,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (aPackage != null) {
         String packageName = aPackage.getQualifiedName();
         if (!packageName.equals(packageDefinition.getPackageName())) {
-          final Annotation annotation = myHolder.createWarningAnnotation(packageDefinition, "wrong package name");
+          final Annotation annotation = myHolder.createWarningAnnotation(packageDefinition, GroovyBundle.message("wrong.package.name", packageName, aPackage.getQualifiedName()));
           annotation.registerFix(new ChangePackageQuickFix((GroovyFile)packageDefinition.getContainingFile(), packageName));
+          annotation.registerFix(new GrMoveToDirFix(packageDefinition.getPackageName()));
         }
       }
     }
-    final GrModifierList modifierList = packageDefinition.getAnnotationList();
-    checkAnnotationList(myHolder, modifierList, GroovyBundle.message("package.definition.cannot.have.modifiers"));
   }
 
   @Override
