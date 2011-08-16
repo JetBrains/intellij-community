@@ -1,0 +1,88 @@
+package org.jetbrains.jpsservice;
+
+option java_package = "org.jetbrains.jpsservice";
+option optimize_for = LITE_RUNTIME;
+
+// data structures
+
+message Message {
+
+  enum Kind {
+    REQUEST = 1;
+    RESPONSE = 2;
+    FAILURE = 3;
+  }
+
+  message UUID {
+    required sint64 most_sig_bits = 1;
+    required sint64 least_sig_bits = 2;
+  }
+
+  message Failure {
+    optional int32 error_code = 1;
+    optional string description = 2;
+    optional string stacktrace = 3;
+  }
+
+  message Request {
+
+    message CompileRequest {
+      enum Command {
+        REBUILD = 1;
+        MAKE = 2;
+      }
+      required Command command = 1;
+      optional string project_id = 2;
+      repeated string module_name = 3;
+    }
+
+    message StatusRequest {
+      optional UUID session_id = 1;
+    }
+
+    optional CompileRequest compile_request = 1;
+    optional StatusRequest status_request = 2;
+  }
+
+
+  message Response {
+
+    message CompileResponse {
+      optional UUID session_id = 1;
+    }
+
+    message StatusResponse {
+      message CompilerMessage {
+        enum Kind {
+          ERROR = 1;
+          WARNING = 2;
+          INFO = 3;
+        }
+        required Kind kind = 1;
+        optional string text = 2;
+        optional string source_file_path = 3;
+        optional uint32 line = 4;
+        optional uint32 column = 5;
+      }
+
+      optional UUID session_id = 1;
+      optional bool is_running = 2;
+      optional string status_text = 3;
+      optional string current_compiler_name = 4;
+      optional string compiled_module_name = 5;
+      repeated CompilerMessage compiler_message = 6;
+    }
+
+    optional CompileResponse compile_response = 1;
+    optional StatusResponse status_response = 2;
+  }
+
+  required UUID message_uuid = 1;
+  required Kind kind = 2;
+  optional Request request = 3;
+  optional Response response = 4;
+  optional Failure failure = 5;
+
+}
+
+
