@@ -72,7 +72,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.AstTransformFieldContributor;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import javax.swing.*;
@@ -352,7 +351,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     List<GrField> fields = AST_TRANSFORM_FIELD.getCachedValue(this);
     if (fields == null) {
       fields = new ArrayList<GrField>();
-      AstTransformFieldContributor.runContributors(this, fields);
+      AstTransformContributor.runContributorsForFields(this, fields);
 
       fields = AST_TRANSFORM_FIELD.putCachedValue(this, fields);
     }
@@ -393,7 +392,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     }
 
     List<PsiMethod> result = new ArrayList<PsiMethod>(cached);
-    AstTransformContributor.runContributors(this, result);
+    AstTransformContributor.runContributorsForMethods(this, result);
 
     for (GrField field : getSyntheticFields()) {
       ContainerUtil.addIfNotNull(result, field.getSetter());
