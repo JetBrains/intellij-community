@@ -19,6 +19,9 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -90,6 +93,14 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
         Notifications.Bus.notify(new Notification("Coverage", "Coverage was not enabled",
                                                   coverageRunner.getPresentableName() + " coverage is disabled in the debug mode",
                                                   NotificationType.WARNING));
+      }
+      if (!(coverageRunner instanceof IDEACoverageRunner)) {
+        final Sdk jdk = params.getJdk();
+        if (jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_7)) {
+          Notifications.Bus.notify(new Notification("Coverage", "Coverage instrumentation is not fully compatible with JDK 7",
+                                                    coverageRunner.getPresentableName() + " coverage instrumentation can lead to java.lang.VerifyError errors with JDK 7. If so, please try IDEA coverage runner.",
+                                                    NotificationType.WARNING));
+        }
       }
     }
   }
