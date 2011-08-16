@@ -158,6 +158,17 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     doTestEnter(" <caret>\n", " \n \n");
   }
 
+  public void testEnterInDocstring() {  // CR-PY-144
+    doTestEnter(" def foo():\n  \"\"\" some comment<caret>\"\"\"\n  pass", " def foo():\n  \"\"\" some comment\n  \"\"\"\n  pass");
+  }
+
+  public void testEnterStubInDocstring() {  // CR-PY-144
+    doTestEnter("def foo():\n  \"\"\"<caret>", "def foo():\n" +
+                                               "  \"\"\"\n" +
+                                               "  \n" +
+                                               "  \"\"\"");
+  }
+
   public void testEnterInImportWithParens() {  // PY-2661
     doTestEnter("from django.http import (HttpResponse,<caret>)",
                 "from django.http import (HttpResponse,\n" +
