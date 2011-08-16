@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ChooseItemAction extends EditorAction {
@@ -37,8 +36,7 @@ public abstract class ChooseItemAction extends EditorAction {
   static LookupImpl getLookup(Editor editor) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null) {
-      Project project = editor.getProject();
-      throw new AssertionError(editor + "; " + (project == null ? null : LookupManager.getInstance(project).getActiveLookup()));
+      throw new AssertionError("The last lookup disposed at: " + LookupImpl.getLastLookupDisposeTrace() + "\n-----------------------\n");
     }
     return lookup;
   }
