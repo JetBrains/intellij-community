@@ -54,15 +54,16 @@ public class CommonCodeStyleSettings {
 
   void importOldIndentOptions(@NotNull CodeStyleSettings rootSettings) {
     if (myFileType != null && myIndentOptions != null && !myIndentOptions.isFoundForLanguage()) {
-      IndentOptions indentOptions = rootSettings.OTHER_INDENT_OPTIONS;
       if (getFileTypeIndentOptionsProvider() == null) {
         IndentOptions fileTypeIdentOptions = rootSettings.getAdditionalIndentOptions(myFileType);
         if (fileTypeIdentOptions != null) {
-          indentOptions = fileTypeIdentOptions;
+          myIndentOptions.copyFrom(fileTypeIdentOptions);
           rootSettings.unregisterAdditionalIndentOptions(myFileType);
         }
+        else if (rootSettings.USE_SAME_INDENTS) {
+          myIndentOptions.copyFrom(rootSettings.OTHER_INDENT_OPTIONS);
+        }
       }
-      myIndentOptions.copyFrom(indentOptions);
     }
   }
   
