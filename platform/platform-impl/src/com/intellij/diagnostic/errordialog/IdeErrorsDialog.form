@@ -20,26 +20,30 @@
             <properties/>
             <border type="none"/>
             <children>
-              <grid id="f2b31" layout-manager="BorderLayout" hgap="0" vgap="0">
+              <grid id="f2b31" layout-manager="BorderLayout" hgap="0" vgap="3">
                 <constraints border-constraint="Center"/>
                 <properties/>
-                <border type="none"/>
+                <border type="empty">
+                  <size top="1" left="0" bottom="0" right="0"/>
+                </border>
                 <children>
                   <grid id="b2cb3" layout-manager="BorderLayout" hgap="0" vgap="0">
-                    <constraints border-constraint="North"/>
+                    <constraints border-constraint="Center"/>
                     <properties/>
                     <border type="none"/>
                     <children>
                       <component id="44ee8" class="com.intellij.ui.HyperlinkLabel$Croppable" binding="myInfoLabel">
                         <constraints border-constraint="West"/>
+                        <properties/>
                       </component>
                       <component id="3f648" class="com.intellij.ui.HyperlinkLabel$Croppable" binding="myDisableLink">
                         <constraints border-constraint="Center"/>
+                        <properties/>
                       </component>
                     </children>
                   </grid>
-                  <grid id="a2fe0" layout-manager="BorderLayout" hgap="0" vgap="0">
-                    <constraints border-constraint="Center"/>
+                  <grid id="a2fe0" binding="myForeignPluginWarningPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints border-constraint="South"/>
                     <properties/>
                     <border type="none"/>
                     <children>
