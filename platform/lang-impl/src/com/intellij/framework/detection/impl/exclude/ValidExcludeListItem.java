@@ -16,6 +16,7 @@
 package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.framework.FrameworkType;
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -53,7 +54,7 @@ class ValidExcludeListItem extends ExcludeListItem {
       }
     }
     else {
-      renderer.setIcon(myFile.getIcon());
+      renderer.setIcon(VirtualFilePresentation.getIcon(myFile));
       renderer.append(myFile.getName());
       renderer.append(" (" + myFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
