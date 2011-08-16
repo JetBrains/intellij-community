@@ -98,7 +98,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
 
   @Override
   public String getName() {
-    return getReferenceNameElement().getText();
+    return getText();
   }
 
   @Nullable
@@ -114,10 +114,9 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    PsiElement nameElement = getReferenceNameElement();
-    ASTNode node = nameElement.getNode();
+    ASTNode node = getNode();
     ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createDocMemberReferenceNameFromText(newElementName).getNode();
-    assert newNameNode != null && node != null;
+    assert newNameNode != null;
     node.getTreeParent().replaceChild(node, newNameNode);
     return this;
   }
