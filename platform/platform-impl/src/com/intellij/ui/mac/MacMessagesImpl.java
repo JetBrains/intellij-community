@@ -183,6 +183,8 @@ public class MacMessagesImpl extends MacMessages{
     String _windowTitle = null;
 
     final Window _window = window == null ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : window;
+    LOG.assertTrue(_window.isShowing(), "Window MUST BE showing in screen!");
+    
     if (_window instanceof JFrame) {
       JFrame frame = (JFrame)_window;
       pane = frame.getRootPane();
@@ -194,7 +196,7 @@ public class MacMessagesImpl extends MacMessages{
       _windowTitle = dialog.getTitle();
     }
 
-    LOG.assertTrue(_windowTitle != null && _windowTitle.length() > 0 && pane != null, "Window should have a title and a root pane!");
+    LOG.assertTrue(_windowTitle != null && _windowTitle.length() > 0 && pane != null, "Window MUST have a title and a root pane!");
 
     final ID focusedWindow = MacUtil.findWindowForTitle(_windowTitle);
     if (focusedWindow != null) {
