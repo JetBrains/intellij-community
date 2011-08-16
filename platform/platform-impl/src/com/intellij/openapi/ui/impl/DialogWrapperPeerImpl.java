@@ -918,6 +918,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       private DialogRootPane() {
         setGlassPane(new IdeGlassPaneImpl(this));
         myGlassPaneIsSet = true;
+        putClientProperty("DIALOG_ROOT_PANE", true);
       }
 
       @Override

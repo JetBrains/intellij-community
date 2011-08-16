@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithButtons;
 import com.intellij.ui.RightAlignedLabelUI;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -110,7 +110,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
 
   private class ExcludedEntriesPanel extends PanelWithButtons {
     private JButton myRemoveButton;
-    private Table myExcludedTable;
+    private JBTable myExcludedTable;
 
     public ExcludedEntriesPanel() {
       initPanel();
@@ -147,7 +147,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
         }
       });
 
-      return new JButton[]{addButton, myRemoveButton};
+      return new JButton[]{/*addButton, myRemoveButton*/};
     }
 
     private void addPath(FileChooserDescriptor descriptor) {
@@ -287,7 +287,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
         }
       };
 
-      myExcludedTable = new Table(dataModel);
+      myExcludedTable = new JBTable(dataModel);
       myExcludedTable.getEmptyText().setText(CompilerBundle.message("no.excludes"));
       myExcludedTable.setPreferredScrollableViewportSize(new Dimension(300, myExcludedTable.getRowHeight() * 6));
       myExcludedTable.setDefaultRenderer(Boolean.class, new BooleanRenderer());
@@ -307,6 +307,11 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       if(editor instanceof DefaultCellEditor) {
         ((DefaultCellEditor)editor).setClickCountToStart(1);
       }
+
+      //ToolbarDecorator.createDecorator(myExcludedTable)
+      //  .disableUpAction()
+      //  .disableDownAction()
+
 
       return ScrollPaneFactory.createScrollPane(myExcludedTable);
     }

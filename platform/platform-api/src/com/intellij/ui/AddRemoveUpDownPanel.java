@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -134,10 +135,16 @@ class AddRemoveUpDownPanel extends JPanel {
     for (AnActionButton button : myActions) {
       final ShortcutSet shortcut = button.getShortcut();
       if (shortcut != null) {
-        if (button instanceof MyActionButton && !((MyActionButton)button).isAddButton()) {
+        if (button instanceof MyActionButton
+            && !((MyActionButton)button).isAddButton()
+            && !UIUtil.isDialogRootPane(pane)) {
           button.registerCustomShortcutSet(shortcut, button.getContextComponent());
         } else {
-          button.registerCustomShortcutSet(shortcut, pane);
+          if (UIUtil.isDialogRootPane(pane)) {
+            button.registerCustomShortcutSet(shortcut, pane);
+          } else {
+            button.registerCustomShortcutSet(shortcut, button.getContextComponent());
+          }
         }
       }
     }
@@ -178,7 +185,7 @@ class AddRemoveUpDownPanel extends JPanel {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void updateButton(AnActionEvent e) {
       final JComponent c = getContextComponent();
       if (c instanceof JTable || c instanceof JList) {
         final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel() 

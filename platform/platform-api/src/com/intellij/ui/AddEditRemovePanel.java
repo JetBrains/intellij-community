@@ -95,7 +95,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
         }
 
         @Override
-        public void update(AnActionEvent e) {
+        public void updateButton(AnActionEvent e) {
           e.getPresentation().setEnabled(myTable.getSelectedRow() != -1);
         }
 
