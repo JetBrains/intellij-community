@@ -24,6 +24,8 @@ import com.intellij.openapi.options.ex.*;
 import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,35 +145,37 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public boolean editConfigurable(Project project, String dimensionServiceKey, Configurable configurable) {
-    return editConfigurable(project, configurable, dimensionServiceKey, null);
+    return editConfigurable(null, project, configurable, dimensionServiceKey, null);
   }
 
   public boolean editConfigurable(Project project, Configurable configurable, Runnable advancedInitialization) {
-    return editConfigurable(project, configurable, createDimensionKey(configurable), advancedInitialization);
-  }
-
-  private static boolean editConfigurable(Project project, Configurable configurable, final String dimensionKey, Runnable advancedInitialization) {
-    SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable, dimensionKey);
-    if (advancedInitialization != null) {
-      advancedInitialization.run();
-    }
-    editor.show();
-    return editor.isOK();
+    return editConfigurable(null, project, configurable, createDimensionKey(configurable), advancedInitialization);
   }
 
   public boolean editConfigurable(Component parent, Configurable configurable) {
     return editConfigurable(parent, configurable, null);
   }
 
-  public boolean editConfigurable(final Component parent, final Configurable configurable, final Runnable advancedInitialization) {
-    return editConfigurable(parent, configurable, createDimensionKey(configurable), advancedInitialization);
+  public boolean editConfigurable(final Component parent, final Configurable configurable, @Nullable final Runnable advancedInitialization) {
+    return editConfigurable(parent, null, configurable, createDimensionKey(configurable), advancedInitialization);
   }
 
-  private static boolean editConfigurable(final Component parent, final Configurable configurable, final String dimensionKey,
-                                   final Runnable advancedInitialization) {
-    SingleConfigurableEditor editor = new SingleConfigurableEditor(parent, configurable, dimensionKey);
+  private static boolean editConfigurable(final @Nullable Component parent, @Nullable Project project, final Configurable configurable, final String dimensionKey,
+                                          @Nullable final Runnable advancedInitialization) {
+    SingleConfigurableEditor editor;
+    if (parent != null) {
+      editor = new SingleConfigurableEditor(parent, configurable, dimensionKey);
+    }
+    else {
+      editor = new SingleConfigurableEditor(project, configurable, dimensionKey);
+    }
     if (advancedInitialization != null) {
-      advancedInitialization.run();
+      new UiNotifyConnector.Once(editor.getContentPane(), new Activatable.Adapter() {
+        @Override
+        public void showNotify() {
+          advancedInitialization.run();
+        }
+      });
     }
     editor.show();
     return editor.isOK();
@@ -184,6 +188,6 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public boolean editConfigurable(Component parent, String dimensionServiceKey,Configurable configurable) {
-    return editConfigurable(parent, configurable, dimensionServiceKey, null);
+    return editConfigurable(parent, null, configurable, dimensionServiceKey, null);
   }
 }
