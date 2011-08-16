@@ -1,0 +1,12 @@
+<idea-plugin>
+  <id>com.intellij.myPlugin</id>
+
+  <extensionPoints>
+    <extensionPoint name="myExt" beanClass="MyExtBean"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.myPlugin">
+    <myExt <warning descr="'myOld' is deprecated">old</warning>="java.lang.Runnable" attr="value"/>
+  </extensions>
+
+</idea-plugin>
