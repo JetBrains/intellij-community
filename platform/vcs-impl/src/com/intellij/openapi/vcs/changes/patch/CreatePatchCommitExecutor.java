@@ -21,11 +21,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -120,7 +122,7 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
 
     public JComponent getAdditionalConfigurationUI(final Collection<Change> changes, final String commitMessage) {
       if (PATCH_PATH.length() == 0) {
-        PATCH_PATH = myProject.getBaseDir().getPresentableUrl();
+        PATCH_PATH = myProject.getBaseDir() == null ? PathManager.getHomePath() : myProject.getBaseDir().getPresentableUrl();
       }
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(PATCH_PATH), null));
       myPanel.setReversePatch(REVERSE_PATCH);

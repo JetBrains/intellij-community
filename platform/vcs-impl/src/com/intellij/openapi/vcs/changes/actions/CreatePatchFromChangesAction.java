@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -69,6 +70,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     }
     List<Change> changeCollection = new ArrayList<Change>();
     Collections.addAll(changeCollection, changes);
+    project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
     CommitSession commitSession = executor.createCommitSession();
     DialogWrapper sessionDialog = new SessionDialog(executor.getActionText(),

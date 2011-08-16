@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.HeaderlessTabbedPane;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.Consumer;
@@ -419,22 +420,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     if (message.isSubmitted()) {
       final SubmittedReportInfo info = message.getSubmissionInfo();
-      if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
-        text.append(" ").append(DiagnosticBundle.message("error.list.message.submission.failed"));
-      }
-      else {
-        if (info.getLinkText() != null) {
-          final ErrorReportSubmitter submitter = getSubmitter(throwable);
-          url = getUrl(info, submitter instanceof ITNReporter);
-          text.append(" ").append(DiagnosticBundle.message("error.list.message.submitted.as.link", url, info.getLinkText()));
-          if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE) {
-            text.append(" ").append(DiagnosticBundle.message("error.list.message.duplicate"));
-          }
-        }
-        else {
-          text.append(DiagnosticBundle.message("error.list.message.submitted"));
-        }
-      }
+      url = getUrl(info, getSubmitter(throwable) instanceof ITNReporter);
+      appendSubmissionInformation(info, text, url);
       text.append(". ");
     }
     else if (message.isSubmitting()) {
@@ -447,7 +434,28 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myInfoLabel.setHyperlinkTarget(url);
   }
 
-  private static String getUrl(SubmittedReportInfo info, boolean reportedToJetbrains) {
+  public static void appendSubmissionInformation(SubmittedReportInfo info, StringBuilder out, @Nullable String url) {
+    if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
+      out.append(" ").append(DiagnosticBundle.message("error.list.message.submission.failed"));
+    }
+    else {
+      if (info.getLinkText() != null) {
+        out.append(" ").append(DiagnosticBundle.message("error.list.message.submitted.as.link", url, info.getLinkText()));
+        if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE) {
+          out.append(" ").append(DiagnosticBundle.message("error.list.message.duplicate"));
+        }
+      }
+      else {
+        out.append(DiagnosticBundle.message("error.list.message.submitted"));
+      }
+    }
+  }
+
+  @Nullable
+  public static String getUrl(SubmittedReportInfo info, boolean reportedToJetbrains) {
+    if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED || info.getLinkText() == null) {
+      return null;
+    }
     if (reportedToJetbrains) {
       return "http://ea.jetbrains.com/browser/ea_reports/" + info.getLinkText();
     }
@@ -748,32 +756,54 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     public void actionPerformed(ActionEvent e) {
+      boolean closeDialog = myMergedMessages.size() == 1;
       final AbstractMessage logMessage = getSelectedMessage();
-      reportMessage(logMessage);
-      rebuildHeaders();
-      updateControls();
+      boolean reportingStarted = reportMessage(logMessage, closeDialog);
+      if (closeDialog) {
+        if (reportingStarted) {
+          doOKAction();
+        }
+      }
+      else {
+        rebuildHeaders();
+        updateControls();
+      }
     }
 
-    private void reportMessage(final AbstractMessage logMessage) {
-      ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
+    private boolean reportMessage(final AbstractMessage logMessage, final boolean dialogClosed) {
+      final ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
 
       if (submitter != null) {
         logMessage.setSubmitting(true);
-        updateControls();
-        submitter.submitAsync(getEvents(logMessage), logMessage.getAdditionalInfo(), getContentPane(), new Consumer<SubmittedReportInfo>() {
-          @Override
-          public void consume(SubmittedReportInfo submittedReportInfo) {
-            logMessage.setSubmitting(false);
-            logMessage.setSubmitted(submittedReportInfo);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                updateOnSubmit();
-              }
-            });
-          }
-        });
+        if (!dialogClosed) {
+          updateControls();
+        }
+        Container parentComponent;
+        if (dialogClosed) {
+          IdeFrame ideFrame = UIUtil.getParentOfType(IdeFrame.class, getContentPane());
+          parentComponent = ideFrame.getComponent();
+        }
+        else {
+          parentComponent = getContentPane();
+        }
+        return submitter.trySubmitAsync(getEvents(logMessage), logMessage.getAdditionalInfo(), parentComponent,
+                                        new Consumer<SubmittedReportInfo>() {
+                                          @Override
+                                          public void consume(final SubmittedReportInfo submittedReportInfo) {
+                                            logMessage.setSubmitting(false);
+                                            logMessage.setSubmitted(submittedReportInfo);
+                                            ApplicationManager.getApplication().invokeLater(new Runnable() {
+                                              @Override
+                                              public void run() {
+                                                if (!dialogClosed) {
+                                                  updateOnSubmit();
+                                                }
+                                              }
+                                            });
+                                          }
+                                        });
       }
+      return false;
     }
 
     private IdeaLoggingEvent[] getEvents(final AbstractMessage logMessage) {

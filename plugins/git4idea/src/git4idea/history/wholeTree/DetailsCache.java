@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
@@ -46,21 +47,19 @@ public class DetailsCache {
   private final SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>> myBranches;
   private final Project myProject;
   private final DetailsLoaderImpl myDetailsLoader;
-  private final ModalityState myModalityState;
   private final BackgroundTaskQueue myQueue;
   private UIRefresh myRefresh;
   private final Map<VirtualFile, Map<AbstractHash, String>> myStash;
   private final Object myLock;
   private final static Logger LOG = Logger.getInstance("git4idea.history.wholeTree.DetailsCache");
+  private ModalityState myState;
 
   public DetailsCache(final Project project,
                       final UIRefresh uiRefresh,
                       final DetailsLoaderImpl detailsLoader,
-                      final ModalityState modalityState,
                       final BackgroundTaskQueue queue) {
     myProject = project;
     myDetailsLoader = detailsLoader;
-    myModalityState = modalityState;
     myQueue = queue;
     myStash = new HashMap<VirtualFile, Map<AbstractHash,String>>();
     myRefresh = uiRefresh;
@@ -142,26 +141,30 @@ public class DetailsCache {
                                  final AbstractHash abstractHash,
                                  final Consumer<List<String>> continuation, final Processor<AbstractHash> recheck) {
     myQueue.run(new Task.Backgroundable(myProject, "Load contained in branches", true, BackgroundFromStartOption.getInstance()) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        if (! recheck.process(abstractHash)) return;
-        if (getBranches(root, abstractHash) != null) return;
-        final List<String> branches;
-        try {
-          branches = new LowLevelAccessImpl(myProject, root).getBranchesWithCommit(abstractHash.getString());
-        }
-        catch (VcsException e) {
-          LOG.info(e);
-          return;
-        }
-        putBranches(root, abstractHash, branches);
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            continuation.consume(branches);
-          }
-        });
-      }
-    });
+                  @Override
+                  public void run(@NotNull ProgressIndicator indicator) {
+                    if (!recheck.process(abstractHash)) return;
+                    if (getBranches(root, abstractHash) != null) return;
+                    final List<String> branches;
+                    try {
+                      branches = new LowLevelAccessImpl(myProject, root).getBranchesWithCommit(abstractHash.getString());
+                    }
+                    catch (VcsException e) {
+                      LOG.info(e);
+                      return;
+                    }
+                    putBranches(root, abstractHash, branches);
+                    SwingUtilities.invokeLater(new Runnable() {
+                      @Override
+                      public void run() {
+                        continuation.consume(branches);
+                      }
+                    });
+                  }
+                }, myState, null);
+  }
+
+  public void setModalityState(ModalityState state) {
+    myState = state;
   }
 }

@@ -29,7 +29,7 @@ public class LogFactoryService {
     myProject = project;
   }
 
-  public GitLog createComponent() {
-    return new GitLogAssembler(myProject);
+  public GitLog createComponent(boolean projectScope) {
+    return new GitLogAssembler(myProject, projectScope);
   }
 }

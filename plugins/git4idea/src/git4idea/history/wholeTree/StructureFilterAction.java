@@ -55,7 +55,8 @@ public class StructureFilterAction extends BasePopupAction {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final VcsStructureChooser vcsStructureChooser =
-          new VcsStructureChooser(GitVcs.getInstance(myProject), "Select folders to filter by", structureFilterI.getSelected());
+          new VcsStructureChooser(GitVcs.getInstance(myProject), "Select folders to filter by", structureFilterI.getSelected(),
+                                  structureFilterI.getRoots());
         vcsStructureChooser.show();
         if (vcsStructureChooser.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) return;
         final Collection<VirtualFile> files = vcsStructureChooser.getSelectedFiles();

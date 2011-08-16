@@ -78,18 +78,11 @@ public class VcsBalloonProblemNotifier implements Runnable {
     if (myProject != null) {
       projects = Collections.singletonList(myProject);
     } else {
-      ProjectManager projectManager = ProjectManager.getInstance();
-      projects = Arrays.asList(projectManager.getOpenProjects());
-    }
-
-    for (Project project : projects) {
-      if (project.isOpen() && (! project.isDisposed())) {
-        doForProject(project);
-      }
+      doForProject(null);
     }
   }
 
-  private void doForProject(@NotNull final Project project) {
+  private void doForProject(final Project project) {
     AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(myMessage, myMessageType).notify(project);
   }
 }

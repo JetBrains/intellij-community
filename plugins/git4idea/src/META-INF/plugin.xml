@@ -14,6 +14,10 @@
       <add-to-group group-id="Vcs.Import"/>
     </action>
 
+    <action id="Git.Log" class="git4idea.history.wholeTree.SelectRepositoryAndShowLogAction">
+      <add-to-group group-id="Vcs.Browse"/>
+    </action>
+
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
       <reference ref="CheckinFiles"/>
       <!-- <reference id="CheckinProject"/>

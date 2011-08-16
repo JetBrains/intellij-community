@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.ResolveResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 /**
@@ -32,6 +33,10 @@ public class GrAccessorWeigher extends CompletionWeigher {
     Object o = element.getObject();
     if (o instanceof ResolveResult) {
       o = ((ResolveResult)o).getElement();
+    }
+
+    if (!(location.getCompletionParameters().getPosition().getContainingFile() instanceof GroovyFileBase)) {
+      return null;
     }
 
     if (o instanceof PsiMethod &&

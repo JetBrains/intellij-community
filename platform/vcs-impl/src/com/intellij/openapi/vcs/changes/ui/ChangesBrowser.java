@@ -273,6 +273,11 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     myDiffAction = new ShowDiffAction() {
+      public void update(AnActionEvent e) {
+        Change[] changes = e.getData(VcsDataKeys.CHANGES);
+        e.getPresentation().setEnabled(canShowDiff(changes));
+      }
+
       public void actionPerformed(AnActionEvent e) {
         showDiff();
       }

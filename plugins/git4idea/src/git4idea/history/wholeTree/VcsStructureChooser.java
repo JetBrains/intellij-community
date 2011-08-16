@@ -60,6 +60,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author irengrig
@@ -79,9 +80,14 @@ public class VcsStructureChooser extends DialogWrapper {
   private JBList mySelectedList;
   private JLabel mySelectedLabel;
   private Tree myTree;
+  private final List<VirtualFile> myInitialRoots;
 
-  public VcsStructureChooser(final AbstractVcs vcs, final String title, final Collection<VirtualFile> initialSelection) {
+  public VcsStructureChooser(final AbstractVcs vcs,
+                             final String title,
+                             final Collection<VirtualFile> initialSelection,
+                             List<VirtualFile> initialRoots) {
     super(vcs.getProject(), true);
+    myInitialRoots = initialRoots;
     setTitle(title);
     myVcs = vcs;
     mySelectionManager = new SelectionManager(MAX_FOLDERS, 500, MyNodeConvertor.getInstance());
@@ -90,11 +96,7 @@ public class VcsStructureChooser extends DialogWrapper {
     checkEmptyness();
   }
 
-  // todo background?
   private void calculateRoots() {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
-    final VirtualFile[] rootsUnderVcs = vcsManager.getRootsUnderVcs(myVcs);
-
     final ModuleManager moduleManager = ModuleManager.getInstance(myVcs.getProject());
     // assertion for read access inside
     final Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
@@ -103,13 +105,16 @@ public class VcsStructureChooser extends DialogWrapper {
       }
     });
 
+    final TreeSet<VirtualFile> checkSet = new TreeSet<VirtualFile>(FilePathComparator.getInstance());
     myRoots = new HashSet<VirtualFile>();
-    myRoots.addAll(Arrays.asList(rootsUnderVcs));
+    myRoots.addAll(myInitialRoots);
+    checkSet.addAll(myInitialRoots);
     myModulesSet = new HashMap<VirtualFile, String>();
     for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile file : files) {
-        if (myVcs.equals(vcsManager.getVcsFor(file))) {
+        final VirtualFile floor = checkSet.floor(file);
+        if (floor != null) {
           myModulesSet.put(file, module.getName());
           myRoots.add(file);
         }
@@ -166,6 +171,7 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.setBorder(BORDER);
     myTree.setShowsRootHandles(true);
     myTree.setRootVisible(true);
+    myTree.getExpandableItemsHandler().setEnabled(false);
     final MyCheckboxTreeCellRenderer cellRenderer = new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myVcs.getProject(),
                                                                                    myTree, myRoots);
     final FileSystemTreeImpl fileSystemTree = new FileSystemTreeImpl(myVcs.getProject(), descriptor, myTree, cellRenderer, null, new Convertor<TreePath, String>() {

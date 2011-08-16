@@ -17,8 +17,6 @@ package com.intellij.util.continuation;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -34,7 +32,8 @@ public class Continuation {
   }
 
   public static Continuation createFragmented(final Project project, final boolean cancellable) {
-    return new Continuation(new SeparatePiecesRunner(project, cancellable));
+    SeparatePiecesRunner generalRunner = new SeparatePiecesRunner(project, cancellable);
+    return new Continuation(generalRunner);
   }
 
   public void run(final TaskDescriptor... tasks) {

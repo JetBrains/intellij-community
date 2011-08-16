@@ -20,6 +20,7 @@ import com.intellij.errorreport.ErrorReportSender;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.IdeaLogger;
@@ -37,7 +38,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 
 /**
@@ -58,17 +61,17 @@ public class ITNReporter extends ErrorReportSubmitter {
   }
 
   @Override
-  public void submitAsync(IdeaLoggingEvent[] events,
+  public boolean trySubmitAsync(IdeaLoggingEvent[] events,
                           String additionalInfo,
                           Component parentComponent,
                           Consumer<SubmittedReportInfo> consumer) {
-    sendError(events [0], additionalInfo, parentComponent, consumer);
+    return sendError(events [0], additionalInfo, parentComponent, consumer);
   }
 
   /**
      * @noinspection ThrowablePrintStackTrace
      */
-  private static void sendError(IdeaLoggingEvent event,
+  private static boolean sendError(IdeaLoggingEvent event,
                                 String additionalInfo,
                                 final Component parentComponent,
                                 final Consumer<SubmittedReportInfo> callback) {
@@ -82,10 +85,10 @@ public class ITNReporter extends ErrorReportSubmitter {
 
     ErrorBean errorBean = new ErrorBean(event.getThrowable(), IdeaLogger.ourLastActionId);
 
-    doSubmit(event, parentComponent, callback, errorBean, additionalInfo);
+    return doSubmit(event, parentComponent, callback, errorBean, additionalInfo);
   }
 
-  private static void doSubmit(final IdeaLoggingEvent event,
+  private static boolean doSubmit(final IdeaLoggingEvent event,
                                final Component parentComponent,
                                final Consumer<SubmittedReportInfo> callback,
                                final ErrorBean errorBean,
@@ -100,7 +103,7 @@ public class ITNReporter extends ErrorReportSubmitter {
       final JetBrainsAccountDialog dlg = new JetBrainsAccountDialog(parentComponent);
       dlg.show();
       if (!dlg.isOK()) {
-        return;
+        return false;
       }
     }
 
@@ -119,14 +122,33 @@ public class ITNReporter extends ErrorReportSubmitter {
       public void consume(Integer threadId) {
         previousExceptionThreadId = threadId;
         wasException = true;
-        callback.consume(new SubmittedReportInfo(URL_HEADER + threadId, String.valueOf(threadId),
-                                                 SubmittedReportInfo.SubmissionStatus.NEW_ISSUE));
+        final SubmittedReportInfo reportInfo = new SubmittedReportInfo(URL_HEADER + threadId, String.valueOf(threadId),
+                                                        SubmittedReportInfo.SubmissionStatus.NEW_ISSUE);
+        callback.consume(reportInfo);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
+            StringBuilder text = new StringBuilder("<html>");
+            final String url = IdeErrorsDialog.getUrl(reportInfo, true);
+            IdeErrorsDialog.appendSubmissionInformation(reportInfo, text, url);
+            text.append(".");
+            if (reportInfo.getStatus() != SubmittedReportInfo.SubmissionStatus.FAILED) {
+              text.append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"));
+            }
+            text.append("</html>");
+            NotificationType type = reportInfo.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED
+                                    ? NotificationType.ERROR
+                                    : NotificationType.INFORMATION;
+            NotificationListener listener = url != null ? new NotificationListener() {
+              @Override
+              public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                BrowserUtil.launchBrowser(url);
+                notification.expire();
+              }
+            } : null;
             ReportMessages.GROUP.createNotification(ReportMessages.ERROR_REPORT,
-                                                         DiagnosticBundle.message("error.report.confirmation"),
-                                                         NotificationType.INFORMATION, null).notify(project);
+                                                    text.toString(),
+                                                    type, listener).notify(project);
           }
         });
       }
@@ -172,6 +194,7 @@ public class ITNReporter extends ErrorReportSubmitter {
         });
       }
     });
+    return true;
   }
 
   private static String buildDescription(IdeaLoggingEvent event, String description) {
