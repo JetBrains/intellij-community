@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.Extensions;
@@ -39,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +61,22 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       return Extensions.getExtensions(FileStatusProvider.EP_NAME, myProject);
     }
   };
+  
+  private static class FileStatusNull implements FileStatus {
+    private static final FileStatus INSTANCE = new FileStatusNull();
+
+    @Override public String getText() {
+      throw new AssertionError("Should not be called");
+    }
+
+    @Override public Color getColor() {
+      throw new AssertionError("Should not be called");
+    }
+
+    @Override public ColorKey getColorKey() {
+      throw new AssertionError("Should not be called");
+    }
+  }
 
   public FileStatusManagerImpl(Project project, StartupManager startupManager) {
     myProject = project;
@@ -160,7 +178,13 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
     if ((file == null) || (! file.isValid())) return;
     FileStatus cachedStatus = getCachedStatus(file);
-    if (cachedStatus == null) return;
+    if (cachedStatus == FileStatusNull.INSTANCE) {
+      return;
+    }
+    if (cachedStatus == null) {
+      myCachedStatuses.put(file, FileStatusNull.INSTANCE);
+      return;
+    }
     FileStatus newStatus = calcStatus(file);
     if (cachedStatus == newStatus) return;
     myCachedStatuses.put(file, newStatus);
@@ -172,7 +196,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
   public FileStatus getStatus(final VirtualFile file) {
     FileStatus status = getCachedStatus(file);
-    if (status == null) {
+    if (status == null || status == FileStatusNull.INSTANCE) {
       status = calcStatus(file);
       myCachedStatuses.put(file, status);
     }

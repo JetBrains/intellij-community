@@ -105,4 +105,22 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
         new MapIgnoredFilesHolder(myProject));
     }
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (!(obj instanceof IgnoredFilesCompositeHolder)) {
+      return false;
+    }
+    IgnoredFilesCompositeHolder other = (IgnoredFilesCompositeHolder) obj;
+    return myHolderMap.equals(other.myHolderMap);
+  }
+
+  @Override
+  public int hashCode() {
+    return myHolderMap.hashCode();
+  }
+
 }
