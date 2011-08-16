@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -24,9 +25,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -34,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
@@ -216,6 +220,26 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   public void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
     myVirtualFileManagerListeners.remove(listener);
+  }
+
+  @Override
+  public void notifyPropertyChanged(final VirtualFile virtualFile, final String property, final Object oldValue, final Object newValue) {
+    final Application application = ApplicationManager.getApplication();
+    application.invokeLater(new Runnable() {
+      public void run() {
+        if (virtualFile.isValid() && !application.isDisposed()) {
+          application.runWriteAction(new Runnable(){
+            public void run() {
+              List<VFilePropertyChangeEvent> events = Collections
+                .singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
+              BulkFileListener listener = application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+              listener.before(events);
+              listener.after(events);
+            }
+          });
+        }
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   public void fireBeforeRefreshStart(boolean asynchronous) {
