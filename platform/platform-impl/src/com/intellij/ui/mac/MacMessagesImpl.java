@@ -182,10 +182,14 @@ public class MacMessagesImpl extends MacMessages{
     JRootPane pane = null;
     String _windowTitle = null;
 
-    final Window _window = window == null ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : window;
-    
-    // TODO: uncomment
-    //LOG.assertTrue(_window.isShowing(), "Window MUST BE showing in screen!");
+    Window _window = window == null ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : window;
+    if (!_window.isShowing()) {
+      Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+      if (focusOwner != null) {
+        _window = SwingUtilities.getWindowAncestor(focusOwner);
+        LOG.assertTrue(_window.isShowing(), "Window MUST BE showing in screen!");
+      }
+    }
     
     if (_window instanceof JFrame) {
       JFrame frame = (JFrame)_window;
