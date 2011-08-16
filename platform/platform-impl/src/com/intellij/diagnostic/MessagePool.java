@@ -67,7 +67,7 @@ public class MessagePool {
     final LogMessage message = data instanceof LogMessage ? (LogMessage)data : new LogMessage(aEvent);
     if (myIdeFatals.size() < MAX_POOL_SIZE_FOR_FATALS) {
       if (myFatalsGrouper.addToGroup(message)) {
-        String title = getTitle(message);
+        String title = "<a href='xxx'>" + getTitle(message) + "</a>";
         String notificationText = getNotificationText(message);
         Notification notification =
           NOTIFICATION_GROUP.createNotification(title, notificationText, NotificationType.ERROR, new NotificationListener() {
@@ -103,7 +103,7 @@ public class MessagePool {
         text = StringUtil.stripHtml(result, false);
       }
     }
-    return "<a href='xxx'>" + text + "</a>";
+    return text;
   }
 
   private static String getTitle(LogMessage message) {
