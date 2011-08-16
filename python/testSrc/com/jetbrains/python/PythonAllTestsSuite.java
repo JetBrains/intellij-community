@@ -80,7 +80,8 @@ public class PythonAllTestsSuite {
     PyCallingNonCallableTest.class,
     PyUnusedImportTest.class,
     PyDeprecationTest.class,
-    PythonHighlightingLexerTest.class
+    PythonHighlightingLexerTest.class,
+    PyOldStyleClassInspectionTest.class
   };
 
   public static TestSuite suite() {

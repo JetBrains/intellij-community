@@ -924,8 +924,12 @@ public class PyUtil {
     PyExpression callee = node.getCallee();
     if (callee == null) return false;
     String name = callee.getName();
+    PsiReference reference = callee.getReference();
+    if (reference == null) return false;
+    PsiElement resolved = reference.resolve();
+    if (resolved == null) return false;
     PyBuiltinCache cache = PyBuiltinCache.getInstance(node);
-    if (PyNames.SUPER.equals(name) && cache.hasInBuiltins(callee)) {
+    if (PyNames.SUPER.equals(name) && cache.hasInBuiltins(resolved)) {
       PyExpression[] args = node.getArguments();
       if (args.length > 0) {
         String firstArg = args[0].getText();
