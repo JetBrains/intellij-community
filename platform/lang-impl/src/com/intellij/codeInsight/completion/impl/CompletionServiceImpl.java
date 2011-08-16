@@ -44,8 +44,6 @@ import java.util.ArrayList;
  */
 public class CompletionServiceImpl extends CompletionService{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
-  private Throwable myTrace = null;
-  private volatile CompletionProgressIndicator myCurrentCompletion;
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static String ourPhaseTrace;
 
@@ -89,7 +87,7 @@ public class CompletionServiceImpl extends CompletionService{
     final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (!(indicator instanceof CompletionProgressIndicator)) {
-      throw new AssertionError("createResultSet may be invoked only from completion thread: " + indicator + "!=" + myCurrentCompletion + "; phase=" + ourPhase + "; set at " + ourPhaseTrace);
+      throw new AssertionError("createResultSet may be invoked only from completion thread: " + indicator + "!=" + getCurrentCompletion() + "; phase set at " + ourPhaseTrace);
     }
     CompletionProgressIndicator process = (CompletionProgressIndicator)indicator;
     CamelHumpMatcher matcher = new CamelHumpMatcher(prefix, true, parameters.isRelaxedMatching());
@@ -99,23 +97,11 @@ public class CompletionServiceImpl extends CompletionService{
 
   @Override
   public CompletionProgressIndicator getCurrentCompletion() {
-    return myCurrentCompletion;
-  }
-
-  public void setCurrentCompletion(@Nullable final CompletionProgressIndicator indicator) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (indicator != null) {
-      final CompletionProgressIndicator oldCompletion = myCurrentCompletion;
-      final Throwable oldTrace = myTrace;
-      myCurrentCompletion = indicator;
-      myTrace = new Throwable();
-      if (oldCompletion != null) {
-        throw new RuntimeException(
-          "SHe's not dead yet!\nthis=" + indicator + "\ncurrent=" + oldCompletion + "\ntrace=" + StringUtil.getThrowableText(oldTrace));
-      }
-    } else {
-      myCurrentCompletion = null;
+    if (isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.CommittingDocuments.class,
+                CompletionPhase.Synchronous.class)) {
+      return ourPhase.indicator;
     }
+    return null;
   }
 
   private static class CompletionResultSetImpl extends CompletionResultSet {
@@ -206,7 +192,6 @@ public class CompletionServiceImpl extends CompletionService{
   }
 
   public static boolean isPhase(Class<? extends CompletionPhase>... possibilities) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     CompletionPhase phase = getCompletionPhase();
     for (Class<? extends CompletionPhase> possibility : possibilities) {
       if (possibility.isInstance(phase)) {
