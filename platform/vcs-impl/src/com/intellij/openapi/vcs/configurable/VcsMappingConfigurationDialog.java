@@ -168,10 +168,10 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myDirectoryRadioButton.setSelected(true);
   }
 
-  public void initProjectMessage() {
-    final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
+  public static String getProjectMessage(final Project project) {
+    final StorageScheme storageScheme = ((ProjectEx) project).getStateStore().getStorageScheme();
     boolean isDirectoryBased = StorageScheme.DIRECTORY_BASED.equals(storageScheme);
-    final String[] parts = new String[] {"Source roots of all modules", "all immediate descendants of project base directory",
+    final String[] parts = new String[] {"Content roots of all modules", "all immediate descendants of project base directory",
       ".idea directory contents"};
     final StringBuilder sb = new StringBuilder(parts[0]);
     if (isDirectoryBased) {
@@ -184,8 +184,12 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
       sb.append(", and\n");
       sb.append(parts[2]);
     }
+    return sb.toString();
+  }
+
+  public void initProjectMessage() {
     myProjectButtonComment.setForeground(UIUtil.getInactiveTextColor());
-    myProjectButtonComment.setText(sb.toString());
+    myProjectButtonComment.setText(getProjectMessage(myProject));
     myProjectButtonComment.setUI(new MultiLineLabelUI());
   }
 

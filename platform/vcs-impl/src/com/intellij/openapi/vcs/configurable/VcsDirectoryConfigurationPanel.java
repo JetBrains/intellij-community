@@ -32,11 +32,13 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.plaf.multi.MultiLabelUI;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -53,6 +55,7 @@ import java.util.List;
  */
 public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements Configurable {
   private final Project myProject;
+  private final String myProjectMessage;
   private final ProjectLevelVcsManager myVcsManager;
   private final TableView<VcsDirectoryMapping> myDirectoryMappingTable;
   private final ComboboxWithBrowseButton myVcsComboBox = new ComboboxWithBrowseButton();
@@ -72,7 +75,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       if (value instanceof VcsDirectoryMapping){
         if (((VcsDirectoryMapping)value).isDefaultMapping()) {
-          append(VcsDirectoryMapping.PROJECT_CONSTANT, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          append(VcsDirectoryMapping.PROJECT_CONSTANT);
           return;
         }
         final VcsDirectoryMapping mapping = (VcsDirectoryMapping) value;
@@ -87,17 +90,16 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
           }
           String relativePath = FileUtil.getRelativePath(ioBase, directoryFile);
           if (".".equals(relativePath)) {
-            append(ioBase.getPath(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            append(ioBase.getPath());
           }
           else {
-            append(relativePath, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-            append(" (" + ioBase + ")");
+            append(relativePath);
+            append(" (" + ioBase + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
         }
       }
     }
   }
-
 
   private final ColumnInfo<VcsDirectoryMapping, String> VCS_SETTING = new ColumnInfo<VcsDirectoryMapping, String>(VcsBundle.message("comumn.name.configure.vcses.vcs")) {
     public String valueOf(final VcsDirectoryMapping object) {
@@ -162,6 +164,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
+    myProjectMessage = VcsDirectoryMapping.PROJECT_CONSTANT + " - " + VcsMappingConfigurationDialog.getProjectMessage(myProject).replace('\n', ' ');
     myIsDisabled = myProject.isDefault();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();
@@ -315,8 +318,15 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     JPanel panel = new JPanel(new BorderLayout());
     final JScrollPane scroll = ScrollPaneFactory.createScrollPane(myDirectoryMappingTable);
     panel.add(scroll, BorderLayout.CENTER);
+    final JPanel wrapper = new JPanel(new BorderLayout());
     myRecentlyChangedConfigurable = new VcsContentAnnotationConfigurable(myProject);
-    panel.add(myRecentlyChangedConfigurable.createComponent(), BorderLayout.SOUTH);
+    final JLabel label = new JLabel(myProjectMessage);
+    label.setForeground(UIUtil.getInactiveTextColor());
+    label.setBorder(BorderFactory.createEmptyBorder(2,0,2,0));
+    //label.setUI(new MultiLabelUI());
+    wrapper.add(label, BorderLayout.CENTER);
+    wrapper.add(myRecentlyChangedConfigurable.createComponent(), BorderLayout.SOUTH);
+    panel.add(wrapper, BorderLayout.SOUTH);
     return panel;
   }
 
