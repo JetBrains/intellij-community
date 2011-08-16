@@ -16,13 +16,14 @@
 package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface PsiDocComment extends PsiComment {
+public interface PsiDocComment extends PsiComment, PsiDocCommentBase {
   @Nullable
   PsiDocCommentOwner getOwner();
 
