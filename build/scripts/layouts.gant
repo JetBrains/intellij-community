@@ -162,10 +162,6 @@ public def layoutCommunityPlugins(String home) {
     layoutPlugin("ToString", "generate-tostring", "toString")
     layoutPlugin("uiDesigner", "ui-designer", "uiDesigner")
 
-    layoutPlugin("RelaxNG-Support", "relaxng") {
-      fileset(dir: "$home/plugins/relaxng/lib", includes: "**/*.jar")
-    }
-
     layoutPlugin("maven") {
       jar("maven-server-api.jar") {
         module("maven-server-api")
