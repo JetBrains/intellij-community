@@ -21,7 +21,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.psi.tree.IElementType;
 import junit.framework.Assert;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Maxim.Mossienko
@@ -66,5 +72,15 @@ public class EditorTestUtil {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
     actionHandler.execute(editor, DataManager.getInstance().getDataContext());
+  }
+
+  public static List<IElementType> getAllTokens(EditorHighlighter highlighter) {
+    List<IElementType> tokens = new ArrayList<IElementType>();
+    HighlighterIterator iterator = highlighter.createIterator(0);
+    while (!iterator.atEnd()) {
+      tokens.add(iterator.getTokenType());
+      iterator.advance();
+    }
+    return tokens;
   }
 }
