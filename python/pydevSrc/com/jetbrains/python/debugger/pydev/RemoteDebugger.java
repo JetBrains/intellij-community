@@ -68,7 +68,7 @@ public class RemoteDebugger {
       mySocket = myServerSocket.accept();
     }
     finally {
-      myServerSocket.close();
+      //it is closed in close() method on process termination
     }
 
     try {
@@ -94,6 +94,8 @@ public class RemoteDebugger {
       }
       mySocket = null;
     }
+
+    cleanUp();
   }
 
   public String handshake() throws PyDebuggerException {
@@ -163,6 +165,13 @@ public class RemoteDebugger {
     catch (PyDebuggerException e) {
       return "#Couldn't load source of file " + path;
     }
+  }
+
+  private void cleanUp() {
+    myThreads.clear();
+    myResponseQueue.clear();
+    mySequence = -1;
+    myTempVars.clear();
   }
 
   private static String composeName(final PyDebugValue var) {
@@ -286,7 +295,7 @@ public class RemoteDebugger {
     }
     catch (SocketException se) {
       disconnect();
-      fireCloseEvent();
+      fireCommunicationError();
     }
     catch (IOException e) {
       LOG.error(e);
@@ -341,7 +350,7 @@ public class RemoteDebugger {
         }
       }
       catch (SocketException ignore) {
-        fireCloseEvent();
+        fireCommunicationError();
       }
       catch (Exception e) {
         LOG.error(e);
@@ -470,6 +479,10 @@ public class RemoteDebugger {
       return myData.get(threadId);
     }
 
+    private void clear() {
+      myData.clear();
+    }
+
     private void clear(final String threadId) {
       final Map<String, Set<String>> threadVars = myData.get(threadId);
       if (threadVars != null) {
@@ -489,6 +502,12 @@ public class RemoteDebugger {
   private void fireCloseEvent() {
     for (RemoteDebuggerCloseListener listener : myCloseListeners) {
       listener.closed();
+    }
+  }
+
+  private void fireCommunicationError() {
+    for (RemoteDebuggerCloseListener listener : myCloseListeners) {
+      listener.communicationError();
     }
   }
 }

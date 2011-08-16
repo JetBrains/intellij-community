@@ -5,4 +5,6 @@ package com.jetbrains.python.debugger.pydev;
  */
 public interface RemoteDebuggerCloseListener {
   void closed();
+
+  void communicationError();
 }
