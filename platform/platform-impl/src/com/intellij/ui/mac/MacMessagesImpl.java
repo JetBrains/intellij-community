@@ -17,6 +17,7 @@ package com.intellij.ui.mac;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.FocusTrackback;
@@ -118,15 +119,17 @@ public class MacMessagesImpl extends MacMessages{
   }
 
   static {
-    final ID delegateClass = Foundation.registerObjcClass(Foundation.getClass("NSObject"), "NSAlertDelegate_");
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), SHEET_DID_END, "v*")) {
-      throw new RuntimeException("Unable to add method to objective-c delegate class!");
-    }
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showSheet:"), MAIN_THREAD_RUNNABLE, "v*")) {
-      throw new RuntimeException("Unable to add method to objective-c delegate class!");
-    }
+    if (SystemInfo.isMac) {
+      final ID delegateClass = Foundation.registerObjcClass(Foundation.getClass("NSObject"), "NSAlertDelegate_");
+      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), SHEET_DID_END, "v*")) {
+        throw new RuntimeException("Unable to add method to objective-c delegate class!");
+      }
+      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showSheet:"), MAIN_THREAD_RUNNABLE, "v*")) {
+        throw new RuntimeException("Unable to add method to objective-c delegate class!");
+      }
 
-    Foundation.registerObjcClassPair(delegateClass);
+      Foundation.registerObjcClassPair(delegateClass);
+    }
   }
 
   @Override
