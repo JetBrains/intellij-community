@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.CompletionWeigher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -36,7 +37,7 @@ public class GrTopClassMembersWeigher extends CompletionWeigher {
     if (o instanceof ResolveResult) {
       o = ((ResolveResult)o).getElement();
     }
-    if (!(o instanceof PsiMember)) return 0;
+    if (!(o instanceof PsiMember) || !(location.getCompletionParameters().getPosition().getContainingFile() instanceof GroovyFileBase)) return null;
 
     final PsiElement position = location.getCompletionParameters().getPosition();
 
