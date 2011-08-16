@@ -58,23 +58,45 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   private final ComboboxWithBrowseButton myVcsComboBox = new ComboboxWithBrowseButton();
   private final List<ModuleVcsListener> myListeners = new ArrayList<ModuleVcsListener>();
 
-  private final ColumnInfo<VcsDirectoryMapping, String> DIRECTORY = new ColumnInfo<VcsDirectoryMapping, String>(VcsBundle.message("column.info.configure.vcses.directory")) {
-    public String valueOf(final VcsDirectoryMapping mapping) {
-      String directory = mapping.getDirectory();
-      if (directory.length() == 0) {
-        return "<Project Root>";
-      }
-      VirtualFile baseDir = myProject.getBaseDir();
-      if (baseDir != null) {
-        final File directoryFile = new File(directory);
-        if (directoryFile.isAbsolute() && directory.charAt(0) != baseDir.getPath().charAt(0)) {
-          return directory;
-        }
-        return FileUtil.getRelativePath(new File(baseDir.getPath()), directoryFile);
-      }
-      return directory;
+  private final MyDirectoryRenderer myDirectoryRenderer;
+  private final ColumnInfo<VcsDirectoryMapping, VcsDirectoryMapping> DIRECTORY;
+
+  private static class MyDirectoryRenderer extends ColoredTableCellRenderer {
+    private final Project myProject;
+
+    public MyDirectoryRenderer(Project project) {
+      myProject = project;
     }
-  };
+
+    @Override
+    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      if (value instanceof VcsDirectoryMapping){
+        if (((VcsDirectoryMapping)value).isDefaultMapping()) {
+          append(VcsDirectoryMapping.PROJECT_CONSTANT, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          return;
+        }
+        final VcsDirectoryMapping mapping = (VcsDirectoryMapping) value;
+        String directory = mapping.getDirectory();
+        VirtualFile baseDir = myProject.getBaseDir();
+        if (baseDir != null) {
+          final File directoryFile = new File(directory);
+          File ioBase = new File(baseDir.getPath());
+          if (directoryFile.isAbsolute() && ! FileUtil.isAncestor(ioBase, directoryFile, false)) {
+            append(directoryFile.getPath());
+            return;
+          }
+          String relativePath = FileUtil.getRelativePath(ioBase, directoryFile);
+          if (".".equals(relativePath)) {
+            append(ioBase.getPath(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          }
+          else {
+            append(relativePath, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            append(" (" + ioBase + ")");
+          }
+        }
+      }
+    }
+  }
 
 
   private final ColumnInfo<VcsDirectoryMapping, String> VCS_SETTING = new ColumnInfo<VcsDirectoryMapping, String>(VcsBundle.message("comumn.name.configure.vcses.vcs")) {
@@ -150,6 +172,17 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
     myDirectoryMappingTable = new TableView<VcsDirectoryMapping>();
     initPanel();
+    myDirectoryRenderer = new MyDirectoryRenderer(myProject);
+    DIRECTORY = new ColumnInfo<VcsDirectoryMapping, VcsDirectoryMapping>(VcsBundle.message("column.info.configure.vcses.directory")) {
+      public VcsDirectoryMapping valueOf(final VcsDirectoryMapping mapping) {
+        return mapping;
+      }
+
+      @Override
+      public TableCellRenderer getRenderer(VcsDirectoryMapping vcsDirectoryMapping) {
+        return myDirectoryRenderer;
+      }
+    };
     initializeModel();
 
     final JComboBox comboBox = myVcsComboBox.getComboBox();
@@ -236,6 +269,8 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   private void addMapping() {
     Collection<AbstractVcs> activeVcses = getActiveVcses();
     VcsMappingConfigurationDialog dlg = new VcsMappingConfigurationDialog(myProject, VcsBundle.message("directory.mapping.add.title"));
+    // due to wonderful UI designer bug
+    dlg.initProjectMessage();
     dlg.show();
     if (dlg.isOK()) {
       VcsDirectoryMapping mapping = new VcsDirectoryMapping();

@@ -16,11 +16,13 @@
 
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -29,6 +31,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,6 +49,9 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myDirectoryTextField;
   private JPanel myPanel;
   private JPanel myVcsConfigurablePlaceholder;
+  private JRadioButton myProjectRadioButton;
+  private JRadioButton myDirectoryRadioButton;
+  private JLabel myProjectButtonComment;
   private UnnamedConfigurable myVcsConfigurable;
   private VcsDirectoryMapping myMappingCopy;
   private JComponent myVcsConfigurableComponent;
@@ -81,15 +87,29 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
 
   public void setMapping(VcsDirectoryMapping mapping) {
     myMappingCopy = new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings());
+    myProjectRadioButton.setSelected(myMappingCopy.isDefaultMapping());
+    myDirectoryRadioButton.setSelected(! myProjectRadioButton.isSelected());
+    if (myMappingCopy.isDefaultMapping()) {
+      myDirectoryTextField.setText("");
+    } else {
+      myDirectoryTextField.setText(FileUtil.toSystemDependentName(mapping.getDirectory()));
+    }
+
     myVCSComboBox.setSelectedItem(myVcses.get(mapping.getVcs()));
-    myDirectoryTextField.setText(FileUtil.toSystemDependentName(mapping.getDirectory()));
     updateVcsConfigurable();
+    myDirectoryTextField.setEnabled(myDirectoryRadioButton.isSelected());
+
+    initProjectMessage();
   }
 
   public void saveToMapping(VcsDirectoryMapping mapping) {
     VcsDescriptor wrapper = (VcsDescriptor) myVCSComboBox.getSelectedItem();
     mapping.setVcs((wrapper == null) || wrapper.isNone() ? "" : wrapper.getName());
-    mapping.setDirectory(FileUtil.toSystemIndependentName(myDirectoryTextField.getText()));
+    if (myProjectRadioButton.isSelected()) {
+      mapping.setDirectory("");
+    } else {
+      mapping.setDirectory(FileUtil.toSystemIndependentName(myDirectoryTextField.getText()));
+    }
     mapping.setRootSettings(myMappingCopy.getRootSettings());
   }
 
@@ -129,6 +149,44 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
       }
     }
     super.doOKAction();
+  }
+
+  private void createUIComponents() {
+    ButtonGroup bg = new ButtonGroup();
+    myProjectRadioButton = new JRadioButton();
+    myDirectoryRadioButton = new JRadioButton();
+    bg.add(myProjectRadioButton);
+    bg.add(myDirectoryRadioButton);
+    final ActionListener al = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myDirectoryTextField.setEnabled(myDirectoryRadioButton.isSelected());
+      }
+    };
+    myProjectRadioButton.addActionListener(al);
+    myDirectoryRadioButton.addActionListener(al);
+    myDirectoryRadioButton.setSelected(true);
+  }
+
+  public void initProjectMessage() {
+    final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
+    boolean isDirectoryBased = StorageScheme.DIRECTORY_BASED.equals(storageScheme);
+    final String[] parts = new String[] {"Source roots of all modules", "all immediate descendants of project base directory",
+      ".idea directory contents"};
+    final StringBuilder sb = new StringBuilder(parts[0]);
+    if (isDirectoryBased) {
+      sb.append(",\n");
+    } else {
+      sb.append(", and\n");
+    }
+    sb.append(parts[1]);
+    if (isDirectoryBased) {
+      sb.append(", and\n");
+      sb.append(parts[2]);
+    }
+    myProjectButtonComment.setForeground(UIUtil.getInactiveTextColor());
+    myProjectButtonComment.setText(sb.toString());
+    myProjectButtonComment.setUI(new MultiLineLabelUI());
   }
 
   private class MyBrowseFolderListener extends ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> {
