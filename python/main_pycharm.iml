@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="jdbc-console" />
     <orderEntry type="module" module-name="django-db-config" />
     <orderEntry type="module" module-name="JSInspections" />
+    <orderEntry type="module" module-name="relaxng" />
   </component>
 </module>
 
