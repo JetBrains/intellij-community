@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.controlflow;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.jetbrains.python.psi.PyReferenceExpression;
 
 import java.util.List;
 
@@ -16,13 +17,10 @@ public class InstructionBuilder {
   public static List<Instruction> buildInstructions(ControlFlowBuilder builder, List<PyTypeAssertionEvaluator.Assertion> assertions) {
     List<Instruction> result = Lists.newArrayList();
     for (PyTypeAssertionEvaluator.Assertion def: assertions) {
-      processDef(builder, def, result);
+      final PyReferenceExpression e = def.getElement();
+      result.add(ReadWriteInstruction.assertType(builder, e, e.getName(), def.getTypeEvalFunction()));
     }
     return result;
-  }
-
-  private static void processDef(ControlFlowBuilder builder, PyTypeAssertionEvaluator.Assertion def, List<Instruction> result) {
-    result.add(ReadWriteInstruction.writeType(builder, def.getElement(), def.getName()));            
   }
 
   public static void addAssertInstructions(ControlFlowBuilder builder, PyTypeAssertionEvaluator assertionEvaluator) {

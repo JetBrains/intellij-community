@@ -28,6 +28,7 @@ import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.Query;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementImpl;
@@ -35,6 +36,9 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Dennis.Ushakov
@@ -136,7 +140,12 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     }
 
     for (final PsiElement ref : refsToInline) {
-      final PsiElement[] defs = PyDefUseUtil.getLatestDefs(containerBlock, local, ref);
+      final List<PsiElement> elems = new ArrayList<PsiElement>();
+      final List<ReadWriteInstruction> latestDefs = PyDefUseUtil.getLatestDefs(containerBlock, local, ref);
+      for (ReadWriteInstruction i : latestDefs) {
+        elems.add(i.getElement());
+      }
+      final PsiElement[] defs = elems.toArray(new PsiElement[elems.size()]);
       boolean isSameDefinition = true;
       for (PsiElement otherDef : defs) {
         isSameDefinition &= isSameDefinition(def, otherDef);
@@ -206,12 +215,12 @@ public class PyInlineLocalHandler extends InlineActionHandler {
   private static Pair<PyStatement, Boolean> getAssignmentToInline(ScopeOwner containerBlock, PyReferenceExpression expr,
                                                                   PyTargetExpression local, Project project) {
     if (expr != null) {
-      final PyElement[] candidates = PyDefUseUtil.getLatestDefs(containerBlock, local, expr);
-      if (candidates.length == 1) {
-        PyStatement expression = getAssignmentByLeftPart(candidates[0]);
+      final List<ReadWriteInstruction> candidates = PyDefUseUtil.getLatestDefs(containerBlock, local, expr);
+      if (candidates.size() == 1) {
+        final PyStatement expression = getAssignmentByLeftPart((PyElement)candidates.get(0).getElement());
         return Pair.create(expression, false);
       }
-      return Pair.create(null, candidates.length > 0);
+      return Pair.create(null, candidates.size() > 0);
     }
     final Query<PsiReference> query = ReferencesSearch.search(local, GlobalSearchScope.allScope(project), false);
     final PsiReference first = query.findFirst();

@@ -25,7 +25,7 @@ public class PyDefUseUtil {
   }
 
   @NotNull
-  public static PyElement[] getLatestDefs(ScopeOwner block, PyElement var, PsiElement anchor) {
+  public static List<ReadWriteInstruction> getLatestDefs(ScopeOwner block, PyElement var, PsiElement anchor) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
@@ -33,28 +33,25 @@ public class PyDefUseUtil {
       throw new InstructionNotFoundException();
     }
     final boolean[] visited = new boolean[instructions.length];
-    final Collection<PyElement> result = new LinkedHashSet<PyElement>();
+    final Collection<ReadWriteInstruction> result = new LinkedHashSet<ReadWriteInstruction>();
     getLatestDefs(var, instructions, instr, visited, result);
-    return result.toArray(new PyElement[result.size()]);
+    return new ArrayList<ReadWriteInstruction>(result);
   }
 
   private static void getLatestDefs(final PyElement var,
                                     final Instruction[] instructions,
                                     final int instr,
                                     final boolean[] visited,
-                                    final Collection<PyElement> result) {
+                                    final Collection<ReadWriteInstruction> result) {
     if (visited[instr]) return;
     visited[instr] = true;
     if (instructions[instr] instanceof ReadWriteInstruction) {
       final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
       final PsiElement element = instruction.getElement();
-      String name = elementName(element);
+      final String name = elementName(element);
       final ReadWriteInstruction.ACCESS access = instruction.getAccess();
-      if (access == ReadWriteInstruction.ACCESS.WRITETYPE) {
-        name = instruction.getName();
-      }
       if (access.isWriteAccess() && Comparing.strEqual(name, var.getName())) {
-        result.add((PyElement)element);
+        result.add(instruction);
         return;
       }
     }

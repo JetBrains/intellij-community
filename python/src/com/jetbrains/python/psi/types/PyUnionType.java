@@ -104,6 +104,24 @@ public class PyUnionType implements PyType {
     return new PyUnionType(members);
   }
 
+  @Nullable
+  public static PyType union(List<PyType> members) {
+    final int n = members.size();
+    if (n == 0) {
+      return null;
+    }
+    else if (n == 1) {
+      return members.get(0);
+    }
+    else {
+      PyType res = unit(members.get(0));
+      for (int i = 1; i < n; i++) {
+        res = union(res, members.get(i));
+      }
+      return res;
+    }
+  }
+
   public boolean isWeak() {
     for (PyType member : myMembers) {
       if (member == null) {
@@ -115,5 +133,16 @@ public class PyUnionType implements PyType {
 
   public List<PyType> getMembers() {
     return myMembers;
+  }
+
+  private static PyType unit(@Nullable PyType type) {
+    if (type instanceof PyUnionType) {
+      Set<PyType> members = new LinkedHashSet<PyType>();
+      members.addAll(((PyUnionType)type).getMembers());
+      return new PyUnionType(members);
+    }
+    else {
+      return new PyUnionType(Collections.singletonList(type));
+    }
   }
 }
