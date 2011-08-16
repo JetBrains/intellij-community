@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -161,19 +162,28 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     final VirtualFile[] files = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     for (VirtualFile file : files) {
       if (file.isValid()) {
-        PushedFilePropertiesUpdater.findAndUpdateValue(project, file, this, languageLevel);
         VirtualFile parent = file.getParent();
+        boolean suppressSizeLimit = false;
         if (parent != null && parent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
-          setNoSizeLimitRecursive(file);
+          suppressSizeLimit = true;
         }
+        markRecursively(project, file, languageLevel, suppressSizeLimit);
       }
     }
   }
 
-  private static void setNoSizeLimitRecursive(VirtualFile file) {
-    SingleRootFileViewProvider.doNotCheckFileSizeLimit(file);
+  private void markRecursively(Project project, VirtualFile file, LanguageLevel languageLevel, boolean suppressSizeLimit) {
+    if (FileTypeManager.getInstance().isFileIgnored(file)) {
+      return;
+    }
+    if (file.isDirectory()) {
+      PushedFilePropertiesUpdater.findAndUpdateValue(project, file, this, languageLevel);
+    }
+    if (suppressSizeLimit) {
+      SingleRootFileViewProvider.doNotCheckFileSizeLimit(file);
+    }
     for (VirtualFile child : file.getChildren()) {
-      setNoSizeLimitRecursive(child);
+      markRecursively(project, child, languageLevel, suppressSizeLimit);
     }
   }
 
