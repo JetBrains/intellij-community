@@ -148,7 +148,13 @@ public class GitContentRevision implements ContentRevision {
                                                VcsRevisionNumber revisionNumber,
                                                Project project,
                                                boolean isDeleted, final boolean canBeDeleted, boolean unescapePath) throws VcsException {
-    final FilePath file = createPath(vcsRoot, path, isDeleted, canBeDeleted, unescapePath);
+    final FilePath file;
+    if (project.isDisposed()) {
+      file = new FilePathImpl(new File(makeAbsolutePath(vcsRoot, path, unescapePath)), false);
+    } else {
+      file = createPath(vcsRoot, path, isDeleted, canBeDeleted, unescapePath);
+    }
+    
     if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
       return createRevisionImpl(file, (GitRevisionNumber)revisionNumber, project, null);
     }
@@ -158,14 +164,18 @@ public class GitContentRevision implements ContentRevision {
   }
 
   public static FilePath createPath(VirtualFile vcsRoot, String path, boolean isDeleted, boolean canBeDeleted, boolean unescapePath) throws VcsException {
-    final String unescapedPath = unescapePath ? GitUtil.unescapePath(path) : path;
-    final String absolutePath = vcsRoot.getPath() + "/" + unescapedPath;
+    final String absolutePath = makeAbsolutePath(vcsRoot, path, unescapePath);
     FilePath file = isDeleted ? VcsUtil.getFilePathForDeletedFile(absolutePath, false) : VcsUtil.getFilePath(absolutePath, false);
     if (canBeDeleted && (! SystemInfo.isFileSystemCaseSensitive) && VcsUtil.caseDiffers(file.getPath(), absolutePath)) {
       // as for deleted file
       file = FilePathImpl.createForDeletedFile(new File(absolutePath), false);
     }
     return file;
+  }
+
+  private static String makeAbsolutePath(VirtualFile vcsRoot, String path, boolean unescapePath) throws VcsException {
+    final String unescapedPath = unescapePath ? GitUtil.unescapePath(path) : path;
+    return vcsRoot.getPath() + "/" + unescapedPath;
   }
 
   public static ContentRevision createRevision(final VirtualFile file, final VcsRevisionNumber revisionNumber, final Project project)
