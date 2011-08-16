@@ -60,6 +60,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyLightFixtureTestCase
     doTest();
   }
 
+  // PY-2308
+  public void testTypeAssertions() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
