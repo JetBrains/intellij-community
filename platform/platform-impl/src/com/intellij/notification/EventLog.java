@@ -160,6 +160,8 @@ public class EventLog implements Notifications {
       }
       mainText = mainText.substring(tagMatcher.end());
     }
+    
+    message = StringUtil.convertLineSeparators(message);
 
     String status = message;
 
