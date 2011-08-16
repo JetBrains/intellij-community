@@ -144,7 +144,7 @@ class EventLogConsole {
     }
 
     if (notification.isImportant()) {
-      highlightNotification(notification, message, document.getLineCount() - 2);
+      highlightNotification(notification, pair.status, document.getLineCount() - 2);
     }
   }
 
