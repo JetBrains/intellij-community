@@ -59,7 +59,12 @@ public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, O
   }
 
   public static Query<PsiMethod> search(final PsiMethod method, SearchScope scope, final boolean checkDeep) {
-    if (cannotBeOverriden(method)) return EmptyQuery.getEmptyQuery(); // Optimization
+    if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return cannotBeOverriden(method);
+      }
+    })) return EmptyQuery.getEmptyQuery(); // Optimization
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(method, scope, checkDeep));
   }
 
