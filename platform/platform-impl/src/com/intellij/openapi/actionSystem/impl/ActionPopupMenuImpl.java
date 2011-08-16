@@ -24,6 +24,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -119,7 +120,7 @@ final class ActionPopupMenuImpl extends ApplicationAdapter implements ActionPopu
 
       // Determine real client area of target graphics configuration
 
-      Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(targetGraphicsConfiguration);
+      Insets insets = ScreenUtil.getScreenInsets(targetGraphicsConfiguration);
       Rectangle targetRectangle = targetGraphicsConfiguration.getBounds();
       targetRectangle.x += insets.left;
       targetRectangle.y += insets.top;

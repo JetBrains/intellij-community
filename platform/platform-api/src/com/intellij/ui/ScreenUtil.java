@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,29 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Map;
 
 /**
  * @author kir
  * @author Konstantin Bulenkov
  */
 public class ScreenUtil {
-  private ScreenUtil() {
+  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache;
+  static {
+    final boolean useCache = SystemInfo.isLinux
+                             && !GraphicsEnvironment.isHeadless()
+                             && SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.7.0")
+                             && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1;
+    ourInsetsCache = useCache ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
   }
+
+  private ScreenUtil() { }
 
   public static Rectangle getScreenRectangle(Point p) {
     GraphicsConfiguration targetGC = null;
@@ -38,7 +50,7 @@ public class ScreenUtil {
       final GraphicsConfiguration config = device.getDefaultConfiguration();
       final Rectangle rect = config.getBounds();
 
-      final Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(config);
+      final Insets insets = getScreenInsets(config);
       if (insets != null) {
         rect.x += insets.left;
         rect.width -= (insets.left + insets.right);
@@ -66,15 +78,31 @@ public class ScreenUtil {
       throw new IllegalStateException("It's impossible to determine target graphics environment for point (" + p.x + "," + p.y + ")");
     }
 
-    //Determine real client area of target graphics configuration
-    final Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(targetGC);
-    Rectangle targetRect = targetGC.getBounds();
+    // determine real client area of target graphics configuration
+    final Insets insets = getScreenInsets(targetGC);
+    final Rectangle targetRect = targetGC.getBounds();
     targetRect.x += insets.left;
     targetRect.y += insets.top;
     targetRect.width -= insets.left + insets.right;
     targetRect.height -= insets.top + insets.bottom;
 
     return targetRect;
+  }
+
+  public static Insets getScreenInsets(final GraphicsConfiguration gc) {
+    if (ourInsetsCache == null) {
+      return Toolkit.getDefaultToolkit().getScreenInsets(gc);
+    }
+
+    synchronized (ourInsetsCache) {
+      Pair<Insets, Long> data = ourInsetsCache.get(gc);
+      final long now = System.currentTimeMillis();
+      if (data == null || now > data.second + 1000) {  // keep for 1 s
+        data = Pair.create(Toolkit.getDefaultToolkit().getScreenInsets(gc), now);
+        ourInsetsCache.put(gc, data);
+      }
+      return data.first;
+    }
   }
 
   public static Rectangle getScreenRectangle(int x, int y) {
