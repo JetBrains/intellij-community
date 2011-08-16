@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -701,5 +702,13 @@ public class PlatformTestUtil {
     public boolean accept(File dir, String name) {
       return !name.contains("CVS");
     }
+  }
+
+  public static String getCommunityPath() {
+    final String homePath = PathManager.getHomePath();
+    if (new File(homePath, "community").exists()) {
+      return homePath + File.separatorChar + "community";
+    }
+    return homePath;
   }
 }
