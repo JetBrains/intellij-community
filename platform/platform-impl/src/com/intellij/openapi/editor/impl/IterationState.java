@@ -23,10 +23,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +106,7 @@ public final class IterationState {
     MarkupModelEx editorMarkup = (MarkupModelEx)editor.getMarkupModel();
     myView.init(editorMarkup, start, myEnd);
 
-    final MarkupModelEx docMarkup = (MarkupModelEx)editor.getDocument().getMarkupModel(editor.getProject());
+    final MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), true);
     myDoc.init(docMarkup, start, myEnd);
 
     myEndOffset = myStartOffset;

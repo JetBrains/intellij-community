@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.Extensions;
@@ -496,7 +497,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
-    MarkupModelEx model = (MarkupModelEx)document.getMarkupModel(project);
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       public boolean process(RangeHighlighterEx marker) {
         Object tt = marker.getErrorStripeTooltip();
@@ -518,7 +519,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
-    MarkupModelEx model = (MarkupModelEx)document.getMarkupModel(project);
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOutside(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       public boolean process(RangeHighlighterEx marker) {
         Object tt = marker.getErrorStripeTooltip();
@@ -634,13 +635,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @Nullable
   public static List<LineMarkerInfo> getLineMarkers(Document document, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    MarkupModel markup = document.getMarkupModel(project);
+    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     return markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY);
   }
 
   public static void setLineMarkers(@NotNull Document document, List<LineMarkerInfo> lineMarkers, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    MarkupModel markup = document.getMarkupModel(project);
+    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
   }
 

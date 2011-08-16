@@ -65,6 +65,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -803,7 +804,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }
     }
-    RangeHighlighter[] highlighters = myEditor.getDocument().getMarkupModel(getProject()).getAllHighlighters();
+    RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true).getAllHighlighters();
     for (RangeHighlighter highlighter : highlighters) {
       if (highlighter.getEndOffset() >= offset && highlighter.getStartOffset() <= offset) {
         GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
@@ -827,7 +828,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       addGutterIconRenderer(info.getGutterIconRenderer(), info.startOffset, result);
     }
 
-    for (final RangeHighlighter highlighter : myEditor.getDocument().getMarkupModel(project).getAllHighlighters()) {
+    for (final RangeHighlighter highlighter : DocumentMarkupModel.forDocument(myEditor.getDocument(), project, true).getAllHighlighters()) {
       if (!highlighter.isValid()) continue;
       addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset(), result);
     }

@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -153,7 +154,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   public static void clearMyHighlights(Document document, Project project) {
-    MarkupModel markupModel = document.getMarkupModel(project);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
       Object tooltip = highlighter.getErrorStripeTooltip();
       if (!(tooltip instanceof HighlightInfo)) {

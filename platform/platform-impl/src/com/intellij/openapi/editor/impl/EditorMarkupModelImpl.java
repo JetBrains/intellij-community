@@ -147,7 +147,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
 
     getNearestHighlighters(this, me, width, highlighters);
-    getNearestHighlighters((MarkupModelEx)myEditor.getDocument().getMarkupModel(getEditor().getProject()), me, width, highlighters);
+    getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), me, width, highlighters);
 
     if (highlighters.isEmpty()) return false;
 
@@ -178,7 +178,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private RangeHighlighter getNearestRangeHighlighter(final MouseEvent e, final int width) {
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     getNearestHighlighters(this, e, width, highlighters);
-    getNearestHighlighters((MarkupModelEx)myEditor.getDocument().getMarkupModel(myEditor.getProject()), e, width, highlighters);
+    getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), myEditor.getProject(), true), e, width, highlighters);
     RangeHighlighter nearestMarker = null;
     int yPos = 0;
     for (RangeHighlighter highlighter : highlighters) {
@@ -439,7 +439,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       endOffset = yPositionToOffset(clip.y + clip.height, false);
 
       drawMarkup(g, stripeWidth, startOffset, endOffset, EditorMarkupModelImpl.this);
-      drawMarkup(g, stripeWidth, startOffset, endOffset, (MarkupModelEx)document.getMarkupModel(myEditor.getProject()));
+      drawMarkup(g, stripeWidth, startOffset, endOffset, (MarkupModelEx)DocumentMarkupModel
+        .forDocument(document, myEditor.getProject(), true));
     }
 
     private void drawMarkup(final Graphics g, final int width, int startOffset, int endOffset, MarkupModelEx markup) {

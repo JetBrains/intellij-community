@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -499,7 +500,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
-    RangeHighlighter highlighter = ((MarkupModelEx)document.getMarkupModel(project)).addPersistentLineHighlighter(
+    RangeHighlighter highlighter = ((MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true)).addPersistentLineHighlighter(
       lineIndex, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
     if (!highlighter.isValid()) {
       return null;

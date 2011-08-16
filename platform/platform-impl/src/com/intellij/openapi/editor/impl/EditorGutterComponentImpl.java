@@ -387,7 +387,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void processRangeHighlighters(int startOffset, int endOffset, RangeHighlighterProcessor processor) {
     Document document = myEditor.getDocument();
-    final MarkupModelEx docMarkup = (MarkupModelEx)document.getMarkupModel(myEditor.getProject());
+    final MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true);
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
     int docLength = document.getTextLength();
     int patchedStartOffset = startOffset < docLength ? document.getLineStartOffset(document.getLineNumber(startOffset)) : docLength;

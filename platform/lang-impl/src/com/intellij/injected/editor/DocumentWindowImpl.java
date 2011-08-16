@@ -24,10 +24,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditReadOnlyListener;
+import com.intellij.openapi.editor.ex.LineIterator;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
@@ -409,11 +410,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     //todo persistent?
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), surviveOnExternalChange);
     return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
-  }
-
-  @NotNull
-  public MarkupModel getMarkupModel(final Project project) {
-    return new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(project), this);
   }
 
   public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {

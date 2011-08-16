@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -277,7 +278,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public static void clearHighlightingAndLineMarkers(final Editor editor, @NotNull Project project) {
-    final MarkupModel markupModel = editor.getDocument().getMarkupModel(project);
+    final MarkupModel markupModel = DocumentMarkupModel.forDocument(editor.getDocument(), project, true);
 
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
       Object tooltip = highlighter.getErrorStripeTooltip();

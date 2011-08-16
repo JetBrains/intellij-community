@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.RedBlackTree;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -1014,7 +1015,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testRangeHighlightersRecreateBug() throws Exception {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
 
-    MarkupModel markupModel = document.getMarkupModel(ourProject);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, ourProject, true);
     for (int i=0; i<2; i++) {
       RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
       RangeMarker m2 = markupModel.addRangeHighlighter(2, 7, 0, null, HighlighterTargetArea.EXACT_RANGE);

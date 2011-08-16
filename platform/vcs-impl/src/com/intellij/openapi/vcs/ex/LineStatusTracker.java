@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -167,7 +168,7 @@ public class LineStatusTracker {
     int second =
       range.getOffset2() >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getOffset2());
 
-    final RangeHighlighter highlighter = myDocument.getMarkupModel(myProject)
+    final RangeHighlighter highlighter = DocumentMarkupModel.forDocument(myDocument, myProject, true)
       .addRangeHighlighter(first, second, HighlighterLayer.FIRST - 1, null, HighlighterTargetArea.LINES_IN_RANGE);
     final TextAttributes attr = LineStatusTrackerDrawing.getAttributesFor(range);
     highlighter.setErrorStripeMarkColor(attr.getErrorStripeColor());

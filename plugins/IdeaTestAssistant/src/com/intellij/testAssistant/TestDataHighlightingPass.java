@@ -17,6 +17,7 @@ package com.intellij.testAssistant;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 
 /**
  * @author Konstantin Bulenkov
@@ -54,7 +54,7 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     removeHighlighters();
 
-    final MarkupModel model = myDocument.getMarkupModel(myProject);
+    final MarkupModel model = DocumentMarkupModel.forDocument(myDocument, myProject, true);
     final String text = myDocument.getText();
 
     if (text != null) {
@@ -72,7 +72,7 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private void removeHighlighters() {
-    final MarkupModel model = myDocument.getMarkupModel(myProject);
+    final MarkupModel model = DocumentMarkupModel.forDocument(myDocument, myProject, true);
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
       if (highlighter.getUserData(KEY) == VALUE) {
         highlighter.dispose();

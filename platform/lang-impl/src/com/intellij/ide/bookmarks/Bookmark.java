@@ -26,6 +26,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -73,7 +74,7 @@ public class Bookmark {
         myHighlighter = null;
       }
       else {
-        MarkupModelEx markup = (MarkupModelEx)document.getMarkupModel(myProject);
+        MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
         myHighlighter = markup.addPersistentLineHighlighter(line, HighlighterLayer.ERROR + 1, null);
 
 

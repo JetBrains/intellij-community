@@ -35,7 +35,7 @@ import java.util.Iterator;
 /**
  * @author cdr
 */
-class MarkupModelWindow extends UserDataHolderBase implements MarkupModelEx {
+public class MarkupModelWindow extends UserDataHolderBase implements MarkupModelEx {
   private final DocumentWindow myDocument;
   private final MarkupModelEx myHostModel;
 

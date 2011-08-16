@@ -17,8 +17,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NonNls;
@@ -204,19 +202,6 @@ public interface Document extends UserDataHolder {
    * @return the marker instance.
    */
   @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange);
-
-  /**
-   * Returns the markup model for the specified project. A document can have multiple markup
-   * models for different projects if the file to which it corresponds belongs to multiple projects
-   * opened in different IDEA frames at the same time.
-   *
-   * @param project the project for which the markup model is requested, or null if the default markup
-   *                model is requested.
-   * @return the markup model instance.
-   * @see Editor#getMarkupModel() 
-   */
-  @NotNull
-  MarkupModel getMarkupModel(@Nullable Project project);
 
   /**
    * Adds a listener for receiving notifications about changes in the properties of the document

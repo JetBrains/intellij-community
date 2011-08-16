@@ -22,9 +22,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.editor.impl.EmptyMarkupModel;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.LocalTimeCounter;
@@ -165,12 +162,6 @@ public class MockDocument implements DocumentEx {
   @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
     return null;
-  }
-
-  @Override
-  @NotNull
-  public MarkupModel getMarkupModel(Project project) {
-    return new EmptyMarkupModel(this);
   }
 
   @Override

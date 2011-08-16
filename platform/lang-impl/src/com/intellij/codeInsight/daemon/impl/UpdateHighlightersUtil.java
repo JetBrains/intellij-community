@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.RangeMarkerTree;
 import com.intellij.openapi.editor.impl.RedBlackTree;
 import com.intellij.openapi.editor.markup.*;
@@ -164,7 +165,7 @@ public class UpdateHighlightersUtil {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (info.isFileLevelAnnotation || info.getGutterIconRenderer() != null) return;
 
-    MarkupModel markup = document.getMarkupModel(project);
+    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     Processor<HighlightInfo> otherHighlightInTheWayProcessor = new Processor<HighlightInfo>() {
       public boolean process(HighlightInfo oldInfo) {
         return oldInfo.group != group || !oldInfo.equalsByActualOffset(info);
@@ -198,7 +199,7 @@ public class UpdateHighlightersUtil {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     cleanFileLevelHighlights(project, group, psiFile);
 
-    MarkupModel markup = document.getMarkupModel(project);
+    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     assertMarkupConsistent(markup, project);
 
     setHighlightersInRange(project, document, range, colorsScheme, new ArrayList<HighlightInfo>(highlights), (MarkupModelEx)markup, group);
@@ -229,7 +230,7 @@ public class UpdateHighlightersUtil {
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     cleanFileLevelHighlights(project, group, psiFile);
 
-    final MarkupModel markup = document.getMarkupModel(project);
+    final MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     assertMarkupConsistent(markup, project);
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
@@ -519,7 +520,7 @@ public class UpdateHighlightersUtil {
 
     List<LineMarkerInfo> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
     List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>(oldMarkers == null ? markers.size() : oldMarkers.size());
-    MarkupModel markupModel = document.getMarkupModel(project);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
     HighlightersRecycler toReuse = new HighlightersRecycler();
     if (oldMarkers != null) {
       for (LineMarkerInfo info : oldMarkers) {
@@ -593,7 +594,7 @@ public class UpdateHighlightersUtil {
     final Document document = e.getDocument();
     if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
 
-    final MarkupModel markup = document.getMarkupModel(project);
+    final MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     assertMarkupConsistent(markup, project);
 
     final int start = e.getOffset() - 1;
