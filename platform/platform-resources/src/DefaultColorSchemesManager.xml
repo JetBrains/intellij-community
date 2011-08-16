@@ -1149,6 +1149,11 @@
           <option name="FOREGROUND" value="ff0000"/>
         </value>
       </option>
+      <option name="LOG_EXPIRED_ENTRY">
+        <value>
+          <option name="FOREGROUND" value="555555"/>
+        </value>
+      </option>
       <option name="CONSOLE_USER_INPUT">
         <value>
           <option name="FOREGROUND" value="007f00"/>

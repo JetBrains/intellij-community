@@ -42,6 +42,7 @@ public class ConsoleViewContentType {
   public static final TextAttributesKey LOG_WARNING_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("LOG_WARNING_OUTPUT");
   public static final TextAttributesKey ERROR_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_ERROR_OUTPUT");
   public static final TextAttributesKey LOG_ERROR_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("LOG_ERROR_OUTPUT");
+  public static final TextAttributesKey LOG_EXPIRED_ENTRY = TextAttributesKey.createTextAttributesKey("LOG_EXPIRED_ENTRY");
   public static final TextAttributesKey USER_INPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_USER_INPUT");
   public static final TextAttributesKey SYSTEM_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_SYSTEM_OUTPUT");
 

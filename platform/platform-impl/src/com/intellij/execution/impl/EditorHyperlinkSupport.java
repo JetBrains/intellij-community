@@ -194,6 +194,25 @@ public class EditorHyperlinkSupport {
     return null;
   }
 
+  public List<RangeHighlighter> findAllHyperlinksOnLine(int line) {
+    ArrayList<RangeHighlighter> list = new ArrayList<RangeHighlighter>();
+    final int lineStart = myEditor.getDocument().getLineStartOffset(line);
+    final int lineEnd = myEditor.getDocument().getLineEndOffset(line);
+    for (RangeHighlighter highlighter : myHighlighterToMessageInfoMap.keySet()) {
+      int hyperlinkStart = highlighter.getStartOffset();
+      int hyperlinkEnd = highlighter.getEndOffset();
+      if (hyperlinkStart >= lineStart && hyperlinkEnd <= lineEnd) {
+        list.add(highlighter);
+      }
+    }
+    return list;
+  }
+
+  public void removeHyperlink(RangeHighlighter hyperlink) {
+    myHighlighterToMessageInfoMap.remove(hyperlink);
+    myEditor.getMarkupModel().removeHighlighter(hyperlink);
+  }
+
   private static boolean containsOffset(final int offset, final RangeHighlighter highlighter) {
     return highlighter.getStartOffset() <= offset && offset <= highlighter.getEndOffset();
   }
