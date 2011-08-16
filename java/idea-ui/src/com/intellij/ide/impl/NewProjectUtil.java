@@ -81,7 +81,13 @@ public class NewProjectUtil {
       if (StorageScheme.DIRECTORY_BASED == dialog.getStorageScheme()) {
         final File ideaDir = new File(projectFilePath + File.separator + ".idea");
         if (!ideaDir.exists() && !ideaDir.mkdirs()) {
-          Messages.showErrorDialog("Unable to create '.idea' directory at: " + projectFilePath, "Project initialization failed");
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showErrorDialog("Unable to create '.idea' directory at: " + projectFilePath, "Project initialization failed");
+            }
+          });
+
           return;
         }
       }
@@ -194,7 +200,7 @@ public class NewProjectUtil {
       final GeneralSettings settings = GeneralSettings.getInstance();
       int exitCode = settings.getConfirmOpenNewProject();
       if (exitCode == GeneralSettings.OPEN_PROJECT_ASK) {
-        exitCode = Messages.showOkCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.new.project"),
+        exitCode = Messages.showOkCancelDialog(projectToClose, IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.new.project"),
                                                IdeBundle.message("button.existingframe"), IdeBundle.message("button.newframe"), 
                                            Messages.getQuestionIcon(), new ProjectNewWindowDoNotAskOption());
       }
