@@ -105,19 +105,24 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
 
     final GrCall call = (GrCall)argumentList.getParent();
 
-    Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> map = GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, null, true);
+    Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> map =
+      GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, null, true);
 
     for (GrNamedArgument argument : PsiUtil.getFirstMapNamedArguments(call)) {
       map.remove(argument.getLabelName());
     }
 
     for (Map.Entry<String, GroovyNamedArgumentProvider.ArgumentDescriptor> entry : map.entrySet()) {
-      LookupElement lookup = LookupElementBuilder.create(entry.getKey())
+      LookupElement lookup = LookupElementBuilder.create(entry.getKey(), entry.getKey())
         .setIcon(GroovyIcons.DYNAMIC)
-        .setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
+        .setInsertHandler(NamedArgumentInsertHandler.INSTANCE)
+        .setTailText(":");
 
       if (entry.getValue().isShowFirst()) {
         lookup = PrioritizedLookupElement.withPriority(lookup, 1);
+      }
+      else {
+        lookup = PrioritizedLookupElement.withPriority(lookup, -1);
       }
 
       result.addElement(lookup);
