@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -14,10 +15,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.django.facet.DjangoFacetType;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.console.PyConsoleType;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -295,7 +298,15 @@ public class ResolveImportUtil {
     }
 
     final Module module = ModuleUtil.findModuleForPsiElement(foothold);
-    List<PsiElement> results = visitRoots(moduleQualifiedName, foothold.getManager(), module, foothold, true);
+
+    List<PsiElement> results;
+
+    if (isConsole(footholdFile)) {
+      results = visitRootsInAllModules(moduleQualifiedName, foothold, footholdFile);
+    }
+    else {
+      results = visitRoots(moduleQualifiedName, foothold.getManager(), module, foothold, true);
+    }
 
     if (cache != null) {
       cache.put(moduleQualifiedName, results);
@@ -303,18 +314,43 @@ public class ResolveImportUtil {
     return results;
   }
 
+  private static boolean isConsole(@Nullable PsiFile footholdFile) {
+    if (footholdFile == null || footholdFile.getVirtualFile() == null || !(footholdFile.getVirtualFile() instanceof LightVirtualFile)) {
+      return false;
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    String name = footholdFile.getVirtualFile().getName();
+
+    for (PyConsoleType type : PyConsoleType.values()) {
+      if (type.getTitle().equals(name)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static List<PsiElement> visitRootsInAllModules(PyQualifiedName moduleQualifiedName, PsiElement foothold, PsiFile footholdFile) {
+    Set<PsiElement> res = Sets.newHashSet();
+    for (Module mod : ModuleManager.getInstance(footholdFile.getProject()).getModules()) {
+      res.addAll(visitRoots(moduleQualifiedName, foothold.getManager(), mod, foothold, true));
+    }
+    return Lists.newArrayList(res);
+  }
+
   private static List<PsiElement> visitRoots(@NotNull PyQualifiedName moduleQualifiedName,
                                              @NotNull PsiManager manager,
                                              @Nullable Module module,
                                              @Nullable PsiElement foothold,
                                              boolean checkForPackage) {
-    // resolve the name considering every source root as a package dir, as if it's a deployed package. django console does so.
+
     PsiFile footholdFile = foothold != null ? foothold.getContainingFile() : null;
     boolean has_djando_facet = false;
     if (module != null) {
       has_djando_facet = FacetManager.getInstance(module).getFacetByType(DjangoFacetType.ID) != null;
     }
     ResolveInRootVisitor visitor;
+    // resolve the name considering every source root as a package dir, as if it's a deployed package. django console does so.
     if (has_djando_facet) {
       visitor = new ResolveInRootAsTopPackageVisitor(moduleQualifiedName, manager, footholdFile, checkForPackage);
     }
@@ -418,20 +454,25 @@ public class ResolveImportUtil {
     final PsiFile elt_psifile = elt.getContainingFile();
     if (elt_psifile != null) {  // formality
       final VirtualFile elt_vfile = elt_psifile.getOriginalFile().getVirtualFile();
+      List<OrderEntry> orderEntries = null;
       if (elt_vfile != null) { // reality
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(elt.getProject()).getFileIndex();
-        final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(elt_vfile);
+        orderEntries = fileIndex.getOrderEntriesForFile(elt_vfile);
         if (orderEntries.size() > 0) {
           for (OrderEntry entry : orderEntries) {
             if (!visitOrderEntryRoots(visitor, entry)) break;
           }
         }
         else {
-          // out-of-project file - use roots of SDK assigned to project
-          final Sdk sdk = PyBuiltinCache.findSdkForFile(elt_psifile);
-          if (sdk != null) {
-            visitSdkRoots(visitor, sdk);
-          }
+          orderEntries = null;
+        }
+      }
+
+      // out-of-project file or non-file(e.g. console) - use roots of SDK assigned to project
+      if (orderEntries == null) {
+        final Sdk sdk = PyBuiltinCache.findSdkForFile(elt_psifile);
+        if (sdk != null) {
+          visitSdkRoots(visitor, sdk);
         }
       }
     }
@@ -897,7 +938,7 @@ public class ResolveImportUtil {
       final String head = components.get(0);
       if (head.equals("_abcoll")) {
         components.set(0, "collections");
-        return  PyQualifiedName.fromComponents(components);
+        return PyQualifiedName.fromComponents(components);
       }
       else if (head.equals("_functools")) {
         components.set(0, "functools");
