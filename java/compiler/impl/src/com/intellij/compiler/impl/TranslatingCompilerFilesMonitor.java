@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -121,7 +122,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   };
   private final ProjectManager myProjectManager;
-  private final TIntHashSet myInitInProgress = new TIntHashSet(); // projectId fior successfully initialized projects
+  private final TIntIntHashMap myInitInProgress = new TIntIntHashMap(); // projectId fior successfully initialized projects
   private final Object myAsyncScanLock = new Object();
 
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager, Application application) {
@@ -967,7 +968,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   public void ensureInitializationCompleted(Project project, ProgressIndicator indicator) {
     final int id = getProjectId(project);
     synchronized (myAsyncScanLock) {
-      while (myInitInProgress.contains(id)) {
+      while (myInitInProgress.containsKey(id)) {
         if (!project.isOpen() || project.isDisposed() || (indicator != null && indicator.isCanceled())) {
           // makes no sense to continue waiting
           break;
@@ -1095,7 +1096,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             catch (ProjectRef.ProjectClosedException swallowed) {
             }
             finally {
-              terminateAsyncScan(projectId);
+              terminateAsyncScan(projectId, false);
             }
           }
         }.queue();
@@ -1103,17 +1104,28 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     });
   }
 
-  private void terminateAsyncScan(int projectId) {
+  private void terminateAsyncScan(int projectId, final boolean clearCounter) {
     synchronized (myAsyncScanLock) {
-      if (myInitInProgress.remove(projectId)) {
+      int counter = myInitInProgress.remove(projectId);
+      if (clearCounter) {
         myAsyncScanLock.notifyAll();
+      }
+      else {
+        if (--counter > 0) {
+          myInitInProgress.put(projectId, counter);
+        }
+        else {
+          myAsyncScanLock.notifyAll();
+        }
       }
     }
   }
 
   private void startAsyncScan(final int projectId) {
     synchronized (myAsyncScanLock) {
-      myInitInProgress.add(projectId);
+      int counter = myInitInProgress.get(projectId);
+      counter = (counter > 0)? counter + 1 : 1;
+      myInitInProgress.put(projectId, counter);
       myAsyncScanLock.notifyAll();
     }
   }
@@ -1130,6 +1142,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         private VirtualFile[] myRootsBefore;
+        private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, conn);
 
         public void beforeRootsChange(final ModuleRootEvent event) {
           try {
@@ -1164,26 +1177,31 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               }
             }
 
-            startAsyncScan(projectId);
-            new Task.Backgroundable(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
-              public void run(@NotNull final ProgressIndicator indicator) {
-                try {
-                  if (newRoots.size() > 0) {
-                    scanSourceContent(projRef, newRoots, newRoots.size(), true);
+            myAlarm.cancelAllRequests(); // need alarm to deal with multiple rootsChanged events
+            myAlarm.addRequest(new Runnable() {
+              public void run() {
+                startAsyncScan(projectId);
+                new Task.Backgroundable(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
+                  public void run(@NotNull final ProgressIndicator indicator) {
+                    try {
+                      if (newRoots.size() > 0) {
+                        scanSourceContent(projRef, newRoots, newRoots.size(), true);
+                      }
+                      if (oldRoots.size() > 0) {
+                        scanSourceContent(projRef, oldRoots, oldRoots.size(), false);
+                      }
+                      markOldOutputRoots(projRef, buildOutputRootsLayout(projRef));
+                    }
+                    catch (ProjectRef.ProjectClosedException swallowed) {
+                      // ignored
+                    }
+                    finally {
+                      terminateAsyncScan(projectId, false);
+                    }
                   }
-                  if (oldRoots.size() > 0) {
-                    scanSourceContent(projRef, oldRoots, oldRoots.size(), false);
-                  }
-                  markOldOutputRoots(projRef, buildOutputRootsLayout(projRef));
-                }
-                catch (ProjectRef.ProjectClosedException swallowed) {
-                  // ignored
-                }
-                finally {
-                  terminateAsyncScan(projectId);
-                }
+                }.queue();
               }
-            }.queue();
+            }, 500);
           }
           catch (ProjectRef.ProjectClosedException e) {
             LOG.info(e);
@@ -1196,7 +1214,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
     public void projectClosed(final Project project) {
       final int projectId = getProjectId(project);
-      terminateAsyncScan(projectId);
+      terminateAsyncScan(projectId, true);
       myConnections.remove(project).disconnect();
       synchronized (myDataLock) {
         mySourcesToRecompile.remove(projectId);
