@@ -42,8 +42,6 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
     fileChooserDescriptor.setTitle(title);
     myTestScriptTextField.addBrowseFolderListener(title, null, myProject, fileChooserDescriptor);
 
-    myKeyLabel.setLabelFor(myKeywordsTextField);
-    myParamLabel.setLabelFor(myParamsTextField);
     myTargetLabel.setLabelFor(myTestScriptTextField);
   }
 
