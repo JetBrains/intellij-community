@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.SweepProcessor;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.RangeMarkerTree;
 import com.intellij.openapi.editor.impl.RedBlackTree;
@@ -264,7 +265,7 @@ public class UpdateHighlightersUtil {
       public boolean generate(Processor<HighlightInfo> processor) {
         return ContainerUtil.process(infos, processor);
       }
-    }, new MarkupModelEx.SweepProcessor<HighlightInfo>() {
+    }, new SweepProcessor<HighlightInfo>() {
       @Override
       public boolean process(int offset, HighlightInfo info, boolean atStart, Collection<HighlightInfo> overlappingIntervals) {
         if (!atStart) return true;
@@ -335,7 +336,7 @@ public class UpdateHighlightersUtil {
       public boolean generate(final Processor<HighlightInfo> processor) {
         return ContainerUtil.process(highlights, processor);
       }
-    }, new MarkupModelEx.SweepProcessor<HighlightInfo>() {
+    }, new SweepProcessor<HighlightInfo>() {
       @Override
       public boolean process(int offset, HighlightInfo info, boolean atStart, Collection<HighlightInfo> overlappingIntervals) {
         if (!atStart) {

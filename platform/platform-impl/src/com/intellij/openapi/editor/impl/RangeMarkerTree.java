@@ -20,9 +20,9 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.SweepProcessor;
 import com.intellij.openapi.util.Segment;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -297,7 +297,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return norm;
   }
 
-  public boolean sweep(final int start, final int end, @NotNull final MarkupModelEx.SweepProcessor<T> sweepProcessor) {
+  public boolean sweep(final int start, final int end, @NotNull final SweepProcessor<T> sweepProcessor) {
     return sweep(new Generator<T>() {
       @Override
       public boolean generate(Processor<T> processor) {
@@ -310,7 +310,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     boolean generate(Processor<T> processor);
   }
 
-  public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final MarkupModelEx.SweepProcessor<T> sweepProcessor) {
+  public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
     final Queue<T> ends = new PriorityQueue<T>(5, new Comparator<T>() {
       public int compare(T o1, T o2) {
         return o1.getEndOffset() - o2.getEndOffset();
