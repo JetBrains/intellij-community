@@ -22,6 +22,7 @@ import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.*;
 import java.net.ConnectException;
+import java.net.InetSocketAddress;
 import java.net.NoRouteToHostException;
 import java.net.Socket;
 import java.text.MessageFormat;
@@ -218,7 +219,10 @@ public final class PServerConnection
       this.socket = connectionSettings.createProxyTransport();
     }
     else {
-      this.socket = new Socket(connectionSettings.getHostName(), connectionSettings.getPort());
+      this.socket = new Socket();
+      final InetSocketAddress address =
+        new InetSocketAddress(connectionSettings.getHostName(), connectionSettings.getPort());
+      this.socket.connect(address, connectionSettings.getConnectionTimeout());
       this.socket.setSoTimeout(connectionSettings.getConnectionTimeout());
     }
   }
