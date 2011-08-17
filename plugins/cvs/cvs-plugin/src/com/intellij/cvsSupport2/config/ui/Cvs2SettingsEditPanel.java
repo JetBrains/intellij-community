@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.cvsSupport2.connections.CvsRootDataBuilder;
 import com.intellij.cvsSupport2.connections.ext.ui.ExtConnectionDualPanel;
 import com.intellij.cvsSupport2.connections.local.ui.LocalConnectionSettingsPanel;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
-import com.intellij.cvsSupport2.connections.pserver.ui.PServerSettingsPanel;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshConnectionSettingsPanel;
 import com.intellij.cvsSupport2.connections.ui.ProxySettingsPanel;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
@@ -199,7 +198,6 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
   public static void testConnection(CvsRootConfiguration configuration, Component component, Project project) {
     try {
       final ModalityContextImpl executor = new ModalityContextImpl(true);
-
       final CvsLoginWorker loginWorker = configuration.getLoginWorker(executor, project);
 
       final ThreeState checkResult = LoginPerformer.checkLoginWorker(loginWorker, executor, project, true);
@@ -265,14 +263,14 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
     }
   }
 
-  private String getProxyPanelName(CvsRootData cvsRootData) {
+  private static String getProxyPanelName(CvsRootData cvsRootData) {
     if (cvsRootData.METHOD == null) {
       return EMPTY;
     }
     return cvsRootData.METHOD.supportsProxyConnection() ? NON_EMPTY_PROXY_SETTINGS : EMPTY;
   }
 
-  private String getSettingsPanelName(CvsRootData cvsRootData) {
+  private static String getSettingsPanelName(CvsRootData cvsRootData) {
     CvsMethod method = cvsRootData.METHOD;
     if (method == null) {
       return EMPTY;
@@ -282,7 +280,7 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
     }
   }
 
-  private void setEnabled(Component component, boolean enabled) {
+  private static void setEnabled(Component component, boolean enabled) {
     component.setEnabled(enabled);
 
     if (component instanceof Container) {
@@ -302,7 +300,7 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
     clearAllTextFieldsIn(myPanel);
   }
 
-  private void clearAllTextFieldsIn(Component component) {
+  private static void clearAllTextFieldsIn(Component component) {
     if (component instanceof JTextField) {
       ((JTextField)component).setText("");
       return;

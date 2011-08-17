@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,23 @@
  */
 package com.intellij.cvsSupport2.connections.ext;
 
+import com.intellij.cvsSupport2.config.CvsRootConfiguration;
+import com.intellij.cvsSupport2.config.ui.CvsConfigurationsListEditor;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorkerImpl;
-import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
-import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.config.ui.CvsConfigurationsListEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 
 import java.io.IOException;
 
-public class ExtLoginWorker extends CvsLoginWorkerImpl {
+public class ExtLoginWorker extends CvsLoginWorkerImpl<ExtConnectionCvsSettings> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.ext.ExtLoginWorker");
 
-  public ExtLoginWorker(final Project project, final CvsConnectionSettings settings, final ModalityContext executor) {
+  public ExtLoginWorker(final Project project, final ExtConnectionCvsSettings settings, final ModalityContext executor) {
     super(project, settings, executor);
   }
 
@@ -41,6 +40,7 @@ public class ExtLoginWorker extends CvsLoginWorkerImpl {
     IConnection connection = mySettings.createConnection(new ReadWriteStatistics());
     try {
       connection.open(new StreamLogger());
+      mySettings.setOffline(false);
     }
     finally {
       try {
@@ -65,6 +65,5 @@ public class ExtLoginWorker extends CvsLoginWorkerImpl {
   }
 
   @Override
-  protected void clearOldCredentials() {
-  }
+  protected void clearOldCredentials() {}
 }

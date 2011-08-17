@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.common;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
@@ -22,14 +23,21 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nullable;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.Collection;
 
 public abstract class LoginPerformer<T extends CvsEnvironment> {
@@ -57,25 +65,49 @@ public abstract class LoginPerformer<T extends CvsEnvironment> {
   public boolean loginAll(final ModalityContext executor, final boolean goOffline) {
     for (T root : myRoots) {
       final Project project = getProject(root);
-
       final CvsLoginWorker worker = root.getLoginWorker(executor, project);
 
-      final ThreeState checkResult = checkLoginWorker(worker, executor, project, myForceCheck);
-      if (! ThreeState.YES.equals(checkResult)) {
-        if (ThreeState.UNSURE.equals(checkResult)) {
-          if (goOffline) {
-            worker.goOffline();
+      try {
+        final ThreeState checkResult = checkLoginWorker(worker, executor, project, myForceCheck);
+        if (! ThreeState.YES.equals(checkResult)) {
+          if (ThreeState.UNSURE.equals(checkResult)) {
+            if (goOffline) {
+              worker.goOffline();
+            }
+            myExceptionConsumer.consume(new CvsException("Authentication canceled", root.getCvsRootAsString()));
           }
-          myExceptionConsumer.consume(new CvsException("Authentication canceled", root.getCvsRootAsString()));
+          return false;
         }
+      } catch (AuthenticationException e) {
+        reportException(project, e);
         return false;
       }
     }
     return true;
   }
 
+  private static void reportException(Project project, AuthenticationException e) {
+    Throwable cause = e.getCause();
+    if (cause instanceof SocketTimeoutException) {
+      VcsBalloonProblemNotifier.showOverChangesView(project, CvsBundle.message("error.message.timeout.error"), MessageType.ERROR);
+    }
+    else if (cause instanceof UnknownHostException) {
+      VcsBalloonProblemNotifier.showOverChangesView(project, CvsBundle.message("error.message.unknown.host", cause.getMessage()),
+                                                    MessageType.ERROR);
+    }
+    else if (cause instanceof ConnectException || cause instanceof NoRouteToHostException) {
+      VcsBalloonProblemNotifier.showOverChangesView(project, CvsBundle.message("error.message.connection.error", cause.getMessage()),
+                                                    MessageType.ERROR);
+    } else {
+      String localizedMessage = e.getLocalizedMessage();
+      localizedMessage = (localizedMessage == null) ? e.getMessage() : localizedMessage;
+      localizedMessage = (localizedMessage == null) ? CvsBundle.message("error.dialog.title.cannot.connect.to.cvs") : localizedMessage;
+      VcsBalloonProblemNotifier.showOverChangesView(project, localizedMessage, MessageType.ERROR);
+    }
+  }
+
   public static ThreeState checkLoginWorker(final CvsLoginWorker worker, final ModalityContext executor, final Project project,
-                                      final boolean forceCheckParam) {
+                                            final boolean forceCheckParam) throws AuthenticationException {
     boolean forceCheck = forceCheckParam;
     final Ref<Boolean> promptResult = new Ref<Boolean>();
     final Runnable prompt = new Runnable() {

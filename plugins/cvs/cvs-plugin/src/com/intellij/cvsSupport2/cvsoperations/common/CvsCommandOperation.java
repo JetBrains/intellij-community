@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,8 +195,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   protected void execute(CvsRootProvider root,
                          final CvsExecutionEnvironment executionEnvironment,
                          ReadWriteStatistics statistics, ModalityContext executor)
-    throws CommandException,
-           VcsException {
+    throws CommandException, VcsException {
     IConnection connection = root.createConnection(statistics);
     execute(root, executionEnvironment, connection);
 
@@ -294,7 +293,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static String composeCommandString(CvsRootProvider root, Command command) {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     result.append(root.getLocalRoot());
     result.append(" cvs ");
     GlobalOptions globalOptions = command.getGlobalOptions();

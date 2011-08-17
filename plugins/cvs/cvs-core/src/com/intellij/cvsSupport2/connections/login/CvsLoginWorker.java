@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.cvsSupport2.connections.login;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.util.ThreeState;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
 // todo rename?
 public interface CvsLoginWorker {
@@ -28,7 +29,7 @@ public interface CvsLoginWorker {
   boolean promptForPassword();
 
   @CalledInBackground
-  ThreeState silentLogin(boolean forceCheck);
+  ThreeState silentLogin(boolean forceCheck) throws AuthenticationException;
 
   void goOffline();
 }
