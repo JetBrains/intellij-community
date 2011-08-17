@@ -57,7 +57,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   @Nullable
-  protected static XSourcePosition createXSourcePosition(VirtualFile vFile, int line) {
+  protected static XSourcePosition createXSourcePosition(@Nullable VirtualFile vFile, int line) {
     if (vFile != null) {
       return XDebuggerUtil.getInstance().createPosition(vFile, convertRemoteLineToLocal(vFile, line));
     }

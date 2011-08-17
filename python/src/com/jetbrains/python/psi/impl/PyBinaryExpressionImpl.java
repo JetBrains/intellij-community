@@ -99,6 +99,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     return getReference(PyResolveContext.noImplicits());
   }
 
+  @Nullable
   @Override
   public PsiPolyVariantReference getReference(PyResolveContext context) {
     final PyElementType t = getOperator();
