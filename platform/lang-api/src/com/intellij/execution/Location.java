@@ -79,6 +79,7 @@ public abstract class Location<E extends PsiElement> {
     return null;
   }
 
+  @NotNull
   public PsiLocation<E> toPsiLocation() {
     return new PsiLocation<E>(getProject(), getPsiElement());
   }

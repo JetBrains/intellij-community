@@ -38,7 +38,7 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
     myModule = ModuleUtil.findModuleForPsiElement(psiElement);
   }
 
-  public PsiLocation(Project project, Module module, E psiElement) {
+  public PsiLocation(@NotNull Project project, Module module, @NotNull E psiElement) {
     myPsiElement = psiElement;
     myProject = project;
     myModule = module;
@@ -60,10 +60,8 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   }
 
   @NotNull
-  public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
-    final T first;
-    if (!strict && ancestorClass.isInstance(myPsiElement)) first = (T)myPsiElement;
-    else first = findNext(myPsiElement, ancestorClass);
+  public <T extends PsiElement> Iterator<Location<T>> getAncestors(@NotNull final Class<T> ancestorClass, final boolean strict) {
+    final T first = strict || !ancestorClass.isInstance(myPsiElement) ? findNext(myPsiElement, ancestorClass) : (T)myPsiElement;
     return new Iterator<Location<T>>() {
       private T myCurrent = first;
       public boolean hasNext() {
@@ -83,6 +81,7 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
     };
   }
 
+  @NotNull
   public PsiLocation<E> toPsiLocation() {
     return this;
   }
@@ -96,7 +95,7 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
     return null;
   }
 
-  public static <T extends PsiElement> Location<T> fromPsiElement(final Project project, final T element) {
+  public static <T extends PsiElement> Location<T> fromPsiElement(@NotNull Project project, final T element) {
     if (element == null) return null;
     return new PsiLocation<T>(project, element);
   }
@@ -106,8 +105,7 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   }
 
   public static <T extends PsiElement> Location<T> fromPsiElement(T element, Module module) {
-    if (element == null) return null;
-    if (!element.isValid()) return null;
+    if (element == null || !element.isValid()) return null;
     return module != null ? new PsiLocation<T>(element.getProject(), module, element) : new PsiLocation<T>(element.getProject(), element);
   }
 }

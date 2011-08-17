@@ -64,6 +64,7 @@ import java.util.regex.Pattern;
 /**
  * @author max
  */
+@SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public class UIUtil {
 
   private static final String TABLE_DECORATION_KEY = "TABLE_DECORATION_KEY";
@@ -116,7 +117,7 @@ public class UIUtil {
   // accessed only from EDT
   private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
 
-  private static final String ROOT_PANE = "JRootPane.future";
+  @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
   private UIUtil() { }
 
@@ -207,6 +208,7 @@ public class UIUtil {
     g.drawLine(x1, y1, x2, y2);
   }
 
+  @NotNull
   public static String[] splitText(String text, FontMetrics fontMetrics, int widthLimit, char separator) {
     ArrayList<String> lines = new ArrayList<String>();
     String currentLine = "";
@@ -753,7 +755,8 @@ public class UIUtil {
           return theme.toString();
         }
       }
-      catch (Exception ignore) { }
+      catch (Exception ignored) {
+      }
     }
     return null;
   }
@@ -1265,7 +1268,7 @@ public class UIUtil {
   }
 
   public static boolean isActionClick(MouseEvent e, int effectiveType, boolean allowShift) {
-    if ((!allowShift && isCloseClick(e)) || e.isPopupTrigger() || e.getID() != effectiveType) return false;
+    if (!allowShift && isCloseClick(e) || e.isPopupTrigger() || e.getID() != effectiveType) return false;
     return e.getButton() == MouseEvent.BUTTON1;
   }
 
@@ -1296,13 +1299,13 @@ public class UIUtil {
   public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
     URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
 
-    String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
-    //@Language("CSS")
+    @NonNls String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
+    @NonNls @Language("HTML")
     String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
     if (resource != null) {
       body +=  "ul {list-style-image: " + resource.toExternalForm() +"}";
     }
-    String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}" : "";
+    @NonNls String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}" : "";
     return "<style> " + body + " " + link + "</style>";
   }
 
@@ -1548,8 +1551,8 @@ public class UIUtil {
     Point containerLocation = container.getLocation();
     Dimension containerSize = container.getSize();
 
-    result.x = containerLocation.x + (containerSize.width / 2 - child.width / 2);
-    result.y = containerLocation.y + (containerSize.height / 2 - child.height / 2);
+    result.x = containerLocation.x + containerSize.width / 2 - child.width / 2;
+    result.y = containerLocation.y + containerSize.height / 2 - child.height / 2;
 
     return result;
   }
@@ -1575,7 +1578,7 @@ public class UIUtil {
   }
 
   public static String convertSpace2Nbsp(String html) {
-    StringBuilder result = new StringBuilder();
+    @NonNls StringBuilder result = new StringBuilder();
     int currentPos = 0;
     int braces = 0;
     while (currentPos < html.length()) {
@@ -1753,7 +1756,7 @@ public class UIUtil {
   }
 
   public static class MacTreeUI extends BasicTreeUI {
-    public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
+    @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
 
     private static final Icon TREE_COLLAPSED_ICON = getTreeCollapsedIcon();
     private static final Icon TREE_EXPANDED_ICON = getTreeExpandedIcon();
@@ -1790,7 +1793,7 @@ public class UIUtil {
           if (pressedPath != null) {
             Rectangle bounds = getPathBounds(tree, pressedPath);
 
-            if (e.getY() >= (bounds.y + bounds.height)) {
+            if (e.getY() >= bounds.y + bounds.height) {
               return;
             }
 
@@ -1849,14 +1852,14 @@ public class UIUtil {
           public void actionPerformed(ActionEvent e) {
             final Object source = e.getSource();
             if (source instanceof JTree) {
-              int toSelect = -1;
-              int toScroll = -1;
               JTree tree = (JTree)source;
               int selectionRow = tree.getLeadSelectionRow();
               if (selectionRow != -1) {
                 TreePath selectionPath = tree.getPathForRow(selectionRow);
                 if (selectionPath != null) {
                   boolean leaf = tree.getModel().isLeaf(selectionPath.getLastPathComponent());
+                  int toSelect = -1;
+                  int toScroll = -1;
                   if (!leaf && tree.isExpanded(selectionRow)) {
                     if (selectionRow + 1 < tree.getRowCount()) {
                       toSelect = selectionRow + 1;
@@ -1966,7 +1969,7 @@ public class UIUtil {
         rowGraphics.setClip(clipBounds);
 
         final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
-        if (sourceList != null && ((Boolean)sourceList)) {
+        if (sourceList != null && (Boolean)sourceList) {
           if (selected) {
             if (tree.hasFocus()) {
               LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
@@ -2011,7 +2014,7 @@ public class UIUtil {
 
         // draw background for the given clip bounds
         final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
-        if (sourceList != null && ((Boolean)sourceList)) {
+        if (sourceList != null && (Boolean)sourceList) {
           Graphics2D backgroundGraphics = (Graphics2D)g.create();
           backgroundGraphics.setClip(xOffset, bounds.y, containerWidth, bounds.height);
           LIST_BACKGROUND_PAINTER.paintBorder(tree, backgroundGraphics, xOffset, bounds.y, containerWidth, bounds.height);
@@ -2196,7 +2199,7 @@ public class UIUtil {
     }
 
     public TextPainter underlined(final Color color) {
-      if (myLines.size() > 0) {
+      if (!myLines.isEmpty()) {
         final LineInfo info = myLines.get(myLines.size() - 1).getSecond();
         info.underlined = true;
         info.underlineColor = color;
@@ -2206,7 +2209,7 @@ public class UIUtil {
     }
 
     public TextPainter withBullet(final char c) {
-      if (myLines.size() > 0) {
+      if (!myLines.isEmpty()) {
         final LineInfo info = myLines.get(myLines.size() - 1).getSecond();
         info.withBullet = true;
         info.bulletChar = c;
@@ -2224,7 +2227,7 @@ public class UIUtil {
     }
 
     public TextPainter smaller() {
-      if (myLines.size() > 0) {
+      if (!myLines.isEmpty()) {
         myLines.get(myLines.size() - 1).getSecond().smaller = true;
       }
 
@@ -2232,7 +2235,7 @@ public class UIUtil {
     }
 
     public TextPainter center() {
-      if (myLines.size() > 0) {
+      if (!myLines.isEmpty()) {
         myLines.get(myLines.size() - 1).getSecond().center = true;
       }
 
@@ -2243,9 +2246,9 @@ public class UIUtil {
      * _position(block width, block height) => (x, y) of the block
      */
     public void draw(@NotNull final Graphics g, final PairFunction<Integer, Integer, Pair<Integer, Integer>> _position) {
-      final int[] maxWidth = new int[] {0};
-      final int[] height = new int[] {0};
-      final int[] maxBulletWidth = new int[] {0};
+      final int[] maxWidth = {0};
+      final int[] height = {0};
+      final int[] maxBulletWidth = {0};
       ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
         @Override
         public boolean process(final Pair<String, LineInfo> pair) {
@@ -2275,7 +2278,7 @@ public class UIUtil {
       final Pair<Integer, Integer> position = _position.fun(maxWidth[0] + 20, height[0]);
       assert position != null;
 
-      final int[] yOffset = new int[] {position.getSecond()};
+      final int[] yOffset = {position.getSecond()};
       ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
         @Override
         public boolean process(final Pair<String, LineInfo> pair) {
@@ -2299,7 +2302,7 @@ public class UIUtil {
             g.setColor(myMacShadowColor);
 
             if (info.withBullet) {
-              g.drawString(String.valueOf(info.bulletChar) + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0] + 1);
+              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0] + 1);
             }
 
             g.drawString(pair.getFirst(), xOffset, yOffset[0] + 1);
@@ -2307,13 +2310,13 @@ public class UIUtil {
           }
 
           if (info.withBullet) {
-            g.drawString(String.valueOf(info.bulletChar) + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
+            g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
           }
 
           g.drawString(pair.getFirst(), xOffset, yOffset[0]);
 
-          Color c = null;
           if (info.underlined) {
+            Color c = null;
             if (info.underlineColor != null) {
               c = g.getColor();
               g.setColor(info.underlineColor);
@@ -2322,7 +2325,6 @@ public class UIUtil {
             g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
             if (c != null) {
               g.setColor(c);
-              c = null;
             }
 
             if (myDrawMacShadow && UIUtil.isUnderAquaLookAndFeel()) {
@@ -2330,7 +2332,6 @@ public class UIUtil {
               g.setColor(myMacShadowColor);
               g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10, yOffset[0] + fm.getDescent() + 1);
               g.setColor(c);
-              c = null;
             }
           }
 
