@@ -382,16 +382,17 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher());
     myCount++;
 
-    if (myCount == 1/* && !ApplicationManager.getApplication().isUnitTestMode()todo [peter]*/) {
+    if (myCount == 1) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           try {
             Thread.sleep(300);
           }
-          catch (InterruptedException e) {
-            LOG.error(e);
+          catch (InterruptedException ignore) {
           }
-          myFreezeSemaphore.up();
+          finally {
+            myFreezeSemaphore.up();
+          }
         }
       });
     }
