@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseListener;
@@ -345,6 +346,7 @@ public class TabbedPaneWrapper  {
       super(new BorderLayout());
       myComponent = component;
       add(component, BorderLayout.CENTER);
+      setBorder(new EmptyBorder(5, 8, 5, 5));
     }
 
     /*

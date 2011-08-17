@@ -62,7 +62,7 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
 
     GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.NORTHWEST;
+    c.anchor = GridBagConstraints.WEST;
 
     myRunInBackgroundCheckbox = new JCheckBox("Run in background");
     myRunInBackgroundCheckbox.setMnemonic('b');
@@ -76,7 +76,7 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
     }
     c.gridwidth = 1;
 
-    JLabel labelVMParameters = new JLabel("VM Options");
+    JLabel labelVMParameters = new JLabel("VM Options:");
     labelVMParameters.setDisplayedMnemonic('v');
     labelVMParameters.setLabelFor(myVMParametersEditor = new RawCommandLineEditor());
     myVMParametersEditor.setDialogCaption(labelVMParameters.getText());
@@ -88,9 +88,11 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
 
     c.gridx = 1;
     c.weightx = 1;
+    c.insets.left = 10;
     panel.add(myVMParametersEditor, c);
+    c.insets.left = 0;
 
-    JLabel jdkLabel = new JLabel("JRE");
+    JLabel jdkLabel = new JLabel("JRE:");
     jdkLabel.setDisplayedMnemonic('j');
     jdkLabel.setLabelFor(myJdkCombo = new JComboBox());
     c.gridx = 0;
@@ -100,7 +102,9 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
     c.gridx = 1;
     c.weightx = 1;
     c.fill = GridBagConstraints.NONE;
+    c.insets.left = 10;
     panel.add(myJdkCombo, c);
+    c.insets.left = 0;
     c.fill = GridBagConstraints.HORIZONTAL;
 
     JPanel propertiesPanel = new JPanel(new BorderLayout());

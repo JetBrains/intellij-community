@@ -20,6 +20,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.RawCommandLineEditor;
 
+import java.awt.*;
+
 public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
   private LabeledComponent<RawCommandLineEditor> myVMParameters;
 
@@ -32,6 +34,9 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
     myVMParameters = LabeledComponent.create(new RawCommandLineEditor(),
                                              ExecutionBundle.message("run.configuration.java.vm.parameters.label"));
     copyDialogCaption(myVMParameters);
+
+    myVMParameters.setLabelLocation(BorderLayout.WEST);
+    myVMParameters.setLabelPreferredSize(super.getProgramParametersComponent().getLabelPreferredSize());
 
     add(myVMParameters);
     super.addComponents();

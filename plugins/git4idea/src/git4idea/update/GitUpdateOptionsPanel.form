@@ -1,32 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="git4idea.update.GitUpdateOptionsPanel">
   <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-    <margin top="0" left="0" bottom="0" right="0"/>
+    <margin top="0" left="10" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="489" height="112"/>
+      <xy x="20" y="20" width="472" height="115"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="150f4" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="30" bottom="0" right="60"/>
+      <grid id="150f4" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <border type="none"/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
+        </clientProperties>
+        <border type="none" title-resource-bundle="git4idea/i18n/GitBundle" title-key="update.options.type"/>
         <children>
-          <component id="fad0d" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.type"/>
-            </properties>
-          </component>
           <component id="dcccd" class="javax.swing.JRadioButton" binding="myForceMergeRadioButton" default-binding="true">
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.type.merge"/>
@@ -35,7 +30,7 @@
           </component>
           <component id="864a1" class="javax.swing.JRadioButton" binding="myForceRebaseRadioButton" default-binding="true">
             <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.type.rebase"/>
@@ -44,7 +39,7 @@
           </component>
           <component id="48ad6" class="javax.swing.JRadioButton" binding="myBranchDefaultRadioButton" default-binding="true">
             <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <selected value="true"/>
@@ -54,25 +49,20 @@
           </component>
         </children>
       </grid>
-      <grid id="fff58" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="30"/>
+      <grid id="fff58" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="100"/>
         <constraints>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <border type="none"/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
+        </clientProperties>
+        <border type="none" title-resource-bundle="git4idea/i18n/GitBundle" title-key="update.options.save.before.update"/>
         <children>
-          <component id="2d59e" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.before.update"/>
-            </properties>
-          </component>
           <component id="98593" class="javax.swing.JRadioButton" binding="myStashRadioButton" default-binding="true">
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <selected value="true"/>
@@ -82,7 +72,7 @@
           </component>
           <component id="d7fb3" class="javax.swing.JRadioButton" binding="myShelveRadioButton" default-binding="true">
             <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.shelve"/>

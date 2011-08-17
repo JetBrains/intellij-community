@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="5" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="477" height="265"/>
+      <xy x="20" y="20" width="475" height="272"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -76,6 +76,7 @@
         </constraints>
         <properties>
           <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
+          <labelLocation value="West"/>
           <text resource-bundle="messages/AndroidBundle" key="android.run.configuration.package.label"/>
         </properties>
       </component>
@@ -85,6 +86,8 @@
         </constraints>
         <properties>
           <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
+          <labelLocation value="West"/>
+          <labelPreferredSize width="55" height="16"/>
           <text resource-bundle="messages/AndroidBundle" key="android.run.configuration.class.label"/>
         </properties>
       </component>
@@ -94,6 +97,8 @@
         </constraints>
         <properties>
           <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
+          <labelLocation value="West"/>
+          <labelPreferredSize width="55" height="16"/>
           <text resource-bundle="messages/AndroidBundle" key="android.run.configuration.method.label"/>
         </properties>
       </component>

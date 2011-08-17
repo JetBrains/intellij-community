@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -122,6 +123,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   protected final void addTab(CodeStyleAbstractPanel tab) {
     myTabs.add(tab);
     tab.setShouldUpdatePreview(true);
+    tab.getPanel().setBorder(new EmptyBorder(5, 8, 5, 5));
     addPanelToWatch(tab.getPanel());
     myTabbedPane.addTab(tab.getTabTitle(), tab.getPanel());
     if (myActiveTab == null) {
