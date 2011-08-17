@@ -45,7 +45,12 @@ public class ImplementationSearcher {
         return targetElementUtil.findTargetElement(editor, getFlags() & ~TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
       }
     });
-    return searchImplementations(element, offset, onRef && targetElementUtil.includeSelfInGotoImplementation(element), onRef);
+    return searchImplementations(element, offset, onRef && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          return targetElementUtil.includeSelfInGotoImplementation(element);
+        }
+    }), onRef);
   }
 
   @NotNull
