@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
