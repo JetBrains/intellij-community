@@ -278,7 +278,7 @@ public class AbstractTreeBuilder implements Disposable {
           getUi().queueUpdate(element, true).notify(result);
         }
       }
-    });
+    }, false);
 
 
     return result;

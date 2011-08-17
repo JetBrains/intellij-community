@@ -328,7 +328,7 @@ public class AbstractTreeUi {
           runnable.run();
         }
         else {
-          invokeLaterIfNeeded(runnable);
+          invokeLaterIfNeeded(runnable, false);
         }
       }
     }
@@ -347,11 +347,11 @@ public class AbstractTreeUi {
       cleanup.run();
     }
     else {
-      invokeLaterIfNeeded(cleanup);
+      invokeLaterIfNeeded(cleanup, false);
     }
   }
 
-  public ActionCallback invokeLaterIfNeeded(@NotNull final Runnable runnable) {
+  public ActionCallback invokeLaterIfNeeded(@NotNull final Runnable runnable, boolean forceEdt) {
     final ActionCallback result = new ActionCallback();
 
     Runnable actual = new Runnable() {
@@ -365,13 +365,17 @@ public class AbstractTreeUi {
       }
     };
 
-    if (isPassthroughMode() || !isEdt() && !isTreeShowing() && !myWasEverShown) {
-      actual.run();
-    }
-    else {
+    if (forceEdt) {
       UIUtil.invokeLaterIfNeeded(actual);
+    } else {
+      if (isPassthroughMode() || !isEdt() && !isTreeShowing() && !myWasEverShown) {
+        actual.run();
+      }
+      else {
+        UIUtil.invokeLaterIfNeeded(actual);
+      }
     }
-
+    
     return result;
   }
 
@@ -719,7 +723,7 @@ public class AbstractTreeUi {
               myRootNodeInitialized = true;
               processNodeActionsIfReady(myRootNode);
             }
-          });
+          }, false);
         }
       });
     }
@@ -848,7 +852,7 @@ public class AbstractTreeUi {
                 }
               });
             }
-          });
+          }, false);
         }
       }
     }
@@ -868,7 +872,7 @@ public class AbstractTreeUi {
                 }
               }
             }
-          });
+          }, false);
         }
       }
     });
@@ -1062,7 +1066,7 @@ public class AbstractTreeUi {
           }
         }
       }
-    });
+    }, false);
   }
 
   private boolean isToBuildInBackground(NodeDescriptor descriptor) {
@@ -1769,7 +1773,7 @@ public class AbstractTreeUi {
 
         resetToReadyNow().notify(result);
       }
-    });
+    }, false);
 
     return result;
   }
@@ -2351,7 +2355,7 @@ public class AbstractTreeUi {
 
         maybeReady();
       }
-    });
+    }, false);
 
     if (isEdt() || isPassthroughMode()) {
       maybeReady();
@@ -2587,7 +2591,7 @@ public class AbstractTreeUi {
               processNodeActionsIfReady(nodeToProcessActions[0]);
             }
           }
-        });
+        }, false);
       }
     };
 
@@ -3395,7 +3399,7 @@ public class AbstractTreeUi {
       public void run() {
         maybeReady();
       }
-    });
+    }, false);
   }
 
   public boolean isWorkerBusy() {
@@ -3455,7 +3459,7 @@ public class AbstractTreeUi {
       public void run() {
         myTreeModel.nodeChanged(node);
       }
-    });
+    }, true);
   }
 
   public DefaultTreeModel getTreeModel() {
@@ -3911,7 +3915,7 @@ public class AbstractTreeUi {
           public void run() {
             _expand(o, onDone, parentsOnly, checkIfInStructure, canSmartExpand);
           }
-        });
+        }, false);
       }
     }).doWhenRejected(new Runnable() {
       public void run() {
