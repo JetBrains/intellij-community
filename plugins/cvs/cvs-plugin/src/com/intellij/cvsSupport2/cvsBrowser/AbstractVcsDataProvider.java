@@ -23,7 +23,6 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContent;
-import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvider;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetDirectoriesListViaUpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,12 +51,12 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     }
   }
 
-  public DirectoryContentProvider createDirectoryContentProvider(String path) {
+  public CvsOperation createDirectoryContentProvider(String path) {
     return new GetDirectoriesListViaUpdateOperation(myEnvironment, path);
   }
 
-  private static class MyCancellableCvsHandler extends CommandCvsHandler {
-    private MyCancellableCvsHandler(final String title, final CvsOperation cvsOperation) {
+  private static class CancellableCvsHandler extends CommandCvsHandler {
+    private CancellableCvsHandler(final String title, final CvsOperation cvsOperation) {
       super(title, cvsOperation, true);
     }
 
@@ -72,12 +71,12 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     }
   }
 
-  private static void executeCommand(final DirectoryContentProvider command, final GetContentCallback callback) {
+  private static void executeCommand(final CvsOperation command, final GetContentCallback callback) {
     final CvsOperationExecutor executor = new CvsOperationExecutor(false, callback.getProject(), callback.getModalityState());
     executor.setIsQuietOperation(true);
 
-    final MyCancellableCvsHandler cvsHandler =
-        new MyCancellableCvsHandler(CvsBundle.message("browse.repository.operation.name"), (CvsOperation) command);
+    final CancellableCvsHandler cvsHandler =
+        new CancellableCvsHandler(CvsBundle.message("browse.repository.operation.name"), command);
 
     callback.useForCancel(cvsHandler.getProgressListener());
 

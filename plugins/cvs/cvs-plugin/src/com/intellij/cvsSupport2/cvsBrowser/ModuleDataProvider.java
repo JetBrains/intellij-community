@@ -16,7 +16,7 @@
 package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvider;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetModuleContentOperation;
 
 /**
@@ -27,7 +27,7 @@ public class ModuleDataProvider extends AbstractVcsDataProvider{
     super(environment);
   }
 
-  public DirectoryContentProvider createDirectoryContentProvider(String path) {
+  public CvsOperation createDirectoryContentProvider(String path) {
     return new GetModuleContentOperation(myEnvironment, path);
   }
 
