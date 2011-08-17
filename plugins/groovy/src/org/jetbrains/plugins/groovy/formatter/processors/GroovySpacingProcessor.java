@@ -96,17 +96,17 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (prev != null && prev.getElementType() == mNLS) {
       prev = getPrevElementType(prev);
     }
-    if (prev != null && prev.getElementType() == mSL_COMMENT) {
-      myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-      return;
-    }
-
     if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && COMMENT_SET.contains(myChild2.getElementType())) {
       if (myChild1.getElementType() != IMPORT_STATEMENT) {
         myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
       }
       return;
     }
+    if (prev != null && prev.getElementType() == mSL_COMMENT) {
+      myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      return;
+    }
+
 
     if (myParent instanceof GroovyPsiElement) {
       ((GroovyPsiElement) myParent).accept(this);
