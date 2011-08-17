@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBase {
@@ -39,6 +41,7 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
     GenerateAccessorProviderRegistrar.registerProvider(new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
       @NotNull
       public Collection<EncapsulatableClassMember> fun(PsiClass s) {
+        if (s.getLanguage() != StdLanguages.JAVA) return Collections.emptyList();
         final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
         for(PsiField field: s.getFields()) {
           if (!(field instanceof PsiEnumConstant)) {

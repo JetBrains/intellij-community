@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -681,4 +682,25 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
     throw new IncorrectOperationException("Can not create literal from type: " + value.getClass().getName());
   }
+
+  @NotNull
+  @Override
+  public GrMethod createMethod(@NotNull @NonNls String name, @Nullable PsiType returnType) throws IncorrectOperationException {
+    StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    if (returnType != null) {
+      builder.append(returnType.getCanonicalText());
+    }
+    else {
+      builder.append("def");
+    }
+    builder.append(' ').append(name).append("(){}");
+    return createMethodFromText(builder.toString());
+  }
+
+  @NotNull
+  @Override
+  public GrParameter createParameter(@NotNull @NonNls String name, @Nullable PsiType type) throws IncorrectOperationException {
+    return createParameter(name, type == null ? null : type.getCanonicalText(), null, null);
+  }
+
 }

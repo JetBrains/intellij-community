@@ -60,7 +60,7 @@ public class ConstructorGenerateHandler extends GenerateConstructorHandler {
           }
         }
 
-        res.add(new PsiMethodMember(factory.createMethodFromText(GroovyToJavaGenerator.generateMethodStub(copy), aClass)));
+        res.add(new PsiMethodMember(factory.createMethodFromText(GroovyToJavaGenerator.generateMethodStub(copy), method)));
       } else if (classMember instanceof PsiFieldMember) {
         final PsiField field = ((PsiFieldMember) classMember).getElement();
 
