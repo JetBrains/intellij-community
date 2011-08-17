@@ -345,5 +345,9 @@
     </action>
     <action id="MoveLineDown" />
     <action id="MoveLineUp" />
+    <action id="Vcs.ShowMessageHistory">
+      <keyboard-shortcut first-keystroke="control M"/>
+      <keyboard-shortcut first-keystroke="shift F4"/>
+    </action>
   </keymap>
 </component>
