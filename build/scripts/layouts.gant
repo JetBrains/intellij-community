@@ -119,6 +119,7 @@ def layoutFull(String home, String targetDirectory) {
         include(name: "trove4j_changes.txt")
         include(name: "trove4j_src.jar")
       }
+      fileset(dir: "$home/xml/relaxng/lib", includes: "*.jar")
 
       dir("ant") {
         fileset(dir: "$home/lib/ant") {
