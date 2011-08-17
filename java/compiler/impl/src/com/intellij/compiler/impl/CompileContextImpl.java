@@ -143,10 +143,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myGeneratedSources.contains(FileBasedIndex.getFileId(file))) {
       return true;
     }
-    for (final VirtualFile root : myRootToModuleMap.keySet()) {
-      if (VfsUtil.isAncestor(root, file, false)) {
-        return true;
-      }
+    if (isUnderRoots(myRootToModuleMap.keySet(), file)) {
+      return true;
     }
     final Module module = getModuleByFile(file);
     if (module != null) {
@@ -467,10 +465,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myProjectFileIndex.isInTestSourceContent(fileOrDir)) {
       return true;
     }
-    for (final VirtualFile root : myGeneratedTestRoots) {
-      if (VfsUtil.isAncestor(root, fileOrDir, false)) {
-        return true;
-      }
+    if (isUnderRoots(myGeneratedTestRoots, fileOrDir)) {
+      return true;
     }
     return false;
   }
@@ -479,11 +475,23 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myProjectFileIndex.isInSourceContent(fileOrDir)) {
       return true;
     }
-    for (final VirtualFile root : myRootToModuleMap.keySet()) {
-      if (VfsUtil.isAncestor(root, fileOrDir, false)) {
-        return true;
-      }
+    if (isUnderRoots(myRootToModuleMap.keySet(), fileOrDir)) {
+      return true;
     }
     return false;
   }
+
+  public static boolean isUnderRoots(@NotNull Set<VirtualFile> roots, @NotNull VirtualFile file) {
+    VirtualFile parent = file;
+    while (true) {
+      if (parent == null) {
+        return false;
+      }
+      if (roots.contains(parent)) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
+  }
+
 }
