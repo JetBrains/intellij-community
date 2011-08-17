@@ -270,16 +270,11 @@ public class JavaCompletionContributor extends CompletionContributor {
 
             final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);
             final PsiFile originalFile = parameters.getOriginalFile();
-            Set<LookupElement> set = JavaCompletionUtil.processJavaReference(position,
+            for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
                                                                                   (PsiJavaReference)reference,
                                                                                   new ElementExtractorFilter(filter),
                                                                                   checkAccess,
-                                                                                  result.getPrefixMatcher(), parameters);
-            PsiClass arrays = JavaPsiFacade.getInstance(position.getProject()).findClass(CommonClassNames.JAVA_UTIL_ARRAYS, position.getResolveScope());
-            if (arrays != null && filter.isAcceptable(arrays, position) && isClassNamePossible(parameters.getPosition())) {
-              set.add(JavaClassNameCompletionContributor.createClassLookupItem(arrays, true));
-            }
-            for (LookupElement element : set) {
+                                                                                  result.getPrefixMatcher(), parameters)) {
               if (inheritors.alreadyProcessed(element)) {
                 continue;
               }
