@@ -22,6 +22,7 @@ import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -1142,7 +1143,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         private VirtualFile[] myRootsBefore;
-        private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
+        private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
 
         public void beforeRootsChange(final ModuleRootEvent event) {
           try {
@@ -1201,7 +1202,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                   }
                 }.queue();
               }
-            }, 500);
+            }, 500, ModalityState.NON_MODAL);
           }
           catch (ProjectRef.ProjectClosedException e) {
             LOG.info(e);
