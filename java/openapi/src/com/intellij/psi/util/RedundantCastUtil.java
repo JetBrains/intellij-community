@@ -145,6 +145,7 @@ public class RedundantCastUtil {
         processBinaryExpressionOperand(deparenthesizeExpression(operands[0]), operands[1].getType(), tokenType);
         for (int i = 1; i < operands.length; i++) {
           PsiExpression operand = deparenthesizeExpression(operands[i]);
+          if (operand == null) continue;
           processBinaryExpressionOperand(operand, lType, tokenType);
           lType = TypeConversionUtil.calcTypeForBinaryExpression(lType, operand.getType(), tokenType, true);
         }

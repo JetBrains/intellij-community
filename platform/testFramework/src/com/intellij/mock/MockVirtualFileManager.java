@@ -131,4 +131,8 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   public long getModificationCount() {
     return ModificationTracker.EVER_CHANGED.getModificationCount();
   }
+
+  @Override
+  public void notifyPropertyChanged(VirtualFile virtualFile, String property, Object oldValue, Object newValue) {
+  }
 }

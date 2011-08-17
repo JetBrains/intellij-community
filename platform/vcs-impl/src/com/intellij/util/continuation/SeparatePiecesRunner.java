@@ -28,6 +28,8 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author irengrig
  *         Date: 4/7/11
@@ -41,11 +43,12 @@ public class SeparatePiecesRunner extends GeneralRunner {
   @CalledInAwt
   public void ping() {
     if (! ApplicationManager.getApplication().isDispatchThread()) {
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          public void run() {
-            pingImpl();
-          }
-        }, null, myProject);
+      Runnable command = new Runnable() {
+        public void run() {
+          pingImpl();
+        }
+      };
+      SwingUtilities.invokeLater(command);
     } else {
       pingImpl();
     }
@@ -54,7 +57,7 @@ public class SeparatePiecesRunner extends GeneralRunner {
   private void pingImpl() {
     while (true) {
     // stop if project is being disposed
-      if (! myProject.isOpen()) return;
+      if (! myProject.isDefault() && ! myProject.isOpen()) return;
       final TaskDescriptor current = getNextMatching();
       if (current == null) {
         synchronized (myQueueLock) {
@@ -68,8 +71,14 @@ public class SeparatePiecesRunner extends GeneralRunner {
         current.run(this);
       } else {
         final TaskWrapper task = new TaskWrapper(myProject, current.getName(), myCancellable, current, this);
-        myIndicator = ApplicationManager.getApplication().isUnitTestMode() ? new EmptyProgressIndicator() :
-                      new BackgroundableProcessIndicator(task);
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          myIndicator = new EmptyProgressIndicator();
+        }
+        else {
+          myIndicator = new BackgroundableProcessIndicator(task);
+          // a hack to set current modality
+          //((BackgroundableProcessIndicator) myIndicator).setModalityProgress(null);
+        }
         ProgressManagerImpl.runProcessWithProgressAsynchronously(task, myIndicator);
         return;
       }
@@ -92,17 +101,32 @@ public class SeparatePiecesRunner extends GeneralRunner {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      myTaskDescriptor.run(myGeneralRunner);
+      try {
+        myTaskDescriptor.run(myGeneralRunner);
+      } catch (Exception e) {
+        doCancel();
+        return;
+      }
+
+      if (! indicator.isCanceled()) {
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            myGeneralRunner.ping();
+          }
+        });
+      } else {
+        doCancel();
+      }
     }
 
-    @Override
-    public void onSuccess() {
-      myGeneralRunner.ping();
-    }
-
-    @Override
-    public void onCancel() {
-      myGeneralRunner.onCancel();
+    private void doCancel() {
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myGeneralRunner.onCancel();
+        }
+      });
     }
   }
 }

@@ -1,0 +1,281 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Web Application Features              #
+# #####################################################################
+
+## Additions to Common Attributes
+
+	common.attrs.interact &=
+		(	common.attrs.contextmenu?
+		&	common.attrs.contenteditable?
+		&	common.attrs.draggable?
+		&	common.attrs.dropzone?
+		&	common.attrs.hidden?
+		&	common.attrs.spellcheck?
+		)
+		
+	common.attrs.other &= common.attrs.interact
+
+## Context Menu: contextmenu
+
+	common.attrs.contextmenu =
+		attribute contextmenu {
+			common.data.idref
+		}
+
+## Editable Content: contenteditable
+
+	common.attrs.contenteditable =
+		attribute contenteditable {
+			w:string "true" | w:string "false" | w:string ""
+		}
+
+## Draggable Element: draggable
+
+	common.attrs.draggable =
+		attribute draggable {
+			w:string "true" | w:string "false"
+		}
+
+## Dropzone: dropzone
+
+	common.attrs.dropzone =
+		attribute dropzone {
+			list {
+				(	xsd:string { pattern = "[sS]:.+" }
+				|	xsd:string { pattern = "[fF]:.+" }
+				)*
+				,
+				(	w:string "copy"
+				|	w:string "move"
+				|	w:string "link"
+				)?
+				,
+				(	xsd:string { pattern = "[sS]:.+" }
+				|	xsd:string { pattern = "[fF]:.+" }
+				)*
+			}
+		}
+
+## Hidden Element: hidden
+
+	common.attrs.hidden =
+		attribute hidden {
+			w:string "hidden" | w:string ""
+		}
+
+## Spellchecking and grammar checking: spellcheck
+
+	common.attrs.spellcheck =
+		attribute spellcheck{
+			w:string "true" | w:string "false" | w:string ""
+		}
+
+## Application Cache: manifest
+
+	html.attrs.manifest =
+		attribute manifest {
+			common.data.uri.non-empty
+		}
+		
+	html.attrs &= html.attrs.manifest?
+
+## Progess Indicator: <progress>
+
+	progress.elem =
+		element progress { progress.inner & progress.attrs }
+	progress.attrs =
+		(	common.attrs
+		&	progress.attrs.value?
+		&	progress.attrs.max?
+		)
+		progress.attrs.value =
+			attribute value {
+				common.data.float.non-negative
+			}
+		progress.attrs.max =
+			attribute max {
+				common.data.float.positive
+			}
+	progress.inner =
+		( common.inner.phrasing ) #Cannot enforce textContent format here
+
+	common.elem.phrasing |= progress.elem
+
+## Command with an associated action: <command type='command'>
+
+	command.command.elem =
+		element command { command.inner & command.command.attrs }
+	command.command.attrs =
+		(	common.attrs
+		&	command.command.attrs.type?
+		&	common-command.attrs
+		)
+		command.command.attrs.type =
+			attribute type {
+				w:string "command"
+			}
+	command.elem = command.command.elem
+
+## Selection of one item from a list of items: <command type='radio'>
+
+	command.radio.elem =
+		element command { command.inner & command.radio.attrs }
+	command.radio.attrs =
+		(	common.attrs
+			&	(	command.radio.attrs.type
+				&	command.radio.attrs.radiogroup #REVISIT taking liberties here
+				&	command.radio.attrs.checked?
+				)
+			&	common-command.attrs
+		)
+		command.radio.attrs.type =
+			attribute type {
+				w:string "radio"
+			}
+		command.radio.attrs.radiogroup =
+			attribute radiogroup {
+				string #REVISIT need special format here?
+			}
+		command.radio.attrs.checked =
+			attribute checked {
+				w:string "checked" | w:string ""
+			}
+	command.elem |= command.radio.elem
+
+## State or option that can be toggled: <command type='checkbox'>
+
+	command.checkbox.elem =
+		element command { command.inner & command.checkbox.attrs }
+	command.checkbox.attrs =
+		(	common.attrs
+			&	(	command.checkbox.attrs.type
+				&	command.checkbox.attrs.checked?
+				)
+			&	common-command.attrs
+			)
+		command.checkbox.attrs.type =
+			attribute type {
+				w:string "checkbox"
+			}
+		command.checkbox.attrs.checked =
+			attribute checked {
+				w:string "checked" | w:string ""
+			}
+	command.elem |= command.checkbox.elem
+
+	common-command.attrs =
+		(	command.attrs.label?
+		&	command.attrs.icon?
+		&	command.attrs.disabled?
+		)
+		command.attrs.label =
+			attribute label {
+				string
+			}
+		command.attrs.icon =
+			attribute icon {
+				common.data.uri.non-empty
+			}
+		command.attrs.disabled =
+			attribute disabled {
+				w:string "disabled" | w:string ""
+			}
+	command.inner =
+		( empty )
+	
+	common.elem.metadata |=
+		( command.elem & nonHTMLizable )
+	common.elem.phrasing |= command.elem
+
+## Menu: <menu>
+
+	menu.elem =
+		element menu { menu.inner & menu.attrs }
+	menu.attrs =
+		(	common.attrs
+		&	menu.attrs.type?
+		&	menu.attrs.label?
+		)
+		menu.attrs.type =
+			attribute type {
+				w:string "toolbar" | w:string "context"
+			}
+		menu.attrs.label =
+			attribute label {
+				string
+			}
+	menu.inner =
+		(	mli.elem*
+		|	common.inner.flow
+		)
+	
+	common.elem.flow |= menu.elem
+	# REVISIT allow nested menus
+
+## Menu Item: <li>
+
+	mli.elem =
+		element li { mli.inner & mli.attrs }
+	mli.attrs =
+		( common.attrs )
+	mli.inner =
+		( common.inner.flow )
+	
+## Canvas for Dynamic Graphics: <canvas>
+
+	canvas.elem.flow =
+		element canvas { canvas.inner.flow & canvas.attrs }
+	canvas.elem.phrasing =
+		element canvas { canvas.inner.phrasing & canvas.attrs }
+	canvas.attrs =
+		(	common.attrs
+		&	canvas.attrs.height?
+		&	canvas.attrs.width?
+		&	common.attrs.aria?
+		)
+		canvas.attrs.height =
+			attribute height {
+				common.data.integer.non-negative
+			}
+		canvas.attrs.width =
+			attribute width {
+				common.data.integer.non-negative
+			}
+	canvas.inner.flow =
+		( common.inner.flow )
+	canvas.inner.phrasing =
+		( common.inner.phrasing )
+	
+	common.elem.flow |= canvas.elem.flow
+	common.elem.phrasing |= canvas.elem.phrasing
+
+## Additional On-Demand Information: <details>
+
+	details.elem =
+		element details { details.inner & details.attrs }
+	details.attrs =
+		(	common.attrs
+		&	details.attrs.open?
+		&	common.attrs.aria.implicit.region?
+		)
+		details.attrs.open =
+			attribute open {
+				w:string "open" | w:string ""
+			}
+	details.inner =
+		(	summary.elem?
+		,	common.inner.flow 
+		)
+	
+	common.elem.flow |= details.elem
+
+## Caption/summary for details element: <summary>
+
+	summary.elem =
+		element summary { summary.inner & summary.attrs }
+	summary.attrs =
+		( common.attrs )
+	summary.inner =
+		( common.inner.phrasing )

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.application.options.codeInsight.editor.quotes;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -9,6 +24,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
@@ -44,58 +60,40 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
     super.tearDown();
   }
 
-  public void testWOSelection() {
-    myFixture.configureByText(FileTypes.PLAIN_TEXT, "aaa\nbbb\n\n");
-    myFixture.getEditor().getCaretModel().moveToOffset(0);
+  private void doTest(final char c, @NotNull String before, @NotNull String expected) {
+    myFixture.configureByText(FileTypes.PLAIN_TEXT, before);
     final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
     performAction(myFixture.getProject(), new Runnable() {
       public void run() {
-        typedAction.actionPerformed(myFixture.getEditor(), '"', ((EditorEx)myFixture.getEditor()).getDataContext());
+        typedAction.actionPerformed(myFixture.getEditor(), c, ((EditorEx)myFixture.getEditor()).getDataContext());
       }
     });
-    myFixture.checkResult("\"aaa\nbbb\n\n");
+    myFixture.getEditor().getSelectionModel().removeSelection();
+    myFixture.checkResult(expected);
+  }
+
+  public void testWOSelection() {
+    doTest('"', "aaa\nbbb\n\n", "\"aaa\nbbb\n\n");
   }
 
   public void testWithSelection() {
-    myFixture.configureByText(FileTypes.PLAIN_TEXT, "aaa\nbbb\n\n");
-    myFixture.getEditor().getCaretModel().moveToOffset(0);
-    myFixture.getEditor().getSelectionModel().setSelection(0, 4);
-    final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
-    performAction(myFixture.getProject(), new Runnable() {
-      public void run() {
-        typedAction.actionPerformed(myFixture.getEditor(), '"', ((EditorEx)myFixture.getEditor()).getDataContext());
-      }
-    });
-    myFixture.getEditor().getSelectionModel().removeSelection();
-    myFixture.checkResult("\"aaa\n\"bbb\n\n");
+    doTest('"', "<selection><caret>aaa\n</selection>bbb\n\n", "\"aaa\n\"bbb\n\n");
   }
 
   public void testWithSingleCharSelection() {
-    myFixture.configureByText(FileTypes.PLAIN_TEXT, "aaa\nbbb\n\n");
-    myFixture.getEditor().getCaretModel().moveToOffset(0);
-    myFixture.getEditor().getSelectionModel().setSelection(0, 1);
-    final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
-    performAction(myFixture.getProject(), new Runnable() {
-      public void run() {
-        typedAction.actionPerformed(myFixture.getEditor(), '"', ((EditorEx)myFixture.getEditor()).getDataContext());
-      }
-    });
-    myFixture.getEditor().getSelectionModel().removeSelection();
-    myFixture.checkResult("\"a\"aa\nbbb\n\n");
+    doTest('"', "<selection><caret>a</selection>aa\nbbb\n\n", "\"a\"aa\nbbb\n\n");
   }
 
   public void testChangeQuotes() {
-    myFixture.configureByText(FileTypes.PLAIN_TEXT, "\"aaa\"\nbbb\n\n");
-    myFixture.getEditor().getCaretModel().moveToOffset(0);
-    myFixture.getEditor().getSelectionModel().setSelection(0, 5);
-    final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
-    performAction(myFixture.getProject(), new Runnable() {
-      public void run() {
-        typedAction.actionPerformed(myFixture.getEditor(), '\'', ((EditorEx)myFixture.getEditor()).getDataContext());
-      }
-    });
-    myFixture.getEditor().getSelectionModel().removeSelection();
-    myFixture.checkResult("'aaa'\nbbb\n\n");
+    doTest('\'', "<selection><caret>\"aaa\"</selection>\nbbb\n\n", "'aaa'\nbbb\n\n");
+  }
+
+  public void testChangeBrackets() {
+    doTest('[', "<selection><caret>(aaa)</selection>\nbbb\n\n", "[aaa]\nbbb\n\n");
+  }
+
+  public void testChangeNonSimilar() {
+    doTest('[', "<selection><caret>\"aaa\"</selection>\nbbb\n\n", "[\"aaa\"]\nbbb\n\n");
   }
 
   public void testRuby7852ErrantEditor() {

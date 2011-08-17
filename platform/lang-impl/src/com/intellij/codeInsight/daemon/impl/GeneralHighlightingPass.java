@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -132,7 +133,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myApplyCommand = new Runnable() {
       public void run() {
         ProperTextRange range = new ProperTextRange(myStartOffset, myEndOffset);
-        MarkupModel model = myDocument.getMarkupModel(myProject);
+        MarkupModel model = DocumentMarkupModel.forDocument(myDocument, myProject, true);
         UpdateHighlightersUtil.cleanFileLevelHighlights(myProject, Pass.UPDATE_ALL,myFile);
         final EditorColorsScheme colorsScheme = getColorsScheme();
         UpdateHighlightersUtil.setHighlightersInRange(myProject, myDocument, range, colorsScheme, myHighlights, (MarkupModelEx)model, Pass.UPDATE_ALL);
@@ -239,7 +240,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               @Override
               public void run() {
                 if (myProject.isDisposed() || modificationStamp != myDocument.getModificationStamp()) return;
-                MarkupModel markupModel = myDocument.getMarkupModel(myProject);
+                MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
 
                 UpdateHighlightersUtil.setHighlightersInRange(myProject, myDocument, priorityIntersection, getColorsScheme(), toApplyInside,
                                                                 (MarkupModelEx)markupModel, Pass.UPDATE_ALL);

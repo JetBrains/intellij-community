@@ -870,6 +870,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testIfConditionExpectedType() throws Exception { doTest(); }
+
   public void testUnboundTypeArgs() throws Exception { doTest(); }
 
   public void testIDEADEV2668() throws Exception {

@@ -49,7 +49,7 @@ public class UpdateCopyrightAction extends AnAction {
     final Editor editor = PlatformDataKeys.EDITOR.getData(context);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file)) {
+      if (file == null || !FileTypeUtil.isSupportedFile(file)) {
         return false;
       }
     }

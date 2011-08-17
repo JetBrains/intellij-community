@@ -337,7 +337,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    ((MarkupModelEx)myDocument.getMarkupModel(myProject)).addMarkupModelListener(myMarkupModelListener);
+    ((MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true)).addMarkupModelListener(myMarkupModelListener);
     ((MarkupModelEx)getMarkupModel()).addMarkupModelListener(myMarkupModelListener);
 
     myDocument.addDocumentListener(myFoldingModel);
@@ -630,7 +630,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     mySoftWrapModel.release();
 
-    MarkupModelEx markupModel = (MarkupModelEx)myDocument.getMarkupModel(myProject, false);
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, false);
     if (markupModel instanceof MarkupModelImpl) {
       markupModel.removeMarkupModelListener(myMarkupModelListener);
     }
@@ -1619,7 +1619,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
     paintCustomRenderers((Graphics2D)g, clipStartOffset, clipEndOffset);
-    MarkupModelEx docMarkup = (MarkupModelEx)myDocument.getMarkupModel(myProject);
+    MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
     paintLineMarkersSeparators(g, clip, docMarkup, clipStartOffset, clipEndOffset);
     paintLineMarkersSeparators(g, clip, myMarkupModel, clipStartOffset, clipEndOffset);
     paintText(g, clip, clipStartPosition, clipStartOffset, clipEndOffset);
@@ -1635,7 +1635,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void paintCustomRenderers(final Graphics2D g, final int clipStartOffset, final int clipEndOffset) {
-    myMarkupModel.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
+    myMarkupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx highlighter) {
         final CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
@@ -1760,8 +1760,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return true;
       }
     };
-    docMarkup.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, paintProcessor);
-    myMarkupModel.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, paintProcessor);
+    docMarkup.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, paintProcessor);
+    myMarkupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, paintProcessor);
   }
 
   private void paintSegmentHighlighterAfterEndOfLine(Graphics g,
@@ -2521,7 +2521,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                           @NotNull MarkupModelEx markupModel,
                                           int clipStartOffset,
                                           int clipEndOffset) {
-    markupModel.processHighlightsOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
+    markupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx lineMarker) {
         paintLineMarkerSeparator(lineMarker, clip, g);

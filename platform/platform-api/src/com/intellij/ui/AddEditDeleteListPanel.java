@@ -49,7 +49,7 @@ public abstract class AddEditDeleteListPanel<T> extends AddDeleteListPanel<T> {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void updateButton(AnActionEvent e) {
         e.getPresentation().setEnabled(myList.getSelectedIndex() != -1);
       }
     });

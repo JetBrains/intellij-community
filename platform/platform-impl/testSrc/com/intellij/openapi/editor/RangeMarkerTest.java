@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.RedBlackTree;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -865,6 +866,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     edit(document, 67,5,0,  1,0,4);
     delete(mm, 11);
   }
+  public void testE17() {
+    DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 100));
+
+    List<RangeMarker> mm = add(document, 15,85, 79,88, 90,94, 43,67, 54,89, 81,98, 1,34, 58,93, 22,23, 44,45, 63,84, 45,76, 58,87, 40,59, 5,81, 95,95, 12,61, 52,65, 80,95, 6,16, 7,67, 59,63, 91,96, 99,99, 50,96, 72,78, 78,78, 85,85, 5,51, 90,91
+    );
+    edit(document, 20,26,0,  15,0,4,  64,4,0);
+  }
 
   public void testRandomEdit_NoCommand() {
     final int N = 100;
@@ -1007,7 +1015,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testRangeHighlightersRecreateBug() throws Exception {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
 
-    MarkupModel markupModel = document.getMarkupModel(ourProject);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, ourProject, true);
     for (int i=0; i<2; i++) {
       RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
       RangeMarker m2 = markupModel.addRangeHighlighter(2, 7, 0, null, HighlighterTargetArea.EXACT_RANGE);

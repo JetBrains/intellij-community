@@ -36,6 +36,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,16 +72,20 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
+import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author ilyas
  */
 public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub> implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
+
+  private static final LightCacheKey<List<GrField>> AST_TRANSFORM_FIELD = LightCacheKey.createByJavaModificationCount();
 
   private volatile PsiClass[] myInnerClasses;
   private volatile List<PsiMethod> myMethods;
@@ -328,7 +333,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @NotNull
-  public GrField[] getFields() {
+  public GrField[] getCodeFields() {
     GrTypeDefinitionBody body = getBody();
     if (body != null) {
       return body.getFields();
@@ -337,21 +342,63 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return GrField.EMPTY_ARRAY;
   }
 
+  @Override
+  public PsiField findCodeFieldByName(String name, boolean checkBases) {
+    return GrClassImplUtil.findFieldByName(this, name, checkBases, false);
+  }
+
+  private List<GrField> getSyntheticFields() {
+    List<GrField> fields = AST_TRANSFORM_FIELD.getCachedValue(this);
+    if (fields == null) {
+      fields = new ArrayList<GrField>();
+      AstTransformContributor.runContributorsForFields(this, fields);
+
+      fields = AST_TRANSFORM_FIELD.putCachedValue(this, fields);
+    }
+
+    return fields;
+  }
+
+  @NotNull
+  public GrField[] getFields() {
+    GrField[] codeFields = getCodeFields();
+
+    List<GrField> fromAstTransform = getSyntheticFields();
+    if (fromAstTransform.isEmpty()) return codeFields;
+
+    GrField[] res = new GrField[codeFields.length + fromAstTransform.size()];
+    System.arraycopy(codeFields, 0, res, 0, codeFields.length);
+
+    for (int i = 0; i < fromAstTransform.size(); i++) {
+      res[codeFields.length + i] = fromAstTransform.get(i);
+    }
+
+    return res;
+  }
+
   @NotNull
   public PsiMethod[] getMethods() {
     List<PsiMethod> cached = myMethods;
     if (cached == null) {
-      cached = new ArrayList<PsiMethod>();
       GrTypeDefinitionBody body = getBody();
       if (body != null) {
-        cached.addAll(body.getMethods());
+        cached = body.getMethods();
+      }
+      else {
+        cached = Collections.emptyList();
       }
 
       myMethods = cached;
     }
 
     List<PsiMethod> result = new ArrayList<PsiMethod>(cached);
-    AstTransformContributor.runContributors(this, result);
+    AstTransformContributor.runContributorsForMethods(this, result);
+
+    for (GrField field : getSyntheticFields()) {
+      ContainerUtil.addIfNotNull(result, field.getSetter());
+      Collections.addAll(result, field.getGetters());
+    }
+
     return result.toArray(new PsiMethod[result.size()]);
   }
 
@@ -425,7 +472,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   public PsiField findFieldByName(String name, boolean checkBases) {
-    return GrClassImplUtil.findFieldByName(this, name, checkBases);
+    return GrClassImplUtil.findFieldByName(this, name, checkBases, true);
   }
 
   @Nullable

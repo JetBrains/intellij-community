@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -76,7 +77,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     errorCount = new int[mySeverityRegistrar.getSeverityMaxIndex()];
 
     if (project != null) {
-      MarkupModelEx model = (MarkupModelEx)document.getMarkupModel(project);
+      MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
       model.addMarkupModelListener(new MarkupModelListener() {
         @Override
         public void afterAdded(@NotNull RangeHighlighterEx highlighter) {

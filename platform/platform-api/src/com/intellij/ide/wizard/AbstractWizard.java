@@ -124,12 +124,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
 
       leftPanel.add(myHelpButton);
+      leftPanel.add(myCancelButton);
+      
       panel.add(leftPanel, BorderLayout.WEST);
 
-      buttonPanel.add(myCancelButton);
-      buttonPanel.add(Box.createHorizontalStrut(5));
       buttonPanel.add(myFinishButton);
-
       if (mySteps.size() > 1) {
         buttonPanel.add(Box.createHorizontalStrut(5));
         buttonPanel.add(myPreviousButton);
@@ -326,9 +325,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   protected void doNextAction() {
     // Commit data of current step
     final Step currentStep = mySteps.get(myCurrentStep);
+    boolean lastStep = getCurrentStep() == getNextStep(getCurrentStep());
     LOG.assertTrue(currentStep != null);
     try {
       currentStep._commit(false);
+      if (SystemInfo.isMac && lastStep) {
+        doOKAction();
+      }
     }
     catch (final CommitStepException exc) {
       Messages.showErrorDialog(
@@ -338,8 +341,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       return;
     }
 
-    myCurrentStep = getNextStep(myCurrentStep);
-    updateStep();
+    if (!SystemInfo.isMac || !lastStep) {
+      myCurrentStep = getNextStep(myCurrentStep);
+      updateStep();
+    }
   }
 
   /**
@@ -394,7 +399,16 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     myIcon.setIcon(step.getIcon());
 
-    myNextButton.setEnabled(mySteps.size() == 1 || myCurrentStep < mySteps.size() - 1);
+    if (SystemInfo.isMac && myCurrentStep == mySteps.size() - 1) {
+      myFinishButton.setVisible(false);
+      myNextButton.setText(IdeBundle.message("button.finish"));
+    }
+    else {
+      myNextButton.setText(IdeBundle.message("button.wizard.next"));
+      myFinishButton.setVisible(true);
+      myNextButton.setEnabled(mySteps.size() == 1 || myCurrentStep < mySteps.size() - 1);
+    }
+
     myPreviousButton.setEnabled(myCurrentStep > 0);
   }
 

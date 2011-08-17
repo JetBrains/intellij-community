@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,7 +74,7 @@ public class ComputableIcon {
     return new ComputableIcon(new Computable<Icon>() {
       @Override
       public Icon compute() {
-        return file.getIcon();
+        return VirtualFilePresentation.getIcon(file);
       }
     });
   }

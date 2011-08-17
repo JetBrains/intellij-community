@@ -15,6 +15,7 @@
  */
 package com.intellij.html.impl;
 
+import com.intellij.html.RelaxedHtmlNSDescriptor;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -26,7 +27,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RelaxedHtmlFromSchemaNSDescriptor extends XmlNSDescriptorImpl {
+public class RelaxedHtmlFromSchemaNSDescriptor extends XmlNSDescriptorImpl implements RelaxedHtmlNSDescriptor {
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     XmlElementDescriptor elementDescriptor = super.getElementDescriptor(tag);
 

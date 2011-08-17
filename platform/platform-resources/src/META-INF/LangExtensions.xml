@@ -28,9 +28,6 @@
   <applicationService serviceInterface="com.intellij.ide.PsiCopyPasteManager"
                       serviceImplementation="com.intellij.ide.PsiCopyPasteManager"/>
 
-  <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
-                      serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
-
   <applicationService serviceInterface="com.intellij.usages.UsageViewSettings"
                       serviceImplementation="com.intellij.usages.UsageViewSettings"/>
   <applicationService serviceInterface="com.intellij.refactoring.RefactoringSettings"
@@ -125,6 +122,9 @@
 
   <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
                       serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
+  
+  <applicationService serviceInterface="com.intellij.ui.mac.MacMessages"
+                      serviceImplementation="com.intellij.ui.mac.MacMessagesImpl"/>
 
   <applicationService serviceInterface="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"
                       serviceImplementation="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>

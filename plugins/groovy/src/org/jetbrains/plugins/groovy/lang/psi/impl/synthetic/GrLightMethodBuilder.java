@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -45,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 import javax.swing.*;
 import java.util.List;
@@ -53,14 +55,15 @@ import java.util.List;
  * @author Sergey Evdokimov
  */
 public class GrLightMethodBuilder extends LightElement implements GrMethod {
-  private final String myName;
+  private String myName;
   private PsiType myReturnType;
   private final GrModifierList myModifierList;
   private GrParameterList myParameterList;
   private Icon myBaseIcon;
   private PsiClass myContainingClass;
   private Object myMethodKind;
-  private String[] namedParametersArray = ArrayUtil.EMPTY_STRING_ARRAY;
+  private String[] myNamedParametersArray = ArrayUtil.EMPTY_STRING_ARRAY;
+  private Runnable myOnRename;
 
   public GrLightMethodBuilder(PsiManager manager, String name) {
     this(manager, name, new GrLightParameterListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE), null);
@@ -77,7 +80,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   public void setNamedParametersArray(@NotNull String[] namedParametersArray) {
-    this.namedParametersArray = namedParametersArray;
+    this.myNamedParametersArray = namedParametersArray;
   }
 
   @Override
@@ -110,7 +113,21 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Please don't rename light methods");
+    if (myOnRename == null) {
+      throw new IncorrectOperationException("Please don't rename light methods");
+    }
+
+    myName = name;
+    myOnRename.run();
+    return this;
+  }
+
+  public void setOnRename(Runnable onRename) {
+    myOnRename = onRename;
+  }
+
+  public void setRenamable() {
+    myOnRename = EmptyRunnable.INSTANCE;
   }
 
   @NotNull
@@ -140,7 +157,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   @NotNull
   @Override
   public String[] getNamedParametersArray() {
-    return namedParametersArray;
+    return myNamedParametersArray;
   }
 
   public GrLightMethodBuilder addModifiers(String... modifiers) {
@@ -386,4 +403,26 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return getReturnType();
   }
 
+  @Override
+  public PsiElement copy() {
+    GrLightMethodBuilder copy = new GrLightMethodBuilder(myManager, myName);
+    copy.setMethodKind(myMethodKind);
+    copy.setNamedParametersArray(myNamedParametersArray);
+    copy.setNavigationElement(getNavigationElement());
+    copy.setBaseIcon(myBaseIcon);
+    copy.setReturnType(myReturnType);
+
+    for (Object o : GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.keys()) {
+      String modifier = (String)o;
+      if (myModifierList.hasExplicitModifier(modifier)) {
+        copy.addModifier(modifier);
+      }
+    }
+
+    for (GrParameter parameter : myParameterList.getParameters()) {
+      copy.addParameter(parameter);
+    }
+
+    return copy;
+  }
 }

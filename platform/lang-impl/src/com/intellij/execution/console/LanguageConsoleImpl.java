@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
@@ -355,7 +356,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     text = StringUtil.convertLineSeparators(text);
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     final Document history = myHistoryViewer.getDocument();
-    final MarkupModel markupModel = history.getMarkupModel(myProject);
+    final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     final int offset = history.getTextLength();
     appendToHistoryDocument(history, text);
     markupModel.addRangeHighlighter(offset,
@@ -406,7 +407,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   protected String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor, boolean preserveMarkup) {
     final DocumentImpl history = (DocumentImpl)myHistoryViewer.getDocument();
-    final MarkupModel markupModel = history.getMarkupModel(myProject);
+    final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     appendToHistoryDocument(history, myPrompt);
     markupModel.addRangeHighlighter(history.getTextLength() - myPrompt.length(), history.getTextLength(), HighlighterLayer.SYNTAX,
                                     ConsoleViewContentType.USER_INPUT.getAttributes(),
@@ -432,7 +433,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       iterator.advance();
     }
     if (preserveMarkup) {
-      duplicateHighlighters(markupModel, consoleEditor.getDocument().getMarkupModel(myProject), offset, textRange);
+      duplicateHighlighters(markupModel, DocumentMarkupModel.forDocument(consoleEditor.getDocument(), myProject, true), offset, textRange);
       duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
     }
     if (!text.endsWith("\n")) {

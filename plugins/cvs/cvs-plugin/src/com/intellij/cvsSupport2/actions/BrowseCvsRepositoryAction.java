@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,10 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.Consumer;
 
 import java.util.Collections;
@@ -94,7 +96,6 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
       tabbedWindow.addTab(TITLE, browserPanel,
                           true, true, true, true, browserPanel.getActionGroup(), "cvs.browse");
       tabbedWindow.ensureVisible(project);
-
     }
   }
 
@@ -114,26 +115,23 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
       return 0;
     }
 
-    public boolean login(ModalityContext executor) throws Exception {
+    public boolean login(ModalityContext executor) {
       return loginImpl(myProject, executor, new Consumer<VcsException>() {
                                             public void consume(VcsException e) {
                                               myErrors.add(e);
                                             }
                                           });
-      /*final LoginPerformer.MyProjectKnown performer =
-        new LoginPerformer.MyProjectKnown(myProject, Collections.<CvsEnvironment>singletonList(mySelectedConfiguration),
-                                          new Consumer<VcsException>() {
-                                            public void consume(VcsException e) {
-                                              myErrors.add(e);
-                                            }
-                                          });
-      return performer.loginAll(executor, false);*/
     }
   }
 
-  public boolean loginImpl(final Project project, final ModalityContext executor, final Consumer<VcsException> exceptionConsumer) {
+  private boolean loginImpl(final Project project, final ModalityContext executor, final Consumer<VcsException> exceptionConsumer) {
     final LoginPerformer.MyProjectKnown performer =
       new LoginPerformer.MyProjectKnown(project, Collections.<CvsEnvironment>singletonList(mySelectedConfiguration), exceptionConsumer);
-    return performer.loginAll(executor, false);
+    try {
+      return performer.loginAll(executor, false);
+    } catch (Exception e) {
+      VcsBalloonProblemNotifier.showOverChangesView(project, e.getMessage(), MessageType.ERROR);
+      return false;
+    }
   }
 }

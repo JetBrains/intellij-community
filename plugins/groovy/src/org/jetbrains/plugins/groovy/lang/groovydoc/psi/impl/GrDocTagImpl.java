@@ -60,7 +60,7 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
 
   @NotNull
   public String getName() {
-    return getNameElement().getText();
+    return getNameElement().getText().substring(1);
   }
 
   @NotNull
@@ -75,10 +75,9 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
     return (GrDocComment)getParent();
   }
 
+  @Nullable
   public GrDocTagValueToken getValueElement() {
-    final GrDocParameterReference reference = getDocParameterReference();
-    if (reference == null) return null;
-    return reference.getReferenceNameElement();
+    return findChildByClass(GrDocTagValueToken.class);
   }
 
   @Nullable

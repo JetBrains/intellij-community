@@ -16,17 +16,20 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.Charset;
 
 
 public class ConsoleViewRunningState extends ConsoleState {
@@ -58,10 +61,23 @@ public class ConsoleViewRunningState extends ConsoleState {
     // attach to process stdin
     if (attachToStdIn) {
       final OutputStream processInput = myProcessHandler.getProcessInput();
-      myUserInputWriter = processInput != null ? new OutputStreamWriter(processInput) : null;
-    } else {
+      myUserInputWriter = processInput != null ? createOutputStreamWriter(processInput, processHandler) : null;
+    }
+    else {
       myUserInputWriter = null;
     }
+  }
+
+  private static OutputStreamWriter createOutputStreamWriter(OutputStream processInput, ProcessHandler processHandler) {
+    Charset charset;
+    if (processHandler instanceof OSProcessHandler) {
+      charset = ((OSProcessHandler)processHandler).getCharset();
+    }
+    else {
+      charset = EncodingManager.getInstance().getDefaultCharset();
+    }
+
+    return new OutputStreamWriter(processInput, charset);
   }
 
   @NotNull
@@ -81,8 +97,9 @@ public class ConsoleViewRunningState extends ConsoleState {
   }
 
   public void sendUserInput(final String input) throws IOException {
-    if (myUserInputWriter == null)
+    if (myUserInputWriter == null) {
       throw new IOException(ExecutionBundle.message("no.user.process.input.error.message"));
+    }
     myUserInputWriter.write(input);
     myUserInputWriter.flush();
   }

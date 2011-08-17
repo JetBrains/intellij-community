@@ -68,7 +68,7 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void updateButton(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {

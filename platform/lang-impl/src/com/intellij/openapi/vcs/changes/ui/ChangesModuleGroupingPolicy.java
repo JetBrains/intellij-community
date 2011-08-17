@@ -43,6 +43,8 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
 
   @Nullable
   public ChangesBrowserNode getParentNodeFor(final StaticFilePath node, final ChangesBrowserNode rootNode) {
+    if (myProject.isDefault()) return null;
+
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
 
     VirtualFile vFile = node.getVf();

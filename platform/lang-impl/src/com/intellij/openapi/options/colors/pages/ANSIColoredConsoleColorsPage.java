@@ -30,6 +30,7 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage {
     "\n" +
     "<logError>Log error</logError>\n" +
     "<logWarning>Log warning</logWarning>\n" +
+    "<logExpired>An expired log entry</logExpired>\n" +
     "\n" +
     "# Process output highlighted using ANSI colors codes\n" +
     "<red>ANSI: red</red>\n" +
@@ -50,6 +51,7 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage {
 
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.logError"), ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.warning"), ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.expired"), ConsoleViewContentType.LOG_EXPIRED_ENTRY),
 
     new AttributesDescriptor(OptionsBundle.message("color.settings.console.red"), ConsoleHighlighter.RED),
     new AttributesDescriptor(OptionsBundle.message("color.settings.console.green"), ConsoleHighlighter.GREEN),
@@ -68,6 +70,7 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage {
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("stderr", ConsoleViewContentType.ERROR_OUTPUT_KEY);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("logError", ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("logWarning", ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("logExpired", ConsoleViewContentType.LOG_EXPIRED_ENTRY);
 
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("red", ConsoleHighlighter.RED);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("green", ConsoleHighlighter.GREEN);

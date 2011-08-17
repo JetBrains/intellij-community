@@ -13,6 +13,7 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vcs.CalledInAny;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,4 +29,5 @@ public interface GitLog extends Disposable {
   void rootsChanged(final List<VirtualFile> roots);
   @CalledInAwt
   JComponent getVisualComponent();
+  void setModalityState(ModalityState state);
 }

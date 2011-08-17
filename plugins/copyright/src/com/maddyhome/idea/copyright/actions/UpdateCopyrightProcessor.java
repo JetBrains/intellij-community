@@ -77,7 +77,7 @@ public class UpdateCopyrightProcessor extends AbstractFileProcessor
 
         CopyrightProfile opts = CopyrightManager.getInstance(project).getCopyrightOptions(file);
 
-        if (opts != null && FileTypeUtil.getInstance().isSupportedFile(file))
+        if (opts != null && FileTypeUtil.isSupportedFile(file))
         {
             logger.debug("process " + file);
             final UpdateCopyright update = UpdateCopyrightFactory.createUpdateCopyright(project, mod, file, opts);

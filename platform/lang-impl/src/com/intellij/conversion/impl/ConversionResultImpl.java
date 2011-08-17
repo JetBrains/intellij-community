@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsShowConfirmationOptionImpl;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.actions.EditAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,7 +79,7 @@ public class ConversionResultImpl implements ConversionResult {
     }
 
     final List<VirtualFile> createdFiles = findVirtualFiles(myCreatedFiles);
-    if (!createdFiles.isEmpty()) {
+    if (containsFilesUnderVcs(createdFiles, project)) {
       final VcsShowConfirmationOptionImpl option = new VcsShowConfirmationOptionImpl("", "", "", "", "");
       final Collection<VirtualFile> selected = AbstractVcsHelper.getInstance(project)
         .selectFilesToProcess(createdFiles, "Files Created", "Select files to be added to version control", null, null, option);
@@ -87,6 +88,15 @@ public class ConversionResultImpl implements ConversionResult {
         changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), new ArrayList<VirtualFile>(selected));
       }
     }
+  }
+
+  private static boolean containsFilesUnderVcs(List<VirtualFile> files, Project project) {
+    for (VirtualFile file : files) {
+      if (ChangesUtil.getVcsForFile(file, project) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static List<VirtualFile> findVirtualFiles(Collection<File> ioFiles) {

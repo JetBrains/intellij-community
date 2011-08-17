@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -109,7 +110,7 @@ public class IconUtil {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
 
     return IconDeferrer.getInstance()
-      .defer(lastIcon != null ? lastIcon : file.getIcon(), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
+      .defer(lastIcon != null ? lastIcon : VirtualFilePresentation.getIcon(file), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
         public Icon fun(final FileIconKey key) {
           VirtualFile file = key.getFile();
           int flags = key.getFlags();
@@ -118,7 +119,7 @@ public class IconUtil {
           if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
 
           Icon providersIcon = getProvidersIcon(file, flags, project);
-          Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
+          Icon icon = providersIcon == null ? VirtualFilePresentation.getIcon(file) : providersIcon;
 
           final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
           for (FileIconPatcher patcher : getPatchers()) {

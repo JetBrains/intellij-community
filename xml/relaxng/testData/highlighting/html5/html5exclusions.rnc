@@ -1,0 +1,63 @@
+default namespace = "http://www.w3.org/1999/xhtml"
+# #####################################################################
+##  RELAX NG Schema for (X)HTML 5: Exclusions                         #
+# #####################################################################
+
+  ## This file is unmaintained. Please use assertions.sch instead.
+  
+# #####################################################################
+## Schema Framework & Parameters
+
+	start = normal.elem.all-inclusive
+
+# #####################################################################
+##  Normal Element Patterns
+
+## Any attribute from any namespace
+
+	normal.attr.anything =
+		attribute * { text }*
+
+## Any element from any namespace except exceptional elements,
+## but allowing those elements as descendants
+
+	normal.elem.all =
+		element * - (dfn) {
+			normal.elem.all-inclusive
+		}
+
+## Any element from any namespace including exceptional elements
+
+	normal.elem.all-inclusive =
+		wildcard.elem.exclude-all | dfn.elem.exclude-self
+
+
+# #####################################################################
+##  Exclusion Element Patterns
+
+  # exclude all exceptional elements from the name classes;
+  # list them explicitly in content models instead
+
+normal.elem.exclude-dfn =
+	element * - (dfn) {
+		normal.elem.exclude-dfn
+	}
+
+dfn.elem.exclude-self =
+	element dfn {
+		(	normal.attr.anything
+		&	normal.elem.exclude-dfn
+		)
+	}
+
+# FIXME this part was cut off -- hsivonen
+wildcard.elem.exclude-all = 
+	notAllowed
+
+#FIXME no nested forms in HTML-serializable docs
+
+#FIXME no nested labels
+
+#FIXME no blockquote inside header or footer
+
+#FIXME exactly one hn in header

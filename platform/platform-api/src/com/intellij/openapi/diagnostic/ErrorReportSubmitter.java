@@ -65,4 +65,12 @@ public abstract class ErrorReportSubmitter implements PluginAware {
                           Consumer<SubmittedReportInfo> consumer) {
     consumer.consume(submit(events, parentComponent));
   }
+
+  public boolean trySubmitAsync(IdeaLoggingEvent[] events,
+                                String additionalInfo,
+                                Component parentComponent,
+                                Consumer<SubmittedReportInfo> consumer) {
+    submitAsync(events, additionalInfo, parentComponent, consumer);
+    return true;
+  }
 }

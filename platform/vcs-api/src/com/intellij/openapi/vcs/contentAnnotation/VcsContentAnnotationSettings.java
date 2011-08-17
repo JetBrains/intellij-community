@@ -22,20 +22,19 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/3/11
- * Time: 1:13 PM
+ * @author Irina.Chernushina
+ * @since 3.08.2011
  */
 @State(
   name = "VcsContentAnnotationSettings",
-  storages = {@Storage( file = "$WORKSPACE_FILE$")})
+  storages = {@Storage(file = "$WORKSPACE_FILE$")}
+)
 public class VcsContentAnnotationSettings implements PersistentStateComponent<VcsContentAnnotationSettings.State> {
-  // approx
-  public static final int ourMaxDays = 31;
-  public final static long ourAbsoluteLimit = ourMaxDays * 24 * 60 * 60 * 1000L;
-  private State myState = new State();
+  public static final long ourMillisecondsInDay = 24 * 60 * 60 * 1000L;
+  public static final int ourMaxDays = 31; // approx
+  public static final long ourAbsoluteLimit = ourMillisecondsInDay * ourMaxDays;
 
+  private State myState = new State();
   {
     myState.myLimit = ourAbsoluteLimit;
   }
@@ -63,12 +62,12 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
     return myState.myLimit;
   }
 
-  public long getLimitDays() {
-    return myState.myLimit / (24 * 60 * 60 * 1000L);
+  public int getLimitDays() {
+    return (int) (myState.myLimit / ourMillisecondsInDay);
   }
 
-  public void setLimit(long limit) {
-    myState.myLimit = limit * 24 * 60 * 60 * 1000L;
+  public void setLimit(int limit) {
+    myState.myLimit = ourMillisecondsInDay * limit;
   }
 
   public boolean isShow() {

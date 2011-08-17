@@ -58,7 +58,7 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
 
   @NotNull
   public String getName() {
-    return getNameElement().getText();
+    return getNameElement().getText().substring(1);
   }
 
   @NotNull

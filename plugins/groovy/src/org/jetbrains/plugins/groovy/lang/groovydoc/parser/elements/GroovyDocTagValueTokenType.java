@@ -25,21 +25,21 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_SHARP_TOKEN;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType.TagValueTokenType.REFERENCE_ELEMENT;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType.TagValueTokenType.VALUE_TOKEN;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 import java.util.Arrays;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_SHARP_TOKEN;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType.TagValueTokenType.REFERENCE_ELEMENT;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType.TagValueTokenType.VALUE_TOKEN;
 
 /**
  * @author ilyas
@@ -55,15 +55,15 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
   }
 
   static {
-    TAGS_WITH_REFERENCES.addAll(Arrays.asList("@see", "@throws", "@exception"));
-    INLINED_TAGS_WITH_REFERENCES.addAll(Arrays.asList("@link", "@linkplain", "@value"));
+    TAGS_WITH_REFERENCES.addAll(Arrays.asList("see", "throws", "exception"));
+    INLINED_TAGS_WITH_REFERENCES.addAll(Arrays.asList("link", "linkplain", "value"));
   }
 
   public GroovyDocTagValueTokenType() {
     super("GDOC_TAG_VALUE_TOKEN");
   }
 
-  public TagValueTokenType getValueType(@NotNull ASTNode node) {
+  public static TagValueTokenType getValueType(@NotNull ASTNode node) {
     return isReferenceElement(node.getTreeParent(), node) ? REFERENCE_ELEMENT : VALUE_TOKEN;
   }
 
@@ -73,7 +73,7 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
       return parseImpl(chameleon);
     }
 
-    return getPlainVaueToken(chameleon);
+    return getPlainValueToken(chameleon);
   }
 
   private static boolean isReferenceElement(ASTNode parent, ASTNode child) {
@@ -98,7 +98,7 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
     return false;
   }
 
-  private static ASTNode getPlainVaueToken(ASTNode chameleon) {
+  private static ASTNode getPlainValueToken(ASTNode chameleon) {
     return new LeafPsiElement(GroovyDocTokenTypes.mGDOC_TAG_PLAIN_VALUE_TOKEN, chameleon.getText());
   }
 

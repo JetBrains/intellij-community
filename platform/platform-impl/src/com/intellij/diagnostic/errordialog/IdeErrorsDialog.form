@@ -20,45 +20,35 @@
             <properties/>
             <border type="none"/>
             <children>
-              <grid id="f2b31" layout-manager="GridLayoutManager" row-count="2" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
+              <grid id="f2b31" layout-manager="BorderLayout" hgap="0" vgap="0">
                 <constraints border-constraint="Center"/>
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="32f8d" class="com.intellij.ui.HyperlinkLabel" binding="myInfoLabel">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                    </constraints>
+                  <grid id="b2cb3" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints border-constraint="North"/>
                     <properties/>
-                  </component>
-                  <component id="759d7" class="com.intellij.ui.HyperlinkLabel" binding="myDisableLink">
-                    <constraints>
-                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
-                    </constraints>
+                    <border type="none"/>
+                    <children>
+                      <component id="44ee8" class="com.intellij.ui.HyperlinkLabel$Croppable" binding="myInfoLabel">
+                        <constraints border-constraint="West"/>
+                      </component>
+                      <component id="3f648" class="com.intellij.ui.HyperlinkLabel$Croppable" binding="myDisableLink">
+                        <constraints border-constraint="Center"/>
+                      </component>
+                    </children>
+                  </grid>
+                  <grid id="a2fe0" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints border-constraint="Center"/>
                     <properties/>
-                  </component>
-                  <component id="be87c" class="com.intellij.ui.HyperlinkLabel" binding="myForeignPluginWarningLabel">
-                    <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                        <preferred-size width="4" height="17"/>
-                      </grid>
-                    </constraints>
-                    <properties/>
-                  </component>
-                  <hspacer id="381d1">
-                    <constraints>
-                      <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                  </hspacer>
-                  <hspacer id="ec849">
-                    <constraints>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                        <minimum-size width="10" height="-1"/>
-                        <maximum-size width="10" height="-1"/>
-                      </grid>
-                    </constraints>
-                  </hspacer>
+                    <border type="none"/>
+                    <children>
+                      <component id="596c6" class="com.intellij.ui.HyperlinkLabel$Croppable" binding="myForeignPluginWarningLabel">
+                        <constraints border-constraint="Center"/>
+                        <properties/>
+                      </component>
+                    </children>
+                  </grid>
                 </children>
               </grid>
               <grid id="7403d" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="1">

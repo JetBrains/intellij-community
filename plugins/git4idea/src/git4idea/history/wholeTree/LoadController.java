@@ -12,7 +12,6 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,15 +30,13 @@ import java.util.List;
 public class LoadController implements Loader {
   private final UsersIndex myUsersIndex;
   private final Project myProject;
-  private final ModalityState myState;
   private final Mediator myMediator;
   private final DetailsCache myDetailsCache;
   private LoadAlgorithm myPreviousAlgorithm;
   private NewGitUsersComponent myUsersComponent;
 
-  public LoadController(final Project project, final ModalityState state, final Mediator mediator, final DetailsCache detailsCache) {
+  public LoadController(final Project project, final Mediator mediator, final DetailsCache detailsCache) {
     myProject = project;
-    myState = state;
     myMediator = mediator;
     myDetailsCache = detailsCache;
     myUsersIndex = new UsersIndex();

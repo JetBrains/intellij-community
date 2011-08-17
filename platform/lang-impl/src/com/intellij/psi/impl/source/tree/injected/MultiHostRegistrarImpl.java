@@ -382,7 +382,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
                                           final Place shreds,
                                           final PsiFile hostPsiFile,
                                           final PsiDocumentManager documentManager) {
-    DocumentEx hostDocument = documentWindow.getDelegate();
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
 
     for (int i = injected.size()-1; i>=0; i--) {

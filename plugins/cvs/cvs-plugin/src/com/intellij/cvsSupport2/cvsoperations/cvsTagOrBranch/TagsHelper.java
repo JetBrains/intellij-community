@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,13 +113,8 @@ public class TagsHelper {
     CvsOperationExecutor executor = new CvsOperationExecutor(true, project,
                                                              new ModalityContextImpl(ModalityState.defaultModalityState(),
                                                                                      forTemporaryConfiguration));
-    CommandCvsHandler handler = new CommandCvsHandler(CvsBundle.message("load.tags.operation.name"), operation, true) {
-      public String getCancelButtonText() {
-        return CvsBundle.message("button.text.stop");
-      }
-    };
-    executor.performActionSync(handler,
-                               CvsOperationExecutorCallback.EMPTY);
+    CommandCvsHandler handler = new CommandCvsHandler(CvsBundle.message("load.tags.operation.name"), operation, true);
+    executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     CvsResult executionResult = executor.getResult();
     if (!executionResult.hasNoErrors()) throw executionResult.composeError();
     return (BranchesProvider)operation;

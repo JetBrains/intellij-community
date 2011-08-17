@@ -203,6 +203,11 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
   }
 
   @Override
+  public void clearCaches() {
+    myField.clearCaches();
+  }
+
+  @Override
   public boolean isEquivalentTo(PsiElement another) {
     return another instanceof GrDynamicPropertyImpl &&
            myManager.areElementsEquivalent(myField, ((GrDynamicPropertyImpl)another).myField) &&

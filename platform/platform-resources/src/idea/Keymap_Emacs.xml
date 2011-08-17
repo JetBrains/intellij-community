@@ -26,7 +26,7 @@
       <keyboard-shortcut first-keystroke="shift control alt F"/>
     </action>
     <action id="OverrideMethods"/>
-    <action id="EditorEnter">
+    <action id="EditorSplitLine">
       <keyboard-shortcut first-keystroke="control O"/>
     </action>
     <action id="MethodDown">

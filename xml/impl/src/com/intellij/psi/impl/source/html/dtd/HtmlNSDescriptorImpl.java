@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.html.dtd;
 
-import com.intellij.html.impl.RelaxedHtmlFromSchemaNSDescriptor;
+import com.intellij.html.RelaxedHtmlNSDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
@@ -57,7 +57,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   private volatile Map<String, XmlElementDescriptor> myCachedDecls;
 
   public HtmlNSDescriptorImpl(XmlNSDescriptor _delegate) {
-    this(_delegate, _delegate instanceof RelaxedHtmlFromSchemaNSDescriptor, false);
+    this(_delegate, _delegate instanceof RelaxedHtmlNSDescriptor, false);
   }
 
   public HtmlNSDescriptorImpl(XmlNSDescriptor _delegate, boolean relaxed, boolean caseSensitive) {

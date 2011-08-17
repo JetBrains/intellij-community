@@ -71,6 +71,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -297,6 +298,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       final LookupElement[] allItems = data.get();
       if (allItems != null) { // the completion is really finished, now we may auto-insert or show lookup
         completionFinished(initContext.getStartOffset(), initContext.getSelectionEndOffset(), indicator, allItems, hasModifiers);
+        if (CompletionServiceImpl.isPhase(CompletionPhase.Synchronous.class)) {
+          LOG.error("sync phase survived: " + Arrays.toString(allItems));
+          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+        }
         return;
       }
     }

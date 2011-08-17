@@ -282,6 +282,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     try {
       for (Map.Entry<Class, MultiHostInjector[]> entry : injectors.entrySet()) {
         Class key = entry.getKey();
+        if (myInjectorsClone.size() == 0) return;
         MultiHostInjector[] oldInjectors = myInjectorsClone.get(key);
         for (MultiHostInjector injector : entry.getValue()) {
           if (!ArrayUtil.contains(injector, oldInjectors)) {

@@ -33,14 +33,11 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +50,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
@@ -70,10 +66,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myIsReadOnly = false;
   private boolean isStripTrailingSpacesEnabled = true;
   private volatile long myModificationStamp;
-  private final ConcurrentMap<Project, MarkupModelImpl> myProjectToMarkupModelMap = new ConcurrentHashMap<Project, MarkupModelImpl>();
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
-  private volatile MarkupModelEx myMarkupModel;
   private DocumentListener[] myCachedDocumentListeners;
   private final List<EditReadOnlyListener> myReadOnlyListeners = ContainerUtil.createEmptyCOWList();
 
@@ -357,7 +351,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
-    replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), startOffset==0 && endOffset==getTextLength());
+    replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), startOffset == 0 && endOffset == getTextLength());
   }
 
   private void replaceString(int startOffset, int endOffset, CharSequence s, final long newModificationStamp, boolean wholeTextReplaced) {
@@ -678,10 +672,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myReadOnlyListeners.remove(listener);
   }
 
-  @NotNull
-  public MarkupModel getMarkupModel(@Nullable Project project) {
-    return getMarkupModel(project, true);
-  }
 
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
@@ -689,48 +679,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.removePropertyChangeListener(listener);
-  }
-
-  private final Object lock = new Object();
-  public MarkupModel getMarkupModel(@Nullable final Project project, boolean create) {
-    if (project == null) {
-      MarkupModelEx markupModel = myMarkupModel;
-      if (create && markupModel == null) {
-        synchronized (lock) {
-          markupModel = myMarkupModel;
-          if (markupModel == null) {
-            myMarkupModel = markupModel = new MarkupModelImpl(this);
-          }
-        }
-      }
-      return markupModel;
-    }
-
-    final DocumentMarkupModelManager documentMarkupModelManager = project.isDisposed() ? null : DocumentMarkupModelManager.getInstance(project);
-    if (documentMarkupModelManager == null || documentMarkupModelManager.isDisposed() || project.isDisposed()) {
-      return new EmptyMarkupModel(this);
-    }
-
-    MarkupModelImpl model = myProjectToMarkupModelMap.get(project);
-    if (create && model == null) {
-      synchronized (lock) {
-        model = myProjectToMarkupModelMap.get(project);
-        if (model == null) {
-          model = new MarkupModelImpl(this);
-          myProjectToMarkupModelMap.put(project, model);
-          documentMarkupModelManager.registerDocument(this);
-        }
-      }
-    }
-
-    return model;
-  }
-
-  void removeMarkupModel(@NotNull Project project) {
-    MarkupModelImpl removed = myProjectToMarkupModelMap.remove(project);
-    if (removed != null) {
-      removed.dispose();
-    }
   }
 
   public void setCyclicBufferSize(int bufferSize) {
@@ -770,7 +718,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     else {
       getPublisher().updateFinished(this);
-      normalizeRangeMarkers();
     }
   }
 
@@ -807,22 +754,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
     return myRangeMarkers.processOverlappingWith(start, end, processor);
-  }
-
-  public boolean processRangeMarkersOverlappingWith(int offset, @NotNull Processor<RangeMarker> processor) {
-    return myRangeMarkers.processOverlappingWith(offset, processor);
-  }
-
-  public void normalizeRangeMarkers() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myRangeMarkers.normalize();
-
-    MarkupModel model = getMarkupModel(null, false);
-    if (model != null) ((MarkupModelImpl)model).normalize();
-
-    for (MarkupModelImpl markupModel : myProjectToMarkupModelMap.values()) {
-      markupModel.normalize();
-    }
   }
 
   private static class MyCharArray extends CharArray {

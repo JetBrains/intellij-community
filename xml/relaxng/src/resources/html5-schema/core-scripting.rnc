@@ -1,0 +1,332 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Core Scripting                        #
+# #####################################################################
+
+# #####################################################################
+## Scripting Elements
+
+## Inline Scripts: <script>
+
+	script.elem.embedded =
+		element script { script.inner.embedded & script.attrs.embedded }
+	script.attrs.embedded =
+		(	common.attrs
+		&	script.attrs.type?
+		&	script.attrs.language? # restricted in Schematron
+		)
+	script.elem.imported =
+		element script { script.inner.imported & script.attrs.imported }
+	script.attrs.imported =
+		(	common.attrs
+		&	script.attrs.src?
+		&	script.attrs.defer?
+		&	script.attrs.async?
+		&	script.attrs.type?
+		&	script.attrs.charset?
+		&	script.attrs.language? # restricted in Schematron
+		)
+		script.attrs.src =
+			attribute src {
+				common.data.uri.non-empty
+			}
+		script.attrs.defer =
+			attribute defer {
+				w:string "defer" | w:string ""
+			}
+		script.attrs.async =
+			attribute async {
+				w:string "async" | w:string ""
+			} & v5only
+		script.attrs.type =
+			attribute type {
+				common.data.mimetype # XXX without charset parameter!
+			}
+		script.attrs.charset =
+			attribute charset {
+				common.data.charset
+			}
+		script.attrs.language =
+			attribute language {
+				string
+			}
+	script.inner.embedded =
+		( common.inner.anything )
+	script.inner.imported =
+		( common.inner.anything )
+		
+	script.elem = 
+		(	script.elem.embedded
+		|	script.elem.imported
+		)
+		
+	common.elem.metadata |= script.elem
+	common.elem.phrasing |= script.elem
+
+## Fallback Unscripted Content: <noscript>
+
+	noscript.elem.head =
+		element noscript { noscript.inner.head & noscript.attrs }
+		& HTMLonly
+		noscript.inner.head = 
+			(	link.elem
+			|	meta.http-equiv.default-style.elem
+			|	meta.http-equiv.refresh.elem
+			|	style.elem
+			)*
+	noscript.elem.phrasing =
+		element noscript { noscript.inner.phrasing & noscript.attrs }
+		& HTMLonly
+	noscript.inner.phrasing =
+		( common.inner.phrasing )
+	noscript.elem.flow =
+		element noscript { noscript.inner.flow & noscript.attrs }
+		& HTMLonly
+	noscript.inner.flow =
+		( common.inner.flow )
+	noscript.attrs =
+		( common.attrs )
+
+	common.elem.metadata |= noscript.elem.head
+	common.elem.phrasing |= noscript.elem.phrasing
+	common.elem.flow |= noscript.elem.flow
+
+# #####################################################################
+## Event Handler Attribute Definitions
+
+	common.attrs.scripting &=
+		(	scripting.attr.onabort?
+		&	scripting.attr.onblur?
+		&	scripting.attr.oncanplay?
+		&	scripting.attr.oncanplaythrough?
+		&	scripting.attr.onchange?
+		&	scripting.attr.onclick?
+		&	scripting.attr.oncontextmenu?
+		&	scripting.attr.ondblclick?
+		&	scripting.attr.ondrag?
+		&	scripting.attr.ondragend?
+		&	scripting.attr.ondragenter?
+		&	scripting.attr.ondragleave?
+		&	scripting.attr.ondragover?
+		&	scripting.attr.ondragstart?
+		&	scripting.attr.ondrop?
+		&	scripting.attr.ondurationchange?
+		&	scripting.attr.onemptied?
+		&	scripting.attr.onended?
+		&	scripting.attr.onerror?
+		&	scripting.attr.onfocus?
+		&	scripting.attr.oninput?
+		&	scripting.attr.oninvalid?
+		&	scripting.attr.onkeydown?
+		&	scripting.attr.onkeypress?
+		&	scripting.attr.onkeyup?
+		&	scripting.attr.onload?
+		&	scripting.attr.onloadeddata?
+		&	scripting.attr.onloadedmetadata?
+		&	scripting.attr.onloadstart?
+		&	scripting.attr.onmousedown?
+		&	scripting.attr.onmousemove?
+		&	scripting.attr.onmouseout?
+		&	scripting.attr.onmouseover?
+		&	scripting.attr.onmouseup?
+		&	scripting.attr.onmousewheel?
+		&	scripting.attr.onpause?
+		&	scripting.attr.onplay?
+		&	scripting.attr.onplaying?
+		&	scripting.attr.onprogress?
+		&	scripting.attr.onratechange?
+		&	scripting.attr.onreadystatechange?
+		&	scripting.attr.onreset?
+		&	scripting.attr.onscroll?
+		&	scripting.attr.onseeked?
+		&	scripting.attr.onseeking?
+		&	scripting.attr.onselect?
+		&	scripting.attr.onshow?
+		&	scripting.attr.onstalled?
+		&	scripting.attr.onsubmit?
+		&	scripting.attr.onsuspend?
+		&	scripting.attr.ontimeupdate?
+		&	scripting.attr.onvolumechange?
+		&	scripting.attr.onwaiting?
+		)
+		
+	common.attrs.other &= common.attrs.scripting
+
+	scripting.attr.onabort =
+		attribute onabort { common.data.functionbody }
+	scripting.attr.onblur =
+		attribute onblur { common.data.functionbody }
+	scripting.attr.oncanplay =
+		attribute oncanplay { common.data.functionbody }
+	scripting.attr.oncanplaythrough =
+		attribute oncanplaythrough { common.data.functionbody }
+	scripting.attr.onchange =
+		attribute onchange { common.data.functionbody }
+	scripting.attr.onclick =
+		attribute onclick { common.data.functionbody }
+	scripting.attr.oncontextmenu =
+		attribute oncontextmenu { common.data.functionbody }
+	scripting.attr.ondblclick =
+		attribute ondblclick { common.data.functionbody }
+	scripting.attr.ondrag =
+		attribute ondrag { common.data.functionbody }
+	scripting.attr.ondragend =
+		attribute ondragend { common.data.functionbody }
+	scripting.attr.ondragenter =
+		attribute ondragenter { common.data.functionbody }
+	scripting.attr.ondragleave =
+		attribute ondragleave { common.data.functionbody }
+	scripting.attr.ondragover =
+		attribute ondragover { common.data.functionbody }
+	scripting.attr.ondragstart =
+		attribute ondragstart { common.data.functionbody }
+	scripting.attr.ondrop =
+		attribute ondrop { common.data.functionbody }
+	scripting.attr.ondurationchange =
+		attribute ondurationchange { common.data.functionbody }
+	scripting.attr.onemptied =
+		attribute onemptied { common.data.functionbody }
+	scripting.attr.onended =
+		attribute onended { common.data.functionbody }
+	scripting.attr.onerror =
+		attribute onerror { common.data.functionbody }
+	scripting.attr.onfocus =
+		attribute onfocus { common.data.functionbody }
+	scripting.attr.onformchange =
+		attribute onformchange { common.data.functionbody }
+	scripting.attr.onforminput =
+		attribute onforminput { common.data.functionbody }
+	scripting.attr.oninput =
+		attribute oninput { common.data.functionbody }
+	scripting.attr.oninvalid =
+		attribute oninvalid { common.data.functionbody }
+	scripting.attr.onkeydown =
+		attribute onkeydown { common.data.functionbody }
+	scripting.attr.onkeypress =
+		attribute onkeypress { common.data.functionbody }
+	scripting.attr.onkeyup =
+		attribute onkeyup { common.data.functionbody }
+	scripting.attr.onload =
+		attribute onload { common.data.functionbody }
+	scripting.attr.onloadeddata =
+		attribute onloadeddata { common.data.functionbody }
+	scripting.attr.onloadedmetadata =
+		attribute onloadedmetadata { common.data.functionbody }
+	scripting.attr.onloadstart =
+		attribute onloadstart { common.data.functionbody }
+	scripting.attr.onmousedown =
+		attribute onmousedown { common.data.functionbody }
+	scripting.attr.onmousemove =
+		attribute onmousemove { common.data.functionbody }
+	scripting.attr.onmouseout =
+		attribute onmouseout { common.data.functionbody }
+	scripting.attr.onmouseover =
+		attribute onmouseover { common.data.functionbody }
+	scripting.attr.onmouseup =
+		attribute onmouseup { common.data.functionbody }
+	scripting.attr.onmousewheel =
+		attribute onmousewheel { common.data.functionbody }
+	scripting.attr.onpause =
+		attribute onpause { common.data.functionbody }
+	scripting.attr.onplay =
+		attribute onplay { common.data.functionbody }
+	scripting.attr.onplaying =
+		attribute onplaying { common.data.functionbody }
+	scripting.attr.onprogress =
+		attribute onprogress { common.data.functionbody }
+	scripting.attr.onratechange =
+		attribute onratechange { common.data.functionbody }
+	scripting.attr.onreadystatechange =
+		attribute onreadystatechange { common.data.functionbody }
+	scripting.attr.onreset =
+		attribute onreset { common.data.functionbody }
+	scripting.attr.onscroll =
+		attribute onscroll { common.data.functionbody }
+	scripting.attr.onseeked =
+		attribute onseeked { common.data.functionbody }
+	scripting.attr.onseeking =
+		attribute onseeking { common.data.functionbody }
+	scripting.attr.onselect =
+		attribute onselect { common.data.functionbody }
+	scripting.attr.onshow =
+		attribute onshow { common.data.functionbody }
+	scripting.attr.onstalled =
+		attribute onstalled { common.data.functionbody }
+	scripting.attr.onsubmit =
+		attribute onsubmit { common.data.functionbody }
+	scripting.attr.onsuspend =
+		attribute onsuspend { common.data.functionbody }
+	scripting.attr.ontimeupdate =
+		attribute ontimeupdate { common.data.functionbody }
+	scripting.attr.onvolumechange =
+		attribute onvolumechange { common.data.functionbody }
+	scripting.attr.onwaiting =
+		attribute onwaiting { common.data.functionbody }
+
+#	scripting.attr.common =
+#		(	scripting.attr.mouse
+#		&	scripting.attr.keyboard
+#		&	scripting.attr.focus
+#		)
+#	
+#	scripting.attr.mouse =
+#		(	scripting.attr.mouse.click?
+#		&	scripting.attr.mouse.dblclick?
+#		&	scripting.attr.mouse.down?
+#		&	scripting.attr.mouse.up?
+#		&	scripting.attr.mouse.over?
+#		&	scripting.attr.mouse.move?
+#		&	scripting.attr.mouse.out?
+#		)
+#		scripting.attr.mouse.click =
+#			attribute onclick { string }
+#		scripting.attr.mouse.dblclick =
+#			attribute ondblclick { string }
+#		scripting.attr.mouse.down =
+#			attribute onmousedown { string }
+#		scripting.attr.mouse.up =
+#			attribute onmouseup { string }
+#		scripting.attr.mouse.over =
+#			attribute onmouseover { string }
+#		scripting.attr.mouse.move =
+#			attribute onmousemove { string }
+#		scripting.attr.mouse.out =
+#			attribute onmouseout { string }
+#	
+#	scripting.attr.keyboard =
+#		(	scripting.attr.keyboard.press?
+#		&	scripting.attr.keyboard.down?
+#		&	scripting.attr.keyboard.up?
+#		)
+#		scripting.attr.keyboard.press =
+#			attribute onkeypress { string }
+#		scripting.attr.keyboard.down =
+#			attribute onkeydown { string }
+#		scripting.attr.keyboard.up =
+#			attribute onkeyup { string }
+#	
+#	
+#	scripting.attr.focus =
+#		(	scripting.attr.focus.gain?
+#		&	scripting.attr.focus.lose?
+#		)
+#		scripting.attr.focus.gain =
+#			attribute onfocus { string }
+#		scripting.attr.focus.lose =
+#			attribute onblur { string }
+#	
+#	scripting.attr.loading =
+#		(	scripting.attr.loading.load?
+#		&	scripting.attr.loading.unload?
+#		)
+#		scripting.attr.loading.load =
+#			attribute onload { string }
+#		scripting.attr.loading.unload =
+#			attribute onunload { string }
+
+
+# #####################################################################
+# Event Handler Attribute Assignments
+
+#	body.attrs   &= scripting.attr.loading

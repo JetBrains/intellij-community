@@ -16,12 +16,18 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.pom.references.PomService;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomExtension;
+import com.intellij.util.xml.reflect.DomExtensionImpl;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,5 +131,30 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   @Nullable
   public ElementPresentationTemplate getPresentationTemplate() {
     return myPresentationTemplate.getValue();
+  }
+
+  @Nullable
+  public PsiElement getDeclaration(final Project project) {
+    final DomAnchor anchor = getUserData(DomExtension.KEY_DECLARATION);
+    if (anchor != null) {
+      final DomElement declaration = anchor.retrieveDomElement();
+      if (declaration != null) {
+        final DomTarget target = DomTarget.getTarget(declaration);
+        if (target != null) {
+          return PomService.convertToPsi(target);
+        }
+        return declaration.getXmlElement();
+      }
+      return anchor.getContainingFile();
+    }
+    final SmartPsiElementPointer<?> pointer = getUserData(DomExtensionImpl.DECLARING_ELEMENT_KEY);
+    if (pointer != null) {
+      final PsiElement element = pointer.getElement();
+      if (element != null) {
+        return element;
+      }
+    }
+
+    return PomService.convertToPsi(project, this);
   }
 }

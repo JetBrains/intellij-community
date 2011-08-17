@@ -69,6 +69,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -118,6 +120,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final LinkedList<Runnable> myDelayQueue = new LinkedList<Runnable>();
   private volatile boolean myProcessingDelayedActions;
   private final Set<OffsetMap> myMapsToDispose = new THashSet<OffsetMap>();
+  private final PropertyChangeListener myLookupManagerListener;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, boolean hasModifiers) {
@@ -133,11 +136,20 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
 
+    myLookupManagerListener = new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getNewValue() != null) {
+          LOG.error("An attempt to change the lookup during completion");
+        }
+      }
+    };
+    LookupManager.getInstance(getProject()).addPropertyChangeListener(myLookupManagerListener);
+
     myQueue = new MergingUpdateQueue("completion lookup progress", 200, true, myEditor.getContentComponent());
     myQueue.setPassThrough(false);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
-    registerItself();
     addMapToDispose(offsetMap);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -316,10 +328,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myParameters;
   }
 
-  private void registerItself() {
-    CompletionServiceImpl.getCompletionService().setCurrentCompletion(this);
-  }
-
   public CodeCompletionHandlerBase getHandler() {
     return myHandler;
   }
@@ -405,9 +413,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void closeAndFinish(boolean hideLookup) {
-    final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-    LOG.assertTrue(this == current, current + "!=" + this);
-
     Lookup lookup = LookupManager.getActiveLookup(myEditor);
     LOG.assertTrue(lookup == myLookup, lookup + "; " + this);
     myLookup.removeLookupListener(myLookupListener);
@@ -424,10 +429,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     Disposer.dispose(myQueue);
+    LookupManager.getInstance(getProject()).removePropertyChangeListener(myLookupManagerListener);
 
     CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     LOG.assertTrue(currentCompletion == this, currentCompletion + "!=" + this);
-    CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
 
     CompletionServiceImpl.assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class, CompletionPhase.CommittingDocuments.class);
     if (CompletionServiceImpl.getCompletionPhase() instanceof CompletionPhase.CommittingDocuments) {

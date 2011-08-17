@@ -70,7 +70,7 @@ public class EventLog implements Notifications {
   private final LogModel myModel = new LogModel(null);
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
-  private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=\"([^>]*)\"[^>]*>");
+  private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
 
   public EventLog() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, this);
@@ -117,7 +117,7 @@ public class EventLog implements Notifications {
     String mainText = notification.getTitle();
     boolean showMore = false;
     if (StringUtil.isNotEmpty(content)) {
-      if (content.startsWith("<")) {
+      if (content.startsWith("<") && !content.startsWith("<a ")) {
         showMore = true;
       }
       else {
@@ -160,6 +160,8 @@ public class EventLog implements Notifications {
       }
       mainText = mainText.substring(tagMatcher.end());
     }
+    
+    message = StringUtil.convertLineSeparators(message);
 
     String status = message;
 
@@ -359,7 +361,7 @@ public class EventLog implements Notifications {
         }
         catch (MalformedURLException ignored) {
         }
-        listener.hyperlinkUpdate(myNotification, new HyperlinkEvent(console, HyperlinkEvent.EventType.ACTIVATED, url, myHref));
+        listener.hyperlinkUpdate(myNotification, new HyperlinkEvent(console.getConsoleEditor().getContentComponent(), HyperlinkEvent.EventType.ACTIVATED, url, myHref));
       }
     }
   }
@@ -373,15 +375,22 @@ public class EventLog implements Notifications {
 
     @Override
     public void navigate(Project project) {
-      Balloon balloon = myNotification.getBalloon();
-      if (balloon != null) {
-        balloon.hide();
+      hideBalloon(myNotification);
+
+      for (Notification notification : getLogModel(project).getNotifications()) {
+        hideBalloon(notification);
       }
 
       RelativePoint target = EventLog.getProjectComponent(project).myConsole.getHyperlinkLocation(this);
       if (target != null) {
-        balloon = NotificationsManagerImpl.createBalloon(myNotification, true, true, false);
-        balloon.show(target, Balloon.Position.above);
+        NotificationsManagerImpl.createBalloon(myNotification, true, true, false).show(target, Balloon.Position.above);
+      }
+    }
+
+    private static void hideBalloon(Notification notification1) {
+      Balloon balloon = notification1.getBalloon();
+      if (balloon != null) {
+        balloon.hide();
       }
     }
   }

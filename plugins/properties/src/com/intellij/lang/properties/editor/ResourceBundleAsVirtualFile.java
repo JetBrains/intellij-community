@@ -19,6 +19,7 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -26,11 +27,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+@Presentation(icon = "/nodes/resourceBundleClosed.png")
 public class ResourceBundleAsVirtualFile extends DeprecatedVirtualFile {
   private final ResourceBundle myResourceBundle;
 
@@ -40,10 +41,6 @@ public class ResourceBundleAsVirtualFile extends DeprecatedVirtualFile {
 
   public ResourceBundle getResourceBundle() {
     return myResourceBundle;
-  }
-
-  public Icon getIcon() {
-    return ResourceBundle.ICON_CLOSED;
   }
 
   @NotNull

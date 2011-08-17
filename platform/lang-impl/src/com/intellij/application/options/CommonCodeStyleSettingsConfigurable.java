@@ -43,7 +43,7 @@ public class CommonCodeStyleSettingsConfigurable extends CodeStyleAbstractConfig
     return null;
   }
 
-  private static class MyCodeStylePanel extends MultiTabLanguageCodeStylePanel {
+  private static class MyCodeStylePanel extends TabbedLanguageCodeStylePanel {
     private CodeStyleSpacesPanel mySpacesPanel;
     private CodeStyleBlankLinesPanel myBlankLinesPanel;
     private WrappingAndBracesPanel myWrappingAndBracesPanel;

@@ -52,13 +52,18 @@ public class CommonCodeStyleSettings {
     myRootSettings = rootSettings;
   }
 
-  void importOldIndentOptions(CodeStyleSettings rootSettings) {
-    if (myFileType != null && myIndentOptions != null) {
-      IndentOptions indentOptions = rootSettings.OTHER_INDENT_OPTIONS;
+  void importOldIndentOptions(@NotNull CodeStyleSettings rootSettings) {
+    if (myFileType != null && myIndentOptions != null && !myIndentOptions.isFoundForLanguage()) {
       if (getFileTypeIndentOptionsProvider() == null) {
-        indentOptions = rootSettings.getIndentOptions(myFileType);
+        IndentOptions fileTypeIdentOptions = rootSettings.getAdditionalIndentOptions(myFileType);
+        if (fileTypeIdentOptions != null) {
+          myIndentOptions.copyFrom(fileTypeIdentOptions);
+          rootSettings.unregisterAdditionalIndentOptions(myFileType);
+        }
+        else if (rootSettings.USE_SAME_INDENTS) {
+          myIndentOptions.copyFrom(rootSettings.OTHER_INDENT_OPTIONS);
+        }
       }
-      myIndentOptions.copyFrom(indentOptions);
     }
   }
   
@@ -77,6 +82,11 @@ public class CommonCodeStyleSettings {
       }
     }
     return null;
+  }
+  
+  @Nullable
+  public FileType getFileType() {
+    return myFileType;
   }
 
   @NotNull
@@ -164,7 +174,7 @@ public class CommonCodeStyleSettings {
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     if (myIndentOptions != null) {
-      myIndentOptions.readExternal(element);
+      myIndentOptions.deserialize(element);
     }
   }
 
@@ -173,7 +183,7 @@ public class CommonCodeStyleSettings {
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CommonCodeStyleSettings>(this, defaultSettings));
     if (myIndentOptions != null) {
       IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
-      myIndentOptions.writeExternalWithNonDefaults(element, defaultIndentOptions);
+      myIndentOptions.serialize(element, defaultIndentOptions) ;
     }
   }
 
@@ -812,6 +822,10 @@ public class CommonCodeStyleSettings {
     public int LABEL_INDENT_SIZE = 0;
     public boolean LABEL_INDENT_ABSOLUTE = false;
     public boolean USE_RELATIVE_INDENTS = false;
+    
+    private boolean myFoundForLanguage = false;
+    
+    private final static String INDENT_OPTIONS_TAG = "indentOptions";
 
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
@@ -821,8 +835,9 @@ public class CommonCodeStyleSettings {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
 
-    public void writeExternalWithNonDefaults(Element element, final IndentOptions defaultOptions) {
-      XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters() {
+    public void serialize(Element element, final IndentOptions defaultOptions) {
+      Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
+      XmlSerializer.serializeInto(this, indentOptionsElement, new SkipDefaultValuesSerializationFilters() {
         @Override
         protected void configure(Object o) {
           if (o instanceof IndentOptions && defaultOptions != null) {
@@ -830,6 +845,19 @@ public class CommonCodeStyleSettings {
           }
         }
       });
+      element.addContent(indentOptionsElement);
+    }
+    
+    public void deserialize(Element element) {
+      Element indentOptionsElement = element.getChild(INDENT_OPTIONS_TAG);
+      if (indentOptionsElement != null) {
+        myFoundForLanguage = true;
+        XmlSerializer.deserializeInto(this, indentOptionsElement);
+      }
+    }
+
+    public boolean isFoundForLanguage() {
+      return myFoundForLanguage;
     }
 
     public Object clone() {

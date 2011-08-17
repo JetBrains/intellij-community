@@ -15,15 +15,14 @@
  */
 package com.intellij.testAssistant;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,6 +30,7 @@ import java.io.OutputStream;
 /**
  * @author yole
  */
+@Presentation(icon = "/nodes/testSourceFolder.png")
 public class TestDataGroupVirtualFile extends DeprecatedVirtualFile {
   private final VirtualFile myBeforeFile;
   private final VirtualFile myAfterFile;
@@ -56,11 +56,6 @@ public class TestDataGroupVirtualFile extends DeprecatedVirtualFile {
 
   public VirtualFile getAfterFile() {
     return myAfterFile;
-  }
-
-  @Override
-  public Icon getIcon() {
-    return PlatformIcons.TEST_SOURCE_FOLDER;
   }
 
   @NotNull

@@ -28,6 +28,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
+import com.intellij.util.xml.DeprecatedClassUsageInspection;
 import org.jetbrains.idea.devkit.DevKitInspectionToolProvider;
 
 import java.io.IOException;
@@ -65,7 +66,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                            "    </extensionPoints>\n" +
                            "</idea-plugin>");
 
-    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml"));
+    configureByFile();
     myFixture.checkHighlighting(false, false, false);
   }
 
@@ -79,12 +80,16 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                            "    <id>com.intellij.custom</id>\n" +
                            "</idea-plugin>");
 
-    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml"));
+    configureByFile();
     myFixture.checkHighlighting(false, false, false);
   }
 
-  public void testExtensionQualifiedName() throws Throwable {
+  private void configureByFile() {
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml"));
+  }
+
+  public void testExtensionQualifiedName() throws Throwable {
+    configureByFile();
     myFixture.checkHighlighting(false, false, false);
   }
 
@@ -128,6 +133,11 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.completeBasic();
     myFixture.type('\'');
     myFixture.checkResultByFile(getTestName(false) + "_after.xml");
+  }
+
+  public void testDeprecatedExtensionAttribute() {
+    myFixture.enableInspections(DeprecatedClassUsageInspection.class);
+    myFixture.testHighlighting("deprecatedExtensionAttribute.xml", "MyExtBean.java");
   }
 
   public void testPluginModule() throws Throwable {

@@ -38,4 +38,7 @@ public interface GrField extends GrVariable, GrMember, PsiField, GrTopLevelDefin
 
   @NotNull
   String[] getNamedParametersArray();
+
+  void clearCaches();
 }
+

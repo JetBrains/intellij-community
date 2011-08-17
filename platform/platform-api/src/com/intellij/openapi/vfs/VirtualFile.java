@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -26,18 +25,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by the same
@@ -263,13 +258,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return createChildData(requestor, name);
   }
 
-  public Icon getIcon() {
-    if (isDirectory() && isInLocalFileSystem()) {
-      return PlatformIcons.FOLDER_ICON;
-    }
-    return getFileType().getIcon();
-  }
-
   /**
    * @return the {@link FileType} of this file.
    *         When IDEA has no idea what the file type is (i.e. file type is not registered via {@link FileTypeManager}),
@@ -459,21 +447,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     setBOM(bom);
 
     if (old != null) { //do not send on detect
-      final Application application = ApplicationManager.getApplication();
-      application.invokeLater(new Runnable() {
-        public void run() {
-          if (isValid() && !application.isDisposed()) {
-            application.runWriteAction(new Runnable(){
-              public void run() {
-                List<VFilePropertyChangeEvent> events = Collections.singletonList(new VFilePropertyChangeEvent(this, VirtualFile.this, PROP_ENCODING, old, charset, false));
-                BulkFileListener listener = application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
-                listener.before(events);
-                listener.after(events);
-              }
-            });
-          }
-        }
-      }, ModalityState.NON_MODAL);
+      VirtualFileManager.getInstance().notifyPropertyChanged(this, PROP_ENCODING, old, charset);
     }
   }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -120,8 +121,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       }
 
       // Determine real client area of target graphics configuration
-
-      Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(targetGraphicsConfiguration);
+      Insets insets = ScreenUtil.getScreenInsets(targetGraphicsConfiguration);
       Rectangle targetRectangle = targetGraphicsConfiguration.getBounds();
       targetRectangle.x += insets.left;
       targetRectangle.y += insets.top;
@@ -130,11 +130,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
       // Fit popup into targetRectangle.
       // The algorithm is the following:
-      // First of all try to move menu up on its height. If menu left-top corder
+      // First of all try to move menu up on its height. If menu's left-top corner
       // is inside screen bounds after that, then OK. Otherwise, if menu is too high
       // (left-top corner is outside of screen bounds) then try to move menu up on
-      // not visible visible area heigh.
-
+      // not visible visible area height.
       if (_x + preferredSize.width > targetRectangle.x + targetRectangle.width) {
         x -= preferredSize.width;
       }

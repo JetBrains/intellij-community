@@ -364,7 +364,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
 
     @Override
     public void consume(T t) {
-      if (! myProject.isOpen()) throw new ProcessCanceledException();
+      if (! myProject.isDefault() && ! myProject.isOpen() || myProject.isDisposed()) throw new ProcessCanceledException();
       ++ myTotalRecordsInPack;
       if (myLastT == null) {
         myPointMeet = true;

@@ -12,6 +12,7 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
@@ -23,6 +24,7 @@ import git4idea.history.browser.SymbolicRefs;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -35,12 +37,10 @@ public class MediatorImpl implements Mediator {
   private TableWrapper myTableWrapper;
   private UIRefresh myUIRefresh;
   private Loader myLoader;
-  private final ModalityState myState;
   private final LoadGrowthController myController;
 
-  public MediatorImpl(final Project project, final ModalityState state) {
+  public MediatorImpl(final Project project) {
     myProject = project;
-    myState = state;
     myTicket = new Ticket();
     myController = new LoadGrowthController();
   }
@@ -62,13 +62,18 @@ public class MediatorImpl implements Mediator {
   @CalledInBackground
   @Override
   public void reportSymbolicRefs(final Ticket ticket, final VirtualFile root, final SymbolicRefs symbolicRefs) {
-    new AbstractCalledLater(myProject, myState) {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (! myTicket.equals(ticket)) return;
+        if (!myTicket.equals(ticket)) return;
         myUIRefresh.reportSymbolicRefs(root, symbolicRefs);
       }
-    }.callMe();
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    } else {
+      SwingUtilities.invokeLater(runnable);
+    }
   }
 
   @CalledInAwt
@@ -151,7 +156,7 @@ public class MediatorImpl implements Mediator {
     @CalledInBackground
     public void appendResult(final Ticket ticket, final List<CommitI> result,
                              final @Nullable List<List<AbstractHash>> parents) {
-      new AbstractCalledLater(myProject, myState) {
+      final Runnable runnable = new Runnable() {
         @Override
         public void run() {
           if (! myTicket.equals(ticket)) return;
@@ -174,7 +179,12 @@ public class MediatorImpl implements Mediator {
             myUIRefresh.finished();
           }
         }
-      }.callMe();
+      };
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        runnable.run();
+      } else {
+        SwingUtilities.invokeLater(runnable);
+      }
     }
 
     private int nextCut() {

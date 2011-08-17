@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
       return true;
     }
 
-    public boolean login(ModalityContext executor) throws Exception {
+    public boolean login(ModalityContext executor) {
       return false;
     }
   };
@@ -179,7 +179,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
 
   public void beforeLogin() {}
 
-  public abstract boolean login(ModalityContext executor) throws Exception;
+  public abstract boolean login(ModalityContext executor);
 
   public FileSetToBeUpdated getFiles() {
     return myFiles;
@@ -190,10 +190,6 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
   }
 
   public abstract boolean isCanceled();
-
-  public String getCancelButtonText() {
-    return null;
-  }
 
   public PerformInBackgroundOption getBackgroundOption(Project project) {
     return null;

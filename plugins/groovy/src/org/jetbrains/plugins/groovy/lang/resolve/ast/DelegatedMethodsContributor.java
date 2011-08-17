@@ -39,7 +39,7 @@ import java.util.List;
 public class DelegatedMethodsContributor extends AstTransformContributor {
 
   @Override
-  public void getMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector) {
+  public void collectMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector) {
     final GrField[] fields = clazz.getFields();
     for (GrField field : fields) {
       final PsiAnnotation delegate = PsiImplUtil.getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);

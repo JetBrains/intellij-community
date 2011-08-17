@@ -176,17 +176,18 @@ public class TestNGUtil
   public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled, boolean checkJavadoc) {
     //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
     //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
-    boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, false, true);
+    boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, true, true);
     if (hasAnnotation) {
       if (checkDisabled) {
         PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, true, TEST_ANNOTATION_FQN);
-        assert annotation != null;
-        PsiNameValuePair[] attribs = annotation.getParameterList().getAttributes();
-        for (PsiNameValuePair attrib : attribs) {
-          final String attribName = attrib.getName();
-          final PsiAnnotationMemberValue attribValue = attrib.getValue();
-          if (Comparing.strEqual(attribName, "enabled") && attribValue != null && attribValue.textMatches("false"))
-            return false;
+        if (annotation != null) {
+          PsiNameValuePair[] attribs = annotation.getParameterList().getAttributes();
+          for (PsiNameValuePair attrib : attribs) {
+            final String attribName = attrib.getName();
+            final PsiAnnotationMemberValue attribValue = attrib.getValue();
+            if (Comparing.strEqual(attribName, "enabled") && attribValue != null && attribValue.textMatches("false"))
+              return false;
+          }
         }
       }
       return true;
@@ -204,7 +205,7 @@ public class TestNGUtil
       //if it's a method, we check if the class it's in has a global @Test annotation
       PsiClass psiClass = ((PsiMethod)element).getContainingClass();
       if (psiClass != null) {
-        if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, false, true)) {
+        if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, true, true)) {
           //even if it has a global test, we ignore private methods
           boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
           return !isPrivate;

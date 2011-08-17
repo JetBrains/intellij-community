@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class VcsDirectoryMapping {
+  public static final String PROJECT_CONSTANT = "<Project>";
   public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
   private String myDirectory;
   // for reliable comparison
@@ -113,5 +114,10 @@ public class VcsDirectoryMapping {
     result = (myDirectory != null ? myDirectory.hashCode() : 0);
     result = 31 * result + (myVcs != null ? myVcs.hashCode() : 0);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return isDefaultMapping() ? PROJECT_CONSTANT : myDirectory;
   }
 }

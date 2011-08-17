@@ -313,7 +313,9 @@ public final class GitRepository implements Disposable {
   }
 
   private void notifyListeners() {
-    myMessageBus.syncPublisher(GIT_REPO_CHANGE).repositoryChanged();
+    if (!Disposer.isDisposed(this)) {
+      myMessageBus.syncPublisher(GIT_REPO_CHANGE).repositoryChanged();
+    }
   }
 
 }

@@ -133,7 +133,7 @@ public class GrClassImplUtil {
       @Override
       public List<PsiClassType> compute() {
         List<PsiClassType> result = new ArrayList<PsiClassType>();
-        final GrField[] fields = grType.getFields();
+        final GrField[] fields = grType.getCodeFields();
         for (GrField field : fields) {
           final PsiAnnotation delegate = PsiImplUtil.getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
           if (delegate == null) continue;
@@ -491,16 +491,16 @@ public class GrClassImplUtil {
   }
 
   @Nullable
-  public static PsiField findFieldByName(GrTypeDefinition grType, String name, boolean checkBases) {
+  public static PsiField findFieldByName(GrTypeDefinition grType, String name, boolean checkBases, boolean includeSynthetic) {
     if (!checkBases) {
-      for (GrField field : grType.getFields()) {
+      for (GrField field : includeSynthetic ? grType.getFields() : grType.getCodeFields()) {
         if (name.equals(field.getName())) return field;
       }
 
       return null;
     }
 
-    Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
+    Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType, includeSynthetic);
     final CandidateInfo info = fieldsMap.get(name);
     return info == null ? null : (PsiField)info.getElement();
   }

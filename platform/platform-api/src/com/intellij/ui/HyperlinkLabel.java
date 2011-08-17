@@ -88,7 +88,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     myUseIconAsLink = useIconAsLink;
   }
 
-  private void adjustSize() {
+  protected void adjustSize() {
     final Dimension preferredSize = this.getPreferredSize();
     this.setMinimumSize(preferredSize);
   }
@@ -206,4 +206,12 @@ public class HyperlinkLabel extends HighlightableComponent {
     ((JComponent)getParent()).revalidate();
     adjustSize();
   }
+
+  public static class Croppable extends HyperlinkLabel {
+    @Override
+    protected void adjustSize() {
+      // ignore, keep minimum size default
+    }
+  }
+
 }

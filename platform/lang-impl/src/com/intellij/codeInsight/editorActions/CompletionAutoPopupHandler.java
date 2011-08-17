@@ -118,7 +118,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   }
 
   public static void runLaterWithCommitted(@NotNull final Project project,
-                                           @NotNull final Document document, @NotNull final Runnable runnable) {
+                                           @NotNull final Document document,
+                                           @NotNull final Runnable runnable) {
     final long beforeStamp = document.getModificationStamp();
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).performWhenAllCommitted(new Runnable() {
         @Override

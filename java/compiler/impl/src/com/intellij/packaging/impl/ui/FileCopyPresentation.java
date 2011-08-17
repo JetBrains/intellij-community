@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.ui;
 
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -62,7 +63,7 @@ public class FileCopyPresentation extends PackagingElementPresentation {
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myFile != null && !myFile.isDirectory()) {
-      presentationData.setIcons(myFile.getIcon());
+      presentationData.setIcons(VirtualFilePresentation.getIcon(myFile));
       presentationData.addText(myOutputFileName, mainAttributes);
       presentationData.addText(" (" + mySourcePath + ")", commentAttributes);
     }

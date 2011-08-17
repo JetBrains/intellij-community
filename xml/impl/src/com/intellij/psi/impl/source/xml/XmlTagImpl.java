@@ -853,7 +853,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   private String getNsLocation(String ns) {
     if (XmlUtil.XHTML_URI.equals(ns)) {
-      return ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
+      String defaultHtmlDoctype = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
+      if (XmlUtil.HTML5_SCHEMA_LOCATION.equals(defaultHtmlDoctype)) {
+        defaultHtmlDoctype = XmlUtil.XHTML5_SCHEMA_LOCATION;
+      }
+      return defaultHtmlDoctype;
     }
     return ns;
   }

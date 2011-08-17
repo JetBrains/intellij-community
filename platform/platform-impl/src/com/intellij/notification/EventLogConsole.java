@@ -30,10 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -144,14 +141,16 @@ class EventLogConsole {
     }
 
     if (notification.isImportant()) {
-      highlightNotification(notification, message, document.getLineCount() - 2);
+      highlightNotification(notification, pair.status, document.getLineCount() - 2);
     }
   }
 
   private void highlightNotification(final Notification notification,
                                      String message, final int line) {
-    TextAttributes attr = new TextAttributes(null, null, null, null, Font.BOLD);
-    final RangeHighlighter lineHighlighter = myLogEditor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, attr);
+
+    final MarkupModel markupModel = myLogEditor.getMarkupModel();
+    TextAttributes bold = new TextAttributes(null, null, null, null, Font.BOLD);
+    final RangeHighlighter lineHighlighter = markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, bold);
     Color color = notification.getType() == NotificationType.ERROR
                   ? Color.red
                   : notification.getType() == NotificationType.WARNING ? Color.yellow : Color.green;
@@ -161,7 +160,16 @@ class EventLogConsole {
     myProjectModel.removeHandlers.put(notification, new Runnable() {
       @Override
       public void run() {
-        myLogEditor.getMarkupModel().removeHighlighter(lineHighlighter);
+        markupModel.removeHighlighter(lineHighlighter);
+
+        TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleViewContentType.LOG_EXPIRED_ENTRY);
+        markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, attributes);
+
+        TextAttributes italic = new TextAttributes(null, null, null, null, Font.ITALIC);
+        for (RangeHighlighter highlighter : myHyperlinkSupport.findAllHyperlinksOnLine(line)) {
+          markupModel.addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic, HighlighterTargetArea.EXACT_RANGE);
+          myHyperlinkSupport.removeHyperlink(highlighter);
+        }
       }
     });
   }

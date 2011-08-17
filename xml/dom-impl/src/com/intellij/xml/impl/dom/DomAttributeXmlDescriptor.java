@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.impl.dom;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
@@ -33,9 +34,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DomAttributeXmlDescriptor implements XmlAttributeDescriptor {
   private final DomAttributeChildDescription myDescription;
+  private final Project myProject;
 
-  public DomAttributeXmlDescriptor(final DomAttributeChildDescription description) {
+  public DomAttributeXmlDescriptor(final DomAttributeChildDescription description, Project project) {
     myDescription = description;
+    myProject = project;
   }
 
   public boolean isRequired() {
@@ -73,8 +76,9 @@ public class DomAttributeXmlDescriptor implements XmlAttributeDescriptor {
     return null;
   }
 
+  @Nullable
   public PsiElement getDeclaration() {
-    return null;
+    return myDescription.getDeclaration(myProject);
   }
 
   @NonNls

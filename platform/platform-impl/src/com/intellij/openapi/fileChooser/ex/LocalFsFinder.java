@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileChooser.ex;
 
+import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -148,7 +149,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
     @Nullable
     public Icon getIcon() {
-      return myFile != null ? (myFile.isDirectory() ? PlatformIcons.DIRECTORY_CLOSED_ICON : myFile.getIcon()) : null;
+      return myFile != null ? (myFile.isDirectory() ? PlatformIcons.DIRECTORY_CLOSED_ICON : VirtualFilePresentation.getIcon(myFile)) : null;
     }
 
     public boolean equals(final Object o) {

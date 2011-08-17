@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ilyas
  */
-public interface GrDocParameterReference extends GroovyDocPsiElement, PsiPolyVariantReference {
+public interface GrDocParameterReference extends GroovyDocPsiElement, PsiPolyVariantReference, GrDocTagValueToken {
   @NotNull
   GrDocTagValueToken getReferenceNameElement();
 }

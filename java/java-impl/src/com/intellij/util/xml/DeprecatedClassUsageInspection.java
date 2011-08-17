@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -42,8 +43,14 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
     return new XmlElementVisitor() {
       @Override
       public void visitXmlTag(XmlTag tag) {
-        if (tag.getValue().getTextElements().length > 0)
+        if (tag.getValue().getTextElements().length > 0) {
           checkReferences(tag, holder);
+        }
+      }
+
+      @Override
+      public void visitXmlAttribute(XmlAttribute attribute) {
+        checkReferences(attribute, holder);
       }
 
       @Override

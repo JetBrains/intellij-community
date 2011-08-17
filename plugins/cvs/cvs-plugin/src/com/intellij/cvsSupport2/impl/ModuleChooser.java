@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class ModuleChooser extends CvsWizard {
 
   public ModuleChooser(Project project, 
                        boolean allowFileSelection,
-                       boolean allowMultiplySelection,
+                       boolean allowMultipleSelection,
                        boolean allowRootSelection,
                        String expertTitle,
                        String selectModulePageTitle) {
@@ -45,11 +45,10 @@ public class ModuleChooser extends CvsWizard {
     mySelectCvsElementStep = new SelectCvsElementStep(selectModulePageTitle,
                                                       this,
                                                       project,
-                                                      mySelectCVSConfigurationStep,
-                                                      allowFileSelection, allowMultiplySelection ?
+                                                      mySelectCVSConfigurationStep, allowRootSelection, allowMultipleSelection ?
                                                                           TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION :
-                                                                          TreeSelectionModel.SINGLE_TREE_SELECTION,
-                                                      allowRootSelection, true);
+                                                                          TreeSelectionModel.SINGLE_TREE_SELECTION, true,
+                                                      allowFileSelection);
 
     addStep(mySelectCVSConfigurationStep);
     addStep(mySelectCvsElementStep);
@@ -65,8 +64,7 @@ public class ModuleChooser extends CvsWizard {
     CvsRepository repository = getSelectedRepository();
     CvsElement[] selectedCvsElement = mySelectCvsElementStep.getSelectedCvsElements();
     ArrayList<CvsModule> result = new ArrayList<CvsModule>();
-    for (int i = 0; i < selectedCvsElement.length; i++) {
-      CvsElement cvsElement = selectedCvsElement[i];
+    for (CvsElement cvsElement : selectedCvsElement) {
       result.add(new CvsModule(repository, cvsElement.getElementPath(), cvsElement instanceof CvsFile));
     }
     return result.toArray(new CvsModule[result.size()]);

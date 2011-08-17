@@ -17,6 +17,7 @@ private List platformImplementationModules() {
           "testFramework",
           "tests_bootstrap",
           "xml",
+          "relaxng",
           "lvcs-impl",
           "spellchecker",
           "images",
@@ -160,10 +161,6 @@ public def layoutCommunityPlugins(String home) {
     layoutPlugin("IntentionPowerPack", "IntentionPowerPackPlugin")
     layoutPlugin("ToString", "generate-tostring", "toString")
     layoutPlugin("uiDesigner", "ui-designer", "uiDesigner")
-
-    layoutPlugin("RelaxNG-Support", "relaxng") {
-      fileset(dir: "$home/plugins/relaxng/lib", includes: "**/*.jar")
-    }
 
     layoutPlugin("maven") {
       jar("maven-server-api.jar") {

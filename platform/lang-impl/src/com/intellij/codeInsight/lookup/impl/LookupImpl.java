@@ -1222,7 +1222,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
   }
 
-  String disposeTrace = null;
+  private static String staticDisposeTrace = null;
+  private String disposeTrace = null;
+
+  public static String getLastLookupDisposeTrace() {
+    return staticDisposeTrace;
+  }
 
   public void dispose() {
     assert ApplicationManager.getApplication().isDispatchThread();
@@ -1237,6 +1242,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     myDisposed = true;
     disposeTrace = DebugUtil.currentStackTrace();
+    staticDisposeTrace = disposeTrace;
   }
 
   private int doSelectMostPreferableItem(List<LookupElement> items, Iterable<List<LookupElement>> groups) {

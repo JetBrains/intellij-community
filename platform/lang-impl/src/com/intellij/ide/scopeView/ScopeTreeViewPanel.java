@@ -400,9 +400,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   private void reload(@Nullable final DefaultMutableTreeNode rootToReload) {
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
-    if (rootToReload != null) {
+    if (rootToReload != null && rootToReload != treeModel.getRoot()) {
       final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myTree, new TreePath(rootToReload.getPath()));
-      ((DefaultTreeModel)myTree.getModel()).reload(rootToReload);
+      treeModel.reload(rootToReload);
       final TreePath path = new TreePath(rootToReload.getPath());
       final boolean wasCollapsed = myTree.isCollapsed(path);
       final Runnable runnable = new Runnable() {
@@ -836,6 +836,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   private void queueUpdate(final VirtualFile fileToRefresh,
                            final Function<PsiFile, DefaultMutableTreeNode> rootToReloadGetter, final String scopeName) {
+    if (myProject.isDisposed()) return;
     AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
     if (pane == null || !ScopeViewPane.ID.equals(pane.getId()) ||
         !scopeName.equals(pane.getSubId())) {

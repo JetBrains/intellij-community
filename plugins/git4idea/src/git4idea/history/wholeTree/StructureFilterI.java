@@ -18,6 +18,7 @@ package git4idea.history.wholeTree;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author irengrig
@@ -28,4 +29,5 @@ public interface StructureFilterI {
   void allSelected();
   void select(final Collection<VirtualFile> files);
   Collection<VirtualFile> getSelected();
+  List<VirtualFile> getRoots();
 }

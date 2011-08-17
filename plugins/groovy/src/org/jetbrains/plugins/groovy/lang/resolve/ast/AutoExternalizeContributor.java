@@ -34,7 +34,7 @@ import java.util.Collection;
 public class AutoExternalizeContributor extends AstTransformContributor {
 
   @Override
-  public void getMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
+  public void collectMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
     if (PsiImplUtil.getAnnotation(clazz, GroovyCommonClassNames.GROOVY_TRANSFORM_AUTO_EXTERNALIZE) == null) return;
 
     final LightMethodBuilder write = new LightMethodBuilder(clazz.getManager(), "writeExternal");

@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class GitProjectLogManager {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.browser.GitProjectLogManager");
-  private static final String CONTENT_KEY = "Log";
+  public static final String CONTENT_KEY = "Log";
 
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
@@ -136,7 +136,7 @@ public class GitProjectLogManager {
       myLogRef.get().rootsChanged(fileList);
       return;
     }
-    final GitLog gitLog = myLogFactoryService.createComponent();
+    final GitLog gitLog = myLogFactoryService.createComponent(true);
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
     final Content content = contentFactory.createContent(gitLog.getVisualComponent(), CONTENT_KEY, false);
     content.setCloseable(false);

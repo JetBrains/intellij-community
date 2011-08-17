@@ -325,7 +325,7 @@ public class FileTreeModelBuilder {
         ((DirectoryNode)node).setCompactedDirNode((DirectoryNode)treeNode);
       }
     }
-    return parentNode;
+    return parentNode != null ? parentNode : myRoot;
   }
 
   @Nullable
@@ -389,7 +389,7 @@ public class FileTreeModelBuilder {
     if (!isMarked[0]) return null;
 
     getModuleDirNode(vFile, myFileIndex.getModuleForFile(vFile), null);
-    return rootToReload;
+    return rootToReload != null ? rootToReload : myRoot;
   }
 
 

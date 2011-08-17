@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.actionSystem.MacOtherAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.help.HelpManager;
@@ -30,7 +31,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.mac.DoNotAskDialogOption;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.AwtVisitor;
@@ -346,6 +346,16 @@ public abstract class DialogWrapper {
     if (SystemInfo.isMacOSLeopard && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
+    }
+    
+    if (SystemInfo.isMac) {
+      for (Action action : actions) {
+        if (action instanceof MacOtherAction) {
+          leftSideActions = ArrayUtil.append(leftSideActions, action);
+          actions = ArrayUtil.remove(actions, action);
+          break;
+        }
+      }
     }
 
     JPanel panel = new JPanel(new BorderLayout());
@@ -1557,7 +1567,7 @@ public abstract class DialogWrapper {
     return myDisposable;
   }
 
-  public interface DoNotAskOption extends DoNotAskDialogOption {
+  public interface DoNotAskOption {
 
     boolean isToBeShown();
 

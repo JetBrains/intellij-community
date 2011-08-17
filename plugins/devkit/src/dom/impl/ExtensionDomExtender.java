@@ -144,7 +144,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
       if (attrName != null) {
         final DomExtension extension =
-          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), String.class);
+          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), String.class).setDeclaringElement(field);
         if (fieldName.endsWith("Class")) {
           extension.setConverter(CLASS_CONVERTER);
         }
@@ -159,7 +159,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
                            propAnno != null && getBooleanAttribute(propAnno, "surroundWithTag", evalHelper)? Constants.OPTION : null;
     if (tagName != null) {
       if (absColAnno == null) {
-        final DomExtension extension = registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class);
+        final DomExtension extension =
+          registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class).setDeclaringElement(field);
         if (fieldName.endsWith("Class")) {
           extension.setConverter(CLASS_CONVERTER);
         }

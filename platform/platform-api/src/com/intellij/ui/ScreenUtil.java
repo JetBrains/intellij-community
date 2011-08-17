@@ -15,17 +15,29 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Map;
 
 /**
  * @author kir
  * @author Konstantin Bulenkov
  */
 public class ScreenUtil {
-  private ScreenUtil() {
+  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache;
+  static {
+    final boolean useCache = SystemInfo.isLinux || SystemInfo.isSolaris
+                             && !GraphicsEnvironment.isHeadless()
+                             && SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.7.0")
+                             && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1;
+    ourInsetsCache = useCache ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
   }
+
+  private ScreenUtil() { }
 
   public static boolean isVisible(Rectangle bounds) {
     final Rectangle intersection = getScreenBounds().intersection(bounds);
@@ -46,17 +58,17 @@ public class ScreenUtil {
   }
 
   public static Rectangle getScreenRectangle(Point p) {
-    GraphicsConfiguration targetGC = null;
     final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
     final GraphicsDevice[] devices = env.getScreenDevices();
     double distance = -1;
+    GraphicsConfiguration targetGC = null;
     GraphicsConfiguration bestConfig = null;
 
-    for (GraphicsDevice device: devices) {
+    for (GraphicsDevice device : devices) {
       final GraphicsConfiguration config = device.getDefaultConfiguration();
       final Rectangle rect = config.getBounds();
 
-      final Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(config);
+      final Insets insets = getScreenInsets(config);
       if (insets != null) {
         rect.x += insets.left;
         rect.width -= (insets.left + insets.right);
@@ -67,7 +79,8 @@ public class ScreenUtil {
       if (rect.contains(p)) {
         targetGC = config;
         break;
-      } else {
+      }
+      else {
         final double d = findNearestPointOnBorder(rect, p).distance(p.x, p.y);
         if (bestConfig == null || distance > d) {
           distance = d;
@@ -84,15 +97,31 @@ public class ScreenUtil {
       throw new IllegalStateException("It's impossible to determine target graphics environment for point (" + p.x + "," + p.y + ")");
     }
 
-    //Determine real client area of target graphics configuration
-    final Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(targetGC);
-    Rectangle targetRect = targetGC.getBounds();
+    // determine real client area of target graphics configuration
+    final Insets insets = getScreenInsets(targetGC);
+    final Rectangle targetRect = targetGC.getBounds();
     targetRect.x += insets.left;
     targetRect.y += insets.top;
     targetRect.width -= insets.left + insets.right;
     targetRect.height -= insets.top + insets.bottom;
 
     return targetRect;
+  }
+
+  public static Insets getScreenInsets(final GraphicsConfiguration gc) {
+    if (ourInsetsCache == null) {
+      return Toolkit.getDefaultToolkit().getScreenInsets(gc);
+    }
+
+    synchronized (ourInsetsCache) {
+      Pair<Insets, Long> data = ourInsetsCache.get(gc);
+      final long now = System.currentTimeMillis();
+      if (data == null || now > data.second + 1000) {  // keep for 1 s
+        data = Pair.create(Toolkit.getDefaultToolkit().getScreenInsets(gc), now);
+        ourInsetsCache.put(gc, data);
+      }
+      return data.first;
+    }
   }
 
   public static Rectangle getScreenRectangle(int x, int y) {
@@ -117,23 +146,24 @@ public class ScreenUtil {
   public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding) {
     Insets insets = padding != null ? padding : new Insets(0, 0, 0, 0);
 
-    Rectangle move = new Rectangle(rectangle.x - insets.left, rectangle.y - insets.top, rectangle.width + insets.left + insets.right, rectangle.height + insets.top + insets.bottom);
+    Rectangle move = new Rectangle(rectangle.x - insets.left, rectangle.y - insets.top, rectangle.width + insets.left + insets.right,
+                                   rectangle.height + insets.top + insets.bottom);
 
     if (move.getMaxX() > container.getMaxX()) {
-      move.x = (int) container.getMaxX() - move.width;
+      move.x = (int)container.getMaxX() - move.width;
     }
 
 
     if (move.getMinX() < container.getMinX()) {
-      move.x = (int) container.getMinX();
+      move.x = (int)container.getMinX();
     }
 
     if (move.getMaxY() > container.getMaxY()) {
-      move.y = (int) container.getMaxY() - move.height;
+      move.y = (int)container.getMaxY() - move.height;
     }
 
     if (move.getMinY() < container.getMinY()) {
-      move.y = (int) container.getMinY();
+      move.y = (int)container.getMinY();
     }
 
     rectangle.x = move.x + insets.left;
@@ -191,19 +221,19 @@ public class ScreenUtil {
     final Rectangle screen = getScreenRectangle(screenX, screenY);
 
     if (rect.getMaxX() > screen.getMaxX()) {
-      rect.width = (int) screen.getMaxX() - rect.x;
+      rect.width = (int)screen.getMaxX() - rect.x;
     }
 
     if (rect.getMinX() < screen.getMinX()) {
-      rect.x = (int) screen.getMinX();
+      rect.x = (int)screen.getMinX();
     }
 
     if (rect.getMaxY() > screen.getMaxY()) {
-      rect.height = (int) screen.getMaxY() - rect.y;
+      rect.height = (int)screen.getMaxY() - rect.y;
     }
 
     if (rect.getMinY() < screen.getMinY()) {
-      rect.y = (int) screen.getMinY();
+      rect.y = (int)screen.getMinY();
     }
   }
 }

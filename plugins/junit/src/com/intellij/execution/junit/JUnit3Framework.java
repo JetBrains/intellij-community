@@ -116,4 +116,9 @@ public class JUnit3Framework extends JavaTestFramework {
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit3 Test Method.java");
   }
+
+  @Override
+  public boolean isTestMethod(PsiElement element) {
+    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element) != null;
+  }
 }

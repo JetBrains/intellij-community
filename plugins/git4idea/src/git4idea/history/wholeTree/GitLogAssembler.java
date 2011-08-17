@@ -34,23 +34,24 @@ public class GitLogAssembler implements GitLog {
   private BigTableTableModel myTableModel;
 
   //@CalledInAwt
-  public GitLogAssembler(final Project project) {
+  public GitLogAssembler(final Project project, boolean projectScope) {
     myProject = project;
     final ModalityState current = ModalityState.current();
-    myMediator = new MediatorImpl(myProject, current);
+    myMediator = new MediatorImpl(myProject);
 
     myGitLogUI = new GitLogUI(myProject, myMediator);
     myTableModel = myGitLogUI.getTableModel();
 
     final BackgroundTaskQueue queue = new BackgroundTaskQueue(project, "Git log details");
     myDetailsLoader = new DetailsLoaderImpl(myProject, queue);
-    myDetailsCache = new DetailsCache(myProject, myGitLogUI.getUIRefresh(), myDetailsLoader, current, queue);
+    myDetailsCache = new DetailsCache(myProject, myGitLogUI.getUIRefresh(), myDetailsLoader, queue);
     myDetailsLoader.setDetailsCache(myDetailsCache);
     myGitLogUI.setDetailsCache(myDetailsCache);
     myGitLogUI.createMe();
+    myGitLogUI.setProjectScope(projectScope);
 
     // modality state?
-    myLoadController = new LoadController(myProject, current, myMediator, myDetailsCache);
+    myLoadController = new LoadController(myProject, myMediator, myDetailsCache);
 
     myMediator.setLoader(myLoadController);
     myMediator.setTableModel(myTableModel);
@@ -63,6 +64,12 @@ public class GitLogAssembler implements GitLog {
   @Override
   public JComponent getVisualComponent() {
     return myGitLogUI.getPanel();
+  }
+
+  @Override
+  public void setModalityState(ModalityState state) {
+    myDetailsCache.setModalityState(state);
+    myDetailsLoader.setModalityState(state);
   }
 
   @Override

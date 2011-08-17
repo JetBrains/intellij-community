@@ -147,7 +147,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
 
     getNearestHighlighters(this, me, width, highlighters);
-    getNearestHighlighters((MarkupModelEx)myEditor.getDocument().getMarkupModel(getEditor().getProject()), me, width, highlighters);
+    getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), me, width, highlighters);
 
     if (highlighters.isEmpty()) return false;
 
@@ -178,7 +178,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private RangeHighlighter getNearestRangeHighlighter(final MouseEvent e, final int width) {
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     getNearestHighlighters(this, e, width, highlighters);
-    getNearestHighlighters((MarkupModelEx)myEditor.getDocument().getMarkupModel(myEditor.getProject()), e, width, highlighters);
+    getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), myEditor.getProject(), true), e, width, highlighters);
     RangeHighlighter nearestMarker = null;
     int yPos = 0;
     for (RangeHighlighter highlighter : highlighters) {
@@ -197,12 +197,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     final int y = e.getY();
     int startOffset = yPositionToOffset(y -getMinHeight(), true);
     int endOffset = yPositionToOffset(y +getMinHeight(), false);
-    markupModel.processHighlightsOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       public boolean process(RangeHighlighterEx highlighter) {
         if (highlighter.getErrorStripeMarkColor() != null) {
           ProperTextRange range = offsetToYPosition(highlighter.getStartOffset(), highlighter.getEndOffset());
           if (range.getStartOffset() >= y - getMinHeight() * 2 &&
-            range.getEndOffset() <= y + getMinHeight() * 2) {
+              range.getEndOffset() <= y + getMinHeight() * 2) {
             nearest.add(highlighter);
           }
         }
@@ -417,11 +417,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {
       g.setColor(TRACK_BACKGROUND);
-      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height + 1);
 
       g.setColor(TRACK_BORDER);
       int border = isMirrored() ? bounds.x + bounds.width - 1 : bounds.x;
-      g.drawLine(border, bounds.y, border, bounds.y + bounds.height);
+      g.drawLine(border, bounds.y, border, bounds.y + bounds.height + 1);
     }
 
     @Override
@@ -439,7 +439,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       endOffset = yPositionToOffset(clip.y + clip.height, false);
 
       drawMarkup(g, stripeWidth, startOffset, endOffset, EditorMarkupModelImpl.this);
-      drawMarkup(g, stripeWidth, startOffset, endOffset, (MarkupModelEx)document.getMarkupModel(myEditor.getProject()));
+      drawMarkup(g, stripeWidth, startOffset, endOffset, (MarkupModelEx)DocumentMarkupModel
+        .forDocument(document, myEditor.getProject(), true));
     }
 
     private void drawMarkup(final Graphics g, final int width, int startOffset, int endOffset, MarkupModelEx markup) {
@@ -459,7 +460,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
-      markup.processHighlightsOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+      markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
         public boolean process(RangeHighlighterEx highlighter) {
           Color color = highlighter.getErrorStripeMarkColor();
           if (color == null) return true;
@@ -513,7 +514,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
           return true;
         }
-
       });
 
       drawStripesEndingBefore(Integer.MAX_VALUE, thinEnds, thinStripes, g, width, thinYStart[0]);

@@ -240,6 +240,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final Component componentAtPoint = SwingUtilities.getDeepestComponentAt(sourceComponent, originalPoint.x, originalPoint.y);
     for (Component comp = componentAtPoint; comp != null; comp = comp.getParent()) {
       if (comp instanceof ComboPopup) {
+        doOKAction();
         return;
       }
     }

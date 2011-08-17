@@ -17,7 +17,7 @@ package com.intellij.cvsSupport2.cvsBrowser;
 
 import javax.swing.tree.MutableTreeNode;
 
-public interface ChildrenLoader {
+public interface ChildrenLoader<T extends MutableTreeNode> {
 
-  void loadChildren(MutableTreeNode element, String elementPath, RemoteResourceDataProvider dataProvider);
+  void loadChildren(T element);
 }

@@ -125,6 +125,13 @@ public class GrLightField extends GrLightVariable implements GrField {
   }
 
   @Override
+  public void clearCaches() {
+    mySetterInitialized = false;
+    mySetter = null;
+    myGetters = null;
+  }
+
+  @Override
   public GrExpression getInitializerGroovy() {
     return null;
   }
@@ -163,5 +170,12 @@ public class GrLightField extends GrLightVariable implements GrField {
   @Override
   public void acceptChildren(GroovyElementVisitor visitor) {
 
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    PsiElement res = super.setName(name);
+    clearCaches();
+    return res;
   }
 }

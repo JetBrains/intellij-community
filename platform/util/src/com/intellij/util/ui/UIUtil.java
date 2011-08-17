@@ -2399,5 +2399,14 @@ public class UIUtil {
       }
     };
   }
+
+  public static boolean isDialogRootPane(JRootPane rootPane) {
+    if (rootPane != null) {
+      final Object isDialog = rootPane.getClientProperty("DIALOG_ROOT_PANE");
+      return isDialog instanceof Boolean && ((Boolean)isDialog).booleanValue();
+    }
+    return false;
+  }
+
 }
 

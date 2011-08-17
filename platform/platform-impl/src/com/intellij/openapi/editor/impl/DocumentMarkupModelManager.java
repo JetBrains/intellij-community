@@ -59,7 +59,7 @@ public class DocumentMarkupModelManager extends AbstractProjectComponent {
     if (!myDisposed) {
       myDisposed = true;
       for (DocumentImpl document : myDocumentSet.toStrongList()) {
-        document.removeMarkupModel(myProject);
+        DocumentMarkupModel.removeMarkupModel(document, myProject);
       }
     }
   }

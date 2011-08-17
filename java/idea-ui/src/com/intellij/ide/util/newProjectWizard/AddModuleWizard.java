@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -139,14 +140,14 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
           preferredFocusedComponent.requestFocus();
         }
         else {
-          if (isLastStep) {
+          if (isLastStep && finishButton.isVisible()) {
             finishButton.requestFocus();
           }
           else {
             nextButton.requestFocus();
           }
         }
-        getRootPane().setDefaultButton(isLastStep ? finishButton : nextButton);
+        getRootPane().setDefaultButton(isLastStep && finishButton.isVisible()? finishButton : nextButton);
       }
     });
   }
@@ -231,9 +232,17 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
 
   private void updateButtons() {
     final boolean isLastStep = isLastStep(getCurrentStep());
-    getNextButton().setEnabled(!isLastStep);
-    getFinishButton().setEnabled(isLastStep);
-    getRootPane().setDefaultButton(isLastStep ? getFinishButton() : getNextButton());
+    
+    if (SystemInfo.isMac) {
+      getNextButton().setEnabled(true);
+      getFinishButton().setVisible(false);
+      getNextButton().setText(isLastStep ? IdeBundle.message("button.finish") : IdeBundle.message("button.wizard.next"));
+      getRootPane().setDefaultButton(getNextButton());
+    } else {
+      getNextButton().setEnabled(!isLastStep);
+      getFinishButton().setEnabled(isLastStep);
+      getRootPane().setDefaultButton(isLastStep ? getFinishButton() : getNextButton());
+    }
   }
 
   private boolean isLastStep(int step) {

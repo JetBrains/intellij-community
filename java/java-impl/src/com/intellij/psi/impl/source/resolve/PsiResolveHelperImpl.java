@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionGuard;
@@ -639,6 +641,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     final GlobalSearchScope scope = parent.getResolveScope();
     PsiType returnType = null;
     if (constraint == null) {
+      if (forCompletion && expectedType == null) {
+        ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(methodCall, true);
+        if (expectedTypes.length > 0) {
+          expectedType = expectedTypes[0].getType();
+        }
+      }
+
       if (expectedType == null) {
         expectedType = forCompletion ?
                PsiType.NULL :
@@ -647,11 +656,15 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
       returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
 
-      constraint = getSubstitutionForTypeParameterConstraint(typeParameter, returnType, expectedType, false, PsiUtil.getLanguageLevel(parent));
+      constraint =
+        getSubstitutionForTypeParameterConstraint(typeParameter, returnType, expectedType, false, PsiUtil.getLanguageLevel(parent));
 
       if (constraint != null) {
         PsiType guess = constraint.getFirst();
-        if (guess != null && !guess.equals(PsiType.NULL) && constraint.getSecond() == ConstraintType.SUPERTYPE && guess instanceof PsiIntersectionType) {
+        if (guess != null &&
+            !guess.equals(PsiType.NULL) &&
+            constraint.getSecond() == ConstraintType.SUPERTYPE &&
+            guess instanceof PsiIntersectionType) {
           for (PsiType conjuct : ((PsiIntersectionType)guess).getConjuncts()) {
             if (!conjuct.isAssignableFrom(expectedType)) {
               return FAILED_INFERENCE;
