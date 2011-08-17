@@ -572,7 +572,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       runnable.run();
     } else {
       final FocusRequestor requestor = getFocusManager().getFurtherRequestor();
-      getFocusManager().doWhenFocusSettlesDown(new Runnable() {
+      getFocusManager().doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         @Override
         public void run() {
           requestor.requestFocus(new FocusCommand() {
