@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -197,12 +196,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     return myRangeMarkers.removeInterval(rangeMarker);
   }
 
   public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     myRangeMarkers.addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
   }
 
@@ -283,7 +280,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     if (!(0 <= startOffset && startOffset <= endOffset && endOffset <= getTextLength())) {
       LOG.error("Incorrect offsets: startOffset=" + startOffset + ", endOffset=" + endOffset + ", text length=" + getTextLength());
     }
@@ -293,7 +289,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public long getModificationStamp() {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     return myModificationStamp;
   }
 
@@ -609,7 +604,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   public LineIterator createLineIterator() {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     return myLineSet.createIterator();
   }
 
@@ -622,7 +616,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public final int getLineEndOffset(int line) {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     if (getTextLength() == 0 && line == 0) return 0;
     int result = myLineSet.getLineEnd(line) - getLineSeparatorLength(line);
     assert result >= 0;
@@ -630,14 +623,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public final int getLineSeparatorLength(int line) {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     int separatorLength = myLineSet.getSeparatorLength(line);
     assert separatorLength >= 0;
     return separatorLength;
   }
 
   public final int getLineCount() {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     int lineCount = myLineSet.getLineCount();
     assert lineCount >= 0;
     return lineCount;
@@ -656,7 +647,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public void fireReadOnlyModificationAttempt() {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     for (EditReadOnlyListener listener : myReadOnlyListeners) {
       listener.readOnlyModificationAttempt(this);
     }

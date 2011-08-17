@@ -941,20 +941,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
            isDispatchThread();
   }
 
-  public void assertReadAccessToDocumentsAllowed() {
-    /* TODO
-    Thread currentThread = Thread.currentThread();
-    if (ourDispatchThread != currentThread) {
-      if (myExceptionalThreadWithReadAccess == currentThread) return;
-      if (myActionsLock.isReadLockAcquired(currentThread)) return;
-      if (myActionsLock.isWriteLockAcquired(currentThread)) return;
-      if (isDispatchThread(currentThread)) return;
-      LOG.error(
-        "Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())");
-    }
-    */
-  }
-
   private static void assertCanRunWriteAction() {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
   }

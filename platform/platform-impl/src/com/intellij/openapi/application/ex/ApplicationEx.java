@@ -45,8 +45,6 @@ public interface ApplicationEx extends Application {
 
   boolean holdsReadLock();
 
-  void assertReadAccessToDocumentsAllowed();
-
   void doNotSave();
   void doNotSave(boolean value);
   boolean isDoNotSave();
