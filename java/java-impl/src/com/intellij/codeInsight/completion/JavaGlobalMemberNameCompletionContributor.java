@@ -102,7 +102,7 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
     @Override
     public void renderElement(LookupElementPresentation presentation) {
       super.renderElement(presentation);
-      myHelper.renderElement(presentation, getAttribute(FORCE_QUALIFY) != null, PsiSubstitutor.EMPTY);
+      myHelper.renderElement(presentation, getAttribute(FORCE_QUALIFY) != null ? Boolean.TRUE : null, PsiSubstitutor.EMPTY);
     }
 
     @Override
