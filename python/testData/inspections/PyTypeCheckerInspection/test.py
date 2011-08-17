@@ -337,3 +337,8 @@ def test_right_operators():
     xs = [
         <warning descr="Expected type 'one of (int, long)', got 'object' instead">o</warning> * [],
     ]
+
+def test_isinstance_implicit_self_types():
+    x = 1
+    if isinstance(x, unicode):
+        x.encode('UTF-8') #pass

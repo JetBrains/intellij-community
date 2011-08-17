@@ -20,6 +20,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="colorSchemes" scope="RUNTIME" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="relaxng" scope="RUNTIME" />
   </component>
 </module>
 
