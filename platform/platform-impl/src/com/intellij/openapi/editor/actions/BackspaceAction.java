@@ -62,7 +62,7 @@ public class BackspaceAction extends EditorAction {
     }
   }
 
-  public static void doBackSpaceAtCaret(Editor editor) {
+  private static void doBackSpaceAtCaret(Editor editor) {
     if(editor.getSelectionModel().hasSelection()) {
       int newOffset = editor.getSelectionModel().getSelectionStart();
       if (EditorActionUtil.canEditAtOffset(editor, newOffset)) {

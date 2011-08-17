@@ -22,6 +22,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -103,6 +104,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   }
 
   public static void disposeInvalidEditors() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     Iterator<EditorWindow> iterator = allEditors.iterator();
     while (iterator.hasNext()) {
       EditorWindow editorWindow = iterator.next();

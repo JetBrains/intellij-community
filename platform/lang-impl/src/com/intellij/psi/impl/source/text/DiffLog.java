@@ -78,7 +78,6 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
             }
             fileImpl.subtreeChanged();
 
-            final PomModel model = PomManager.getModel(fileImpl.getProject());
             return new TreeAspectEvent(model, astDiffBuilder.getEvent());
           }
         });

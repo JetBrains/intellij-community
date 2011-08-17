@@ -29,6 +29,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author lesya
@@ -43,7 +44,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
 
   private final PostFormatProcessorHelper myPostProcessor;
 
-  public ImportsFormatter(final CodeStyleSettings settings, PsiFile file) {
+  public ImportsFormatter(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
     myPostProcessor = new PostFormatProcessorHelper(settings);
     myDocumentModel = FormattingDocumentModelImpl.createOn(file);
     myIndentOptions = settings.getIndentOptions(file.getFileType());
