@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
@@ -144,6 +145,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     });
 
     mySplitter.setPreferredSize(new Dimension(500, 500));
+    new ListSpeedSearch(myList);
 
     return mySplitter;
   }
