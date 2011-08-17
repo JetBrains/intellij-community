@@ -294,14 +294,13 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         Pair<RefreshablePanel, Disposable> details = myDetailsCache.get(filePath);
         if (details != null) {
           myDetailsConsumer.consume(change, details);
-        } else if (myVcsChangeDetailsManager.getPanel(change)) {
+        } else if (myVcsChangeDetailsManager.getPanel(change, myDetailsLoader)) {
           myDetailsPanel.loading();
           myDetailsPanel.layout();
         }
       }
     }, myDetailsConsumer);
     myDetailsLoader.setCacheConsumer(cacheConsumer);
-    myVcsChangeDetailsManager.setDetails(myDetailsLoader);
   }
 
   private void changeDetails() {

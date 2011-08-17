@@ -56,7 +56,6 @@ public class VcsChangeDetailsManager {
   // todo also check for size
   private final LinkedList<DiffPanel> myDiffPanelCache;
   private final Project myProject;
-  private Details<Change, Pair<RefreshablePanel, Disposable>> myDetails;
   private final BackgroundTaskQueue myQueue;
 
   public VcsChangeDetailsManager(final Project project) {
@@ -79,10 +78,6 @@ public class VcsChangeDetailsManager {
     });
   }
 
-  public void setDetails(Details<Change, Pair<RefreshablePanel, Disposable>> details) {
-    myDetails = details;
-  }
-
   public boolean canComment(final Change change) {
     return getProvider(change) != null;
   }
@@ -96,14 +91,14 @@ public class VcsChangeDetailsManager {
   }
 
   // true -> loading
-  public boolean getPanel(final Change change) {
+  public boolean getPanel(final Change change, final Details<Change, Pair<RefreshablePanel, Disposable>> details) {
     // text details
     final VcsChangeDetailsProvider<?> provider = getProvider(change);
     if (provider == null) {
       return false;
     }
 
-    myQueue.run(new LoaderTask(myProject, provider, change, myDetails));
+    myQueue.run(new LoaderTask(myProject, provider, change, details));
     return true;
   }
 
