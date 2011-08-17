@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,10 +32,8 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
   private String myLabelConstraints = BorderLayout.NORTH;
 
   public LabeledComponent() {
-    super(new BorderLayout());
+    super(new BorderLayout(AbstractLayout.DEFAULT_HGAP, AbstractLayout.DEFAULT_VGAP));
     insertLabel();
-    updateLabelBorder();
-    updateUI();
   }
 
   @NotNull
@@ -45,23 +44,17 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
     return labeledComponent;
   }
 
-  private void updateLabelBorder() {
-    int left = 0;
-    int bottom = 0;
-    if (BorderLayout.NORTH.equals(myLabelConstraints)) {
-      bottom = 2;
-    }
-    myLabel.setBorder(BorderFactory.createEmptyBorder(0, left, bottom, 0));
-  }
-
-  public void updateUI() {
-    super.updateUI();
-    if (myLabel != null) updateLabelBorder();
-  }
-
   private void insertLabel() {
     remove(myLabel);
     add(myLabel, myLabelConstraints);
+  }
+
+  public void setLabelPreferredSize(Dimension d) {
+    myLabel.setPreferredSize(d);
+  }
+
+  public Dimension getLabelPreferredSize() {
+    return myLabel.getPreferredSize();
   }
 
   public void setText(String textWithMnemonic) {
