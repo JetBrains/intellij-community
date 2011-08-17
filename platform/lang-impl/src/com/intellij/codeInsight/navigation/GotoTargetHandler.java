@@ -23,6 +23,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
@@ -277,11 +278,17 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return hasDifferentNames;
     }
 
-    public void addTarget(PsiElement element) {
+    public void addTarget(final PsiElement element) {
       targets = ArrayUtil.append(targets, element);
       renderers.put(element, createRenderer(this, element));
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
-        myNames.add(((PsiNamedElement)element).getName());
+        final String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          @Override
+          public String compute() {
+            return  ((PsiNamedElement)element).getName();
+          }
+        });
+        myNames.add(name);
         hasDifferentNames = myNames.size() > 1;
       }
     }
