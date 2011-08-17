@@ -453,7 +453,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   @Nullable
   public PsiReference getReferenceAtCaretPosition(final String... filePaths) {
-    configureByFilesInner(filePaths);
+    if (filePaths.length > 0) {
+      configureByFilesInner(filePaths);
+    }
     return getFile().findReferenceAt(myEditor.getCaretModel().getOffset());
   }
 
