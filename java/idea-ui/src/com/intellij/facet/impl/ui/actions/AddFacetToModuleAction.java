@@ -26,19 +26,16 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 
-import java.util.Arrays;
-import java.util.Comparator;
-
 /**
  * @author nik
 */
-public class AddFacetAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.actions.AddFacetAction");
+public class AddFacetToModuleAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.actions.AddFacetToModuleAction");
   private final FacetEditorFacade myEditor;
   private final Project myProject;
   private final FacetType myType;
 
-  public AddFacetAction(final FacetEditorFacade editor, Project project, final FacetType type) {
+  private AddFacetToModuleAction(final FacetEditorFacade editor, Project project, final FacetType type) {
     super(type.getPresentableName(), null, type.getIcon());
     myEditor = editor;
     myProject = project;
@@ -95,16 +92,10 @@ public class AddFacetAction extends AnAction implements DumbAware {
   }
 
   public static AnAction[] createAddFacetActions(FacetEditorFacade editor, Project project) {
-    final FacetType[] types = FacetTypeRegistry.getInstance().getFacetTypes();
-    Arrays.sort(types, new Comparator<FacetType>() {
-      public int compare(final FacetType o1, final FacetType o2) {
-        return o1.getPresentableName().compareTo(o2.getPresentableName());
-      }
-    });
-
+    final FacetType[] types = FacetTypeRegistry.getInstance().getSortedFacetTypes();
     AnAction[] actions = new AnAction[types.length];
     for (int i = 0; i < types.length; i++) {
-      actions[i] = new AddFacetAction(editor, project, types[i]);
+      actions[i] = new AddFacetToModuleAction(editor, project, types[i]);
     }
     return actions;
   }

@@ -36,6 +36,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +54,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   private final ModuleManager myModuleManager;
   private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<FacetType<?,?>, FacetTypeEditor>();
   private MultipleFacetSettingsEditor myCurrentMultipleSettingsEditor;
+  @NonNls private static final String NO_FRAMEWORKS_NODE = "No facets are configured";
 
   public FacetStructureConfigurable(final Project project, ModuleManager moduleManager) {
     super(project);
@@ -80,14 +83,19 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   protected void loadTree() {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
+    boolean hasFacetTypeNodes = false;
     for (FacetType<?,?> facetType : FacetTypeRegistry.getInstance().getFacetTypes()) {
-      final FacetTypeEditor editor = getOrCreateFacetTypeEditor(facetType);
-      if (editor.isVisible() || ProjectFacetManager.getInstance(myProject).hasFacets(facetType.getId())) {
+      if (ProjectFacetManager.getInstance(myProject).hasFacets(facetType.getId())) {
+        hasFacetTypeNodes = true;
         addFacetTypeNode(facetType);
       }
     }
     if (!InvalidFacetManager.getInstance(myProject).getInvalidFacets().isEmpty()) {
+      hasFacetTypeNodes = true;
       addFacetTypeNode(InvalidFacetType.getInstance());
+    }
+    if (!hasFacetTypeNodes) {
+      addNode(new MyNode(new TextConfigurable<String>(NO_FRAMEWORKS_NODE, NO_FRAMEWORKS_NODE, "Facets", "Press '+' button to add a new facet", null, null)), myRoot);
     }
     addNode(new MyNode(new FrameworkDetectionConfigurable(myProject)), myRoot);
   }
@@ -108,6 +116,11 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   private MyNode addFacetTypeNode(FacetType<?, ?> facetType) {
+    final MyNode noFrameworksNode = findNodeByObject(myRoot, NO_FRAMEWORKS_NODE);
+    if (noFrameworksNode != null) {
+      removePaths(TreeUtil.getPathFromRoot(noFrameworksNode));
+    }
+
     FacetTypeConfigurable facetTypeConfigurable = new FacetTypeConfigurable(this, facetType);
     MyNode facetTypeNode = new MyNode(facetTypeConfigurable);
     addNode(facetTypeNode, myRoot);
@@ -167,6 +180,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   public void reset() {
     super.reset();
     myFacetTypeEditors.clear();
+    TreeUtil.expandAll(myTree);
   }
 
 
@@ -202,7 +216,13 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> actions = new ArrayList<AnAction>();
-    actions.add(new AddFacetOfTypeAction(this));
+    actions.add(new AbstractAddGroup("Add") {
+      @NotNull
+      @Override
+      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+        return AddFacetOfTypeAction.createAddFacetActions(FacetStructureConfigurable.this);
+      }
+    });
     if (fromPopup) {
       actions.add(new MyNavigateAction());
     }

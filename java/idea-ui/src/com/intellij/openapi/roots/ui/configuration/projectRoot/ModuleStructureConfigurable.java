@@ -19,7 +19,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.CommonBundle;
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
-import com.intellij.facet.impl.ui.actions.AddFacetAction;
+import com.intellij.facet.impl.ui.actions.AddFacetToModuleAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.projectView.impl.ModuleGroup;
@@ -63,6 +63,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -234,7 +235,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                 },
                                 new Function<ModuleGroup, MyNode>() {
                                   public MyNode fun(final ModuleGroup moduleGroup) {
-                                    final NamedConfigurable moduleGroupConfigurable = new ModuleGroupConfigurable(moduleGroup);
+                                    final NamedConfigurable moduleGroupConfigurable =
+                                      createModuleGroupConfigurable(moduleGroup);
                                     return new MyNode(moduleGroupConfigurable, true);
                                   }
                                 });
@@ -281,7 +283,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
             }
           }, new Function<ModuleGroup, MyNode>() {
             public MyNode fun(final ModuleGroup moduleGroup) {
-              final NamedConfigurable moduleGroupConfigurable = new ModuleGroupConfigurable(moduleGroup);
+              final NamedConfigurable moduleGroupConfigurable = createModuleGroupConfigurable(moduleGroup);
               return new MyNode(moduleGroupConfigurable, true);
             }
           });
@@ -536,6 +538,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext;
   }
 
+  private static TextConfigurable<ModuleGroup> createModuleGroupConfigurable(final ModuleGroup moduleGroup) {
+    return new TextConfigurable<ModuleGroup>(moduleGroup, moduleGroup.toString(),
+                                             ProjectBundle.message("module.group.banner.text", moduleGroup.toString()),
+                                             ProjectBundle.message("project.roots.module.groups.text"),
+                                             PlatformIcons.OPENED_MODULE_GROUP_ICON, PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+  }
 
   private class MyDataProviderWrapper extends JPanel implements DataProvider {
     public MyDataProviderWrapper(final JComponent component) {
@@ -639,7 +647,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         ArrayList<AnAction> result = new ArrayList<AnAction>();
         result.add(module);
 
-        final AnAction[] facets = AddFacetAction.createAddFacetActions(myFacetEditorFacade, myProject);
+        final AnAction[] facets = AddFacetToModuleAction.createAddFacetActions(myFacetEditorFacade, myProject);
         if (facets.length > 0) {
           result.add(new Separator(ProjectBundle.message("add.group.facet.separator")));
           ContainerUtil.addAll(result, facets);
