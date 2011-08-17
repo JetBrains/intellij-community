@@ -501,9 +501,9 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     final Boolean[] result = new Boolean[1];
     result[0] = false;
     final ProgressIndicator finalProgressIndicator = progressIndicator;
-    new GitComplexProcess(myProject) {
+    GitComplexProcess.Operation reorderOperation = new GitComplexProcess.Operation() {
       @Override
-      protected void runImpl(ContinuationContext context) {
+      public void run(ContinuationContext context) {
         try {
           final Set<VirtualFile> rootsToReorder = rebaseInfo.reorderedCommits.keySet();
           saver.saveLocalChanges(rootsToReorder);
@@ -546,7 +546,8 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
                       "Update was cancelled.", true, e);
         }
       }
-    }.execute();
+    };
+    GitComplexProcess.execute(myProject, "reordering commits", reorderOperation);
     return result[0];
   }
 

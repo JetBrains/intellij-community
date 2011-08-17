@@ -44,7 +44,6 @@ import git4idea.checkout.branches.GitBranchConfigurations.BranchChanges;
 import git4idea.checkout.branches.GitBranchConfigurations.ChangeInfo;
 import git4idea.checkout.branches.GitBranchConfigurations.ChangeListInfo;
 import git4idea.commands.*;
-import git4idea.update.GitComplexProcess;
 import git4idea.stash.GitShelveUtils;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -186,7 +185,7 @@ public class GitCheckoutProcess {
 //      waitForChanges();
       myProjectManager.blockReloadingProjectOnExternalChanges();
       // todo here not tested!! since now is not used in UI
-      myChangeManager.freeze(new SemaphoreContinuationContext(), GitComplexProcess.REASON);
+      myChangeManager.freeze(new SemaphoreContinuationContext(), "Local changes are not available until Git checkout is finished.");
       try {
         GitBranchConfiguration oldConfiguration = checkCurrentConfiguration();
         if (oldConfiguration == null) {

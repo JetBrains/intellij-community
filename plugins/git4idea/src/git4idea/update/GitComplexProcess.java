@@ -16,99 +16,139 @@
 package git4idea.update;
 
 import com.intellij.ide.GeneralSettings;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.util.continuation.*;
-import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 
 /**
+ * This class executes a Git task, surrounding it with a couple of preparation and completion tasks, such as:
+ * <ul>
+ *   <li>Prohibit saving and syncing on frame deactivation.</li>
+ *   <li>{@link ChangeListManager#freeze(com.intellij.util.continuation.ContinuationPause, String) Freeze} the {@link ChangeListManager}</li>
+ * </ul>
+ *
+ * <p>
+ *   To use it implement the {@link Operation} interface which runs the needed Git task itself and call
+ *   {@link GitComplexProcess#execute(com.intellij.openapi.project.Project, String, git4idea.update.GitComplexProcess.Operation)}
+ * </p>
+ *
  * @author irengrig
- *         Date: 3/31/11
- *         Time: 2:59 PM
+ * @author Kirill Likhodedov
  */
-public abstract class GitComplexProcess {
-  public static final String GIT_UPDATING = "Git: updating";
-  public static final String REASON = "Local changes are not available until Git update is finished.";
-  
+public class GitComplexProcess {
+
+  public interface Operation {
+    void run(ContinuationContext continuationContext);
+  }
+
   private final Project myProject;
+  private final String myTitle;
+  private final Operation myOperation;
+
+  private final String myFreezeReason;
   private final GeneralSettings myGeneralSettings;
   private final ProjectManagerEx myProjectManager;
   private final GitRepositoryManager myRepositoryManager;
+  private final ChangeListManager myChangeListManager;
 
-  public GitComplexProcess(final Project project) {
+  private final boolean mySaveOnFrameDeactivation;
+  private final boolean mySyncOnFrameDeactivation;
+
+  private final TaskDescriptor BLOCK = new TaskDescriptor("", Where.AWT) {
+    @Override public void run(ContinuationContext context) {
+      myProjectManager.blockReloadingProjectOnExternalChanges();
+      FileDocumentManager.getInstance().saveAllDocuments();
+      myGeneralSettings.setSaveOnFrameDeactivation(false);
+      myGeneralSettings.setSyncOnFrameActivation(false);
+    }
+  };
+
+  private final TaskDescriptor FREEZE;
+
+  private final TaskDescriptor RELEASE = new TaskDescriptor("", Where.AWT) {
+    @Override public void run(ContinuationContext context) {
+      myChangeListManager.letGo();
+    }
+
+    @Override public boolean isHaveMagicCure() {
+      return true;
+    }
+  };
+
+  private final TaskDescriptor UNBLOCK = new TaskDescriptor("", Where.AWT) {
+    @Override public void run(ContinuationContext context) {
+      myProjectManager.unblockReloadingProjectOnExternalChanges();
+      myGeneralSettings.setSaveOnFrameDeactivation(mySaveOnFrameDeactivation);
+      myGeneralSettings.setSyncOnFrameActivation(mySyncOnFrameDeactivation);
+    }
+
+    @Override public boolean isHaveMagicCure() {
+      return true;
+    }
+  };
+
+  private final TaskDescriptor UPDATE_REPOSITORIES;
+
+  public static void execute(Project project, String title, Operation operation) {
+    new GitComplexProcess(project, title, operation).run();
+  }
+
+  private GitComplexProcess(Project project, String title, Operation operation) {
     myProject = project;
+    myTitle = title;
+    myOperation = operation;
+    myFreezeReason = "Local changes are not available until Git " + myTitle + " is finished.";
+
     myGeneralSettings = GeneralSettings.getInstance();
     myProjectManager = ProjectManagerEx.getInstanceEx();
     myRepositoryManager = GitRepositoryManager.getInstance(project);
+    myChangeListManager = ChangeListManager.getInstance(myProject);
+
+    mySaveOnFrameDeactivation = myGeneralSettings.isSaveOnFrameDeactivation();
+    mySyncOnFrameDeactivation = myGeneralSettings.isSyncOnFrameActivation();
+
+    // define tasks that need information from constructor
+
+    FREEZE = new TaskDescriptor(myTitle, Where.POOLED) {
+      @Override public void run(ContinuationContext context) {
+        myChangeListManager.freeze(context, myFreezeReason);
+      }
+    };
+
+    UPDATE_REPOSITORIES = new TaskDescriptor(myTitle, Where.POOLED) {
+      @Override public void run(ContinuationContext context) {
+        for (GitRepository repo : myRepositoryManager.getRepositories()) {
+          repo.update(GitRepository.TrackedTopic.ALL);
+        }
+      }
+    };
   }
 
-  public void execute() {
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-
-    final boolean saveOnFrameDeactivation = myGeneralSettings.isSaveOnFrameDeactivation();
-    final boolean syncOnFrameDeactivation = myGeneralSettings.isSyncOnFrameActivation();
-    myProjectManager.blockReloadingProjectOnExternalChanges();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveAllDocuments();
-            myGeneralSettings.setSaveOnFrameDeactivation(false);
-            myGeneralSettings.setSyncOnFrameActivation(false);
-          }
-        });
-      }
-    });
-
-    final Continuation continuation = Continuation.createForCurrentProgress(myProject, true, GIT_UPDATING);
-    final GatheringContinuationContext initContext = new GatheringContinuationContext();
-    final TaskDescriptor returnFlagsBack = new TaskDescriptor("", Where.AWT) {
-      @Override
-      public void run(ContinuationContext context) {
-        myProjectManager.unblockReloadingProjectOnExternalChanges();
-        myGeneralSettings.setSaveOnFrameDeactivation(saveOnFrameDeactivation);
-        myGeneralSettings.setSyncOnFrameActivation(syncOnFrameDeactivation);
-        changeListManager.letGo();
+  private void run() {
+    Continuation continuation = Continuation.createForCurrentProgress(myProject, true, myTitle);
+    GatheringContinuationContext initContext = new GatheringContinuationContext();
+    String taskTitle = "Git: " + myTitle;
+    TaskDescriptor operation = new TaskDescriptor(taskTitle, Where.POOLED) {
+      @Override public void run(final ContinuationContext context) {
+        myOperation.run(context);
       }
     };
-    final TaskDescriptor[] next = {
-      new TaskDescriptor(GIT_UPDATING, Where.POOLED) {
-        @Override
-        public void run(ContinuationContext context) {
-          changeListManager.freeze(context, REASON);
-        }
-      },
-      new TaskDescriptor(GIT_UPDATING, Where.POOLED) {
-        @Override
-        public void run(final ContinuationContext context) {
-          runImpl(context);
-        }
-      },
-      new TaskDescriptor(GIT_UPDATING, Where.POOLED) {
-        @Override
-        public void run(ContinuationContext context) {
-          updateRepositories();
-        }
-      },
-      returnFlagsBack
+
+    final TaskDescriptor[] tasks = {
+      BLOCK,
+      FREEZE,
+      operation,
+      UPDATE_REPOSITORIES,
+      RELEASE,
+      UNBLOCK
     };
-    returnFlagsBack.setHaveMagicCure(true);
-    initContext.next(next);
+
+    initContext.next(tasks);
     continuation.run(initContext.getList());
   }
 
-  private void updateRepositories() {
-    for (GitRepository repo: myRepositoryManager.getRepositories()) {
-      repo.update(GitRepository.TrackedTopic.ALL);
-    }
-  }
-
-  protected abstract void runImpl(ContinuationContext context);
 }
