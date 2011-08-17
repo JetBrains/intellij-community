@@ -23,8 +23,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -51,20 +53,20 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public VirtualFile findFileByPath(@NotNull String path) {
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
-    return super.findFileByPath(canonicalPath);
+    return VfsImplUtil.findFileByPath(this, path);
   }
 
   public VirtualFile findFileByPathIfCached(@NotNull String path) {
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
-    return super.findFileByPathIfCached(canonicalPath);
+    return VfsImplUtil.findFileByPathIfCached(this, canonicalPath);
   }
 
   @Nullable
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
-    return super.refreshAndFindFileByPath(canonicalPath);
+    return VfsImplUtil.refreshAndFindFileByPath(this, canonicalPath);
   }
 
   public VirtualFile findFileByIoFile(File file) {
@@ -602,5 +604,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     catch (IOException e) {
       return originalFileName;
     }
+  }
+
+  public void refresh(final boolean asynchronous) {
+    RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
   }
 }
