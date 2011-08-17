@@ -46,7 +46,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
         res = ((Callable)resolved).getReturnType(context, null);
       }
     }
-    if (res == null || res instanceof PyNoneType) {
+    if (PyTypeChecker.isUnknown(res) || res instanceof PyNoneType) {
       final PyExpression indexExpression = getIndexExpression();
       if (indexExpression != null) {
         final PyType type = context.getType(getOperand());

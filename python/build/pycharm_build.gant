@@ -53,6 +53,7 @@ private List platformImplementationModules() {
           "testFramework",
           "tests_bootstrap",
           "xml",
+          "relaxng",
           "lvcs-impl",
           "images",
           "spellchecker",

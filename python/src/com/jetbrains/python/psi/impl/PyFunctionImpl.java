@@ -157,13 +157,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       statements.accept(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyYieldExpression(PyYieldExpression node) {
-          PyType t = node.getType(context);
-          if (t != null) {
-            types.add(t);
-          }
-          else {
-            types.add(cache.getObjectType());
-          }
+          types.add(node.getType(context));
         }
       });
       final int n = types.size();
@@ -319,14 +313,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
           myHasReturns = true;
         }
         else {
-          if (myResult == null) {
-            myResult = returnType;
-          }
-          else {
-            if (returnType != null) {
-              myResult = PyUnionType.union(myResult, returnType);
-            }
-          }
+          myResult = PyUnionType.union(myResult, returnType);
         }
       }
     }

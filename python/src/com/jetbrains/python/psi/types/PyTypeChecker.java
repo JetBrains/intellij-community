@@ -12,7 +12,7 @@ public class PyTypeChecker {
   private PyTypeChecker() {
   }
 
-  public static boolean match(PyType expected, PyType actual, TypeEvalContext context) {
+  public static boolean match(@Nullable PyType expected, @Nullable PyType actual, TypeEvalContext context) {
     // TODO: subscriptable types?, module types?, etc.
     if (expected == null || actual == null) {
       return true;
@@ -23,14 +23,11 @@ public class PyTypeChecker {
     if (actual instanceof PyTypeReference) {
       return match(expected, ((PyTypeReference)actual).resolve(null, context), context);
     }
+    if (isUnknown(actual)) {
+      return true;
+    }
     if (actual instanceof PyUnionType) {
-      final List<PyType> members = ((PyUnionType)actual).getMembers();
-      for (PyType m : members) {
-        if (m == null) {
-          return true;
-        }
-      }
-      for (PyType m : members) {
+      for (PyType m : ((PyUnionType)actual).getMembers()) {
         if (!match(expected, m, context)) {
           return false;
         }
@@ -98,6 +95,21 @@ public class PyTypeChecker {
         ("float".equals(superName) && (subIsBool || subIsInt || subIsLong)) ||
         ("complex".equals(superName) && (subIsBool || subIsInt || subIsLong || subIsFloat))) {
       return true;
+    }
+    return false;
+  }
+
+  public static boolean isUnknown(@Nullable PyType type) {
+    if (type == null) {
+      return true;
+    }
+    if (type instanceof PyUnionType) {
+      final PyUnionType union = (PyUnionType)type;
+      for (PyType t : union.getMembers()) {
+        if (isUnknown(t)) {
+          return true;
+        }
+      }
     }
     return false;
   }

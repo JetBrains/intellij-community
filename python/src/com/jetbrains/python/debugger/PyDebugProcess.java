@@ -84,9 +84,22 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     myDebugger.addCloseListener(new RemoteDebuggerCloseListener() {
       @Override
       public void closed() {
-        session.stop();
+        handleStop();
+      }
+
+      @Override
+      public void communicationError() {
+        handleCommunicationError();
       }
     });
+  }
+
+  protected void handleCommunicationError() {
+    getSession().stop();
+  }
+
+  protected void handleStop() {
+    getSession().stop();
   }
 
   public void setPositionConverter(PyPositionConverter positionConverter) {
@@ -125,11 +138,18 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void sessionInitialized() {
     super.sessionInitialized();
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Connecting to debugger", false) {
+    waitForConnection(getConnectionMessage(), getConnectionTitle());
+  }
+
+  protected void waitForConnection(final String connectionMessage, String connectionTitle) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, connectionTitle, false) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        indicator.setText("Connecting to debugger...");
+        indicator.setText(connectionMessage);
         try {
+          beforeConnect();
           myDebugger.waitForConnect();
+          afterConnect();
+
           handshake();
           getSession().rebuildViews();
           registerBreakpoints();
@@ -140,13 +160,27 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           if (!myClosing) {
             invokeLater(new Runnable() {
               public void run() {
-                Messages.showErrorDialog("Unable to establish connection with debugger:\n" + e.getMessage(), "Connecting to debugger");
+                Messages.showErrorDialog("Unable to establish connection with debugger:\n" + e.getMessage(), getConnectionTitle());
               }
             });
           }
         }
       }
     });
+  }
+
+  protected void afterConnect() {
+  }
+
+  protected void beforeConnect() {
+  }
+
+  protected String getConnectionMessage() {
+    return "Connecting to debugger...";
+  }
+
+  protected String getConnectionTitle() {
+    return "Connecting to debugger";
   }
 
   private void handshake() throws PyDebuggerException {
@@ -219,14 +253,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void startPausing() {
-    if (myDebugger.isConnected()) {
+    if (isConnected()) {
       myDebugger.suspendAllThreads();
     }
   }
 
   private void resume(final ResumeCommand.Mode mode) {
     dropFrameCaches();
-    if (myDebugger.isConnected()) {
+    if (isConnected()) {
       for (PyThreadInfo suspendedThread : mySuspendedThreads) {
         final ResumeCommand command = new ResumeCommand(myDebugger, suspendedThread.getId(), mode);
         myDebugger.execute(command);
@@ -234,10 +268,23 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  protected boolean isConnected() {
+    return myDebugger.isConnected();
+  }
+
+  protected void disconnect() {
+    myDebugger.disconnect();
+    cleanUp();
+  }
+
+  private void cleanUp() {
+    mySuspendedThreads.clear();
+  }
+
   @Override
   public void runToPosition(@NotNull final XSourcePosition position) {
     dropFrameCaches();
-    if (myDebugger.isConnected() && !mySuspendedThreads.isEmpty()) {
+    if (isConnected() && !mySuspendedThreads.isEmpty()) {
       final PySourcePosition pyPosition = myPositionConverter.convert(position);
       String type = PyLineBreakpointType.ID;
       final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
@@ -325,7 +372,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private PyStackFrame currentFrame() throws PyDebuggerException {
-    if (!myDebugger.isConnected()) {
+    if (!isConnected()) {
       throw new PyDebuggerException("Disconnected");
     }
 
@@ -339,7 +386,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   public void addBreakpoint(final PySourcePosition position, final XLineBreakpoint breakpoint) {
     myRegisteredBreakpoints.put(position, breakpoint);
-    if (myDebugger.isConnected()) {
+    if (isConnected()) {
       final SetBreakpointCommand command =
         new SetBreakpointCommand(myDebugger, breakpoint.getType().getId(), position.getFile(), position.getLine(),
                                  breakpoint.getCondition(),
@@ -352,7 +399,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     XLineBreakpoint breakpoint = myRegisteredBreakpoints.get(position);
     if (breakpoint != null) {
       myRegisteredBreakpoints.remove(position);
-      if (myDebugger.isConnected()) {
+      if (isConnected()) {
         final RemoveBreakpointCommand command =
           new RemoveBreakpointCommand(myDebugger, breakpoint.getType().getId(), position.getFile(), position.getLine());
         myDebugger.execute(command);
@@ -362,14 +409,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   public void addExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
     myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getException(), breakpoint);
-    if (myDebugger.isConnected()) {
+    if (isConnected()) {
       myDebugger.execute(breakpoint.getProperties().createAddCommand(myDebugger));
     }
   }
 
   public void removeExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
     myRegisteredExceptionBreakpoints.remove(breakpoint.getProperties().getException());
-    if (myDebugger.isConnected()) {
+    if (isConnected()) {
       myDebugger.execute(breakpoint.getProperties().createRemoveCommand(myDebugger));
     }
   }
@@ -428,7 +475,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @NotNull
   public List<PydevCompletionVariant> getCompletions(String prefix) throws Exception {
-    if (myDebugger.isConnected()) {
+    if (isConnected()) {
       dropFrameCaches();
       final PyStackFrame frame = currentFrame();
       final GetCompletionsCommand command = new GetCompletionsCommand(myDebugger, frame.getThreadId(), frame.getFrameId(), prefix);
@@ -465,7 +512,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (getSession().isStopped()) {
       return XDebuggerBundle.message("debugger.state.message.disconnected");
     }
-    else if (myDebugger.isConnected()) {
+    else if (isConnected()) {
       return XDebuggerBundle.message("debugger.state.message.connected");
     }
     else {

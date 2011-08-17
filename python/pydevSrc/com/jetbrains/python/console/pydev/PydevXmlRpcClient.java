@@ -2,10 +2,7 @@ package com.jetbrains.python.console.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.net.NetUtils;
-import org.apache.xmlrpc.AsyncCallback;
-import org.apache.xmlrpc.CommonsXmlRpcTransportFactory;
-import org.apache.xmlrpc.XmlRpcClient;
-import org.apache.xmlrpc.XmlRpcException;
+import org.apache.xmlrpc.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -47,6 +44,7 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
     String hostname = NetUtils.getLocalHostString();
     URL url = new URL("http://" + hostname + ':' + port + "/RPC2");
 
+    XmlRpc.setDefaultInputEncoding("UTF8"); //eventhough it uses UTF anyway
     this.impl = new XmlRpcClient(url, new CommonsXmlRpcTransportFactory(url));
     this.process = process;
   }

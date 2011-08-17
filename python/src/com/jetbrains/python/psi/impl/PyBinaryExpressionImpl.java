@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,7 +118,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
         final PsiElement resolved = ref.resolve();
         if (resolved instanceof Callable) {
           final PyType res = ((Callable)resolved).getReturnType(context, null);
-          if (res != null && !(res instanceof PyNoneType)) {
+          if (!PyTypeChecker.isUnknown(res) && !(res instanceof PyNoneType)) {
             return res;
           }
         }
