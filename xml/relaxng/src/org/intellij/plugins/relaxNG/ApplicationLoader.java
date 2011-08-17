@@ -22,8 +22,6 @@ import com.intellij.javaee.StandardResourceProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ClassFilter;
@@ -62,9 +60,6 @@ public class ApplicationLoader implements ApplicationComponent, InspectionToolPr
 
   public void initComponent() {
     registerMetaData();
-
-    final FileTypeManager ftm = FileTypeManager.getInstance();
-    ftm.associateExtension(StdFileTypes.XML, RNG_EXT);
 
     installValidateXmlAction();
   }
