@@ -531,10 +531,12 @@ public class ResolveUtil {
   }
 
   public static boolean isInUseScope(GroovyResolveResult resolveResult) {
-    return resolveResult != null && isInUseScope(resolveResult.getCurrentFileResolveContext());
+    if (resolveResult != null && resolveResult.getElement() instanceof GrGdkMethod) return false;
+    return resolveResult != null && isInUseScope(resolveResult.getCurrentFileResolveContext(), resolveResult.getElement());
   }
 
-  public static boolean isInUseScope(@Nullable PsiElement context) {
+  public static boolean isInUseScope(@Nullable PsiElement context, @Nullable PsiElement method) {
+    if (method instanceof GrGdkMethod) return false;
     if (context instanceof GrMethodCall && context.isValid()) {
       final GrExpression expression = ((GrMethodCall)context).getInvokedExpression();
       if (expression instanceof GrReferenceExpression) {
