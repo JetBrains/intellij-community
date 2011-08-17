@@ -30,6 +30,7 @@
     <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="library" name="winp" level="project" />
     <orderEntry type="library" name="swingx" level="project" />
+    <orderEntry type="module" module-name="core-impl" exported="" />
   </component>
 </module>
 

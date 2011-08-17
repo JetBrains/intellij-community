@@ -58,7 +58,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @Override
-  protected int compareEqualStartIntervals(@NotNull IntervalTreeImpl<T>.IntervalNode i1, @NotNull IntervalTreeImpl<T>.IntervalNode i2) {
+  protected int compareEqualStartIntervals(@NotNull IntervalTreeImpl.IntervalNode<T> i1, @NotNull IntervalTreeImpl.IntervalNode<T> i2) {
     RMNode o1 = (RMNode)i1;
     RMNode o2 = (RMNode)i2;
     boolean greedyL1 = o1.isGreedyToLeft();
@@ -150,12 +150,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     ((RangeMarkerImpl)key).myNode = (RMNode)intervalNode;
   }
 
-  public class RMNode extends IntervalTreeImpl<T>.IntervalNode {
+  public class RMNode extends IntervalTreeImpl.IntervalNode<T> {
     private final boolean isExpandToLeft;
     private final boolean isExpandToRight;
 
     public RMNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight) {
-      super(key, start, end);
+      super(RangeMarkerTree.this, key, start, end);
       isExpandToLeft = greedyToLeft;
       isExpandToRight = greedyToRight;
     }

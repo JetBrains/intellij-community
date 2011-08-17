@@ -20,10 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.DocumentRunnable;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
-import com.intellij.openapi.editor.ReadOnlyModificationException;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -187,7 +184,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public void setReadOnly(boolean isReadOnly) {
     if (myIsReadOnly != isReadOnly) {
       myIsReadOnly = isReadOnly;
-      myPropertyChangeSupport.firePropertyChange(PROP_WRITABLE, !isReadOnly, isReadOnly);
+      myPropertyChangeSupport.firePropertyChange(Document.PROP_WRITABLE, !isReadOnly, isReadOnly);
     }
   }
 
