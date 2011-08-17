@@ -249,6 +249,19 @@ public class PyTypeTest extends PyLightFixtureTestCase {
              "        expr = x");
   }
 
+  // PY-2140
+  public void testNotIsInstance() {
+    doTest("list",
+           "def f(c):\n" +
+           "    def g():\n" +
+           "        '''\n" +
+           "        :rtype: int or str or list\n" +
+           "        '''\n" +
+           "    x = g()\n" +
+           "    if not isinstance(x, (str, long)):\n" +
+           "        expr = x");
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
@@ -271,4 +284,3 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     }
   }
 }
-  
