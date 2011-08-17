@@ -74,33 +74,33 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
   @Override
   public void setPopupVisible(boolean visible) {
     if (!isSwingPopup()) {
-        if (visible && (myJBPopup == null || myJBPopup.isDisposed())) {
-            final JBList list = new JBList(getModel());
-            myJBPopup = JBPopupFactory.getInstance()
-                    .createListPopupBuilder(list)
-                    .setItemChoosenCallback(new Runnable() {
-                        @Override
-                        public void run() {
-                            final Object value = list.getSelectedValue();
-                            if (value != null) {
-                                configureEditor(getEditor(), value);
-                            }
-                        }
-                    })
-                    .setMinSize(new Dimension(getWidth(), -1))
-                    .setMovable(false)
-                    .setResizable(false)
-                    .createPopup();
-            list.setBorder(IdeBorderFactory.createEmptyBorder(0));
-            myJBPopup.showUnderneathOf(this);
-            list.addFocusListener(new FocusAdapter() {
-                @Override
-                public void focusLost(FocusEvent e) {
-                    myJBPopup.cancel();
-                }
-            });
-        }
-        return;
+      if (visible && (myJBPopup == null || myJBPopup.isDisposed())) {
+        final JBList list = new JBList(getModel());
+        myJBPopup = JBPopupFactory.getInstance()
+          .createListPopupBuilder(list)
+          .setItemChoosenCallback(new Runnable() {
+            @Override
+            public void run() {
+              final Object value = list.getSelectedValue();
+              if (value != null) {
+                configureEditor(getEditor(), value);
+              }
+            }
+          })
+          .setMinSize(new Dimension(getWidth(), -1))
+          .setMovable(false)
+          .setResizable(false)
+          .createPopup();
+        list.setBorder(IdeBorderFactory.createEmptyBorder(0));
+        myJBPopup.showUnderneathOf(this);
+        list.addFocusListener(new FocusAdapter() {
+          @Override
+          public void focusLost(FocusEvent e) {
+            myJBPopup.cancel();
+          }
+        });
+      }
+      return;
     }
 
     if (getModel().getSize() == 0 && visible) return;
@@ -151,7 +151,7 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
     super.removeNotify();
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     if (myJBPopup != null && myJBPopup.isVisible()) {
-        myJBPopup.cancel();
+      myJBPopup.cancel();
     }
   }
 
@@ -184,7 +184,7 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
   private static DialogWrapperDialog getParentDialog(Component c) {
     do {
       if (c == null || c instanceof DialogWrapperDialog) {
-          return (DialogWrapperDialog)c;
+        return (DialogWrapperDialog)c;
       }
       c = c.getParent();
     }
