@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,10 @@ package com.intellij.openapi.vcs.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Shows a notification balloon over one of version control related tool windows: Changes View or Version Control View.
@@ -76,7 +72,7 @@ public class VcsBalloonProblemNotifier implements Runnable {
   public void run() {
     final Collection<Project> projects;
     if (myProject != null) {
-      projects = Collections.singletonList(myProject);
+      doForProject(myProject);
     } else {
       doForProject(null);
     }
