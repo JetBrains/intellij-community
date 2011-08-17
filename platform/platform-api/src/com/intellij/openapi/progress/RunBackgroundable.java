@@ -16,10 +16,6 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,13 +36,15 @@ public class RunBackgroundable {
     boolean canceled = true;
     try {
       task.run(pi);
-      if (pooledContinuation != null) {
-        pooledContinuation.run();
-      }
       canceled = pi != null && pi.isCanceled();
     } catch (ProcessCanceledException e) {
       //
+    } finally {
+      if (pooledContinuation != null) {
+        pooledContinuation.run();
+      }
     }
+
     final boolean finalCanceled = canceled;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
