@@ -185,11 +185,6 @@ public class MockDocument implements DocumentEx {
   }
 
   @Override
-  public boolean stripTrailingSpaces(boolean inChangedLinesOnly) {
-    return true;
-  }
-
-  @Override
   public void setStripTrailingSpacesEnabled(boolean isEnabled) {
   }
 

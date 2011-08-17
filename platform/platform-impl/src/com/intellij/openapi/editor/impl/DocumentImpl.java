@@ -15,32 +15,33 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.DocumentRunnable;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
+import com.intellij.openapi.editor.ReadOnlyModificationException;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
@@ -120,60 +121,67 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public void setStripTrailingSpacesEnabled(boolean isEnabled) {
     isStripTrailingSpacesEnabled = isEnabled;
   }
+  
+  @TestOnly
+  public boolean stripTrailingSpaces() {
+    return stripTrailingSpaces(null, false, false, -1, -1);
+  }
 
-  public boolean stripTrailingSpaces(boolean inChangedLinesOnly) {
+  /**
+   * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret being in the way
+   */
+  public boolean stripTrailingSpaces(@Nullable final Project project,
+                                     boolean inChangedLinesOnly,
+                                     boolean virtualSpaceEnabled,
+                                     int caretLine,
+                                     int caretOffset) {
     if (!isStripTrailingSpacesEnabled) {
       return true;
     }
 
-    DataContext dataContext = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getFocusOwner());
-    Editor activeEditor = PlatformDataKeys.EDITOR.getData(dataContext);
-
-    // when virtual space enabled, we can strip whitespace anywhere
-    boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();
-
-    VisualPosition visualCaret = activeEditor == null ? null : activeEditor.getCaretModel().getVisualPosition();
-    int caretLine = activeEditor == null ? -1 : activeEditor.getCaretModel().getLogicalPosition().line;
-
     boolean markAsNeedsStrippingLater = false;
     CharSequence text = myText.getCharArray();
-    for (int line = 0; line < myLineSet.getLineCount(); line++) {
-      if (inChangedLinesOnly && !myLineSet.isModified(line)) continue;
-      int whiteSpaceStart = -1;
-      final int lineEnd = myLineSet.getLineEnd(line) - myLineSet.getSeparatorLength(line);
-      int lineStart = myLineSet.getLineStart(line);
-      for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
-        char c = text.charAt(offset);
-        if (c != ' ' && c != '\t') {
-          break;
-        }
-        whiteSpaceStart = offset;
-      }
-      if (whiteSpaceStart == -1) continue;
-      if (!isVirtualSpaceEnabled && caretLine == line && activeEditor != null && whiteSpaceStart < activeEditor.getCaretModel().getOffset()) {
-        // mark this as a document that needs stripping later
-        // otherwise the caret would jump madly
-        markAsNeedsStrippingLater = true;
-      }
-      else {
-        final int finalStart = whiteSpaceStart;
-        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(this, activeEditor == null ? null : activeEditor.getProject()) {
-          public void run() {
-            CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-              public void run() {
-                deleteString(finalStart, lineEnd);
-              }
-            });
+    RangeMarker caretMarker = caretOffset < 0 ? null : createRangeMarker(caretOffset, caretOffset);
+    try {
+      for (int line = 0; line < myLineSet.getLineCount(); line++) {
+        if (inChangedLinesOnly && !myLineSet.isModified(line)) continue;
+        int whiteSpaceStart = -1;
+        final int lineEnd = myLineSet.getLineEnd(line) - myLineSet.getSeparatorLength(line);
+        int lineStart = myLineSet.getLineStart(line);
+        for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
+          char c = text.charAt(offset);
+          if (c != ' ' && c != '\t') {
+            break;
           }
-        });
-        text = myText.getCharArray();
+          whiteSpaceStart = offset;
+        }
+        if (whiteSpaceStart == -1) continue;
+        if (!virtualSpaceEnabled && caretLine == line && caretMarker != null &&
+            caretMarker.getStartOffset() >= 0 && whiteSpaceStart < caretMarker.getStartOffset()) {
+          // mark this as a document that needs stripping later
+          // otherwise the caret would jump madly
+          markAsNeedsStrippingLater = true;
+        }
+        else {
+          final int finalStart = whiteSpaceStart;
+          ApplicationManager
+            .getApplication().runWriteAction(new DocumentRunnable(this, project) {
+            public void run() {
+              CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+                public void run() {
+                  deleteString(finalStart, lineEnd);
+                }
+              });
+            }
+          });
+          text = myText.getCharArray();
+        }
       }
     }
-
-    if (!ShutDownTracker.isShutdownHookRunning() && activeEditor != null) {
-      activeEditor.getCaretModel().moveToVisualPosition(visualCaret);
+    finally {
+      if (caretMarker != null) caretMarker.dispose();
     }
-    return !markAsNeedsStrippingLater;
+    return markAsNeedsStrippingLater;
   }
 
   public void setReadOnly(boolean isReadOnly) {

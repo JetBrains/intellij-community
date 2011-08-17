@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.actions.updown;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -119,7 +119,7 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
     new WriteCommandAction(getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
-        ((DocumentEx)myFixture.getEditor().getDocument()).stripTrailingSpaces(false);
+        ((DocumentImpl)myFixture.getEditor().getDocument()).stripTrailingSpaces();
       }
     }.execute();
   }

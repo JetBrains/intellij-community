@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -480,7 +481,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       public void run() {
         getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
         if (stripTrailingSpaces) {
-          ((DocumentEx)myEditor.getDocument()).stripTrailingSpaces(false);
+          ((DocumentImpl)myEditor.getDocument()).stripTrailingSpaces();
         }
 
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -522,7 +523,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         String newFileText1 = newFileText;
         if (stripTrailingSpaces) {
           Document document1 = EditorFactory.getInstance().createDocument(newFileText);
-          ((DocumentEx)document1).stripTrailingSpaces(false);
+          ((DocumentImpl)document1).stripTrailingSpaces();
           newFileText1 = document1.getText();
         }
 

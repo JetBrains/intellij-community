@@ -3,7 +3,7 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jdom.Element;
 
@@ -90,7 +90,7 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ((DocumentImpl)getEditor().getDocument()).stripTrailingSpaces(true);
+        TrailingSpacesStripper.stripIfNotCurrentLine(getEditor().getDocument(), true);
       }
     });
   }
