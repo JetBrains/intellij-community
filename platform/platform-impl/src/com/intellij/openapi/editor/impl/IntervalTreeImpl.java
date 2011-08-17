@@ -17,7 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.WalkingState;
+import com.intellij.util.WalkingState;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;

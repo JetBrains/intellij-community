@@ -17,6 +17,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.WalkingState;
 import org.jetbrains.annotations.NotNull;
 
 /**

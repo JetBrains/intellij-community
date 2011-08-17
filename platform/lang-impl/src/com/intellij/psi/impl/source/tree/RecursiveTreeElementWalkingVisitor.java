@@ -17,7 +17,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.WalkingState;
+import com.intellij.util.WalkingState;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisitor {

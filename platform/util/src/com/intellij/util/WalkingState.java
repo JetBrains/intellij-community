@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.intellij.psi;
+package com.intellij.util;
 
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 /**
