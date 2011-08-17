@@ -21,11 +21,7 @@ import org.netbeans.lib.cvsclient.io.StreamUtilities;
 import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.*;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.net.NoRouteToHostException;
-import java.net.Socket;
-import java.text.MessageFormat;
+import java.net.*;
 
 /**
  * Implements a connection to a pserver. See the cvs documents for more
@@ -37,10 +33,6 @@ import java.text.MessageFormat;
  */
 public final class PServerConnection
   implements IConnection {
-
-  // Constants ==============================================================
-
-  private static final int DEFAULT_PORT = 2401;
 
   // Fields =================================================================
 
@@ -186,16 +178,27 @@ public final class PServerConnection
 
       response = removePrefix(response, "error ");
       response = removePrefix(response, "E ");
-      throw new UnknownUserException(getMessage(JavaCvsSrcBundle.message("authentication.failed.error.message"), response));
+      throw new AuthenticationException(JavaCvsSrcBundle.message("authentication.failed.error.message", response));
     }
     catch (ConnectException ex) {
-      throw new AuthenticationException(getMessage(JavaCvsSrcBundle.message("cannot.connect.to.host.error.message"), connectionSettings.getHostName()), ex);
+      throw new AuthenticationException(JavaCvsSrcBundle.message("cannot.connect.to.host.error.message",
+                                                                 connectionSettings.getHostName()), ex);
     }
     catch (NoRouteToHostException ex) {
-      throw new AuthenticationException(getMessage(JavaCvsSrcBundle.message("no.route.to.host.error.message"), connectionSettings.getHostName()), ex);
+      throw new AuthenticationException(JavaCvsSrcBundle.message("no.route.to.host.error.message",
+                                                                 connectionSettings.getHostName()), ex);
+    }
+    catch (UnknownHostException ex) {
+      throw new AuthenticationException(JavaCvsSrcBundle.message("unknown.host.error.message",
+                                                                 connectionSettings.getHostName()), ex);
+    }
+    catch (SocketTimeoutException ex) {
+      throw new AuthenticationException(JavaCvsSrcBundle.message("timeout.error.message",
+                                                                 connectionSettings.getHostName()), ex);
     }
     catch (IOException ex) {
-      throw new AuthenticationException(getMessage(JavaCvsSrcBundle.message("i.o.error.while.connecting.to.host.error.mesage"), connectionSettings.getHostName()), ex);
+      throw new AuthenticationException(JavaCvsSrcBundle.message("i.o.error.while.connecting.to.host.error.message",
+                                                                 connectionSettings.getHostName()), ex);
     }
     finally {
       if (error) {
@@ -235,9 +238,5 @@ public final class PServerConnection
       return response.substring(prefix.length());
     }
     return response;
-  }
-
-  private static String getMessage(String messagePattern, String value) {
-    return MessageFormat.format(messagePattern, new Object[]{value});
   }
 }
