@@ -1142,7 +1142,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         private VirtualFile[] myRootsBefore;
-        private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, conn);
+        private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
 
         public void beforeRootsChange(final ModuleRootEvent event) {
           try {
