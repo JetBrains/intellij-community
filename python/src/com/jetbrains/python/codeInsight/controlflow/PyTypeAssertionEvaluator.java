@@ -54,6 +54,21 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         }
       }
     }
+    else if (node.isCalleeText(PyNames.CALLABLE_BUILTIN)) {
+      final PyExpression[] args = node.getArguments();
+      if (args.length == 1 && args[0] instanceof PyReferenceExpression) {
+        final PyReferenceExpression target = (PyReferenceExpression)args[0];
+        final boolean positive = myPositive;
+        pushAssertion(target, new Function<TypeEvalContext, PyType>() {
+          @Override
+          public PyType fun(TypeEvalContext context) {
+            final List<PyType> types = new ArrayList<PyType>();
+            types.add(PyTypeParser.getTypeByName(target, PyNames.CALLABLE));
+            return createAssertionType(context.getType(target), types, positive, context);
+          }
+        });
+      }
+    }
   }
 
   @Override

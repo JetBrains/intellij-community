@@ -28,12 +28,12 @@ public class PyCallingNonCallableInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder);
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(@NotNull ProblemsHolder holder) {
+      super(holder);
     }
 
     @Override

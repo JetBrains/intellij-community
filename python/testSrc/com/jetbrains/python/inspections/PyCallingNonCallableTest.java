@@ -34,6 +34,11 @@ public class PyCallingNonCallableTest extends PyLightFixtureTestCase {
   public void testNamedTupleCallable() {
     doTest();
   }
+
+  // PY-3892
+  public void testCallableCheck() {
+    doTest();
+  }
   
   public void testClassMethodFirstParam() {
     doTest();
