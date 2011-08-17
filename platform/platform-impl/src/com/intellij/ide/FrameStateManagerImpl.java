@@ -42,7 +42,7 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     myApp = app;
     myActive = new BusyObject.Impl() {
       @Override
-      protected boolean isReady() {
+      public boolean isReady() {
         return myApp.isActive();
       }
     };

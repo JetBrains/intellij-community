@@ -16,6 +16,7 @@
 
 package com.intellij.ide.projectView;
 
+import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -182,11 +183,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     final FocusRequestor requestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
 
+    UiActivityMonitor.getInstance().addActivity(myProject, "projectViewSelect");
     cancelUpdate().doWhenDone(new Runnable() {
       public void run() {
         batch(new Progressive() {
           public void run(@NotNull ProgressIndicator indicator) {
             _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
+            UiActivityMonitor.getInstance().removeActivity(myProject, "projectViewSelect");
           }
         });
       }
@@ -197,7 +200,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return result;
   }
 
-  private void _select(Object element,
+  private void _select(final Object element,
                        final VirtualFile file,
                        final boolean requestFocus,
                        final Condition<AbstractTreeNode> nonStopCondition,
@@ -206,11 +209,11 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                        @Nullable final Ref<Object> virtualSelectTarget,
                        final FocusRequestor focusRequestor,
                        final boolean isSecondAttempt) {
-    AbstractTreeNode alreadySelected = alreadySelectedNode(element);
+    final AbstractTreeNode alreadySelected = alreadySelectedNode(element);
 
     final Runnable onDone = new Runnable() {
       public void run() {
-        if (requestFocus && virtualSelectTarget == null) {
+        if (requestFocus && virtualSelectTarget == null && getUi().isReady()) {
           focusRequestor.requestFocus(getTree(), true);
         }
 

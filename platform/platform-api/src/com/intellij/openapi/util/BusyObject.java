@@ -28,11 +28,11 @@ public interface BusyObject {
 
   ActionCallback getReady(@NotNull Object requestor);
 
-  public abstract static class Impl implements BusyObject {
+  abstract class Impl implements BusyObject {
 
     private final Map<Object, ActionCallback> myReadyCallbacks = new WeakHashMap<Object, ActionCallback>();
 
-    protected abstract boolean isReady();
+    public abstract boolean isReady();
 
     public final void onReady() {
       onReady(null);
@@ -53,6 +53,11 @@ public interface BusyObject {
           each.setDone();
         }
       }
+
+      onReadyWasSent();
+    }
+
+    protected void onReadyWasSent() {
     }
 
     public final ActionCallback getReady(@NotNull Object requestor) {
@@ -104,7 +109,7 @@ public interface BusyObject {
       private AtomicInteger myBusyCount = new AtomicInteger();
 
       @Override
-      protected boolean isReady() {
+      public boolean isReady() {
         return myBusyCount.get() == 0;
       }
 

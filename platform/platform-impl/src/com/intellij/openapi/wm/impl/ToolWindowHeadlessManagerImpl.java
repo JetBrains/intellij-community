@@ -74,7 +74,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public ActionCallback getReady(Object requestor) {
+    public ActionCallback getReady(@NotNull Object requestor) {
       return new ActionCallback.Done();
     }
 
@@ -182,7 +182,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   @NonNls private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManager() {
 
     @Override
-    public ActionCallback getReady(Object requestor) {
+    public ActionCallback getReady(@NotNull Object requestor) {
       return new ActionCallback.Done();
     }
 

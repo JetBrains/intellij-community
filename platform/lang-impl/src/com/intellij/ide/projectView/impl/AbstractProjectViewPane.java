@@ -658,7 +658,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @Override
-  public ActionCallback getReady(Object requestor) {
+  public ActionCallback getReady(@NotNull Object requestor) {
     return myTreeBuilder.getUi().getReady(requestor);
   }
 }

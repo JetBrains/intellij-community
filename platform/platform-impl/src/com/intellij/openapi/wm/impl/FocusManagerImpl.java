@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.UiActivityMonitor;
 import com.intellij.internal.focus.FocusTracesAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -172,6 +173,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
     final ActionCallback result = new ActionCallback();
 
+    UiActivityMonitor.getInstance().addActivity("focus");
     if (!forced) {
       if (!myFocusRequests.contains(command)) {
         myFocusRequests.add(command);
@@ -538,6 +540,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         }
         break;
       }
+    }
+    
+    if (isFocusTransferReady()) {
+      UiActivityMonitor.getInstance().removeActivity("focus");
     }
   }
 

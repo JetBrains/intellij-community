@@ -177,6 +177,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
 
     myNodeQueue.add(toAdd);
+    myTreeBuilder.getUi().addActivity();
 
     myUpdateCount = newUpdateCount;
     toAdd.setUpdateStamp(myUpdateCount);

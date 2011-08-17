@@ -79,7 +79,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private BusyObject.Impl myBusyObject = new BusyObject.Impl() {
     @Override
-    protected boolean isReady() {
+    public boolean isReady() {
       return myCurrentDragSession == null;
     }
   };

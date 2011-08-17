@@ -1854,7 +1854,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   }
 
   @Override
-  public ActionCallback getReady(Object requestor) {
+  public ActionCallback getReady(@NotNull Object requestor) {
     AbstractProjectViewPane pane = myId2Pane.get(myCurrentViewSubId);
     return pane != null ? pane.getReady(requestor) : new ActionCallback.Done();
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.playback;
 
+import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -22,11 +23,8 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import org.jdom.JDOMException;
 
 import java.awt.*;
 import java.io.File;
@@ -92,7 +90,8 @@ public class PlaybackCallFacade {
   public static AsyncResult<String> printFocus(final PlaybackContext context) {
     final AsyncResult result = new AsyncResult<String>();
 
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
+    UiActivityMonitor.getInstance().getBusy().getReady(context).doWhenProcessed(new Runnable() {
+      @Override
       public void run() {
         final LinkedHashMap<String, String> focusInfo = getFocusInfo();
         if (focusInfo == null) {
@@ -132,7 +131,8 @@ public class PlaybackCallFacade {
       }
     }
 
-    IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
+    UiActivityMonitor.getInstance().getBusy().getReady(context).doWhenDone(new Runnable() {
+      @Override
       public void run() {
         try {
           doAssert(expectedMap, result, context);

@@ -67,7 +67,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private ActionCallback myActivation = new ActionCallback.Done();
   private BusyObject.Impl myShowing = new BusyObject.Impl() {
     @Override
-    protected boolean isReady() {
+    public boolean isReady() {
       return myComponent != null && myComponent.isShowing();
     }
   };

@@ -83,6 +83,10 @@
     </component>
 
     <component>
+      <implementation-class>com.intellij.ide.UiActivityMonitor</implementation-class>
+    </component>
+
+    <component>
       <implementation-class>com.intellij.diagnostic.PerformanceWatcher</implementation-class>
     </component>
 

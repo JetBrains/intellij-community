@@ -16,6 +16,7 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -155,8 +156,13 @@ public class AbstractTreeUi {
   private final ActionCallback myInitialized = new ActionCallback();
   private final BusyObject.Impl myBusyObject = new BusyObject.Impl() {
     @Override
-    protected boolean isReady() {
+    public boolean isReady() {
       return AbstractTreeUi.this.isReady(true);
+    }
+
+    @Override
+    protected void onReadyWasSent() {
+      removeActivity();
     }
   };
 
@@ -195,6 +201,7 @@ public class AbstractTreeUi {
       maybeReady();
     }
   };
+  private UiActivityMonitor myActivityMonitor;
 
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
@@ -4563,6 +4570,27 @@ public class AbstractTreeUi {
   }
 
 
+  public void addActivity() {
+    getActivityMonitor().addActivity(this);
+  }
+
+  private UiActivityMonitor getActivityMonitor() {
+    if (myActivityMonitor == null) {
+      UiActivityMonitor appMonitor = UiActivityMonitor.getInstance();
+      if (appMonitor != null) {
+        myActivityMonitor = appMonitor;
+      } else {
+        myActivityMonitor = new UiActivityMonitor();
+      }
+    }
+
+    return myActivityMonitor;
+  }
+
+  public void removeActivity() {
+    getActivityMonitor().removeActivity(this);
+  }
+
   private void _addNodeAction(Object element, NodeAction action, Map<Object, List<NodeAction>> map) {
     maybeSetBusyAndScheduleWaiterForReady(true, element);
     List<NodeAction> list = map.get(element);
@@ -4571,6 +4599,8 @@ public class AbstractTreeUi {
       map.put(element, list);
     }
     list.add(action);
+
+    addActivity();
   }
 
 
