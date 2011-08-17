@@ -470,7 +470,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   private boolean executeRebase(final List<VcsException> exceptions, RebaseInfo rebaseInfo) {
     // TODO this is a workaround to attach PushActiveBranched to the new update.
     // at first we update via rebase
-    boolean result = new GitUpdateProcess(myProject, new EmptyProgressIndicator(), rebaseInfo.roots, UpdatedFiles.create()).update(true, true);
+    boolean result = new GitUpdateProcess(myProject, new EmptyProgressIndicator(), rebaseInfo.roots, UpdatedFiles.create()).update(true);
 
     // then we reorder commits
     if (result) {

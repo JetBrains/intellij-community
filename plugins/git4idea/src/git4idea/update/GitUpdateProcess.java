@@ -80,7 +80,7 @@ public class GitUpdateProcess {
    * In case of error shows notification and returns false. If update completes without errors, returns true.
    */
   public boolean update() {
-    return update(false, true);
+    return update(false);
   }
 
   /**
@@ -92,10 +92,11 @@ public class GitUpdateProcess {
    * 4. Updates via 'git pull' or equivalent.
    * 5. Restores local changes if update completed or failed with error. If update is incomplete, i.e. some unmerged files remain,
    * local changes are not restored.
+   *
    * @param forceRebase
    * @return
    */
-  public boolean update(final boolean forceRebase, final boolean restoreChangesRightNow) {
+  public boolean update(final boolean forceRebase) {
     LOG.info("update started|" + (forceRebase ? " force rebase" : ""));
 
     if (!fetchAndNotify()) {
@@ -184,7 +185,7 @@ public class GitUpdateProcess {
     return success;
   }
 
-  public void restoreLocalChanges(ContinuationContext context) {
+  private void restoreLocalChanges(ContinuationContext context) {
     context.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
       @Override
       public void consume(VcsException e) {
