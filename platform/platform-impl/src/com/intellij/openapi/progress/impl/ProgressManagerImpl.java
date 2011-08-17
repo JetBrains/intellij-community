@@ -429,11 +429,15 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
         getTask().run(myIndicator);
       }
       finally {
-        if (myIndicator instanceof ProgressIndicatorEx) {
-          ((ProgressIndicatorEx)myIndicator).finish(getTask());
+        try {
+          if (myIndicator instanceof ProgressIndicatorEx) {
+            ((ProgressIndicatorEx)myIndicator).finish(getTask());
+          }
         }
-        if (myContinuation != null) {
-          myContinuation.run();
+        finally {
+          if (myContinuation != null) {
+            myContinuation.run();
+          }
         }
       }
     }
