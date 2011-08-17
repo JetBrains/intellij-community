@@ -24,15 +24,11 @@ import com.intellij.psi.PsiFile;
 /**
  * @author peter
  */
-public class BasicToClassNameDelegator extends AbstractBasicToClassNameDelegator {
+public class XmlBasicToClassNameDelegator extends AbstractBasicToClassNameDelegator {
 
   @Override
   protected boolean isClassNameCompletionSupported(CompletionResultSet result, PsiFile file, PsiElement position) {
     if (!JavaCompletionContributor.mayStartClassName(result, false)) return false;
-
-    if (file.getLanguage() == StdLanguages.JAVA) {
-      return JavaCompletionContributor.isClassNamePossible(position);
-    }
 
     return file.getLanguage().isKindOf(StdLanguages.XML);
   }
