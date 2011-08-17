@@ -25,6 +25,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 
 /**
  * User: spLeaner
@@ -176,31 +177,59 @@ public class MacStatusBarUI extends StatusBarUI implements Activatable {
     private static final Color INACTIVE_BORDER2_TOP_COLOR = new Color(251, 251, 251);
 
     private static final Insets INSETS = new Insets(0, 0, 0, 0);
+    
+    private static BufferedImage ACTIVE_CACHE;
+    private static BufferedImage INACTIVE_CACHE;
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      final Graphics2D g2d = (Graphics2D) g.create();
+      final Graphics2D g2d = (Graphics2D) g;
+      final Rectangle clip = g.getClipBounds();
       final boolean active = isActive(c);
 
-      final Color top = active ? ACTIVE_TOP_COLOR : INACTIVE_TOP_COLOR;
-      final Color bottom = active ? ACTIVE_BOTTOM_COLOR : INACTIVE_BOTTOM_COLOR;
+      BufferedImage img = active ? ACTIVE_CACHE : INACTIVE_CACHE;
 
-      UIUtil.fillVerticalGradient(g, x, y, width, height, top, bottom);
+      if (img == null || img.getHeight() != height) {
+        final Color top = active ? ACTIVE_TOP_COLOR : INACTIVE_TOP_COLOR;
+        final Color bottom = active ? ACTIVE_BOTTOM_COLOR : INACTIVE_BOTTOM_COLOR;
+        img = getSample(height, top, bottom);
+
+        if (active) {
+          ACTIVE_CACHE = img;
+        }
+        else {
+          INACTIVE_CACHE = img;
+        }
+      }
+
+
+      final Graphics2D g2 = (Graphics2D)g;
+      for (int i = clip.x; i < clip.x + clip.width; i += 50) {
+        g2.drawImage(img, null, i, y);
+      }
 
       if (active) {
         g2d.setColor(ACTIVE_BORDER_TOP_COLOR);
-        g2d.drawLine(0, 0, width, 0);
+        g2d.drawLine(clip.x, 0, clip.width, 0);
 
         g2d.setColor(ACTIVE_BORDER2_TOP_COLOR);
-        g2d.drawLine(0, 1, width, 1);
+        g2d.drawLine(clip.x, 1, clip.width, 1);
       } else {
         g2d.setColor(INACTIVE_BORDER_TOP_COLOR);
-        g2d.drawLine(0, 0, width, 0);
+        g2d.drawLine(clip.x, 0, clip.width, 0);
 
         g2d.setColor(INACTIVE_BORDER2_TOP_COLOR);
-        g2d.drawLine(0, 1, width, 1);
+        g2d.drawLine(clip.x, 1, clip.width, 1);
       }
 
       g2d.dispose();
+    }
+
+    private static BufferedImage getSample(int height, Color top, Color bottom) {
+      BufferedImage img = new BufferedImage(50, height, BufferedImage.TYPE_INT_RGB);
+      Graphics2D imageGraphics = (Graphics2D)img.getGraphics();
+      imageGraphics.setPaint(new GradientPaint(0, 0, top, 0, height, bottom));
+      imageGraphics.fillRect(0, 0, 50, height);
+      return img;
     }
 
     public Insets getBorderInsets(Component c) {

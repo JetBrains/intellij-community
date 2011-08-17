@@ -158,24 +158,6 @@ public class UIUtil {
     }
   }
 
-  public static void fillVerticalGradient(final Graphics g,
-                                          final int x,
-                                          final int y,
-                                          final int width,
-                                          final int height,
-                                          final Color top,
-                                          final Color bottom) {
-    BufferedImage img = new BufferedImage(50, height, BufferedImage.TYPE_INT_RGB);
-    Graphics2D imageGraphics = (Graphics2D)img.getGraphics();
-    imageGraphics.setPaint(new GradientPaint(0, 0, top, 0, height, bottom));
-    imageGraphics.fillRect(0, 0, 50, height);
-
-    final Graphics2D g2 = (Graphics2D)g;
-    for (int i = x; i < x + width; i += 50) {
-      g2.drawImage(img, null, i, y);
-    }
-  }
-
   public static boolean isReallyTypedEvent(KeyEvent e) {
     char c = e.getKeyChar();
     if (!(c >= 0x20 && c != 0x7F)) return false;
