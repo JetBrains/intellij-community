@@ -206,7 +206,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     });
     myRunnerPanel = new JPanel(new BorderLayout());
     myRunnerPanel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
-    myRunnerPanel.add(new JLabel("Choose coverage runner:"), BorderLayout.NORTH);
+    myRunnerPanel.add(new JLabel("Choose coverage runner:"), BorderLayout.WEST);
     myRunnerPanel.add(myCoverageRunnerCb, BorderLayout.CENTER);
     final JPanel cPanel = new JPanel(new VerticalFlowLayout());
 
@@ -238,7 +238,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
     result.add(myRunnerPanel);
 
-    JPanel panel = new JPanel(new VerticalFlowLayout());
+    JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
     panel.setBorder(IdeBorderFactory.createTitledBorder(ExecutionBundle.message("record.coverage.filters.title"), false, false, true));
     myClassFilterEditor = new MyClassFilterEditor(myProject);
     panel.add(myClassFilterEditor);
