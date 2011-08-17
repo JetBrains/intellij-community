@@ -29,7 +29,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   protected static final int NULL_ID = 0;
 
   private static final int DIRTY_MAGIC = 0xbabe0589;
-  private static final int VERSION = 5;
+  private static final int VERSION = 6;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac + VERSION;
 
   private static final int FIRST_VECTOR_OFFSET = DATA_START;
@@ -81,7 +81,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     }
   }
 
-  protected int enumerateImpl(final Data value, final boolean saveNewValue) throws IOException {
+  protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     try {
       int depth = 0;
       final int valueHC = myDataDescriptor.getHashCode(value);
@@ -106,7 +106,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
 
       if (vector == 0) {
         // Empty slot
-        if (!saveNewValue) {
+        if (onlyCheckForExisting) {
           return NULL_ID;
         }
         final int newId = writeData(value, valueHC);
@@ -133,7 +133,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
         }
         while (collision != 0);
 
-        if (!saveNewValue) {
+        if (onlyCheckForExisting) {
           return NULL_ID;
         }
 

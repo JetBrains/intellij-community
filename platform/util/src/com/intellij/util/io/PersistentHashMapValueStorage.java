@@ -19,6 +19,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
@@ -67,37 +68,66 @@ public class PersistentHashMapValueStorage {
     }
   }
 
+  private long smallWrites;
+  private int smallWritesCount;
+  private long largeWrites;
+  private int largeWritesCount;
+  private int requests;
+
+  private static final int POSITIVE_VALUE_SHIFT = 1;
+  private static final int BYTE_LENGTH_INT_ADDRESS = 1 + 4;
+  private static final int INT_LENGTH_LONG_ADDRESS = 4 + 8;
+
   public long appendBytes(ByteSequence data, long prevChunkAddress) throws IOException {
     assert !myCompactionMode;
     long result = mySize;
     final CacheValue<DataOutputStream> appender = ourAppendersCache.get(myPath);
+    int dataLength = data.getLength();
+    int serviceFieldsSizeIncrease;
+
     try {
-      appender.get().writeLong(prevChunkAddress);
-      appender.get().writeInt(data.getLength());
-      appender.get().write(data.getBytes(), data.getOffset(), data.getLength());
+      DataOutputStream dataOutputStream = appender.get();
+      ++requests;
+      
+      if (dataLength + POSITIVE_VALUE_SHIFT < 0x80 && prevChunkAddress < Integer.MAX_VALUE) {
+        ++smallWritesCount;
+        smallWrites += dataLength;
+        dataOutputStream.write(-dataLength - POSITIVE_VALUE_SHIFT);
+        dataOutputStream.writeInt((int)prevChunkAddress);
+        serviceFieldsSizeIncrease = BYTE_LENGTH_INT_ADDRESS;
+      } else {
+        ++largeWritesCount;
+        largeWrites += dataLength;
+        dataOutputStream.writeInt(dataLength);
+        dataOutputStream.writeLong(prevChunkAddress);
+        serviceFieldsSizeIncrease = INT_LENGTH_LONG_ADDRESS;
+      }
+      dataOutputStream.write(data.getBytes(), data.getOffset(), dataLength);
+      if (requests % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
+        IOStatistics.dump("Small writes:"+smallWritesCount +", bytes:"+smallWrites + ", largeWrites:"+largeWritesCount
+                          + ", bytes:"+largeWrites+", total:"+requests + "@"+myFile.getPath());
+      }
     }
     finally {
       appender.release();
     }
-    mySize += data.getLength() + 8 + 4;
+    mySize += dataLength + serviceFieldsSizeIncrease;
 
     return result;
   }
 
+  private final byte[] myBuffer = new byte[1024];
+
   /**
    * Reads bytes pointed by tailChunkAddress into result passed, returns new address if linked list compactification have been performed
    */
-  public long readBytes(long tailChunkAddress, byte[] result) throws IOException {
-    int size = result.length;
-    if (size == 0) return tailChunkAddress;
-
+  public Pair<Long, byte[]> readBytes(long tailChunkAddress) throws IOException {    
     force();
 
-    int bytesRead = 0;
     long chunk = tailChunkAddress;
     int chunkCount = 0;
 
-    byte[] headerBits = new byte[8 + 4];
+    byte[] result = null;
     RAReader reader = myCompactionModeReader;
     CacheValue<RAReader> readerHandle = null;
     if (reader == null) {
@@ -107,16 +137,37 @@ public class PersistentHashMapValueStorage {
 
     try {
       while (chunk != 0) {
-        reader.get(chunk, headerBits, 0, 12);
-        final long prevChunkAddress = Bits.getLong(headerBits, 0);
-        final int chunkSize = Bits.getInt(headerBits, 8);
-        final int off = size - bytesRead - chunkSize;
+        int len = (int)Math.min(myBuffer.length, mySize - chunk);
+        reader.get(chunk, myBuffer, 0, len);
 
-        checkPreconditions(result, chunkSize, off);
+        final int sizePart = myBuffer[0];
+        final long prevChunkAddress;
+        final int chunkSize;
 
-        reader.get(chunk + 12, result, off, chunkSize);
+        if (sizePart < 0) {
+          chunkSize = -sizePart - POSITIVE_VALUE_SHIFT;
+          prevChunkAddress = Bits.getInt(myBuffer, 1);
+          byte[] b = new byte[(result != null ? result.length:0) + chunkSize];
+          if (result != null) System.arraycopy(result, 0, b, b.length - result.length, result.length);
+          result = b;
+
+          checkPreconditions(result, chunkSize, 0);
+          System.arraycopy(myBuffer, BYTE_LENGTH_INT_ADDRESS, result, 0, chunkSize);
+        } else {
+          chunkSize = Bits.getInt(myBuffer, 0);
+          prevChunkAddress = Bits.getLong(myBuffer, 4);
+          byte[] b = new byte[(result != null ? result.length:0) + chunkSize];
+          if (result != null) System.arraycopy(result, 0, b, b.length - result.length, result.length);
+          result = b;
+
+          if (chunkSize < myBuffer.length - INT_LENGTH_LONG_ADDRESS) {
+            System.arraycopy(myBuffer, INT_LENGTH_LONG_ADDRESS, result, 0, chunkSize);
+          } else {
+            reader.get(chunk + INT_LENGTH_LONG_ADDRESS, result, 0, chunkSize);
+          }
+        }
+
         chunk = prevChunkAddress;
-        bytesRead += chunkSize;
         chunkCount++;
       }
     }
@@ -126,16 +177,16 @@ public class PersistentHashMapValueStorage {
       }
     }
 
-    //assert bytesRead == size;
-    if (bytesRead != size) {
-      throw new IOException("Read from storage " + bytesRead + " bytes, but requested " + size + " bytes");
-    }
-    
     if (chunkCount > 1 && !myCompactionMode) {
-      return appendBytes(new ByteSequence(result), 0);
+      long l = appendBytes(new ByteSequence(result), 0);
+      return new Pair<Long, byte[]>(l, result);
     }
 
-    return tailChunkAddress;
+    return new Pair<Long, byte[]>(tailChunkAddress, result);
+  }
+
+  public long getSize() {
+    return mySize;
   }
 
   private static void checkPreconditions(final byte[] result, final int chunkSize, final int off) throws IOException {

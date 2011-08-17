@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,6 +25,9 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
+import gnu.trove.TIntHash;
+import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +42,7 @@ import java.util.List;
  */
 public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentHashMap");
+
   private PersistentHashMapValueStorage myValueStorage;
   private final DataExternalizer<Value> myValueExternalizer;
   private static final long NULL_ADDR = 0;
@@ -49,9 +54,17 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @NonNls
   public static final String DATA_FILE_EXTENSION = ".values";
-  private int myGarbageSize;
+  private long myLiveAndGarbageKeysCounter; // first four bytes contain live keys count (updated via LIVE_KEY_MASK), last four bytes - number of dead keys
+  private static final long LIVE_KEY_MASK = (1L << 32);
+  private static final long USED_LONG_VALUE_MASK = 1L << 62;
+  private static final int POSITIVE_VALUE_SHIFT = 1;
   private final int myParentValueRefOffset;
   private final byte[] myRecordBuffer;
+  private final byte[] mySmallRecordBuffer;
+  private final boolean myCanReEnumerate;
+  private int myWatermarkId;
+  private boolean myIntAddressForNewRecord;
+  private static final boolean doHardConsistencyChecks = false;
 
   private static class AppendStream extends DataOutputStream {
     private AppendStream() {
@@ -88,7 +101,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     public void cleanup(final AppendStream appendStream) {
       appendStream.reset();
     }
-  });
+  });  
 
   private final SLRUCache<Key, AppendStream> myAppendCache = new SLRUCache<Key, AppendStream>(16 * 1024, 4 * 1024) {
     @NotNull
@@ -98,15 +111,16 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
     protected void onDropFromCache(final Key key, final AppendStream value) {
       try {
-        final int id = enumerate(key);
-        HeaderRecord headerRecord = readValueId(id);
-
         final ByteSequence bytes = value.getInternalBuffer();
+        final int id = enumerate(key);
+        HeaderRecord oldHeaderRecord = readValueId(id);
 
-        headerRecord.size += bytes.getLength();
-        headerRecord.address = myValueStorage.appendBytes(bytes, headerRecord.address);
+        HeaderRecord headerRecord = new HeaderRecord(
+          myValueStorage.appendBytes(bytes, oldHeaderRecord.address)
+        );
 
-        updateValueId(id, headerRecord);
+        updateValueId(id, headerRecord, oldHeaderRecord, key, 0);
+        if (oldHeaderRecord == HeaderRecord.EMPTY) myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
 
         myStreamPool.recycle(value);
       }
@@ -115,6 +129,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
     }
   };
+
+  private boolean canUseIntAddressForNewRecord(long size) {
+    return myCanReEnumerate ? size + POSITIVE_VALUE_SHIFT < Integer.MAX_VALUE: false;
+  }
 
   private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
     public void force() {
@@ -136,8 +154,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
     final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
-    myRecordBuffer = new byte[myParentValueRefOffset + 8 + 4];
-    
+    myRecordBuffer = new byte[myParentValueRefOffset + 8];
+    mySmallRecordBuffer = new byte[myParentValueRefOffset + 4];
+
     myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase>() {
       @Override
       int recordWriteOffset(PersistentEnumeratorBase enumerator, byte[] buf) {
@@ -146,13 +165,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
       @Override
       byte[] getRecordBuffer(PersistentEnumeratorBase enumerator) {
-        return myRecordBuffer;
+        return myIntAddressForNewRecord ? mySmallRecordBuffer : myRecordBuffer;
       }
 
       @Override
       void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, byte[] buf) {
         recordHandler.setupRecord(enumerator, hashCode, dataOffset, buf);
-        for (int i = myParentValueRefOffset; i < myRecordBuffer.length; i++) {
+        for (int i = myParentValueRefOffset; i < buf.length; i++) {
           buf[i] = 0;
         }
       }
@@ -162,7 +181,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       new Flushable() {
         @Override
         public void flush() throws IOException {
-          myEnumerator.putMetaData(myGarbageSize);
+          myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
+          myEnumerator.putMetaData2(myWatermarkId);
         }
       }
     );
@@ -170,7 +190,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     try {
       myValueExternalizer = valueExternalizer;
       myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath());
-      myGarbageSize = myEnumerator.getMetaData();
+      myLiveAndGarbageKeysCounter = myEnumerator.getMetaData();
+      myWatermarkId = (int)myEnumerator.getMetaData2();
+      myCanReEnumerate = myEnumerator.canReEnumerate();
 
       if (makesSenseToCompact()) {
         compact();
@@ -186,7 +208,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   public int getGarbageSize() {
-    return myGarbageSize;
+    return (int)myLiveAndGarbageKeysCounter;
   }
 
   public File getBaseFile() {
@@ -195,7 +217,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   private boolean makesSenseToCompact() {
     final long fileSize = getDataFile(myEnumerator.myFile).length();
-    return fileSize > 5 * 1024 * 1024 && myGarbageSize * 2 > fileSize; // file is longer than 5MB and more than 50% of data is garbage
+    if (fileSize > 5 * 1024 * 1024) { // file is longer than 5MB and more than 50% of keys is garbage
+      int liveKeys = (int)(myLiveAndGarbageKeysCounter / LIVE_KEY_MASK);
+      int oldKeys = (int)(myLiveAndGarbageKeysCounter & 0xFFFFFFFF);
+      return oldKeys > liveKeys;
+    }
+    return false;
   }
 
   private static File checkDataFiles(final File file) {
@@ -228,19 +255,25 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myEnumerator.markDirty(true);
       myAppendCache.remove(key);
 
-      final int id = enumerate(key);
       final AppendStream record = new AppendStream();
       myValueExternalizer.save(record, value);
       final ByteSequence bytes = record.getInternalBuffer();
+      final int id = enumerate(key);
 
-      HeaderRecord header = readValueId(id);
-      myGarbageSize += header.size;
+      HeaderRecord oldheader = readValueId(id);
+      if (oldheader != HeaderRecord.EMPTY) myLiveAndGarbageKeysCounter++;
+      myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
 
-      header.size = bytes.getLength();
-      header.address = myValueStorage.appendBytes(bytes, 0);
+      HeaderRecord header = new HeaderRecord(myValueStorage.appendBytes(bytes, 0));
 
-      updateValueId(id, header);
+      updateValueId(id, header, oldheader, key, 0);
     }
+  }
+
+  @Override
+  public synchronized int enumerate(Key name) throws IOException {
+    myIntAddressForNewRecord = canUseIntAddressForNewRecord(myValueStorage.getSize());
+    return super.enumerate(name);
   }
 
   public interface ValueDataAppender {
@@ -290,21 +323,20 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       if (id == PersistentEnumerator.NULL_ID) {
         return null;
       }
-      final HeaderRecord header = readValueId(id);
-      if (header.address == PersistentEnumerator.NULL_ID) {
+      final HeaderRecord oldHeader = readValueId(id);
+      if (oldHeader.address == PersistentEnumerator.NULL_ID) {
         return null;
       }
-
-      byte[] data = new byte[header.size];
-      long newAddress = myValueStorage.readBytes(header.address, data);
-      if (newAddress != header.address) {
+      
+      Pair<Long, byte[]> readResult = myValueStorage.readBytes(oldHeader.address);
+      if (readResult.first != null && readResult.first != oldHeader.address) {
         myEnumerator.markDirty(true);
-        header.address = newAddress;
-        updateValueId(id, header);
-        myGarbageSize += header.size;
+
+        updateValueId(id, new HeaderRecord(readResult.first), oldHeader, key, 0);
+        if (oldHeader != HeaderRecord.EMPTY) myLiveAndGarbageKeysCounter++;
       }
 
-      final DataInputStream input = new DataInputStream(new ByteArrayInputStream(data));
+      final DataInputStream input = new DataInputStream(new ByteArrayInputStream(readResult.second));
       try {
         return myValueExternalizer.read(input);
       }
@@ -321,9 +353,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       if (id == PersistentEnumerator.NULL_ID) {
         return false;
       }
-      return readValueId(id).address != PersistentEnumerator.NULL_ID;
+      return readValueId(id).address != NULL_ADDR;
     }
-
   }
 
   public synchronized void remove(Key key) throws IOException {
@@ -336,9 +367,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myEnumerator.markDirty(true);
 
       final HeaderRecord record = readValueId(id);
-      myGarbageSize += record.size;
+      if (record != HeaderRecord.EMPTY) myLiveAndGarbageKeysCounter++;
 
-      updateValueId(id, new HeaderRecord());
+      updateValueId(id, HeaderRecord.EMPTY, record, key, 0);
     }
   }
 
@@ -382,15 +413,16 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       final String newPath = getDataFile(myEnumerator.myFile).getPath() + ".new";
       final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
       myValueStorage.switchToCompactionMode();
+      myLiveAndGarbageKeysCounter = 0;
 
       traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
         public boolean process(final int keyId) throws IOException {
           final HeaderRecord record = readValueId(keyId);
-          if (record.address != NULL_ADDR) {
-            final byte[] bytes = new byte[record.size];
-            myValueStorage.readBytes(record.address, bytes);
-            record.address = newStorage.appendBytes(new ByteSequence(bytes), 0);
-            updateValueId(keyId, record);
+          if (record.address != NULL_ADDR) {            
+            Pair<Long, byte[]> readResult = myValueStorage.readBytes(record.address);
+            HeaderRecord value = new HeaderRecord(newStorage.appendBytes(new ByteSequence(readResult.second), 0));
+            updateValueId(keyId, value, record, null, getCurrentKey());
+            myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
           }
           return true;
         }
@@ -403,25 +435,78 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
       myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myEnumerator.myFile).getPath());
       LOG.info("Compacted " + myEnumerator.myFile.getPath() + " in " + (System.currentTimeMillis() - now) + "ms.");
-      myGarbageSize = 0;
-      myEnumerator.putMetaData(0);
+
+      myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
     }
   }
 
   private HeaderRecord readValueId(final int keyId) {
-    HeaderRecord result = new HeaderRecord();
-    result.address = myEnumerator.myStorage.getLong(keyId + myParentValueRefOffset);
-    result.size = myEnumerator.myStorage.getInt(keyId + myParentValueRefOffset + 8);
-    return result;
+    long address = myEnumerator.myStorage.getInt(keyId + myParentValueRefOffset);
+    if (address == 0 || address == -POSITIVE_VALUE_SHIFT) {
+      return HeaderRecord.EMPTY;
+    }
+
+    if (address < 0) {
+      address = -address - POSITIVE_VALUE_SHIFT;
+    } else {
+      int value = myEnumerator.myStorage.getInt(keyId + myParentValueRefOffset + 4);
+      address = ((address << 32) + value) & ~USED_LONG_VALUE_MASK;
+    }
+
+    return new HeaderRecord(address);
   }
 
-  private void updateValueId(final int keyId, HeaderRecord value) {
-    myEnumerator.myStorage.putLong(keyId + myParentValueRefOffset, value.address);
-    myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset + 8, value.size);
+  private int smallKeys;
+  private int largeKeys;
+  private int transformedKeys;
+  private int requests;
+
+  private int updateValueId(int keyId, HeaderRecord value, HeaderRecord oldValue, Key key, int processingKey) throws IOException {
+    final boolean newKey = oldValue == null || oldValue.address == NULL_ADDR;
+    if (newKey) ++requests;
+    boolean defaultSizeInfo = true;
+
+    if (myCanReEnumerate) {
+      if (canUseIntAddressForNewRecord(value.address)) {
+        defaultSizeInfo = false;
+        myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset, -(int)(value.address + POSITIVE_VALUE_SHIFT));
+        if (newKey) ++smallKeys;
+      } else {
+        if (newKey && myWatermarkId == 0) myWatermarkId = keyId;
+        if (keyId < myWatermarkId && (oldValue == null || canUseIntAddressForNewRecord(oldValue.address))) {
+          // keyId is result of enumerate, if we do reenumerate then it is no longer accessible unless somebody cached it
+          myIntAddressForNewRecord = false;
+          keyId = myEnumerator.reenumerate(key == null ? myEnumerator.getValue(keyId, processingKey) : key);
+          ++transformedKeys;
+        }
+      }
+    }
+
+    if (defaultSizeInfo) {
+      myEnumerator.myStorage.putLong(keyId + myParentValueRefOffset, value.address | USED_LONG_VALUE_MASK);
+      if (newKey) ++largeKeys;
+    }
+
+    if (newKey && requests % IOStatistics.KEYS_FACTOR == 0 && IOStatistics.DEBUG) {
+      IOStatistics.dump("small:"+smallKeys + ", large:" + largeKeys + ", transformed:"+transformedKeys +
+                        ",@"+getBaseFile().getPath());
+    }
+    if (doHardConsistencyChecks) {
+      HeaderRecord checkRecord = readValueId(keyId);
+      if (checkRecord.address != value.address) {
+        assert false:value.address; int a = 1;
+      }
+    }
+    return keyId;
   }
 
   private static class HeaderRecord {
-    long address;
-    int size;
+    final long address;
+
+    HeaderRecord(long address) {
+      this.address = address;
+    }
+
+    static final HeaderRecord EMPTY = new HeaderRecord(NULL_ADDR);
   }
 }

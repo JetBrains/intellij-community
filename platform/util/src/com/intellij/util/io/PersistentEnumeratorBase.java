@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.containers.ShareableKey;
@@ -41,7 +42,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected static final int NULL_ID = 0;
 
   private static final int META_DATA_OFFSET = 4;
-  protected static final int DATA_START = META_DATA_OFFSET + 4;
+  protected static final int DATA_START = META_DATA_OFFSET + 16;
 
   protected final ISimpleStorage myStorage;
   private final ResizeableMappedFile myKeyStorage;
@@ -156,6 +157,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
         try {
           markDirty(true);
           putMetaData(0);
+          putMetaData2(0);
           setupEmptyFile();
         }
         catch (RuntimeException e) {
@@ -217,16 +219,26 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     myMarkCleanCallback = markCleanCallback;
   }
 
+  public Data getValue(int keyId, int processingKey) throws IOException {
+    return valueOf(keyId);
+  }
+
   protected int tryEnumerate(Data value) throws IOException {
-    synchronized (ourEnumerationCache) {
-      final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
-      if (cachedId != null) return cachedId.intValue();
+    return doEnumerate(value, true, false);
+  }
+
+  private int doEnumerate(Data value, boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
+    if (!saveNewValue) {
+      synchronized (ourEnumerationCache) {
+        final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
+        if (cachedId != null) return cachedId.intValue();
+      }
     }
 
     final int id;
     synchronized (this) {
       synchronized (ourLock) {
-        id = enumerateImpl(value, false);
+        id = enumerateImpl(value, onlyCheckForExisting, saveNewValue);
       }
     }
 
@@ -240,40 +252,34 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   public int enumerate(Data value) throws IOException {
-    synchronized (ourEnumerationCache) {
-      final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
-      if (cachedId != null) {
-        return cachedId.intValue();
-      }
-    }
-
-    final int id;
-    synchronized (this) {
-      synchronized (ourLock) {
-        id = enumerateImpl(value, true);
-      }
-    }
-
-    synchronized (ourEnumerationCache) {
-      ourEnumerationCache.put(new CacheKey(value, this), id);
-    }
-
-    return id;
+    return doEnumerate(value, false, false);
   }
 
   public interface DataFilter {
     boolean accept(int id);
   }
 
-  protected void putMetaData(int data) throws IOException {
+  protected void putMetaData(long data) throws IOException {
     synchronized (ourLock) {
-      myStorage.putInt(META_DATA_OFFSET, data);
+      myStorage.putLong(META_DATA_OFFSET, data);
     }
   }
 
-  protected int getMetaData() throws IOException {
+  protected long getMetaData() throws IOException {
     synchronized (ourLock) {
-      return myStorage.getInt(META_DATA_OFFSET);
+      return myStorage.getLong(META_DATA_OFFSET);
+    }
+  }
+
+  protected void putMetaData2(long data) throws IOException {
+    synchronized (ourLock) {
+      myStorage.putLong(META_DATA_OFFSET + 8, data);
+    }
+  }
+
+  protected long getMetaData2() throws IOException {
+    synchronized (ourLock) {
+      return myStorage.getLong(META_DATA_OFFSET + 8);
     }
   }
 
@@ -309,7 +315,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   public abstract boolean traverseAllRecords(RecordsProcessor p) throws IOException;
 
-  protected abstract int enumerateImpl(final Data value, final boolean saveNewValue) throws IOException;
+  protected abstract int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException;
 
   protected int writeData(final Data value, int hashCode) {
     try {
@@ -389,6 +395,15 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
         throw new RuntimeException(e);
       }
     }
+  }
+
+  int reenumerate(Data key) throws IOException {
+    if (!canReEnumerate()) throw new IncorrectOperationException();
+    return doEnumerate(key, false, true);
+  }
+
+  boolean canReEnumerate() {
+    return false;
   }
 
   protected abstract int indexToAddr(int idx);
