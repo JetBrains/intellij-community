@@ -62,6 +62,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -494,13 +495,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     loadComponentRoamingTypes();
 
+    HeavyProcessLatch.INSTANCE.processStarted();
     try {
       getStateStore().load();
     }
     catch (StateStorage.StateStorageException e) {
       throw new IOException(e.getMessage());
     }
-
+    finally {
+      HeavyProcessLatch.INSTANCE.processFinished();
+    }
   }
 
   @Override
