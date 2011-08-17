@@ -3,14 +3,17 @@ package com.jetbrains.python.console;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -23,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * @author traff
  */
 public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCodeExecutor {
-  private ConsoleExecuteActionHandler myExecuteActionHandler;
+  private PydevConsoleExecuteActionHandler myExecuteActionHandler;
 
   public PythonConsoleView(final Project project, final String title, Sdk sdk) {
     super(project, new PythonLanguageConsole(project, title, sdk));
@@ -36,7 +39,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     getPythonLanguageConsole().setConsoleCommunication(communication);
   }
 
-  public void setExecutionHandler(@NotNull ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+  public void setExecutionHandler(@NotNull PydevConsoleExecuteActionHandler consoleExecuteActionHandler) {
     myExecuteActionHandler = consoleExecuteActionHandler;
   }
 
@@ -49,7 +52,33 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
   }
 
   @Override
-  public void executeCode(@NotNull String code) {
+  public void executeCode(final @NotNull String code) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing code in console...", false) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
+          if (indicator.isCanceled()) {
+            break;
+          }
+          try {
+            Thread.sleep(300);
+          }
+          catch (InterruptedException e) {
+          }
+        }
+        if (!indicator.isCanceled()) {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              doExecute(code);
+            }
+          });
+        }
+      }
+    });
+  }
+
+
+  private void doExecute(String code) {
     getPythonLanguageConsole().addTextToCurrentEditor(PyConsoleIndentUtil.normalize(code));
     myExecuteActionHandler.runExecuteAction(getPythonLanguageConsole());
     myExecuteActionHandler.finishExecution();

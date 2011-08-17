@@ -16,6 +16,7 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.execution.ExecutionHelper;
+import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -134,8 +135,10 @@ public class ExecuteInConsoleAction extends AnAction {
     assert runner != null;
     runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
       @Override
-      public void handleConsoleInitialized() {
-        selectConsole(project, editor, consumer);
+      public void handleConsoleInitialized(LanguageConsoleViewImpl consoleView) {
+        if (consoleView instanceof PyCodeExecutor) {
+          consumer.consume((PyCodeExecutor)consoleView);
+        }
       }
     });
   }

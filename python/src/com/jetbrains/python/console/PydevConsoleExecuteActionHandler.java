@@ -266,7 +266,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   @Override
   public void runExecuteAction(LanguageConsoleImpl languageConsole) {
     if (isEnabled()) {
-      if (myConsoleCommunication.isExecuting() && !myConsoleCommunication.isWaitingForInput()) {
+      if (!canExecuteNow()) {
         HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getPrevCommandRunningMessage());
       }
       else {
@@ -276,6 +276,10 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     else {
       HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getConsoleIsNotEnabledMessage());
     }
+  }
+
+  public boolean canExecuteNow() {
+    return !myConsoleCommunication.isExecuting() || myConsoleCommunication.isWaitingForInput();
   }
 
   protected String getConsoleIsNotEnabledMessage() {
