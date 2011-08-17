@@ -49,6 +49,8 @@ public class PythonNoseTestRunConfigurationForm implements PythonNoseTestRunConf
     LabeledComponent<JTextField> myComponent = new LabeledComponent<JTextField>();
     myComponent.setComponent(myParamTextField);
     myComponent.setText("Param");
+    myComponent.setLabelLocation(BorderLayout.WEST);
+    myComponent.setLabelPreferredSize(new Dimension(51, 16));
 
     return myComponent;
   }
