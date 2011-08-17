@@ -191,7 +191,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                                         PsiElement lastParent,
                                         PsiElement place,
                                         PsiScopeProcessor importProcessor,
-                                        GrImportStatement[] importStatements, boolean shouldProcessOnDemand) {
+                                        GrImportStatement[] importStatements, 
+                                        boolean shouldProcessOnDemand) {
     for (int i = importStatements.length - 1; i >= 0; i--) {
       final GrImportStatement imp = importStatements[i];
       if (shouldProcessOnDemand != imp.isOnDemand()) continue;
@@ -227,7 +228,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   private List<String> getImplicitlyImportedPackages() {
     final ArrayList<String> result = new ArrayList<String>();
-    result.add(getPackageName());
     ContainerUtil.addAll(result, IMPLICITLY_IMPORTED_PACKAGES);
     if (isScript()) {
       result.addAll(GroovyScriptTypeDetector.getScriptType(this).appendImplicitImports(this));
@@ -235,12 +235,25 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return result;
   }
 
-  private boolean processImplicitImports(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent,
-                                         PsiElement place) {
+  private boolean processImplicitImports(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent, PsiElement place) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
 
+    final DelegatingScopeProcessor packageSkipper = new DelegatingScopeProcessor(processor) {
+      @Override
+      public boolean execute(PsiElement element, ResolveState state) {
+        if (element instanceof PsiPackage) return true;
+        return super.execute(element, state);
+      }
+    };
+
+
     for (final String implicitlyImported : getImplicitlyImportedPackages()) {
-      if (!processDeclarationsInPackage(processor, state, lastParent, place, facade, implicitlyImported)) return false;
+      PsiPackage aPackage = facade.findPackage(implicitlyImported);
+      if (aPackage == null) continue;
+
+      if (!aPackage.processDeclarations(packageSkipper, state, lastParent, place)) {
+        return false;
+      }
     }
 
     for (String implicitlyImportedClass : IMPLICITLY_IMPORTED_CLASSES) {
@@ -250,11 +263,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return true;
   }
 
-  private boolean processDeclarationsInPackage(final PsiScopeProcessor processor,
-                                               ResolveState state,
-                                               PsiElement lastParent,
-                                               PsiElement place, JavaPsiFacade facade, String implicitlyImported) {
-    PsiPackage aPackage = facade.findPackage(implicitlyImported);
+  private static boolean processDeclarationsInPackage(final PsiScopeProcessor processor,
+                                                      ResolveState state,
+                                                      PsiElement lastParent,
+                                                      PsiElement place, JavaPsiFacade facade,
+                                                      String packageName) {
+    PsiPackage aPackage = facade.findPackage(packageName);
     if (aPackage != null && !aPackage.processDeclarations(new DelegatingScopeProcessor(processor) {
       @Override
       public boolean execute(PsiElement element, ResolveState state) {
@@ -437,10 +451,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
       return;
     }
-    final GrPackageDefinition newPackage = (GrPackageDefinition)GroovyPsiElementFactory.getInstance(getProject()).createTopElementFromText("package " + packageName);
+
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+    final GrPackageDefinition newPackage = (GrPackageDefinition)factory.createTopElementFromText("package " + packageName);
 
     if (currentPackage != null) {
-      GrCodeReferenceElement packageReference = currentPackage.getPackageReference();
+      final GrCodeReferenceElement packageReference = currentPackage.getPackageReference();
       if (packageReference != null) {
         packageReference.replace(newPackage.getPackageReference());
         return;
@@ -528,6 +544,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (context != null) {
       myContext = context;
     }
+  }
+
+  public void setContextNullable(PsiElement context) {
+    myContext = context;
   }
 
   @NotNull
