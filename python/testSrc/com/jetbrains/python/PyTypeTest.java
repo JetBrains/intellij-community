@@ -237,9 +237,27 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     assertInstanceOf(t, PyTypeReference.class);
   }
 
+  public void testIsInstance() {
+      doTest("str",
+             "def f(c):\n" +
+             "    def g():\n" +
+             "        '''\n" +
+             "        :rtype: int or str\n" +
+             "        '''\n" +
+             "    x = g()\n" +
+             "    if isinstance(x, str):\n" +
+             "        expr = x");
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
+  }
+
+  private static String msg(PyType expected, PyType actual, TypeEvalContext context) {
+    return String.format("Expected: %s, actual: %s",
+                         PythonDocumentationProvider.getTypeName(expected, context),
+                         PythonDocumentationProvider.getTypeName(actual, context));
   }
 
   private void doTest(final String expectedType, final String text) {
