@@ -128,9 +128,15 @@ public class VcsChangeDetailsManager {
       if (myProject.isDisposed() || ! myProject.isOpen()) return;
       if (myResult != null) {
         final Pair<RefreshablePanel, Disposable> pair = myProvider.comment(myChange, myResult);
-        myDetails.take(myChange, pair);
+        try {
+          myDetails.take(myChange, pair);
+        }
+        catch (Details.AlreadyDisposedException e) {
+          if (pair != null && pair.getSecond() != null) {
+            Disposer.dispose(pair.getSecond());
+          }
+        }
       }
-      // todo else?
     }
   }
 

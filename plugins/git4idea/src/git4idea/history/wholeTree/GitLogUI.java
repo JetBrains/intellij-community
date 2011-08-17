@@ -320,7 +320,12 @@ public class GitLogUI implements Disposable {
           question.putValue(commitI.selectRepository(myRootsUnderVcs), commitI.getHash());
           myDetailsCache.acceptQuestion(question);
         } else {
-          myDetailsLoader.take(commitI, gitCommit);
+          try {
+            myDetailsLoader.take(commitI, gitCommit);
+          }
+          catch (Details.AlreadyDisposedException e) {
+            //
+          }
         }
       }
     };
@@ -350,7 +355,12 @@ public class GitLogUI implements Disposable {
         final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
         final List<String> branches = myDetailsCache.getBranches(root, commitI.getHash());
         if (branches != null) {
-          myBranchesLoader.take(commitI, branches);
+          try {
+            myBranchesLoader.take(commitI, branches);
+          }
+          catch (Details.AlreadyDisposedException e) {
+            //
+          }
           return;
         }
 
@@ -358,7 +368,12 @@ public class GitLogUI implements Disposable {
           @Override
           public void consume(List<String> strings) {
             if (myProject.isDisposed() || strings == null) return;
-            myBranchesLoader.take(commitI, strings);
+            try {
+              myBranchesLoader.take(commitI, strings);
+            }
+            catch (Details.AlreadyDisposedException e) {
+              //
+            }
           }
         }, myRecheck);
       }

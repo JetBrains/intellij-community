@@ -21,6 +21,8 @@ package com.intellij.openapi.vcs;
  *         Time: 7:32 PM
  */
 public interface Details<Id, Data> {
-  void take(Id id, Data data);
+  void take(Id id, Data data) throws AlreadyDisposedException;
   Id getCurrentlySelected();
+
+  class AlreadyDisposedException extends Exception {}
 }
