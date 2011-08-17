@@ -51,6 +51,7 @@ import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
+import git4idea.update.GitComplexProcess;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -58,7 +59,6 @@ import git4idea.stash.GitChangesSaver;
 import git4idea.stash.GitShelveChangesSaver;
 import git4idea.stash.GitStashChangesSaver;
 import git4idea.ui.GitUIUtil;
-import git4idea.update.GitUpdateLikeProcess;
 import git4idea.update.GitUpdateProcess;
 import git4idea.update.UpdatePolicyUtils;
 import org.jetbrains.annotations.NotNull;
@@ -501,7 +501,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     final Boolean[] result = new Boolean[1];
     result[0] = false;
     final ProgressIndicator finalProgressIndicator = progressIndicator;
-    new GitUpdateLikeProcess(myProject) {
+    new GitComplexProcess(myProject) {
       @Override
       protected void runImpl(ContinuationContext context) {
         try {

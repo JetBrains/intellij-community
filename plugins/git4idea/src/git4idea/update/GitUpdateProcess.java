@@ -108,7 +108,7 @@ public class GitUpdateProcess {
       return false;
     }
 
-    new GitUpdateLikeProcess(myProject) {
+    new GitComplexProcess(myProject) {
       @Override
       protected void runImpl(ContinuationContext context) {
         myResult = updateImpl(forceRebase, context);

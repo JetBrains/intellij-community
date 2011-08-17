@@ -31,7 +31,7 @@ import git4idea.repo.GitRepositoryManager;
  *         Date: 3/31/11
  *         Time: 2:59 PM
  */
-public abstract class GitUpdateLikeProcess {
+public abstract class GitComplexProcess {
   public static final String GIT_UPDATING = "Git: updating";
   public static final String REASON = "Local changes are not available until Git update is finished.";
   
@@ -40,7 +40,7 @@ public abstract class GitUpdateLikeProcess {
   private final ProjectManagerEx myProjectManager;
   private final GitRepositoryManager myRepositoryManager;
 
-  public GitUpdateLikeProcess(final Project project) {
+  public GitComplexProcess(final Project project) {
     myProject = project;
     myGeneralSettings = GeneralSettings.getInstance();
     myProjectManager = ProjectManagerEx.getInstanceEx();
