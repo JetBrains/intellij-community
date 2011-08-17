@@ -220,6 +220,9 @@ public class SMTestRunnerConnectionUtil {
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(final ProcessEvent event) {
+        outputConsumer.flushBufferBeforeTerminating();
+        eventsProcessor.onFinishTesting();
+
         Disposer.dispose(eventsProcessor);
         Disposer.dispose(outputConsumer);
       }
@@ -231,8 +234,6 @@ public class SMTestRunnerConnectionUtil {
 
       @Override
       public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-        outputConsumer.flushBufferBeforeTerminating();
-        eventsProcessor.onFinishTesting();
       }
 
       @Override

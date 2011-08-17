@@ -236,6 +236,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     LvcsHelper.addLabel(this);
 
     fireOnTestingFinished();
+
+    SMTestProxy root = getTestsRootNode();
+    if (root != null) {
+      selectAndNotify(root);
+    }
   }
 
   public void onTestsCountInSuite(final int count) {
@@ -262,14 +267,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
   public void onTestIgnored(@NotNull final SMTestProxy test) {
     //Do nothing
-  }
-
-  @Override
-  public void onFinish() {
-    SMTestProxy root = getTestsRootNode();
-    if (root != null) {
-      selectAndNotify(root);
-    }
   }
 
   /**
