@@ -563,11 +563,11 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       }
     }
 
+    myCommonSettingsManager.readExternal(element);
+
     copyOldIndentOptions("java", JAVA_INDENT_OPTIONS);
     copyOldIndentOptions("jsp", JSP_INDENT_OPTIONS);
     copyOldIndentOptions("xml", XML_INDENT_OPTIONS);
-
-    myCommonSettingsManager.readExternal(element);
   }
 
   private void copyOldIndentOptions(@NonNls final String extension, final IndentOptions options) {
