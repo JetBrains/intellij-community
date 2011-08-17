@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.groovy.spock;
 
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -28,8 +27,6 @@ public class SpockVariableDescriptor {
   private List<GrExpression> myExpressionsOfCollection;
 
   private PsiVariable myVariable;
-
-  private static final RecursionGuard guard = RecursionManager.createGuard("SpockVariableDescriptor");
 
   public SpockVariableDescriptor(PsiElement navigationElement, String name) {
     myName = name;
@@ -63,7 +60,7 @@ public class SpockVariableDescriptor {
     if (myVariable == null) {
       final PsiManager manager = myNavigationElement.getManager();
 
-      PsiType type = guard.doPreventingRecursion(this, true, new Computable<PsiType>() {
+      PsiType type = RecursionManager.doPreventingRecursion(this, true, new Computable<PsiType>() {
         @Override
         public PsiType compute() {
           PsiType res = null;

@@ -352,7 +352,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<List<GrVariable>>() {
       @Override
       public Result<List<GrVariable>> compute() {
-        List<GrVariable> result = RecursionManager.createGuard("groovy.scriptFields").doPreventingRecursion(GroovyScriptClass.this, true, new Computable<List<GrVariable>>() {
+        List<GrVariable> result = RecursionManager.doPreventingRecursion(GroovyScriptClass.this, true, new Computable<List<GrVariable>>() {
           @Override
           public List<GrVariable> compute() {
             final List<GrVariable> result = new ArrayList<GrVariable>();
