@@ -30,10 +30,11 @@ import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHand
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.LocalTimeCounter;
@@ -41,12 +42,10 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -76,7 +75,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myEventsHandling = false;
   private final boolean myAssertWriteAccess;
   private volatile boolean myDoingBulkUpdate = false;
-  private static final Key<WeakReference<EditorHighlighter>> ourSomeEditorSyntaxHighlighter = Key.create("some editor highlighter");
   private boolean myAcceptSlashR = false;
   private boolean myChangeInProgress;
 
@@ -719,24 +717,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     else {
       getPublisher().updateFinished(this);
     }
-  }
-
-  @Nullable
-  public EditorHighlighter getEditorHighlighterForCachesBuilding() {
-    final WeakReference<EditorHighlighter> editorHighlighterWeakReference = getUserData(ourSomeEditorSyntaxHighlighter);
-    final EditorHighlighter someEditorHighlighter = editorHighlighterWeakReference != null ? editorHighlighterWeakReference.get():null;
-
-    if (someEditorHighlighter instanceof LexerEditorHighlighter &&
-        ((LexerEditorHighlighter)someEditorHighlighter).isValid()
-       ) {
-      return someEditorHighlighter;
-    }
-    putUserData(ourSomeEditorSyntaxHighlighter, null);
-    return null;
-  }
-
-  public void rememberEditorHighlighterForCachesOptimization(@NotNull final EditorHighlighter highlighter) {
-    putUserData(ourSomeEditorSyntaxHighlighter, new WeakReference<EditorHighlighter>(highlighter));
   }
 
   private static class DocumentBulkUpdateListenerHolder {
