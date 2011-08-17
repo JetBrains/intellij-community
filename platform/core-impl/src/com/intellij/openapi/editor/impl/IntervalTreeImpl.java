@@ -17,10 +17,10 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.util.WalkingState;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TLongHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -56,14 +56,14 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     private volatile int modCount; // if it equals to the com.intellij.openapi.editor.impl.RedBlackTree.modCount then deltaUpToRoot can be used, otherwise it is expired
     private volatile int deltaUpToRoot; // sum of all deltas up to the root (including this node' delta). Has valid value only if modCount == IntervalTreeImpl.this.modCount
     private volatile boolean allDeltasUpAreNull; // true if all deltas up the tree (including this node) are 0. Has valid value only if modCount == IntervalTreeImpl.this.modCount
-    private IntervalTreeImpl<E> myIntervalTree;
+    private final IntervalTreeImpl<E> myIntervalTree;
 
     public IntervalNode(IntervalTreeImpl<E> intervalTree, @NotNull E key, int start, int end) {
       // maxEnd == 0 so to not disrupt existing maxes
-      intervals = new SmartList<Getable<E>>(createGetable(key));
+      this.myIntervalTree = intervalTree;
       myStart = start;
       myEnd = end;
-      this.myIntervalTree = intervalTree;
+      intervals = new SmartList<Getable<E>>(createGetable(key));
     }
 
 
