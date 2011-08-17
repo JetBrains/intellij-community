@@ -21,11 +21,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.playback.commands.*;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.text.StringTokenizer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class PlaybackRunner {
@@ -113,12 +116,34 @@ public class PlaybackRunner {
   }
 
   private void parse() {
-    final StringTokenizer tokens = new StringTokenizer(myScript, "\n");
-    int line = 0;
+    includeScript(myScript, myCommands, 0);
+  }
+
+  private void includeScript(String scriptText, ArrayList<PlaybackCommand> commandList, int line) {
+    final StringTokenizer tokens = new StringTokenizer(scriptText, "\n");
     while (tokens.hasMoreTokens()) {
       final String eachLine = tokens.nextToken();
-      final PlaybackCommand cmd = createCommand(eachLine, line++);
-      myCommands.add(cmd);
+
+      String includeCmd = AbstractCommand.CMD_PREFIX + "include";
+      if (eachLine.startsWith(includeCmd)) {
+        File file = PlaybackCallFacade.getFile(eachLine.substring(includeCmd.length()).trim());
+        if (!file.exists()) {
+          commandList.add(new ErrorCommand("Cannot find file to include: " + file.getAbsolutePath(), line));
+          return;
+        }
+        try {
+          String include = FileUtil.loadFile(file);
+          myCommands.add(new PrintCommand(eachLine, line));
+          includeScript(include, commandList, 0);
+        }
+        catch (IOException e) {
+          commandList.add(new ErrorCommand("Error reading file: " + file.getAbsolutePath(), line));
+          return;
+        }
+      } else {
+        final PlaybackCommand cmd = createCommand(eachLine, line++);
+        commandList.add(cmd);
+      }
     }
   }
 

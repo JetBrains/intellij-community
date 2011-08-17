@@ -1,6 +1,3 @@
-%% Features tested:
-%%       - typahead in the "Goto class" dialog
-%%       - select in an unitialized project view pane (project, packages)
 %action CloseProject
 %call openProjectClone(../community/platform/funcTests/project1)
 %action GotoClass
