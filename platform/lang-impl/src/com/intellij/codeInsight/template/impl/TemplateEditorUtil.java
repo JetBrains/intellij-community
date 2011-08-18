@@ -17,9 +17,11 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.ide.DataManager;
 import com.intellij.lexer.CompositeLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -33,15 +35,39 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 public class TemplateEditorUtil {
-  public static Editor createEditor(boolean isReadOnly, final CharSequence text) {
+  private TemplateEditorUtil() {}
+
+  public static Editor createEditor(boolean isReadOnly, CharSequence text) {
+    return createEditor(isReadOnly, text, null);
+  }
+
+  public static Editor createEditor(boolean isReadOnly, CharSequence text, @Nullable Map<TemplateContextType, Boolean> context) {
+    Document doc = EditorFactory.getInstance().createDocument(text);
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    if (context != null) {
+      for (Map.Entry<TemplateContextType, Boolean> entry : context.entrySet()) {
+        if (entry.getValue()) {
+          doc = entry.getKey().createDocument(text, project);
+          break;
+        }
+      }
+    }
+
+    return createEditor(isReadOnly, doc, project);
+  }
+    
+  private static Editor createEditor(boolean isReadOnly, final Document document, final Project project) {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document doc = editorFactory.createDocument(text);
-    Editor editor = (isReadOnly ? editorFactory.createViewer(doc) : editorFactory.createEditor(doc));
+    Editor editor = (isReadOnly ? editorFactory.createViewer(document, project) : editorFactory.createEditor(document, project));
 
     EditorSettings editorSettings = editor.getSettings();
     editorSettings.setVirtualSpace(false);
