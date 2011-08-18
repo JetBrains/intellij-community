@@ -1,5 +1,6 @@
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +86,7 @@ class IntToIntBtree {
       FileUtil.delete(file);
     }
 
-    storage = new MappedFileSimpleStorage(file, pageSize, 1024 * 1024);
+    storage = new MappedFileSimpleStorage(file, pageSize, (SystemInfo.is64Bit ? 10:1) *1024 * 1024);
     if (initial) {
       nextPage(); // allocate root
     }
