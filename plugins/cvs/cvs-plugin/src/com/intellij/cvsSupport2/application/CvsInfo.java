@@ -26,7 +26,6 @@ import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfo;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfoImpl;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -293,12 +292,8 @@ public class CvsInfo {
         }
 
         public ThreeState silentLogin(boolean forceCheck) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              new VcsBalloonProblemNotifier(project, CvsBundle.message("message.error.invalid.cvs.root", getCvsRootAsString()),
-                                            MessageType.ERROR).run();
-            }
-          });
+          VcsBalloonProblemNotifier.showOverChangesView(
+            project, CvsBundle.message("message.error.invalid.cvs.root", getCvsRootAsString()), MessageType.ERROR);
           return ThreeState.NO;
         }
 
