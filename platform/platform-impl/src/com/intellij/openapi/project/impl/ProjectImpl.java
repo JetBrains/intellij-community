@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.StorageScheme;
@@ -475,6 +476,11 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
            + (isDefault() ? " (Default)" : "")
            + " " + myName
       ;
+  }
+
+  @Override
+  protected boolean logSlowComponents() {
+    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
   }
 
   public static void dropUnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {

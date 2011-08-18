@@ -17,8 +17,6 @@ package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -344,7 +342,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected boolean isComponentSuitable(Map<String, String> options) {
-    return !isTrue(options, "internal") || ApplicationManagerEx.getApplicationEx().isInternal();
+    return !isTrue(options, "internal") || ApplicationManager.getApplication().isInternal();
   }
 
   private static boolean isTrue(Map<String, String> options, @NonNls final String option) {
@@ -444,6 +442,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     else {
       return component.getClass().getName();
     }
+  }
+
+  protected boolean logSlowComponents() {
+    return LOG.isDebugEnabled();
   }
 
   private class ComponentsRegistry {
@@ -670,11 +672,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                   long endTime = System.nanoTime();
                   long ms = (endTime - startTime) / 1000000;
                   if (ms > 10) {
-                    if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
+                    if (logSlowComponents()) {
                       LOG.info(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
-                    }
-                    else if (LOG.isDebugEnabled()) {
-                      LOG.debug(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
                     }
                   }
                   myInitializing = false;

@@ -19,6 +19,7 @@ package com.intellij.openapi.module.impl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -306,6 +307,11 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
+  }
+
+  @Override
+  protected boolean logSlowComponents() {
+    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
   }
 
   private class MyVirtualFileListener extends VirtualFileAdapter {

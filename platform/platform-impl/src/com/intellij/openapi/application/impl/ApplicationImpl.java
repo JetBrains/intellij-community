@@ -1320,6 +1320,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
+  protected boolean logSlowComponents() {
+    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
+  }
+
+  @Override
   public String toString() {
     return "Application" +
            (isDisposed() ? " (Disposed)" : "") +
