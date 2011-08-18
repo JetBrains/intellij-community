@@ -505,8 +505,6 @@
     <lang.psiStructureViewFactory language="ReST"
                                   implementationClass="com.jetbrains.rest.structureView.RestStructureViewFactory"/>
     <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
-    <projectService serviceInterface="com.jetbrains.rest.actions.PyRestructuredSettings"
-                    serviceImplementation="com.jetbrains.rest.actions.PyRestructuredSettings"/>
     <inspectionToolProvider implementation="com.jetbrains.rest.inspections.RestInspectionToolProvider"/>
     <lang.substitutor language="TEXT" implementationClass="com.jetbrains.rest.RestLanguageSubstitutor"/>
     <configurationType implementation="com.jetbrains.rest.run.RestRunConfigurationType"/>
