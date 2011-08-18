@@ -29,7 +29,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.*;
@@ -499,7 +499,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     try {
       getStateStore().load();
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (StateStorageException e) {
       throw new IOException(e.getMessage());
     }
     finally {

@@ -17,10 +17,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.StateSplitter;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Disposer;

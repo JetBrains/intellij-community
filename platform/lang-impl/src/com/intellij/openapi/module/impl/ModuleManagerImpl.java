@@ -261,7 +261,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
               errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, ModuleManagerImpl.this));
             }
-            catch (StateStorage.StateStorageException e) {
+            catch (StateStorageException e) {
               errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
                                                            modulePath, ModuleManagerImpl.this));
             }
@@ -723,13 +723,13 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       try {
         return loadModuleInternal(filePath);
       }
-      catch (StateStorage.StateStorageException e) {
+      catch (StateStorageException e) {
         throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()));
       }
     }
 
     private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists,
-                                                              IOException, StateStorage.StateStorageException {
+                                                              IOException, StateStorageException {
       final File moduleFile = new File(filePath);
       filePath = resolveShortWindowsName(filePath);
 

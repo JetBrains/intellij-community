@@ -341,7 +341,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
-  public void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
+  public void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorageException {
     //load();
     myProject.init();
   }
@@ -466,13 +466,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
-  protected SaveSessionImpl createSaveSession() throws StateStorage.StateStorageException {
+  protected SaveSessionImpl createSaveSession() throws StateStorageException {
     return new ProjectSaveSession();
   }
 
   protected class ProjectSaveSession extends SaveSessionImpl {
 
-    ProjectSaveSession() throws StateStorage.StateStorageException {
+    ProjectSaveSession() throws StateStorageException {
     }
 
     public List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
@@ -633,7 +633,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @NotNull
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent, final StateStorageOperation operation) throws StateStorage.StateStorageException {
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent, final StateStorageOperation operation) throws
+                                                                                                                                                               StateStorageException {
     Storage[] result = super.getComponentStorageSpecs(persistentStateComponent, operation);
 
     if (operation == StateStorageOperation.READ) {
@@ -676,7 +677,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
-  public boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException, StateStorage.StateStorageException {
+  public boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException, StateStorageException {
     final SaveSession saveSession = startSave();
 
     final Set<String> componentNames;

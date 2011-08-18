@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -53,10 +54,10 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   String getPresentableUrl();
 
-  boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) throws StateStorage.StateStorageException, IOException;
+  boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) throws StateStorageException, IOException;
 
   //------ This methods should be got rid of
-  void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException;
+  void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorageException;
 
   @Nullable
   VirtualFile getProjectFile();

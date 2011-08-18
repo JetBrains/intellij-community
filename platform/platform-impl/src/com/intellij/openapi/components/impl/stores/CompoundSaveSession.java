@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.util.io.fs.IFile;
 
 import java.util.*;
@@ -34,7 +35,7 @@ public class CompoundSaveSession {
     }
   }
 
-  public List<IFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {
+  public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
     List<IFile> result = new ArrayList<IFile>();
 
     for (StateStorage stateStorage : mySaveSessions.keySet()) {
@@ -46,7 +47,7 @@ public class CompoundSaveSession {
     return result;
   }
 
-  public void save() throws StateStorage.StateStorageException {
+  public void save() throws StateStorageException {
     for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
       saveSession.save();
     }

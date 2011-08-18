@@ -127,7 +127,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         try {
           createComponent(componentInterface);
         }
-        catch (StateStorage.StateStorageException e) {
+        catch (StateStorageException e) {
           throw e;
         }
         catch (ProcessCanceledException e) {
@@ -246,7 +246,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         ((BaseComponent)component).initComponent();
       }
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (StateStorageException e) {
       throw e;
     }
     catch (ProcessCanceledException e) {
@@ -693,7 +693,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               catch (ProcessCanceledException e) {
                 throw e;
               }
-              catch (StateStorage.StateStorageException e) {
+              catch (StateStorageException e) {
                 throw e;
               }
               catch (Throwable t) {

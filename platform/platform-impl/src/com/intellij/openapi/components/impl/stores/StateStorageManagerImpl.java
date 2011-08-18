@@ -95,13 +95,13 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Nullable
-  public StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorage.StateStorageException {
+  public StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorageException {
     final String key = getStorageSpecId(storageSpec);
     return getStateStorage(storageSpec, key);
   }
 
   @Nullable
-  private StateStorage getStateStorage(final Storage storageSpec, final String key) throws StateStorage.StateStorageException {
+  private StateStorage getStateStorage(final Storage storageSpec, final String key) throws StateStorageException {
     if (myStorages.get(key) == null) {
       final StateStorage stateStorage = createStateStorage(storageSpec);
       putStorageToMap(key, stateStorage);
@@ -213,7 +213,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Nullable
-  private StateStorage createStateStorage(final Storage storageSpec) throws StateStorage.StateStorageException {
+  private StateStorage createStateStorage(final Storage storageSpec) throws StateStorageException {
     if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
       final String key = UUID.randomUUID().toString();
       ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
@@ -243,7 +243,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   private StateStorage createDirectoryStateStorage(final String file, final Class<? extends StateSplitter> splitterClass)
-    throws StateStorage.StateStorageException {
+    throws StateStorageException {
     final String expandedFile = expandMacroses(file);
     if (expandedFile == null) {
       myStorages.put(file, null);
@@ -256,10 +256,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       splitter = splitterClass.newInstance();
     }
     catch (InstantiationException e) {
-      throw new StateStorage.StateStorageException(e);
+      throw new StateStorageException(e);
     }
     catch (IllegalAccessException e) {
-      throw new StateStorage.StateStorageException(e);
+      throw new StateStorageException(e);
     }
 
     return new DirectoryBasedStorage(myPathMacroSubstitutor, expandedFile, splitter, this, myPicoContainer);
@@ -450,7 +450,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     CompoundExternalizationSession myCompoundExternalizationSession = new CompoundExternalizationSession();
 
     public void setState(@NotNull final Storage[] storageSpecs, final Object component, final String componentName, final Object state)
-      throws StateStorage.StateStorageException {
+      throws StateStorageException {
       assert mySession == this;
 
       for (Storage storageSpec : storageSpecs) {
@@ -462,7 +462,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       }
     }
 
-    public void setStateInOldStorage(Object component, final String componentName, Object state) throws StateStorage.StateStorageException {
+    public void setStateInOldStorage(Object component, final String componentName, Object state) throws StateStorageException {
       assert mySession == this;
       StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
       if (stateStorage != null) {
@@ -472,12 +472,13 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Nullable
-  public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation) throws StateStorage.StateStorageException {
+  public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation) throws
+                                                                                                                         StateStorageException {
     return getFileStateStorage(getOldStorageSpec(component, componentName, operation));
   }
 
   protected abstract String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation)
-    throws StateStorage.StateStorageException;
+    throws StateStorageException;
 
   protected class MySaveSession implements SaveSession {
     CompoundSaveSession myCompoundSaveSession;
@@ -495,7 +496,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
     }
 
-    public List<IFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {
+    public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
       assert mySession == this;
       return myCompoundSaveSession.getAllStorageFilesToSave();
     }
@@ -504,7 +505,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       return myCompoundSaveSession.getAllStorageFiles();
     }
 
-    public void save() throws StateStorage.StateStorageException {
+    public void save() throws StateStorageException {
       assert mySession == this;
 
       myCompoundSaveSession.save();

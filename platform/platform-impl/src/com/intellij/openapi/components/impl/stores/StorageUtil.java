@@ -23,6 +23,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
@@ -89,7 +90,7 @@ public class StorageUtil {
     }
   }
 
-  static void save(final IFile file, final Parent element, final Object requestor) throws StateStorage.StateStorageException {
+  static void save(final IFile file, final Parent element, final Object requestor) throws StateStorageException {
     final String filePath = file.getCanonicalPath();
     try {
       final Ref<IOException> refIOException = Ref.create(null);
@@ -122,11 +123,11 @@ public class StorageUtil {
         }
       });
       if (refIOException.get() != null) {
-        throw new StateStorage.StateStorageException(refIOException.get());
+        throw new StateStorageException(refIOException.get());
       }
     }
     catch (IOException e) {
-      throw new StateStorage.StateStorageException(e);
+      throw new StateStorageException(e);
     }
   }
 
@@ -164,12 +165,12 @@ public class StorageUtil {
   }
 
   @Deprecated
-  public static byte[] printDocument(final Document document) throws StateStorage.StateStorageException {
+  public static byte[] printDocument(final Document document) throws StateStorageException {
     try {
       return printDocumentToString(document).getBytes(CharsetToolkit.UTF8);
     }
     catch (IOException e) {
-      throw new StateStorage.StateStorageException(e);
+      throw new StateStorageException(e);
     }
   }
 
@@ -217,7 +218,7 @@ public class StorageUtil {
     return printDocumentToString(document, SystemProperties.getLineSeparator());
   }
 
-  static String printElement(final Element element, final String lineSeparator) throws StateStorage.StateStorageException {
+  static String printElement(final Element element, final String lineSeparator) throws StateStorageException {
     return JDOMUtil.writeElement(element, lineSeparator);
   }
 
