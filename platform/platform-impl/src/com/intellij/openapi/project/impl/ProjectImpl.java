@@ -33,10 +33,7 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
-import com.intellij.openapi.components.impl.stores.UnknownMacroNotification;
+import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -81,6 +78,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private static final String PLUGIN_SETTINGS_ERROR = "Plugin Settings Error";
 
   private ProjectManagerImpl myManager;
+
+  private IProjectStore myComponentStore;
 
   private MyProjectManagerListener myProjectManagerListener;
 
@@ -177,8 +176,16 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   @NotNull
-  public IProjectStore getStateStore() {
-    return (IProjectStore)super.getStateStore();
+  public synchronized IProjectStore getStateStore() {
+    if (myComponentStore == null) {
+      myComponentStore = (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+    }
+    return myComponentStore;
+  }
+
+  @Override
+  public void initializeComponent(Object component, boolean service) {
+    getStateStore().initComponent(component, service);
   }
 
   public boolean isOpen() {
@@ -348,6 +355,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     Extensions.disposeArea(this);
     myManager = null;
     myProjectManagerListener = null;
+
+    myComponentStore = null;
 
     super.dispose();
 

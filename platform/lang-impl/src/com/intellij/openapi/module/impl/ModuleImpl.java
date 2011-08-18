@@ -24,6 +24,7 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IModuleStore;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
@@ -75,6 +76,8 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   private String myName;
 
+  private IModuleStore myComponentStore;
+
   public ModuleImpl(String filePath, Project project) {
     super(project);
 
@@ -93,8 +96,16 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   @NotNull
-  public IModuleStore getStateStore() {
-    return (IModuleStore)super.getStateStore();
+  public synchronized IModuleStore getStateStore() {
+    if (myComponentStore == null) {
+      myComponentStore = (IModuleStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+    }
+    return myComponentStore;
+  }
+
+  @Override
+  public void initializeComponent(Object component, boolean service) {
+    getStateStore().initComponent(component, service);
   }
 
   private void init(String filePath) {
@@ -168,6 +179,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     isModuleAdded = false;
     disposeComponents();
     Extensions.disposeArea(this);
+    myComponentStore = null;
     super.dispose();
   }
 

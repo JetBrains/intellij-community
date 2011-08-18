@@ -86,6 +86,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
 
+  private IApplicationStore myComponentStore;
+
   private boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
@@ -169,10 +171,17 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     getPicoContainer().registerComponentImplementation(ApplicationPathMacroManager.class);
   }
 
-  @Override
   @NotNull
   public synchronized IApplicationStore getStateStore() {
-    return (IApplicationStore)super.getStateStore();
+    if (myComponentStore == null) {
+      myComponentStore = (IApplicationStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+    }
+    return myComponentStore;
+  }
+
+  @Override
+  public void initializeComponent(Object component, boolean service) {
+    getStateStore().initComponent(component, service);
   }
 
   public ApplicationImpl(boolean isInternal,
@@ -554,6 +563,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     disposeComponents();
 
     ourThreadExecutorsService.shutdownNow();
+    myComponentStore = null;
     super.dispose();
   }
 

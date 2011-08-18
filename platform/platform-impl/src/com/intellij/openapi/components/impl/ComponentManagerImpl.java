@@ -19,7 +19,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -67,7 +66,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private final ComponentManagerConfigurator myConfigurator = new ComponentManagerConfigurator(this);
   private final ComponentManager myParentComponentManager;
-  private IComponentStore myComponentStore;
   private Boolean myHeadless;
   private ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
   private boolean myHaveProgressManager = false;
@@ -85,16 +83,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   //todo[mike] there are several init* methods. Make it just 1
   public void init() {
     initComponents();
-  }
-
-
-  @NotNull
-  public synchronized IComponentStore getStateStore() {
-    if (myComponentStore == null) {
-      assert myPicoContainer != null;
-      myComponentStore = (IComponentStore)myPicoContainer.getComponentInstance(IComponentStore.class);
-    }
-    return myComponentStore;
   }
 
   public MessageBus getMessageBus() {
@@ -250,7 +238,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   public void initializeComponent(Object component, boolean service) {
-    getStateStore().initComponent(component, service);
   }
 
 
@@ -360,7 +347,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     myInitializedComponents.clear();
     myComponentsRegistry = null;
-    myComponentStore = null;
     myPicoContainer = null;
   }
 
