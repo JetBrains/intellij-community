@@ -1,11 +1,13 @@
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
+import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author ksafonov
@@ -17,6 +19,7 @@ public class CommentsTabForm {
 
   public CommentsTabForm() {
     myCommentsArea.setTitle(DiagnosticBundle.message("error.dialog.comment.prompt"));
+    myErrorComponent.getComponent().setPreferredSize(new Dimension(IdeErrorsDialog.COMPONENTS_WIDTH, -1));
     myErrorComponent.getComponent().setEditable(false);
     myErrorComponent.getComponent().setBackground(UIUtil.getTextFieldBackground());
     myErrorComponent.getComponent().setBorder(IdeBorderFactory.createBorder());
