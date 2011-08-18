@@ -297,13 +297,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentsRegistry.registerComponent(config);
   }
 
-  /** @Deprecated */
-  @NotNull
-  public synchronized Class[] getComponentInterfaces() {
-    LOG.warn("Deprecated method usage: getComponentInterfaces", new Throwable());
-    return myComponentsRegistry.getComponentInterfaces();
-  }
-
   public synchronized boolean hasComponent(@NotNull Class interfaceClass) {
     return myComponentsRegistry.containsInterface(interfaceClass);
   }

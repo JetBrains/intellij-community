@@ -22,7 +22,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.IdeaPicoContainer;
@@ -88,12 +87,6 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @Override
   public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
     return getComponent(interfaceClass);
-  }
-
-  @Override
-  @NotNull
-  public Class[] getComponentInterfaces() {
-    return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
 
   @Override
