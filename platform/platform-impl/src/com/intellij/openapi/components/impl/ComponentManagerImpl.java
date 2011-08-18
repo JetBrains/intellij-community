@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -24,6 +23,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -279,7 +279,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
-  public synchronized void registerComponent(final ComponentConfig config, final IdeaPluginDescriptor pluginDescriptor) {
+  public synchronized void registerComponent(final ComponentConfig config, final PluginDescriptor pluginDescriptor) {
     if (isHeadless()) {
       String headlessImplClass = config.headlessImplementationClass;
       if (headlessImplClass != null) {
@@ -390,7 +390,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     getComponents();
   }
 
-  protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable final IdeaPluginDescriptor descriptor, final boolean defaultProject) {
+  protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable final PluginDescriptor descriptor, final boolean defaultProject) {
     myConfigurator.loadComponentsConfiguration(components, descriptor, defaultProject);
   }
 

@@ -15,13 +15,10 @@
  */
 package com.intellij.openapi.components.ex;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.notification.Notification;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.extensions.PluginDescriptor;
 
 import java.util.Map;
 
@@ -40,7 +37,7 @@ public interface ComponentManagerEx extends ComponentManager {
   void registerComponent(Class interfaceClass, Class implementationClass, Map options);
 
   void registerComponent(ComponentConfig config);
-  void registerComponent(ComponentConfig config, IdeaPluginDescriptor pluginDescriptor);
+  void registerComponent(ComponentConfig config, PluginDescriptor pluginDescriptor);
 
   IComponentStore getComponentStore();
 }

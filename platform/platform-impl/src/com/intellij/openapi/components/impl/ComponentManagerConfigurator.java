@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.components.impl;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.extensions.PluginDescriptor;
 
 class ComponentManagerConfigurator {
   private final ComponentManagerImpl myComponentManager;
@@ -25,13 +25,13 @@ class ComponentManagerConfigurator {
     myComponentManager = componentManager;
   }
 
-  private void loadConfiguration(final ComponentConfig[] configs, final boolean defaultProject, final IdeaPluginDescriptor descriptor) {
+  private void loadConfiguration(final ComponentConfig[] configs, final boolean defaultProject, final PluginDescriptor descriptor) {
     for (ComponentConfig config : configs) {
       loadSingleConfig(defaultProject, config, descriptor);
     }
   }
 
-  private void loadSingleConfig(final boolean defaultProject, final ComponentConfig config, final IdeaPluginDescriptor descriptor) {
+  private void loadSingleConfig(final boolean defaultProject, final ComponentConfig config, final PluginDescriptor descriptor) {
     if (defaultProject && config.skipForDefaultProject) return;
     if (!myComponentManager.isComponentSuitable(config.options)) return;
 
@@ -39,7 +39,7 @@ class ComponentManagerConfigurator {
   }
 
   public void loadComponentsConfiguration(final ComponentConfig[] components,
-                                          final IdeaPluginDescriptor descriptor,
+                                          final PluginDescriptor descriptor,
                                           final boolean defaultProject) {
     if (components == null) return;
 
