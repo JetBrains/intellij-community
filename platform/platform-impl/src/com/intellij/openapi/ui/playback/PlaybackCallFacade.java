@@ -44,10 +44,7 @@ public class PlaybackCallFacade {
   public static AsyncResult<String> openProjectClone(final PlaybackContext context, String path) {
     try {
       File parentDir = FileUtil.createTempDirectory("funcTest", "");
-      File sourceDir = new File(path);
-      if (!sourceDir.isAbsolute()) {
-        sourceDir = new File(System.getProperty("work.dir"), path);
-      }
+      File sourceDir = getFile(path);
       
       FileUtil.copyDir(sourceDir, parentDir);
       File projectDir = new File(parentDir, sourceDir.getName());
@@ -57,7 +54,15 @@ public class PlaybackCallFacade {
       return new AsyncResult.Rejected<String>("Cannot create temp directory for clone");
     }
   }
-  
+
+  public static File getFile(String path) {
+    File sourceDir = new File(path);
+    if (!sourceDir.isAbsolute()) {
+      sourceDir = new File(System.getProperty("work.dir"), path);
+    }
+    return sourceDir;
+  }
+
   public static AsyncResult<String> openProject(final PlaybackContext context, String path) {
     final AsyncResult<String> result = new AsyncResult<String>();
     final ProjectManager pm = ProjectManager.getInstance();

@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="community-resources" scope="RUNTIME" />
     <orderEntry type="library" exported="" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="spellchecker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="relaxng" scope="RUNTIME" />
   </component>
 </module>
 

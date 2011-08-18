@@ -97,11 +97,6 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return null;
   }
 
-  @NotNull
-  public Class[] getComponentInterfaces() {
-    return ArrayUtil.EMPTY_CLASS_ARRAY;
-  }
-
   public boolean hasComponent(@NotNull Class interfaceClass) {
     return false;
   }

@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.cvsSupport2.cvsBrowser;
+package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Consumer;
+import java.io.IOException;
 
-public interface RemoteResourceDataProvider {
+/**
+ * @author yole
+ */
+public class StoreUtil {
+  private StoreUtil() {
+  }
 
-  RemoteResourceDataProvider NOT_EXPANDABLE = new RemoteResourceDataProvider(){
-    public void fillContentFor(GetContentCallback callback, Consumer<VcsException> errorCallback) {}
-
-    @Override
-    public RemoteResourceDataProvider getChildrenDataProvider() {
-      return this;
+  public static void doSave(IComponentStore stateStore) throws IOException {
+    IComponentStore.SaveSession session = null;
+    try {
+      session = stateStore.startSave();
+      session.save();
     }
-  };
-
-  void fillContentFor(GetContentCallback callback, Consumer<VcsException> errorCallback);
-
-  RemoteResourceDataProvider getChildrenDataProvider();
+    finally {
+      if (session != null) {
+        session.finishSave();
+      }
+    }
+  }
 }

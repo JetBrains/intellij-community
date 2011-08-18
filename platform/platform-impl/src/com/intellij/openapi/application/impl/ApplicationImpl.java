@@ -29,7 +29,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.*;
@@ -85,6 +85,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
+
+  private IApplicationStore myComponentStore;
 
   private boolean myTestModeFlag;
   private final boolean myHeadlessMode;
@@ -163,16 +165,23 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   };
 
-  protected void boostrapPicoContainer() {
-    super.boostrapPicoContainer();
+  protected void bootstrapPicoContainer() {
+    super.bootstrapPicoContainer();
     getPicoContainer().registerComponentImplementation(IComponentStore.class, StoresFactory.getApplicationStoreClass());
     getPicoContainer().registerComponentImplementation(ApplicationPathMacroManager.class);
   }
 
-  @Override
   @NotNull
   public synchronized IApplicationStore getStateStore() {
-    return (IApplicationStore)super.getStateStore();
+    if (myComponentStore == null) {
+      myComponentStore = (IApplicationStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+    }
+    return myComponentStore;
+  }
+
+  @Override
+  public void initializeComponent(Object component, boolean service) {
+    getStateStore().initComponent(component, service);
   }
 
   public ApplicationImpl(boolean isInternal,
@@ -499,7 +508,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     try {
       getStateStore().load();
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (StateStorageException e) {
       throw new IOException(e.getMessage());
     }
     finally {
@@ -554,6 +563,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     disposeComponents();
 
     ourThreadExecutorsService.shutdownNow();
+    myComponentStore = null;
     super.dispose();
   }
 
@@ -1214,7 +1224,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void _saveSettings() { // public for testing purposes
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
-        doSave();
+        StoreUtil.doSave(getStateStore());
       }
       catch (final Throwable ex) {
         if (isUnitTestMode()) {
@@ -1317,6 +1327,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     return false;
+  }
+
+  @Override
+  protected boolean logSlowComponents() {
+    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
   }
 
   @Override

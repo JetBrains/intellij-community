@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageId;
 import com.intellij.openapi.diagnostic.Logger;
@@ -85,7 +85,7 @@ class DefaultStateSerializer {
 
   @SuppressWarnings({"unchecked"})
   @Nullable
-  static <T> T deserializeState(@Nullable Element stateElement, Class <T> stateClass, @Nullable T mergeInto) throws StateStorage.StateStorageException {
+  static <T> T deserializeState(@Nullable Element stateElement, Class <T> stateClass, @Nullable T mergeInto) throws StateStorageException {
     if (stateElement == null) return mergeInto;
 
     if (stateClass.equals(Element.class)) {
@@ -104,14 +104,14 @@ class DefaultStateSerializer {
           return t;
         }
         catch (InvalidDataException e) {
-          throw new StateStorage.StateStorageException(e);
+          throw new StateStorageException(e);
         }
       }
       catch (InstantiationException e) {
-        throw new StateStorage.StateStorageException(e);
+        throw new StateStorageException(e);
       }
       catch (IllegalAccessException e) {
-        throw new StateStorage.StateStorageException(e);
+        throw new StateStorageException(e);
       }
     }
     else {

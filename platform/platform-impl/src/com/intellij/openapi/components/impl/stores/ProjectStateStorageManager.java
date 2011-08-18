@@ -16,10 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageOperation;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -50,7 +47,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
   }
 
   protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) throws
-                                                                                                                              StateStorage.StateStorageException {
+                                                                                                                          StateStorageException {
     final ComponentConfig config = myProject.getConfig(component.getClass());
     assert config != null : "Couldn't find old storage for " + component.getClass().getName();
 

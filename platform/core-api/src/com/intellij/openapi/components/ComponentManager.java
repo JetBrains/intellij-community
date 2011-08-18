@@ -60,11 +60,6 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   <T> T getComponent(Class<T> interfaceClass, T defaultImplementationIfAbsent);
 
   /**
-   * @deprecated Use {@link #getComponents} instead.
-   */
-  @NotNull Class[] getComponentInterfaces();
-
-  /**
    * Checks whether there is a component with the specified interface class.
    *
    * @param interfaceClass interface class of component to be checked

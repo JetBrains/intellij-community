@@ -19,7 +19,6 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -44,7 +43,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.IntoSelfVirtualFileConvertor;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -62,7 +60,6 @@ import java.io.File;
 import java.util.*;
 
 public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Common Version Control Messages", ChangesViewContentManager.TOOLWINDOW_ID, true);
   private final boolean myAlwaysVisible;
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.AbstractCommonUpdateAction");
 
@@ -458,7 +455,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       if (text.length() > 0) {
         log += ": " + text.toString();
       }
-      NOTIFICATION_GROUP.createNotification(log, NotificationType.INFORMATION).notify(myProject);
+      VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(log, NotificationType.INFORMATION).notify(myProject);
 
       return new NotificationInfo("VCS Update", title, log, true);
     }

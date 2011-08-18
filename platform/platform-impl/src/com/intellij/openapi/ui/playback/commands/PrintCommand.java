@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,25 @@ package com.intellij.openapi.ui.playback.commands;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 
-public class StopCommand extends AbstractCommand {
+/**
+ * Created by IntelliJ IDEA.
+ * User: kirillk
+ * Date: 8/17/11
+ * Time: 1:12 PM
+ * To change this template use File | Settings | File Templates.
+ */
+public class PrintCommand extends AbstractCommand {
 
-  public static String PREFIX = CMD_PREFIX + "stop";
-
-  public StopCommand(String text, int line) {
-    super(text, line);
-  }
-
-  protected ActionCallback _execute(PlaybackContext context) {
-    context.getCallback().message("Stopped", getLine());
-    return new ActionCallback.Done();
+  private String myText;
+  
+  public PrintCommand(String text, int line) {
+    super("", line);
+    myText = text;
   }
 
   @Override
-  public boolean canGoFurther() {
-    return false;
+  protected ActionCallback _execute(PlaybackContext context) {
+    context.getCallback().message(myText, getLine());
+    return new ActionCallback.Done();
   }
 }

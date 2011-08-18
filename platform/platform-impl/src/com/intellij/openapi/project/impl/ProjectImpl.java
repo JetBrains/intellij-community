@@ -26,15 +26,14 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.UnknownMacroNotification;
+import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -79,6 +78,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private static final String PLUGIN_SETTINGS_ERROR = "Plugin Settings Error";
 
   private ProjectManagerImpl myManager;
+
+  private IProjectStore myComponentStore;
 
   private MyProjectManagerListener myProjectManagerListener;
 
@@ -126,9 +127,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
-  protected void boostrapPicoContainer() {
+  protected void bootstrapPicoContainer() {
     Extensions.instantiateArea(PluginManager.AREA_IDEA_PROJECT, this, null);
-    super.boostrapPicoContainer();
+    super.bootstrapPicoContainer();
     final MutablePicoContainer picoContainer = getPicoContainer();
 
     final ProjectStoreClassProvider projectStoreClassProvider = (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);
@@ -175,8 +176,16 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   @NotNull
-  public IProjectStore getStateStore() {
-    return (IProjectStore)super.getStateStore();
+  public synchronized IProjectStore getStateStore() {
+    if (myComponentStore == null) {
+      myComponentStore = (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+    }
+    return myComponentStore;
+  }
+
+  @Override
+  public void initializeComponent(Object component, boolean service) {
+    getStateStore().initComponent(component, service);
   }
 
   public boolean isOpen() {
@@ -304,7 +313,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
           }
         }
 
-        doSave();
+        StoreUtil.doSave(getStateStore());
       }
       catch (IComponentStore.SaveCancelledException e) {
         LOG.info(e);
@@ -346,6 +355,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     Extensions.disposeArea(this);
     myManager = null;
     myProjectManagerListener = null;
+
+    myComponentStore = null;
 
     super.dispose();
 
@@ -474,6 +485,11 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
            + (isDefault() ? " (Default)" : "")
            + " " + myName
       ;
+  }
+
+  @Override
+  protected boolean logSlowComponents() {
+    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
   }
 
   public static void dropUnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {

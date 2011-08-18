@@ -17,6 +17,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -76,21 +77,21 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     return moduleManager.getModules();
   }
 
-  protected SaveSessionImpl createSaveSession() throws StateStorage.StateStorageException {
+  protected SaveSessionImpl createSaveSession() throws StateStorageException {
     return new ProjectWithModulesSaveSession();
   }
 
   private class ProjectWithModulesSaveSession extends ProjectSaveSession {
     List<SaveSession> myModuleSaveSessions = new ArrayList<SaveSession>();
 
-    public ProjectWithModulesSaveSession() throws StateStorage.StateStorageException {
+    public ProjectWithModulesSaveSession() throws StateStorageException {
       try {
         for (Module module : getPersistentModules()) {
           myModuleSaveSessions.add(((ModuleImpl)module).getStateStore().startSave());
         }
       }
       catch (IOException e) {
-        throw new StateStorage.StateStorageException(e.getMessage());
+        throw new StateStorageException(e.getMessage());
       }
     }
 

@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.ui.playback.PlaybackRunner;
-
-import java.awt.*;
 
 public class ErrorCommand extends AbstractCommand {
 
@@ -26,8 +24,8 @@ public class ErrorCommand extends AbstractCommand {
     super(text, line);
   }
 
-  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
-    dumpError(cb, getText());
+  public ActionCallback _execute(PlaybackContext context) {
+    dumpError(context.getCallback(), getText());
     return new ActionCallback.Rejected();
   }
 }

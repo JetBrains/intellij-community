@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.ui.playback.PlaybackRunner;
-
-import java.awt.*;
 
 public class DelayCommand extends AbstractCommand {
   public static String PREFIX = CMD_PREFIX + "delay";
@@ -27,15 +25,15 @@ public class DelayCommand extends AbstractCommand {
     super(text, line);
   }
 
-  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
+  public ActionCallback _execute(PlaybackContext context) {
     final String s = getText().substring(PREFIX.length()).trim();
 
     try {
       final Integer delay = Integer.valueOf(s);
-      robot.delay(delay.intValue());
+      context.getRobot().delay(delay.intValue());
     }
     catch (NumberFormatException e) {
-      dumpError(cb, "Invalid delay value: " + s);
+      dumpError(context.getCallback(), "Invalid delay value: " + s);
       return new ActionCallback.Rejected();
     }
 

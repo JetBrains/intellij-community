@@ -17,10 +17,9 @@ package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.playback.PlaybackCommand;
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
-
-import java.awt.*;
 
 public abstract class AbstractCommand implements PlaybackCommand {
 
@@ -46,17 +45,17 @@ public abstract class AbstractCommand implements PlaybackCommand {
     return true;
   }
 
-  public final ActionCallback execute(final PlaybackRunner.StatusCallback cb, final Robot robot, final boolean useDirectActionCall) {
+  public final ActionCallback execute(final PlaybackContext context) {
     try {
-      dumpCommand(cb);
+      dumpCommand(context.getCallback());
       final ActionCallback result = new ActionCallback();
       if (isAwtThread()) {
-        _execute(cb, robot, useDirectActionCall).notify(result);
+        _execute(context).notify(result);
       } else {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
-            _execute(cb, robot, useDirectActionCall).notify(result);
+            _execute(context).notify(result);
           }
         });
       }
@@ -64,7 +63,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
      return result;
     }
     catch (Exception e) {
-      cb.error(e.getMessage(), getLine());
+      context.getCallback().error(e.getMessage(), getLine());
       return new ActionCallback.Rejected();
     }
   }
@@ -73,7 +72,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
     return false;
   }
 
-  protected abstract ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall);
+  protected abstract ActionCallback _execute(PlaybackContext context);
 
   public void dumpCommand(final PlaybackRunner.StatusCallback cb) {
     cb.message(getText(), getLine());

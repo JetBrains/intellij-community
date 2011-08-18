@@ -16,8 +16,8 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.TypingTarget;
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +30,8 @@ public class AlphaNumericTypeCommand extends TypeCommand {
     super(text, line);
   }
 
-  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
-    return type(robot, getText());
+  public ActionCallback _execute(PlaybackContext context) {
+    return type(context.getRobot(), getText());
   }
 
   protected ActionCallback type(final Robot robot, final String text) {

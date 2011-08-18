@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -266,7 +267,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (ignoreTrailingSpaces) {
       final Editor editor = myEditor;
-      ((DocumentImpl) editor.getDocument()).stripTrailingSpaces();
+      TrailingSpacesStripper.stripIfNotCurrentLine(editor.getDocument(), false);
       EditorUtil.fillVirtualSpaceUntilCaret(editor);
     }
 

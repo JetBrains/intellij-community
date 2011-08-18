@@ -16,14 +16,11 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -46,7 +43,6 @@ import org.picocontainer.*;
 import org.picocontainer.defaults.CachingComponentAdapter;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +66,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private final ComponentManagerConfigurator myConfigurator = new ComponentManagerConfigurator(this);
   private final ComponentManager myParentComponentManager;
-  private IComponentStore myComponentStore;
   private Boolean myHeadless;
   private ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
   private boolean myHaveProgressManager = false;
@@ -82,28 +77,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected ComponentManagerImpl(ComponentManager parentComponentManager) {
     myParentComponentManager = parentComponentManager;
-    boostrapPicoContainer();
+    bootstrapPicoContainer();
   }
 
   //todo[mike] there are several init* methods. Make it just 1
   public void init() {
     initComponents();
   }
-
-
-  @NotNull
-  public synchronized IComponentStore getStateStore() {
-    if (myComponentStore == null) {
-      assert myPicoContainer != null;
-      myComponentStore = (IComponentStore)myPicoContainer.getComponentInstance(IComponentStore.class);
-    }
-    return myComponentStore;
-  }
-
-  public IComponentStore getComponentStore() {
-    return getStateStore();
-  }
-
 
   public MessageBus getMessageBus() {
     assert !myDisposeCompleted && !myDisposed : "Already disposed";
@@ -127,7 +107,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         try {
           createComponent(componentInterface);
         }
-        catch (StateStorage.StateStorageException e) {
+        catch (StateStorageException e) {
           throw e;
         }
         catch (ProcessCanceledException e) {
@@ -241,12 +221,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     try {
-      getStateStore().initComponent(component, false);
+      initializeComponent(component, false);
       if (component instanceof BaseComponent) {
         ((BaseComponent)component).initComponent();
       }
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (StateStorageException e) {
       throw e;
     }
     catch (ProcessCanceledException e) {
@@ -255,6 +235,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     catch (Throwable ex) {
       handleInitComponentError(ex, false, component.getClass().getName());
     }
+  }
+
+  public void initializeComponent(Object component, boolean service) {
   }
 
 
@@ -279,7 +262,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
-  public synchronized void registerComponent(final ComponentConfig config, final IdeaPluginDescriptor pluginDescriptor) {
+  public synchronized void registerComponent(final ComponentConfig config, final PluginDescriptor pluginDescriptor) {
     if (isHeadless()) {
       String headlessImplClass = config.headlessImplementationClass;
       if (headlessImplClass != null) {
@@ -297,13 +280,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     config.pluginDescriptor =  pluginDescriptor;
     myComponentsRegistry.registerComponent(config);
-  }
-
-  /** @Deprecated */
-  @NotNull
-  public synchronized Class[] getComponentInterfaces() {
-    LOG.warn("Deprecated method usage: getComponentInterfaces", new Throwable());
-    return myComponentsRegistry.getComponentInterfaces();
   }
 
   public synchronized boolean hasComponent(@NotNull Class interfaceClass) {
@@ -353,7 +329,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected boolean isComponentSuitable(Map<String, String> options) {
-    return !isTrue(options, "internal") || ApplicationManagerEx.getApplicationEx().isInternal();
+    return !isTrue(options, "internal") || ApplicationManager.getApplication().isInternal();
   }
 
   private static boolean isTrue(Map<String, String> options, @NonNls final String option) {
@@ -371,7 +347,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     myInitializedComponents.clear();
     myComponentsRegistry = null;
-    myComponentStore = null;
     myPicoContainer = null;
   }
 
@@ -390,11 +365,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     getComponents();
   }
 
-  protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable final IdeaPluginDescriptor descriptor, final boolean defaultProject) {
+  protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable final PluginDescriptor descriptor, final boolean defaultProject) {
     myConfigurator.loadComponentsConfiguration(components, descriptor, defaultProject);
   }
 
-  protected void boostrapPicoContainer() {
+  protected void bootstrapPicoContainer() {
     myPicoContainer = createPicoContainer();
 
     myMessageBus = MessageBusFactory.newMessageBus(this, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
@@ -453,6 +428,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     else {
       return component.getClass().getName();
     }
+  }
+
+  protected boolean logSlowComponents() {
+    return LOG.isDebugEnabled();
   }
 
   private class ComponentsRegistry {
@@ -679,11 +658,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                   long endTime = System.nanoTime();
                   long ms = (endTime - startTime) / 1000000;
                   if (ms > 10) {
-                    if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
+                    if (logSlowComponents()) {
                       LOG.info(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
-                    }
-                    else if (LOG.isDebugEnabled()) {
-                      LOG.debug(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
                     }
                   }
                   myInitializing = false;
@@ -693,7 +669,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               catch (ProcessCanceledException e) {
                 throw e;
               }
-              catch (StateStorage.StateStorageException e) {
+              catch (StateStorageException e) {
                 throw e;
               }
               catch (Throwable t) {
@@ -708,20 +684,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
-  protected void doSave() throws IOException {
-    IComponentStore.SaveSession session = null;
-    try {
-      session = getStateStore().startSave();
-      session.save();
-    }
-    finally {
-      if (session != null) {
-        session.finishSave();
-      }
-    }
-  }
-
-  public final int hashCode() {
+    public final int hashCode() {
     return super.hashCode();
   }
 

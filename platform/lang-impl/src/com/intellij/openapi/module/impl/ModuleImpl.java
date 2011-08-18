@@ -19,10 +19,12 @@ package com.intellij.openapi.module.impl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IModuleStore;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
@@ -40,7 +42,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.StripedLockConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,6 +76,8 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   private String myName;
 
+  private IModuleStore myComponentStore;
+
   public ModuleImpl(String filePath, Project project) {
     super(project);
 
@@ -85,16 +88,24 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     init(filePath);
   }
 
-  protected void boostrapPicoContainer() {
+  protected void bootstrapPicoContainer() {
     Extensions.instantiateArea(PluginManager.AREA_IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
-    super.boostrapPicoContainer();
+    super.bootstrapPicoContainer();
     getPicoContainer().registerComponentImplementation(IComponentStore.class, ModuleStoreImpl.class);
     getPicoContainer().registerComponentImplementation(ModulePathMacroManager.class);
   }
 
   @NotNull
-  public IModuleStore getStateStore() {
-    return (IModuleStore)super.getStateStore();
+  public synchronized IModuleStore getStateStore() {
+    if (myComponentStore == null) {
+      myComponentStore = (IModuleStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+    }
+    return myComponentStore;
+  }
+
+  @Override
+  public void initializeComponent(Object component, boolean service) {
+    getStateStore().initComponent(component, service);
   }
 
   private void init(String filePath) {
@@ -168,6 +179,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     isModuleAdded = false;
     disposeComponents();
     Extensions.disposeArea(this);
+    myComponentStore = null;
     super.dispose();
   }
 
@@ -307,6 +319,11 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
+  }
+
+  @Override
+  protected boolean logSlowComponents() {
+    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
   }
 
   private class MyVirtualFileListener extends VirtualFileAdapter {

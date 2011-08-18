@@ -15,13 +15,12 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
-
-import java.util.Collection;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 
 /**
  * Shows a notification balloon over one of version control related tool windows: Changes View or Version Control View.
@@ -29,6 +28,8 @@ import java.util.Collection;
  * Use the special method or supply additional parameter to the constructor to show the balloon over the Version Control View.
  */
 public class VcsBalloonProblemNotifier implements Runnable {
+  public static final NotificationGroup
+    NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Common Version Control Messages", ChangesViewContentManager.TOOLWINDOW_ID, true);
   private final Project myProject;
   private final String myMessage;
   private final MessageType myMessageType;
@@ -65,20 +66,11 @@ public class VcsBalloonProblemNotifier implements Runnable {
       showErrorAction.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(showErrorAction);
+      application.invokeLater(showErrorAction);
     }
   }
 
   public void run() {
-    final Collection<Project> projects;
-    if (myProject != null) {
-      doForProject(myProject);
-    } else {
-      doForProject(null);
-    }
-  }
-
-  private void doForProject(final Project project) {
-    AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(myMessage, myMessageType).notify(project);
+    NOTIFICATION_GROUP.createNotification(myMessage, myMessageType).notify(myProject);
   }
 }

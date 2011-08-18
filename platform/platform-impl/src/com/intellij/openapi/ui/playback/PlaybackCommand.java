@@ -20,6 +20,6 @@ import com.intellij.openapi.util.ActionCallback;
 import java.awt.*;
 
 public interface PlaybackCommand {
-  ActionCallback execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean useDirectActionCall);
+  ActionCallback execute(PlaybackContext context);
   boolean canGoFurther();
 }

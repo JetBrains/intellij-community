@@ -138,7 +138,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     boolean markAsNeedsStrippingLater = false;
     CharSequence text = myText.getCharArray();
-    RangeMarker caretMarker = caretOffset < 0 ? null : createRangeMarker(caretOffset, caretOffset);
+    RangeMarker caretMarker = caretOffset < 0 || caretOffset > getTextLength() ? null : createRangeMarker(caretOffset, caretOffset);
     try {
       for (int line = 0; line < myLineSet.getLineCount(); line++) {
         if (inChangedLinesOnly && !myLineSet.isModified(line)) continue;

@@ -18,10 +18,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageOperation;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.Pair;
@@ -98,7 +95,8 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
     myStateStorageManager.addMacro(CONFIG_MACRO, configPath);
   }
 
-  public boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, final Collection<String> notReloadableComponents) throws StateStorage.StateStorageException, IOException {
+  public boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, final Collection<String> notReloadableComponents) throws
+                                                                                                                                   StateStorageException, IOException {
 
     final SaveSession saveSession = startSave();
     final Set<String> componentNames = saveSession.analyzeExternalChanges(changedFiles);

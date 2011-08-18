@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.ui.playback.commands;
+package com.intellij.openapi.components;
 
-import com.intellij.openapi.ui.playback.PlaybackContext;
-import com.intellij.openapi.util.ActionCallback;
-
-public class EmptyCommand extends AbstractCommand {
-  public EmptyCommand(int line) {
-    super("", line);
+public class StateStorageException extends RuntimeException {
+  public StateStorageException() {
   }
 
-  public ActionCallback _execute(PlaybackContext context) {
-    return new ActionCallback.Done();
+  public StateStorageException(final String message) {
+    super(message);
+  }
+
+  public StateStorageException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
+
+  public StateStorageException(final Throwable cause) {
+    super(cause);
   }
 }

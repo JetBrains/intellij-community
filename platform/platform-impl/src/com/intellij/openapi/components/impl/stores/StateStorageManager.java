@@ -36,7 +36,7 @@ public interface StateStorageManager {
   TrackingPathMacroSubstitutor getMacroSubstitutor();
 
   @Nullable
-  StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorage.StateStorageException;
+  StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException;
 
   @Nullable
   StateStorage getFileStateStorage(String fileName);
@@ -50,7 +50,8 @@ public interface StateStorageManager {
   void finishSave(SaveSession saveSession);
 
   @Nullable
-  StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation) throws StateStorage.StateStorageException;
+  StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation) throws
+                                                                                                                  StateStorageException;
 
   @Nullable
   String expandMacroses(String file);
@@ -65,8 +66,8 @@ public interface StateStorageManager {
 
 
   interface ExternalizationSession {
-    void setState(@NotNull Storage[] storageSpecs, Object component, final String componentName, Object state) throws StateStorage.StateStorageException;
-    void setStateInOldStorage(Object component, final String componentName, Object state) throws StateStorage.StateStorageException;
+    void setState(@NotNull Storage[] storageSpecs, Object component, final String componentName, Object state) throws StateStorageException;
+    void setStateInOldStorage(Object component, final String componentName, Object state) throws StateStorageException;
   }
 
   interface SaveSession {
@@ -74,8 +75,8 @@ public interface StateStorageManager {
     @Nullable
     Set<String> analyzeExternalChanges(Set<Pair<VirtualFile, StateStorage>> files);
 
-    List<IFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException;
+    List<IFile> getAllStorageFilesToSave() throws StateStorageException;
     List<IFile> getAllStorageFiles();
-    void save() throws StateStorage.StateStorageException;
+    void save() throws StateStorageException;
   }
 }
