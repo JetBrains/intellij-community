@@ -233,10 +233,6 @@ public class SMTestRunnerConnectionUtil {
       }
 
       @Override
-      public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-      }
-
-      @Override
       public void onTextAvailable(final ProcessEvent event, final Key outputType) {
         outputConsumer.process(event.getText(), outputType);
       }
