@@ -40,7 +40,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.StripedLockConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,9 +84,9 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     init(filePath);
   }
 
-  protected void boostrapPicoContainer() {
+  protected void bootstrapPicoContainer() {
     Extensions.instantiateArea(PluginManager.AREA_IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
-    super.boostrapPicoContainer();
+    super.bootstrapPicoContainer();
     getPicoContainer().registerComponentImplementation(IComponentStore.class, ModuleStoreImpl.class);
     getPicoContainer().registerComponentImplementation(ModulePathMacroManager.class);
   }

@@ -81,7 +81,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected ComponentManagerImpl(ComponentManager parentComponentManager) {
     myParentComponentManager = parentComponentManager;
-    boostrapPicoContainer();
+    bootstrapPicoContainer();
   }
 
   //todo[mike] there are several init* methods. Make it just 1
@@ -385,7 +385,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myConfigurator.loadComponentsConfiguration(components, descriptor, defaultProject);
   }
 
-  protected void boostrapPicoContainer() {
+  protected void bootstrapPicoContainer() {
     myPicoContainer = createPicoContainer();
 
     myMessageBus = MessageBusFactory.newMessageBus(this, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());

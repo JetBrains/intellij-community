@@ -127,9 +127,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
-  protected void boostrapPicoContainer() {
+  protected void bootstrapPicoContainer() {
     Extensions.instantiateArea(PluginManager.AREA_IDEA_PROJECT, this, null);
-    super.boostrapPicoContainer();
+    super.bootstrapPicoContainer();
     final MutablePicoContainer picoContainer = getPicoContainer();
 
     final ProjectStoreClassProvider projectStoreClassProvider = (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);
