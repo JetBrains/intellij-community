@@ -23,9 +23,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +50,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
   private CvsRootConfiguration myCvsRootConfiguration = null;
   private final Observable mySelectionObservable = new AlwaysNotifiedObservable();
   private final boolean myShowFiles;
+  private final Consumer<VcsException> myErrorCallback;
   private final boolean myAllowRootSelection;
   private final boolean myShowModules;
   private final Project myProject;
@@ -56,13 +59,15 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
 
   @NonNls public static final String SELECTION_CHANGED = "Selection Changed";
 
-  public CvsTree(Project project, boolean allowRootSelection, int selectionMode, boolean showModules, boolean showFiles) {
+  public CvsTree(Project project, boolean allowRootSelection, int selectionMode, boolean showModules, boolean showFiles,
+                 Consumer<VcsException> errorCallback) {
     super(new BorderLayout());
     myProject = project;
     mySelectionMode = selectionMode;
     myShowModules = showModules;
     myAllowRootSelection = allowRootSelection;
     myShowFiles = showFiles;
+    myErrorCallback = errorCallback;
     setSize(500, 500);
     addListener(myLoadingNodeManager);
   }
@@ -187,7 +192,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     application.executeOnPooledThread(new Runnable() {
       public void run() {
         final RemoteResourceDataProvider dataProvider = element.getDataProvider();
-        dataProvider.fillContentFor(new MyGetContentCallback(element, modalityState, myProject));
+        dataProvider.fillContentFor(new MyGetContentCallback(element, modalityState, myProject), myErrorCallback);
       }
     });
   }

@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeUIHelper;
+import com.intellij.util.Consumer;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -62,12 +63,12 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
   private final CvsRootConfiguration myCvsRootConfiguration;
   private final Project myProject;
 
-  public BrowserPanel(CvsRootConfiguration configuration, Project project) {
+  public BrowserPanel(CvsRootConfiguration configuration, Project project, Consumer<VcsException> errorCallback) {
     super(new BorderLayout(2, 0));
     setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     myProject = project;
     myCvsRootConfiguration = configuration;
-    myTree = new CvsTree(project, false, TreeSelectionModel.SINGLE_TREE_SELECTION, true, true);
+    myTree = new CvsTree(project, false, TreeSelectionModel.SINGLE_TREE_SELECTION, true, true, errorCallback);
     add(myTree, BorderLayout.CENTER);
     myTree.init();
     myTree.setCvsRootConfiguration(configuration);

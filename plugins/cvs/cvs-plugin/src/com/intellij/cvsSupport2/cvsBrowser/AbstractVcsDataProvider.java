@@ -27,16 +27,21 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvide
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetDirectoriesListViaUpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
+
+import java.util.List;
 
 public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvider {
   protected final CvsEnvironment myEnvironment;
+  private Consumer<VcsException> myErrorCallback;
 
   protected AbstractVcsDataProvider(CvsEnvironment environment) {
     myEnvironment = environment;
   }
 
-  public void fillContentFor(final GetContentCallback callback) {
+  public void fillContentFor(final GetContentCallback callback, Consumer<VcsException> errorCallback) {
+    myErrorCallback = errorCallback;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       executeCommand(createDirectoryContentProvider(callback.getElementPath()), callback);
     } else {
@@ -72,7 +77,7 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     }
   }
 
-  private static void executeCommand(final DirectoryContentProvider command, final GetContentCallback callback) {
+  private void executeCommand(final DirectoryContentProvider command, final GetContentCallback callback) {
     final CvsOperationExecutor executor = new CvsOperationExecutor(false, callback.getProject(), callback.getModalityState());
     executor.setIsQuietOperation(true);
 
@@ -83,6 +88,12 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
 
     executor.performActionSync(cvsHandler, new CvsOperationExecutorCallback() {
       public void executionFinished(boolean successfully) {
+        if (!successfully) {
+          final List<VcsException> errors = cvsHandler.getErrorsExceptAborted();
+          if (!errors.isEmpty()) {
+            myErrorCallback.consume(errors.get(0));
+          }
+        }
         callback.finished();
       }
 
