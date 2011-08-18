@@ -34,6 +34,7 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -304,7 +305,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
           }
         }
 
-        doSave();
+        StoreUtil.doSave(getStateStore());
       }
       catch (IComponentStore.SaveCancelledException e) {
         LOG.info(e);

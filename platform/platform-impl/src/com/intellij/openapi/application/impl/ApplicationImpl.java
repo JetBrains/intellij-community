@@ -1214,7 +1214,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void _saveSettings() { // public for testing purposes
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
-        doSave();
+        StoreUtil.doSave(getStateStore());
       }
       catch (final Throwable ex) {
         if (isUnitTestMode()) {

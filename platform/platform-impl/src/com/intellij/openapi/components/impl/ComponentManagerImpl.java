@@ -708,20 +708,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
-  protected void doSave() throws IOException {
-    IComponentStore.SaveSession session = null;
-    try {
-      session = getStateStore().startSave();
-      session.save();
-    }
-    finally {
-      if (session != null) {
-        session.finishSave();
-      }
-    }
-  }
-
-  public final int hashCode() {
+    public final int hashCode() {
     return super.hashCode();
   }
 
