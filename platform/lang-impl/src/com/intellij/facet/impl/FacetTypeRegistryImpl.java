@@ -18,23 +18,25 @@ package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
  */
 public class FacetTypeRegistryImpl extends FacetTypeRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.FacetTypeRegistryImpl");
+  private static final Comparator<FacetType> FACET_TYPE_COMPARATOR = new Comparator<FacetType>() {
+    public int compare(final FacetType o1, final FacetType o2) {
+      return o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
+    }
+  };
   private final Map<String, FacetTypeId> myTypeIds = new HashMap<String, FacetTypeId>();
   private final Map<FacetTypeId, FacetType> myFacetTypes = new HashMap<FacetTypeId, FacetType>();
   private boolean myExtensionsLoaded = false;
@@ -67,7 +69,16 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
   public synchronized FacetType[] getFacetTypes() {
     loadExtensions();
     final Collection<FacetType> types = myFacetTypes.values();
-    return types.toArray(new FacetType[types.size()]);
+    final FacetType[] facetTypes = types.toArray(new FacetType[types.size()]);
+    Arrays.sort(facetTypes, FACET_TYPE_COMPARATOR);
+    return facetTypes;
+  }
+
+  @Override
+  public FacetType[] getSortedFacetTypes() {
+    final FacetType[] types = getFacetTypes();
+    Arrays.sort(types, FACET_TYPE_COMPARATOR);
+    return types;
   }
 
   @Nullable

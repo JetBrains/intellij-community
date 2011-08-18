@@ -1,0 +1,11 @@
+class Foo{
+//  Foo copy() {
+//	another(zo)
+//  }
+}
+-----
+class Foo {
+//  Foo copy() {
+//	another(zo)
+//  }
+}

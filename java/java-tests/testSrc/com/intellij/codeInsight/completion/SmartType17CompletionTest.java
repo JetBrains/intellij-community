@@ -41,6 +41,14 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testDiamondNotCollapsedInCaseOfAnonymousClasses() throws Exception {
+    doTest();
+  }
+
+  public void testDiamondNotCollapsedInCaseOfInapplicableInference() throws Exception {
+    doTest();
+  }
+
   public void testDiamondPresentation() {
     configureByFile("/" + getTestName(false) + ".java");
     LookupElementPresentation presentation = new LookupElementPresentation();

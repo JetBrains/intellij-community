@@ -859,6 +859,7 @@
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
+    <keyboard-shortcut first-keystroke="control E"/>
   </action>
   <action id="AddToFavoritesPopup">
     <keyboard-shortcut first-keystroke="alt shift F"/>

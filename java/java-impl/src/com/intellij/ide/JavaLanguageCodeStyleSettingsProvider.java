@@ -15,6 +15,8 @@
  */
 package com.intellij.ide;
 
+import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.application.options.JavaIndentOptionsEditor;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
@@ -79,12 +81,19 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   public CommonCodeStyleSettings getDefaultCommonSettings() {
-    return new CommonCodeStyleSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings settings = new CommonCodeStyleSettings(JavaLanguage.INSTANCE);
+    settings.initIndentOptions();
+    return settings;
   }
 
   @Override
   public boolean usesSharedPreview() {
     return false;
+  }
+
+  @Override
+  public IndentOptionsEditor getIndentOptionsEditor() {
+    return new JavaIndentOptionsEditor();
   }
 
   private static final String GENERAL_CODE_SAMPLE =

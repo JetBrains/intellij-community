@@ -16,8 +16,7 @@ package org.netbeans.lib.cvsclient.util;
 
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,7 +28,7 @@ public final class SimpleStringPattern
 	private static final char MATCH_EACH = '*';
 	private static final char MATCH_ONE = '?';
 
-	private final List subPatterns = new LinkedList();
+	private final List<SubPattern> subPatterns = new ArrayList();
 
 	/**
 	 * Creates a SimpleStringPattern for the specified definition.
@@ -45,8 +44,8 @@ public final class SimpleStringPattern
 	public boolean doesMatch(String string) {
 		int index = 0;
 		SubPattern subPattern = null;
-		for (Iterator it = subPatterns.iterator(); it.hasNext();) {
-			subPattern = (SubPattern)it.next();
+		for (int i = 0, length = subPatterns.size(); i < length ; i++) {
+			subPattern = subPatterns.get(i);
 			index = subPattern.doesMatch(string, index);
 			if (index < 0) {
 				return false;
@@ -108,9 +107,9 @@ public final class SimpleStringPattern
 	}
 
 	public String toString() {
-		final StringBuffer buffer = new StringBuffer();
-		for (Iterator it = subPatterns.iterator(); it.hasNext();) {
-			final SubPattern subPattern = (SubPattern)it.next();
+          final StringBuilder buffer = new StringBuilder();
+		for (int i = 0, length = subPatterns.size(); i < length; i++) {
+			final SubPattern subPattern = subPatterns.get(i);
 			buffer.append(subPattern.toString());
 		}
 		return buffer.toString();

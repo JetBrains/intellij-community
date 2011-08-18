@@ -54,7 +54,7 @@ public class TypeInferenceHelper {
 
   @Nullable
   public static PsiType getInferredType(@NotNull final GrReferenceExpression refExpr) {
-    return RecursionManager.createGuard("refType").doPreventingRecursion(refExpr, true, new Computable<PsiType>() {
+    return RecursionManager.doPreventingRecursion(refExpr, true, new Computable<PsiType>() {
       @Override
       public PsiType compute() {
         @SuppressWarnings("unchecked") GroovyPsiElement scope =

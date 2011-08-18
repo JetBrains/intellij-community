@@ -24,10 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface DocumentEx extends Document {
-  /**
-   * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret being in the way
-   */
-  boolean stripTrailingSpaces(boolean inChangedLinesOnly);
   void setStripTrailingSpacesEnabled(boolean isEnabled);
 
   @NotNull LineIterator createLineIterator();

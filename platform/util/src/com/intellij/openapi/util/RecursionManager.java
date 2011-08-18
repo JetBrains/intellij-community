@@ -57,6 +57,15 @@ public class RecursionManager {
   };
 
   /**
+   * @see RecursionGuard#doPreventingRecursion(Object, boolean, Computable)
+   */
+  @SuppressWarnings("JavaDoc")
+  @Nullable
+  public static <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
+    return createGuard(computation.getClass().getName()).doPreventingRecursion(key, memoize, computation);
+  }
+
+  /**
    * @param id just some string to separate different recursion prevention policies from each other
    * @return a helper object which allow you to perform reentrancy-safe computations and check whether caching will be safe.
    */

@@ -136,15 +136,11 @@ class AddRemoveUpDownPanel extends JPanel {
       final ShortcutSet shortcut = button.getShortcut();
       if (shortcut != null) {
         if (button instanceof MyActionButton
-            && !((MyActionButton)button).isAddButton()
-            && !UIUtil.isDialogRootPane(pane)) {
-          button.registerCustomShortcutSet(shortcut, button.getContextComponent());
+            && ((MyActionButton)button).isAddButton()
+            && UIUtil.isDialogRootPane(pane)) {
+          button.registerCustomShortcutSet(shortcut, pane);
         } else {
-          if (UIUtil.isDialogRootPane(pane)) {
-            button.registerCustomShortcutSet(shortcut, pane);
-          } else {
-            button.registerCustomShortcutSet(shortcut, button.getContextComponent());
-          }
+          button.registerCustomShortcutSet(shortcut, button.getContextComponent());
         }
       }
     }

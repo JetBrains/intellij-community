@@ -332,17 +332,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                   indicator.duringCompletion(initContext);
                   ProgressManager.checkCanceled();
 
-                  final List<LookupElement> items = new ArrayList<LookupElement>();
-                  CompletionService.getCompletionService().performCompletion(parameters, new Consumer<CompletionResult>() {
+                  data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<CompletionResult>() {
                     public void consume(final CompletionResult result) {
                       indicator.addItem(result);
-                      items.add(result.getLookupElement());
                     }
-                  });
-
-                  indicator.processDelayQueue();
-
-                  data.set(items.toArray(new LookupElement[items.size()]));
+                  }));
                 }
               });
             }

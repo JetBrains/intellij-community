@@ -8,6 +8,7 @@ target('default' : "Developers update") {
 
 private List platformImplementationModules() {
   return [
+          "core-impl",
           "platform-impl",
           "vcs-impl",
           "lang-impl",
@@ -25,7 +26,7 @@ private List platformImplementationModules() {
 }
 
 private List<String> platformApiModules() {
-  return ["platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi"]
+  return ["core-api", "platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi"]
 }
 
 def layoutFull(String home, String targetDirectory) {

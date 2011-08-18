@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.WalkingState;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;

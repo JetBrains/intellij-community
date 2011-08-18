@@ -65,8 +65,8 @@
                   </grid>
                 </children>
               </grid>
-              <grid id="b6b2d" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
+              <grid id="b6b2d" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="5" left="8" bottom="5" right="5"/>
                 <constraints>
                   <tabbedpane title="Dictionaries"/>
                 </constraints>
@@ -76,11 +76,11 @@
                   <grid id="b9ce9" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties/>
                     <clientProperties>
-                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithoutIndent"/>
+                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithoutIndent"/>
                     </clientProperties>
                     <border type="etched" title-resource-bundle="com/intellij/spellchecker/util/SpellCheckerBundle" title-key="dictionaries.panel.title"/>
                     <children>
@@ -112,7 +112,7 @@
                     </constraints>
                     <properties/>
                     <clientProperties>
-                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithoutIndent"/>
+                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithoutIndent"/>
                     </clientProperties>
                     <border type="etched" title-resource-bundle="com/intellij/spellchecker/util/SpellCheckerBundle" title-key="add.directory.title"/>
                     <children>

@@ -42,6 +42,8 @@ public abstract class FacetTypeRegistry {
 
   public abstract FacetType[] getFacetTypes();
 
+  public abstract FacetType[] getSortedFacetTypes();
+
   @Nullable
   public abstract FacetType findFacetType(String id);
 

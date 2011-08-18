@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.connections.ext;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.config.SshSettings;
@@ -25,13 +26,13 @@ import com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl;
 import com.intellij.cvsSupport2.connections.ssh.SshConnectionUtil;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
-import com.intellij.CvsBundle;
-import com.intellij.util.ThreeState;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 
 import java.io.IOException;
@@ -84,7 +85,7 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
       return myWorker.promptForPassword();
     }
 
-    public ThreeState silentLogin(boolean forceCheck) {
+    public ThreeState silentLogin(boolean forceCheck) throws AuthenticationException {
       return myWorker.silentLogin(forceCheck);
     }
 

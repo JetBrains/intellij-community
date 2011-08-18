@@ -62,9 +62,9 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -453,7 +453,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   @Nullable
   public PsiReference getReferenceAtCaretPosition(final String... filePaths) {
-    configureByFilesInner(filePaths);
+    if (filePaths.length > 0) {
+      configureByFilesInner(filePaths);
+    }
     return getFile().findReferenceAt(myEditor.getCaretModel().getOffset());
   }
 
@@ -1632,7 +1634,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private static String stripTrailingSpaces(String actualText) {
     final Document document = EditorFactory.getInstance().createDocument(actualText);
-    ((DocumentEx)document).stripTrailingSpaces(false);
+    ((DocumentImpl)document).stripTrailingSpaces();
     actualText = document.getText();
     return actualText;
   }

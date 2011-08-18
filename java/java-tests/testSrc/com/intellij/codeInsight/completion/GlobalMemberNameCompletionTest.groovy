@@ -2,7 +2,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtil
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 
 /**
  * @author peter
@@ -52,6 +53,24 @@ public class Foo {
     doTest "class Bar {{ abcf<caret> }}", false, """import foo.Foo;
 
 class Bar {{ Foo.abcfield<caret> }}"""
+  }
+
+  public void testFieldNamePresentation() {
+    myFixture.addClass("""
+package foo;
+
+public class Foo {
+  public static int abcfield = 2
+  static final int fieldThatsNotVisible = 3
+}
+""")
+    myFixture.configureByText "a.java", "class Bar {{ abcf<caret> }}"
+    def element = myFixture.complete(CompletionType.CLASS_NAME)[0]
+    def presentation = new LookupElementPresentation()
+    element.renderElement(presentation)
+    assert 'Foo.abcfield' == presentation.itemText
+    assert ' (foo)' == presentation.tailText
+    assert 'int' == presentation.typeText
   }
 
   public void testQualifiedMethodName() throws Exception {

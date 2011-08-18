@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,32 @@
  */
 package com.intellij.cvsSupport2.cvsIgnore;
 
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfoImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.util.SimpleStringPattern;
 
 import java.io.File;
-import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
+import java.util.List;
 
 /**
  * author: lesya
  */
 public class UserDirIgnores{
 
-  private ArrayList myPatterns;
-  @NonNls private static final File ourUserHomeCVSIgnoreFile = new File(System.getProperty("user.home") + "/.cvsignore");
+  private List<SimpleStringPattern> myPatterns;
+  @NonNls private static final File ourUserHomeCVSIgnoreFile = new File(System.getProperty("user.home") + "/" + CvsUtil.CVS_IGNORE_FILE);
 
-  public ArrayList getPatterns(){
+  public List<SimpleStringPattern> getPatterns(){
     if (myPatterns == null){
       myPatterns = createUserDirIgnoredFilesInfo();
     }
     return myPatterns;
   }
 
-  private ArrayList createUserDirIgnoredFilesInfo() {
+  private List<SimpleStringPattern> createUserDirIgnoredFilesInfo() {
     final File file = userHomeCvsIgnoreFile();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -57,6 +57,4 @@ public class UserDirIgnores{
   public void clearInfo() {
     myPatterns = null;
   }
-
-
 }

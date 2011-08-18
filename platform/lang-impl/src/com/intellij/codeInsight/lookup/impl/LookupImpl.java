@@ -328,6 +328,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   void appendPrefix(char c) {
+    //todo this checkReused + refreshUi clears the lookup which fails testChoosingItemDuringCopyCommit
     checkReused();
     checkValid();
     myAdditionalPrefix += c;
@@ -337,6 +338,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     ensureSelectionVisible();
   }
 
+  //todo closing such a lookup still cancels the live template, it shouldn't
   public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
     myStartCompletionWhenNothingMatches = startCompletionWhenNothingMatches;
   }

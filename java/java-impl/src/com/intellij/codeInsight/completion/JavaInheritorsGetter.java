@@ -22,16 +22,14 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,8 +135,13 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
         final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
         final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondType.hasDefaultConstructor(psiClass) || !PsiDiamondType.haveConstructorsGenericsParameters(psiClass);
-        if (hasDefaultConstructorOrNoGenericsOne && PsiDiamondType.resolveInferredTypes(initializer).getErrorMessage() == null) {
-          psiType = initializer.getType();
+        if (hasDefaultConstructorOrNoGenericsOne) {
+            final PsiDiamondType.DiamondInferenceResult inferenceResult = PsiDiamondType.resolveInferredTypes(initializer);
+            if (inferenceResult.getErrorMessage() == null &&
+                !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                areInferredTypesApplicable(inferenceResult.getTypes(), parameters.getOriginalPosition())) {
+              psiType = initializer.getType();
+            }
         }
       }
     }
@@ -153,7 +156,21 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     return LookupElementDecorator.withInsertHandler(item, myConstructorInsertHandler);
   }
 
-  public static void processInheritors(final CompletionParameters parameters,
+    private static boolean areInferredTypesApplicable(PsiType[] types, PsiElement originalPosition) {
+      final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(originalPosition, PsiNewExpression.class);
+      if (newExpression != null) {
+        final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(originalPosition, PsiMethodCallExpression.class);
+        if (methodCallExpression != null &&
+          ArrayUtil.find(methodCallExpression.getArgumentList().getExpressions(), newExpression) > -1) {
+          final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
+          return PsiUtil.getApplicabilityLevel((PsiMethod)resolveResult.getElement(), resolveResult.getSubstitutor(), types, PsiUtil.getLanguageLevel(originalPosition))
+                       != MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
+        }
+      }
+      return true;
+    }
+
+    public static void processInheritors(final CompletionParameters parameters,
                                        final Collection<PsiClassType> expectedClassTypes,
                                        final PrefixMatcher matcher, final Consumer<PsiType> consumer) {
     //quick

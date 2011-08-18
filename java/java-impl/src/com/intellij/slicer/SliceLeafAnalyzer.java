@@ -29,7 +29,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.WalkingState;
+import com.intellij.util.WalkingState;
 import com.intellij.psi.impl.source.tree.SourceUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;

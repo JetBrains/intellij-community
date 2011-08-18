@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -125,6 +124,6 @@ public class VirtualFileEvent extends EventObject {
    * @return true if the VFS change described by the event is the save of a document, false otherwise.
    */
   public boolean isFromSave() {
-    return myRequestor instanceof FileDocumentManager;
+    return myRequestor instanceof SavingRequestor;
   }
 }

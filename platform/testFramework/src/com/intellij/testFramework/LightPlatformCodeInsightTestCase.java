@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -267,7 +266,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (ignoreTrailingSpaces) {
       final Editor editor = myEditor;
-      ((DocumentEx) editor.getDocument()).stripTrailingSpaces(false);
+      ((DocumentImpl) editor.getDocument()).stripTrailingSpaces();
       EditorUtil.fillVirtualSpaceUntilCaret(editor);
     }
 
@@ -321,7 +320,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
                                          : null;
 
         if (ignoreTrailingSpaces) {
-          ((DocumentEx)document).stripTrailingSpaces(false);
+          ((DocumentImpl)document).stripTrailingSpaces();
         }
 
         if (caretMarker != null) {

@@ -75,10 +75,10 @@ public class UIUtil {
     JComponent c = (JComponent)comp;
 
     if (SystemInfo.isMac) {
-      c.putClientProperty("JComponent.sizeVariant", style == Style.REGULAR ? "regular" : "small");
+      c.putClientProperty("JComponent.sizeVariant", style == Style.REGULAR ? "regular" : style == Style.SMALL ? "small" : "mini");
     }
     else {
-      c.setFont(getFont(style == Style.SMALL ? FontSize.SMALL : FontSize.NORMAL, c.getFont()));
+      c.setFont(getFont(style == Style.REGULAR ? FontSize.NORMAL : style == Style.SMALL ? FontSize.SMALL : FontSize.MINI, c.getFont()));
     }
     Container p = c.getParent();
     if (p != null) {
@@ -86,7 +86,7 @@ public class UIUtil {
     }
   }
 
-  public enum FontSize { NORMAL, SMALL }
+  public enum FontSize { NORMAL, SMALL, MINI }
 
   public static final char MNEMONIC = 0x1B;
   @NonNls public static final String HTML_MIME = "text/html";
@@ -155,24 +155,6 @@ public class UIUtil {
       graphics.drawLine(minX+1, y,  maxX-1, y1);
     } else {
       drawLine(graphics, x, y, x1, y1);
-    }
-  }
-
-  public static void fillVerticalGradient(final Graphics g,
-                                          final int x,
-                                          final int y,
-                                          final int width,
-                                          final int height,
-                                          final Color top,
-                                          final Color bottom) {
-    BufferedImage img = new BufferedImage(50, height, BufferedImage.TYPE_INT_RGB);
-    Graphics2D imageGraphics = (Graphics2D)img.getGraphics();
-    imageGraphics.setPaint(new GradientPaint(0, 0, top, 0, height, bottom));
-    imageGraphics.fillRect(0, 0, 50, height);
-
-    final Graphics2D g2 = (Graphics2D)g;
-    for (int i = x; i < x + width; i += 50) {
-      g2.drawImage(img, null, i, y);
     }
   }
 
@@ -274,18 +256,15 @@ public class UIUtil {
   @NotNull
   public static Font getFont(@NotNull FontSize size, @Nullable Font base) {
     Font defFont = getLabelFont();
+    if (base == null) base = defFont;
 
-    if (size == FontSize.SMALL) {
-      if (base == null) base = defFont;
-      return base.deriveFont(defFont.getSize() * (SystemInfo.isMac ? 0.85f: 0.8f));
-    }
-    else {
-      if (base != null) {
+    switch (size) {
+      case SMALL:
+        return base.deriveFont(defFont.getSize() * (SystemInfo.isMac ? 0.85f: 0.8f));
+      case MINI:
+        return base.deriveFont(defFont.getSize() * 0.7f);
+      default:
         return base.deriveFont(defFont.getSize());
-      }
-      else {
-        return defFont;
-      }
     }
   }
 
@@ -296,7 +275,7 @@ public class UIUtil {
       if (isBold) {
         return defFont.deriveFont((float)Math.max(defFont.getSize() - 2, 11)).deriveFont(Font.BOLD);
       }
-      return defFont.deriveFont((float)Math.max(defFont.getSize() - 1, 11));
+      return defFont.deriveFont((float)Math.max(defFont.getSize() - 2, 11));
     }
     if (isBold) {
       return defFont.deriveFont(Font.BOLD);
@@ -2389,7 +2368,7 @@ public class UIUtil {
     return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane;
   }
 
-  public enum Style {REGULAR, SMALL}
+  public enum Style {REGULAR, SMALL, MINI}
 
   public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay, @NotNull ActionListener listener) {
     return new Timer(delay, listener){

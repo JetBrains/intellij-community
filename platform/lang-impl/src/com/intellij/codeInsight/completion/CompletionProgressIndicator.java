@@ -72,7 +72,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -117,8 +116,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   };
   private volatile int myCount;
   private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(TObjectHashingStrategy.IDENTITY);
-  private final LinkedList<Runnable> myDelayQueue = new LinkedList<Runnable>();
-  private volatile boolean myProcessingDelayedActions;
   private final Set<OffsetMap> myMapsToDispose = new THashSet<OffsetMap>();
   private final PropertyChangeListener myLookupManagerListener;
 
@@ -211,17 +208,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       contributor.duringCompletion(initContext);
-    }
-  }
-
-  public void delayAllowingFocusedLookup(@NotNull Runnable runnable) {
-    myDelayQueue.addLast(runnable);
-  }
-
-  public void processDelayQueue() {
-    myProcessingDelayedActions = true;
-    while (!myDelayQueue.isEmpty()) {
-      myDelayQueue.removeFirst().run();
     }
   }
 
@@ -368,7 +354,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private boolean shouldShowLookup() {
     if (isAutopopupCompletion() && myLookup.isCalculating()) {
-      return myProcessingDelayedActions;
+      return false;
     }
     return true;
   }
@@ -402,10 +388,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           try {
             Thread.sleep(300);
           }
-          catch (InterruptedException e) {
-            LOG.error(e);
+          catch (InterruptedException ignore) {
           }
-          myFreezeSemaphore.up();
+          finally {
+            myFreezeSemaphore.up();
+          }
         }
       });
     }

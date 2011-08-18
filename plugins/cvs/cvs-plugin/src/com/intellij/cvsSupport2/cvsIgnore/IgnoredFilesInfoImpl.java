@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,12 @@
  */
 package com.intellij.cvsSupport2.cvsIgnore;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
-import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import org.netbeans.lib.cvsclient.util.SimpleStringPattern;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -79,7 +74,7 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
     }
   };
 
-  private List myPatterns = null;
+  private List<SimpleStringPattern> myPatterns = null;
 
   public static IgnoredFilesInfo createForFile(File file){
     if (!file.isFile()) return EMPTY_FILTER;
@@ -88,8 +83,8 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
 
   private IgnoredFilesInfoImpl() { }
 
-  public static ArrayList getPattensFor(File cvsIgnoreFile){
-    ArrayList result = new ArrayList();
+  public static List<SimpleStringPattern> getPattensFor(File cvsIgnoreFile){
+    ArrayList<SimpleStringPattern> result = new ArrayList();
 
     if (!cvsIgnoreFile.exists()) return result;
 
@@ -105,16 +100,16 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
 
         }
       } catch (Exception ex){
-
+        LOG.error(ex);
       } finally{
         try {
           reader.close();
-        } catch (java.io.IOException e) {
-
+        } catch (IOException e) {
+          LOG.error(e);
         }
       }
 
-    } catch (java.io.FileNotFoundException e) {
+    } catch (FileNotFoundException e) {
       LOG.error(e);
     }
 
@@ -130,17 +125,17 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
     return checkPatterns(myPatterns, fileName);
   }
 
-  protected static boolean checkPatterns(List patterns, String fileName) {
-    for (Iterator iterator = patterns.iterator(); iterator.hasNext();) {
-      SimpleStringPattern simpleStringPattern = (SimpleStringPattern) iterator.next();
+  protected static boolean checkPatterns(List<SimpleStringPattern> patterns, String fileName) {
+    for (int i = 0, patternsSize = patterns.size(); i < patternsSize; i++) {
+      SimpleStringPattern simpleStringPattern = patterns.get(i);
       if (simpleStringPattern.doesMatch(fileName)) return true;
     }
     return false;
   }
 
   protected static boolean checkPatterns(SimpleStringPattern[] patterns, String fileName) {
-    for (int i = 0; i < patterns.length; i++) {
-      if (patterns[i].doesMatch(fileName)) return true;
+    for (SimpleStringPattern pattern : patterns) {
+      if (pattern.doesMatch(fileName)) return true;
     }
     return false;
   }

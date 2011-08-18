@@ -328,7 +328,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
     }
 
-    final Runnable process = new TaskRunnable(task, progressIndicator);
+    final Runnable process = new TaskRunnable(task, progressIndicator, continuation);
 
     TaskContainer action = new TaskContainer(task) {
       public void run() {
@@ -336,9 +336,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
         final long start = System.currentTimeMillis();
         try {
           ProgressManager.getInstance().runProcess(process, progressIndicator);
-          if (continuation != null) {
-            continuation.run();
-          }
         }
         catch (ProcessCanceledException e) {
           canceled = true;
@@ -415,10 +412,16 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   private static class TaskRunnable extends TaskContainer {
     private final ProgressIndicator myIndicator;
+    private final Runnable myContinuation;
 
     private TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator) {
+      this(task, indicator, null);
+    }
+    
+    private TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation) {
       super(task);
       myIndicator = indicator;
+      myContinuation = continuation;
     }
 
     public void run() {
@@ -426,8 +429,15 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
         getTask().run(myIndicator);
       }
       finally {
-        if (myIndicator instanceof ProgressIndicatorEx) {
-          ((ProgressIndicatorEx)myIndicator).finish(getTask());
+        try {
+          if (myIndicator instanceof ProgressIndicatorEx) {
+            ((ProgressIndicatorEx)myIndicator).finish(getTask());
+          }
+        }
+        finally {
+          if (myContinuation != null) {
+            myContinuation.run();
+          }
         }
       }
     }

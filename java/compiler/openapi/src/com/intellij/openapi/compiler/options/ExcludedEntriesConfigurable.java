@@ -25,9 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.PanelWithButtons;
-import com.intellij.ui.RightAlignedLabelUI;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
@@ -308,12 +306,24 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
         ((DefaultCellEditor)editor).setClickCountToStart(1);
       }
 
-      //ToolbarDecorator.createDecorator(myExcludedTable)
-      //  .disableUpAction()
-      //  .disableDownAction()
+      return ToolbarDecorator.createDecorator(myExcludedTable)
+        .disableUpAction()
+        .disableDownAction()
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton anActionButton) {
+            addPath(myDescriptor);
+          }
+        })
+        .setRemoveAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton anActionButton) {
+            removePaths();
+          }
+        }).createPanel();
 
 
-      return ScrollPaneFactory.createScrollPane(myExcludedTable);
+      //return ScrollPaneFactory.createScrollPane(myExcludedTable);
     }
   }
 

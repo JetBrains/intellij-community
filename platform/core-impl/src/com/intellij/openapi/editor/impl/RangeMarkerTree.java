@@ -16,13 +16,12 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.SweepProcessor;
 import com.intellij.openapi.util.Segment;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -36,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerTree");
-  private static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode() || ApplicationManagerEx.getApplicationEx().isInternal();
+  private static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
 
   private final PrioritizedDocumentListener myListener;
   private final Document myDocument;
@@ -59,7 +58,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @Override
-  protected int compareEqualStartIntervals(@NotNull IntervalTreeImpl<T>.IntervalNode i1, @NotNull IntervalTreeImpl<T>.IntervalNode i2) {
+  protected int compareEqualStartIntervals(@NotNull IntervalTreeImpl.IntervalNode<T> i1, @NotNull IntervalTreeImpl.IntervalNode<T> i2) {
     RMNode o1 = (RMNode)i1;
     RMNode o2 = (RMNode)i2;
     boolean greedyL1 = o1.isGreedyToLeft();
@@ -151,12 +150,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     ((RangeMarkerImpl)key).myNode = (RMNode)intervalNode;
   }
 
-  public class RMNode extends IntervalTreeImpl<T>.IntervalNode {
+  public class RMNode extends IntervalTreeImpl.IntervalNode<T> {
     private final boolean isExpandToLeft;
     private final boolean isExpandToRight;
 
     public RMNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight) {
-      super(key, start, end);
+      super(RangeMarkerTree.this, key, start, end);
       isExpandToLeft = greedyToLeft;
       isExpandToRight = greedyToRight;
     }
@@ -297,7 +296,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return norm;
   }
 
-  public boolean sweep(final int start, final int end, @NotNull final MarkupModelEx.SweepProcessor<T> sweepProcessor) {
+  public boolean sweep(final int start, final int end, @NotNull final SweepProcessor<T> sweepProcessor) {
     return sweep(new Generator<T>() {
       @Override
       public boolean generate(Processor<T> processor) {
@@ -310,7 +309,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     boolean generate(Processor<T> processor);
   }
 
-  public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final MarkupModelEx.SweepProcessor<T> sweepProcessor) {
+  public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
     final Queue<T> ends = new PriorityQueue<T>(5, new Comparator<T>() {
       public int compare(T o1, T o2) {
         return o1.getEndOffset() - o2.getEndOffset();

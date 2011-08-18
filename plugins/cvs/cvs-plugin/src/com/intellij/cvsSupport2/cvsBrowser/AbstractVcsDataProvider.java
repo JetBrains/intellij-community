@@ -56,8 +56,8 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     return new GetDirectoriesListViaUpdateOperation(myEnvironment, path);
   }
 
-  private static class MyCancellableCvsHandler extends CommandCvsHandler {
-    private MyCancellableCvsHandler(final String title, final CvsOperation cvsOperation) {
+  private static class CancellableCvsHandler extends CommandCvsHandler {
+    private CancellableCvsHandler(final String title, final CvsOperation cvsOperation) {
       super(title, cvsOperation, true);
     }
 
@@ -76,8 +76,8 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     final CvsOperationExecutor executor = new CvsOperationExecutor(false, callback.getProject(), callback.getModalityState());
     executor.setIsQuietOperation(true);
 
-    final MyCancellableCvsHandler cvsHandler =
-        new MyCancellableCvsHandler(CvsBundle.message("browse.repository.operation.name"), (CvsOperation) command);
+    final CancellableCvsHandler cvsHandler =
+        new CancellableCvsHandler(CvsBundle.message("browse.repository.operation.name"), (CvsOperation)command);
 
     callback.useForCancel(cvsHandler.getProgressListener());
 

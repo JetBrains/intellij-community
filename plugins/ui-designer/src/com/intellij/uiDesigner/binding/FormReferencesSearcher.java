@@ -3,7 +3,9 @@ package com.intellij.uiDesigner.binding;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
@@ -151,7 +153,14 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     PsiManagerImpl manager = (PsiManagerImpl)field.getManager();
     PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return true;
-    String fieldName = field.getName();
+    String fieldName;
+    final AccessToken token = ReadAction.start();
+    try {
+      fieldName = field.getName();
+    }
+    finally {
+      token.finish();
+    }
     manager.startBatchFilesProcessingMode();
 
     try {

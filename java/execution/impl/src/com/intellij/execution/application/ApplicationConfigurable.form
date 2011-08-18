@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.execution.application.ApplicationConfigurable">
-  <grid id="93687" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
+  <grid id="93687" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="53" y="36" width="596" height="433"/>
@@ -21,9 +21,13 @@
       </component>
       <component id="50d08" class="com.intellij.openapi.ui.LabeledComponent" binding="myMainClass" custom-create="true">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="154" height="25"/>
+          </grid>
         </constraints>
         <properties>
+          <labelLocation value="West"/>
+          <labelPreferredSize width="144" height="16"/>
           <text resource-bundle="messages/ExecutionBundle" key="application.configuration.main.class.label"/>
         </properties>
       </component>
@@ -33,6 +37,7 @@
         </constraints>
         <properties>
           <componentClass value="javax.swing.JComboBox"/>
+          <labelLocation value="West"/>
           <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
         </properties>
       </component>

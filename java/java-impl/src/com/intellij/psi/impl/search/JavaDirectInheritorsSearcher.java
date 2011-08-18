@@ -67,7 +67,12 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(psiManager.getProject());
-    final String searchKey = aClass.getName();
+    final String searchKey = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return aClass.getName();
+      }
+    });
     if (StringUtil.isEmpty(searchKey)) {
       return true;
     }

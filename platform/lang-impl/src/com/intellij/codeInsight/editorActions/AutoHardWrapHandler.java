@@ -31,7 +31,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
 import com.intellij.util.containers.WeakHashMap;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -85,7 +85,7 @@ public class AutoHardWrapHandler {
    * @param dataContext                     current data context
    * @param modificationStampBeforeTyping   document modification stamp before the current symbols typing
    */
-  public void wrapLineIfNecessary(Editor editor, @Nullable DataContext dataContext, long modificationStampBeforeTyping) {
+  public void wrapLineIfNecessary(Editor editor, @NotNull DataContext dataContext, long modificationStampBeforeTyping) {
     Project project = editor.getProject();
     Document document = editor.getDocument();
     AutoWrapChange change = myAutoWrapChanges.get(document);

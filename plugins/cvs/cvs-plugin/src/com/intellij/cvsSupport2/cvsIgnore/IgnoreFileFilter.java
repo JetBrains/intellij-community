@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 package com.intellij.cvsSupport2.cvsIgnore;
 
-import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfo;
-import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfoImpl;
-import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.util.containers.HashMap;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
@@ -38,10 +35,8 @@ public class IgnoreFileFilter implements IIgnoreFileFilter{
     File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);
     File parent = file.getParentFile();
     if (!myParentToFilterMap.containsKey(parent)){
-      myParentToFilterMap.put(parent, IgnoredFilesInfoImpl.createForFile(new File(parent,
-                                                                                  CvsUtil.CVS_IGNORE_FILE)));
+      myParentToFilterMap.put(parent, IgnoredFilesInfoImpl.createForFile(new File(parent, CvsUtil.CVS_IGNORE_FILE)));
     }
     return myParentToFilterMap.get(parent).shouldBeIgnored(file.getName());
-
   }
 }

@@ -61,7 +61,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private boolean myExternalKeysNoMapping;
 
   private static final int DIRTY_MAGIC = 0xbabe1977;
-  private static final int VERSION = 5 + IntToIntBtree.VERSION;
+  private static final int VERSION = 6 + IntToIntBtree.VERSION;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafc + VERSION + PAGE_SIZE;
   private static Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
   private static final int KEY_SHIFT = 1;
@@ -169,50 +169,34 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   @Override
   public boolean traverseAllRecords(RecordsProcessor p) throws IOException {
     synchronized (ourLock) {
-      if (myInlineKeysNoMapping || myExternalKeysNoMapping) {
-        List<IntToIntBtree.BtreeIndexNodeView> leafPages = new ArrayList<IntToIntBtree.BtreeIndexNodeView> ();
-        btree.root.setAddress(btree.root.address);
-        collectLeafPages(btree.root, leafPages);
-        Collections.sort(leafPages, new Comparator<IntToIntBtree.BtreeIndexNodeView>() {
-          @Override
-          public int compare(IntToIntBtree.BtreeIndexNodeView o1, IntToIntBtree.BtreeIndexNodeView o2) {
-            return o1.address - o2.address;
-          }
-        });
 
-        out:
-        for(IntToIntBtree.BtreeIndexNodeView page:leafPages) {
-          for(int key:page.exportKeys()) {
-            Integer record = btree.get(key);
-            p.setCurrentKey(key);
-            assert record != null;
-            if (record > 0) {
-              if (!p.process(record)) break out;
-            } else {
-              int rec = - record;
-              while(rec != 0) {
-                int id = myStorage.getInt(rec);
-                if (!p.process(id)) break out;
-                rec = myStorage.getInt(rec + COLLISION_OFFSET);
-              }
+      List<IntToIntBtree.BtreeIndexNodeView> leafPages = new ArrayList<IntToIntBtree.BtreeIndexNodeView> ();
+      btree.root.setAddress(btree.root.address);
+      collectLeafPages(btree.root, leafPages);
+      Collections.sort(leafPages, new Comparator<IntToIntBtree.BtreeIndexNodeView>() {
+        @Override
+        public int compare(IntToIntBtree.BtreeIndexNodeView o1, IntToIntBtree.BtreeIndexNodeView o2) {
+          return o1.address - o2.address;
+        }
+      });
+
+      out:
+      for(IntToIntBtree.BtreeIndexNodeView page:leafPages) {
+        for(int key:page.exportKeys()) {
+          Integer record = btree.get(key);
+          p.setCurrentKey(key);
+          assert record != null;
+          if (record > 0) {
+            if (!p.process(record)) break out;
+          } else {
+            int rec = - record;
+            while(rec != 0) {
+              int id = myStorage.getInt(rec);
+              if (!p.process(id)) break out;
+              rec = myStorage.getInt(rec + COLLISION_OFFSET);
             }
           }
         }
-        return true;
-      }
-
-      int current = myFirstPageStart;
-      int currentPage = current;
-      int end = myDataPageStart + myDataPageOffset;
-      byte[] recordBuffer = getRecordHandler().getRecordBuffer(this);
-      int last = PAGE_SIZE - 4;
-
-      while(current != end) {
-        if (current - currentPage >= last) {
-          currentPage = current = myStorage.getInt(currentPage + last);
-        }
-        if (!p.process(current)) break;
-        current += recordBuffer.length;
       }
       return true;
     }
@@ -256,18 +240,27 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     super.setRecordHandler(recordHandler);
   }
 
-  protected int enumerateImpl(final Data value, final boolean saveNewValue) throws IOException {
+  @Override
+  public Data getValue(int keyId, int processingKey) throws IOException {
+    if (myInlineKeysNoMapping) {
+      return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(processingKey);
+    }
+    return super.getValue(keyId, processingKey);
+  }
+
+  protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     try {
       if (IntToIntBtree.doDump) System.out.println(value);
       final int valueHC = myDataDescriptor.getHashCode(value);
 
       final Integer keyValue = btree.get(valueHC);
-      if (keyValue == null && !saveNewValue) {
+      if (keyValue == null && onlyCheckForExisting) {
         return NULL_ID;
       }
 
       int indexNodeValueAddress = keyValue != null ? keyValue:0;
       int collisionAddress = NULL_ID;
+      Data existingData = null;
 
       if (!myInlineKeysNoMapping) {
         indexNodeValueAddress = keyValue != null ? keyValue:0;
@@ -279,7 +272,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           if (IntToIntBtree.doSanityCheck) IntToIntBtree.myAssert(myDataDescriptor.getHashCode(candidate) == valueHC);
 
           if (myDataDescriptor.isEqual(value, candidate)) {
-            return indexNodeValueAddress;
+            if (!saveNewValue) return indexNodeValueAddress;
+            existingData = candidate;
           }
 
           collisionAddress = indexNodeValueAddress;
@@ -290,7 +284,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
             final int address = myStorage.getInt(collisionAddress);
             Data candidate = valueOf(address);
             if (myDataDescriptor.isEqual(value, candidate)) {
-              return address;
+              if (!saveNewValue) return address;
+              existingData = candidate;
+              break;
             }
             if (IntToIntBtree.doSanityCheck) IntToIntBtree.myAssert(myDataDescriptor.getHashCode(candidate) == valueHC);
 
@@ -300,9 +296,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           }
         }
 
-        if (!saveNewValue) return NULL_ID;
+        if (onlyCheckForExisting) return NULL_ID;
       } else {
-        if (keyValue != null) return indexNodeValueAddress;
+        if (keyValue != null) {
+          if(!saveNewValue) return indexNodeValueAddress;
+          existingData = value;
+        }
       }
 
       int newValueId = writeData(value, valueHC);
@@ -319,21 +318,29 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       }
 
       if (collisionAddress != NULL_ID) {
-        if (indexNodeValueAddress > 0) {
-          // organize collision type reference
-          int duplicatedValueOff = nextDuplicatedValueRecord();
-          btree.put(valueHC, -duplicatedValueOff);
+        if (existingData != null) {
+          if (indexNodeValueAddress > 0) {
+            btree.put(valueHC, newValueId);
+          } else {
+            myStorage.putInt(collisionAddress, newValueId);
+          }
+        } else {
+          if (indexNodeValueAddress > 0) {
+            // organize collision type reference
+            int duplicatedValueOff = nextDuplicatedValueRecord();
+            btree.put(valueHC, -duplicatedValueOff);
 
-          myStorage.putInt(duplicatedValueOff, indexNodeValueAddress); // we will set collision offset in next if
-          collisionAddress = duplicatedValueOff;
+            myStorage.putInt(duplicatedValueOff, indexNodeValueAddress); // we will set collision offset in next if
+            collisionAddress = duplicatedValueOff;
+            ++collisions;
+          }
+
           ++collisions;
+          int duplicatedValueOff = nextDuplicatedValueRecord();
+          myStorage.putInt(collisionAddress + COLLISION_OFFSET, duplicatedValueOff);
+          myStorage.putInt(duplicatedValueOff, newValueId);
+          myStorage.putInt(duplicatedValueOff + COLLISION_OFFSET, 0);
         }
-
-        ++collisions;
-        int duplicatedValueOff = nextDuplicatedValueRecord();
-        myStorage.putInt(collisionAddress + COLLISION_OFFSET, duplicatedValueOff);
-        myStorage.putInt(duplicatedValueOff, newValueId);
-        myStorage.putInt(duplicatedValueOff + COLLISION_OFFSET, 0);
       } else {
         btree.put(valueHC, newValueId);
       }
@@ -355,6 +362,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       LOG.error(e);
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  boolean canReEnumerate() {
+    return true;
   }
 
   @Override

@@ -18,11 +18,12 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class FileDocumentManager {
+public abstract class FileDocumentManager implements SavingRequestor {
   public static FileDocumentManager getInstance() {
     return ApplicationManager.getApplication().getComponent(FileDocumentManager.class);
   }

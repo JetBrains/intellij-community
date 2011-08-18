@@ -15,12 +15,10 @@
  */
 package git4idea.update;
 
-import com.intellij.ide.GeneralSettings;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -52,7 +50,6 @@ public class GitUpdateProcess {
   private static final Logger LOG = Logger.getInstance(GitUpdateProcess.class);
 
   private final Project myProject;
-  private final ProjectManagerEx myProjectManager;
   private final Set<VirtualFile> myRoots;
   private final UpdatedFiles myUpdatedFiles;
   private final ProgressIndicator myProgressIndicator;
@@ -60,7 +57,6 @@ public class GitUpdateProcess {
   private final GitChangesSaver mySaver;
 
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
-  private GeneralSettings myGeneralSettings;
   private boolean myResult;
   private final Map<VirtualFile, GitUpdater> myUpdaters;
   private final Collection<VirtualFile> myRootsToSave;
@@ -72,11 +68,9 @@ public class GitUpdateProcess {
     myRoots = roots;
     myUpdatedFiles = updatedFiles;
     myProgressIndicator = progressIndicator;
-    myProjectManager = ProjectManagerEx.getInstanceEx();
     myMerger = new GitMerger(myProject);
     mySaver = GitChangesSaver.getSaver(myProject, myProgressIndicator,
       "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()));
-    myGeneralSettings = GeneralSettings.getInstance();
     myUpdaters = new HashMap<VirtualFile, GitUpdater>();
     myRootsToSave = new HashSet<VirtualFile>(1);
   }
@@ -86,7 +80,7 @@ public class GitUpdateProcess {
    * In case of error shows notification and returns false. If update completes without errors, returns true.
    */
   public boolean update() {
-    return update(false, true);
+    return update(false);
   }
 
   /**
@@ -98,22 +92,23 @@ public class GitUpdateProcess {
    * 4. Updates via 'git pull' or equivalent.
    * 5. Restores local changes if update completed or failed with error. If update is incomplete, i.e. some unmerged files remain,
    * local changes are not restored.
+   *
    * @param forceRebase
    * @return
    */
-  public boolean update(final boolean forceRebase, final boolean restoreChangesRightNow) {
+  public boolean update(final boolean forceRebase) {
     LOG.info("update started|" + (forceRebase ? " force rebase" : ""));
 
     if (!fetchAndNotify()) {
       return false;
     }
 
-    new GitUpdateLikeProcess(myProject) {
-      @Override
-      protected void runImpl(ContinuationContext context) {
-        myResult = updateImpl(forceRebase, context);
+    GitComplexProcess.Operation updateOperation = new GitComplexProcess.Operation() {
+      @Override public void run(ContinuationContext continuationContext) {
+        myResult = updateImpl(forceRebase, continuationContext);
       }
-    }.execute();
+    };
+    GitComplexProcess.execute(myProject, "update", updateOperation);
     return myResult;
   }
 
@@ -190,7 +185,7 @@ public class GitUpdateProcess {
     return success;
   }
 
-  public void restoreLocalChanges(ContinuationContext context) {
+  private void restoreLocalChanges(ContinuationContext context) {
     context.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
       @Override
       public void consume(VcsException e) {

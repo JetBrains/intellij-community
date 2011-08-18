@@ -81,6 +81,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     setLayout(new BorderLayout(0, 0));
 
     myComboBox = new ComboBox(new MyComboboxModel(getRecents()), -1);
+    myComboBox.setSwingPopup(false);
 
     // Have to turn this off because when used in DebuggerTreeInplaceEditor, the combobox popup is hidden on every change of selection
     // See comment to SynthComboBoxUI.FocusHandler.focusLost()

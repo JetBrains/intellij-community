@@ -129,7 +129,7 @@ public class GrClassImplUtil {
 
   @Nullable
   private static List<PsiClassType> getImplementsFromDelegate(@NotNull final GrTypeDefinition grType, final Set<PsiClass> visited) {
-    return RecursionManager.createGuard("groovyDelegateFields").doPreventingRecursion(grType, true, new Computable<List<PsiClassType>>() {
+    return RecursionManager.doPreventingRecursion(grType, true, new Computable<List<PsiClassType>>() {
       @Override
       public List<PsiClassType> compute() {
         List<PsiClassType> result = new ArrayList<PsiClassType>();

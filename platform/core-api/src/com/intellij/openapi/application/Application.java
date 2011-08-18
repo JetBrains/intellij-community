@@ -331,4 +331,6 @@ public interface Application extends ComponentManager {
    * Returns lock used for write operations, should be closed in finally block
    */
   AccessToken acquireWriteActionLock(@Nullable Class marker);
+
+  boolean isInternal();
 }

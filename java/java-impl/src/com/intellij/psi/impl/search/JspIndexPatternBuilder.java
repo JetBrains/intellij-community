@@ -22,9 +22,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorHighlighterCache;
+import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.jsp.JspFile;
@@ -44,8 +45,7 @@ public class JspIndexPatternBuilder implements IndexPatternBuilder {
       EditorHighlighter cachedEditorHighlighter;
       boolean alreadyInitializedHighlighter = false;
 
-      if (document instanceof DocumentImpl && 
-          (cachedEditorHighlighter = ((DocumentImpl)document).getEditorHighlighterForCachesBuilding()) != null &&
+      if ((cachedEditorHighlighter = EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document)) != null &&
           IdTableBuilding.checkCanUseCachedEditorHighlighter(file.getText(), cachedEditorHighlighter)
          ) {
         highlighter = cachedEditorHighlighter;
