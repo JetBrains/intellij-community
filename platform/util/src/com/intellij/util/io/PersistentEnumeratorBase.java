@@ -236,10 +236,17 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
 
     final int id;
-    synchronized (this) {
-      synchronized (ourLock) {
-        id = enumerateImpl(value, onlyCheckForExisting, saveNewValue);
-      }
+    try {
+      id = enumerateImpl(value, onlyCheckForExisting, saveNewValue);
+    }
+    catch (IOException io) {
+      markCorrupted();
+      throw io;
+    }
+    catch (Throwable e) {
+      markCorrupted();
+      LOG.error(e);
+      throw new RuntimeException(e);
     }
 
     if (id != NULL_ID) {
@@ -508,7 +515,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  protected void markCorrupted() {
+  private synchronized void markCorrupted() {
     if (!myCorrupted) {
       myCorrupted = true;
       try {

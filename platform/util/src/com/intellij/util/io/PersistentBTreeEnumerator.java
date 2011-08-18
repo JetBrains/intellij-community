@@ -15,8 +15,8 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -27,8 +27,6 @@ import java.util.Comparator;
 import java.util.List;
 
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
-  protected static final int NULL_ID = 0;
   private static final int PAGE_SIZE;
   private static final int DEFAULT_PAGE_SIZE = 4096;
 
@@ -248,8 +246,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return super.getValue(keyId, processingKey);
   }
 
-  protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
-    try {
+  protected synchronized int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
+    synchronized (ourLock) {
       if (IntToIntBtree.doDump) System.out.println(value);
       final int valueHC = myDataDescriptor.getHashCode(value);
 
@@ -353,15 +351,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       }
       return newValueId;
     }
-    catch (IOException io) {
-      markCorrupted();
-      throw io;
-    }
-    catch (Throwable e) {
-      markCorrupted();
-      LOG.error(e);
-      throw new RuntimeException(e);
-    }
   }
 
   @Override
@@ -417,6 +406,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       return recordWriteOffset + enumerator.myDataPageStart;
     }
 
+    @NotNull
     @Override
     byte[] getRecordBuffer(PersistentBTreeEnumerator enumerator) {
       if (myBuffer == null) {
