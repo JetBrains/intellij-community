@@ -47,6 +47,8 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
 
   public void testIDEADEV11257() throws Exception { doTest(true, 0); }
 
+  public void testThisInAnonymous() throws Exception { doTest(true, 0); }
+
   public void testEscalateVisibility() throws Exception {
     doTest(true, 0, VisibilityUtil.ESCALATE_VISIBILITY);
   }

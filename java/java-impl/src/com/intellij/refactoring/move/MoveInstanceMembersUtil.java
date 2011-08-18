@@ -61,7 +61,7 @@ public class MoveInstanceMembersUtil {
         if (expression instanceof PsiThisExpression) {
           final PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)expression).getQualifier();
           PsiClass thisClass = thisQualifier == null ? PsiTreeUtil.getParentOfType(expression, PsiClass.class, true) : ((PsiClass)thisQualifier.resolve());
-          if (thisClass != null) {
+          if (thisClass != null && !PsiTreeUtil.isAncestor( refMember,thisClass, false)) {
             addReferencedMember(map, thisClass, null);
           }
         }
