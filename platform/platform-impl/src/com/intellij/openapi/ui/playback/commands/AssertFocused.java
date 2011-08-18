@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -31,7 +32,7 @@ public class AssertFocused extends AbstractCommand {
     super(text, line);
   }
 
-  protected ActionCallback _execute(final PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
+  protected ActionCallback _execute(final PlaybackContext context) {
     final ActionCallback result = new ActionCallback();
 
     String text = getText().substring(PREFIX.length()).trim();
@@ -42,7 +43,7 @@ public class AssertFocused extends AbstractCommand {
       for (String each : keyValue) {
         final String[] eachPair = each.split("=");
         if (eachPair.length != 2) {
-          cb.error("Syntax error, must be comma-separated pairs key=value", getLine());
+          context.getCallback().error("Syntax error, must be comma-separated pairs key=value", getLine());
           result.setRejected();
           return result;
         }
@@ -54,11 +55,11 @@ public class AssertFocused extends AbstractCommand {
     IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
       public void run() {
         try {
-          doAssert(expected, cb);
+          doAssert(expected, context.getCallback());
           result.setDone();
         }
         catch (AssertionError error) {
-          cb.error("Assertion failed: " + error.getMessage(), getLine());
+          context.getCallback().error("Assertion failed: " + error.getMessage(), getLine());
           result.setRejected();
         }
       }

@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
-import com.intellij.openapi.ui.playback.PlaybackRunner;
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-
-import java.awt.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -37,8 +35,8 @@ public class PrintCommand extends AbstractCommand {
   }
 
   @Override
-  protected ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
-    cb.message(myText, getLine());
+  protected ActionCallback _execute(PlaybackContext context) {
+    context.getCallback().message(myText, getLine());
     return new ActionCallback.Done();
   }
 }

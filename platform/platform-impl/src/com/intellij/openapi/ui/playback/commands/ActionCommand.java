@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
-import com.intellij.openapi.ui.playback.PlaybackRunner;
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -38,17 +37,17 @@ public class ActionCommand extends TypeCommand {
     super(text, line);
   }
 
-  protected ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
+  protected ActionCallback _execute(PlaybackContext context) {
     final String actionName = getText().substring(PREFIX.length()).trim();
 
     final AnAction action = ActionManager.getInstance().getAction(actionName);
     if (action == null) {
-      dumpError(cb, "Unknown action: " + actionName);
+      dumpError(context.getCallback(), "Unknown action: " + actionName);
       return new ActionCallback.Rejected();
     }
 
 
-    if (!directActionCall) {
+    if (!context.isUseDirectActionCall()) {
       final Shortcut[] sc = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionName);
       KeyStroke stroke = null;
       for (Shortcut each : sc) {
@@ -64,8 +63,8 @@ public class ActionCommand extends TypeCommand {
       }
 
       if (stroke != null) {
-        cb.message("Invoking action via shortcut: " + stroke.toString(), getLine());
-        type(robot, stroke);
+        context.getCallback().message("Invoking action via shortcut: " + stroke.toString(), getLine());
+        type(context.getRobot(), stroke);
         return new ActionCallback.Done();
       }
     }
@@ -74,7 +73,7 @@ public class ActionCommand extends TypeCommand {
 
     final ActionCallback result = new ActionCallback();
 
-    robot.delay(Registry.intValue("actionSystem.playback.autodelay"));
+    context.getRobot().delay(Registry.intValue("actionSystem.playback.autodelay"));
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         ActionManager.getInstance().tryToExecute(action, input, null, null, false).doWhenProcessed(new Runnable() {

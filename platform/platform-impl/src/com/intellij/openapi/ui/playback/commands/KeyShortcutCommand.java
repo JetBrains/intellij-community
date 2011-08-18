@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.ui.playback.PlaybackRunner;
-
-import java.awt.*;
 
 public class KeyShortcutCommand extends TypeCommand {
 
@@ -29,14 +27,14 @@ public class KeyShortcutCommand extends TypeCommand {
     super(text, line);
   }
 
-  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
+  public ActionCallback _execute(PlaybackContext context) {
     final String one = getText().substring(PREFIX.length());
     if (!one.endsWith(POSTFIX)) {
-      dumpError(cb, "Expected " + "]");
+      dumpError(context.getCallback(), "Expected " + "]");
       return new ActionCallback.Rejected();
     }
 
-    type(robot, getFromShortcut(one.substring(0, one.length() - 1).trim()));
+    type(context.getRobot(), getFromShortcut(one.substring(0, one.length() - 1).trim()));
 
     return new ActionCallback.Done();
   }

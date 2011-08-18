@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.ui.playback.PlaybackRunner;
-
-import java.awt.*;
 
 public class StopCommand extends AbstractCommand {
 
@@ -28,8 +26,8 @@ public class StopCommand extends AbstractCommand {
     super(text, line);
   }
 
-  protected ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
-    cb.message("Stopped", getLine());
+  protected ActionCallback _execute(PlaybackContext context) {
+    context.getCallback().message("Stopped", getLine());
     return new ActionCallback.Done();
   }
 

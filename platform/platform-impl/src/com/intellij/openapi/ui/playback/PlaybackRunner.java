@@ -26,7 +26,6 @@ import com.intellij.util.text.StringTokenizer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -92,7 +91,7 @@ public class PlaybackRunner {
         myActionCallback.setRejected();
         return;
       }
-      final ActionCallback cmdCallback = cmd.execute(myCallback, myRobot, myUseDirectActionCall);
+      final ActionCallback cmdCallback = cmd.execute(new PlaybackContext(myCallback, cmdIndex, myRobot, myUseDirectActionCall));
       cmdCallback.doWhenDone(new Runnable() {
         public void run() {
           if (cmd.canGoFurther()) {
