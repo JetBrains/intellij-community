@@ -17,7 +17,6 @@ package com.intellij.openapi.components.ex;
 
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.extensions.PluginDescriptor;
 
 import java.util.Map;
@@ -39,5 +38,5 @@ public interface ComponentManagerEx extends ComponentManager {
   void registerComponent(ComponentConfig config);
   void registerComponent(ComponentConfig config, PluginDescriptor pluginDescriptor);
 
-  IComponentStore getComponentStore();
+  void initializeComponent(Object component, boolean service);
 }

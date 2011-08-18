@@ -46,7 +46,6 @@ import org.picocontainer.*;
 import org.picocontainer.defaults.CachingComponentAdapter;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,11 +98,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
     return myComponentStore;
   }
-
-  public IComponentStore getComponentStore() {
-    return getStateStore();
-  }
-
 
   public MessageBus getMessageBus() {
     assert !myDisposeCompleted && !myDisposed : "Already disposed";
@@ -241,7 +235,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     try {
-      getStateStore().initComponent(component, false);
+      initializeComponent(component, false);
       if (component instanceof BaseComponent) {
         ((BaseComponent)component).initComponent();
       }
@@ -255,6 +249,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     catch (Throwable ex) {
       handleInitComponentError(ex, false, component.getClass().getName());
     }
+  }
+
+  public void initializeComponent(Object component, boolean service) {
+    getStateStore().initComponent(component, service);
   }
 
 
