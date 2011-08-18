@@ -18,6 +18,7 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase{
   public void testParametericMethod() throws Exception { doSingleTest(); }
   public void testQualifyInner() throws Exception { doSingleTest(); }
   public void testTypeArgsFormatted() throws Exception { doSingleTest(); }
+  public void testInsideStaticInnerClass() throws Exception { doSingleTest(); }
 
   public void testSortByRelevance() throws Exception {
     new WriteCommandAction(getProject()) {

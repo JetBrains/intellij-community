@@ -37,7 +37,7 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
 
   protected boolean isValidElement(PsiElement element) {
     PsiReferenceExpression expression = (PsiReferenceExpression) element;
-    return CreateFromUsageUtils.isValidReference(expression, true);
+    return CreateFromUsageUtils.isValidReference(expression, false);
   }
 
   protected PsiElement getElement() {
@@ -48,7 +48,7 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
     if (parent instanceof PsiMethodCallExpression) return null;
 
     if (myReferenceExpression.getReferenceNameElement() != null) {
-      if (!CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) {
+      if (!CreateFromUsageUtils.isValidReference(myReferenceExpression, false)) {
         return myReferenceExpression;
       }
     }
