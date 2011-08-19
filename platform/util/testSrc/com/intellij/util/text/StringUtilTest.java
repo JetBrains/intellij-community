@@ -86,5 +86,6 @@ public class StringUtilTest extends TestCase {
     final List<String> strings2 = new ArrayList(Arrays.asList("t1", "t001", "T2", "T002", "T1", "t2"));
     Collections.sort(strings2, c);
     assertEquals(Arrays.asList("T1", "t1", "t001", "T2", "t2", "T002"), strings2);
+    assertEquals(1 ,StringUtil.naturalCompare("7403515080361171695", "07403515080361171694"));
   }
 }
