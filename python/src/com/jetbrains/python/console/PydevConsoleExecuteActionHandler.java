@@ -124,7 +124,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         indent += getPythonIndent();
         flag = true;
       }
-      if ((myCurrentIndentSize != -1 && indent >= myCurrentIndentSize) || flag) {
+      if ((myCurrentIndentSize >0 && indent>0) || flag) {
         myCurrentIndentSize = indent;
         indentEditor(currentEditor, indent);
         more(console, currentEditor);
