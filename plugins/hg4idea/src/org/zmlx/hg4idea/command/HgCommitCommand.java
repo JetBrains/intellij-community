@@ -13,9 +13,10 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.apache.commons.lang.StringUtils;
@@ -26,11 +27,8 @@ import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,54 +38,51 @@ import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
 
 public class HgCommitCommand {
 
-  private static final Logger LOG = Logger.getInstance(HgCommitCommand.class.getName());
-
   private static final String TEMP_FILE_NAME = ".hg4idea-commit.tmp";
 
-  private final Project project;
-  private final VirtualFile repo;
-  private final String message;
+  private final Project myProject;
+  private final VirtualFile myRoot;
+  private final String myMessage;
 
-  private Set<HgFile> files = Collections.emptySet();
+  private Set<HgFile> myFiles = Collections.emptySet();
 
-  public HgCommitCommand(Project project, @NotNull VirtualFile repo, String message) {
-    this.project = project;
-    this.repo = repo;
-    this.message = message;
+  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message) {
+    myProject = project;
+    myRoot = root;
+    myMessage = message;
   }
 
   public void setFiles(@NotNull Set<HgFile> files) {
-    this.files = files;
+    myFiles = files;
   }
 
   public void execute() throws HgCommandException, VcsException {
-    if (StringUtils.isBlank(message)) {
+    if (StringUtils.isBlank(myMessage)) {
       throw new HgCommandException(HgVcsMessages.message("hg4idea.commit.error.messageEmpty"));
     }
-    try {
-      List<String> parameters = new LinkedList<String>();
-      parameters.add("--logfile");
-      parameters.add(saveCommitMessage().getAbsolutePath());
-      for (HgFile hgFile : files) {
-        parameters.add(hgFile.getRelativePath());
-      }
-      ensureSuccess(new HgCommandExecutor(project).executeInCurrentThread(repo, "commit", parameters));
-      final MessageBus messageBus = project.getMessageBus();
-      messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
-      messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
-    } catch (IOException e) {
-      LOG.info(e);
+    List<String> parameters = new LinkedList<String>();
+    parameters.add("--logfile");
+    parameters.add(saveCommitMessage().getAbsolutePath());
+    for (HgFile hgFile : myFiles) {
+      parameters.add(hgFile.getRelativePath());
     }
+    parameters.add("--encoding");
+    parameters.add(CharsetToolkit.UTF8);
+
+    ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
+    final MessageBus messageBus = myProject.getMessageBus();
+    messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
+    messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject);
   }
 
-  private File saveCommitMessage() throws IOException {
+  private File saveCommitMessage() throws VcsException {
     File systemDir = new File(PathManager.getSystemPath());
     File tempFile = new File(systemDir, TEMP_FILE_NAME);
-    Writer output = new BufferedWriter(new FileWriter(tempFile, false));
+    
     try {
-      output.write(message);
-    } finally {
-      output.close();
+      FileUtil.writeToFile(tempFile, myMessage);
+    } catch (IOException e) {
+      throw new VcsException("Couldn't prepare commit message", e);
     }
     return tempFile;
   }
