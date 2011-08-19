@@ -1,0 +1,149 @@
+     adrian  2287 3f0790d500a9 2006-02-24:  1: "Database cache backend."
+     jezdez 16338 bf038debb499 2011-07-13:  2: import base64
+     jezdez 16338 bf038debb499 2011-07-13:  3: import time
+     jezdez 16338 bf038debb499 2011-07-13:  4: from datetime import datetime
+     adrian  2287 3f0790d500a9 2006-02-24:  2: 
+     adrian  2287 3f0790d500a9 2006-02-24:  7: try:
+     adrian  2287 3f0790d500a9 2006-02-24:  8:     import cPickle as pickle
+     adrian  2287 3f0790d500a9 2006-02-24:  9: except ImportError:
+     adrian  2287 3f0790d500a9 2006-02-24: 10:     import pickle
+     adrian  2287 3f0790d500a9 2006-02-24: 11: 
+     jezdez 16338 bf038debb499 2011-07-13: 11: from django.core.cache.backends.base import BaseCache
+     jezdez 16338 bf038debb499 2011-07-13: 12: from django.db import connections, router, transaction, DatabaseError
+     jezdez 16338 bf038debb499 2011-07-13: 13: 
+     jezdez 16338 bf038debb499 2011-07-13: 14: 
+   russellm 13275 4dd52d4f3f50 2010-08-05: 12: class Options(object):
+   russellm 13275 4dd52d4f3f50 2010-08-05: 13:     """A class that will quack like a Django model _meta class.
+   russellm 13275 4dd52d4f3f50 2010-08-05: 14: 
+   russellm 13275 4dd52d4f3f50 2010-08-05: 15:     This allows cache operations to be controlled by the router
+   russellm 13275 4dd52d4f3f50 2010-08-05: 16:     """
+   russellm 13275 4dd52d4f3f50 2010-08-05: 17:     def __init__(self, table):
+   russellm 13275 4dd52d4f3f50 2010-08-05: 18:         self.db_table = table
+   russellm 13275 4dd52d4f3f50 2010-08-05: 19:         self.app_label = 'django_cache'
+   russellm 13275 4dd52d4f3f50 2010-08-05: 20:         self.module_name = 'cacheentry'
+   russellm 13275 4dd52d4f3f50 2010-08-05: 21:         self.verbose_name = 'cache entry'
+   russellm 13275 4dd52d4f3f50 2010-08-05: 22:         self.verbose_name_plural = 'cache entries'
+   russellm 13275 4dd52d4f3f50 2010-08-05: 23:         self.object_name =  'CacheEntry'
+   russellm 13275 4dd52d4f3f50 2010-08-05: 24:         self.abstract = False
+   russellm 13275 4dd52d4f3f50 2010-08-05: 25:         self.managed = True
+   russellm 13275 4dd52d4f3f50 2010-08-05: 26:         self.proxy = False
+   russellm 13275 4dd52d4f3f50 2010-08-05: 27: 
+   russellm 14807 905c4a7e1f19 2010-12-21: 28: class BaseDatabaseCache(BaseCache):
+   russellm 14807 905c4a7e1f19 2010-12-21: 29:     def __init__(self, table, params):
+   russellm 14807 905c4a7e1f19 2010-12-21: 30:         BaseCache.__init__(self, params)
+   russellm 13275 4dd52d4f3f50 2010-08-05: 31:         self._table = table
+   russellm 13275 4dd52d4f3f50 2010-08-05: 32: 
+   russellm 13275 4dd52d4f3f50 2010-08-05: 33:         class CacheEntry(object):
+   russellm 13275 4dd52d4f3f50 2010-08-05: 34:             _meta = Options(table)
+   russellm 13275 4dd52d4f3f50 2010-08-05: 35:         self.cache_model_class = CacheEntry
+   russellm 13275 4dd52d4f3f50 2010-08-05: 36: 
+   russellm 14807 905c4a7e1f19 2010-12-21: 37: class DatabaseCache(BaseDatabaseCache):
+   russellm 14425 793e94ba2037 2010-11-19: 38:     def get(self, key, default=None, version=None):
+   russellm 14425 793e94ba2037 2010-11-19: 39:         key = self.make_key(key, version=version)
+mtredinnick 13568 7e0b7bf098d2 2010-09-12: 49:         self.validate_key(key)
+   russellm 13275 4dd52d4f3f50 2010-08-05: 49:         db = router.db_for_read(self.cache_model_class)
+   russellm 13275 4dd52d4f3f50 2010-08-05: 50:         table = connections[db].ops.quote_name(self._table)
+   russellm 13275 4dd52d4f3f50 2010-08-05: 51:         cursor = connections[db].cursor()
+   russellm 13275 4dd52d4f3f50 2010-08-05: 52: 
+   russellm 13275 4dd52d4f3f50 2010-08-05: 53:         cursor.execute("SELECT cache_key, value, expires FROM %s WHERE cache_key = %%s" % table, [key])
+     adrian  2287 3f0790d500a9 2006-02-24: 30:         row = cursor.fetchone()
+     adrian  2287 3f0790d500a9 2006-02-24: 31:         if row is None:
+     adrian  2287 3f0790d500a9 2006-02-24: 32:             return default
+     adrian  2287 3f0790d500a9 2006-02-24: 33:         now = datetime.now()
+     adrian  2287 3f0790d500a9 2006-02-24: 34:         if row[2] < now:
+   russellm 13275 4dd52d4f3f50 2010-08-05: 59:             db = router.db_for_write(self.cache_model_class)
+   russellm 13275 4dd52d4f3f50 2010-08-05: 60:             cursor = connections[db].cursor()
+   russellm 13275 4dd52d4f3f50 2010-08-05: 61:             cursor.execute("DELETE FROM %s WHERE cache_key = %%s" % table, [key])
+   russellm 13275 4dd52d4f3f50 2010-08-05: 62:             transaction.commit_unless_managed(using=db)
+     adrian  2287 3f0790d500a9 2006-02-24: 37:             return default
+   russellm 13275 4dd52d4f3f50 2010-08-05: 64:         value = connections[db].ops.process_clob(row[1])
+     ikelly  9862 8739c35149dd 2009-03-13: 39:         return pickle.loads(base64.decodestring(value))
+     adrian  2287 3f0790d500a9 2006-02-24: 39: 
+   russellm 14425 793e94ba2037 2010-11-19: 59:     def set(self, key, value, timeout=None, version=None):
+   russellm 14425 793e94ba2037 2010-11-19: 60:         key = self.make_key(key, version=version)
+mtredinnick 13568 7e0b7bf098d2 2010-09-12: 69:         self.validate_key(key)
+mtredinnick  8110 c787c7f62142 2008-08-10: 41:         self._base_set('set', key, value, timeout)
+mtredinnick  6421 b4175804cc7b 2007-10-20: 45: 
+   russellm 14425 793e94ba2037 2010-11-19: 64:     def add(self, key, value, timeout=None, version=None):
+   russellm 14425 793e94ba2037 2010-11-19: 65:         key = self.make_key(key, version=version)
+mtredinnick 13568 7e0b7bf098d2 2010-09-12: 73:         self.validate_key(key)
+mtredinnick  6438 5096a56a9ac6 2007-10-21: 44:         return self._base_set('add', key, value, timeout)
+mtredinnick  6438 5096a56a9ac6 2007-10-21: 45: 
+mtredinnick  6421 b4175804cc7b 2007-10-20: 46:     def _base_set(self, mode, key, value, timeout=None):
+     adrian  2287 3f0790d500a9 2006-02-24: 41:         if timeout is None:
+     adrian  2287 3f0790d500a9 2006-02-24: 42:             timeout = self.default_timeout
+   russellm 13275 4dd52d4f3f50 2010-08-05: 76:         db = router.db_for_write(self.cache_model_class)
+   russellm 13275 4dd52d4f3f50 2010-08-05: 77:         table = connections[db].ops.quote_name(self._table)
+   russellm 13275 4dd52d4f3f50 2010-08-05: 78:         cursor = connections[db].cursor()
+   russellm 13275 4dd52d4f3f50 2010-08-05: 79: 
+   russellm 13275 4dd52d4f3f50 2010-08-05: 80:         cursor.execute("SELECT COUNT(*) FROM %s" % table)
+     adrian  2287 3f0790d500a9 2006-02-24: 45:         num = cursor.fetchone()[0]
+     adrian  2287 3f0790d500a9 2006-02-24: 46:         now = datetime.now().replace(microsecond=0)
+     adrian  2287 3f0790d500a9 2006-02-24: 47:         exp = datetime.fromtimestamp(time.time() + timeout).replace(microsecond=0)
+     adrian  2287 3f0790d500a9 2006-02-24: 48:         if num > self._max_entries:
+   russellm 13275 4dd52d4f3f50 2010-08-05: 85:             self._cull(db, cursor, now)
+     adrian  2287 3f0790d500a9 2006-02-24: 50:         encoded = base64.encodestring(pickle.dumps(value, 2)).strip()
+   russellm 13275 4dd52d4f3f50 2010-08-05: 87:         cursor.execute("SELECT cache_key, expires FROM %s WHERE cache_key = %%s" % table, [key])
+     adrian  2287 3f0790d500a9 2006-02-24: 52:         try:
+mtredinnick  9753 0ab5ef23e1bc 2009-03-02: 59:             result = cursor.fetchone()
+mtredinnick  9753 0ab5ef23e1bc 2009-03-02: 60:             if result and (mode == 'set' or
+mtredinnick  9753 0ab5ef23e1bc 2009-03-02: 61:                     (mode == 'add' and result[1] < now)):
+   russellm 13275 4dd52d4f3f50 2010-08-05: 92:                 cursor.execute("UPDATE %s SET value = %%s, expires = %%s WHERE cache_key = %%s" % table,
+   russellm 13275 4dd52d4f3f50 2010-08-05: 93:                                [encoded, connections[db].ops.value_to_db_datetime(exp), key])
+     adrian  2287 3f0790d500a9 2006-02-24: 55:             else:
+   russellm 13275 4dd52d4f3f50 2010-08-05: 95:                 cursor.execute("INSERT INTO %s (cache_key, value, expires) VALUES (%%s, %%s, %%s)" % table,
+   russellm 13275 4dd52d4f3f50 2010-08-05: 96:                                [key, encoded, connections[db].ops.value_to_db_datetime(exp)])
+     adrian  2287 3f0790d500a9 2006-02-24: 57:         except DatabaseError:
+     adrian  2287 3f0790d500a9 2006-02-24: 58:             # To be threadsafe, updates/inserts are allowed to fail silently
+   russellm 13275 4dd52d4f3f50 2010-08-05: 99:             transaction.rollback_unless_managed(using=db)
+mtredinnick  8110 c787c7f62142 2008-08-10: 65:             return False
+     adrian  2287 3f0790d500a9 2006-02-24: 60:         else:
+   russellm 13275 4dd52d4f3f50 2010-08-05:102:             transaction.commit_unless_managed(using=db)
+mtredinnick  8110 c787c7f62142 2008-08-10: 68:             return True
+     adrian  2287 3f0790d500a9 2006-02-24: 62: 
+   russellm 14425 793e94ba2037 2010-11-19:101:     def delete(self, key, version=None):
+   russellm 14425 793e94ba2037 2010-11-19:102:         key = self.make_key(key, version=version)
+mtredinnick 13568 7e0b7bf098d2 2010-09-12:109:         self.validate_key(key)
+   russellm 14425 793e94ba2037 2010-11-19:104: 
+   russellm 13275 4dd52d4f3f50 2010-08-05:106:         db = router.db_for_write(self.cache_model_class)
+   russellm 13275 4dd52d4f3f50 2010-08-05:107:         table = connections[db].ops.quote_name(self._table)
+   russellm 13275 4dd52d4f3f50 2010-08-05:108:         cursor = connections[db].cursor()
+   russellm 13275 4dd52d4f3f50 2010-08-05:109: 
+   russellm 13275 4dd52d4f3f50 2010-08-05:110:         cursor.execute("DELETE FROM %s WHERE cache_key = %%s" % table, [key])
+   russellm 13275 4dd52d4f3f50 2010-08-05:111:         transaction.commit_unless_managed(using=db)
+     adrian  2287 3f0790d500a9 2006-02-24: 67: 
+   russellm 14425 793e94ba2037 2010-11-19:112:     def has_key(self, key, version=None):
+   russellm 14425 793e94ba2037 2010-11-19:113:         key = self.make_key(key, version=version)
+mtredinnick 13568 7e0b7bf098d2 2010-09-12:118:         self.validate_key(key)
+   russellm 14425 793e94ba2037 2010-11-19:115: 
+   russellm 13275 4dd52d4f3f50 2010-08-05:114:         db = router.db_for_read(self.cache_model_class)
+   russellm 13275 4dd52d4f3f50 2010-08-05:115:         table = connections[db].ops.quote_name(self._table)
+   russellm 13275 4dd52d4f3f50 2010-08-05:116:         cursor = connections[db].cursor()
+   russellm 13275 4dd52d4f3f50 2010-08-05:117: 
+mtredinnick  9753 0ab5ef23e1bc 2009-03-02: 78:         now = datetime.now().replace(microsecond=0)
+   russellm 13275 4dd52d4f3f50 2010-08-05:119:         cursor.execute("SELECT cache_key FROM %s WHERE cache_key = %%s and expires > %%s" % table,
+   russellm 13275 4dd52d4f3f50 2010-08-05:120:                        [key, connections[db].ops.value_to_db_datetime(now)])
+     adrian  2287 3f0790d500a9 2006-02-24: 71:         return cursor.fetchone() is not None
+     adrian  2287 3f0790d500a9 2006-02-24: 72: 
+   russellm 13275 4dd52d4f3f50 2010-08-05:123:     def _cull(self, db, cursor, now):
+     adrian  2287 3f0790d500a9 2006-02-24: 74:         if self._cull_frequency == 0:
+   russellm 12116 c1ad14c551a9 2010-01-27: 87:             self.clear()
+     adrian  2287 3f0790d500a9 2006-02-24: 76:         else:
+   russellm 13480 7351411944a9 2010-08-31:127:             table = connections[db].ops.quote_name(self._table)
+   russellm 13275 4dd52d4f3f50 2010-08-05:127:             cursor.execute("DELETE FROM %s WHERE expires < %%s" % table,
+   russellm 13275 4dd52d4f3f50 2010-08-05:128:                            [connections[db].ops.value_to_db_datetime(now)])
+   russellm 13275 4dd52d4f3f50 2010-08-05:129:             cursor.execute("SELECT COUNT(*) FROM %s" % table)
+     adrian  2287 3f0790d500a9 2006-02-24: 79:             num = cursor.fetchone()[0]
+     adrian  2287 3f0790d500a9 2006-02-24: 80:             if num > self._max_entries:
+   russellm 13275 4dd52d4f3f50 2010-08-05:132:                 cursor.execute("SELECT cache_key FROM %s ORDER BY cache_key LIMIT 1 OFFSET %%s" % table, [num / self._cull_frequency])
+   russellm 13275 4dd52d4f3f50 2010-08-05:133:                 cursor.execute("DELETE FROM %s WHERE cache_key < %%s" % table, [cursor.fetchone()[0]])
+   russellm 12116 c1ad14c551a9 2010-01-27: 95: 
+   russellm 12116 c1ad14c551a9 2010-01-27: 96:     def clear(self):
+   russellm 13275 4dd52d4f3f50 2010-08-05:136:         db = router.db_for_write(self.cache_model_class)
+   russellm 13275 4dd52d4f3f50 2010-08-05:137:         table = connections[db].ops.quote_name(self._table)
+   russellm 13275 4dd52d4f3f50 2010-08-05:138:         cursor = connections[db].cursor()
+   russellm 13275 4dd52d4f3f50 2010-08-05:139:         cursor.execute('DELETE FROM %s' % table)
+   russellm 14807 905c4a7e1f19 2010-12-21:143: 
+   russellm 14807 905c4a7e1f19 2010-12-21:144: # For backwards compatibility
+   russellm 14807 905c4a7e1f19 2010-12-21:145: class CacheClass(DatabaseCache):
+   russellm 14807 905c4a7e1f19 2010-12-21:146:     pass
