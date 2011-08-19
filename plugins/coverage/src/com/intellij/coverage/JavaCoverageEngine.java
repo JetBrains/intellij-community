@@ -39,6 +39,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
@@ -579,7 +580,7 @@ public class JavaCoverageEngine extends CoverageEngine {
               final Collection<ClassInfo> classes = super.getClasses();
               if (!trackTestFolders) {
                 final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-                final GlobalSearchScope productionScope = GlobalSearchScope.projectProductionScope(project);
+                final GlobalSearchScope productionScope = GlobalSearchScopes.projectProductionScope(project);
                 for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext();) {
                   final ClassInfo aClass = iterator.next();
                   final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
