@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -68,7 +68,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private final ComponentManager myParentComponentManager;
   private Boolean myHeadless;
   private ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
-  private boolean myHaveProgressManager = false;
   private final Condition myDisposedCondition = new Condition() {
     public boolean value(final Object o) {
       return isDisposed();
@@ -101,9 +100,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
       final Class[] componentInterfaces = myComponentsRegistry.getComponentInterfaces();
       for (Class componentInterface : componentInterfaces) {
-        if (myHaveProgressManager) {
-          ProgressManager.checkCanceled();
-        }
+        ProgressIndicatorProvider.checkCanceled();
         try {
           createComponent(componentInterface);
         }
@@ -204,20 +201,15 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   private void initComponent(Object component) {
-    if (myHaveProgressManager) {
-      final ProgressManager progressManager = ProgressManager.getInstance();
+    final ProgressIndicatorProvider progressManager = ProgressIndicatorProvider.getInstance();
 
-      final ProgressIndicator indicator = progressManager != null ? progressManager.getProgressIndicator() : null;
-      if (indicator != null) {
-        String name = getComponentName(component);
-        indicator.checkCanceled();
-        indicator.setText2(name);
-        indicator.setIndeterminate(false);
-        indicator.setFraction(myComponentsRegistry.getPercentageOfComponentsLoaded());
-      }
-    }
-    if (component instanceof ProgressManager) {
-      myHaveProgressManager = true;
+    final ProgressIndicator indicator = progressManager != null ? progressManager.getProgressIndicator() : null;
+    if (indicator != null) {
+      String name = getComponentName(component);
+      indicator.checkCanceled();
+      indicator.setText2(name);
+      indicator.setIndeterminate(false);
+      indicator.setFraction(myComponentsRegistry.getPercentageOfComponentsLoaded());
     }
 
     try {
@@ -290,9 +282,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     Class[] componentClasses = myComponentsRegistry.getComponentInterfaces();
     ArrayList<Object> components = new ArrayList<Object>(componentClasses.length);
     for (Class<?> interfaceClass : componentClasses) {
-      if (myHaveProgressManager) {
-        ProgressManager.checkCanceled();
-      }
+      ProgressIndicatorProvider.checkCanceled();
       Object component = getComponent(interfaceClass);
       if (component != null) components.add(component);
     }

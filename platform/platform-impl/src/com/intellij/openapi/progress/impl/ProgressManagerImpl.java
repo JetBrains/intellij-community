@@ -62,6 +62,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
             catch (InterruptedException ignored) {
             }
             ourNeedToCheckCancel = true;
+            ProgressIndicatorProvider.ourNeedToCheckCancel = true;
           }
         }
       };
@@ -86,6 +87,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
           if (ourLockedCheckCounter > 10) {
             ourLockedCheckCounter = 0;
             ourNeedToCheckCancel = true;
+            ProgressIndicatorProvider.ourNeedToCheckCancel = true;
           }
         }
         else {
@@ -98,6 +100,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   public static void canceled() {
     ourNeedToCheckCancel = true;
+    ProgressIndicatorProvider.ourNeedToCheckCancel = true;
   }
 
   private static class NonCancelableIndicator extends EmptyProgressIndicator implements NonCancelableSection {
@@ -458,6 +461,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   @TestOnly
   public static void setNeedToCheckCancel(boolean needToCheckCancel) {
     ourNeedToCheckCancel = needToCheckCancel;
+    ProgressIndicatorProvider.ourNeedToCheckCancel = true;
   }
 
   @TestOnly

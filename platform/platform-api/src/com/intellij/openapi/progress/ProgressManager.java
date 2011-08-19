@@ -26,6 +26,20 @@ import javax.swing.*;
 public abstract class ProgressManager {
   private static final ProgressManager ourInstance = ServiceManager.getService(ProgressManager.class);
 
+  static {
+    ProgressIndicatorProvider.ourInstance = new ProgressIndicatorProvider() {
+      @Override
+      public ProgressIndicator getProgressIndicator() {
+        return ProgressManager.ourInstance.getProgressIndicator();
+      }
+
+      @Override
+      protected void doCheckCanceled() throws ProcessCanceledException {
+        ProgressManager.ourInstance.doCheckCanceled();
+      }
+    };
+  }
+
   public static ProgressManager getInstance() {
     return ourInstance;
   }
