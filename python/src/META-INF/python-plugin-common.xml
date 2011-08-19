@@ -86,20 +86,14 @@
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointType"/>
 
-    <configurationType implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationType"/>
+    <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
+
     <configurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>
     <testSrcLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
 
-    <configurationType implementation="com.jetbrains.python.testing.pytest.PyTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
-
-    <configurationType implementation="com.jetbrains.python.testing.doctest.PythonDocTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
-
-    <configurationType implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
-
-    <configurationType implementation="com.jetbrains.python.testing.attest.PythonAtTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.attest.PythonAtTestConfigurationProducer"/>
 
     <referenceImporter implementation="com.jetbrains.python.codeInsight.imports.PythonReferenceImporter"/>

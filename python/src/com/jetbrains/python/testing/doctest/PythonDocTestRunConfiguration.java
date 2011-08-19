@@ -19,7 +19,9 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
                                           implements PythonDocTestRunConfigurationParams {
   private String myPattern = ""; // pattern for modules in folder to match against
   protected String myTitle = "Doctests";
-  protected PythonDocTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
+  public PythonDocTestRunConfiguration(RunConfigurationModule module,
+                                       ConfigurationFactory configurationFactory,
+                                       String name) {
     super(module, configurationFactory, name);
   }
 

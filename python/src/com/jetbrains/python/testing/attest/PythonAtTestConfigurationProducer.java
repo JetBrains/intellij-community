@@ -5,6 +5,7 @@ import com.intellij.execution.Location;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.testing.PythonTestConfigurationProducer;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 
@@ -15,7 +16,7 @@ import java.util.List;
 public class PythonAtTestConfigurationProducer extends
                                                  PythonTestConfigurationProducer {
   public PythonAtTestConfigurationProducer() {
-    super(PythonAtTestRunConfigurationType.class);
+    super(PythonTestConfigurationType.getInstance().PY_ATTEST_FACTORY);
   }
 
   protected boolean isAvailable(Location location) {

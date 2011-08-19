@@ -9,7 +9,7 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.facet.Facet;
@@ -30,9 +30,8 @@ import java.util.List;
 
 abstract public class PythonTestConfigurationProducer extends RuntimeConfigurationProducer {
   protected PsiElement myPsiElement;
-
-  public PythonTestConfigurationProducer (final Class configurationTypeClass) {
-    super(ConfigurationTypeUtil.findConfigurationType(configurationTypeClass));
+  public PythonTestConfigurationProducer(final ConfigurationFactory configurationFactory) {
+    super(configurationFactory);
   }
 
   @Override

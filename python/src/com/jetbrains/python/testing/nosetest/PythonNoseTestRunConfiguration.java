@@ -19,8 +19,9 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
                                           implements PythonNoseTestRunConfigurationParams {
   private String myParams = ""; // parameters for nosetests
   protected String myTitle = "Nosetests";
-  protected PythonNoseTestRunConfiguration(RunConfigurationModule module,
-                                     ConfigurationFactory configurationFactory, String name) {
+  public PythonNoseTestRunConfiguration(RunConfigurationModule module,
+                                        ConfigurationFactory configurationFactory,
+                                        String name) {
     super(module, configurationFactory, name);
   }
 

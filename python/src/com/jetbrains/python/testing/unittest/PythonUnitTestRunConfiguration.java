@@ -22,7 +22,9 @@ public class PythonUnitTestRunConfiguration extends
   private boolean myIsPureUnittest = true;
   protected String myTitle = "Unittests";
 
-  protected PythonUnitTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
+  public PythonUnitTestRunConfiguration(RunConfigurationModule module,
+                                        ConfigurationFactory configurationFactory,
+                                        String name) {
     super(module, configurationFactory, name);
   }
 
