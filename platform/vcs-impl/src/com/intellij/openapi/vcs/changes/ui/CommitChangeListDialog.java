@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -41,6 +42,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.AdjustComponentWhenShown;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +69,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final ChangesBrowserExtender myBrowserExtender;
 
   private CommitLegendPanel myLegend;
+  private final ShortDiffDetails myDiffDetails;
 
   private final List<RefreshableOnComponent> myAdditionalComponents = new ArrayList<RefreshableOnComponent>();
   private final List<CheckinHandler> myHandlers = new ArrayList<CheckinHandler>();
@@ -210,6 +213,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myVcs = singleVcs;
     myListComments = new HashMap<String, String>();
     myAdditionalData = new PseudoMap<Object, Object>();
+    myDiffDetails = new ShortDiffDetails(myProject, new Getter<Change[]>() {
+      @Override
+      public Change[] get() {
+        final List<Change> selectedChanges = myBrowser.getViewer().getSelectedChanges();
+        return selectedChanges.toArray(new Change[selectedChanges.size()]);
+      }
+    }, VcsChangeDetailsManager.getInstance(myProject));
 
     if (!myShowVcsCommit && ((myExecutors == null) || myExecutors.size() == 0)) {
       throw new IllegalArgumentException("nothing found to execute commit with");
@@ -240,6 +250,20 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowserExtender = browser.getExtender();
     }
 
+    final ZipperUpdater zipperUpdater = new ZipperUpdater(30, Alarm.ThreadToUse.SWING_THREAD, getDisposable());
+    final Runnable refreshShortDiffDetails = new Runnable() {
+      @Override
+      public void run() {
+        myDiffDetails.refresh();
+      }
+    };
+    myBrowser.getViewer().addSelectionListener(new Runnable() {
+      @Override
+      public void run() {
+        zipperUpdater.queue(refreshShortDiffDetails);
+      }
+    });
+    
     myBrowserExtender.addToolbarActions(this);
 
     myBrowserExtender.addSelectedListChangeListener(new SelectedListChangeListener() {
@@ -423,6 +447,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       support.installSearch(myCommitMessageArea.getEditorField(), myCommitMessageArea.getEditorField());
     }
 
+    new AdjustComponentWhenShown() {
+      @Override
+      protected boolean init() {
+        myDiffDetails.refresh();
+        return true;
+      }
+    }.install(myBrowser);
   }
 
   private void updateOnListSelection() {
@@ -612,6 +643,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     Disposer.dispose(myOKButtonUpdateAlarm);
     myUpdateButtonsRunnable.cancel();
     super.dispose();
+    Disposer.dispose(myDiffDetails);
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, String.valueOf(mySplitter.getProportion()));
   }
 
@@ -812,8 +844,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     mySplitter = new Splitter(true);
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(myBrowser);
-    mySplitter.setSecondComponent(myCommitMessageArea);
-    mySplitter.setProportion(calcSplitterProportion());
+    //mySplitter.setSecondComponent(myCommitMessageArea);
+    Splitter splitter = new Splitter(true);
+    splitter.setDividerWidth(3);
+    splitter.setProportion(0.5f);
+    splitter.setFirstComponent(myDiffDetails.getPanel());
+    splitter.setSecondComponent(myCommitMessageArea);
+    mySplitter.setSecondComponent(splitter);
+    mySplitter.setProportion(0.3f);
+    //mySplitter.setProportion(calcSplitterProportion());
     mySplitter.setDividerWidth(3);
     rootPane.add(mySplitter, BorderLayout.CENTER);
 
