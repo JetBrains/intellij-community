@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
@@ -40,7 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
+public class VirtualFileManagerImpl extends VirtualFileManagerEx {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
@@ -71,17 +70,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
 
     bus.connect().subscribe(VFS_CHANGES, new BulkVirtualFileListenerAdapter(myVirtualFileListenerMulticaster.getMulticaster()));
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "VirtualFileManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public void registerFileSystem(VirtualFileSystem fileSystem) {
