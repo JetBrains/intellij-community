@@ -68,7 +68,7 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
 
   public static IgnoredFilesInfo EMPTY_FILTER = new IgnoredFilesInfoImpl(){
     public boolean shouldBeIgnored(String fileName) {
-      if (checkPatterns(CvsEntriesManager.getInstance().getUserdIgnores().getPatterns(), fileName)) return true;
+      if (checkPatterns(CvsEntriesManager.getInstance().getUserDirIgnores().getPatterns(), fileName)) return true;
       if (checkPatterns(PREDEFINED_PATTERNS, fileName)) return true;
       return false;
     }
