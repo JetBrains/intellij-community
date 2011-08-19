@@ -106,16 +106,17 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
                                                                  ConfigurationContext context) {
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final RunConfiguration configuration = existingConfiguration.getConfiguration();
-      PyTestRunConfiguration pyTestRunConfiguration = (PyTestRunConfiguration)configuration;
-      final PsiElement element = location.getPsiElement();
-      PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory)element : element.getContainingFile();
-      if (file == null || !pyTestRunConfiguration.getTestToRun().equals(file.getVirtualFile().getPath())) {
-        continue;
-      }
-      PyFunction testFunction = findTestFunction(location);
-      String keyword = testFunction != null ? testFunction.getName() : null;
-      if (Comparing.equal(pyTestRunConfiguration.getKeywords(), keyword)) {
-        return existingConfiguration;
+      if (configuration instanceof PyTestRunConfiguration) {
+        final PsiElement element = location.getPsiElement();
+        PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory)element : element.getContainingFile();
+        if (file == null || !((PyTestRunConfiguration)configuration).getTestToRun().equals(file.getVirtualFile().getPath())) {
+          continue;
+        }
+        PyFunction testFunction = findTestFunction(location);
+        String keyword = testFunction != null ? testFunction.getName() : null;
+        if (Comparing.equal(((PyTestRunConfiguration)configuration).getKeywords(), keyword)) {
+          return existingConfiguration;
+        }
       }
     }
     return null;
