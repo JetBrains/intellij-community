@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 /**
  * author: lesya
@@ -48,8 +47,7 @@ public class ImportConfiguration extends AbstractConfiguration {
       return result;
 
     String[] wrappers = KEYWORD_SUBSTITUTION_WRAPPERS.split(";");
-    for (int i = 0; i < wrappers.length; i++) {
-      String wrapper = wrappers[i];
+    for (String wrapper : wrappers) {
       String[] extAndSubstitution = wrapper.split(" ");
       if (extAndSubstitution.length != 2) continue;
       result.add(new FileExtension(extAndSubstitution[0], extAndSubstitution[1]));
@@ -57,10 +55,9 @@ public class ImportConfiguration extends AbstractConfiguration {
     return result;
   }
 
-  public void setExtensions(List items) {
-    StringBuffer buffer = new StringBuffer();
-    for (Iterator iterator = items.iterator(); iterator.hasNext();) {
-      FileExtension extension = (FileExtension)iterator.next();
+  public void setExtensions(List<FileExtension> items) {
+    StringBuilder buffer = new StringBuilder();
+    for (FileExtension extension : items) {
       buffer.append(extension.getExtension());
       buffer.append(" ");
       buffer.append(extension.getKeywordSubstitution().getSubstitution().toString());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,10 @@ import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -37,13 +35,12 @@ public class CvsActionVisibility {
   private boolean myCanBePerformedOnFile = true;
   private boolean myCanBePerformedOnDirectory = true;
   private boolean myCanBePerformedOnSeveralFiles = false;
-  private final boolean myExpectedCvsAsActiveVcs = true;
 
-  private final List myConditions = new ArrayList();
+  private final List<Condition> myConditions = new ArrayList();
   private boolean myCanBePerformedOnLocallyDeletedFile = false;
   private boolean myCanBePerformedOnCvsLightweightFile = false;
 
-  public static interface Condition{
+  public interface Condition{
     boolean isPerformedOn(CvsContext context);
   }
 
@@ -51,18 +48,11 @@ public class CvsActionVisibility {
     myConditions.add(condition);
   }
 
-  public boolean isVisible(CvsContext context){
-    if (!myExpectedCvsAsActiveVcs) return true;
-    return context.cvsIsActive();
-  }
-
-  public boolean isEnabled(CvsContext context){
-    boolean result = (context.cvsIsActive() || !myExpectedCvsAsActiveVcs)
-        && hasSuitableType(context);
+  private boolean isEnabled(CvsContext context){
+    boolean result = context.cvsIsActive() && hasSuitableType(context);
 
     if (!result) return false;
-    for (Iterator each = myConditions.iterator(); each.hasNext();) {
-      Condition condition = (Condition) each.next();
+    for (Condition condition : myConditions) {
       if (!condition.isPerformedOn(context)) return false;
     }
     return true;
@@ -107,40 +97,35 @@ public class CvsActionVisibility {
   }
 
   private boolean containsFileFromUnsupportedFileSystem(VirtualFile[] selectedFiles) {
-    for (int i = 0; i < selectedFiles.length; i++) {
-      VirtualFile selectedFile = selectedFiles[i];
+    for (VirtualFile selectedFile : selectedFiles) {
       if (!selectedFile.isInLocalFileSystem()) return true;
     }
     return false;
   }
 
   private boolean containsFile(VirtualFile[] selectedFiles) {
-    for (int i = 0; i < selectedFiles.length; i++) {
-      VirtualFile selectedFile = selectedFiles[i];
+    for (VirtualFile selectedFile : selectedFiles) {
       if (!selectedFile.isDirectory()) return true;
     }
     return false;
   }
 
   private boolean containsDirectory(VirtualFile[] selectedFiles) {
-    for (int i = 0; i < selectedFiles.length; i++) {
-      VirtualFile selectedFile = selectedFiles[i];
+    for (VirtualFile selectedFile : selectedFiles) {
       if (selectedFile.isDirectory()) return true;
     }
     return false;
   }
 
   private boolean containsDirectory(File[] selectedFiles) {
-    for (int i = 0; i < selectedFiles.length; i++) {
-      File selectedFile = selectedFiles[i];
+    for (File selectedFile : selectedFiles) {
       if (selectedFile.isDirectory()) return true;
     }
     return false;
   }
 
   private boolean containsFile(File[] selectedFiles) {
-    for (int i = 0; i < selectedFiles.length; i++) {
-      File selectedFile = selectedFiles[i];
+    for (File selectedFile : selectedFiles) {
       if (selectedFile.isFile()) return true;
     }
     return false;
@@ -160,12 +145,10 @@ public class CvsActionVisibility {
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(isEnabled(cvsContext));
-    presentation.setVisible(isVisible(cvsContext));
+    presentation.setVisible(cvsContext.cvsIsActive());
   }
 
   public void canBePerformedOnCvsLightweightFile() {
      myCanBePerformedOnCvsLightweightFile = true;
   }
-
-
 }

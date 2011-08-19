@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.config.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.openapi.project.Project;
@@ -28,20 +29,20 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Observable;
 
 /**
  * author: lesya
  */
-public class SelectCvsConfgurationPanel extends JPanel {
+public class SelectCvsConfigurationPanel extends JPanel {
   private final DefaultListModel myModel = new DefaultListModel();
   private final JList myList = new JBList(myModel);
   private CvsRootConfiguration mySelection;
   private final Project myProject;
   private final MyObservable myObservable;
 
-  public SelectCvsConfgurationPanel(Project project) {
+  public SelectCvsConfigurationPanel(Project project) {
     super(new BorderLayout(2, 4));
     myProject = project;
     add(createListPanel(), BorderLayout.CENTER);
@@ -58,13 +59,11 @@ public class SelectCvsConfgurationPanel extends JPanel {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     fillModel(null);
-
-
   }
 
   private Component createButtonPanel() {
     JPanel result = new JPanel(new BorderLayout());
-    JButton jButton = new JButton(com.intellij.CvsBundle.message("button.text.configure.cvs.roots"));
+    JButton jButton = new JButton(CvsBundle.message("button.text.configure.cvs.roots"));
     jButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         editConfigurations();
@@ -83,43 +82,34 @@ public class SelectCvsConfgurationPanel extends JPanel {
   }
 
   public void editConfigurations() {
+    final CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
     CvsConfigurationsListEditor cvsConfigurationsListEditor =
-      new CvsConfigurationsListEditor(new ArrayList<CvsRootConfiguration>(getConfigurationList()), myProject);
+      new CvsConfigurationsListEditor(new ArrayList<CvsRootConfiguration>(configuration.CONFIGURATIONS), myProject);
     CvsRootConfiguration selectedConfiguration = getSelectedConfiguration();
     if (selectedConfiguration != null) {
       cvsConfigurationsListEditor.selectConfiguration(selectedConfiguration);
     }
     cvsConfigurationsListEditor.show();
     if (cvsConfigurationsListEditor.isOK()) {
-      getConfiguration().CONFIGURATIONS =
-      new ArrayList<CvsRootConfiguration>(cvsConfigurationsListEditor.getConfigurations());
+      configuration.CONFIGURATIONS =
+        new ArrayList<CvsRootConfiguration>(cvsConfigurationsListEditor.getConfigurations());
       fillModel(cvsConfigurationsListEditor.getSelectedConfiguration());
     }
   }
 
   private void fillModel(Object selectedConfiguration) {
-    Object oldSelection = selectedConfiguration == null ? myList.getSelectedValue() : selectedConfiguration;
+    Object selection = selectedConfiguration == null ? myList.getSelectedValue() : selectedConfiguration;
     myModel.removeAllElements();
-    java.util.List configurations = getConfigurationList();
-    for (Iterator each = configurations.iterator(); each.hasNext();) {
-      CvsRootConfiguration configuration = (CvsRootConfiguration)each.next();
+    List<CvsRootConfiguration> configurations = CvsApplicationLevelConfiguration.getInstance().CONFIGURATIONS;
+    for (CvsRootConfiguration configuration : configurations) {
       myModel.addElement(configuration);
     }
-    myList.setSelectedValue(oldSelection, true);
+    myList.setSelectedValue(selection, true);
 
     if (myList.getSelectedIndex() < 0 && myList.getModel().getSize() > 0) {
       myList.setSelectedIndex(0);
     }
   }
-
-  private java.util.List<CvsRootConfiguration> getConfigurationList() {
-    return getConfiguration().CONFIGURATIONS;
-  }
-
-  private CvsApplicationLevelConfiguration getConfiguration() {
-    return CvsApplicationLevelConfiguration.getInstance();
-  }
-
 
   public CvsRootConfiguration getSelectedConfiguration() {
     return mySelection;
