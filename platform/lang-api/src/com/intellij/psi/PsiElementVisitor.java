@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 
 /**
