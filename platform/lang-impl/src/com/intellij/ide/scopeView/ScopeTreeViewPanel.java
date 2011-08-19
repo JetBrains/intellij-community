@@ -402,6 +402,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
     if (rootToReload != null && rootToReload != treeModel.getRoot()) {
       final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myTree, new TreePath(rootToReload.getPath()));
+      final List<TreePath> selectionPaths = TreeUtil.collectSelectedPaths(myTree, new TreePath(rootToReload.getPath()));
       treeModel.reload(rootToReload);
       final TreePath path = new TreePath(rootToReload.getPath());
       final boolean wasCollapsed = myTree.isCollapsed(path);
@@ -411,6 +412,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
             myTree.collapsePath(path);
             for (TreePath treePath : treePaths) {
               myTree.expandPath(treePath);
+            }
+            for (TreePath selectionPath : selectionPaths) {
+              TreeUtil.selectPath(myTree, selectionPath);
             }
           }
           TreeUtil.sort(rootToReload, getNodeComparator());
