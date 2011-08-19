@@ -64,7 +64,7 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
     final String source = StringUtil.decapitalize(builders.get(0).getScope().getDisplayName());
     final String target = StringUtil.decapitalize(myTargetScope.getDisplayName());
     final String message = AnalysisScopeBundle.message("no.dependencies.found.message", source, target);
-    NotificationGroup.toolWindowGroup("Dependencies", ToolWindowId.DEPENDENCIES, true).createNotification("message", MessageType.INFO).notify(myProject);
+    NotificationGroup.toolWindowGroup("Dependencies", ToolWindowId.DEPENDENCIES, true).createNotification(message, MessageType.INFO).notify(myProject);
     return false;
   }
 
