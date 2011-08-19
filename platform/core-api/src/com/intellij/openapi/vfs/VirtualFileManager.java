@@ -123,11 +123,6 @@ public abstract class VirtualFileManager implements ModificationTracker{
    */
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
-  public abstract void addModificationAttemptListener(@NotNull ModificationAttemptListener listener);
-  public abstract void removeModificationAttemptListener(@NotNull ModificationAttemptListener listener);
-
-  public abstract void fireReadOnlyModificationAttempt(@NotNull VirtualFile... files);
-
   /**
    * Constructs URL by specified protocol and path. URL is a string which uniquely identifies file in all
    * file systems.

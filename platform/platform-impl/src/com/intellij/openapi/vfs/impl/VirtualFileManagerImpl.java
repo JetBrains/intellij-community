@@ -56,7 +56,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createEmptyCOWList();
-  private final EventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster = EventDispatcher.create(ModificationAttemptListener.class);
 
   private int myRefreshCount = 0;
   private final ManagingFS myPersistence;
@@ -186,21 +185,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
     myVirtualFileListenerMulticaster.removeListener(listener);
-  }
-
-  public void addModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
-    myModificationAttemptListenerMulticaster.addListener(listener);
-  }
-
-  public void removeModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
-    myModificationAttemptListenerMulticaster.removeListener(listener);
-  }
-
-  public void fireReadOnlyModificationAttempt(@NotNull VirtualFile... files) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    final ModificationAttemptEvent event = new ModificationAttemptEvent(this, files);
-    myModificationAttemptListenerMulticaster.getMulticaster().readOnlyModificationAttempt(event);
   }
 
   public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {

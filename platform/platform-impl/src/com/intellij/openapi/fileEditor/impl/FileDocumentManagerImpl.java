@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -78,7 +77,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
 
   private final Set<Document> myUnsavedDocuments = new ConcurrentHashSet<Document>();
-  private final EditReadOnlyListener myReadOnlyListener = new MyEditReadOnlyListener();
 
   private final EventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = EventDispatcher.create(FileDocumentSynchronizationVetoListener.class);
 
@@ -142,7 +140,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
               }
             }
           );
-          document.addEditReadOnlyListener(myReadOnlyListener);
         }
       }
 
@@ -614,14 +611,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public void beforeFileMovement(VirtualFileMoveEvent event) {
-  }
-
-  private final class MyEditReadOnlyListener implements EditReadOnlyListener {
-    public void readOnlyModificationAttempt(Document document) {
-      VirtualFile file = getFile(document);
-      if (file == null) return;
-      myVirtualFileManager.fireReadOnlyModificationAttempt(file);
-    }
   }
 
   private void fireFileContentReloaded(final VirtualFile file, final Document document) {

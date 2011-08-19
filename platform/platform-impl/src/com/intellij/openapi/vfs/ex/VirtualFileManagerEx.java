@@ -17,12 +17,8 @@
 package com.intellij.openapi.vfs.ex;
 
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 
 public abstract class VirtualFileManagerEx extends VirtualFileManager {
-  public abstract void registerFileSystem(VirtualFileSystem fileSystem);
-  public abstract void unregisterFileSystem(VirtualFileSystem fileSystem);
-
   public abstract void fireBeforeRefreshStart(boolean asynchronous);
   public abstract void fireAfterRefreshFinish(boolean asynchronous);
 }

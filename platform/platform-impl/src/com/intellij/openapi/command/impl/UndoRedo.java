@@ -29,7 +29,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -119,7 +118,6 @@ abstract class UndoRedo {
       final VirtualFile[] files = VfsUtil.toVirtualFileArray(readOnlyFiles);
 
       if (project == null) {
-        VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(files);
         return false;
       }
 
