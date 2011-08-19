@@ -36,7 +36,12 @@ public class UserDirIgnores{
   static {
     final String home = System.getenv().get("HOME");
     if (home != null) {
-      ourUserHomeCVSIgnoreFile = new File(home + "/" + CvsUtil.CVS_IGNORE_FILE);
+      final File homeDir = new File(home);
+      if (homeDir.exists() && homeDir.isDirectory()) {
+        ourUserHomeCVSIgnoreFile = new File(homeDir, CvsUtil.CVS_IGNORE_FILE);
+      } else {
+        ourUserHomeCVSIgnoreFile = new File(System.getProperty("user.home") + "/" + CvsUtil.CVS_IGNORE_FILE);
+      }
     } else {
       ourUserHomeCVSIgnoreFile = new File(System.getProperty("user.home") + "/" + CvsUtil.CVS_IGNORE_FILE);
     }
