@@ -510,6 +510,7 @@
     <inspectionToolProvider implementation="com.jetbrains.rest.inspections.RestInspectionToolProvider"/>
     <lang.substitutor language="TEXT" implementationClass="com.jetbrains.rest.RestLanguageSubstitutor"/>
     <configurationType implementation="com.jetbrains.rest.run.RestRunConfigurationType"/>
+    <configurationProducer implementation="com.jetbrains.rest.run.docutils.DocutilsConfigurationProducer"/>
   </extensions>
 
   <extensionPoints>
