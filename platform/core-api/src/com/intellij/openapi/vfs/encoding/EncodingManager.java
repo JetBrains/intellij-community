@@ -18,6 +18,8 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -88,4 +90,21 @@ public abstract class EncodingManager {
   public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
+
+  public static <E extends Throwable> VirtualFile doActionAndRestoreEncoding(@NotNull VirtualFile fileBefore, @NotNull ThrowableComputable<VirtualFile, E> action) throws E {
+    Charset charsetBefore = getInstance().getEncoding(fileBefore, true);
+    VirtualFile fileAfter = null;
+    try {
+      fileAfter = action.compute();
+      return fileAfter;
+    }
+    finally {
+      if (fileAfter != null) {
+        Charset actual = getInstance().getEncoding(fileAfter, true);
+        if (!Comparing.equal(actual, charsetBefore)) {
+          getInstance().setEncoding(fileAfter, charsetBefore);
+        }
+      }
+    }
+  }
 }

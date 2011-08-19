@@ -19,10 +19,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
@@ -595,10 +596,6 @@ public class VfsUtil {
     return null;
   }
 
-  public static boolean isValidName(@NotNull String name) {
-    return name.indexOf('\\') < 0 && name.indexOf('/') < 0;
-  }
-
   public static String getUrlForLibraryRoot(@NotNull File libraryRoot) {
     String path = FileUtil.toSystemIndependentName(libraryRoot.getAbsolutePath());
     if (FileTypeManager.getInstance().getFileTypeByFileName(libraryRoot.getName()) == FileTypes.ARCHIVE) {
@@ -685,23 +682,6 @@ public class VfsUtil {
       return parent.createChildDirectory(LocalFileSystem.getInstance(), dirName);
     }
     return file;
-  }
-
-  public static <E extends Throwable> VirtualFile doActionAndRestoreEncoding(@NotNull VirtualFile fileBefore, @NotNull ThrowableComputable<VirtualFile, E> action) throws E {
-    Charset charsetBefore = EncodingManager.getInstance().getEncoding(fileBefore, true);
-    VirtualFile fileAfter = null;
-    try {
-      fileAfter = action.compute();
-      return fileAfter;
-    }
-    finally {
-      if (fileAfter != null) {
-        Charset actual = EncodingManager.getInstance().getEncoding(fileAfter, true);
-        if (!Comparing.equal(actual, charsetBefore)) {
-          EncodingManager.getInstance().setEncoding(fileAfter, charsetBefore);
-        }
-      }
-    }
   }
 
   public static void processFileRecursivelyWithoutIgnored(@NotNull final VirtualFile root, @NotNull final Processor<VirtualFile> processor) {

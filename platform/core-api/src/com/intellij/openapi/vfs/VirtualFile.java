@@ -179,7 +179,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public void rename(Object requestor, @NotNull @NonNls String newName) throws IOException {
     if (getName().equals(newName)) return;
-    if (!VfsUtil.isValidName(newName)) {
+    if (!isValidName(newName)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
     }
 
@@ -321,7 +321,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("invalid.directory.create.files"));
     }
 
-    if (!VfsUtil.isValidName(name)) {
+    if (!isValidName(name)) {
       throw new IOException(VfsBundle.message("directory.invalid.name.error", name));
     }
 
@@ -351,7 +351,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("invalid.directory.create.files"));
     }
 
-    if (!VfsUtil.isValidName(name)) {
+    if (!isValidName(name)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", name));
     }
 
@@ -391,7 +391,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
-    VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+    EncodingManager.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
       public VirtualFile compute() throws IOException {
         getFileSystem().moveFile(requestor, VirtualFile.this, newParent);
         return VirtualFile.this;
@@ -408,7 +408,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
     }
 
-    return VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+    return EncodingManager.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
       public VirtualFile compute() throws IOException {
         return getFileSystem().copyFile(requestor, VirtualFile.this, newParent, copyName);
       }
@@ -627,5 +627,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   public boolean isInLocalFileSystem() {
     return false;
+  }
+
+  public static boolean isValidName(@NotNull String name) {
+    return name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
 }
