@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlProlog;
@@ -81,7 +82,7 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
             if (text != null && InspectionUtil.SUPPRESSION_PATTERN.matcher(text).matches()) {
                 final String s = text.trim() + ", " + myToolId;
                 final XmlComment newComment = createComment(project, s);
-                PsiManager.getInstance(project).getCodeStyleManager().reformat(comment.replace(newComment));
+              CodeStyleManager.getInstance(PsiManager.getInstance(project).getProject()).reformat(comment.replace(newComment));
             } else {
                 addNoinspectionComment(project, anchor);
             }
@@ -96,10 +97,10 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
         if (parent == null) {
             parent = PsiTreeUtil.getPrevSiblingOfType(anchor, XmlProlog.class);
             if (parent != null) {
-                PsiManager.getInstance(project).getCodeStyleManager().reformat(parent.add(newComment));
+              CodeStyleManager.getInstance(PsiManager.getInstance(project).getProject()).reformat(parent.add(newComment));
             }
         } else {
-            PsiManager.getInstance(project).getCodeStyleManager().reformat(parent.addBefore(newComment, anchor));
+          CodeStyleManager.getInstance(PsiManager.getInstance(project).getProject()).reformat(parent.addBefore(newComment, anchor));
         }
     }
 

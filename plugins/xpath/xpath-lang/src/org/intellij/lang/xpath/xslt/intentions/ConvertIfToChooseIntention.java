@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
@@ -60,7 +61,7 @@ public class ConvertIfToChooseIntention implements IntentionAction {
         chooseTag.add(whenTag);
         chooseTag.add(otherwiseTag);
 
-        tag.getManager().getCodeStyleManager().reformat(tag.replace(chooseTag));
+      CodeStyleManager.getInstance(tag.getManager().getProject()).reformat(tag.replace(chooseTag));
     }
 
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

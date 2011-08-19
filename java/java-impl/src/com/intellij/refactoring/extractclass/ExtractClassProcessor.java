@@ -392,7 +392,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private void buildDelegate() {
     final PsiManager manager = sourceClass.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
     @NonNls final StringBuilder fieldBuffer = new StringBuilder();
     final String delegateVisibility = calculateDelegateVisibility();
     if (delegateVisibility.length() > 0) fieldBuffer.append(delegateVisibility).append(' ');
@@ -691,7 +691,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       if (directory != null) {
         final PsiFile newFile = PsiFileFactory.getInstance(project).createFileFromText(newClassName + ".java", classString);
         final PsiElement addedFile = directory.add(newFile);
-        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
         final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedFile);
         return ((PsiJavaFile)codeStyleManager.reformat(shortenedFile)).getClasses()[0];
       } else {

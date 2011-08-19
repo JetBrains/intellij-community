@@ -279,7 +279,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
 
         if (directory != null) {
 
-          final CodeStyleManager codeStyleManager = method.getManager().getCodeStyleManager();
+          final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(method.getManager().getProject());
           final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(newFile);
           final PsiElement reformattedFile = codeStyleManager.reformat(shortenedFile);
           return ((PsiJavaFile)directory.add(reformattedFile)).getClasses()[0];

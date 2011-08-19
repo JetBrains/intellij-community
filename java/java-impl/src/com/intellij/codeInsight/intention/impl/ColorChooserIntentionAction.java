@@ -225,7 +225,7 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
           + (color.getAlpha() < 255 ? ", " + color.getAlpha() : "")
           +")", expression);
       final PsiElement insertedElement = expression.replace(newCall);
-      final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
       codeStyleManager.reformat(insertedElement);
     }
   }

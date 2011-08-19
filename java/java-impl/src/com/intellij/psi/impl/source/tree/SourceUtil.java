@@ -52,7 +52,7 @@ public class SourceUtil {
     parenthExpr.rawAddChildren(ASTFactory.leaf(JavaTokenType.RPARENTH, ")"));
 
     try {
-      CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
       parenthExpr =
       (CompositeElement)SourceTreeToPsiMap.psiElementToTree(
         codeStyleManager.reformat(SourceTreeToPsiMap.treeElementToPsi(parenthExpr)));

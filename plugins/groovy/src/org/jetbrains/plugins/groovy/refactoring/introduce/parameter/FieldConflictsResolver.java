@@ -141,7 +141,7 @@ public class FieldConflictsResolver {
       expressionFromText = (GrReferenceExpression)factory.createExpressionFromText("A." + member.getName());
       expressionFromText.setQualifier(factory.createReferenceElementForClass(qualifyingClass));
     }
-    CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
     expressionFromText = (GrReferenceExpression)codeStyleManager.reformat(expressionFromText);
     return (GrReferenceExpression)referenceExpression.replace(expressionFromText);
   }

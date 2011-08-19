@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -113,16 +112,6 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param listener the listener instance.
    */
   public abstract void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener);
-
-  /**
-   * Returns the code style manager for the project. The code style manager can be used
-   * to reformat code fragments, get names for elements according to the user's code style
-   * and work with import statements and full-qualified names.
-   *
-   * @return the code style manager instance.
-   */
-  @NotNull
-  public abstract CodeStyleManager getCodeStyleManager();
 
   /**
    * Returns the search helper for the project, which provides low-level search and

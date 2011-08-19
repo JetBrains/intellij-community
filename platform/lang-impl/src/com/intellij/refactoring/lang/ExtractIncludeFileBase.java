@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSystemItemUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -95,7 +96,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ti
     final Document document = documentManager.getDocument(file);
     document.replaceString(0, document.getTextLength(), first.getText().trim());
     documentManager.commitDocument(document);
-    PsiManager.getInstance(project).getCodeStyleManager().reformat(file);  //TODO: adjustLineIndent
+    CodeStyleManager.getInstance(PsiManager.getInstance(project).getProject()).reformat(file);  //TODO: adjustLineIndent
 
     final String relativePath = PsiFileSystemItemUtil.getRelativePath(first.getContainingFile(), file);
     if (relativePath == null) throw new IncorrectOperationException("Cannot extract!");

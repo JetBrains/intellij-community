@@ -37,7 +37,7 @@ public class MutationUtils {
                 factory.createTypeFromText(newExpression, null);
         final PsiTypeElement newTypeElement = factory.createTypeElement(newType);
         final PsiElement insertedElement = typeElement.replace(newTypeElement);
-        final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(mgr.getProject());
         final PsiElement shortenedElement = JavaCodeStyleManager.getInstance(mgr.getProject()).shortenClassReferences(insertedElement);
         codeStyleManager.reformat(shortenedElement);
     }
@@ -50,7 +50,7 @@ public class MutationUtils {
         final PsiExpression newCall =
                 factory.createExpressionFromText(newExpression, null);
         final PsiElement insertedElement = exp.replace(newCall);
-        final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(mgr.getProject());
         final PsiElement shortenedElement = JavaCodeStyleManager.getInstance(mgr.getProject()).shortenClassReferences(insertedElement);
         codeStyleManager.reformat(shortenedElement);
     }
@@ -66,7 +66,7 @@ public class MutationUtils {
             return;
         }
         final PsiElement insertedElement = exp.replace(newCall);
-        final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(mgr.getProject());
         final PsiElement shortenedElement =JavaCodeStyleManager.getInstance(mgr.getProject()).shortenClassReferences(insertedElement);
         codeStyleManager.reformat(shortenedElement);
     }
@@ -82,7 +82,7 @@ public class MutationUtils {
             final PsiJavaCodeReferenceElement newReference =
                     factory.createReferenceElementByFQClassName(className, scope);
             final PsiElement insertedElement = reference.replace(newReference);
-            final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(mgr.getProject());
             final PsiElement shortenedElement = JavaCodeStyleManager.getInstance(mgr.getProject()).shortenClassReferences(insertedElement);
             codeStyleManager.reformat(shortenedElement);   
     }
@@ -96,7 +96,7 @@ public class MutationUtils {
         final PsiStatement newCall =
                 factory.createStatementFromText(newStatement, null);
         final PsiElement insertedElement = statement.replace(newCall);
-        final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(mgr.getProject());
         final PsiElement shortenedElement = JavaCodeStyleManager.getInstance(mgr.getProject()).shortenClassReferences(insertedElement);
         codeStyleManager.reformat(shortenedElement);
     }

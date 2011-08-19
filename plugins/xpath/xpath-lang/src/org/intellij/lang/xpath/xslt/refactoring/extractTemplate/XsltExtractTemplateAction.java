@@ -16,6 +16,7 @@
 
 package org.intellij.lang.xpath.xslt.refactoring.extractTemplate;
 
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -224,7 +225,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                     final Document doc = psiDocumentManager.getDocument(containingFile);
                     assert doc != null;
                     psiDocumentManager.doPostponedOperationsAndUnblockDocument(doc);
-                    start.getManager().getCodeStyleManager().adjustLineIndent(containingFile, adjust);
+                  CodeStyleManager.getInstance(start.getManager().getProject()).adjustLineIndent(containingFile, adjust);
 
                     final PsiElement parent = start.getParent();
                     XmlTag callTag = parentScope.createChildTag("call-template", XsltSupport.XSLT_NS, null, false);

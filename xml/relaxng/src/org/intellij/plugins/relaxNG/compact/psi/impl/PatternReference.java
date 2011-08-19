@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -202,7 +203,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
       final ASTNode newNode = e.getNode();
       assert newNode != null;
 
-      e.getManager().getCodeStyleManager().reformatNewlyAddedElement(blockNode, newNode);
+      CodeStyleManager.getInstance(e.getManager().getProject()).reformatNewlyAddedElement(blockNode, newNode);
 
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
 

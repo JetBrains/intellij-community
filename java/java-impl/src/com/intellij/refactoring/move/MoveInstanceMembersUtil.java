@@ -18,6 +18,7 @@ package com.intellij.refactoring.move;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -168,7 +169,7 @@ public class MoveInstanceMembersUtil {
           initializerCopy = newExpression;
         }
         ((PsiAssignmentExpression)statement.getExpression()).getRExpression().replace(initializerCopy);
-        statement = (PsiExpressionStatement)field.getManager().getCodeStyleManager().reformat(statement);
+        statement = (PsiExpressionStatement)CodeStyleManager.getInstance(field.getManager().getProject()).reformat(statement);
         body.add(statement);
         initializer.delete();
       }

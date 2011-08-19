@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyElement;
@@ -407,7 +408,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
       throw new IncorrectOperationException("Incorrect catch section '" + text + "'. Parsed element: " + element);
     }
     setupCatchBlock(exceptionName, context, (PsiCatchSection)element);
-    return (PsiCatchSection)myManager.getCodeStyleManager().reformat(element);
+    return (PsiCatchSection)CodeStyleManager.getInstance(myManager.getProject()).reformat(element);
   }
 
   private void setupCatchBlock(final String exceptionName, @Nullable final PsiElement context, final PsiCatchSection psiCatchSection)

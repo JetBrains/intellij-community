@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -118,7 +119,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     LOG.assertTrue(commonParent != null);
     PsiDeclarationStatement added = (PsiDeclarationStatement)commonParent.addBefore(newDeclaration, child);
     PsiLocalVariable addedVar = (PsiLocalVariable)added.getDeclaredElements()[0];
-    manager.getCodeStyleManager().reformat(commonParent);
+    CodeStyleManager.getInstance(manager.getProject()).reformat(commonParent);
 
     //Leave initializer assignment
     PsiExpression initializer = myOutOfScopeVariable.getInitializer();
@@ -126,7 +127,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
       PsiExpressionStatement assignment = (PsiExpressionStatement)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createStatementFromText(myOutOfScopeVariable
         .getName() + "= e;", null);
       ((PsiAssignmentExpression)assignment.getExpression()).getRExpression().replace(initializer);
-      assignment = (PsiExpressionStatement)manager.getCodeStyleManager().reformat(assignment);
+      assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(manager.getProject()).reformat(assignment);
       PsiDeclarationStatement declStatement = PsiTreeUtil.getParentOfType(myOutOfScopeVariable, PsiDeclarationStatement.class);
       LOG.assertTrue(declStatement != null);
       PsiElement parent = declStatement.getParent();

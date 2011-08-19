@@ -41,7 +41,6 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
@@ -324,11 +323,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       LOG.error("Project is already disposed.");
     }
     return myCacheManager;
-  }
-
-  @NotNull
-  public CodeStyleManager getCodeStyleManager() {
-    return CodeStyleManager.getInstance(myProject);
   }
 
   @NotNull

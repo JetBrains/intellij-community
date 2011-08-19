@@ -58,7 +58,7 @@ public class MoveCommentToSeparateLineIntention extends Intention {
         parent.addBefore(copyWhiteSpace, insertedComment);
 
         selectedComment.delete();
-        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
         codeStyleManager.reformat(insertedComment);
     }
 

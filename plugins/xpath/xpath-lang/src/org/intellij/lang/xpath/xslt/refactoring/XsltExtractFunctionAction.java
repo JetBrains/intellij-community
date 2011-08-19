@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -109,7 +110,7 @@ public class XsltExtractFunctionAction extends BaseIntroduceAction<RefactoringOp
       assert node1 != null;
       final ASTNode node2 = element.getNode();
       assert node2 != null;
-      xmlTag.getManager().getCodeStyleManager().reformatNewlyAddedElement(node1, node2);
+      CodeStyleManager.getInstance(xmlTag.getManager().getProject()).reformatNewlyAddedElement(node1, node2);
 
       final XPathExpression var = XPathChangeUtil.createExpression(expression, name + "(" + argList + ")");
       expression.replace(var);

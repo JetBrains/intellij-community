@@ -108,7 +108,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
             }
         }
         initializer.delete();
-        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
         codeStyleManager.reformat(field);
         codeStyleManager.reformat(classInitializer);
         HighlightUtil.highlightElement(addedElement,

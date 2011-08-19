@@ -342,7 +342,7 @@ public class CreateFromUsageUtils {
                         classKind == CLASS ? elementFactory.createClass(name) :
                         elementFactory.createEnum(name);
       CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
-      result = (PsiClass)manager.getCodeStyleManager().reformat(result);
+      result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
       return (PsiClass) psiClass.add(result);
     }
     catch (IncorrectOperationException e) {
