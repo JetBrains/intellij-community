@@ -17,7 +17,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -388,7 +388,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public boolean contains(VirtualFile file) {
       if (!super.contains(file)) return false;
 
-      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+      final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
       for (FileType otherFileType : myFileTypes) {
         if (fileType.equals(otherFileType)) return true;
       }
