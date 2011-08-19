@@ -16,6 +16,7 @@
 package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Comparator;
@@ -55,10 +56,6 @@ public class TreeNodeComparator implements Comparator<DefaultMutableTreeNode> {
     }
     final String name1 = ((CvsElement)node1).getName();
     final String name2 = ((CvsElement)node2).getName();
-    final int result = name1.compareToIgnoreCase(name2);
-    if (result != 0) {
-      return result;
-    }
-    return name1.compareTo(name2);
+    return StringUtil.naturalCompare(name1, name2);
   }
 }
