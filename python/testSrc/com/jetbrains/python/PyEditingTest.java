@@ -169,6 +169,11 @@ public class PyEditingTest extends PyLightFixtureTestCase {
                                                "  \"\"\"");
   }
 
+  public void testEnterInString() {  // PY-1738
+    doTestEnter("a = \"some <caret>string\"", "a = \"some \" \\\n" +
+                                              "    \"string\"");
+  }
+
   public void testEnterInImportWithParens() {  // PY-2661
     doTestEnter("from django.http import (HttpResponse,<caret>)",
                 "from django.http import (HttpResponse,\n" +

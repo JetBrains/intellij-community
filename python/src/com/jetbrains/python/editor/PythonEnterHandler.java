@@ -16,6 +16,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +76,16 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (PyTokenTypes.TRIPLE_NODES.contains(element.getNode().getElementType()) ||
       element.getNode().getElementType() == PyTokenTypes.DOCSTRING)
       return Result.Continue;
+
+    PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PyStringLiteralExpression.class, false);
+    if (string != null && string.getTextOffset() < offset) {
+      String stringText = element.getText();
+      int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      String quote = element.getText().substring(prefixLength, prefixLength + 1);
+      doc.insertString(offset, quote+" \\"+quote);
+      caretOffset.set(offset+3);
+      return Result.Continue;
+    }
 
     if (!PyCodeInsightSettings.getInstance().INSERT_BACKSLASH_ON_WRAP) {
       return Result.Continue;
