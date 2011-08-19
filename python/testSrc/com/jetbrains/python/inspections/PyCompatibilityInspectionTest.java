@@ -106,6 +106,9 @@ public class PyCompatibilityInspectionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testConditionalExpression() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile("inspections/PyCompatibilityInspection/" + getTestName(true) + ".py");

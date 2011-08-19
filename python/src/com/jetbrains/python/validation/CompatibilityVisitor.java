@@ -386,8 +386,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     if (PydevConsoleRunner.isInPydevConsole(node)) return;
     if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
       PyExpression assignedValue = node.getAssignedValue();
-      if (assignedValue instanceof PyConditionalExpression)                        // PY-2792
-        registerProblem(node, "Python version 2.4 doesn't support this syntax.");
 
       Stack<PsiElement> st = new Stack<PsiElement>();           // PY-2796
       if (assignedValue != null)
@@ -402,6 +400,15 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
             st.push(e);
         }
       }
+    }
+  }
+
+  @Override
+  public void visitPyConditionalExpression(PyConditionalExpression node) {   //PY-4293
+    super.visitPyConditionalExpression(node);
+    if (PydevConsoleRunner.isInPydevConsole(node)) return;
+    if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
+      registerProblem(node, "Python version 2.4 doesn't support this syntax.");
     }
   }
 
