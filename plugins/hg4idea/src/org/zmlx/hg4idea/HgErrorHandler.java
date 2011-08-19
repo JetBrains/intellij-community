@@ -13,11 +13,15 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 public abstract class HgErrorHandler {
   
-  public static HgCommandResult ensureSuccess(HgCommandResult result) throws VcsException {
+  public static HgCommandResult ensureSuccess(@Nullable HgCommandResult result) throws VcsException {
+    if (result == null) {
+      throw new VcsException("Couldn't execute Mercurial command");
+    }
     if (fatalErrorOccurred(result)) {
       throw new VcsException(result.getRawError());
     }
