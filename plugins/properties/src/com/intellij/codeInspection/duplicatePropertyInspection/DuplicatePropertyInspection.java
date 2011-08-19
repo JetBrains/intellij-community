@@ -146,7 +146,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   private void checkFile(final PsiFile file, final InspectionManager manager, GlobalInspectionContextImpl context, final RefManager refManager, final ProblemDescriptionsProcessor processor) {
     if (!(file instanceof PropertiesFile)) return;
     if (!context.isToCheckMember(file, this)) return;
-    final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
+    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
     final PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<IProperty> properties = propertiesFile.getProperties();
     Module module = ModuleUtil.findModuleForPsiElement(file);

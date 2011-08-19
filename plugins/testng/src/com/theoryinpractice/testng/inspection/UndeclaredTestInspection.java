@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -90,13 +91,13 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
       }
       for (final String name : names) {
         final boolean[] found = new boolean[]{false};
-        PsiManager.getInstance(project).getSearchHelper()
+        PsiSearchHelper.SERVICE.getInstance(project)
           .processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
             public boolean process(final PsiFile file, final int startOffset, final int endOffset) {
               if (file.findReferenceAt(startOffset) != null) {
                 if (packageQName.endsWith(name)) { //special package tag required
                   final XmlTag tag = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), XmlTag.class);
-                  if (tag == null || !tag.getName().equals("package")){
+                  if (tag == null || !tag.getName().equals("package")) {
                     return true;
                   }
                   final XmlAttribute attribute = tag.getAttribute("name");

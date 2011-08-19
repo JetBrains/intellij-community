@@ -15,7 +15,9 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -30,6 +32,15 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.psi.PsiManager#getSearchHelper()
  */
 public interface PsiSearchHelper extends PsiTodoSearchHelper {
+  class SERVICE {
+    private SERVICE() {
+    }
+
+    public static PsiSearchHelper getInstance(Project project) {
+      return ServiceManager.getService(project, PsiSearchHelper.class);
+    }
+  }
+  
   /**
    * Searches the specified scope for comments containing the specified identifier.
    *

@@ -27,7 +27,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
 import com.intellij.usageView.UsageInfo;
@@ -60,7 +59,7 @@ public class TextOccurrencesUtil {
                                            @NotNull GlobalSearchScope searchScope,
                                            @NotNull final Processor<UsageInfo> processor,
                                            @NotNull final UsageInfoFactory factory) {
-    PsiSearchHelper helper = element.getManager().getSearchHelper();
+    PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
 
     helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
       public boolean process(PsiFile psiFile, int startOffset, int endOffset) {
@@ -93,10 +92,9 @@ public class TextOccurrencesUtil {
                                                           @NotNull final String stringToSearch,
                                                           final boolean ignoreReferences,
                                                           @NotNull final PairProcessor<PsiElement, TextRange> processor) {
-    PsiManager manager = element.getManager();
-    PsiSearchHelper helper = manager.getSearchHelper();
-    SearchScope scope = element.getManager().getSearchHelper().getUseScope(element);
-    scope = scope.intersectWith(GlobalSearchScope.projectScope(manager.getProject()));
+    PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
+    SearchScope scope = PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(element);
+    scope = scope.intersectWith(GlobalSearchScope.projectScope(element.getProject()));
     Processor<PsiElement> commentOrLiteralProcessor = new Processor<PsiElement>() {
       public boolean process(PsiElement literal) {
         return processTextIn(literal, stringToSearch, ignoreReferences, processor);

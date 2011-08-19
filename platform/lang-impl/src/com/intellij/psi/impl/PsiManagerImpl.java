@@ -47,13 +47,11 @@ import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
 import com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
@@ -78,7 +76,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final MessageBus myMessageBus;
 
   private final FileManager myFileManager;
-  private final PsiSearchHelperImpl mySearchHelper;
   private final CacheManager myCacheManager;
   private final PsiModificationTrackerImpl myModificationTracker;
   private final ResolveCache myResolveCache;
@@ -122,7 +119,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileTypeManager, fileDocumentManager,
                                                                                                     projectRootManagerEx);
-    mySearchHelper = new PsiSearchHelperImpl(this);
     final CompositeCacheManager cacheManager = new CompositeCacheManager();
     if (isProjectDefault) {
       cacheManager.addCacheManager(new EmptyCacheManager());
@@ -693,11 +689,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   @Override
   public void afterChange(boolean isPhysical) {
     myMessageBus.syncPublisher(ANY_PSI_CHANGE_TOPIC).afterPsiChanged(isPhysical);
-  }
-
-  @NotNull
-  public PsiSearchHelper getSearchHelper() {
-    return mySearchHelper;
   }
 
   @NotNull

@@ -670,7 +670,7 @@ public class SystemBuilder {
         final PsiElement declarationScope = parameter.getDeclarationScope();
         if (declarationScope instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)declarationScope;
-          final PsiSearchHelper helper = myManager.getSearchHelper();
+          final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(myManager.getProject());
           SearchScope scope = getScope(helper, method);
 
           for (PsiReference ref : ReferencesSearch.search(method, scope, true)) {
@@ -914,7 +914,7 @@ public class SystemBuilder {
   }
 
   public ReductionSystem build(final HashSet<PsiElement> victims) {
-    final PsiSearchHelper helper = myManager.getSearchHelper();
+    final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(myManager.getProject());
 
     ReductionSystem system = new ReductionSystem(myProject, victims, myTypes, myTypeVariableFactory, mySettings);
 

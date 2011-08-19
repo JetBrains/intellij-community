@@ -201,7 +201,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
 
     if (gppScope instanceof GlobalSearchScope) {
       String name = currentTarget.getName();
-      if (currentTarget.getManager().getSearchHelper().isCheapEnoughToSearch(name, (GlobalSearchScope)gppScope, null, null) ==
+      if (PsiSearchHelper.SERVICE.getInstance(currentTarget.getProject()).isCheapEnoughToSearch(name, (GlobalSearchScope)gppScope, null, null) ==
           PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
         return;
       }

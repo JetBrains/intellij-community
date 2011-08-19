@@ -46,10 +46,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchRequestCollector;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.SearchSession;
+import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
@@ -431,11 +428,12 @@ public class FindUsagesManager implements JDOMExternalizable {
               return scopeFile != null ? scopeFile.getProject() : !elements.isEmpty() ? elements.get(0).getProject() : handler.getProject();
             }
           });
-          PsiManager.getInstance(project).getSearchHelper().processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
-            public boolean processInReadAction(final PsiReference ref) {
-              return usageInfoProcessor.process(new UsageInfo(ref));
-            }
-          });
+          PsiSearchHelper.SERVICE.getInstance(project)
+              .processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
+                public boolean processInReadAction(final PsiReference ref) {
+                  return usageInfoProcessor.process(new UsageInfo(ref));
+                }
+              });
         }
         finally {
           options.fastTrack = null;

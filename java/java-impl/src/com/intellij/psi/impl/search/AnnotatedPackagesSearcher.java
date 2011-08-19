@@ -79,7 +79,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
       }
     }
 
-    PsiSearchHelper helper = psiManager.getSearchHelper();
+    PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(psiManager.getProject());
     final GlobalSearchScope infoFilesFilter = new PackageInfoFilesOnly();
 
     GlobalSearchScope infoFiles =

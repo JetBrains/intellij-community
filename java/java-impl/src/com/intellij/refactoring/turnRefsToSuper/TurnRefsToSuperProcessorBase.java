@@ -145,7 +145,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     super(project);
     mySuperClassName = superClassName;
     myManager = PsiManager.getInstance(project);
-    mySearchHelper = myManager.getSearchHelper();
+    mySearchHelper = PsiSearchHelper.SERVICE.getInstance(myManager.getProject());
     myManager = PsiManager.getInstance(myProject);
     myReplaceInstanceOf = replaceInstanceOf;
   }

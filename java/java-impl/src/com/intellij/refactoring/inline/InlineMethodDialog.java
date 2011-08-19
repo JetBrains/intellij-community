@@ -20,7 +20,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -57,7 +56,7 @@ public class InlineMethodDialog extends InlineOptionsDialog {
 
   private void initOccurrencesNumber(PsiMethod method) {
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final PsiSearchHelper searchHelper = method.getManager().getSearchHelper();
+    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(method.getProject());
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(method.getProject());
     final boolean isCheapToSearch =
       searchHelper.isCheapEnoughToSearch(method.getName(), scope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;

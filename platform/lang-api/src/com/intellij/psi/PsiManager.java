@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
@@ -112,16 +111,6 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param listener the listener instance.
    */
   public abstract void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener);
-
-  /**
-   * Returns the search helper for the project, which provides low-level search and
-   * find usages functionality. It can be used to perform operations like finding references
-   * to an element, finding overriding / inheriting elements, finding to do items and so on.
-   *
-   * @return the search helper instance.
-   */
-  @NotNull
-  public abstract PsiSearchHelper getSearchHelper();
 
   /**
    * Returns the modification tracker for the project, which can be used to get the PSI

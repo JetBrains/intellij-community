@@ -388,7 +388,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
           final RefFilter filter = new StrictUnreferencedFilter(UnusedDeclarationInspection.this);
-          final PsiSearchHelper helper = PsiManager.getInstance(getRefManager().getProject()).getSearchHelper();
+          final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(getRefManager().getProject());
           getRefManager().iterate(new RefJavaVisitor() {
             @Override public void visitElement(final RefEntity refEntity) {
               if (refEntity instanceof RefClass && filter.accepts((RefClass)refEntity)) {

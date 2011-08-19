@@ -100,7 +100,7 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
       }
 
 
-      return element.getManager().getSearchHelper().processRequests(collector, consumer);
+      return PsiSearchHelper.SERVICE.getInstance(element.getProject()).processRequests(collector, consumer);
     }
 
     @Nullable
