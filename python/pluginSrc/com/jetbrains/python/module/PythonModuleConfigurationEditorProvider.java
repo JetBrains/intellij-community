@@ -1,5 +1,6 @@
 package com.jetbrains.python.module;
 
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
@@ -15,7 +16,7 @@ import java.util.ArrayList;
 public class PythonModuleConfigurationEditorProvider implements ModuleConfigurationEditorProvider {
   public ModuleConfigurationEditor[] createEditors(final ModuleConfigurationState state) {
     final Module module = state.getRootModel().getModule();
-    if (!(module.getModuleType() instanceof PythonModuleType)) return ModuleConfigurationEditor.EMPTY;
+    if (!(ModuleType.get(module) instanceof PythonModuleType)) return ModuleConfigurationEditor.EMPTY;
     final DefaultModuleConfigurationEditorFactory editorFactory = DefaultModuleConfigurationEditorFactory.getInstance();
     final List<ModuleConfigurationEditor> editors = new ArrayList<ModuleConfigurationEditor>();
     editors.add(editorFactory.createModuleContentRootsEditor(state));

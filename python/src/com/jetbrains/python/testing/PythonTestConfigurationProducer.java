@@ -15,6 +15,7 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -163,7 +164,7 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     if (module == null) {
       return false;
     }
-    if (module.getModuleType() instanceof PythonModuleTypeBase) {
+    if (ModuleType.get(module) instanceof PythonModuleTypeBase) {
       return true;
     }
     final Facet[] allFacets = FacetManager.getInstance(module).getAllFacets();
