@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1957,6 +1957,58 @@ public class StringUtil {
       }
     }
     return res;
+  }
+
+  /**
+   * Implementation of "Sorting for Humans: Natural Sort Order":
+   * http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html
+   */
+  public static int naturalCompare(String string1, String string2) {
+    return naturalCompare(string1, string2, false);
+  }
+
+  private static int naturalCompare(String string1, String string2, boolean caseSensitive) {
+    final int string1Length = string1.length();
+    final int string2Length = string2.length();
+    for(int i = 0, j = 0; i < string1Length && j < string2Length; i++, j++) {
+      final char ch1 = string1.charAt(i);
+      final char ch2 = string2.charAt(j);
+      if (isDigit(ch1) && isDigit(ch2)) {
+        int startNum1 = i;
+        int startNum2 = j;
+        i++;
+        j++;
+        while (i < string1Length && isDigit(string1.charAt(i))) i++;
+        while (j < string2Length && isDigit(string2.charAt(j))) j++;
+        final int difference = Integer.parseInt(string1.substring(startNum1, i)) -
+                               Integer.parseInt(string2.substring(startNum2, j));
+        if (difference != 0) {
+          return difference;
+        }
+      } else {
+        if (caseSensitive) {
+          return ch1 - ch2;
+        } else {
+          // similar logic to charsMatch() below
+          final int diff1 = Character.toUpperCase(ch1) - Character.toUpperCase(ch2);
+          if (diff1 != 0) {
+            final int diff2 = Character.toLowerCase(ch1) - Character.toLowerCase(ch2);
+            if (diff2 != 0) {
+              return diff1;
+            }
+          }
+        }
+      }
+    }
+    if (!caseSensitive && string1Length == string2Length) {
+      // do case sensitive compare if case insensitive strings are equal
+      return naturalCompare(string1, string2, true);
+    }
+    return string1Length - string2Length;
+  }
+
+  public static boolean isDigit(char c) {
+    return c >= '0' && c <= '9';
   }
 
   public static int compare(@Nullable String s1, @Nullable String s2, boolean ignoreCase) {

@@ -18,7 +18,7 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -69,5 +69,22 @@ public class StringUtilTest extends TestCase {
     assertTrue(StringUtil.startsWithConcatenationOf("something", "something", ""));
     assertFalse(StringUtil.startsWithConcatenationOf("something", "something", "."));
     assertFalse(StringUtil.startsWithConcatenationOf("some", "something", ""));
+  }
+
+  public void testNaturalCompare() {
+    final List<String> strings = new ArrayList(Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
+                                                             "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1"));
+    final Comparator<String> c = new Comparator<String>() {
+      @Override
+      public int compare(String o1, String o2) {
+        return StringUtil.naturalCompare(o1, o2);
+      }
+    };
+    Collections.sort(strings, c);
+    assertEquals(Arrays.asList("1.2.9.1", "1.2.10.5", "tes0", "test", "test 3", "test0", "test1", "test2", "test10", "test10a",
+                               "test011", "Test99", "test99", "testing"), strings);
+    final List<String> strings2 = new ArrayList(Arrays.asList("t1", "T2", "T1", "t2"));
+    Collections.sort(strings2, c);
+    assertEquals(Arrays.asList("T1", "t1", "T2", "t2"), strings2);
   }
 }
