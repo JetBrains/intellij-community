@@ -16,7 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationComponentLocator;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -42,7 +42,7 @@ public abstract class VirtualFileManager implements ModificationTracker{
    */
   @NotNull
   public static VirtualFileManager getInstance(){
-    return ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
+    return ApplicationComponentLocator.getComponent(VirtualFileManager.class);
   }
 
   /**

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
