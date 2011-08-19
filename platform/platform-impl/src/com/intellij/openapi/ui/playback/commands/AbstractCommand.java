@@ -21,6 +21,8 @@ import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 
+import java.io.File;
+
 public abstract class AbstractCommand implements PlaybackCommand {
 
   public static String CMD_PREFIX = "%";
@@ -28,6 +30,8 @@ public abstract class AbstractCommand implements PlaybackCommand {
   private final String myText;
   private final int myLine;
 
+  private File myBaseDir;
+  
   public AbstractCommand(String text, int line) {
     myText = text != null ? text : null;
     myLine = line;
@@ -80,5 +84,16 @@ public abstract class AbstractCommand implements PlaybackCommand {
 
   public void dumpError(final PlaybackRunner.StatusCallback cb, final String text) {
     cb.error(text, getLine());
+  }
+
+  @Override
+  public File getBaseDir() {
+    return myBaseDir;
+  }
+
+
+  public PlaybackCommand setBaseDir(File baseDir) {
+    myBaseDir = baseDir;
+    return this;
   }
 }

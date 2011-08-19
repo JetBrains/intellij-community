@@ -44,7 +44,7 @@ public class PlaybackCallFacade {
   public static AsyncResult<String> openProjectClone(final PlaybackContext context, String path) {
     try {
       File parentDir = FileUtil.createTempDirectory("funcTest", "");
-      File sourceDir = getFile(path);
+      File sourceDir = getFile(context.getCurrentCmd().getBaseDir(), path);
       
       FileUtil.copyDir(sourceDir, parentDir);
       File projectDir = new File(parentDir, sourceDir.getName());
@@ -55,10 +55,10 @@ public class PlaybackCallFacade {
     }
   }
 
-  public static File getFile(String path) {
+  public static File getFile(File baseDir, String path) {
     File sourceDir = new File(path);
     if (!sourceDir.isAbsolute()) {
-      sourceDir = new File(System.getProperty("work.dir"), path);
+      sourceDir = new File(baseDir, path);
     }
     return sourceDir;
   }

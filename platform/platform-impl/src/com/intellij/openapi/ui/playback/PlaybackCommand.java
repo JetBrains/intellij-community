@@ -18,8 +18,11 @@ package com.intellij.openapi.ui.playback;
 import com.intellij.openapi.util.ActionCallback;
 
 import java.awt.*;
+import java.io.File;
 
 public interface PlaybackCommand {
   ActionCallback execute(PlaybackContext context);
   boolean canGoFurther();
+
+  File getBaseDir();
 }
