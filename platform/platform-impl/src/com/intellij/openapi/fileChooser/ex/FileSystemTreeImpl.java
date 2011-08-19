@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -483,10 +484,12 @@ public class FileSystemTreeImpl implements FileSystemTree {
           }
 
 
-          if (myTreeBuilder.getTreeStructure().isToBuildChildrenInBackground(virtualFile)) {
-            virtualFile.refresh(true, false, null, ModalityState.stateForComponent(myTree));
-          } else {
-            virtualFile.refresh(false, false, null, ModalityState.stateForComponent(myTree));
+          boolean async = myTreeBuilder.getTreeStructure().isToBuildChildrenInBackground(virtualFile);
+          if (virtualFile instanceof NewVirtualFile) {
+            RefreshQueue.getInstance().refresh(async, false, null, ModalityState.stateForComponent(myTree), virtualFile);
+          }
+          else {
+            virtualFile.refresh(async, false);
           }
         }
       }

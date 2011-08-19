@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -573,13 +572,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * after the operation is completed.
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable);
-
-  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable, ModalityState modalityState) {
-    if (modalityState != ModalityState.NON_MODAL) {
-      LOG.error("Refresh with non-modal modality state is not implemented for file: " + this);
-    }
-    refresh(asynchronous, recursive, postRunnable);
-  }
 
   public String getPresentableName() {
     return getName();
