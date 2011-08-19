@@ -92,7 +92,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     final PsiFile containingFile = myElement.getContainingFile();
     final List<PyQualifiedName> imports;
     if (containingFile instanceof PyFile) {
-      imports = collectImports((PyFile) containingFile);
+      imports = collectImports((PyFile)containingFile);
     }
     else {
       imports = Collections.emptyList();
@@ -103,7 +103,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
                                                      new Throwable("found non-function object " + function + " in function list"));
         break;
       }
-      PyFunction pyFunction = (PyFunction) function;
+      PyFunction pyFunction = (PyFunction)function;
       if (pyFunction.getContainingClass() != null) {
         ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction, imports)));
       }
@@ -113,10 +113,11 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     for (Object attribute : attributes) {
       if (!(attribute instanceof PyTargetExpression)) {
         FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
-                                                     new Throwable("found non-target expression object " + attribute + " in target expression list"));
+                                                     new Throwable(
+                                                       "found non-target expression object " + attribute + " in target expression list"));
         break;
       }
-      ret.add(new ImplicitResolveResult((PyTargetExpression) attribute, getImplicitResultRate((PyTargetExpression)attribute, imports)));
+      ret.add(new ImplicitResolveResult((PyTargetExpression)attribute, getImplicitResultRate((PyTargetExpression)attribute, imports)));
     }
   }
 
@@ -155,7 +156,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       }
     }
     if (myElement.getParent() instanceof PyCallExpression) {
-      if (target instanceof PyFunction) rate += 50;      
+      if (target instanceof PyFunction) rate += 50;
     }
     else {
       if (!(target instanceof PyFunction)) rate += 50;
@@ -347,7 +348,25 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         }
       }
     }
+    if (resolveResult instanceof PyTargetExpression && PyUtil.isInstanceAttribute((PyTargetExpression)resolveResult) &&
+        element instanceof PyTargetExpression && PyUtil.isInstanceAttribute((PyTargetExpression)element)) {
+      PyClass aClass = PsiTreeUtil.getParentOfType(resolveResult, PyClass.class);
+      PyClass bClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
+
+      if (isSubclass(aClass, bClass)
+          || (isSubclass(bClass, aClass))) {
+        return true;
+      }
+    }
+
     return false;
+  }
+
+  private boolean isSubclass(@Nullable PyClass init, @Nullable PyClass usage) {
+    if (init == null || usage == null) {
+      return false;
+    }
+    return usage.isSubclass(init);
   }
 
   private static boolean isLocalScope(PsiElement element) {
