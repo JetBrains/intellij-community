@@ -25,6 +25,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -67,7 +68,7 @@ public class PrepareToDeployAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
-    if (module != null && module.getModuleType() instanceof PluginModuleType) {
+    if (module != null && ModuleType.get(module) instanceof PluginModuleType) {
       doPrepare(Arrays.asList(module), LangDataKeys.PROJECT.getData(e.getDataContext()));
     }
   }
@@ -343,7 +344,7 @@ public class PrepareToDeployAction extends AnAction {
 
   public void update(AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
-    boolean enabled = module != null && module.getModuleType() instanceof PluginModuleType;
+    boolean enabled = module != null && ModuleType.get(module) instanceof PluginModuleType;
     e.getPresentation().setVisible(enabled);
     e.getPresentation().setEnabled(enabled);
     if (enabled) {

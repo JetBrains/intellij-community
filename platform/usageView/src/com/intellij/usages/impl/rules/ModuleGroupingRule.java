@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
@@ -137,7 +138,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
     }
 
     public Icon getIcon(boolean isOpen) {
-      return myModule.getModuleType().getNodeIcon(isOpen);
+      return ModuleType.get(myModule).getNodeIcon(isOpen);
     }
 
     @NotNull

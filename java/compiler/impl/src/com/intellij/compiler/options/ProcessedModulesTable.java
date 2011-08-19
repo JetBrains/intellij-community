@@ -17,6 +17,7 @@ package com.intellij.compiler.options;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.util.Pair;
@@ -420,7 +421,7 @@ public class ProcessedModulesTable extends JPanel {
       }
       component.setEnabled(ProcessedModulesTable.this.isEnabled());
       if (component instanceof JLabel) {
-        final Icon icon = module != null ? module.getModuleType().getNodeIcon(false) : null;
+        final Icon icon = module != null ? ModuleType.get(module).getNodeIcon(false) : null;
         JLabel label = (JLabel)component;
         label.setIcon(icon);
         label.setDisabledIcon(icon);

@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 
 import javax.swing.*;
 
@@ -16,7 +17,7 @@ public class InspectionModuleNode extends InspectionTreeNode{
   }
 
   public Icon getIcon(boolean expanded) {
-    return myModule.getModuleType().getNodeIcon(expanded);
+    return ModuleType.get(myModule).getNodeIcon(expanded);
   }
 
   public String getName(){

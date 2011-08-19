@@ -24,7 +24,6 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IModuleStore;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
@@ -32,7 +31,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.project.Project;
@@ -61,11 +59,9 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleImpl");
 
   @NotNull private final Project myProject;
-  private ModuleType myModuleType = null;
   private boolean isModuleAdded;
 
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
-  @NonNls public static final String ELEMENT_TYPE = "type";
 
   private final Map<Integer, GlobalSearchScope> myScopeCache = new StripedLockConcurrentHashMap<Integer, GlobalSearchScope>();
 
@@ -210,12 +206,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   @NotNull
-  public ModuleType getModuleType() {
-    LOG.assertTrue(myModuleType != null, "Module type not initialized yet");
-    return myModuleType;
-  }
-
-  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -234,11 +224,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     for (ModuleComponent component : getComponents(ModuleComponent.class)) {
       component.moduleAdded();
     }
-  }
-
-  public void setModuleType(ModuleType type) {
-    myModuleType = type;
-    setOption(ELEMENT_TYPE, type.getId());
   }
 
   public void setOption(@NotNull String optionName, @NotNull String optionValue) {

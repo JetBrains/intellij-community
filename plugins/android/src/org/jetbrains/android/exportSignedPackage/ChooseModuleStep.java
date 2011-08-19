@@ -20,6 +20,7 @@ import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.ui.CollectionComboBoxModel;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
@@ -62,7 +63,7 @@ class ChooseModuleStep extends ExportSignedPackageWizardStep {
       public void customize(JList list, AndroidFacet value, int index, boolean selected, boolean hasFocus) {
         final Module module = value.getModule();
         setText(module.getName());
-        setIcon(module.getModuleType().getNodeIcon(false));
+        setIcon(ModuleType.get(module).getNodeIcon(false));
       }
     });
     myModuleCombo.addActionListener(new ActionListener() {

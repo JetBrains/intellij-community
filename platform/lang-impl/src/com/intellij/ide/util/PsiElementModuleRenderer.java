@@ -17,6 +17,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.IconLoader;
@@ -77,7 +78,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
             setIcon(TEST_ICON);
           }
           else {
-            setIcon(module.getModuleType().getNodeIcon(false));
+            setIcon(ModuleType.get(module).getNodeIcon(false));
           }
         } else {
           if (psiFile != null) {

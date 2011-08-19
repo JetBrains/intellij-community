@@ -17,6 +17,7 @@ package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -165,7 +166,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     @Override
     public void customize(JList list, Module value, int index, boolean selected, boolean hasFocus) {
       if (value != null) {
-        setIcon(value.getModuleType().getNodeIcon(false));
+        setIcon(ModuleType.get(value).getNodeIcon(false));
         setText(value.getName());
       }
       else {

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.hint;
 
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.*;
@@ -49,7 +50,7 @@ public class ElementLocationUtil {
 
       if (module != null) {
         label.setText(module.getName());
-        label.setIcon(module.getModuleType().getNodeIcon(false));
+        label.setIcon(ModuleType.get(module).getNodeIcon(false));
       }
       else {
         final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);

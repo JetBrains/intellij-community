@@ -14,6 +14,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -271,8 +272,8 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     protected ModuleDescriptor(final Project project, final NodeDescriptor parentDescriptor, final Module element) {
       super(project, parentDescriptor, element);
       final PresentationData templatePresentation = getTemplatePresentation();
-      templatePresentation.setClosedIcon(element.getModuleType().getNodeIcon(false));
-      templatePresentation.setOpenIcon(element.getModuleType().getNodeIcon(true));
+      templatePresentation.setClosedIcon(ModuleType.get(element).getNodeIcon(false));
+      templatePresentation.setOpenIcon(ModuleType.get(element).getNodeIcon(true));
       templatePresentation.addText(notEmpty(element.getName()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 

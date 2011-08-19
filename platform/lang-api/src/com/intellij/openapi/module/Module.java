@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,8 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    */
   Module[] EMPTY_ARRAY = new Module[0];
 
+  @NonNls String ELEMENT_TYPE = "type";
+
   /**
    * Returns the <code>VirtualFile</code> for the module .iml file.
    *
@@ -50,13 +53,6 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * @return the path to the .iml file.
    */
   @NotNull String getModuleFilePath();
-
-  /**
-   * Returns the type of this module.
-   *
-   * @return the module type.
-   */
-  @NotNull ModuleType getModuleType();
 
   /**
    * Returns the project to which this module belongs.

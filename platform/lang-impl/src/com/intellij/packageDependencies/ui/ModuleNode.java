@@ -18,6 +18,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.NavigatableWithText;
@@ -59,11 +60,11 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
   }
 
   public Icon getOpenIcon() {
-    return myModule == null ? null : myModule.getModuleType().getNodeIcon(true);
+    return myModule == null ? null : ModuleType.get(myModule).getNodeIcon(true);
   }
 
   public Icon getClosedIcon() {
-    return myModule == null ? null : myModule.getModuleType().getNodeIcon(false);
+    return myModule == null ? null : ModuleType.get(myModule).getNodeIcon(false);
   }
 
   public String toString() {

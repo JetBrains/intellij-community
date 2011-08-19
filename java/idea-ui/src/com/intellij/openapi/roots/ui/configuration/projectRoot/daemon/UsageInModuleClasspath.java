@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
@@ -81,6 +82,6 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
 
   @Override
   public Icon getIcon() {
-    return myModule.getModuleType().getNodeIcon(false);
+    return ModuleType.get(myModule).getNodeIcon(false);
   }
 }

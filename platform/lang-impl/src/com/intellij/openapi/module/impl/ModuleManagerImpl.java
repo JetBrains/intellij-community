@@ -244,7 +244,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
           for (final ModulePath modulePath : myModulePaths) {
             try {
               final Module module = moduleModel.loadModuleInternal(modulePath.getPath());
-              if (module.getModuleType() instanceof UnknownModuleType) {
+              if (ModuleType.get(module) instanceof UnknownModuleType) {
                 modulesWithUnknownTypes.add(module);
               }
               final String groupPathString = modulePath.getModuleGroup();
@@ -273,13 +273,13 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             String message;
             if (modulesWithUnknownTypes.size() == 1) {
               message = ProjectBundle.message("module.unknown.type.single.error", modulesWithUnknownTypes.get(0).getName(),
-                                              modulesWithUnknownTypes.get(0).getModuleType().getId());
+                                              ModuleType.get(modulesWithUnknownTypes.get(0)).getId());
             }
             else {
               StringBuilder modulesBuilder = new StringBuilder();
               for (final Module module : modulesWithUnknownTypes) {
                 modulesBuilder.append("<br>\"");
-                modulesBuilder.append(module.getName()).append("\" (type '").append(module.getModuleType().getId()).append("')");
+                modulesBuilder.append(module.getName()).append("\" (type '").append(ModuleType.get(module).getId()).append("')");
               }
               modulesBuilder.append("<br>");
               message = ProjectBundle.message("module.unknown.type.multiple.error", modulesBuilder.toString());
@@ -684,7 +684,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
         module = new ModuleImpl(filePath, myProject);
-        module.setModuleType(moduleType);
+        module.setOption(Module.ELEMENT_TYPE, moduleType.getId());
         if (options != null) {
           for ( Map.Entry<String,String> option : options.entrySet()) {
             module.setOption(option.getKey(),option.getValue());

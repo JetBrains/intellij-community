@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.build;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -63,7 +64,7 @@ public class PluginBuildUtil {
     productionRuntimeDependencies(module).forEachModule(new Processor<Module>() {
       @Override
       public boolean process(Module dep) {
-        if (dep.getModuleType() == StdModuleTypes.JAVA && !modules.contains(dep)) {
+        if (ModuleType.get(dep) == StdModuleTypes.JAVA && !modules.contains(dep)) {
           modules.add(dep);
           getDependencies(dep, modules);
         }

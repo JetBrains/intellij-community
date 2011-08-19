@@ -771,7 +771,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
             }
 
             public ModuleType getModuleType() {
-              return rootModel.getModule().getModuleType();
+              return ModuleType.get(rootModel.getModule());
             }
           };
           builder.setName(component.getNameValue());

@@ -345,7 +345,7 @@ public class BackendCompilerWrapper {
       return; // should not invoke javac with empty sources list
     }
 
-    ModuleType moduleType = chunk.getModules()[0].getModuleType();
+    ModuleType moduleType = ModuleType.get(chunk.getModules()[0]);
     if (!(chunk.getJdk().getSdkType() instanceof JavaSdkType) &&
         !(moduleType instanceof JavaModuleType || moduleType.createModuleBuilder() instanceof JavaModuleBuilder)) {
       // TODO

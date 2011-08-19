@@ -21,6 +21,7 @@ import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
@@ -119,7 +120,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
       @Override
       public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
         if (module != null) {
-          setIcon(module.getModuleType().getNodeIcon(false));
+          setIcon(ModuleType.get(module).getNodeIcon(false));
           setText(module.getName());
         }
       }
