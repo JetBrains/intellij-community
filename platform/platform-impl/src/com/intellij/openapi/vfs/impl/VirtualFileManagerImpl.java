@@ -118,7 +118,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
     refresh(asynchronous, postAction, ModalityState.NON_MODAL);
   }
 
-  @Override
   public void refresh(boolean asynchronous, @Nullable Runnable postAction, ModalityState modalityState) {
     if (!asynchronous) {
       ApplicationManager.getApplication().assertIsDispatchThread();
