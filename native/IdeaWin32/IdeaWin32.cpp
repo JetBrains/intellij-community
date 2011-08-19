@@ -38,6 +38,7 @@ fileTimeToInt64 (const FILETIME * time)
 jfieldID nameID; 
 jfieldID attributesID;
 jfieldID timestampID;
+jfieldID lengthID;
 
 jobject CreateFileInfo(JNIEnv *env, LPWIN32_FIND_DATA lpData, jclass cls) {
 
@@ -52,6 +53,11 @@ jobject CreateFileInfo(JNIEnv *env, LPWIN32_FIND_DATA lpData, jclass cls) {
 	env->SetObjectField(o, nameID, fileName);
 	env->SetIntField(o, attributesID, lpData->dwFileAttributes);
 	env->SetLongField(o, timestampID, fileTimeToInt64(&lpData->ftLastWriteTime));
+
+	ULARGE_INTEGER size;
+	size.LowPart = lpData->nFileSizeLow;
+	size.HighPart = lpData->nFileSizeHigh;
+	env->SetLongField(o, lengthID, size.QuadPart);
 	return o;
 }
 
@@ -59,6 +65,7 @@ JNIEXPORT void JNICALL Java_com_intellij_openapi_vfs_impl_win32_FileInfo_initIDs
 	nameID = env->GetFieldID(cls, "name", "Ljava/lang/String;");
 	attributesID = env->GetFieldID(cls, "attributes", "I");
 	timestampID = env->GetFieldID(cls, "timestamp", "J");
+	lengthID = env->GetFieldID(cls, "length", "J");
 }
 
 JNIEXPORT jobject JNICALL Java_com_intellij_openapi_vfs_impl_win32_IdeaWin32_getInfo(JNIEnv *env, jobject method, jstring path) {

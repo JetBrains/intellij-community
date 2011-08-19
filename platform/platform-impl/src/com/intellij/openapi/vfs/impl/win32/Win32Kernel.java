@@ -81,6 +81,10 @@ public class Win32Kernel {
     return timestamp / 10000 - 11644473600000l;
   }
 
+  public long getLength(String path) throws FileNotFoundException {
+    return getInfo(path).length;
+  }
+
   private FileInfo getInfo(String path) throws FileNotFoundException {
     FileInfo info = myCache.get(path);
     if (info == null) {

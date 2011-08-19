@@ -81,8 +81,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private VirtualFileSystemEntry findChild(@NotNull String name, final boolean createIfNotFound, boolean ensureCanonicalName) {
-    final VirtualFileSystemEntry result = doFindChild(name, createIfNotFound, ensureCanonicalName);
+  private VirtualFileSystemEntry findChild(@NotNull String name,
+                                           final boolean createIfNotFound,
+                                           boolean ensureCanonicalName,
+                                           NewVirtualFileSystem delegate) {
+    final VirtualFileSystemEntry result = doFindChild(name, createIfNotFound, ensureCanonicalName, delegate);
     if (result == NULL_VIRTUAL_FILE) {
       return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
     }
@@ -100,7 +103,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private VirtualFileSystemEntry doFindChild(@NotNull String name, final boolean createIfNotFound, boolean ensureCanonicalName) {
+  private VirtualFileSystemEntry doFindChild(@NotNull String name,
+                                             final boolean createIfNotFound,
+                                             boolean ensureCanonicalName,
+                                             NewVirtualFileSystem delegate) {
     if (name.length() == 0) {
       return null;
     }
@@ -130,7 +136,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (file != null) return file;
 
     if (ensureCanonicalName) {
-      final NewVirtualFileSystem delegate = getFileSystem();
       VirtualFile fake = new FakeVirtualFile(this, name);
       name = delegate.getCanonicallyCasedName(fake);
       if (name.length() == 0) return null;
@@ -138,7 +143,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     synchronized (this) {
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
-      int id = PersistentFS.getId(this, name);
+      int id = PersistentFS.getId(this, name, delegate);
       if (id > 0) {
         // maybe another doFindChild() sneaked in the middle
         VirtualFileSystemEntry lastTry = map.get(name);
@@ -304,7 +309,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   public NewVirtualFile refreshAndFindChild(@NotNull String name) {
-    return findChild(name, true, true);
+    return findChild(name, true, true, getFileSystem());
   }
 
   @Nullable
@@ -353,8 +358,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     final String[] names = PersistentFS.listPersisted(this);
+    NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
     for (String name : names) {
-      findChild(name, false, false);
+      findChild(name, false, false, delegate);
     }
     
     // important: should return a copy here for safe iterations
@@ -395,7 +401,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   public VirtualFileSystemEntry findChild(@NotNull final String name) {
-    return findChild(name, false, true);
+    return findChild(name, false, true, getFileSystem());
   }
 
   @Nullable
@@ -406,7 +412,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     
     String name = ourPersistence.getName(id);
-    return findChild(name, false, false);
+    return findChild(name, false, false, getFileSystem());
   }
 
   public NewVirtualFile findChildByIdIfCached(int id) {
