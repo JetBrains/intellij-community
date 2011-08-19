@@ -54,6 +54,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -218,8 +219,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     for (final Module module : modules) {
       ModuleConfigurable configurable = new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER);
       final MyNode moduleNode = new MyNode(configurable);
-      final boolean facetsExist = myFacetEditorFacade.addFacetsNodes(module, moduleNode);
-      if (facetsExist) {
+      boolean nodesAdded = myFacetEditorFacade.addFacetsNodes(module, moduleNode);
+      nodesAdded |= addNodesFromExtensions(module, moduleNode);
+      if (nodesAdded) {
         myTree.setShowsRootHandles(true);
       }
       final String[] groupPath = myPlainMode ? null : myContext.myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
@@ -252,6 +254,14 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     //myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, projectLibrariesProvider);
     //
     //myProjectNode.add(myLevel2Nodes.get(LibraryTablesRegistrar.PROJECT_LEVEL));
+  }
+
+  private boolean addNodesFromExtensions(final Module module, final MyNode moduleNode) {
+    boolean nodesAdded= false;
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      nodesAdded |= extension.addModuleNodeChildren(module, moduleNode, TREE_UPDATER);
+    }
+    return nodesAdded;
   }
 
   public boolean updateProjectTree(final Module[] modules, final ModuleGroup group) {
@@ -290,6 +300,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         addNode(moduleNode, moduleGroupNode);
       }
       myFacetEditorFacade.addFacetsNodes((Module)moduleNode.getConfigurable().getEditableObject(), moduleNode);
+      addNodesFromExtensions((Module)moduleNode.getConfigurable().getEditableObject(), moduleNode);
     }
     ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
     return true;
@@ -326,6 +337,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   public void reset() {
     super.reset();
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      extension.reset();
+    }
   }
 
 
@@ -335,10 +349,24 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     checkApply(roots, ProjectBundle.message("rename.message.prefix.module"), ProjectBundle.message("rename.module.title"));
 
     if (myContext.myModulesConfigurator.isModified()) myContext.myModulesConfigurator.apply();
+
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      extension.apply();
+    }
   }
 
   public boolean isModified() {
-    return myContext.myModulesConfigurator.isModified();
+    if (myContext.myModulesConfigurator.isModified()) {
+      return true;
+    }
+
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      if (extension.isModified()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public void disposeUIResources() {
@@ -346,6 +374,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     myFacetEditorFacade.clearMaps(true);
     myContext.myModulesConfigurator.disposeUIResources();
     ModuleStructureConfigurable.super.disposeUIResources();
+
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      extension.disposeUIResources();
+    }
   }
 
   public void dispose() {}
@@ -494,6 +526,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (parent == null) parent = myRoot;
     addNode(node, parent);
     myFacetEditorFacade.addFacetsNodes(module, node);
+    addNodesFromExtensions(module, node);
     ((DefaultTreeModel)myTree.getModel()).reload(parent);
     selectNodeInTree(node);
     final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
@@ -545,6 +578,43 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                              PlatformIcons.OPENED_MODULE_GROUP_ICON, PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
+  protected boolean canBeRemoved(final Object editableObject) {
+    if (super.canBeRemoved(editableObject)) {
+      return true;
+    }
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      if (extension.canBeRemoved(editableObject)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  protected boolean removeObject(final Object editableObject) {
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      if (extension.removeObject(editableObject)) {
+        return true;
+      }
+    }
+    return super.removeObject(editableObject);
+  }
+
+  private boolean canBeCopiedByExtension(final NamedConfigurable confugurable) {
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      if (extension.canBeCopied(confugurable)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void copyByExtension(final NamedConfigurable configurable) {
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      extension.copy(configurable, TREE_UPDATER);
+    }
+  }
+  
   private class MyDataProviderWrapper extends JPanel implements DataProvider {
     public MyDataProviderWrapper(final JComponent component) {
       super(new BorderLayout());
@@ -659,6 +729,15 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           result.addAll(libraryActions);
         }
 
+        final Computable<Object> selectedObjectRetriever = new Computable<Object>() {
+          public Object compute() {
+            return getSelectedObject();
+          }
+        };
+        for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+          result.addAll(extension.createAddActions(selectedObjectRetriever, TREE_UPDATER));
+        }
+
         return result.toArray(new AnAction[result.size()]);
       }
     };
@@ -679,6 +758,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     List<Facet> removed = modulesConfigurator.getFacetsConfigurator().removeAllFacets(module);
     FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
     myContext.getDaemonAnalyzer().removeElement(new ModuleProjectStructureElement(myContext, module));
+
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      extension.moduleRemoved(module);
+    }
     return true;
   }
 
@@ -785,6 +868,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           LOG.error(e1);
         }
       }
+      else {
+        copyByExtension(namedConfigurable);
+      }
     }
 
     public void update(final AnActionEvent e) {
@@ -792,11 +878,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       if (selectionPaths == null || selectionPaths.length != 1) {
         e.getPresentation().setEnabled(false);
       } else {
-        e.getPresentation().setEnabled(getSelectedConfugurable() instanceof ModuleConfigurable);
+        final NamedConfigurable selectedConfigurable = getSelectedConfugurable();
+        e.getPresentation().setEnabled(selectedConfigurable instanceof ModuleConfigurable || canBeCopiedByExtension(selectedConfigurable));
       }
     }
   }
-
 
   private class AddModuleAction extends AnAction implements DumbAware {
     public AddModuleAction() {
