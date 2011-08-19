@@ -17,7 +17,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -261,7 +261,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   @NotNull
   public FileType getFileType() {
-    return FileTypeManager.getInstance().getFileTypeByFile(this);
+    return FileTypeRegistry.getInstance().getFileTypeByFile(this);
   }
 
   /**

@@ -17,6 +17,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.application.ApplicationComponentLocator;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,16 @@ import java.util.List;
  * Manages the relationship between filenames and {@link FileType} instances.
  */
 
-public abstract class FileTypeManager{
+public abstract class FileTypeManager extends FileTypeRegistry {
+  static {
+    FileTypeRegistry.ourInstanceGetter = new Getter<FileTypeRegistry>() {
+      @Override
+      public FileTypeRegistry get() {
+        return FileTypeManager.getInstance();
+      }
+    };
+  }
+
   private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
   /**
    * Returns the singleton instance of the FileTypeManager component.
@@ -76,15 +86,6 @@ public abstract class FileTypeManager{
   public abstract FileType getFileTypeByFileName(@NotNull @NonNls String fileName);
 
   /**
-   * Returns the file type for the specified file.
-   *
-   * @param file The file for which the type is requested.
-   * @return The file type instance.
-   */
-  @NotNull
-  public abstract FileType getFileTypeByFile(@NotNull VirtualFile file);
-
-  /**
    * Returns the file type for the specified extension.
    * Note that a more general way of obtaining file type is with {@link #getFileTypeByFile(VirtualFile)}
    *
@@ -93,14 +94,6 @@ public abstract class FileTypeManager{
    */
   @NotNull
   public abstract FileType getFileTypeByExtension(@NonNls @NotNull String extension);
-
-  /**
-   * Returns the list of all registered file types.
-   *
-   * @return The list of file types.
-   */
-  @NotNull
-  public abstract FileType[] getRegisteredFileTypes();
 
   /**
    * Checks if the specified file is ignored by IDEA. Ignored files are not visible in
