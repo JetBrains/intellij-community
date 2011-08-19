@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -183,12 +184,12 @@ public class PlatformPackageUtil {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(baseDir.getProject()).getFileIndex();
       if (fileIndex.isInTestSourceContent(baseDir.getVirtualFile())) {
         if (skipSourceDirsForBaseTestDirectory) {
-          return scope.intersectWith(GlobalSearchScope.projectTestScope(baseDir.getProject()));
+          return scope.intersectWith(GlobalSearchScopes.projectTestScope(baseDir.getProject()));
         }
       }
       else {
         if (skipTestDirsForBaseSourceDirectory) {
-          return scope.intersectWith(GlobalSearchScope.projectProductionScope(baseDir.getProject()));
+          return scope.intersectWith(GlobalSearchScopes.projectProductionScope(baseDir.getProject()));
         }
       }
     }

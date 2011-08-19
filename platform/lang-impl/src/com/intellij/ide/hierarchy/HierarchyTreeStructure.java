@@ -25,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -142,14 +143,14 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
       searchScope = new LocalSearchScope(thisClass);
     }
     else if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
-      searchScope = GlobalSearchScope.projectProductionScope(myProject);
+      searchScope = GlobalSearchScopes.projectProductionScope(myProject);
     }
     else if (HierarchyBrowserBaseEx.SCOPE_TEST.equals(scopeType)) {
-      searchScope = GlobalSearchScope.projectTestScope(myProject);
+      searchScope = GlobalSearchScopes.projectTestScope(myProject);
     } else {
       final NamedScope namedScope = NamedScopesHolder.getScope(myProject, scopeType);
       if (namedScope != null) {
-        searchScope = GlobalSearchScope.filterScope(myProject, namedScope);
+        searchScope = GlobalSearchScopes.filterScope(myProject, namedScope);
       }
     }
     return searchScope;
