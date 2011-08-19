@@ -511,7 +511,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
             processNodeCreation(child);
           }
         } else {
-          reload((DefaultMutableTreeNode)myBuilder.addDirNode((PsiDirectory)psiElement).getParent());
+          final PackageDependenciesNode node = myBuilder.addDirNode((PsiDirectory)psiElement);
+          if (node != null) {
+            reload((DefaultMutableTreeNode)node.getParent());
+          }
         }
       }
     }
