@@ -15,7 +15,7 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 
 import java.util.List;
 
@@ -35,7 +35,7 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   }
 
   public void visitElement(final PsiElement element) {
-    ProgressManager.checkCanceled();
+    ProgressIndicatorProvider.checkCanceled();
     element.acceptChildren(this);
   }
 
@@ -47,7 +47,7 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
       if (allFiles.size() > 1) {
         if (file == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
           for (PsiFile lFile : allFiles) {
-            ProgressManager.checkCanceled();
+            ProgressIndicatorProvider.checkCanceled();
             lFile.acceptChildren(this);
           }
           return;
