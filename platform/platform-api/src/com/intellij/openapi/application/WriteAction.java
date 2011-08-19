@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.ui.InvokeUtil;
+import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
@@ -28,7 +28,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     try {
-      InvokeUtil.runOrInvokeAndWait(new Runnable() {
+      GuiUtils.runOrInvokeAndWait(new Runnable() {
         public void run() {
           final AccessToken accessToken = start();
           try {
