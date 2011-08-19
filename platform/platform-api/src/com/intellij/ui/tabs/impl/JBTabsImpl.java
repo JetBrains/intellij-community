@@ -2121,8 +2121,15 @@ public class JBTabsImpl extends JComponent
   private void addHeaderSize(Dimension size, final int tabsCount) {
     Dimension header = computeHeaderPreferredSize(tabsCount);
 
-    size.height += header.height;
-    size.width += header.width;
+    final boolean horizontal = getTabsPosition() == JBTabsPosition.top || getTabsPosition() == JBTabsPosition.bottom;
+    if (horizontal) {
+      size.height += header.height;
+      size.width = Math.max(size.width, header.width);
+    }
+    else {
+      size.height += Math.max(size.height, header.height);
+      size.width += header.width;
+    }
 
     final Insets insets = getLayoutInsets();
     size.width += insets.left + insets.right + 1;
