@@ -56,7 +56,8 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   }
 
   @NotNull
-  public SingleRootFileViewProvider createCopy(final LightVirtualFile copy) {
+  @Override
+  public SingleRootFileViewProvider createCopy(final VirtualFile copy) {
     return new ClassFileViewProvider(getManager(), copy, false);
   }
 }

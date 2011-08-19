@@ -337,7 +337,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @NotNull
-  public SingleRootFileViewProvider createCopy(final LightVirtualFile copy) {
+  @Override
+  public SingleRootFileViewProvider createCopy(final VirtualFile copy) {
     return new SingleRootFileViewProvider(getManager(), copy, false, myBaseLanguage);
   }
 
