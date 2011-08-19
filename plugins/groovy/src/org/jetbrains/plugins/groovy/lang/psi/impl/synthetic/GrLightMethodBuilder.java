@@ -65,6 +65,8 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   private String[] myNamedParametersArray = ArrayUtil.EMPTY_STRING_ARRAY;
   private Runnable myOnRename;
 
+  private Object myData;
+
   public GrLightMethodBuilder(PsiManager manager, String name) {
     this(manager, name, new GrLightParameterListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE), null);
   }
@@ -98,17 +100,14 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   public PsiTypeParameterList getTypeParameterList() {
-    //todo
     return null;
   }
 
   public GrDocComment getDocComment() {
-    //todo
     return null;
   }
 
   public boolean isDeprecated() {
-    //todo
     return false;
   }
 
@@ -202,6 +201,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return myReturnType;
   }
 
+  @Nullable
   public GrTypeElement setReturnType(String returnType) {
     setReturnType(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeByFQClassName(returnType, getResolveScope()));
     return null;
@@ -242,7 +242,6 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
   @NotNull
   public PsiReferenceList getThrowsList() {
-    //todo
     return new LightEmptyImplementsList(getManager());
   }
 
@@ -256,8 +255,9 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   public boolean isVarArgs() {
-    //todo
-    return false;
+    GrParameter[] parameters = myParameterList.getParameters();
+    if (parameters.length == 0) return false;
+    return parameters[parameters.length - 1].isVarArgs();
   }
 
   @NotNull
@@ -425,4 +425,15 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
     return copy;
   }
+
+  @Nullable
+  public <T> T getData() {
+    return (T)myData;
+  }
+
+  public GrLightMethodBuilder setData(@Nullable Object data) {
+    myData = data;
+    return this;
+  }
+
 }

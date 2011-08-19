@@ -264,21 +264,13 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
     assert typeParameters.length == 1 : aClass;
 
-    final Map<PsiTypeParameter, PsiType> map = Collections.singletonMap(typeParameters[0], parameter);
-    return createType(aClass, createSubstitutor(map));
+    return createType(aClass, PsiSubstitutor.EMPTY.put(typeParameters[0], parameter));
   }
 
   @NotNull
   @Override
   public PsiClassType createType(@NotNull final PsiClass aClass, final PsiType... parameters) {
-    final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
-    assert parameters.length == typeParameters.length;
-
-    final Map<PsiTypeParameter, PsiType> map = new java.util.HashMap<PsiTypeParameter, PsiType>();
-    for (int i = 0; i < parameters.length; i++) {
-      map.put(typeParameters[i], parameters[i]);
-    }
-    return createType(aClass, createSubstitutor(map));
+    return createType(aClass, PsiSubstitutor.EMPTY.putAll(aClass, parameters));
   }
 
   @NotNull
