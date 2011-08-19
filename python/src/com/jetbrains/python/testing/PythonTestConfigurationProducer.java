@@ -152,7 +152,6 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
 
     configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
     configuration.setFolderName(path);
-    configuration.setWorkingDirectory(path);
 
     configuration.setName(configuration.suggestedName());
     myPsiElement = dir;
@@ -221,8 +220,8 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     final VirtualFile parent = vFile.getParent();
     if (parent == null) return false;
 
-    cfg.setScriptName(containingFile.getName());
-    cfg.setWorkingDirectory(parent.getPath());
+    cfg.setScriptName(vFile.getPath());
+    cfg.setShortName(containingFile.getName());
 
     return true;
   }

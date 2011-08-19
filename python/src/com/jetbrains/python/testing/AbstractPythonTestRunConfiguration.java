@@ -39,6 +39,8 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
   protected String myFolderName = "";
   protected TestType myTestType = TestType.TEST_SCRIPT;
 
+  private String myShortScriptName = "";
+
   protected AbstractPythonTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);
   }
@@ -111,6 +113,10 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
 
   public void setTestType(TestType testType) {
     myTestType = testType;
+  }
+
+  public void setShortName(String name) {
+    myShortScriptName = name;
   }
 
   public enum TestType {
@@ -191,7 +197,7 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
       case TEST_METHOD:
         return getTitle() + " in " + myClassName + "." + myMethodName;
       case TEST_SCRIPT:
-        return getTitle() + " in " + myScriptName;
+        return getTitle() + " in " + myShortScriptName;
       case TEST_FOLDER:
         return getTitle() + " in " + FileUtil.toSystemDependentName(myFolderName);
       case TEST_FUNCTION:
