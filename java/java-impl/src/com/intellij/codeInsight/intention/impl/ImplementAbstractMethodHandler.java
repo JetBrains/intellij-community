@@ -47,10 +47,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class ImplementAbstractMethodHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler");
@@ -107,18 +104,17 @@ public class ImplementAbstractMethodHandler {
     }
 
     if (result[0].length == 1) {
-      implementInClass(result[0][0]);
+      implementInClass(new Object[] {result[0][0]});
       return;
     }
 
     myList = new JBList(result[0]);
-    myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     final Runnable runnable = new Runnable(){
       public void run() {
         int index = myList.getSelectedIndex();
         if (index < 0) return;
-        PsiElement element = (PsiElement)myList.getSelectedValue();
-        implementInClass(element);
+        implementInClass(myList.getSelectedValues());
       }
     };
     final PsiElementListCellRenderer<PsiElement> elementListCellRenderer = new MyPsiElementListCellRenderer(result[0]);
@@ -133,31 +129,31 @@ public class ImplementAbstractMethodHandler {
       showInBestPositionFor(myEditor);
   }
 
-  private void implementInClass(final PsiElement psiClassOrEnumConstant) {
-    if (!psiClassOrEnumConstant.isValid()) return;
-
-    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClassOrEnumConstant.getContainingFile());
-    if (!FileDocumentManager.getInstance().requestWriting(document, myProject)) {
-      MessagesEx.fileIsReadOnly(myProject, psiClassOrEnumConstant.getContainingFile().getVirtualFile()).showNow();
-      return;
+  private void implementInClass(final Object[] selection) {
+    for (Object o : selection) {
+      if (!((PsiElement)o).isValid()) return;
     }
-
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
+        final LinkedHashSet<PsiClass> classes = new LinkedHashSet<PsiClass>();
+        for (Object o : selection) {
+          if (o instanceof PsiEnumConstant) {
+            classes.add(((PsiEnumConstant)o).getOrCreateInitializingClass());
+          }
+          else {
+            classes.add((PsiClass)o);
+          }
+        }
+        if (!CodeInsightUtilBase.preparePsiElementsForWrite(classes)) return;
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            try {
-              PsiClass psiClass;
-              if (psiClassOrEnumConstant instanceof PsiEnumConstant) {
-                psiClass = ((PsiEnumConstant)psiClassOrEnumConstant).getOrCreateInitializingClass();
-              } else {
-                psiClass = (PsiClass)psiClassOrEnumConstant;
+            for (PsiClass psiClass : classes) {
+              try {
+                OverrideImplementUtil.overrideOrImplement(psiClass, myMethod);
               }
-              CodeInsightUtilBase.prepareFileForWrite(psiClass.getContainingFile());
-              OverrideImplementUtil.overrideOrImplement(psiClass, myMethod);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
             }
           }
         });
