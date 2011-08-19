@@ -438,7 +438,10 @@
       <className>com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction</className>
       <category>Imports</category>
     </intentionAction>
-
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ExpandStaticImportAction</className>
+      <category>Imports</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInspection.actions.UnimplementInterfaceAction</className>
