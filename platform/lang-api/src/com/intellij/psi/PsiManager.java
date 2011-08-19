@@ -208,8 +208,6 @@ public abstract class PsiManager extends UserDataHolderBase {
                                                                                                         T;
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
 
-  public abstract void postponeAutoFormattingInside(Runnable runnable);
-
   public abstract void registerLanguageInjector(@NotNull LanguageInjector injector);
 
   public abstract void registerLanguageInjector(@NotNull LanguageInjector injector, Disposable parentDisposable);

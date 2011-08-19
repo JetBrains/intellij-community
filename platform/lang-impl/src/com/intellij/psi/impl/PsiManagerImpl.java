@@ -266,10 +266,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     InjectedLanguageManagerImpl.getInstanceImpl(myProject).psiManagerInjectorsChanged();
   }
 
-  public void postponeAutoFormattingInside(Runnable runnable) {
-    PostprocessReformattingAspect.getInstance(getProject()).postponeFormattingInside(runnable);
-  }
-
 
   public void projectClosed() {
   }
