@@ -38,7 +38,7 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
     super(manager, language);
   }
 
-  public void addParameter(GrParameter parameter) {
+  public void addParameter(@NotNull GrParameter parameter) {
     myParameters.add(parameter);
     myCachedParameters = null;
   }
@@ -65,12 +65,13 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
 
   @Override
   public void addParameterToEnd(GrParameter parameter) {
-
+    addParameter(parameter);
   }
 
   @Override
   public void addParameterToHead(GrParameter parameter) {
-    throw new IncorrectOperationException("GrLightParameterListBuilder is unmodifiable");
+    myParameters.add(0, parameter);
+    myCachedParameters = null;
   }
 
   @Override
@@ -104,5 +105,12 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
   @Override
   public void acceptChildren(GroovyElementVisitor visitor) {
 
+  }
+
+  @NotNull
+  public GrParameter removeParameter(int index) {
+    GrParameter removed = myParameters.remove(index);
+    myCachedParameters = null;
+    return removed;
   }
 }

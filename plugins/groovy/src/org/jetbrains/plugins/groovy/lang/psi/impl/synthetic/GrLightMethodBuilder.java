@@ -318,6 +318,10 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return this;
   }
 
+  public Object getMethodKind() {
+    return myMethodKind;
+  }
+
   public GrLightMethodBuilder setMethodKind(@Nullable Object methodKind) {
     myMethodKind = methodKind;
     return this;
