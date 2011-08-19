@@ -28,7 +28,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     findMatchingFiles = _findMatchngFiles;
 
     if (findMatchingFiles) {
-      helper = PsiManager.getInstance(project).getSearchHelper();
+      helper = PsiSearchHelper.SERVICE.getInstance(project);
 
       if (filesToScan == null) {
         filesToScan = new THashMap<PsiFile,PsiFile>(TObjectHashingStrategy.CANONICAL);

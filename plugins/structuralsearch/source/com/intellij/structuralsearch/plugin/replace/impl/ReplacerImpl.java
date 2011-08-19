@@ -195,7 +195,7 @@ public class ReplacerImpl {
     if (elementParent == null) return;
     final Runnable action = new Runnable() {
       public void run() {
-        CodeStyleManager codeStyleManager = PsiManager.getInstance(project).getCodeStyleManager();
+        CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(PsiManager.getInstance(project));
         final PsiFile containingFile = elementParent.getContainingFile();
 
         if (containingFile != null) {
