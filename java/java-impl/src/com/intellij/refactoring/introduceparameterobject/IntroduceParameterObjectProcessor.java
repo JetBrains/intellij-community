@@ -164,7 +164,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     if (myUseExistingClass && existingClass != null) {
       myExistingClassCompatibleConstructor = existingClassIsCompatible(existingClass, parameters);
     }
-    findUsagesForMethod(method, usages);
+    findUsagesForMethod(method, usages, true);
 
     if (myUseExistingClass && existingClass != null && !(paramsNeedingGetters.isEmpty() && paramsNeedingSetters.isEmpty())) {
       usages.add(new AppendAccessorsUsageInfo(existingClass, myGenerateAccessors, paramsNeedingGetters, paramsNeedingSetters, parameters));
@@ -172,7 +172,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
 
     final PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod siblingMethod : overridingMethods) {
-      findUsagesForMethod(siblingMethod, usages);
+      findUsagesForMethod(siblingMethod, usages, false);
     }
 
     if (myNewVisibility != null) {
@@ -180,7 +180,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     }
   }
 
-  private void findUsagesForMethod(PsiMethod overridingMethod, List<FixableUsageInfo> usages) {
+  private void findUsagesForMethod(PsiMethod overridingMethod, List<FixableUsageInfo> usages, boolean changeSignature) {
     final PsiCodeBlock body = overridingMethod.getBody();
     final String baseParameterName = StringUtil.decapitalize(className);
     final String fixedParamName =
@@ -188,7 +188,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       ? JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(baseParameterName, body.getLBrace(), true)
       : JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(baseParameterName, VariableKind.PARAMETER);
 
-    usages.add(new MergeMethodArguments(overridingMethod, className, packageName, fixedParamName, paramsToMerge, typeParams, keepMethodAsDelegate, myCreateInnerClass ? method.getContainingClass() : null));
+    usages.add(new MergeMethodArguments(overridingMethod, className, packageName, fixedParamName, paramsToMerge, typeParams, keepMethodAsDelegate, myCreateInnerClass ? method.getContainingClass() : null, changeSignature));
 
     final ParamUsageVisitor visitor = new ParamUsageVisitor(overridingMethod, paramsToMerge);
     overridingMethod.accept(visitor);
