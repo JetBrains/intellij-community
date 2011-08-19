@@ -1971,19 +1971,34 @@ public class StringUtil {
     final int string1Length = string1.length();
     final int string2Length = string2.length();
     for(int i = 0, j = 0; i < string1Length && j < string2Length; i++, j++) {
-      final char ch1 = string1.charAt(i);
-      final char ch2 = string2.charAt(j);
-      if (isDigit(ch1) && isDigit(ch2)) {
+      char ch1 = string1.charAt(i);
+      char ch2 = string2.charAt(j);
+      if ((isDigit(ch1) || ch1 == ' ') && (isDigit(ch2) || ch2 == ' ')) {
         int startNum1 = i;
+        while (ch1 == ' ' || ch1 == '0') { // skip leading spaces and zeros
+          startNum1++;
+          if (startNum1 >= string1Length) break;
+          ch1 = string1.charAt(startNum1);
+        }
         int startNum2 = j;
-        i++;
-        j++;
+        while (ch2 == ' ' || ch2 == '0') {
+          startNum2++;
+          if (startNum2 >= string2Length) break;
+          ch2 = string2.charAt(startNum2);
+        }
+        i = startNum1;
+        j = startNum2;
         while (i < string1Length && isDigit(string1.charAt(i))) i++;
         while (j < string2Length && isDigit(string2.charAt(j))) j++;
-        final int difference = Integer.parseInt(string1.substring(startNum1, i)) -
-                               Integer.parseInt(string2.substring(startNum2, j));
-        if (difference != 0) {
-          return difference;
+        final int lengthDiff = (i - startNum1) - (j - startNum2);
+        if (lengthDiff != 0) {
+          return lengthDiff;
+        }
+        for (; startNum1 < i; startNum1++, startNum2++) {
+          final int diff = string1.charAt(startNum1) - string2.charAt(startNum2);
+          if (diff != 0) {
+            return diff;
+          }
         }
       } else {
         if (caseSensitive) {
@@ -2007,8 +2022,8 @@ public class StringUtil {
     return string1Length - string2Length;
   }
 
-  public static boolean isDigit(char c) {
-    return c >= '0' && c <= '9';
+  private static boolean isDigit(char c) {
+    return (c >= '0' && c <= '9');
   }
 
   public static int compare(@Nullable String s1, @Nullable String s2, boolean ignoreCase) {
