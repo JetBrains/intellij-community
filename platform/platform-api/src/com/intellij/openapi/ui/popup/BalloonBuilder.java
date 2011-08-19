@@ -87,4 +87,7 @@ public interface BalloonBuilder {
 
   @NotNull
   BalloonBuilder setShadow(boolean shadow);
+
+  @NotNull
+  BalloonBuilder setSmallVariant(boolean smallVariant);
 }

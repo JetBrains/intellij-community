@@ -136,7 +136,7 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
     final JComponent component = getComponent();
     if (component == null) return;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null);
+    final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
     myBalloon = balloonBuilder.createBalloon();
     Disposer.register(myBalloon, new Disposable() {
       @Override
