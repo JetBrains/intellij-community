@@ -402,19 +402,6 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
 
   private static void addClassesUsages(PsiPackage aPackage, final Processor<UsageInfo> results, final JavaPackageFindUsagesOptions options) {
-    final HashSet<PsiFile> filesSet = new HashSet<PsiFile>();
-    final ArrayList<PsiFile> files = new ArrayList<PsiFile>();
-    ReferencesSearch.search(new ReferencesSearch.SearchParameters(aPackage, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
-      public boolean processInReadAction(final PsiReference psiReference) {
-        PsiElement ref = psiReference.getElement();
-        PsiFile file = ref.getContainingFile();
-        if (filesSet.add(file)) {
-          files.add(file);
-        }
-        return true;
-      }
-    });
-
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null){
       progress.pushState();
@@ -430,17 +417,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
             return aClass.getName();
           }
         })));
+        progress.checkCanceled();
       }
-      for (PsiFile file : files) {
-        if (progress != null) {
-          progress.checkCanceled();
+      ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
+        public boolean processInReadAction(final PsiReference psiReference) {
+          return addResult(results, psiReference, options);
         }
-        ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, new LocalSearchScope(file), false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
-          public boolean processInReadAction(final PsiReference psiReference) {
-            return addResult(results, psiReference, options);
-          }
-        });
-      }
+      });
     }
 
     if (progress != null){
