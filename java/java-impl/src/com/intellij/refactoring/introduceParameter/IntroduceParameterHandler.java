@@ -182,6 +182,13 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
   private void chooseMethodToIntroduceParameter(final Editor editor,
                                                 final List<PsiMethod> validEnclosingMethods,
                                                 final Introducer introducer) {
+    final AbstractInplaceIntroducer inplaceIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
+    if (inplaceIntroducer instanceof InplaceIntroduceParameterPopup) {
+      final InplaceIntroduceParameterPopup introduceParameterPopup = (InplaceIntroduceParameterPopup)inplaceIntroducer;
+      introducer.introduceParameter(introduceParameterPopup.getMethodToIntroduceParameter(),
+                                    introduceParameterPopup.getMethodToSearchFor());
+      return;
+    }
     final JPanel panel = new JPanel(new BorderLayout());
     final JCheckBox superMethod = new JCheckBox("Use super method of", true);
     superMethod.setMnemonic('U');
