@@ -186,8 +186,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (fields.length < 1) {
       throw new IncorrectOperationException("Field was not created " + text);
     }
-    final PsiField field = fields[0];
-    JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(field);
+    PsiField field = fields[0];
+    field = (PsiField)JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(field);
     return (PsiField)CodeStyleManager.getInstance(myManager.getProject()).reformat(field);
   }
 
@@ -199,9 +199,18 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create method with type \"null\".");
     }
 
-    final PsiJavaFile aFile = createDummyJavaFile(join("class _Dummy_ { public " + returnType.getCanonicalText(), " ", name, "() {} }"));
-    final PsiMethod method = aFile.getClasses()[0].getMethods()[0];
-    JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(method);
+    final String canonicalText = returnType.getCanonicalText();
+    final PsiJavaFile aFile = createDummyJavaFile(join("class _Dummy_ { public " + canonicalText, " ", name, "() {} }"));
+    final PsiClass[] classes = aFile.getClasses();
+    if (classes.length < 1) {
+      throw new IncorrectOperationException("Class was not created. Method name: " + name + "; return type: " + canonicalText);
+    }
+    final PsiMethod[] methods = classes[0].getMethods();
+    if (methods.length < 1) {
+      throw new IncorrectOperationException("Method was not created. Method name: " + name + "; return type: " + canonicalText);
+    }
+    PsiMethod method = methods[0];
+    method = (PsiMethod)JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(method);
     return (PsiMethod)CodeStyleManager.getInstance(myManager.getProject()).reformat(method);
   }
 
@@ -230,12 +239,12 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     }
 
     final String text = join(type.getCanonicalText() + " " + name);
-    final PsiParameter parameter = createParameterFromText(text, null);
+    PsiParameter parameter = createParameterFromText(text, null);
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL,
                                 CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_PARAMETERS);
     markGenerated(parameter);
-    JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(parameter);
+    parameter = (PsiParameter)JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(parameter);
     return (PsiParameter)codeStyleManager.reformat(parameter);
   }
 
