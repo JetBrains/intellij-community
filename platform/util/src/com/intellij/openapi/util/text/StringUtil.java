@@ -2005,11 +2005,13 @@ public class StringUtil {
           return ch1 - ch2;
         } else {
           // similar logic to charsMatch() below
-          final int diff1 = Character.toUpperCase(ch1) - Character.toUpperCase(ch2);
-          if (diff1 != 0) {
-            final int diff2 = Character.toLowerCase(ch1) - Character.toLowerCase(ch2);
-            if (diff2 != 0) {
-              return diff1;
+          if (ch1 != ch2) {
+            final int diff1 = Character.toUpperCase(ch1) - Character.toUpperCase(ch2);
+            if (diff1 != 0) {
+              final int diff2 = Character.toLowerCase(ch1) - Character.toLowerCase(ch2);
+              if (diff2 != 0) {
+                return diff2;
+              }
             }
           }
         }
