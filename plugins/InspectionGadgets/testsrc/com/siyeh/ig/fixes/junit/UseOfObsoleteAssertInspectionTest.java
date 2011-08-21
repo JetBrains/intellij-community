@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes.junit;
 
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.junit.UseOfObsoleteAssertInspection;
 
@@ -56,7 +57,7 @@ public class UseOfObsoleteAssertInspectionTest extends IGQuickFixesTestCase {
   }
 
   private void doFixTest() {
-    doTest(getTestName(true), "Replace with org.junit.Assert");
+    doTest(getTestName(true), InspectionGadgetsBundle.message("use.of.obsolete.assert.quickfix"));
   }
 
   @Override
