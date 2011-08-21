@@ -132,16 +132,13 @@ public class GrDescriptorReturnTypeCalculator extends GrCallExpressionTypeCalcul
       return ourGuard.doPreventingRecursion(callExpression, true, new Computable<PsiType>() {
         @Override
         public PsiType compute() {
-          return finalClosure.getReturnType();
+          PsiType returnType = finalClosure.getReturnType();
+          if (returnType == PsiType.VOID) return null;
+          return returnType;
         }
       });
     }
 
-    if (typeName.endsWith("[]")) {
-      PsiClassType type = TypesUtil.createType(typeName.substring(0, typeName.length() - 2), callExpression);
-      return type.createArrayType();
-    }
-
-    return TypesUtil.createType(typeName, callExpression);
+    return JavaPsiFacade.getElementFactory(containingClass.getProject()).createTypeFromText(typeName, callExpression);
   }
 }
