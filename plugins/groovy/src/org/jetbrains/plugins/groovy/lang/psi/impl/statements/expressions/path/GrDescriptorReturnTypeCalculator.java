@@ -49,20 +49,20 @@ public class GrDescriptorReturnTypeCalculator extends GrCallExpressionTypeCalcul
 
         GrMethodReturnTypeDescriptor.Param[] params;
 
-        if (descriptor.anyParams != null) {
-          assert descriptor.anyParams.length == 1;
-          assert descriptor.params == null;
-          assert pairs.isEmpty();
-
-          params = null;
-        }
-        else {
+        if (descriptor.params != null) {
           params = descriptor.params;
-          if (params == null) params = GrMethodReturnTypeDescriptor.Param.EMPTY_ARRAY;
+          assert params != null;
+          assert (descriptor.checkParamsType == null || descriptor.checkParamsType);
 
           for (GrMethodReturnTypeDescriptor.Param param : params) {
             assert StringUtil.isNotEmpty(param.type);
           }
+        }
+        else if (descriptor.checkParamsType != null && descriptor.checkParamsType) {
+          params = GrMethodReturnTypeDescriptor.Param.EMPTY_ARRAY;
+        }
+        else {
+          params = null;
         }
 
         assert StringUtil.isNotEmpty(descriptor.returnType);

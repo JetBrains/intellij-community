@@ -23,9 +23,8 @@ public class GrMethodReturnTypeDescriptor {
   @Attribute("returnType")
   public String returnType;
 
-  @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false)
-  public AnyParams[] anyParams;
+  @Attribute("checkParamsType")
+  public Boolean checkParamsType;
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
@@ -40,8 +39,4 @@ public class GrMethodReturnTypeDescriptor {
     public String type;
   }
 
-  @Tag("anyParams")
-  public static class AnyParams {
-
-  }
 }
