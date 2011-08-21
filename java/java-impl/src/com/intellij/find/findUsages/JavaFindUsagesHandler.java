@@ -424,7 +424,12 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     addClassesInPackage(aPackage, options.isIncludeSubpackages, classes);
     for (final PsiClass aClass : classes) {
       if (progress != null) {
-        progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", aClass.getName()));
+        progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", ApplicationManager.getApplication().runReadAction(new Computable<String>(){
+          @Override
+          public String compute() {
+            return aClass.getName();
+          }
+        })));
       }
       for (PsiFile file : files) {
         if (progress != null) {
