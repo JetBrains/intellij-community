@@ -60,7 +60,7 @@ import javax.swing.*;
 public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubElementBase<T> implements GrVariable {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl");
 
-  private final RecursionGuard myGuard = RecursionManager.createGuard("grVariableInitializer");
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("grVariableInitializer");
 
   public GrVariableBaseImpl(ASTNode node) {
     super(node);
@@ -165,7 +165,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
     }
 
     if (initializer != null) {
-      PsiType initializerType = myGuard.doPreventingRecursion(this, true, new NullableComputable<PsiType>() {
+      PsiType initializerType = ourGuard.doPreventingRecursion(this, true, new NullableComputable<PsiType>() {
         @Override
         public PsiType compute() {
           return initializer.getType();
