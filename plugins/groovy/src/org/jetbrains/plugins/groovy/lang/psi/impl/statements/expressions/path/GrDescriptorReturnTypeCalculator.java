@@ -1,12 +1,17 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +22,8 @@ import java.util.Map;
  * @author Sergey Evdokimov
  */
 public class GrDescriptorReturnTypeCalculator extends GrCallExpressionTypeCalculator {
+
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("GrDescriptorReturnTypeCalculator getClosureReturnType");
 
   private Map<String, Map<String, List<Pair<GrMethodReturnTypeDescriptor.Param[], String>>>> map;
 
@@ -106,6 +113,29 @@ public class GrDescriptorReturnTypeCalculator extends GrCallExpressionTypeCalcul
     }
 
     if (typeName == null) return null;
+
+    if (typeName.equals("!closure")) {
+      GrExpression[] allArguments = PsiUtil.getAllArguments(callExpression);
+      GrClosableBlock closure = null;
+
+      for (GrExpression argument : allArguments) {
+        if (argument instanceof GrClosableBlock) {
+          closure = (GrClosableBlock)argument;
+          break;
+        }
+      }
+
+      if (closure == null) return null;
+
+      final GrClosableBlock finalClosure = closure;
+
+      return ourGuard.doPreventingRecursion(callExpression, true, new Computable<PsiType>() {
+        @Override
+        public PsiType compute() {
+          return finalClosure.getReturnType();
+        }
+      });
+    }
 
     if (typeName.endsWith("[]")) {
       PsiClassType type = TypesUtil.createType(typeName.substring(0, typeName.length() - 2), callExpression);
