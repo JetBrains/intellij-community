@@ -87,7 +87,7 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   public boolean hasElementsToShow() {
-    return myElements.length > 0;
+    return myElements != null && myElements.length > 0;
   }
 
   private static class FileDescriptor {
