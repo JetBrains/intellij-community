@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
@@ -124,18 +126,9 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
     }
 
     public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (myComponent != null && !myProject.isDisposed()) {
-            if (lastError != null) {
-              myComponent.setErrorText("Error refreshing changes: " + lastError.getMessage());
-            }
-            else {
-              myComponent.setErrorText("");
-            }
-          }
-        }
-      });
+      if (lastError != null) {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, lastError.getMessage(), MessageType.ERROR);
+      }
     }
   }
 }
