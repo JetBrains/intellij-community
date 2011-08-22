@@ -143,9 +143,32 @@ class AddRemoveUpDownPanel extends JPanel {
         } else {
           button.registerCustomShortcutSet(shortcut, button.getContextComponent());
         }
+        if (button instanceof MyActionButton && ((MyActionButton)button).isRemoveButton()) {
+          registerDeleteHook((MyActionButton)button);
+        }
       }
     }
+    
     super.addNotify(); // call after all to construct actions tooltips properly
+  }
+
+  private static void registerDeleteHook(final MyActionButton removeButton) {
+    new AnAction("Delete Hook") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        removeButton.actionPerformed(e);
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        final JComponent contextComponent = removeButton.getContextComponent();
+        if (contextComponent instanceof JTable && ((JTable)contextComponent).isEditing()) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
+        removeButton.update(e);
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE"), removeButton.getContextComponent());
   }
 
   public void setEnabled(Buttons button, boolean enabled) {
@@ -213,6 +236,10 @@ class AddRemoveUpDownPanel extends JPanel {
 
     boolean isAddButton() {
       return myButton == Buttons.ADD;
+    }
+
+    boolean isRemoveButton() {
+      return myButton == Buttons.REMOVE;
     }
   }
 
