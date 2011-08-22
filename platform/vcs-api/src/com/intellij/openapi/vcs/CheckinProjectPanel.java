@@ -101,4 +101,16 @@ public interface CheckinProjectPanel extends Refreshable {
   String getCommitMessage();
 
   String getCommitActionName();
+
+  /**
+   * @return    <code>true</code> if commit message is checked for spelling errors; <code>false</code> otherwise
+   */
+  boolean isCheckCommitMessageSpelling();
+  
+  /**
+   * Allows to define whether commit message should be checked for spelling errors.
+   * 
+   * @param checkSpelling  <code>true</code> if commit message should be checked for spelling errors; <code>false</code> otherwise
+   */
+  void setCheckCommitMessageSpelling(boolean checkSpelling);
 }
