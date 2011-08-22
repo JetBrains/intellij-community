@@ -74,7 +74,7 @@ public class CallCommand extends AbstractCommand {
      }
      
      Object[] actualArgs = noArgs ? new Object[1] : new Object[args.length + 1];
-     actualArgs[0] = new PlaybackContext(context.getCallback(), getLine(), context.getRobot(), context.isUseDirectActionCall());
+     actualArgs[0] = context;
       for (int i = 1; i < actualArgs.length; i++) {
         actualArgs[i] = args[i - 1];
       }

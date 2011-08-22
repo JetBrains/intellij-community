@@ -148,7 +148,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   private boolean myAnimationEnabled = true;
   private boolean myShadow = false;
 
-  public boolean isInsideBalloon(MouseEvent me) {
+    public boolean isInsideBalloon(MouseEvent me) {
     return isInside(new RelativePoint(me));
   }
 
@@ -202,7 +202,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                      boolean dialogMode,
                      String title,
                      Insets contentInsets,
-                     boolean shadow) {
+                     boolean shadow,
+                     boolean smallVariant) {
     myBorderColor = borderColor;
     myFillColor = fillColor;
     myContent = content;
@@ -248,7 +249,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myFadeoutTime = fadeoutTime;
     myAnimationCycle = animationCycle;
 
-    if (myDialogMode) {
+    if (smallVariant) {
       new AwtVisitor(myContent) {
         @Override
         public boolean visit(Component component) {
@@ -1455,7 +1456,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
           //pane.setBorder(new LineBorder(Color.blue));
 
           balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 5, 0, 0, false, "This is the title",
-                                      new Insets(2, 2, 2, 2), true));
+                                      new Insets(2, 2, 2, 2), true, false));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {

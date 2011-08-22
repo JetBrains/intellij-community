@@ -192,6 +192,9 @@
     </group>
 
     <group id="Vcs.MessageActionGroup">
+      <action id="Vcs.CheckCommitMessageSpelling"
+              class="com.intellij.openapi.vcs.actions.CheckCommitMessageSpellingAction"
+              icon="/vcs/checkSpelling.png"/>
       <action id="Vcs.ShowMessageHistory"
               class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
               icon="/vcs/messageHistory.png"/>

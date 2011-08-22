@@ -37,11 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.MessageFormat;
+import java.util.Arrays;
 
 public class ChangeListStorageImpl implements ChangeListStorage {
   private static final int VERSION = 5;
@@ -209,9 +208,12 @@ public class ChangeListStorageImpl implements ChangeListStorage {
 
     try {
       int id = myStorage.createNextRecord();
+      byte[] writtenBytes = changeSetToBytes(changeSet);
+      assertCorrectlyWritten(writtenBytes);
+
       AbstractStorage.StorageDataOutput out = myStorage.writeStream(id, true);
       try {
-        changeSet.write(out);
+        out.write(writtenBytes);
       }
       finally {
         out.close();
@@ -221,12 +223,15 @@ public class ChangeListStorageImpl implements ChangeListStorage {
 
       // todo remove this when bug is found
       Pair<Long, Integer> os = myStorage.getOffsetAndSize(id);
-      LocalHistoryLog.LOG.info("Block was written: " + id + " offset: " + os.first + " size: " + os.second);
+      LocalHistoryLog.LOG
+        .info("Block was written: " + id + " offset: " + os.first + " size: " + os.second + " real bytes size: " + writtenBytes.length);
+      if (os.second != writtenBytes.length) throw new IOException("wrong space was allocated for the record!");
 
       // todo remove this when bug is found
       if (ApplicationManagerEx.getApplicationEx().isInternal()) {
         try {
-          doReadBlock(id);
+          byte[] readBytes = myStorage.readBytes(id);
+          assertCorrectlyWritten(readBytes);
         }
         catch (IOException e) {
           handleError(e, "failed to check the just-written block: " + id);
@@ -235,6 +240,38 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     }
     catch (IOException e) {
       handleError(e, null);
+    }
+  }
+
+  private byte[] changeSetToBytes(ChangeSet changeSet) throws IOException {
+    ByteArrayOutputStream byteOS = new ByteArrayOutputStream();
+    DataOutputStream dataOS = new DataOutputStream(byteOS);
+    try {
+      changeSet.write(dataOS);
+    }
+    finally {
+      dataOS.close();
+    }
+    return byteOS.toByteArray();
+  }
+
+  private void assertCorrectlyWritten(byte[] writtenBytes) throws IOException {
+    ChangeSet read;
+    DataInputStream in = new DataInputStream(new ByteArrayInputStream(writtenBytes));
+    try {
+      read = new ChangeSet(in);
+    }
+    finally {
+      in.close();
+    }
+    byte[] readBytes = changeSetToBytes(read);
+    assertBytes(writtenBytes, readBytes);
+  }
+
+  private void assertBytes(byte[] writtenBytes, byte[] readBytes) throws IOException {
+    if (!Arrays.equals(writtenBytes, readBytes)) {
+      throw new IOException("bytes was written incorrectly. written: " + writtenBytes.length
+                            + " read: " + readBytes.length);
     }
   }
 

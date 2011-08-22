@@ -38,6 +38,7 @@ import java.util.StringTokenizer;
 public class UnixProcessManager {
   public static final int SIGINT = 2;
   public static final int SIGKILL = 9;
+  public static final int SIGCONT = 19;
 
   private static CLib C_LIB;
 

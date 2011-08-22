@@ -43,6 +43,7 @@ public class PlaybackRunner {
   private ActionCallback myActionCallback;
   private boolean myStopRequested;
   private final boolean myUseDirectActionCall;
+  private File myBaseDir;
 
   public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall) {
     myScript = script;
@@ -91,7 +92,7 @@ public class PlaybackRunner {
         myActionCallback.setRejected();
         return;
       }
-      final ActionCallback cmdCallback = cmd.execute(new PlaybackContext(myCallback, cmdIndex, myRobot, myUseDirectActionCall));
+      final ActionCallback cmdCallback = cmd.execute(new PlaybackContext(myCallback, cmdIndex, myRobot, myUseDirectActionCall, cmd));
       cmdCallback.doWhenDone(new Runnable() {
         public void run() {
           if (cmd.canGoFurther()) {
@@ -123,9 +124,11 @@ public class PlaybackRunner {
     while (tokens.hasMoreTokens()) {
       final String eachLine = tokens.nextToken();
 
+      String cdCmd = AbstractCommand.CMD_PREFIX + "cd";
       String includeCmd = AbstractCommand.CMD_PREFIX + "include";
+
       if (eachLine.startsWith(includeCmd)) {
-        File file = PlaybackCallFacade.getFile(eachLine.substring(includeCmd.length()).trim());
+        File file = PlaybackCallFacade.getFile(getBaseDir(), eachLine.substring(includeCmd.length()).trim());
         if (!file.exists()) {
           commandList.add(new ErrorCommand("Cannot find file to include: " + file.getAbsolutePath(), line));
           return;
@@ -139,6 +142,27 @@ public class PlaybackRunner {
           commandList.add(new ErrorCommand("Error reading file: " + file.getAbsolutePath(), line));
           return;
         }
+      } else if (eachLine.startsWith(cdCmd)) {
+        File dir = new File(eachLine.substring(cdCmd.length()).trim());
+        if (!dir.exists()) {
+          commandList.add(new ErrorCommand("Cannot cd to: " + dir.getPath(), line));
+          return;
+        }
+        
+        if (dir.isAbsolute()) {
+          myBaseDir = dir;
+          commandList.add(new PrintCommand("Base dir set to: " + myBaseDir.getAbsolutePath(), line++));
+        } else {
+          dir = new File(getBaseDir(), dir.getPath());
+          if (!dir.exists()) {
+            commandList.add(new ErrorCommand("Cannot cd to: " + dir.getAbsolutePath(), line));
+            return;
+          } else {
+            myBaseDir = dir;
+            commandList.add(new PrintCommand("Base dir set to: " + myBaseDir.getAbsolutePath(), line++));
+          }
+        }
+        
       } else {
         final PlaybackCommand cmd = createCommand(eachLine, line++);
         commandList.add(cmd);
@@ -147,41 +171,32 @@ public class PlaybackRunner {
   }
 
   private PlaybackCommand createCommand(String string, int line) {
+    AbstractCommand cmd;
     String actualString = string.toLowerCase();
 
     if (actualString.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
-      return new EmptyCommand(line);
-    }
-
-    if (actualString.startsWith(KeyCodeTypeCommand.PREFIX)) {
-      return new KeyCodeTypeCommand(string, line);
-    }
-
-    if (actualString.startsWith(DelayCommand.PREFIX)) {
-      return new DelayCommand(string, line);
-    }
-
-    if (actualString.startsWith(KeyShortcutCommand.PREFIX)) {
-      return new KeyShortcutCommand(string, line);
-    }
-
-    if (actualString.startsWith(ActionCommand.PREFIX)) {
+      cmd = new EmptyCommand(line);
+    } else if (actualString.startsWith(KeyCodeTypeCommand.PREFIX)) {
+      cmd = new KeyCodeTypeCommand(string, line);
+    } else if (actualString.startsWith(DelayCommand.PREFIX)) {
+      cmd =  new DelayCommand(string, line);
+    } else if (actualString.startsWith(KeyShortcutCommand.PREFIX)) {
+      cmd = new KeyShortcutCommand(string, line);
+    } else if (actualString.startsWith(ActionCommand.PREFIX)) {
       return new ActionCommand(string, line);
-    }
-
-    if (actualString.startsWith(StopCommand.PREFIX)) {
+    } else if (actualString.startsWith(StopCommand.PREFIX)) {
       return new StopCommand(string, line);
-    }
-
-    if (actualString.startsWith(AssertFocused.PREFIX)) {
+    } else if (actualString.startsWith(AssertFocused.PREFIX)) {
       return new AssertFocused(string, line);
-    }
-
-    if (actualString.startsWith(CallCommand.PREFIX)) {
+    } else if (actualString.startsWith(CallCommand.PREFIX)) {
       return new CallCommand(string, line);
+    } else {
+      cmd = new AlphaNumericTypeCommand(string, line);
     }
 
-    return new AlphaNumericTypeCommand(string, line);
+    cmd.setBaseDir(getBaseDir());
+    
+    return cmd;
   }
 
   private void setDone() {
@@ -190,6 +205,10 @@ public class PlaybackRunner {
 
   public void stop() {
     myStopRequested = true;
+  }
+
+  public File getBaseDir() {
+    return myBaseDir != null ? myBaseDir : new File(System.getProperty("user.dir"));
   }
 
   public interface StatusCallback {

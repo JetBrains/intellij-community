@@ -59,6 +59,16 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     mySubstitutionMap = new THashMap<PsiTypeParameter, PsiType>(2, PSI_EQUIVALENCE);
   }
 
+  PsiSubstitutorImpl(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
+    this();
+    mySubstitutionMap.put(typeParameter, mapping);
+  }
+
+  PsiSubstitutorImpl(@NotNull PsiClass parentClass, PsiType[] mappings) {
+    this();
+    putAllInternal(parentClass, mappings);
+  }
+
   public PsiType substitute(@NotNull PsiTypeParameter typeParameter) {
     if (containsInMap(typeParameter)) {
       return getFromMap(typeParameter);
@@ -353,26 +363,30 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return new PsiSubstitutorImpl(mySubstitutionMap);
   }
 
-  public synchronized PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
+  public PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
     PsiSubstitutorImpl ret = clone();
     ret.mySubstitutionMap.put(typeParameter, mapping);
     return ret;
   }
 
-  public synchronized PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings) {
+  private void putAllInternal(@NotNull PsiClass parentClass, PsiType[] mappings) {
     final PsiTypeParameter[] params = parentClass.getTypeParameters();
-    PsiSubstitutorImpl substitutor = clone();
+
     for (int i = 0; i < params.length; i++) {
       PsiTypeParameter param = params[i];
       assert param != null;
       if (mappings != null && mappings.length > i) {
-        substitutor.mySubstitutionMap.put(param, mappings[i]);
+        mySubstitutionMap.put(param, mappings[i]);
       }
       else {
-        substitutor.mySubstitutionMap.put(param, null);
+        mySubstitutionMap.put(param, null);
       }
     }
+  }
 
+  public PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings) {
+    PsiSubstitutorImpl substitutor = clone();
+    substitutor.putAllInternal(parentClass, mappings);
     return substitutor;
   }
 

@@ -38,7 +38,6 @@ import java.util.List;
  */
 @SuppressWarnings("UnusedDeclaration")
 public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.ListenerFactory {
-  private ListModel myListModel;
   protected Border myToolbarBorder;
   protected boolean myAddActionEnabled;
   protected boolean myRemoveActionEnabled;
@@ -57,7 +56,6 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
   private String myMoveDownName;
   private Dimension myPreferredSize;
   private AddRemoveUpDownPanel myPanel;
-  private JList myList;
 
   public ToolbarDecorator() {
   }
@@ -79,7 +77,6 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
       return 0;
     }
   };
-
 
   protected ToolbarDecorator initPositionAndBorder() {
     myToolbarPosition = SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;

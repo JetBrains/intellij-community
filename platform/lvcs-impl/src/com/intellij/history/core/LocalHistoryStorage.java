@@ -147,4 +147,9 @@ public class LocalHistoryStorage extends AbstractStorage {
       }
     }
   }
+
+  @Override
+  public byte[] readBytes(int record) throws IOException {
+    return super.readBytes(record);
+  }
 }

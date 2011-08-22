@@ -50,7 +50,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
 
   public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     super(file, new MappedFileSimpleStorage(file, initialSize), dataDescriptor, initialSize, ourVersion,
-          new RecordBufferHandler());
+          new RecordBufferHandler(), true);
   }
 
   protected  void setupEmptyFile() throws IOException {
