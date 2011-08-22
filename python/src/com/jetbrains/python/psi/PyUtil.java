@@ -10,8 +10,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -661,6 +659,9 @@ public class PyUtil {
    * @return 0 if no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
    */
   public static int getInitialUnderscores(String name) {
+    if (name == null) {
+      return 0;
+    }
     int underscores = 0;
     if (name.startsWith("__")) {
       underscores = 2;

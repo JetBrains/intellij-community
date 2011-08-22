@@ -218,7 +218,8 @@ target('default': "Build artifacts") {
           String normalizedHome = home.replace('\\', '/')
           if (path.endsWith(".jar") && (path.startsWith("$normalizedHome/lib/") ||
                                         path.startsWith("$normalizedHome/community/lib/") ||
-                                        path.startsWith("$normalizedHome/python/lib"))
+                                        path.startsWith("$normalizedHome/python/lib") ||
+                                        path.startsWith("$normalizedHome/community/xml/relaxng/lib"))
               && !path.contains("/dev/") && !path.contains("/rt/") && !path.contains("/ant/")
               && !forbiddenJars.any { path.contains(it) }) {
             usedJars.add(path);
