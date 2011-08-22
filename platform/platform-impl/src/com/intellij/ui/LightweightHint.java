@@ -307,9 +307,17 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   public void hide() {
+    hide(false);
+  }
+
+  public void hide(boolean ok) {
     if (isVisible()) {
       if (myIsRealPopup) {
-        myPopup.cancel();
+        if (ok) {
+          myPopup.closeOk(null);
+        } else {
+          myPopup.cancel();
+        }
         myPopup = null;
       }
       else {

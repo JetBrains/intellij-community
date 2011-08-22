@@ -551,7 +551,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void activateEditorComponent(final boolean forced) {
-    activateEditorComponent(forced, true); //TODO[kirillk]: runnable in activateEditorComponent(boolean, boolean) never runs
+    activateEditorComponent(forced, false); //TODO[kirillk]: runnable in activateEditorComponent(boolean, boolean) never runs
   }
   private void activateEditorComponent(final boolean forced, boolean now) {
     if (LOG.isDebugEnabled()) {
