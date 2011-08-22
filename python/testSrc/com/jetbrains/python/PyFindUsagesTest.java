@@ -83,7 +83,7 @@ public class PyFindUsagesTest extends PyLightFixtureTestCase {
       }
     });
     for (int i = 0; i < usageTexts.length; i++) {
-      assertSameUsage(usageTexts [i], sortedUsages.get(i));
+      assertSameUsage(usageTexts[i], sortedUsages.get(i));
     }
   }
 
@@ -93,5 +93,15 @@ public class PyFindUsagesTest extends PyLightFixtureTestCase {
     usageText = usageText.replace("<caret>", "");
     final int startIndex = usageInfo.getElement().getTextOffset() + usageInfo.getRangeInElement().getStartOffset() - pos;
     assertEquals(usageText, myFixture.getFile().getText().substring(startIndex, startIndex + usageText.length()));
+  }
+
+  public void testReassignedInstanceAttribute() {  // PY-4338
+    final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/ReassignedInstanceAttribute.py");
+    assertEquals(5, usages.size());
+  }
+
+  public void testReassignedClassAttribute() {  // PY-4338
+    final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/ReassignedClassAttribute.py");
+    assertEquals(5, usages.size());
   }
 }

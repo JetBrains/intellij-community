@@ -348,8 +348,8 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         }
       }
     }
-    if (resolveResult instanceof PyTargetExpression && PyUtil.isInstanceAttribute((PyTargetExpression)resolveResult) &&
-        element instanceof PyTargetExpression && PyUtil.isInstanceAttribute((PyTargetExpression)element)) {
+    if (resolveResult instanceof PyTargetExpression && isInstanceOrClassAttribute((PyTargetExpression)resolveResult) &&
+        element instanceof PyTargetExpression && isInstanceOrClassAttribute((PyTargetExpression)element)) {
       PyClass aClass = PsiTreeUtil.getParentOfType(resolveResult, PyClass.class);
       PyClass bClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
 
@@ -362,11 +362,15 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     return false;
   }
 
-  private boolean isSubclass(@Nullable PyClass init, @Nullable PyClass usage) {
-    if (init == null || usage == null) {
+  private static boolean isInstanceOrClassAttribute(PyTargetExpression ex) {
+    return PyUtil.isInstanceAttribute(ex) || PyUtil.isClassAttribute(ex);
+  }
+
+  private static boolean isSubclass(@Nullable PyClass aClass, @Nullable PyClass bClass) {
+    if (aClass == null || bClass == null) {
       return false;
     }
-    return usage.isSubclass(init);
+    return bClass.isSubclass(aClass);
   }
 
   private static boolean isLocalScope(PsiElement element) {
