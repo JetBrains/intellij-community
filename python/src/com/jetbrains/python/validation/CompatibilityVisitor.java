@@ -10,7 +10,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.*;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 
@@ -33,7 +32,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyDictCompExpression(PyDictCompExpression node) {
     super.visitPyDictCompExpression(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
@@ -48,7 +46,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPySetLiteralExpression(PySetLiteralExpression node) {
     super.visitPySetLiteralExpression(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
@@ -63,7 +60,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPySetCompExpression(PySetCompExpression node) {
     super.visitPySetCompExpression(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
@@ -78,7 +74,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyExceptBlock(PyExceptPart node) {
     super.visitPyExceptBlock(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     PyExpression exceptClass = node.getExceptClass();
     if (exceptClass != null) {
       if (myVersionsToProcess.contains(LanguageLevel.PYTHON24) || myVersionsToProcess.contains(LanguageLevel.PYTHON25)) {
@@ -112,7 +107,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyImportStatement(PyImportStatement node) {
     super.visitPyImportStatement(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     PyIfStatement ifParent = PsiTreeUtil.getParentOfType(node, PyIfStatement.class);
     if (ifParent != null)
       return;
@@ -146,7 +140,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyStarExpression(PyStarExpression node) {
     super.visitPyStarExpression(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
@@ -162,7 +155,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyBinaryExpression(PyBinaryExpression node) {
     super.visitPyBinaryExpression(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     int len = 0;
     if (node.isOperator("<>")) {
       StringBuilder message = new StringBuilder(myCommonMessage);
@@ -179,7 +171,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
     super.visitPyNumericLiteralExpression(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     int len = 0;
     LocalQuickFix quickFix = null;
     StringBuilder message = new StringBuilder(myCommonMessage);
@@ -221,7 +212,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
     super.visitPyStringLiteralExpression(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
@@ -240,7 +230,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyListCompExpression(final PyListCompExpression node) {
     super.visitPyListCompExpression(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
@@ -260,7 +249,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyRaiseStatement(PyRaiseStatement node) {
     super.visitPyRaiseStatement(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
@@ -289,7 +277,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyReprExpression(PyReprExpression node) {
     super.visitPyReprExpression(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
@@ -306,7 +293,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyWithStatement(PyWithStatement node) {
     super.visitPyWithStatement(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     Set<PyWithItem> problemItems = new HashSet<PyWithItem>();
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
@@ -335,7 +321,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyClass(PyClass node) {    //PY-2719
     super.visitPyClass(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
       PyArgumentList list = node.getSuperClassExpressionList();
       if (list != null && list.getArguments().length == 0)
@@ -346,7 +331,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyPrintStatement(PyPrintStatement node) {
     super.visitPyPrintStatement(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     if (shouldBeCompatibleWithPy3()) {
       boolean hasProblem = false;
       PsiElement[] arguments = node.getChildren();
@@ -365,7 +349,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyFromImportStatement(PyFromImportStatement node) {
     super.visitPyFromImportStatement(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     PyReferenceExpression importSource  = node.getImportSource();
     if (importSource != null) {
       if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {      //PY-2793
@@ -383,7 +366,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyAssignmentStatement(PyAssignmentStatement node) {
     super.visitPyAssignmentStatement(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
       PyExpression assignedValue = node.getAssignedValue();
 
@@ -406,7 +388,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyConditionalExpression(PyConditionalExpression node) {   //PY-4293
     super.visitPyConditionalExpression(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
       registerProblem(node, "Python version 2.4 doesn't support this syntax.");
     }
@@ -415,7 +396,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyTryExceptStatement(PyTryExceptStatement node) { // PY-2795
     super.visitPyTryExceptStatement(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
       PyExceptPart[] excepts =  node.getExceptParts();
       PyFinallyPart finallyPart = node.getFinallyPart();
@@ -428,7 +408,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyReferenceExpression(PyReferenceExpression node) {
     super.visitPyElement(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     if (shouldBeCompatibleWithPy3()) {
       if (PyNames.BASESTRING.equals(node.getText())) {
         PsiElement res = node.getReference().resolve();
@@ -448,7 +427,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyCallExpression(PyCallExpression node) {
     super.visitPyCallExpression(node);
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
@@ -515,7 +493,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @Override
   public void visitPyNonlocalStatement(PyNonlocalStatement node) {
-    if (PydevConsoleRunner.isInPydevConsole(node)) return;
     if (myVersionsToProcess.contains(LanguageLevel.PYTHON24) || myVersionsToProcess.contains(LanguageLevel.PYTHON25) ||
         myVersionsToProcess.contains(LanguageLevel.PYTHON26) || myVersionsToProcess.contains(LanguageLevel.PYTHON27)) {
       registerProblem(node, "nonlocal keyword available only since py3", null, false);
