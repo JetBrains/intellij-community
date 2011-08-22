@@ -171,7 +171,7 @@ public class GitChangeUtils {
         s.nextLine();
         continue;
       }
-      if ("CADUMR".indexOf(s.peek()) == -1) {
+      if ("CADUMRT".indexOf(s.peek()) == -1) {
         // exit if there is no next character
         return;
       }
@@ -204,6 +204,11 @@ public class GitChangeUtils {
           status = FileStatus.MODIFIED;
           before = GitContentRevision.createRevision(vcsRoot, tokens[1], parentRevision, project, true, true);
           after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false);
+          break;
+        case 'T':
+          status = FileStatus.MODIFIED;
+          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true, true);
+          after = GitContentRevision.createRevisionForTypeChange(project, vcsRoot, path, thisRevision);
           break;
         default:
           throw new VcsException("Unknown file status: " + Arrays.asList(tokens));
