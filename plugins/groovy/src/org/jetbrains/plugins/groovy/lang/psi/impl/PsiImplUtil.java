@@ -65,6 +65,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Arrays;
 import java.util.List;
@@ -201,19 +202,30 @@ public class PsiImplUtil {
 
       PsiElement parent = closure.getParent();
       if (parent instanceof GrArgumentList) parent = parent.getParent();
-      if (parent instanceof GrMethodCall) {
-        GrExpression funExpr = ((GrMethodCall)parent).getInvokedExpression();
-        if (!(funExpr instanceof GrReferenceExpression)) return funExpr;
+      if (!(parent instanceof GrMethodCall)) continue;
 
-        final PsiElement resolved = ((GrReferenceExpression)funExpr).resolve();
-        if (resolved instanceof GrGdkMethod && !GdkMethodUtil.WITH.equals(((GrGdkMethod)resolved).getStaticMethod().getName())) continue;
+      GrExpression funExpr = ((GrMethodCall)parent).getInvokedExpression();
+      if (!(funExpr instanceof GrReferenceExpression)) return funExpr;
 
-        qualifier = ((GrReferenceExpression)funExpr).getQualifierExpression();
-        if (qualifier != null) return qualifier;
+      final PsiElement resolved = ((GrReferenceExpression)funExpr).resolve();
+      if (!(resolved instanceof PsiMethod)) return funExpr;
+
+      if (resolved instanceof GrGdkMethod &&
+          isFromDGM((GrGdkMethod)resolved) &&
+          !GdkMethodUtil.WITH.equals(((GrGdkMethod)resolved).getStaticMethod().getName())) {
+        continue;
       }
+
+      qualifier = ((GrReferenceExpression)funExpr).getQualifierExpression();
+      if (qualifier != null) return qualifier;
     }
 
     return null;
+  }
+
+  private static boolean isFromDGM(GrGdkMethod resolved) {
+    final PsiClass containingClass = resolved.getStaticMethod().getContainingClass();
+    return containingClass != null && GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName());
   }
 
   public static void removeVariable(GrVariable variable) {
