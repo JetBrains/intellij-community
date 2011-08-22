@@ -66,7 +66,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024), dataDescriptor, initialSize,
-          ourVersion, new RecordBufferHandler());
+          ourVersion, new RecordBufferHandler(), false);
 
     myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantKeyMapping();
     myExternalKeysNoMapping = !(myDataDescriptor instanceof InlineKeyDescriptor) && !wantKeyMapping();

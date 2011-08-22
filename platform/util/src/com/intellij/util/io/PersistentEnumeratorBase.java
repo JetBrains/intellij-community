@@ -60,6 +60,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   private RecordBufferHandler<PersistentEnumeratorBase> myRecordHandler;
   private volatile boolean myDirtyStatusUpdateInProgress;
   private Flushable myMarkCleanCallback;
+  private final boolean myDoCaching;
 
   public static class Version {
     private final int correctlyClosedMagic;
@@ -137,11 +138,13 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   public PersistentEnumeratorBase(File file, ISimpleStorage storage, KeyDescriptor<Data> dataDescriptor, int initialSize, 
-                                  Version version, RecordBufferHandler<? extends PersistentEnumeratorBase> recordBufferHandler) throws IOException {
+                                  Version version, RecordBufferHandler<? extends PersistentEnumeratorBase> recordBufferHandler,
+                                  boolean doCaching) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
     myVersion = version;
     myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase>)recordBufferHandler;
+    myDoCaching = doCaching;
 
     if (!file.exists()) {
       FileUtil.delete(keystreamFile());
@@ -228,7 +231,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   private int doEnumerate(Data value, boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
-    if (!saveNewValue) {
+    if (myDoCaching && !saveNewValue) {
       synchronized (ourEnumerationCache) {
         final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
         if (cachedId != null) return cachedId.intValue();
@@ -249,7 +252,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       throw new RuntimeException(e);
     }
 
-    if (id != NULL_ID) {
+    if (myDoCaching && id != NULL_ID) {
       synchronized (ourEnumerationCache) {
         ourEnumerationCache.put(new CacheKey(value, this), id);
       }

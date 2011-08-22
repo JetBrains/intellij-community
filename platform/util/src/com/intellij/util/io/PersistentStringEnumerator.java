@@ -15,14 +15,14 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.util.containers.SLRUMap;
+import com.intellij.util.containers.ConcurrentSLRUMap;
 
 import java.io.File;
 import java.io.IOException;
 
 public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<String>{
-  private final SLRUMap<Integer, String> myIdToStringCache;
-  private final SLRUMap<Integer, Integer> myHashcodeToIdCache;
+  private final ConcurrentSLRUMap<Integer, String> myIdToStringCache;
+  private final ConcurrentSLRUMap<Integer, Integer> myHashcodeToIdCache;
 
   public PersistentStringEnumerator(final File file) throws IOException {
     this(file, 1024 * 4);
@@ -39,8 +39,8 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
   private PersistentStringEnumerator(final File file, final int initialSize, boolean cacheLastMappings) throws IOException {
     super(file, new EnumeratorStringDescriptor(), initialSize);
     if (cacheLastMappings) {
-      myIdToStringCache = new SLRUMap<Integer, String>(8192, 8192);
-      myHashcodeToIdCache = new SLRUMap<Integer, Integer>(8192, 8192);
+      myIdToStringCache = new ConcurrentSLRUMap<Integer, String>(8192, 8192);
+      myHashcodeToIdCache = new ConcurrentSLRUMap<Integer, Integer>(8192, 8192);
     } else {
       myIdToStringCache = null;
       myHashcodeToIdCache = null;
@@ -49,16 +49,12 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
 
   @Override
   public int enumerate(String value) throws IOException {
+    int valueHashCode = -1;
+
     if (myHashcodeToIdCache != null && value != null) {
-      Integer cachedId;
-      synchronized (myHashcodeToIdCache) {
-        cachedId = myHashcodeToIdCache.get(value.hashCode());
-      }
+      Integer cachedId = myHashcodeToIdCache.get(valueHashCode = value.hashCode());
       if (cachedId != null) {
-        String s;
-        synchronized (myIdToStringCache) {
-          s = myIdToStringCache.get(cachedId.intValue());
-        }
+        String s = myIdToStringCache.get(cachedId.intValue());
         if (s != null && value.equals(s)) return cachedId.intValue();
       }
     }
@@ -66,15 +62,11 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
     int enumerate = super.enumerate(value);
 
     if (myHashcodeToIdCache != null && value != null) {
-      synchronized (myHashcodeToIdCache) {
-        myHashcodeToIdCache.put(value.hashCode(), enumerate);
-      }
+      myHashcodeToIdCache.put(valueHashCode, enumerate);
     }
 
     if (myIdToStringCache != null) {
-      synchronized (myIdToStringCache) {
-        myIdToStringCache.put(enumerate, value);
-      }
+      myIdToStringCache.put(enumerate, value);
     }
     return enumerate;
   }
@@ -82,10 +74,8 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
   @Override
   public String valueOf(int idx) throws IOException {
     if (myIdToStringCache != null) {
-      synchronized (myIdToStringCache) {
-        String s = myIdToStringCache.get(idx);
-        if (s != null) return s;
-      }
+      String s = myIdToStringCache.get(idx);
+      if (s != null) return s;
     }
     return super.valueOf(idx);
   }
@@ -95,15 +85,11 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
     super.close();
 
     if (myIdToStringCache != null) {
-      synchronized (myIdToStringCache) {
-        myIdToStringCache.clear();
-      }
+      myIdToStringCache.clear();
     }
 
     if (myHashcodeToIdCache != null) {
-      synchronized (myHashcodeToIdCache) {
-        myHashcodeToIdCache.clear();
-      }
+      myHashcodeToIdCache.clear();
     }
   }
 }
