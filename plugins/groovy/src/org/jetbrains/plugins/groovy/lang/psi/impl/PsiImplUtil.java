@@ -191,25 +191,24 @@ public class PsiImplUtil {
   @Nullable
   public static GrExpression getRuntimeQualifier(GrReferenceExpression refExpr) {
     GrExpression qualifier = refExpr.getQualifierExpression();
-    if (qualifier == null) {
-      GrClosableBlock closure = PsiTreeUtil.getParentOfType(refExpr, GrClosableBlock.class);
-      while (closure != null) {
-        PsiElement parent = closure.getParent();
-        if (parent instanceof GrArgumentList) parent = parent.getParent();
-        if (parent instanceof GrMethodCall) {
-          GrExpression funExpr = ((GrMethodCall)parent).getInvokedExpression();
-          if (funExpr instanceof GrReferenceExpression && ((GrReferenceExpression)funExpr).resolve() instanceof PsiMethod) {
-            qualifier = ((GrReferenceExpression) funExpr).getQualifierExpression();
-            if (qualifier != null) {
-              return qualifier;
-            }
-          }
-          else {
-            return funExpr;
+    if (qualifier != null) return qualifier;
+
+    for (GrClosableBlock closure = PsiTreeUtil.getParentOfType(refExpr, GrClosableBlock.class);
+         closure != null;
+         closure = PsiTreeUtil.getParentOfType(closure, GrClosableBlock.class)) {
+      PsiElement parent = closure.getParent();
+      if (parent instanceof GrArgumentList) parent = parent.getParent();
+      if (parent instanceof GrMethodCall) {
+        GrExpression funExpr = ((GrMethodCall)parent).getInvokedExpression();
+        if (funExpr instanceof GrReferenceExpression && ((GrReferenceExpression)funExpr).resolve() instanceof PsiMethod) {
+          qualifier = ((GrReferenceExpression)funExpr).getQualifierExpression();
+          if (qualifier != null) {
+            return qualifier;
           }
         }
-
-        closure = PsiTreeUtil.getParentOfType(closure, GrClosableBlock.class);
+        else {
+          return funExpr;
+        }
       }
     }
 

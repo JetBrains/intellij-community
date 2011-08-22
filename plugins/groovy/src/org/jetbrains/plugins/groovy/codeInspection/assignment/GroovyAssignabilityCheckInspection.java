@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -51,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -93,11 +96,41 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
   private static class MyVisitor extends BaseInspectionVisitor {
     private void checkAssignability(@NotNull PsiType expectedType, @NotNull GrExpression expression, GroovyPsiElement element) {
       if (PsiUtil.isRawClassMemberAccess(expression)) return; //GRVY-2197
+      if (checkForImplicitEnumAssigning(expectedType, expression, element)) return;
       final PsiType rType = expression.getType();
       if (rType == null || rType == PsiType.VOID) return;
       if (!TypesUtil.isAssignable(expectedType, rType, element)) {
         registerError(element, GroovyBundle.message("cannot.assign", rType.getPresentableText(), expectedType.getPresentableText()));
       }
+    }
+
+    private boolean checkForImplicitEnumAssigning(PsiType expectedType, GrExpression expression, GroovyPsiElement element) {
+      if (!(expectedType instanceof PsiClassType)) return false;
+
+      if (!GroovyConfigUtils.getInstance().isVersionAtLeast(element, GroovyConfigUtils.GROOVY1_8)) return false;
+
+      final PsiClass resolved = ((PsiClassType)expectedType).resolve();
+      if (resolved == null || !resolved.isEnum()) return false;
+
+      final PsiType type = expression.getType();
+      if (type == null) return false;
+
+      if (!type.equalsToText(GroovyCommonClassNames.GROOVY_LANG_GSTRING) && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return false;
+      }
+
+      final Object result = GroovyConstantExpressionEvaluator.evaluate(expression);
+      if (result == null || !(result instanceof String)) {
+        registerError(element, ProblemHighlightType.WEAK_WARNING,
+                      GroovyBundle.message("cannot.assign.string.to.enum.0", expectedType.getPresentableText()));
+      }
+      else {
+        final PsiField field = resolved.findFieldByName((String)result, true);
+        if (!(field instanceof PsiEnumConstant)) {
+          registerError(element, GroovyBundle.message("cannot.find.enum.constant.0.in.enum.1", result, expectedType.getPresentableText()));
+        }
+      }
+      return true;
     }
 
     //isApplicable last expression on method body

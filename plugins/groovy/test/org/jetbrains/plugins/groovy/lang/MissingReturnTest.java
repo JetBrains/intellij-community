@@ -19,7 +19,7 @@ public class MissingReturnTest extends LightCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyHighlightingTest.GROOVY_17_PROJECT_DESCRIPTOR;
+    return GroovyHighlightingTest.GROOVY_18_PROJECT_DESCRIPTOR;
   }
 
   public void testMissingReturnWithLastLoop() throws Throwable { doTest(); }
