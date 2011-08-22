@@ -2271,6 +2271,7 @@ public class HighlightUtil {
         QuickFixAction.registerQuickFixAction(highlightInfo, action, null);
       }
     }
+    ChangeParameterClassFix.registerQuickFixAction(parameter, itemType, highlightInfo);
   }
 
   @Nullable
