@@ -162,7 +162,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private ModuleEditor doCreateModuleEditor(final Module module) {
-    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module) {
+    final ModuleEditor moduleEditor = new TabbedModuleEditor(myProject, this, module) {
       @Override
       public ProjectFacetsConfigurator getFacetsConfigurator() {
         return myFacetsConfigurator;
@@ -548,13 +548,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public static boolean showDialog(Project project,
                                    @Nullable final String moduleToSelect,
-                                   final String tabNameToSelect,
+                                   @Nullable final String editorNameToSelect,
                                    final boolean showModuleWizard) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
       public void run() {
         final ModuleStructureConfigurable modulesConfig = config.getModulesConfig();
-        config.select(moduleToSelect, tabNameToSelect, true).doWhenDone(new Runnable() {
+        config.select(moduleToSelect, editorNameToSelect, true).doWhenDone(new Runnable() {
           public void run() {
             modulesConfig.setStartModuleWizard(showModuleWizard);
             SwingUtilities.invokeLater(new Runnable() {

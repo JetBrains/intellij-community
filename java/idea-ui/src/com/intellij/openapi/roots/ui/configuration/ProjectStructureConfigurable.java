@@ -370,12 +370,12 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return navigateTo(place, requestFocus);
   }
 
-  public ActionCallback select(@Nullable final String moduleToSelect, String tab, final boolean requestFocus) {
+  public ActionCallback select(@Nullable final String moduleToSelect, @Nullable String editorNameToSelect, final boolean requestFocus) {
     Place place = createPlaceFor(myModulesConfig);
     if (moduleToSelect != null) {
       final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
       assert module != null;
-      place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, module).putPath(ModuleEditor.MODULE_TAB, tab);
+      place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, module).putPath(TabbedModuleEditor.EDITOR_NAME, editorNameToSelect);
     }
     return navigateTo(place, requestFocus);
   }
@@ -439,7 +439,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
         if (node != null) {
           ModuleConfigurable moduleConfigurable = (ModuleConfigurable)node.getConfigurable();
           ModuleEditor moduleEditor = moduleConfigurable.getModuleEditor();
-          moduleEditor.setSelectedTabName(ClasspathEditor.NAME);
+          moduleEditor.selectEditor(ClasspathEditor.NAME);
           if (orderEntry != null) {
             ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.NAME);
             if (editor instanceof ClasspathEditor) {

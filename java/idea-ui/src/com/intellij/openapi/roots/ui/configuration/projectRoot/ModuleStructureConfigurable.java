@@ -178,8 +178,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   protected void updateSelection(@Nullable final NamedConfigurable configurable) {
     FacetStructureConfigurable.getInstance(myProject).disposeMultipleSettingsEditor();
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final String selectedTab = ModuleEditor.getSelectedTab();
-    updateSelection(configurable, selectedTab);
+    super.updateSelection(configurable);
+    if (configurable != null) {
+      updateModuleEditorSelection(configurable);
+    }
   }
 
 
@@ -191,19 +193,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return FacetStructureConfigurable.getInstance(myProject).updateMultiSelection(selectedConfigurables, getDetailsComponent());
   }
 
-  private void updateSelection(final NamedConfigurable configurable, final String selectedTab) {
-    super.updateSelection(configurable);
-    if (configurable != null) {
-      updateTabSelection(configurable, selectedTab);
-    }
-  }
-
-  private void updateTabSelection(final NamedConfigurable configurable, final String selectedTab) {
+  private void updateModuleEditorSelection(final NamedConfigurable configurable) {
     if (configurable instanceof ModuleConfigurable){
       final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
       if (editor != null) { //already deleted
-        editor.init(selectedTab, myHistory);
+        editor.init(myHistory);
       }
     }
     if (configurable instanceof FacetConfigurable) {
