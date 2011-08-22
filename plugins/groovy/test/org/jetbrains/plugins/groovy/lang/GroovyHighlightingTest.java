@@ -448,4 +448,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testImplicitEnumCoercion() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
+
+  public void testCallableProperty() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }

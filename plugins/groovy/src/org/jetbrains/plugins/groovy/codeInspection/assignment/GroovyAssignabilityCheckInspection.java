@@ -282,7 +282,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (parent instanceof GrCall) {
         final PsiType type = referenceExpression.getType();
         if (resolved != null ) {
-          if (resolved instanceof PsiMethod) {
+          if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
             checkMethodApplicability(resolveResult, referenceExpression);
           }
           else {
@@ -293,7 +293,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         else if (results.length > 0) {
           for (GroovyResolveResult result : results) {
             resolved = result.getElement();
-            if (resolved instanceof PsiMethod) {
+            if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
               if (!checkMethodApplicability(result, referenceExpression)) return;
             }
             else {
@@ -400,7 +400,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         final GroovyResolveResult[] calls = ResolveUtil.getMethodCandidates(type, "call", invokedExpr, argumentTypes);
         for (GroovyResolveResult result : calls) {
           PsiElement resolved = result.getElement();
-          if (resolved instanceof PsiMethod) {
+          if (resolved instanceof PsiMethod && !result.isInvokedOnProperty()) {
             if (!checkMethodApplicability(result, invokedExpr)) return false;
           }
           else if (resolved instanceof PsiField) {

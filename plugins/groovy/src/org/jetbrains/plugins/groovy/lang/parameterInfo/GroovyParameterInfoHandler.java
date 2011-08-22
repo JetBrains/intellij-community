@@ -116,12 +116,13 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     return null;
   }
 
+  @SuppressWarnings("unchecked")
   public void showParameterInfo(@NotNull GroovyPsiElement place, CreateParameterInfoContext context) {
     GroovyResolveResult[] variants = ResolveUtil.getCallVariants(place);
     final Condition<GroovyResolveResult> condition = new Condition<GroovyResolveResult>() {
       public boolean value(GroovyResolveResult groovyResolveResult) {
         final PsiElement element = groovyResolveResult.getElement();
-        return element instanceof PsiMethod ||
+        return element instanceof PsiMethod && !groovyResolveResult.isInvokedOnProperty() ||
                element instanceof GrVariable && ((GrVariable)element).getTypeGroovy() instanceof GrClosureType;
       }
     };
@@ -129,7 +130,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     final PsiElement parent = place.getParent();
     if (parent instanceof GrMethodCall) {
       final GrExpression invoked = ((GrMethodCall)parent).getInvokedExpression();
-      if (!(invoked instanceof GrReferenceExpression && ((GrReferenceExpression)invoked).resolve() instanceof PsiMethod)) {
+      if (!(invoked instanceof GrReferenceExpression &&
+            ((GrReferenceExpression)invoked).advancedResolve() instanceof PsiMethod &&
+            !((GrReferenceExpression)invoked).advancedResolve().isInvokedOnProperty())) {
         final PsiType type = invoked.getType();
         if (type instanceof GrClosureType) {
           elementToShow.add(type);
