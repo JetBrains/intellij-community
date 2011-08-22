@@ -17,6 +17,9 @@ package com.intellij.ui.mac.foundation;
 
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
 
@@ -24,7 +27,8 @@ import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
  * @author pegov
  */
 public class MacUtil {
-
+  public static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
+  
   private MacUtil() {
   }
 
@@ -61,6 +65,40 @@ public class MacUtil {
     }
 
     return focusedWindow;
+  }
+  
+  public static synchronized void startModal(JComponent component) {
+    try {
+      if (SwingUtilities.isEventDispatchThread()) {
+        EventQueue theQueue = component.getToolkit().getSystemEventQueue();
+
+        while (component.getClientProperty(MAC_NATIVE_WINDOW_SHOWING) == Boolean.TRUE) {
+          AWTEvent event = theQueue.getNextEvent();
+          Object source = event.getSource();
+          if (event instanceof ActiveEvent) {
+            ((ActiveEvent)event).dispatch();
+          }
+          else if (source instanceof Component) {
+            ((Component)source).dispatchEvent(event);
+          }
+          else if (source instanceof MenuComponent) {
+            ((MenuComponent)source).dispatchEvent(event);
+          }
+          else {
+            System.err.println("Unable to dispatch: " + event);
+          }
+        }
+      }
+      else {
+        assert false: "Should be called from Event-Dispatch Thread only!";
+        while (component.getClientProperty(MAC_NATIVE_WINDOW_SHOWING) == Boolean.TRUE) {
+          // TODO:
+          //wait();
+        }
+      }
+    }
+    catch (InterruptedException ignored) {
+    }
   }
   
   
