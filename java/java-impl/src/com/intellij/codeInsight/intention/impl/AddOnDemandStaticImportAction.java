@@ -24,6 +24,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -65,6 +67,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
       return null;
     }
     PsiClass psiClass = (PsiClass)resolved;
+    if (Comparing.strEqual(psiClass.getName(), psiClass.getQualifiedName())) return null;
     PsiFile file = refExpr.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
