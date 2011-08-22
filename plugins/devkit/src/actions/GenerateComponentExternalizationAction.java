@@ -46,7 +46,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
     assert target != null;
 
     final PsiElementFactory factory = JavaPsiFacade.getInstance(target.getProject()).getElementFactory();
-    final CodeStyleManager formatter = target.getManager().getCodeStyleManager();
+    final CodeStyleManager formatter = CodeStyleManager.getInstance(target.getManager().getProject());
     final JavaCodeStyleManager styler = JavaCodeStyleManager.getInstance(target.getProject());
     final String qualifiedName = target.getQualifiedName();
     Runnable runnable = new Runnable() {

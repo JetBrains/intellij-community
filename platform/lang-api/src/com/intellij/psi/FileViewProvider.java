@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,5 +80,5 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
   boolean isLockedByPsiOperations();
 
   @NotNull
-  FileViewProvider createCopy(LightVirtualFile copy);
+  FileViewProvider createCopy(VirtualFile copy);
 }

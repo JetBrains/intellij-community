@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -39,8 +36,9 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   private volatile boolean myOptional;
   private volatile GrModifierList myModifierList;
   private PsiElement myScope;
+  private boolean myVarArg;
 
-  public GrLightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement scope) {
+  public GrLightParameter(@Nullable String name, @NotNull PsiType type, @NotNull PsiElement scope) {
     super(scope.getManager(), name, type, GroovyFileType.GROOVY_LANGUAGE);
     myScope = scope;
     myModifierList = new GrLightModifierList(this, ArrayUtil.EMPTY_STRING_ARRAY);
@@ -54,7 +52,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
 
   @Override
   public boolean isVarArgs() {
-    return false;
+    return getType() instanceof PsiEllipsisType;
   }
 
   @NotNull

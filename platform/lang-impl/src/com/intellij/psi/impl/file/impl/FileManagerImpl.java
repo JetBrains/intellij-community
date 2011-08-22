@@ -47,6 +47,7 @@ import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.FileContentUtil;
@@ -480,7 +481,7 @@ public class FileManagerImpl implements FileManager {
       final VirtualFile vf = f == null ? null : f.getVirtualFile();
 
       return f == null || vf == null || vf.isDirectory() || allScope.contains(vf)
-             ? allScope : GlobalSearchScope.fileScope(f).uniteWith(allScope);
+             ? allScope : GlobalSearchScopes.fileScope(f).uniteWith(allScope);
     }
   }
 

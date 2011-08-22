@@ -1168,6 +1168,9 @@ public class HighlightUtil {
     if (staticParent != null && isInstanceReference(place)) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(staticParent, PsiModifier.STATIC, false, false));
     }
+    if (place instanceof PsiReferenceExpression && refElement instanceof PsiField) {
+      QuickFixAction.registerQuickFixAction(errorResult, new CreateFieldFromUsageFix((PsiReferenceExpression)place));
+    }
   }
 
   private static boolean isInstanceReference(PsiJavaCodeReferenceElement place) {

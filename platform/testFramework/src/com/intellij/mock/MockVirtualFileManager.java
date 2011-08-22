@@ -15,14 +15,14 @@
  */
 package com.intellij.mock;
 
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class MockVirtualFileManager extends VirtualFileManagerEx {
   public MockVirtualFileManager() {
@@ -48,10 +48,6 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   }
 
   @Override
-  public void refresh(boolean asynchronous, @Nullable Runnable postAction, ModalityState modalityState) {
-  }
-
-  @Override
   public VirtualFile findFileByUrl(@NotNull String url) {
     return null;
   }
@@ -74,18 +70,6 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   }
 
   @Override
-  public void addModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
-  }
-
-  @Override
-  public void removeModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
-  }
-
-  @Override
-  public void fireReadOnlyModificationAttempt(@NotNull VirtualFile... files) {
-  }
-
-  @Override
   public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
   }
 
@@ -97,25 +81,6 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   public void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
   }
 
-  public void beforeRefreshStart(boolean asynchronous, ModalityState modalityState, Runnable postAction) {
-  }
-
-  public void afterRefreshFinish(boolean asynchronous, ModalityState modalityState) {
-  }
-
-  public void registerRefreshUpdater(CacheUpdater updater) {
-  }
-
-  public void unregisterRefreshUpdater(CacheUpdater updater) {
-  }
-
-  @Override
-  public void registerFileSystem(VirtualFileSystem fileSystem) {
-  }
-
-  @Override
-  public void unregisterFileSystem(VirtualFileSystem fileSystem) {
-  }
 
   @Override
   public void fireAfterRefreshFinish(final boolean asynchronous) {

@@ -48,6 +48,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.search.scope.packageSet.ParsingException;
@@ -94,7 +95,7 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
     GlobalSearchScope searchScope;
     try {
       @NonNls final String libsName = "libs";
-      searchScope = GlobalSearchScope.filterScope(project, new NamedScope(libsName, PackageSetFactory.getInstance().compile("lib:*..*")));
+      searchScope = GlobalSearchScopes.filterScope(project, new NamedScope(libsName, PackageSetFactory.getInstance().compile("lib:*..*")));
     }
     catch (ParsingException e) {
       //can't be

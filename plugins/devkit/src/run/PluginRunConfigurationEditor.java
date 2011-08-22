@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -126,7 +127,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
       public void customize(JList list, final Module module, int index, boolean selected, boolean hasFocus) {
         if (module != null) {
           setText(module.getName());
-          setIcon(module.getModuleType().getNodeIcon(true));
+          setIcon(ModuleType.get(module).getNodeIcon(true));
         }
       }
     });

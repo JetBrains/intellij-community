@@ -122,6 +122,6 @@ public class FileNode extends PackageDependenciesNode {
 
   @Nullable
   private PsiFile getFile() {
-    return PsiManager.getInstance(myProject).findFile(myVFile);
+    return myVFile.isValid() ? PsiManager.getInstance(myProject).findFile(myVFile) : null;
   }
 }

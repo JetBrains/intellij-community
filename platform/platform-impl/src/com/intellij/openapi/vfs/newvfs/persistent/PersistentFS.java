@@ -20,6 +20,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -724,6 +725,17 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
 
     RefreshQueue.getInstance().refresh(asynchronous, true, null, roots);
+  }
+
+  @Override
+  public void refresh(boolean asynchronous, Runnable postAction, ModalityState modalityState) {
+    final NewVirtualFile[] roots;
+    synchronized (LOCK) {
+      Collection<VirtualFileSystemEntry> values = myRoots.values();
+      roots = values.toArray(new NewVirtualFile[values.size()]);
+    }
+
+    RefreshQueue.getInstance().refresh(asynchronous, true, postAction, modalityState, roots);
   }
 
   @NotNull

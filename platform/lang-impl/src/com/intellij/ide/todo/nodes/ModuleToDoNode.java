@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
@@ -96,8 +97,8 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
     myHighlightedRegions.add(
       new HighlightedRegion(nameEndOffset, newName.length(), colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES)));
-    presentation.setOpenIcon(getValue().getModuleType().getNodeIcon(true));
-    presentation.setClosedIcon(getValue().getModuleType().getNodeIcon(false));
+    presentation.setOpenIcon(ModuleType.get(getValue()).getNodeIcon(true));
+    presentation.setClosedIcon(ModuleType.get(getValue()).getNodeIcon(false));
     presentation.setPresentableText(newName);
   }
 

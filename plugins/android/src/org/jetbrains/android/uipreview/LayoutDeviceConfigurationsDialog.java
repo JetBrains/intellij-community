@@ -58,9 +58,11 @@ public class LayoutDeviceConfigurationsDialog extends DialogWrapper {
 
     myProject = project;
     myLayoutDeviceManager = layoutDeviceManager;
-    
-    mySelectedDeviceConfigName = selectedConfig.getName();
-    mySelectedDeviceName = selectedConfig.getDevice().getName();
+
+    if (selectedConfig != null) {
+      mySelectedDeviceConfigName = selectedConfig.getName();
+      mySelectedDeviceName = selectedConfig.getDevice().getName();
+    }
 
     setTitle(AndroidBundle.message("android.layout.preview.device.configurations.dialog.title"));
 

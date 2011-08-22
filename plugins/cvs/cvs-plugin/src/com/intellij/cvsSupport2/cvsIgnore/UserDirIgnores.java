@@ -31,7 +31,21 @@ import java.util.List;
 public class UserDirIgnores{
 
   private List<SimpleStringPattern> myPatterns;
-  @NonNls private static final File ourUserHomeCVSIgnoreFile = new File(System.getProperty("user.home") + "/" + CvsUtil.CVS_IGNORE_FILE);
+  @NonNls private static final File ourUserHomeCVSIgnoreFile;
+
+  static {
+    final String home = System.getenv().get("HOME");
+    if (home != null) {
+      final File homeDir = new File(home);
+      if (homeDir.exists() && homeDir.isDirectory()) {
+        ourUserHomeCVSIgnoreFile = new File(homeDir, CvsUtil.CVS_IGNORE_FILE);
+      } else {
+        ourUserHomeCVSIgnoreFile = new File(System.getProperty("user.home") + "/" + CvsUtil.CVS_IGNORE_FILE);
+      }
+    } else {
+      ourUserHomeCVSIgnoreFile = new File(System.getProperty("user.home") + "/" + CvsUtil.CVS_IGNORE_FILE);
+    }
+  }
 
   public List<SimpleStringPattern> getPatterns(){
     if (myPatterns == null){
@@ -40,7 +54,7 @@ public class UserDirIgnores{
     return myPatterns;
   }
 
-  private List<SimpleStringPattern> createUserDirIgnoredFilesInfo() {
+  private static List<SimpleStringPattern> createUserDirIgnoredFilesInfo() {
     final File file = userHomeCvsIgnoreFile();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -50,7 +64,7 @@ public class UserDirIgnores{
     return IgnoredFilesInfoImpl.getPattensFor(file);
   }
 
-  public File userHomeCvsIgnoreFile() {
+  public static File userHomeCvsIgnoreFile() {
     return ourUserHomeCVSIgnoreFile;
   }
 

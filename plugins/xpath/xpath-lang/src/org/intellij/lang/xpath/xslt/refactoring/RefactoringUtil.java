@@ -18,6 +18,7 @@ package org.intellij.lang.xpath.xslt.refactoring;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -66,7 +67,7 @@ public class RefactoringUtil {
         } else {
             paramTag = (XmlTag)templateTag.add(paramTag);
         }
-        paramTag = (XmlTag)paramTag.getManager().getCodeStyleManager().reformat(paramTag);
+      paramTag = (XmlTag)CodeStyleManager.getInstance(paramTag.getManager().getProject()).reformat(paramTag);
         return paramTag;
     }
 
@@ -82,7 +83,7 @@ public class RefactoringUtil {
         } else {
             withParamTag = (XmlTag)templateTag.add(withParamTag);
         }
-        withParamTag = (XmlTag)withParamTag.getManager().getCodeStyleManager().reformat(withParamTag);
+      withParamTag = (XmlTag)CodeStyleManager.getInstance(withParamTag.getManager().getProject()).reformat(withParamTag);
         return withParamTag;
     }
 

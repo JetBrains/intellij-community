@@ -117,7 +117,7 @@ class ChangedConstantsDependencyProcessor {
         }
       }
     }
-    final PsiSearchHelper psiSearchHelper = PsiManager.getInstance(myProject).getSearchHelper();
+    final PsiSearchHelper psiSearchHelper = PsiSearchHelper.SERVICE.getInstance(myProject);
 
     final Ref<CacheCorruptedException> exRef = new Ref<CacheCorruptedException>(null);
     final long analysisStart = System.currentTimeMillis();

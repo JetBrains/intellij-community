@@ -67,7 +67,7 @@ public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstr
 
     final Project project = context.getProject();
     final Set<InstrumentationItem> result = new HashSet<InstrumentationItem>();
-    final PsiSearchHelper searchHelper = PsiManager.getInstance(context.getProject()).getSearchHelper();
+    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(context.getProject());
 
     DumbService.getInstance(project).waitForSmartMode();
 

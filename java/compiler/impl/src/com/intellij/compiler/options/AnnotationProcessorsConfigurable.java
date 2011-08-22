@@ -13,12 +13,10 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.ItemRemovable;
-import com.intellij.util.ui.Table;
+import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,9 +48,8 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable 
   private TextFieldWithBrowseButton myProcessorPathField;
   private ProcessorTableModel myProcessorsModel;
   private JCheckBox myCbEnableProcessing;
-  private JButton myRemoveButton;
-  private Table myProcessorTable;
-  private JButton myAddButton;
+  private JBTable myProcessorTable;
+  private JPanel myProcessorPanel;
 
   public AnnotationProcessorsConfigurable(final Project project) {
     myProject = project;
@@ -110,16 +107,28 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable 
     final JPanel processorTablePanel = new JPanel(new BorderLayout());
     myProcessorsModel = new ProcessorTableModel();
     processorTablePanel.setBorder(IdeBorderFactory.createTitledBorder("Annotation Processors", false, false, true));
-    myProcessorTable = new Table(myProcessorsModel);
+    myProcessorTable = new JBTable(myProcessorsModel);
     myProcessorTable.getEmptyText().setText("No processors configured");
+    myProcessorPanel = ToolbarDecorator.createDecorator(myProcessorTable)
+      .disableUpAction()
+      .disableDownAction()
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton anActionButton) {
+          final TableCellEditor cellEditor = myProcessorTable.getCellEditor();
+          if (cellEditor != null) {
+            cellEditor.stopCellEditing();
+          }
+          final ProcessorTableModel model = (ProcessorTableModel)myProcessorTable.getModel();
+          model.addRow();
+          TableUtil.editCellAt(myProcessorTable, model.getRowCount() - 1, ProcessorTableRow.NAME_COLUMN);
+        }
+      })
+      .createPanel();
 
-    processorTablePanel.add(ScrollPaneFactory.createScrollPane(myProcessorTable), BorderLayout.CENTER);
-    final JPanel buttons = new JPanel(new GridBagLayout());
-    myAddButton = new JButton("Add");
-    buttons.add(myAddButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 5, 0, 0), 0, 0));
-    myRemoveButton = new JButton("Remove");
-    buttons.add(myRemoveButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 0, 0), 0, 0));
-    processorTablePanel.add(buttons, BorderLayout.EAST);
+
+
+    processorTablePanel.add(myProcessorPanel, BorderLayout.CENTER);
     processorTablePanel.setPreferredSize(new Dimension(processorTablePanel.getPreferredSize().width, 50));
 
     myModulesTable = new ProcessedModulesTable(myProject);
@@ -157,23 +166,6 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable 
         }
       }
     });
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final TableCellEditor cellEditor = myProcessorTable.getCellEditor();
-        if (cellEditor != null) {
-          cellEditor.stopCellEditing();
-        }
-        final ProcessorTableModel model = (ProcessorTableModel)myProcessorTable.getModel();
-        final int inserdedIndex = model.addRow();
-        TableUtil.editCellAt(myProcessorTable, inserdedIndex, ProcessorTableRow.NAME_COLUMN);
-      }
-    });
-
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        TableUtil.removeSelectedItems(myProcessorTable);
-      }
-    });
 
     myCbEnableProcessing.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
@@ -192,8 +184,14 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable 
     myRbClasspath.setEnabled(enabled);
     myRbProcessorsPath.setEnabled(enabled);
     myProcessorPathField.setEnabled(enabled && useProcessorpath);
-    myRemoveButton.setEnabled(enabled && myProcessorTable.getSelectedRow() >= 0);
-    myAddButton.setEnabled(enabled);
+    final AnActionButton addButton = ToolbarDecorator.findAddButton(myProcessorPanel);
+    if (addButton != null) {
+      addButton.setEnabled(enabled);
+    }
+    final AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myProcessorPanel);
+    if (removeButton != null) {
+      removeButton.setEnabled(enabled && myProcessorTable.getSelectedRow() >= 0);
+    }
     myProcessorTable.setEnabled(enabled);
     final JTableHeader header = myProcessorTable.getTableHeader();
     if (header != null) {
@@ -278,7 +276,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable 
   public void disposeUIResources() {
   }
 
-  private static class ProcessorTableModel extends AbstractTableModel implements ItemRemovable{
+  private static class ProcessorTableModel extends AbstractTableModel implements EditableModel {
     private final java.util.List<ProcessorTableRow> myRows = new ArrayList<ProcessorTableRow>();
 
     public String getColumnName(int column) {
@@ -333,11 +331,14 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable 
       fireTableRowsDeleted(idx, idx);
     }
 
-    public int addRow() {
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
+    }
+
+    public void addRow() {
       myRows.add(new ProcessorTableRow());
-      final int inserted = myRows.size() - 1;
-      fireTableRowsInserted(inserted, inserted);
-      return inserted;
+      final int index = myRows.size() - 1;
+      fireTableRowsInserted(index, index);
     }
 
     public void setProcessorMap(Map<String, String> processorMap) {

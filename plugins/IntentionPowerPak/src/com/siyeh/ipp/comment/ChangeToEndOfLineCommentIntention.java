@@ -33,7 +33,7 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
             throws IncorrectOperationException {
         final PsiComment comment = (PsiComment)element;
         final PsiManager manager = comment.getManager();
-        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
         final PsiElement parent = comment.getParent();
         assert parent != null;
       final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();

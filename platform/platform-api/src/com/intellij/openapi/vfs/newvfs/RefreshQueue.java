@@ -42,6 +42,8 @@ public abstract class RefreshQueue {
     session.launch();
   }
 
+  public abstract void refreshLocalRoots(boolean async, @Nullable Runnable postAction, ModalityState modalityState);
+
   public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, VirtualFile... files) {
     refresh(async, recursive, finishRunnable, getDefaultModalityState(), files);
   }

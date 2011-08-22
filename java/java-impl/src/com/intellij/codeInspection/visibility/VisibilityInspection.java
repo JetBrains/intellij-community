@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -418,7 +419,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
                   String qualifiedName = ownerClass.getElement().getQualifiedName();
                   if (qualifiedName != null) {
                     final Project project = manager.getProject();
-                    PsiManager.getInstance(project).getSearchHelper()
+                    PsiSearchHelper.SERVICE.getInstance(project)
                       .processUsagesInNonJavaFiles(qualifiedName, new PsiNonJavaFileReferenceProcessor() {
                         public boolean process(PsiFile file, int startOffset, int endOffset) {
                           entryPointsManager.addEntryPoint(refMethod, false);

@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.lang.java.JavaCommenter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -39,6 +40,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -229,14 +231,11 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       }
 
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        final PsiExpression qualifier = expression.getQualifierExpression();
-        if (qualifier == null || qualifier instanceof PsiThisExpression) {
-          final PsiElement resolved = expression.resolve();
-          if (resolved instanceof PsiField) {
-            final PsiField field = (PsiField)resolved;
-            if (aClass.equals(field.getContainingClass())) {
-              candidates.remove(field);
-            }
+        final PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiField) {
+          final PsiField field = (PsiField)resolved;
+          if (aClass.equals(field.getContainingClass())) {
+            candidates.remove(field);
           }
         }
 
@@ -265,6 +264,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       PsiField myField = PsiTreeUtil.getParentOfType(element, PsiField.class);
       if (myField == null || !myField.isValid()) return; //weird. should not get here when field becomes invalid
 
+      final PsiDocComment docComment = myField.getDocComment();
       final Collection<PsiReference> refs = ReferencesSearch.search(myField).findAll();
       if (refs.isEmpty()) return;
       Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
@@ -311,6 +311,20 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       }
 
       if (newDeclaration != null) {
+        if (docComment != null) {
+          final StringBuilder buf = new StringBuilder();
+          for (PsiElement psiElement : docComment.getDescriptionElements()) {
+            buf.append(psiElement.getText());
+          }
+          if (buf.length() > 0) {
+            final JavaCommenter commenter = new JavaCommenter();
+            final PsiComment comment = JavaPsiFacade.getElementFactory(project)
+              .createCommentFromText(commenter.getBlockCommentPrefix() +
+                                     buf.toString() +
+                                     commenter.getBlockCommentSuffix(), newDeclaration);
+            newDeclaration.getParent().addBefore(comment, newDeclaration);
+          }
+        }
         final PsiFile psiFile = myField.getContainingFile();
         final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
         if (editor != null && IJSwingUtilities.hasFocus(editor.getComponent())) {

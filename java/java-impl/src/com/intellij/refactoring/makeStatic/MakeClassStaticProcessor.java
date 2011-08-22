@@ -144,7 +144,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         final PsiReferenceExpression refExpr = (PsiReferenceExpression)factory.createExpressionFromText(fieldName, body);
         if (refExpr.resolve() != null) fieldName = "this." + fieldName;
         PsiStatement statement = factory.createStatementFromText(fieldName + "=" + parameterName + ";", null);
-        statement = (PsiStatement)manager.getCodeStyleManager().reformat(statement);
+        statement = (PsiStatement)CodeStyleManager.getInstance(manager.getProject()).reformat(statement);
         body.add(statement);
       }
       catch (IncorrectOperationException e) {

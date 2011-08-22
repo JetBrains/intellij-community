@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiPackageStatement;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
     if (file != null && !(file instanceof LightVirtualFile)) {
       final ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
       if (!index.isInSource(file) && !index.isInLibraryClasses(file)) {
-        return GlobalSearchScope.fileScope(this);
+        return GlobalSearchScopes.fileScope(this);
       }
     }
     return super.getResolveScope();

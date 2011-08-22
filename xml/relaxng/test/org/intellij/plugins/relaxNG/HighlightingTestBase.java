@@ -181,6 +181,10 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   protected void doCustomHighlighting(String name, final boolean checkWeakWarnings, final Boolean includeExternalToolPass) throws Throwable {
     myTestFixture.configureByFile(name);
 
+    doCustomHighlighting(checkWeakWarnings, includeExternalToolPass);
+  }
+
+  protected void doCustomHighlighting(boolean checkWeakWarnings, Boolean includeExternalToolPass) {
     final PsiFile file = myTestFixture.getFile();
     final Document doc = myTestFixture.getEditor().getDocument();
     ExpectedHighlightingData data = new ExpectedHighlightingData(doc, true, checkWeakWarnings, false, file);
@@ -192,7 +196,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   }
 
   @NotNull
-  private Collection<HighlightInfo> doHighlighting(final Boolean externalToolPass) {
+  protected Collection<HighlightInfo> doHighlighting(final Boolean externalToolPass) {
     final Project project = myTestFixture.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = myTestFixture.getEditor();

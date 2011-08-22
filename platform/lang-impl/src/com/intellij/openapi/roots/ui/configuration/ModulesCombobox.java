@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.SortedComboBoxModel;
@@ -45,7 +46,7 @@ public class ModulesCombobox extends ComboBox {
       public void customize(JList list, Module value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {
           setText(value.getName());
-          setIcon(value.getModuleType().getNodeIcon(false));
+          setIcon(ModuleType.get(value).getNodeIcon(false));
         }
         else {
           setText("[none]");

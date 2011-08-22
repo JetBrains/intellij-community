@@ -21,12 +21,11 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.usageView.UsageViewUtil;
 
@@ -83,13 +82,9 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
     }
   }
 
-  private PsiManager getPsiManager() {
-    return myPsiElement.getManager();
-  }
-
   protected boolean isInFileOnly() {
     return super.isInFileOnly() ||
-           myPsiElement != null && getPsiManager().getSearchHelper().getUseScope(myPsiElement)instanceof LocalSearchScope;
+           myPsiElement != null && PsiSearchHelper.SERVICE.getInstance(myPsiElement.getProject()).getUseScope(myPsiElement)instanceof LocalSearchScope;
   }
 
   public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {

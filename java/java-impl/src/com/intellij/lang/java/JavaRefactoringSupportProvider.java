@@ -19,6 +19,7 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -107,7 +108,7 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {
     if (nameSuggestionContext != null && nameSuggestionContext.getContainingFile() != elementToRename.getContainingFile()) return false;
     if (!(elementToRename instanceof PsiLocalVariable) && !(elementToRename instanceof PsiParameter) && !(elementToRename instanceof PsiTypeParameter)) return false;
-    SearchScope useScope = elementToRename.getManager().getSearchHelper().getUseScope(elementToRename);
+    SearchScope useScope = PsiSearchHelper.SERVICE.getInstance(elementToRename.getProject()).getUseScope(elementToRename);
     if (!(useScope instanceof LocalSearchScope)) return false;
     PsiElement[] scopeElements = ((LocalSearchScope) useScope).getScope();
     if (scopeElements.length > 1 &&                          // assume there are no elements with use scopes with holes in them

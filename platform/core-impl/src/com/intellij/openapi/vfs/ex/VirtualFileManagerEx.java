@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -13,10 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs;
+package com.intellij.openapi.vfs.ex;
 
-import java.util.EventListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
 
-public interface ModificationAttemptListener extends EventListener{
-  void readOnlyModificationAttempt(ModificationAttemptEvent event);
+public abstract class VirtualFileManagerEx extends VirtualFileManager {
+  public abstract void fireBeforeRefreshStart(boolean asynchronous);
+  public abstract void fireAfterRefreshFinish(boolean asynchronous);
 }

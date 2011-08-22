@@ -848,7 +848,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void runReadAction(@NotNull final Runnable action) {
-    final AccessToken token = acquireReadActionLock();
+    final AccessToken token = acquireReadActionLockImpl(false);
 
     try {
       action.run();
@@ -876,7 +876,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public <T> T runReadAction(@NotNull final Computable<T> computation) {
-    final AccessToken token = acquireReadActionLock();
+    final AccessToken token = acquireReadActionLockImpl(false);
 
     try {
       return computation.compute();
@@ -1085,11 +1085,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public AccessToken acquireReadActionLock() {
+    return acquireReadActionLockImpl(true);
+  }
+
+  private AccessToken acquireReadActionLockImpl(boolean explicit) {
     /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
      * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */
     if (isReadAccessAllowed()) return AccessToken.EMPTY_ACCESS_TOKEN;
 
-    return new ReadAccessToken();
+    return new ReadAccessToken(explicit);
   }
 
   @Override
@@ -1157,11 +1161,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private class ReadAccessToken extends AccessToken {
-    ReadAccessToken() {
+    private final boolean myExplicit;
+
+    ReadAccessToken(boolean explicit) {
+      myExplicit = explicit;
       LOG.assertTrue(!Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
       try {
         myActionsLock.readLock().acquire();
-        acquired();
+        if (myExplicit) acquired();
       }
       catch (InterruptedException e) {
         throw new RuntimeInterruptedException(e);
@@ -1171,7 +1178,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     @Override
     public void finish() {
       myActionsLock.readLock().release();
-      released();
+      if (myExplicit) released();
     }
   }
 

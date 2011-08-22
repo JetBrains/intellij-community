@@ -105,7 +105,7 @@ public class FieldConflictsResolver {
     else {
       expressionFromText = (GrReferenceExpression)factory.createExpressionFromText(qualifyingClass.getQualifiedName()+ '.' + member.getName());
     }
-    CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
     expressionFromText = (GrReferenceExpression)codeStyleManager.reformat(expressionFromText);
     return (GrReferenceExpression)referenceExpression.replace(expressionFromText);
   }

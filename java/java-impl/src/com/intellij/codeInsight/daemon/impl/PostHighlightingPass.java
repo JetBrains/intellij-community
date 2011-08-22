@@ -537,8 +537,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     // some classes may have references from within XML outside dependent modules, e.g. our actions
     if (member instanceof PsiClass) scope = scope.uniteWith(GlobalSearchScope.projectScope(myProject));
 
-    PsiSearchHelper.SearchCostResult cheapEnough = myFile.getManager().getSearchHelper().isCheapEnoughToSearch(name, scope, myFile,
-                                                                                                               progress);
+    PsiSearchHelper.SearchCostResult cheapEnough = PsiSearchHelper.SERVICE.getInstance(myFile.getProject())
+        .isCheapEnoughToSearch(name, scope, myFile, progress);
     if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false;
 
     //search usages if it cheap

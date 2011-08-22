@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -45,7 +46,7 @@ public class DotProjectFileHelper {
   public static void saveDotProjectFile(Module module, String storageRoot) throws IOException {
     try {
       final Document doc;
-      if (module.getModuleType() instanceof JavaModuleType) {
+      if (ModuleType.get(module) instanceof JavaModuleType) {
         doc = JDOMUtil.loadDocument(DotProjectFileHelper.class.getResource("template.project.xml"));
       } else {
         doc = JDOMUtil.loadDocument(DotProjectFileHelper.class.getResource("template.empty.project.xml"));

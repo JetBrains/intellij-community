@@ -3,6 +3,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
   }
 
   public Icon getIcon(final boolean expanded) {
-    return getModule().getModuleType().getNodeIcon(expanded);
+    return ModuleType.get(getModule()).getNodeIcon(expanded);
   }
 
   @Nullable

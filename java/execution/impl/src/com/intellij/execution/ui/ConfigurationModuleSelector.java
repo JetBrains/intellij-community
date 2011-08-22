@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -66,7 +67,7 @@ public class ConfigurationModuleSelector {
       public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
         if (value instanceof Module) {
           final Module module = (Module)value;
-          setIcon(module.getModuleType().getNodeIcon(true));
+          setIcon(ModuleType.get(module).getNodeIcon(true));
           setText(module.getName());
         }
         else if (value == null) {
@@ -91,7 +92,7 @@ public class ConfigurationModuleSelector {
   }
 
   public static boolean isModuleAccepted(final Module module) {
-    return ModuleTypeManager.getInstance().isClasspathProvider(module.getModuleType());    
+    return ModuleTypeManager.getInstance().isClasspathProvider(ModuleType.get(module));
   }
 
   public Project getProject() {

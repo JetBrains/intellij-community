@@ -17,10 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.JavaModuleType;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -218,7 +215,7 @@ public class MavenProjectImporter {
       Module module = myFileToModuleMapping.get(each.getFile());
       if (module == null) continue;
 
-      if (shouldCreateModuleFor(each) && !(module.getModuleType() instanceof JavaModuleType)) {
+      if (shouldCreateModuleFor(each) && !(ModuleType.get(module) instanceof JavaModuleType)) {
         incompatible.add(Pair.create(each, module));
       }
     }
@@ -230,7 +227,7 @@ public class MavenProjectImporter {
         public String fun(Pair<MavenProject, Module> each) {
           MavenProject project = each.first;
           Module module = each.second;
-          return module.getModuleType().getName() +
+          return ModuleType.get(module).getName() +
                  " '" +
                  module.getName() +
                  "' for Maven project '" +

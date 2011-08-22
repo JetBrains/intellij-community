@@ -291,4 +291,12 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
   public void setReplaceAllOccurrences(boolean replaceAll) {
     myPanel.setReplaceAllOccurrences(replaceAll);
   }
+
+  public PsiMethod getMethodToIntroduceParameter() {
+    return myMethod;
+  }
+
+  public PsiMethod getMethodToSearchFor() {
+    return myMethodToSearchFor;
+  }
 }

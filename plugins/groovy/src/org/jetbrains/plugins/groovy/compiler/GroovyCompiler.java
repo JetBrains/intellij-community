@@ -22,6 +22,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -212,7 +213,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
 
     Set<Module> nojdkModules = new HashSet<Module>();
     for (Module module : modules) {
-      if(!GroovyUtils.isAcceptableModuleType(module.getModuleType())) continue;
+      if(!GroovyUtils.isAcceptableModuleType(ModuleType.get(module))) continue;
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
         nojdkModules.add(module);

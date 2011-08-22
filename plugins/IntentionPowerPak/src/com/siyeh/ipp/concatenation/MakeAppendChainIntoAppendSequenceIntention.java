@@ -112,7 +112,7 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention {
         final PsiElementFactory factory =
                 JavaPsiFacade.getElementFactory(project);
         final PsiElement appendStatementParent = appendStatement.getParent();
-        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
         final PsiCodeBlock codeBlock =
                 factory.createCodeBlockFromText(builder.toString(),
                         appendStatement);

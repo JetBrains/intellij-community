@@ -19,6 +19,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -47,8 +48,8 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
       presentation.addText(getValue().getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
-    presentation.setOpenIcon(getValue().getModuleType().getNodeIcon(true));
-    presentation.setClosedIcon(getValue().getModuleType().getNodeIcon(false));
+    presentation.setOpenIcon(ModuleType.get(getValue()).getNodeIcon(true));
+    presentation.setClosedIcon(ModuleType.get(getValue()).getNodeIcon(false));
   }
 
   protected boolean showModuleNameInBold() {
@@ -86,7 +87,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
 
   public String getToolTip() {
     final Module module = getValue();
-    return module.getModuleType().getName();
+    return ModuleType.get(module).getName();
   }
 
   public void navigate(final boolean requestFocus) {

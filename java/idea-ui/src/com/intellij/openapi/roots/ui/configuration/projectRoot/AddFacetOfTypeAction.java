@@ -24,6 +24,7 @@ import com.intellij.ide.util.ChooseElementsDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
@@ -68,7 +69,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     final ProjectFacetsConfigurator facetsConfigurator = myContext.getModulesConfigurator().getFacetsConfigurator();
     List<Facet> suitableParents = new ArrayList<Facet>();
     for (Module module : myContext.getModules()) {
-      if (type.isSuitableModuleType(module.getModuleType())) {
+      if (type.isSuitableModuleType(ModuleType.get(module))) {
         suitableParents.addAll(facetsConfigurator.getFacetsByType(module, underlyingType));
       }
     }
@@ -104,7 +105,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     final Iterator<Module> iterator = suitableModules.iterator();
     while (iterator.hasNext()) {
       Module module = iterator.next();
-      if (!type.isSuitableModuleType(module.getModuleType()) || (type.isOnlyOneFacetAllowed() && facetsConfigurator.hasFacetOfType(module, null, type.getId()))) {
+      if (!type.isSuitableModuleType(ModuleType.get(module)) || (type.isOnlyOneFacetAllowed() && facetsConfigurator.hasFacetOfType(module, null, type.getId()))) {
         iterator.remove();
       }
     }
@@ -139,7 +140,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
 
   private static boolean hasSuitableModules(StructureConfigurableContext context, FacetType type) {
     for (Module module : context.getModules()) {
-      if (type.isSuitableModuleType(module.getModuleType())) {
+      if (type.isSuitableModuleType(ModuleType.get(module))) {
         return true;
       }
     }

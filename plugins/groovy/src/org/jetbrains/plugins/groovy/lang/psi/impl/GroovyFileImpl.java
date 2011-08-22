@@ -479,7 +479,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, PsiElement anchorBefore)
     throws IncorrectOperationException {
     T result = (T)addBefore(decl, anchorBefore);
-    CodeStyleManager styleManager = getManager().getCodeStyleManager();
+    CodeStyleManager styleManager = CodeStyleManager.getInstance(getManager().getProject());
     PsiElement parent = result.getContainingFile();
     TextRange range = result.getTextRange();
     styleManager.reformatRange(parent, range.getEndOffset() - 1, range.getEndOffset() + 1);

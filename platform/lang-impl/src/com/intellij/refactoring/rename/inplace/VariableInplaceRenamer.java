@@ -52,6 +52,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -181,7 +182,7 @@ public class VariableInplaceRenamer {
 
   @Nullable
   protected PsiElement checkLocalScope() {
-    final SearchScope searchScope = myElementToRename.getManager().getSearchHelper().getUseScope(myElementToRename);
+    final SearchScope searchScope = PsiSearchHelper.SERVICE.getInstance(myElementToRename.getProject()).getUseScope(myElementToRename);
     if (searchScope instanceof LocalSearchScope) {
       final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
       return PsiTreeUtil.findCommonParent(elements);

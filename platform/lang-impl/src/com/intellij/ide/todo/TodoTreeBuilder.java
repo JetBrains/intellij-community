@@ -99,7 +99,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     myFile2Highlighter = new HashMap<VirtualFile, EditorHighlighter>();
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    mySearchHelper = psiManager.getSearchHelper();
+    mySearchHelper = PsiSearchHelper.SERVICE.getInstance(myProject);
     psiManager.addPsiTreeChangeListener(new MyPsiTreeChangeListener());
 
     myFileStatusListener = new MyFileStatusListener();

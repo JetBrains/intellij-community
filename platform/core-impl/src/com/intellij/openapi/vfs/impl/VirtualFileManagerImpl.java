@@ -19,16 +19,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
+public class VirtualFileManagerImpl extends VirtualFileManagerEx {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
@@ -56,12 +52,11 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createEmptyCOWList();
-  private final EventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster = EventDispatcher.create(ModificationAttemptListener.class);
 
   private int myRefreshCount = 0;
-  private final ManagingFS myPersistence;
+  private final FileSystemPersistence myPersistence;
 
-  public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems, MessageBus bus, ManagingFS persistence) {
+  public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems, MessageBus bus, FileSystemPersistence persistence) {
     myPersistence = persistence;
     for (VirtualFileSystem fileSystem : fileSystems) {
       registerFileSystem(fileSystem);
@@ -74,20 +69,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     bus.connect().subscribe(VFS_CHANGES, new BulkVirtualFileListenerAdapter(myVirtualFileListenerMulticaster.getMulticaster()));
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "VirtualFileManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
   public void registerFileSystem(VirtualFileSystem fileSystem) {
     myCollector.addExplicitExtension(fileSystem.getProtocol(), fileSystem);
-    if (!(fileSystem instanceof NewVirtualFileSystem)) {
+    if (!(fileSystem instanceof CachingVirtualFileSystem)) {
       fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
     }
     myPhysicalFileSystems.add(fileSystem);
@@ -118,8 +102,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
 
     for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
-      if (fileSystem instanceof NewVirtualFileSystem) {
-        ((NewVirtualFileSystem)fileSystem).refreshWithoutFileWatcher(asynchronous);
+      if (fileSystem instanceof CachingVirtualFileSystem) {
+        ((CachingVirtualFileSystem)fileSystem).refreshWithoutFileWatcher(asynchronous);
       }
       else {
         fileSystem.refresh(asynchronous);
@@ -131,13 +115,12 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     refresh(asynchronous, postAction, ModalityState.NON_MODAL);
   }
 
-  @Override
   public void refresh(boolean asynchronous, @Nullable Runnable postAction, ModalityState modalityState) {
     if (!asynchronous) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
 
-    RefreshQueue.getInstance().refresh(asynchronous, true, postAction, modalityState, myPersistence.getLocalRoots()); // TODO: Get an idea how to deliver chnages from local FS to jar fs before they go refresh
+    myPersistence.refresh(asynchronous, postAction, modalityState);
 
     //final VirtualFile[] managedRoots = ManagingFS.getInstance().getRoots();
     //for (int i = 0; i < managedRoots.length; i++) {
@@ -147,7 +130,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     //}
 
     for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
-      if (!(fileSystem instanceof NewVirtualFileSystem)) {
+      if (!(fileSystem instanceof CachingVirtualFileSystem)) {
         fileSystem.refresh(asynchronous);
       }
     }
@@ -186,21 +169,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
     myVirtualFileListenerMulticaster.removeListener(listener);
-  }
-
-  public void addModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
-    myModificationAttemptListenerMulticaster.addListener(listener);
-  }
-
-  public void removeModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
-    myModificationAttemptListenerMulticaster.removeListener(listener);
-  }
-
-  public void fireReadOnlyModificationAttempt(@NotNull VirtualFile... files) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    final ModificationAttemptEvent event = new ModificationAttemptEvent(this, files);
-    myModificationAttemptListenerMulticaster.getMulticaster().readOnlyModificationAttempt(event);
   }
 
   public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {

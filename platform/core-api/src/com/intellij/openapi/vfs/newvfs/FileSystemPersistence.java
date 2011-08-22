@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.ex;
+package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.application.ModalityState;
 
-public abstract class VirtualFileManagerEx extends VirtualFileManager {
-  public abstract void registerFileSystem(VirtualFileSystem fileSystem);
-  public abstract void unregisterFileSystem(VirtualFileSystem fileSystem);
-
-  public abstract void fireBeforeRefreshStart(boolean asynchronous);
-  public abstract void fireAfterRefreshFinish(boolean asynchronous);
+/**
+ * @author yole
+ */
+public interface FileSystemPersistence {
+  void refresh(boolean asynchronous, Runnable postAction, ModalityState modalityState);
+  int getCheapFileSystemModificationCount();
 }

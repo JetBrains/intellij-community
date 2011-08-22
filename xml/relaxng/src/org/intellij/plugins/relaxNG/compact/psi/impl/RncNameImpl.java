@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -226,7 +227,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
       final ASTNode newNode = e.getNode();
       assert newNode != null;
 
-      e.getManager().getCodeStyleManager().reformatNewlyAddedElement(blockNode, newNode);
+      CodeStyleManager.getInstance(e.getManager().getProject()).reformatNewlyAddedElement(blockNode, newNode);
 
       final SmartPsiElementPointer<RncDecl> p = SmartPointerManager.getInstance(project).createLazyPointer(e);
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());

@@ -36,6 +36,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.util.PsiUtilBase;
@@ -188,7 +189,7 @@ public class IndexCacheManagerImpl implements CacheManager{
           count[0] += value.intValue();
           return true;
         }
-      }, GlobalSearchScope.fileScope(myProject, file));
+      }, GlobalSearchScopes.fileScope(myProject, file));
     return count[0];
   }
 

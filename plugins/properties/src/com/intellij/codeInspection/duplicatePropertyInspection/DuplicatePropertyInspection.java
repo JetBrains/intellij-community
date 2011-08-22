@@ -39,6 +39,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -146,13 +147,13 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   private void checkFile(final PsiFile file, final InspectionManager manager, GlobalInspectionContextImpl context, final RefManager refManager, final ProblemDescriptionsProcessor processor) {
     if (!(file instanceof PropertiesFile)) return;
     if (!context.isToCheckMember(file, this)) return;
-    final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
+    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
     final PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<IProperty> properties = propertiesFile.getProperties();
     Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return;
     final GlobalSearchScope scope = CURRENT_FILE
-                                    ? GlobalSearchScope.fileScope(file)
+                                    ? GlobalSearchScopes.fileScope(file)
                                     : MODULE_WITH_DEPENDENCIES
                                       ? GlobalSearchScope.moduleWithDependenciesScope(module)
                                       : GlobalSearchScope.projectScope(file.getProject());

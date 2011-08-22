@@ -21,6 +21,7 @@
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +37,7 @@ public abstract class GotoReturnValue implements ReturnValue {
     final PsiExpression condition = statement.getCondition();
     assert condition != null;
     condition.replace(methodCallExpression);
-    return (PsiStatement)statement.getManager().getCodeStyleManager().reformat(statement);
+    return (PsiStatement)CodeStyleManager.getInstance(statement.getManager().getProject()).reformat(statement);
   }
 
   @NonNls

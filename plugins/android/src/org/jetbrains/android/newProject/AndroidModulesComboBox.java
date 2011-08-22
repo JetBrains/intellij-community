@@ -18,6 +18,7 @@ package org.jetbrains.android.newProject;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public class AndroidModulesComboBox extends JComboBox {
         if (value instanceof Module) {
           final Module module = (Module)value;
           setText(module.getName());
-          setIcon(module.getModuleType().getNodeIcon(false));
+          setIcon(ModuleType.get(module).getNodeIcon(false));
         }
         else {
           setText("<html><font color='red'>[none]</font></html>");

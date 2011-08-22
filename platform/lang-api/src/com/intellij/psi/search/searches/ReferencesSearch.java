@@ -69,7 +69,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
 
     public SearchScope getEffectiveSearchScope () {
       if (!myIgnoreAccessScope) {
-        SearchScope accessScope = myElementToSearch.getManager().getSearchHelper().getUseScope(myElementToSearch);
+        SearchScope accessScope = PsiSearchHelper.SERVICE.getInstance(myElementToSearch.getProject()).getUseScope(myElementToSearch);
         return myScope.intersectWith(accessScope);
       }
       else {

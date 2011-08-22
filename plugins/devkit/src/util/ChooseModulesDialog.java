@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -177,7 +178,7 @@ public class ChooseModulesDialog extends DialogWrapper {
       myCellRenderer = new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final Module module = ((Module)value);
-          setIcon(module.getModuleType().getNodeIcon(false));
+          setIcon(ModuleType.get(module).getNodeIcon(false));
           append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
           final XmlFile pluginXml = PluginModuleType.getPluginXml(module);

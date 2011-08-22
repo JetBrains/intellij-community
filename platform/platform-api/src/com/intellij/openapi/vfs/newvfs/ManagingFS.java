@@ -29,7 +29,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.List;
 
-public abstract class ManagingFS implements FileSystemInterface {
+public abstract class ManagingFS implements FileSystemInterface, FileSystemPersistence {
   private static class ManagingFSHolder {
     private static final ManagingFS ourInstance = ApplicationManager.getApplication().getComponent(ManagingFS.class);
   }

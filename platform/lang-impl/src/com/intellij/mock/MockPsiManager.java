@@ -32,7 +32,6 @@ import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValuesManager;
@@ -188,10 +187,6 @@ public class MockPsiManager extends PsiManagerEx {
 
   @Override
   public void dropFileCaches(@NotNull PsiFile file) {
-  }
-
-  public void postponeAutoFormattingInside(Runnable runnable) {
-    PostprocessReformattingAspect.getInstance(getProject()).postponeFormattingInside(runnable);
   }
 
   @NotNull

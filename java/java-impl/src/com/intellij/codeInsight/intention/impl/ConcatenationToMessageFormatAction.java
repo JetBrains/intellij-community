@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiConcatenationUtil;
@@ -78,7 +79,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
       argumentList.add(arrayArg);
     }
     call = (PsiMethodCallExpression) JavaCodeStyleManager.getInstance(project).shortenClassReferences(call);
-    call = (PsiMethodCallExpression) element.getManager().getCodeStyleManager().reformat(call);
+    call = (PsiMethodCallExpression) CodeStyleManager.getInstance(element.getManager().getProject()).reformat(call);
     concatenation.replace(call);
   }
 

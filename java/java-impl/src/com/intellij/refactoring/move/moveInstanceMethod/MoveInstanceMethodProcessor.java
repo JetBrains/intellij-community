@@ -372,7 +372,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         body.accept(new JavaRecursiveElementVisitor() {
           @Override public void visitThisExpression(PsiThisExpression expression) {
             final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
-            if (classReferencedByThis != null) {
+            if (classReferencedByThis != null && !PsiTreeUtil.isAncestor(myMethod, classReferencedByThis, false)) {
               final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
               String paramName = getParameterNameToCreate(classReferencedByThis);
               try {

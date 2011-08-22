@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
@@ -164,7 +163,7 @@ public class SaveAndSyncHandler implements ApplicationComponent {
       if (LOG.isDebugEnabled()) {
         LOG.debug("refresh VFS");
       }
-      VirtualFileManager.getInstance().refresh(true, null, modalityState);
+      RefreshQueue.getInstance().refreshLocalRoots(true, null, modalityState);
     }
   }
 

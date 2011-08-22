@@ -201,7 +201,8 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
 
     if (gppScope instanceof GlobalSearchScope) {
       String name = currentTarget.getName();
-      if (currentTarget.getManager().getSearchHelper().isCheapEnoughToSearch(name, (GlobalSearchScope)gppScope, null, null) ==
+      if (PsiSearchHelper.SERVICE.getInstance(currentTarget.getProject()).isCheapEnoughToSearch(name, (GlobalSearchScope)gppScope, null,
+                                                                                                null) ==
           PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
         return;
       }
@@ -350,7 +351,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
         }
       });
 
-      GlobalSearchScope withTypedAnno = GlobalSearchScope.filesScope(project, files);
+      GlobalSearchScope withTypedAnno = GlobalSearchScopes.filesScope(project, files);
       return withTypedAnno.union(gppExtensions);
     }
 

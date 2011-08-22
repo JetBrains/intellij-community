@@ -17,45 +17,40 @@ package com.intellij.compiler.options;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
-import com.intellij.util.ui.ItemRemovable;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
 public class ProcessedModulesTable extends JPanel {
-  private Table myTable = null;
+  private JBTable myTable = null;
   private MyTableModel myTableModel = null;
 
   public ProcessedModulesTable(final Project project) {
     super(new BorderLayout());
 
-    myTableModel = new MyTableModel();
-    myTable = new Table(myTableModel);
+    myTableModel = new MyTableModel(project);
+    myTable = new JBTable(myTableModel);
     myTable.getEmptyText().setText("No modules configured");
 
     //myTable.setShowGrid(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
-    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTable);
-    pane.setPreferredSize(new Dimension(100, 155));
 
     final TableColumnModel columnModel = myTable.getColumnModel();
 
@@ -73,42 +68,13 @@ public class ProcessedModulesTable extends JPanel {
     moduleColumn.setHeaderValue("Module");
     moduleColumn.setCellRenderer(new MyElementColumnCellRenderer());
 
-    add(pane, BorderLayout.CENTER);
+    final JPanel panel = ToolbarDecorator.createDecorator(myTable)
+      .disableUpDownActions()
+      .setPreferredSize(new Dimension(100, 155))
+      .createPanel();
+    add(panel, BorderLayout.CENTER);
 
-    final JButton addButton = new JButton("Add");
-    addButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Set<Module> projectModules = new HashSet<Module>(Arrays.asList(ModuleManager.getInstance(project).getModules()));
-        projectModules.removeAll(myTableModel.getAllModules());
-        final ChooseModulesDialog chooser = new ChooseModulesDialog(ProcessedModulesTable.this, new ArrayList<Module>(projectModules), "ChooseModule");
-        chooser.show();
-        if (chooser.isOK()) {
-          final List<Module> chosen = chooser.getChosenElements();
-          for (Module module : chosen) {
-            myTableModel.addElement(module, null);
-          }
-        }
-      }
-    });
-
-    final JButton removeButton = new JButton("Remove");
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        removeButton.setEnabled(myTable.getSelectedRowCount() > 0);
-      }
-    });
-    removeButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        TableUtil.removeSelectedItems(myTable);
-      }
-    });
-
-    final JPanel buttonPanel = new JPanel(new GridBagLayout());
-    buttonPanel.add(addButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 6, 0, 0), 0, 0));
-    buttonPanel.add(removeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(5, 6, 0, 0), 0, 0));
-    add(buttonPanel, BorderLayout.EAST);
-
-    final SpeedSearchBase<Table> speedSearch = new SpeedSearchBase<Table>(myTable) {
+    final SpeedSearchBase<JBTable> speedSearch = new SpeedSearchBase<JBTable>(myTable) {
       public int getSelectedIndex() {
         return myTable.getSelectedRow();
       }
@@ -291,11 +257,16 @@ public class ProcessedModulesTable extends JPanel {
     return myTableModel.getModuleAt(row);
   }
 
-  private final class MyTableModel extends AbstractTableModel implements ItemRemovable {
+  private final class MyTableModel extends AbstractTableModel implements EditableModel {
     private final List<Module> myElements = new ArrayList<Module>();
     private final Map<Module, String> myDirNameMap = new HashMap<Module, String>();
     public final int ELEMENT_COLUMN_INDEX = 0;
     public final int DIRNAME_COLUMN_INDEX = 1;
+    private final Project myProject;
+
+    private MyTableModel(Project project) {
+      myProject = project;
+    }
 
     public void sort(Comparator<Module> comparator) {
       Collections.sort(myElements, comparator);
@@ -323,10 +294,28 @@ public class ProcessedModulesTable extends JPanel {
       fireTableRowsInserted(row, row);
     }
 
+    @Override
+    public void addRow() {
+      final Set<Module> projectModules = new HashSet<Module>(Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
+      projectModules.removeAll(getAllModules());
+      final ChooseModulesDialog chooser = new ChooseModulesDialog(ProcessedModulesTable.this, new ArrayList<Module>(projectModules), "ChooseModule");
+      chooser.show();
+      if (chooser.isOK()) {
+        final List<Module> chosen = chooser.getChosenElements();
+        for (Module module : chosen) {
+          addElement(module, null);
+        }
+      }      
+    }
+
     public void removeRow(int idx) {
       final Module element = myElements.remove(idx);
       myDirNameMap.remove(element);
       fireTableRowsDeleted(idx, idx);
+    }
+
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
     }
 
     public void removeElement(Module element) {
@@ -432,7 +421,7 @@ public class ProcessedModulesTable extends JPanel {
       }
       component.setEnabled(ProcessedModulesTable.this.isEnabled());
       if (component instanceof JLabel) {
-        final Icon icon = module != null ? module.getModuleType().getNodeIcon(false) : null;
+        final Icon icon = module != null ? ModuleType.get(module).getNodeIcon(false) : null;
         JLabel label = (JLabel)component;
         label.setIcon(icon);
         label.setDisabledIcon(icon);

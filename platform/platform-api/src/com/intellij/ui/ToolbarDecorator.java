@@ -65,6 +65,7 @@ public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.List
   private String myRemoveName;
   private String myMoveUpName;
   private String myMoveDownName;
+  private Dimension myPreferredSize;
   private AddRemoveUpDownPanel myPanel;
   private JList myList;
 
@@ -303,6 +304,12 @@ public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.List
     return this;
   }
 
+  public ToolbarDecorator disableUpDownActions() {
+    myUpActionEnabled = false;
+    myDownActionEnabled = false;
+    return this;
+  }
+
   public ToolbarDecorator disableDownAction() {
     myDownActionEnabled = false;
     return this;
@@ -371,6 +378,11 @@ public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.List
     return this;
   }
 
+  public ToolbarDecorator setPreferredSize(Dimension size) {
+    myPreferredSize = size;
+    return this;
+  }
+
   public JPanel createPanel() {
     final AddRemoveUpDownPanel.Buttons[] buttons = getButtons();
     myPanel = new AddRemoveUpDownPanel(this,
@@ -381,6 +393,9 @@ public class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.List
                              buttons);
     myPanel.setBorder(myBorder);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable == null ? myList == null ? myTree : myList : myTable);
+    if (myPreferredSize != null) {
+      scrollPane.setPreferredSize(myPreferredSize);
+    }
     scrollPane.setBorder(IdeBorderFactory.createEmptyBorder(0));
     final JPanel panel = new JPanel(new BorderLayout()) {
       @Override

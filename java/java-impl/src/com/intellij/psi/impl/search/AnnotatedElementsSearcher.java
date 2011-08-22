@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.search;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -35,12 +37,23 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     Class<? extends PsiModifierListOwner>[] types = p.getTypes();
 
     final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : null;
-    final Collection<? extends PsiElement> annotations = JavaAnnotationIndex.getInstance().get(annClass.getName(), annClass.getProject(), scope);
+    final Collection<? extends PsiElement> annotations = ApplicationManager.getApplication().runReadAction(
+      new Computable<Collection<? extends PsiElement>>() {
+        @Override
+        public Collection<? extends PsiElement> compute() {
+          return JavaAnnotationIndex.getInstance().get(annClass.getName(), annClass.getProject(), scope);
+        }
+      });
     for (PsiElement elt : annotations) {
       if (notAnnotation(elt)) continue;
 
-      PsiAnnotation ann = (PsiAnnotation)elt;
-      final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();
+      final PsiAnnotation ann = (PsiAnnotation)elt;
+      final PsiJavaCodeReferenceElement ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiJavaCodeReferenceElement>() {
+        @Override
+        public PsiJavaCodeReferenceElement compute() {
+          return ann.getNameReferenceElement();
+        }
+      });
       if (ref == null) continue;
 
       PsiElement parent = ann.getParent();
@@ -56,7 +69,12 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
         throw new PsiInvalidElementAccessException(candidate);
       }
 
-      if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) continue;
+      if (!psiManager.areElementsEquivalent(ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+        @Override
+        public PsiElement compute() {
+          return ref.resolve();
+        }
+      }), annClass)) continue;
       if (useScope instanceof GlobalSearchScope &&
           !((GlobalSearchScope)useScope).contains(candidate.getContainingFile().getVirtualFile())) {
         continue;

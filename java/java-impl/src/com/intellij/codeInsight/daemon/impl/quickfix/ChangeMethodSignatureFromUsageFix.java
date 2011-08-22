@@ -109,15 +109,15 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
     if (myTargetMethod.getContainingClass().findMethodsByName(targetMethodName, true).length == 1) {
       if (newParams.size() == 1) {
         final ParameterInfoImpl p = newParams.iterator().next();
-        return "Add " + p.getTypeText() + " as " + (ArrayUtil.find(myNewParametersInfo, p) + 1) + " parameter to method " + targetMethodName;
+        return QuickFixBundle.message("add.parameter.from.usage.text", p.getTypeText(), (ArrayUtil.find(myNewParametersInfo, p) + 1), targetMethodName);
       }
       if (removedParams.size() == 1) {
         final ParameterInfoImpl p = removedParams.iterator().next();
-        return "Remove " + (p.getOldIndex() + 1) + " parameter from method " + targetMethodName;
+        return QuickFixBundle.message("remove.parameter.from.usage.text", (p.getOldIndex() + 1), targetMethodName);
       }
       if (changedParams.size() == 1) {
         final ParameterInfoImpl p = changedParams.iterator().next();
-        return "Change " + (p.getOldIndex() + 1)+ " parameter of method " +targetMethodName + " from " + myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText() + " to " + p.getTypeText();
+        return QuickFixBundle.message("change.parameter.from.usage.text", (p.getOldIndex() + 1), targetMethodName, myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText(),  p.getTypeText());
       }
     }
     return "<html> Change signature of " + targetMethodName + "(" + buf.toString() + ")</html>";

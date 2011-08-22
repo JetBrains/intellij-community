@@ -16,9 +16,12 @@
 
 package com.intellij.codeInsight.template;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,5 +79,9 @@ public abstract class TemplateContextType {
   @Nullable
   public TemplateContextType getBaseContextType() {
     return myBaseContextType != null ? EP_NAME.findExtension(myBaseContextType) : null;
+  }
+
+  public Document createDocument(CharSequence text, Project project) {
+    return EditorFactory.getInstance().createDocument(text);
   }
 }

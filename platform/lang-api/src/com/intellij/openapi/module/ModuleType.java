@@ -83,4 +83,8 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public boolean isValidSdk(final Module module, final Sdk projectSdk) {
     return true;
   }
+
+  public static ModuleType get(Module module) {
+    return ModuleTypeManager.getInstance().findByID(module.getOptionValue(Module.ELEMENT_TYPE));
+  }
 }

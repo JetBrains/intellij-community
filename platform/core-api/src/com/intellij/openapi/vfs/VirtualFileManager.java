@@ -16,8 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationComponentLocator;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.util.messages.Topic;
@@ -42,7 +41,7 @@ public abstract class VirtualFileManager implements ModificationTracker{
    */
   @NotNull
   public static VirtualFileManager getInstance(){
-    return ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
+    return ApplicationComponentLocator.getComponent(VirtualFileManager.class);
   }
 
   /**
@@ -72,8 +71,6 @@ public abstract class VirtualFileManager implements ModificationTracker{
    * after the operation is completed.
    */
   public abstract void refresh(boolean asynchronous, @Nullable Runnable postAction);
-
-  public abstract void refresh(boolean asynchronous, @Nullable Runnable postAction, ModalityState modalityState);
 
   /**
    * Searches for the file specified by given URL. URL is a string which uniquely identifies file in all
@@ -122,11 +119,6 @@ public abstract class VirtualFileManager implements ModificationTracker{
    * @param listener  the listener
    */
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
-
-  public abstract void addModificationAttemptListener(@NotNull ModificationAttemptListener listener);
-  public abstract void removeModificationAttemptListener(@NotNull ModificationAttemptListener listener);
-
-  public abstract void fireReadOnlyModificationAttempt(@NotNull VirtualFile... files);
 
   /**
    * Constructs URL by specified protocol and path. URL is a string which uniquely identifies file in all

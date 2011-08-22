@@ -27,6 +27,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import gnu.trove.THashSet;
@@ -70,17 +71,21 @@ public class DefinitionResolver extends CommonElement.Visitor implements
       myVisitedFiles.set(new THashSet<PsiFile>(TObjectHashingStrategy.IDENTITY));
     }
     if (value != null && myVisitedFiles.get().add(value)) {
-      if (value instanceof RncFile) {
-        final Grammar grammar = ((RncFile)value).getGrammar();
-        if (grammar != null) {
-          grammar.acceptChildren(this);
-        }
-      } else if (value instanceof XmlFile) {
-        final DomManager mgr = DomManager.getDomManager(value.getProject());
-        final DomFileElement<RngGrammar> element = mgr.getFileElement((XmlFile)value, RngGrammar.class);
-        if (element != null) {
-          element.getRootElement().acceptChildren(this);
-        }
+      doVisitRncOrRngFile(value, this);
+    }
+  }
+
+  private static void doVisitRncOrRngFile(PsiFile file, CommonElement.Visitor visitor) {
+    if (file instanceof RncFile) {
+      final Grammar grammar = ((RncFile)file).getGrammar();
+      if (grammar != null) {
+        grammar.acceptChildren(visitor);
+      }
+    } else if (file instanceof XmlFile) {
+      final DomManager mgr = DomManager.getDomManager(file.getProject());
+      final DomFileElement<RngGrammar> element = mgr.getFileElement((XmlFile)file, RngGrammar.class);
+      if (element != null) {
+        element.getRootElement().acceptChildren(visitor);
       }
     }
   }
@@ -181,6 +186,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
   private static class BackwardDefinitionResolver implements PsiElementProcessor<XmlFile> {
     private final String myValue;
     private Define myResult;
+    private final Set<PsiFile> myVisitedPsiFiles = new HashSet<PsiFile>();
 
     public BackwardDefinitionResolver(String value) {
       myValue = value;
@@ -201,6 +207,14 @@ public class DefinitionResolver extends CommonElement.Visitor implements
           public void visitDefine(Define define) {
             if (myValue.equals(define.getName())) {
               myResult = define;
+            }
+          }
+
+          @Override
+          public void visitInclude(Include include) {
+            final PsiFile file = include.getInclude();
+            if (file != null && myVisitedPsiFiles.add(file)) {
+              doVisitRncOrRngFile(file, this);
             }
           }
         });

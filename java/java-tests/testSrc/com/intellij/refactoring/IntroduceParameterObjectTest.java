@@ -115,6 +115,24 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     doTest();
   }
 
+  public void testSameTypeAndVarargs() throws Exception {
+    doTest(false, false, new Function<PsiMethod, ParameterTablePanel.VariableData[]>() {
+      @Override
+      public ParameterTablePanel.VariableData[] fun(PsiMethod method) {
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+
+        final ParameterTablePanel.VariableData[] datas = new ParameterTablePanel.VariableData[parameters.length - 1];
+        for (int i = 0; i < parameters.length - 1; i++) {
+          PsiParameter parameter = parameters[i];
+          datas[i] = new ParameterTablePanel.VariableData(parameter);
+          datas[i].name = parameter.getName();
+          datas[i].passAsParameter = true;
+        }
+        return datas;
+      }
+    });
+  }
+
   public void testTypeParametersWithChosenSubtype() throws Exception {
     doTest(false, true, new Function<PsiMethod, ParameterTablePanel.VariableData[]>() {
       @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs;
+package com.intellij.codeInsight.intention;
 
-import java.util.EventObject;
+import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
-public class ModificationAttemptEvent extends EventObject{
-  private final VirtualFile[] myFiles;
-  private boolean myConsumed = false;
+public class ExpandStaticImportActionTest extends LightIntentionActionTestCase {
 
-  public ModificationAttemptEvent(VirtualFileManager manager, VirtualFile[] files) {
-    super(manager);
-    myFiles = files;
-  }
+  public void test() throws Exception { doAllTests(); }
 
-  public VirtualFile[] getFiles() {
-    return myFiles;
-  }
-
-  public void consume(){
-    myConsumed = true;
-  }
-
-  public boolean isConsumed() {
-    return myConsumed;
+  @Override
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/expandStaticImport";
   }
 }

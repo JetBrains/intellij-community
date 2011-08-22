@@ -20,6 +20,7 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,7 +43,7 @@ public class ModuleTypeUsagesCollector extends AbstractApplicationUsagesCollecto
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
     Set<String> modulesTypes = new HashSet<String>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      modulesTypes.add(module.getModuleType().getId());
+      modulesTypes.add(ModuleType.get(module).getId());
     }
     return ContainerUtil.map2Set(modulesTypes, new Function<String, UsageDescriptor>() {
       @Override

@@ -22,6 +22,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -36,6 +38,7 @@ import java.util.*;
 public class MergeMethodArguments extends FixableUsageInfo {
   private final PsiMethod method;
   private final PsiClass myContainingClass;
+  private final boolean myChangeSignature;
   private final boolean myKeepMethodAsDelegate;
   private final List<PsiTypeParameter> typeParams;
   private final String className;
@@ -50,7 +53,7 @@ public class MergeMethodArguments extends FixableUsageInfo {
                               String parameterName,
                               int[] paramsToMerge,
                               List<PsiTypeParameter> typeParams,
-                              final boolean keepMethodAsDelegate, final PsiClass containingClass) {
+                              final boolean keepMethodAsDelegate, final PsiClass containingClass, boolean changeSignature) {
     super(method);
     this.paramsToMerge = paramsToMerge;
     this.packageName = packageName;
@@ -58,7 +61,8 @@ public class MergeMethodArguments extends FixableUsageInfo {
     this.parameterName = parameterName;
     this.method = method;
     myContainingClass = containingClass;
-    lastParamIsVararg = method.isVarArgs();
+    myChangeSignature = changeSignature;
+    lastParamIsVararg = method.isVarArgs() && isParameterToMerge(method.getParameterList().getParametersCount() - 1);
     myKeepMethodAsDelegate = keepMethodAsDelegate;
     this.typeParams = new ArrayList<PsiTypeParameter>(typeParams);
   }
@@ -111,12 +115,14 @@ public class MergeMethodArguments extends FixableUsageInfo {
       public void run() {
         final PsiMethod psiMethod = meth.getElement();
         if (psiMethod == null) return;
-        final ChangeSignatureProcessor changeSignatureProcessor =
-          new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod,
-                                       myKeepMethodAsDelegate, null, psiMethod.getName(),
-                                       psiMethod.getReturnType(),
-                                       parametersInfo.toArray(new ParameterInfoImpl[parametersInfo.size()]));
-        changeSignatureProcessor.run();
+        if (myChangeSignature) {
+          final ChangeSignatureProcessor changeSignatureProcessor =
+            new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod,
+                                         myKeepMethodAsDelegate, null, psiMethod.getName(),
+                                         psiMethod.getReturnType(),
+                                         parametersInfo.toArray(new ParameterInfoImpl[parametersInfo.size()]));
+          changeSignatureProcessor.run();
+        }
       }
     };
     if (ApplicationManager.getApplication().isUnitTestMode()) {

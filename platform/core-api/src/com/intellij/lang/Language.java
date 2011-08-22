@@ -17,7 +17,7 @@ package com.intellij.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
@@ -126,7 +126,7 @@ public abstract class Language extends UserDataHolderBase {
 
   @Nullable
   public LanguageFileType getAssociatedFileType() {
-    final FileType[] types = FileTypeManager.getInstance().getRegisteredFileTypes();
+    final FileType[] types = FileTypeRegistry.getInstance().getRegisteredFileTypes();
     for (final FileType fileType : types) {
       if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == this) {
         return (LanguageFileType)fileType;

@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +38,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
 
     renderer.append(module.isDisposed() ? "" : module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     appendCount(renderer);
-    renderer.setIcon(module.getModuleType().getNodeIcon(expanded));
+    renderer.setIcon(ModuleType.get(module).getNodeIcon(expanded));
   }
 
   @Override

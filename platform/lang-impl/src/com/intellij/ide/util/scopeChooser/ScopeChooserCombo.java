@@ -36,10 +36,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -165,13 +162,13 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
     List<NamedScope> changeLists = ChangeListsScopesProvider.getInstance(myProject).getCustomScopes();
     for (NamedScope changeListScope : changeLists) {
-      model.addElement(new ScopeDescriptor(GlobalSearchScope.filterScope(myProject, changeListScope)));
+      model.addElement(new ScopeDescriptor(GlobalSearchScopes.filterScope(myProject, changeListScope)));
     }
     final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
     for (NamedScopesHolder holder : holders) {
       NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
       for (NamedScope scope : scopes) {
-        model.addElement(new ScopeDescriptor(GlobalSearchScope.filterScope(myProject, scope)));
+        model.addElement(new ScopeDescriptor(GlobalSearchScopes.filterScope(myProject, scope)));
       }
     }
 
@@ -201,8 +198,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     if (suggestSearchInLibs) {
       result.add(GlobalSearchScope.allScope(project));
     }
-    result.add(GlobalSearchScope.projectProductionScope(project));
-    result.add(GlobalSearchScope.projectTestScope(project));
+    result.add(GlobalSearchScopes.projectProductionScope(project));
+    result.add(GlobalSearchScopes.projectTestScope(project));
 
     if (dataContext != null) {
       PsiElement dataContextElement = getDataContextElement(dataContext);
@@ -350,7 +347,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
       if (files != null) {
         final List<VirtualFile> openFiles = Arrays.asList(files);
-        result.add(new DelegatingGlobalSearchScope(GlobalSearchScope.filesScope(project, openFiles)){
+        result.add(new DelegatingGlobalSearchScope(GlobalSearchScopes.filesScope(project, openFiles)){
           @Override
           public String getDisplayName() {
             return "Selected files";

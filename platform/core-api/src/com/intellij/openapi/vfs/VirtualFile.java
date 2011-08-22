@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -180,7 +178,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public void rename(Object requestor, @NotNull @NonNls String newName) throws IOException {
     if (getName().equals(newName)) return;
-    if (!VfsUtil.isValidName(newName)) {
+    if (!isValidName(newName)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
     }
 
@@ -263,7 +261,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   @NotNull
   public FileType getFileType() {
-    return FileTypeManager.getInstance().getFileTypeByFile(this);
+    return FileTypeRegistry.getInstance().getFileTypeByFile(this);
   }
 
   /**
@@ -322,7 +320,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("invalid.directory.create.files"));
     }
 
-    if (!VfsUtil.isValidName(name)) {
+    if (!isValidName(name)) {
       throw new IOException(VfsBundle.message("directory.invalid.name.error", name));
     }
 
@@ -352,7 +350,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("invalid.directory.create.files"));
     }
 
-    if (!VfsUtil.isValidName(name)) {
+    if (!isValidName(name)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", name));
     }
 
@@ -392,7 +390,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
-    VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+    EncodingManager.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
       public VirtualFile compute() throws IOException {
         getFileSystem().moveFile(requestor, VirtualFile.this, newParent);
         return VirtualFile.this;
@@ -409,7 +407,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
     }
 
-    return VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+    return EncodingManager.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
       public VirtualFile compute() throws IOException {
         return getFileSystem().copyFile(requestor, VirtualFile.this, newParent, copyName);
       }
@@ -575,13 +573,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable);
 
-  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable, ModalityState modalityState) {
-    if (modalityState != ModalityState.NON_MODAL) {
-      LOG.error("Refresh with non-modal modality state is not implemented for file: " + this);
-    }
-    refresh(asynchronous, recursive, postRunnable);
-  }
-
   public String getPresentableName() {
     return getName();
   }
@@ -628,5 +619,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   public boolean isInLocalFileSystem() {
     return false;
+  }
+
+  public static boolean isValidName(@NotNull String name) {
+    return name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
 }

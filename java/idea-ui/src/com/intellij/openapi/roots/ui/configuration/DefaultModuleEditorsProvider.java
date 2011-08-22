@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ public class DefaultModuleEditorsProvider implements ModuleConfigurationEditorPr
   public ModuleConfigurationEditor[] createEditors(ModuleConfigurationState state) {
     ModifiableRootModel rootModel = state.getRootModel();
     Module module = rootModel.getModule();
-    if (!(module.getModuleType() instanceof JavaModuleType)) {
+    if (!(ModuleType.get(module) instanceof JavaModuleType)) {
       return ModuleConfigurationEditor.EMPTY;
     }
 

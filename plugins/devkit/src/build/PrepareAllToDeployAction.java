@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
@@ -36,7 +37,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
 
     List<Module> pluginModules = new ArrayList<Module>();
     for (Module aModule : ModuleManager.getInstance(project).getModules()) {
-      if (aModule.getModuleType() instanceof PluginModuleType) {
+      if (ModuleType.get(aModule) instanceof PluginModuleType) {
         pluginModules.add(aModule);
       }
     }
@@ -55,7 +56,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
       for (Module aModule : (ModuleManager.getInstance(project).getModules())) {
-        if (aModule.getModuleType() instanceof PluginModuleType) {
+        if (ModuleType.get(aModule) instanceof PluginModuleType) {
           moduleCount++;
         }
       }
@@ -66,7 +67,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
     }
     else if (moduleCount > 0) {
       final Module module = e.getData(LangDataKeys.MODULE);
-      if (module == null || !(module.getModuleType() instanceof PluginModuleType)) {
+      if (module == null || !(ModuleType.get(module) instanceof PluginModuleType)) {
         enabled = true;
       }
     }

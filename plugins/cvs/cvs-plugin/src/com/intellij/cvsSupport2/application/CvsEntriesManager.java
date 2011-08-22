@@ -384,7 +384,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
     return myStringToSettingsMap.get(cvsRoot);
   }
 
-  public UserDirIgnores getUserdIgnores() {
+  public UserDirIgnores getUserDirIgnores() {
     return myUserDirIgnores;
   }
 
@@ -396,8 +396,8 @@ public class CvsEntriesManager extends VirtualFileAdapter {
     }
   }
 
-  private boolean isUserHomeCvsIgnoreFile(VirtualFile file) {
-    return myUserDirIgnores.userHomeCvsIgnoreFile().equals(CvsVfsUtil.getFileFor(file));
+  private static boolean isUserHomeCvsIgnoreFile(VirtualFile file) {
+    return UserDirIgnores.userHomeCvsIgnoreFile().equals(CvsVfsUtil.getFileFor(file));
   }
 
   public boolean isActive() {

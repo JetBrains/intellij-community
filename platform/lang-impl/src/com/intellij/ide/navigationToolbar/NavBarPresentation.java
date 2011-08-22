@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -64,7 +65,7 @@ public class NavBarPresentation {
   public static Icon getIcon(final Object object, final boolean open) {
     if (!NavBarModel.isValid(object)) return null;
     if (object instanceof Project) return PROJECT_ICON;
-    if (object instanceof Module) return ((Module)object).getModuleType().getNodeIcon(false);
+    if (object instanceof Module) return ModuleType.get(((Module)object)).getNodeIcon(false);
     try {
       if (object instanceof PsiElement) {
         return ApplicationManager.getApplication().runReadAction(new Computable<Icon>() {
@@ -80,7 +81,7 @@ public class NavBarPresentation {
     }
     if (object instanceof JdkOrderEntry) return ((JdkOrderEntry)object).getJdk().getSdkType().getIcon();
     if (object instanceof LibraryOrderEntry) return IconLoader.getIcon("/nodes/ppLibClosed.png");
-    if (object instanceof ModuleOrderEntry) return ((ModuleOrderEntry)object).getModule().getModuleType().getNodeIcon(false);
+    if (object instanceof ModuleOrderEntry) return ModuleType.get(((ModuleOrderEntry)object).getModule()).getNodeIcon(false);
     return null;
   }
 

@@ -450,8 +450,11 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
     else if (getExprMarker() != null) {
-      myEditor.getCaretModel().moveToOffset(getExprMarker().getStartOffset());
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      final RangeMarker exprMarker = getExprMarker();
+      if (exprMarker.isValid()) {
+        myEditor.getCaretModel().moveToOffset(exprMarker.getStartOffset());
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      }
     }
     super.moveOffsetAfter(success);
     if (success) {
