@@ -154,7 +154,7 @@ class GitOldChangesCollector extends GitChangesCollector {
       return;
     }
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.DIFF);
-    handler.addParameters("--name-status", "--diff-filter=ADCMRUX", "-M", "HEAD");
+    handler.addParameters("--name-status", "--diff-filter=ADCMRUXT", "-M", "HEAD");
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
@@ -163,7 +163,7 @@ class GitOldChangesCollector extends GitChangesCollector {
     if (handler.isLargeCommandLine()) {
       // if there are too much files, just get all changes for the project
       handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.DIFF);
-      handler.addParameters("--name-status", "--diff-filter=ADCMRUX", "-M", "HEAD");
+      handler.addParameters("--name-status", "--diff-filter=ADCMRUXT", "-M", "HEAD");
       handler.setNoSSH(true);
       handler.setSilent(true);
       handler.setStdoutSuppressed(true);
