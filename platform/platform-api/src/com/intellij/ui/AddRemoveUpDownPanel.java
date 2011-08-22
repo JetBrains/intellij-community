@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
@@ -173,7 +174,7 @@ class AddRemoveUpDownPanel extends JPanel {
     public ShortcutSet getShortcut() {
       switch (myButton) {
         case ADD: return CommonShortcuts.getNewForDialogs();
-        case REMOVE: return CustomShortcutSet.fromString("DELETE");
+        case REMOVE: return CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
         case UP: return CustomShortcutSet.fromString("alt UP");
         case DOWN: return CustomShortcutSet.fromString("alt DOWN");
       }
@@ -201,14 +202,14 @@ class AddRemoveUpDownPanel extends JPanel {
       }
     }
 
-    @Override
-    public boolean isEnabled() {
-      if (myButton == Buttons.REMOVE) {
-        final JComponent c = getContextComponent();
-        if (c instanceof JTable && ((JTable)c).isEditing()) return false;
-      }
-      return super.isEnabled();
-    }
+    //@Override
+    //public boolean isEnabled() {
+    //  if (myButton == Buttons.REMOVE) {
+    //    final JComponent c = getContextComponent();
+    //    if (c instanceof JTable && ((JTable)c).isEditing()) return false;
+    //  }
+    //  return super.isEnabled();
+    //}
 
     boolean isAddButton() {
       return myButton == Buttons.ADD;
