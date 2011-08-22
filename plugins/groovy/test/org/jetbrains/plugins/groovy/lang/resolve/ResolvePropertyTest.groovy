@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -32,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.*
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 
 /**
  * @author ven
@@ -730,5 +730,18 @@ print map.cla<caret>ss''')
     assert !ref.resolve()
   }
 
+  public void testResolveInsideWith0() {
+    def resolved = resolve('a.groovy')
+
+    assertInstanceOf( resolved , GrAccessorMethod)
+    assertEquals(resolved.containingClass.name, 'A')
+  }
+
+  public void testResolveInsideWith1() {
+      def resolved = resolve('a.groovy')
+
+      assertInstanceOf( resolved , GrField)
+      assertEquals(resolved.containingClass.name, 'B')
+    }
 
 }
