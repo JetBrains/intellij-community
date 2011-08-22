@@ -15,12 +15,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.django.facet.DjangoFacetType;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.console.PyConsoleType;
+import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -301,7 +300,7 @@ public class ResolveImportUtil {
 
     List<PsiElement> results;
 
-    if (isConsole(footholdFile)) {
+    if (PydevConsoleRunner.isInPydevConsole(foothold)) {
       results = visitRootsInAllModules(moduleQualifiedName, foothold, footholdFile);
     }
     else {
@@ -312,22 +311,6 @@ public class ResolveImportUtil {
       cache.put(moduleQualifiedName, results);
     }
     return results;
-  }
-
-  private static boolean isConsole(@Nullable PsiFile footholdFile) {
-    if (footholdFile == null || footholdFile.getVirtualFile() == null || !(footholdFile.getVirtualFile() instanceof LightVirtualFile)) {
-      return false;
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    String name = footholdFile.getVirtualFile().getName();
-
-    for (PyConsoleType type : PyConsoleType.values()) {
-      if (type.getTitle().equals(name)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static List<PsiElement> visitRootsInAllModules(PyQualifiedName moduleQualifiedName, PsiElement foothold, PsiFile footholdFile) {
