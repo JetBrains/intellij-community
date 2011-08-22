@@ -1372,18 +1372,11 @@ public class ProjectWrapper {
                     if (property == null || !property && force) {
                         final boolean outdated = getModule(moduleName).isOutdated(flags.tests(), myHistory);
 
-                        if (flags.logStream() != null) {
-                            flags.logStream().println("Module " + moduleName + " is " + (outdated ? "" : "not ") + "outdated.");
-                            flags.logStream().println("forced == " + force);
-                        }
 
                         if (force || outdated) {
                             visited.put(moduleName, true);
                             modules.add(myProject.getModules().get(moduleName));
-                            if (flags.logStream() != null) {
-                                flags.logStream().println("Module " + moduleName + " added to the propagated list.");
-                                flags.logStream().println("Forced switched to true.");
-                            }
+
                             run(reversedDependencies.get(moduleName), true);
                         } else {
                             if (property == null) {

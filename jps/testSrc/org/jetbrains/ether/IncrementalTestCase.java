@@ -130,11 +130,13 @@ public abstract class IncrementalTestCase extends TestCase {
         first.rebuild();
         first.save();
 
+        Thread.sleep(500);
+
         modify();
 
         final ProjectWrapper second = ProjectWrapper.load(getWorkDir(), null, true);
 
-        final PrintStream stream = new PrintStream(new FileOutputStream(getWorkDir() + ".log"));
+        final PrintStream stream = new PrintStream(new FileOutputStream(getWorkDir() + ".log"), true);
 
         try {
             second.makeModule(null, new ProjectWrapper.Flags() {
