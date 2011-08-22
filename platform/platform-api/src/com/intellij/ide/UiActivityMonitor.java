@@ -22,9 +22,11 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -59,34 +61,50 @@ public class UiActivityMonitor implements ApplicationComponent {
   }
 
 
-  public void addActivity(@NotNull Project project, Object activity) {
-    if (!hasObjectFor(project)) {
-      Project[] open = ProjectManager.getInstance().getOpenProjects();
-      for (Project each : open) {
-        if (each == project) {
-          initBusyObjectFor(project);
-          break;
+  public void addActivity(@NotNull final Project project, final Object activity) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (!hasObjectFor(project)) {
+          Project[] open = ProjectManager.getInstance().getOpenProjects();
+          for (Project each : open) {
+            if (each == project) {
+              initBusyObjectFor(project);
+              break;
+            }
+          }
         }
+
+        _getBusy(project).addActivity(activity);
       }
-    }
-
-    _getBusy(project).addActivity(activity);
+    });
   }
 
-  boolean hasObjectFor(Project project) {
-    return myObjects.containsKey(project);
+  public void removeActivity(@NotNull final Project project, final Object activity) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        _getBusy(project).removeActivity(activity);
+      }
+    });
   }
 
-  public void removeActivity(@NotNull Project project, Object activity) {
-    _getBusy(project).removeActivity(activity);
+  public void addActivity(final Object activity) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        _getBusy(null).addActivity(activity);
+      }
+    });
   }
 
-  public void addActivity(Object activity) {
-    _getBusy(null).addActivity(activity);
-  }
-
-  public void removeActivity(Object activity) {
-    _getBusy(null).removeActivity(activity);
+  public void removeActivity(final Object activity) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        _getBusy(null).removeActivity(activity);
+      }
+    });
   }
 
   private BusyImpl _getBusy(@Nullable Object key) {
@@ -99,6 +117,10 @@ public class UiActivityMonitor implements ApplicationComponent {
     myObjects.put(key, object);
   }
   
+  boolean hasObjectFor(Project project) {
+    return myObjects.containsKey(project);
+  }
+
   private BusyObjectGlobalImpl getGlobalBusy() {
     return (BusyObjectGlobalImpl)myObjects.get(null);
   }
@@ -138,8 +160,16 @@ public class UiActivityMonitor implements ApplicationComponent {
     }
 
     public void removeActivity(Object activity) {
+      if (!myActivities.contains(activity)) return;
+
       myActivities.remove(activity);
-      onReady();
+
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          onReady();
+        }
+      });
     }
   }
 
