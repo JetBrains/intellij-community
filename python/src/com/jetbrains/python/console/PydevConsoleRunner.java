@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.ConsoleHistoryController;
+import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -201,7 +202,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           final PythonConsoleView consoleView = getConsoleView();
 
           consoleView.setConsoleCommunication(myPydevConsoleCommunication);
-          consoleView.setExecutionHandler(getConsoleExecuteActionHandler());
+          consoleView.setExecutionHandler(myConsoleExecuteActionHandler);
           myProcessHandler.addProcessListener(new ProcessAdapter() {
             @Override
             public void onTextAvailable(ProcessEvent event, Key outputType) {
@@ -217,7 +218,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
             consoleView.executeStatement(statement + "\n", ProcessOutputTypes.SYSTEM);
           }
 
-          fireConsoleInitializedEvent();
+          fireConsoleInitializedEvent(consoleView);
         }
       });
     }
@@ -390,13 +391,13 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myConsoleListeners.remove(consoleListener);
   }
 
-  private void fireConsoleInitializedEvent() {
+  private void fireConsoleInitializedEvent(LanguageConsoleViewImpl consoleView) {
     for (ConsoleListener listener : myConsoleListeners) {
-      listener.handleConsoleInitialized();
+      listener.handleConsoleInitialized(consoleView);
     }
   }
 
   public interface ConsoleListener {
-    void handleConsoleInitialized();
+    void handleConsoleInitialized(LanguageConsoleViewImpl consoleView);
   }
 }

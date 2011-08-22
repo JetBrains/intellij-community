@@ -19,16 +19,11 @@ class IORedirector:
         pass
 
     def __getattr__(self, name):
-        for r in self._redirectTo:
-            if hasattr(r, name):
-                t = type(r.__getattribute__(name)).__name__
-                if t == 'builtin_function_or_method' or t == 'method':
-                    def foo(*args):
-                        return r.__getattribute__(name)(*args)
-                    return foo
-        raise AttributeError(name)
+            for r in self._redirectTo:
+                if hasattr(r, name):
+                    return r.__getattribute__(name)
+            raise AttributeError(name)
 
-    
 class IOBuf:
     '''This class works as a replacement for stdio and stderr.
     It is a buffer and when its contents are requested, it will erase what

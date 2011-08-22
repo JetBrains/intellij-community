@@ -217,8 +217,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
     }
 
-    private void processReference(PyElement node, PsiReference reference) {
-      if (reference.isSoft()) return;
+    private void processReference(PyElement node, @Nullable PsiReference reference) {
+      if (reference == null || reference.isSoft()) return;
       HighlightSeverity severity = HighlightSeverity.ERROR;
       if (reference instanceof PsiReferenceEx) {
         severity = ((PsiReferenceEx) reference).getUnresolvedHighlightSeverity(myTypeEvalContext);

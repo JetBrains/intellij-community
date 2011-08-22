@@ -124,7 +124,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         indent += getPythonIndent();
         flag = true;
       }
-      if ((myCurrentIndentSize != -1 && indent >= myCurrentIndentSize) || flag) {
+      if ((myCurrentIndentSize >0 && indent>0) || flag) {
         myCurrentIndentSize = indent;
         indentEditor(currentEditor, indent);
         more(console, currentEditor);
@@ -266,7 +266,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   @Override
   public void runExecuteAction(LanguageConsoleImpl languageConsole) {
     if (isEnabled()) {
-      if (myConsoleCommunication.isExecuting() && !myConsoleCommunication.isWaitingForInput()) {
+      if (!canExecuteNow()) {
         HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getPrevCommandRunningMessage());
       }
       else {
@@ -276,6 +276,10 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     else {
       HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getConsoleIsNotEnabledMessage());
     }
+  }
+
+  public boolean canExecuteNow() {
+    return !myConsoleCommunication.isExecuting() || myConsoleCommunication.isWaitingForInput();
   }
 
   protected String getConsoleIsNotEnabledMessage() {
