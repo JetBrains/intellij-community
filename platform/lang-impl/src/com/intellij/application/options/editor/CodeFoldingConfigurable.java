@@ -85,13 +85,16 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        for (Pair<Editor, Project> each : toUpdate) {
-          final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(each.second);
-          if (foldingManager != null) {
-            foldingManager.buildInitialFoldings(each.first);
+          for (Pair<Editor, Project> each : toUpdate) {
+              if (each.second == null || each.second.isDisposed()) {
+                  continue;
+              }
+              final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(each.second);
+              if (foldingManager != null) {
+                  foldingManager.buildInitialFoldings(each.first);
+              }
           }
-        }
-        EditorOptionsPanel.reinitAllEditors();
+          EditorOptionsPanel.reinitAllEditors();
       }
     }, ModalityState.NON_MODAL);
   }

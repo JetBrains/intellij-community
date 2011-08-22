@@ -3,7 +3,7 @@ class Test {
     private final String string;
 
     Test() {
-        string =<caret> "";
+        <caret>string = "";
         myTimer = string;
   }
 }

@@ -38,11 +38,11 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Dec 18, 2007
  */
-public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key>{
+public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key> implements PersistentMap<Key, Value> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentHashMap");
 
   private PersistentHashMapValueStorage myValueStorage;
-  private final DataExternalizer<Value> myValueExternalizer;
+  protected final DataExternalizer<Value> myValueExternalizer;
   private static final long NULL_ADDR = 0;
   private static final int INITIAL_INDEX_SIZE;
   static {

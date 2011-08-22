@@ -134,7 +134,6 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
     try {
       long timeStamp = myKernel.getTimeStamp(file.getPath());
       if (checkMe && timeStamp != super.getTimeStamp(file)) {
-        timeStamp = myKernel.getTimeStamp(file.getPath());
         LOG.error(file.getPath());
       }
       return timeStamp;
@@ -145,6 +144,20 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   }
 
   @Override
+  public long getLength(@NotNull VirtualFile file) {
+    try {
+      long length = myKernel.getLength(file.getPath());
+      if (checkMe && length != super.getLength(file)) {
+        LOG.error(file.getPath());
+      }
+      return length;
+    }
+    catch (FileNotFoundException e) {
+      return super.getLength(file);
+    }
+  }
+
+    @Override
   public WatchRequest addRootToWatch(@NotNull String rootPath, boolean toWatchRecursively) {
     throw new UnsupportedOperationException();
   }

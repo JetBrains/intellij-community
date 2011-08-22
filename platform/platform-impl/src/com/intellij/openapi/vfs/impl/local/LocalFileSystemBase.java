@@ -408,7 +408,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
-    return FileUtil.loadFileBytes(convertToIOFile(file));
+      FileInputStream stream = new FileInputStream(convertToIOFile(file));
+      try {
+        return FileUtil.loadBytes(stream, (int)file.getLength());
+      }
+      finally {
+        stream.close();
+      }
   }
 
   @NotNull

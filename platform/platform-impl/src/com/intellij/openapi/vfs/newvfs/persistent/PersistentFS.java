@@ -26,10 +26,13 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
@@ -296,10 +299,15 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     FSRecords.setParent(id, parentId);
     FSRecords.setName(id, name);
 
-    FSRecords.setTimestamp(id, delegate.getTimeStamp(file));
-    FSRecords.setFlags(id, (delegate.isDirectory(file) ? IS_DIRECTORY_FLAG : 0) | (delegate.isWritable(file) ? 0 : IS_READ_ONLY), true);
+    delegate = replaceWithNativeFS(delegate);
 
-    FSRecords.setLength(id, -1L);
+    FSRecords.setTimestamp(id, delegate.getTimeStamp(file));
+
+    boolean directory = delegate.isDirectory(file);
+
+    FSRecords.setLength(id, directory ? -1L : delegate.getLength(file));
+
+    FSRecords.setFlags(id, (directory ? IS_DIRECTORY_FLAG : 0) | (delegate.isWritable(file) ? 0 : IS_READ_ONLY), true);
 
     // TODO!!!: More attributes?
   }
@@ -358,8 +366,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     processEvent(new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_WRITABLE, isWritable(file), writableFlag, false));
   }
 
-  public static int getId(final VirtualFile parent, final String childName) {
-    final NewVirtualFileSystem delegate = getDelegate(parent);
+  public static int getId(final VirtualFile parent, final String childName, NewVirtualFileSystem delegate) {
     final int parentId = getFileId(parent);
 
     final int[] children = FSRecords.list(parentId);
@@ -438,8 +445,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     processEvent(new VFilePropertyChangeEvent(requestor, file, VirtualFile.PROP_NAME, file.getName(), newName, false));
   }
 
-  private static final boolean noCaching = Boolean.parseBoolean(System.getProperty("idea.no.content.caching"));
-
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     return contentsToByteArray(file, true);
@@ -458,8 +463,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       final byte[] content = delegate.contentsToByteArray(file);
 
       ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+      // we should cache every local files content
+      // because the local history feature is currently depends on this cache
       if ((!delegate.isReadOnly() || !application.isInternal() && !application.isUnitTestMode()) &&
-          !noCaching && content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
+          content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (INPUT_LOCK) {
           writeContent(file, new ByteSequence(content), delegate.isReadOnly());
 
@@ -1038,5 +1045,14 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     catch (NumberFormatException ignored) {
       return maxLimitBytes;
     }
+  }
+
+  public static NewVirtualFileSystem replaceWithNativeFS(NewVirtualFileSystem delegate) {
+    if (delegate.getProtocol().equals(LocalFileSystem.PROTOCOL) && Registry.is("filesystem.useNative")) {
+        if (SystemInfo.isWindows && Win32LocalFileSystem.isAvailable()) {
+          delegate = Win32LocalFileSystem.getWin32Instance();
+        }
+      }
+    return delegate;
   }
 }

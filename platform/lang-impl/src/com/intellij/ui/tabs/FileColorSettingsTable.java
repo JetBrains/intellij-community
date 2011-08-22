@@ -242,6 +242,7 @@ public abstract class FileColorSettingsTable extends JBTable {
     @Override
     public void exchangeRows(int oldIndex, int newIndex) {
       myConfigurations.add(newIndex, myConfigurations.remove(oldIndex));
+      fireTableRowsUpdated(Math.min(oldIndex, newIndex), Math.max(oldIndex, newIndex));
     }
   }
 
