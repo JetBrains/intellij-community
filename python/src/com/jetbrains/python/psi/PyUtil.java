@@ -661,6 +661,9 @@ public class PyUtil {
    * @return 0 if no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
    */
   public static int getInitialUnderscores(String name) {
+    if (name == null) {
+      return 0;
+    }
     int underscores = 0;
     if (name.startsWith("__")) {
       underscores = 2;
