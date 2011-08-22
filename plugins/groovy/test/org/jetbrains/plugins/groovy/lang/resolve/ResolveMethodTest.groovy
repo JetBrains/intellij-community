@@ -740,4 +740,8 @@ class Foo {
     assertTrue element.containingClass.name == 'Foo'
     assertSize 1, element.throwsList.referencedTypes
   }
+
+  void testDontUseQualifierScopeInDGM() {
+    assertNull resolve('a.groovy')
+  }
 }

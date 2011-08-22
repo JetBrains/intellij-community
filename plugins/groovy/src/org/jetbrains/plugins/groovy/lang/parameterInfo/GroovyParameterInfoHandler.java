@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -175,7 +176,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
           for (int j = 0; j < parameters.length; j++) {
             parameterTypes[j] = parameters[j].getType();
           }
-          if (ResolveUtil.isInUseScope(resolveResult)) {
+          if (GdkMethodUtil.isInUseScope(resolveResult)) {
             parameterTypes = ArrayUtil.remove(parameterTypes, 0);
           }
           argTypes = PsiUtil.getArgumentTypes(place, false);
@@ -345,7 +346,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
 
       PsiParameter[] parms = method.getParameterList().getParameters();
       final GroovyResolveResult resolveResult = (GroovyResolveResult)o;
-      if (ResolveUtil.isInUseScope(resolveResult)) {
+      if (GdkMethodUtil.isInUseScope(resolveResult)) {
         parms = ArrayUtil.remove(parms, 0);
       }
       int numParams = parms.length;

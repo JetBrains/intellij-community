@@ -52,10 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Map;
@@ -458,7 +455,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
       if (argumentTypes != null &&
           !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
-                                ResolveUtil.isInUseScope(methodResolveResult), place, false)) {
+                                GdkMethodUtil.isInUseScope(methodResolveResult), place, false)) {
 
         //check for implicit use of property getter which returns closure
         if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {

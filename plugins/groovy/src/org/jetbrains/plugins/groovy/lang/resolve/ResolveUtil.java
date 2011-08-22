@@ -16,13 +16,11 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -50,9 +48,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
@@ -68,7 +65,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnT
 @SuppressWarnings({"StringBufferReplaceableByString"})
 public class ResolveUtil {
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
-  private static final Logger LOG = Logger.getInstance(ResolveUtil.class);
 
   private ResolveUtil() {
   }
@@ -93,8 +89,8 @@ public class ResolveUtil {
           }
         }
         else if (run instanceof GrClosableBlock) {
-          if (!categoryIteration((GrClosableBlock)run, processor)) return false;
-          if (!withIteration((GrClosableBlock)run, processor, place)) return false;
+          if (!GdkMethodUtil.categoryIteration((GrClosableBlock)run, processor)) return false;
+          if (!GdkMethodUtil.withIteration((GrClosableBlock)run, processor, place)) return false;
         }
       }
       lastParent = run;
@@ -367,85 +363,12 @@ public class ResolveUtil {
     while (place != null) {
       if (place instanceof GrMember) break;
       if (place instanceof GrClosableBlock) {
-        if (!categoryIteration((GrClosableBlock)place, processor)) return false;
+        if (!GdkMethodUtil.categoryIteration((GrClosableBlock)place, processor)) return false;
       }
       place = place.getContext();
     }
 
     return true;
-  }
-
-  private static boolean categoryIteration(GrClosableBlock place, final PsiScopeProcessor processor) {
-    final GrMethodCall call = checkMethodCall(place, "use");
-    if (call == null) return true;
-
-    final GrClosableBlock[] closures = call.getClosureArguments();
-    final GrExpression[] args = call.getExpressionArguments();
-    int last = args.length - 1;
-    if (!(closures.length == 1 && place.equals(closures[0])) &&
-        !(args.length > 0 && place.equals(args[last]))) {
-      return true;
-    }
-
-    if (!(call.resolveMethod() instanceof GrGdkMethod)) return true;
-
-    final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
-      @Override
-      public boolean execute(PsiElement element, ResolveState state) {
-        if (element instanceof PsiMethod) {
-          if (!((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) return true;
-          if (((PsiMethod)element).getParameterList().getParametersCount() == 0) return true;
-          return processor.execute(new GrGdkMethodImpl((PsiMethod)element, false), state);
-        }
-        else {
-          return processor.execute(element, state);
-        }
-      }
-    };
-    for (GrExpression arg : args) {
-      if (arg instanceof GrReferenceExpression) {
-        final PsiElement resolved = ((GrReferenceExpression)arg).resolve();
-        if (resolved instanceof PsiClass) {
-          if (!resolved.processDeclarations(delegate, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, call), null, place)) {
-            return false;
-          }
-        }
-      }
-    }
-    return true;
-  }
-
-  private static boolean withIteration(GrClosableBlock block, final PsiScopeProcessor processor, GroovyPsiElement place) {
-    GrMethodCall call = checkMethodCall(block, "with");
-    if (call == null) return true;
-    final GrExpression invoked = call.getInvokedExpression();
-    LOG.assertTrue(invoked instanceof GrReferenceExpression);
-    final GrExpression qualifier = ((GrReferenceExpression)invoked).getQualifier();
-    if (qualifier == null) return true;
-    if (!GrReferenceResolveUtil.processQualifier(processor, qualifier, place)) return false;
-
-    return true;
-  }
-
-  @Nullable
-  private static GrMethodCall checkMethodCall(GrClosableBlock place, String methodName) {
-    final PsiElement context = place.getContext();
-    GrMethodCall call = null;
-    if (context instanceof GrMethodCall) {
-      call = (GrMethodCall)context;
-    }
-    else if (context instanceof GrArgumentList) {
-      final PsiElement ccontext = context.getContext();
-      if (ccontext instanceof GrMethodCall) {
-        call = (GrMethodCall)ccontext;
-      }
-    }
-    if (call == null) return null;
-    final GrExpression invoked = call.getInvokedExpression();
-    if (!(invoked instanceof GrReferenceExpression) || !methodName.equals(((GrReferenceExpression)invoked).getReferenceName())) {
-      return null;
-    }
-    return call;
   }
 
   public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {
@@ -561,41 +484,6 @@ public class ResolveUtil {
     return result;
   }
 
-  public static boolean isInUseScope(GroovyResolveResult resolveResult) {
-    if (resolveResult != null && resolveResult.getElement() instanceof GrGdkMethod) return false;
-    return resolveResult != null && isInUseScope(resolveResult.getCurrentFileResolveContext(), resolveResult.getElement());
-  }
-
-  public static boolean isInUseScope(@Nullable PsiElement context, @Nullable PsiElement method) {
-    if (method instanceof GrGdkMethod) return false;
-    if (context instanceof GrMethodCall && context.isValid()) {
-      final GrExpression expression = ((GrMethodCall)context).getInvokedExpression();
-      if (expression instanceof GrReferenceExpression) {
-        final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-        if (resolved instanceof GrGdkMethod && "use".equals(((GrGdkMethod)resolved).getStaticMethod().getName())) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  public static boolean isInWithContext(GroovyPsiElement resolveContext) {
-    if (resolveContext instanceof GrExpression) {
-      final PsiElement parent = resolveContext.getParent();
-      if (parent instanceof GrReferenceExpression && ((GrReferenceExpression)parent).getQualifier() == resolveContext) {
-        final PsiElement pparent = parent.getParent();
-        if (pparent instanceof GrMethodCall) {
-          final PsiMethod method = ((GrMethodCall)pparent).resolveMethod();
-          if (method instanceof GrGdkMethod && "with".equals(method.getName())) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
   public static boolean isKeyOfMap(GrReferenceExpression ref) {
     if (ref.multiResolve(false).length > 0) return false;
     return mayBeKeyOfMap(ref);
@@ -627,7 +515,7 @@ public class ResolveUtil {
       if (!(clParent instanceof GrMethodCall)) continue;
       final GrExpression expression = ((GrMethodCall)clParent).getInvokedExpression();
       if (expression instanceof GrReferenceExpression &&
-          "with".equals(((GrReferenceExpression)expression).getReferenceName()) &&
+          GdkMethodUtil.WITH.equals(((GrReferenceExpression)expression).getReferenceName()) &&
           ((GrReferenceExpression)expression).resolve() instanceof GrGdkMethod) {
         final GrExpression withQualifier = ((GrReferenceExpression)expression).getQualifierExpression();
         if (withQualifier != null) {

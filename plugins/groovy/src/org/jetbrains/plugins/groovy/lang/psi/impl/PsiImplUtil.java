@@ -56,12 +56,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrRangeExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.Arrays;
@@ -196,23 +198,22 @@ public class PsiImplUtil {
     for (GrClosableBlock closure = PsiTreeUtil.getParentOfType(refExpr, GrClosableBlock.class);
          closure != null;
          closure = PsiTreeUtil.getParentOfType(closure, GrClosableBlock.class)) {
+
       PsiElement parent = closure.getParent();
       if (parent instanceof GrArgumentList) parent = parent.getParent();
       if (parent instanceof GrMethodCall) {
         GrExpression funExpr = ((GrMethodCall)parent).getInvokedExpression();
-        if (funExpr instanceof GrReferenceExpression && ((GrReferenceExpression)funExpr).resolve() instanceof PsiMethod) {
-          qualifier = ((GrReferenceExpression)funExpr).getQualifierExpression();
-          if (qualifier != null) {
-            return qualifier;
-          }
-        }
-        else {
-          return funExpr;
-        }
+        if (!(funExpr instanceof GrReferenceExpression)) return funExpr;
+
+        final PsiElement resolved = ((GrReferenceExpression)funExpr).resolve();
+        if (resolved instanceof GrGdkMethod && !GdkMethodUtil.WITH.equals(((GrGdkMethod)resolved).getStaticMethod().getName())) continue;
+
+        qualifier = ((GrReferenceExpression)funExpr).getQualifierExpression();
+        if (qualifier != null) return qualifier;
       }
     }
 
-    return qualifier;
+    return null;
   }
 
   public static void removeVariable(GrVariable variable) {

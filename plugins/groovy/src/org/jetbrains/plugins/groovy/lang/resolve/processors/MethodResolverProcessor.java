@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.DominanceAwareMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -114,7 +115,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       boolean isStaticsOK = isStaticsOK(method, resolveContext);
       if (!myAllVariants &&
-          PsiUtil.isApplicable(myArgumentTypes, method, substitutor, ResolveUtil.isInUseScope(resolveContext, element), (GroovyPsiElement)myPlace, myByShape) &&
+          PsiUtil.isApplicable(myArgumentTypes, method, substitutor, GdkMethodUtil.isInUseScope(resolveContext, element), (GroovyPsiElement)myPlace, myByShape) &&
           isStaticsOK) {
         addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK));
       } else {
@@ -149,7 +150,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (method instanceof GrGdkMethod) {
         //type inference should be performed from static method
         PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
-        if (ResolveUtil.isInWithContext(resolveContext)) {
+        if (GdkMethodUtil.isInWithContext(resolveContext)) {
           newArgTypes[0] = ((GrExpression)resolveContext).getType();
         }
         else {
@@ -161,7 +162,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
         method = ((GrGdkMethod)method).getStaticMethod();
         LOG.assertTrue(method.isValid());
       }
-      else if (ResolveUtil.isInUseScope(resolveContext, method)) {
+      else if (GdkMethodUtil.isInUseScope(resolveContext, method)) {
         PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
         newArgTypes[0] = myThisType;
         System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);

@@ -292,7 +292,7 @@ public class PsiUtil {
     GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
     final PsiClass containingClass = ((PsiMember)member).getContainingClass();
     if (qualifier != null) {
-      final boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC) && !(ResolveUtil.isInUseScope(resolveContext, member));
+      final boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC) && !(GdkMethodUtil.isInUseScope(resolveContext, member));
       if (qualifier instanceof GrReferenceExpression) {
         if ("class".equals(((GrReferenceExpression)qualifier).getReferenceName())) {
           //invoke static members of class from A.class.foo()

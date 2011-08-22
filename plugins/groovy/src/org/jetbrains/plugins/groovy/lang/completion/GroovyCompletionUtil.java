@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
@@ -247,7 +248,7 @@ public class GroovyCompletionUtil {
     }
     else if (element instanceof PsiMethod) {
       final PsiMethod method;
-      if (ResolveUtil.isInUseScope(candidate)) {
+      if (GdkMethodUtil.isInUseScope(candidate)) {
         method = generateMethodInCategory(candidate);
       }
       else {
@@ -471,11 +472,6 @@ public class GroovyCompletionUtil {
     return TailType.insertChar(editor, offset, ')');
   }
 
-  private static final Set<String> COLLECTION_METHOD_NAMES = CollectionFactory.newSet(
-    "each", "eachWithIndex", "any", "every", "reverseEach", "collect", "collectAll", "find", "findAll", "retainAll", "removeAll", "split",
-    "groupBy", "groupEntriesBy", "findLastIndexOf", "findIndexValues", "findIndexOf"
-  );
-
   public static final Set<String> OPERATOR_METHOD_NAMES = CollectionFactory.newSet(
     "plus", "minus", "multiply", "power", "div", "mod", "or", "and", "xor", "next", "previous", "getAt", "putAt", "leftShift", "rightShift",
     "isCase", "bitwiseNegate", "negative", "positive"
@@ -490,13 +486,13 @@ public class GroovyCompletionUtil {
 
     final PsiType substituted = substitutor != null ? substitutor.substitute(baseType) : baseType;
 
-    if (COLLECTION_METHOD_NAMES.contains(name)) {
+    if (GdkMethodUtil.COLLECTION_METHOD_NAMES.contains(name)) {
       return !(type instanceof PsiArrayType ||
                InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE) ||
                substituted instanceof PsiArrayType ||
                InheritanceUtil.isInheritor(substituted, CommonClassNames.JAVA_LANG_ITERABLE));
     }
-    if ("with".equals(name)) return false;
+    if (GdkMethodUtil.WITH.equals(name)) return false;
 
     return true;
   }
