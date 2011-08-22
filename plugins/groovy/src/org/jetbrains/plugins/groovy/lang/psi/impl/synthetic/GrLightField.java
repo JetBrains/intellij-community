@@ -178,4 +178,16 @@ public class GrLightField extends GrLightVariable implements GrField {
     clearCaches();
     return res;
   }
+
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    if (super.isEquivalentTo(another)) return true;
+
+    if (another instanceof GrLightField) {
+      GrLightField otherField = (GrLightField)another;
+      return otherField.myContainingClass == myContainingClass && getName().equals(otherField.getName());
+    }
+
+    return false;
+  }
 }
