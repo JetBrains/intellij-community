@@ -95,11 +95,14 @@ public class GroovyOverrideImplementUtil {
     }
 
     final PsiType returnType = substitutor.substitute(getSuperReturnType(superMethod));
-    if (!hasModifiers && returnType == null || typeParameters.size() > 0) {
+
+    boolean isConstructor = superMethod.isConstructor();
+    if (!isConstructor && (!hasModifiers && returnType == null || typeParameters.size() > 0)) {
       buffer.append("def ");
     }
 
     if (typeParameters.size() > 0) {
+      LOG.assertTrue(!isConstructor);
       buffer.append('<');
       for (PsiTypeParameter parameter : typeParameters) {
         buffer.append(parameter.getText());
@@ -109,7 +112,7 @@ public class GroovyOverrideImplementUtil {
     }
 
     final String name;
-    if (superMethod.isConstructor()) {
+    if (isConstructor) {
       name = aClass.getName();
     }
     else {
@@ -141,10 +144,12 @@ public class GroovyOverrideImplementUtil {
     buffer.append(") {}");
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
-    if (superMethod.isConstructor()) {
+    if (isConstructor) {
       return factory.createConstructorFromText(name, buffer.toString(), null);
     }
-    return (GrMethod) factory.createTopElementFromText(buffer.toString());
+    else {
+      return (GrMethod)factory.createTopElementFromText(buffer.toString());
+    }
   }
 
   @Nullable
