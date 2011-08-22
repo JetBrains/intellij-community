@@ -1,5 +1,5 @@
 // "Add constructor parameter" "true"
-class A {
+public class A {
   private int field;
 
     public A(int field) {
