@@ -78,7 +78,7 @@ class mylist<T> {}
 class myAList<T> extends mylist<T> {
   {
         mylist<String> l = <error descr="Inconvertible types; cannot cast 'myAList<java.lang.Integer>' to 'mylist<java.lang.String>'">(mylist<String>) new myAList<Integer>()</error>;
-        boolean b = <error descr="Operator '==' cannot be applied to 'myAList<java.lang.Integer>','myAList<java.lang.String>'">new myAList<Integer>() == new myAList<String>()</error>;
+        boolean b = <error descr="Operator '==' cannot be applied to 'myAList<java.lang.Integer>', 'myAList<java.lang.String>'">new myAList<Integer>() == new myAList<String>()</error>;
 
         if (l instanceof <error descr="Illegal generic type for instanceof">myAList<String></error>);
         Object o = new Object();
