@@ -349,7 +349,9 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       }
     }
     if (resolveResult instanceof PyTargetExpression && isInstanceOrClassAttribute((PyTargetExpression)resolveResult) &&
-        element instanceof PyTargetExpression && isInstanceOrClassAttribute((PyTargetExpression)element)) {
+        element instanceof PyTargetExpression && isInstanceOrClassAttribute((PyTargetExpression)element) && Comparing.equal(
+      ((PyTargetExpression)resolveResult).getReferencedName(),
+      ((PyTargetExpression)element).getReferencedName())) {
       PyClass aClass = PsiTreeUtil.getParentOfType(resolveResult, PyClass.class);
       PyClass bClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
 
