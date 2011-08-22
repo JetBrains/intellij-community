@@ -28,6 +28,7 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
   private JLabel myKeyLabel;
   private JLabel myTargetLabel;
   private JLabel myParamLabel;
+  private JLabel myName;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private final Project myProject;
 

@@ -37,6 +37,7 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   private JPanel myAdditionalPanel;
   private JPanel myCommonOptionsPlaceholder;
   private JPanel myTestsPanel;
+  private JLabel myConfigurationName;
 
   private TextFieldWithBrowseButton myTestFolderTextField;
   private TextFieldWithBrowseButton myTestScriptTextField;
@@ -97,6 +98,10 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
 
   public void setFolderName(String folderName) {
     myTestFolderTextField.setText(FileUtil.toSystemDependentName(folderName));
+  }
+
+  public void setConfigurationName(String name) {
+    myConfigurationName.setText(name);
   }
 
   public String getScriptName() {

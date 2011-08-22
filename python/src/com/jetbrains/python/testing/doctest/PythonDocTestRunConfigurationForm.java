@@ -1,6 +1,7 @@
 package com.jetbrains.python.testing.doctest;
 
 import com.intellij.openapi.project.Project;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.PythonTestRunConfigurationForm;
 
@@ -19,6 +20,8 @@ public class PythonDocTestRunConfigurationForm implements PythonDocTestRunConfig
   public PythonDocTestRunConfigurationForm(final Project project, final PythonDocTestRunConfiguration configuration) {
     myRootPanel = new JPanel(new BorderLayout());
     myTestRunConfigurationForm = new PythonTestRunConfigurationForm(project, configuration);
+    myTestRunConfigurationForm.setConfigurationName(
+      PyBundle.message("runcfg.doctest.display_name"));
     myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
   }
   public String getPattern() {

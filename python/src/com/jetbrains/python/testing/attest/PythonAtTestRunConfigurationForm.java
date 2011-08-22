@@ -1,6 +1,7 @@
 package com.jetbrains.python.testing.attest;
 
 import com.intellij.openapi.project.Project;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.PythonTestRunConfigurationForm;
 
@@ -19,6 +20,8 @@ public class PythonAtTestRunConfigurationForm implements PythonAtTestRunConfigur
   public PythonAtTestRunConfigurationForm(final Project project, final PythonAtTestRunConfiguration configuration) {
     myRootPanel = new JPanel(new BorderLayout());
     myTestRunConfigurationForm = new PythonTestRunConfigurationForm(project, configuration);
+    myTestRunConfigurationForm.setConfigurationName(
+      PyBundle.message("runcfg.attest.display_name"));
     myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
   }
   public String getPattern() {

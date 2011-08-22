@@ -2,6 +2,7 @@ package com.jetbrains.python.testing.nosetest;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.PythonTestRunConfigurationForm;
 
@@ -24,6 +25,8 @@ public class PythonNoseTestRunConfigurationForm implements PythonNoseTestRunConf
     myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
     myTestRunConfigurationForm.getAdditionalPanel().add(createParamComponent());
     myTestRunConfigurationForm.getPatternComponent().setVisible(false);
+    myTestRunConfigurationForm.setConfigurationName(
+      PyBundle.message("runcfg.nosetests.display_name"));
   }
 
   public String getParams() {

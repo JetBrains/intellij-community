@@ -1,6 +1,7 @@
 package com.jetbrains.python.testing.unittest;
 
 import com.intellij.openapi.project.Project;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.PythonTestRunConfigurationForm;
 
@@ -51,6 +52,8 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
       }
     });
     myTestRunConfigurationForm.getAdditionalPanel().add(myIsPureUnittest);
+    myTestRunConfigurationForm.setConfigurationName(
+      PyBundle.message("runcfg.unittest.display_name"));
     myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
   }
   public String getPattern() {
