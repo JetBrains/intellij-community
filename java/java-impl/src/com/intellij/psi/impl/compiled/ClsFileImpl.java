@@ -280,12 +280,13 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   public PsiElement getMirror() {
     synchronized (MIRROR_LOCK) {
       if (myMirrorFileElement == null) {
-        FileDocumentManager documentManager = FileDocumentManager.getInstance();
-        final Document document = documentManager.getDocument(getVirtualFile());
+        VirtualFile virtualFile = getVirtualFile();
+        final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
         String text = document.getText();
         String ext = StdFileTypes.JAVA.getDefaultExtension();
-        PsiClass aClass = getClasses()[0];
-        String fileName = aClass.getName() + "." + ext;
+        PsiClass[] classes = getClasses();
+
+        String fileName = (classes.length > 0 ? classes[0].getName(): virtualFile.getNameWithoutExtension()) + "." + ext;
         PsiManager manager = getManager();
         PsiFile mirror = PsiFileFactory.getInstance(manager.getProject()).createFileFromText(fileName, StdLanguages.JAVA, text, false, false);
         final ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
