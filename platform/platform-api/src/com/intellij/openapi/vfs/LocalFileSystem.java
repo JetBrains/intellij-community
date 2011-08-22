@@ -40,8 +40,29 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return LocalFileSystemHolder.ourInstance;
   }
 
+  /**
+   * Checks whether given file is a symbolic link.
+   *
+   * @param file a file to check.
+   * @return <code>true</code> if the file is a symbolic link, <code>false</code> otherwise
+   * @since 11.0
+   */
   public boolean isSymLink(@NotNull final VirtualFile file) {
     return false;
+  }
+
+  /**
+   * Attempts to resolve a symbolic link represented by given file and returns link target.
+   *
+   * @since 11.0
+   * @param file a file to resolve.
+   * @return <code>this</code> if the file isn't a symbolic link;
+   *         instance of <code>VirtualFile</code> if the link was successfully resolved;
+   *         <code>null</code> otherwise
+   */
+  @Nullable
+  public VirtualFile getRealFile(@NotNull final VirtualFile file) {
+    return file;
   }
 
   @Nullable
