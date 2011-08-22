@@ -38,6 +38,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -49,6 +50,7 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -57,7 +59,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
@@ -87,7 +91,7 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   public boolean hasElementsToShow() {
-    return myElements.length > 0;
+    return myElements != null && myElements.length > 0;
   }
 
   private static class FileDescriptor {
@@ -96,7 +100,7 @@ public class ImplementationViewComponent extends JPanel {
 
     public FileDescriptor(PsiFile file, PsiElement element) {
       myFile = file;
-      myElementPresentation = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
+      myElementPresentation = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
     public String getPresentableName(VirtualFile vFile) {
@@ -237,6 +241,17 @@ public class ImplementationViewComponent extends JPanel {
     });
   }
 
+  @TestOnly
+  public String[] getVisibleFiles() {
+    final ComboBoxModel model = myFileChooser.getModel();
+    String[] result = new String[model.getSize()];
+    for (int i = 0; i < model.getSize(); i++) {
+      FileDescriptor o = (FileDescriptor)model.getElementAt(i);
+      result[i] = o.getPresentableName(o.myFile.getVirtualFile());
+    }
+    return result;
+  }
+
   public void update(final PsiElement[] elements, final int index) {
     update(elements, new PairFunction<PsiElement[], List<FileDescriptor>, Boolean>() {
       @Override
@@ -296,11 +311,17 @@ public class ImplementationViewComponent extends JPanel {
   private static void update(final PsiElement[] elements, final PairFunction<PsiElement[], List<FileDescriptor>, Boolean> fun) {
     List<PsiElement> candidates = new ArrayList<PsiElement>(elements.length);
     List<FileDescriptor> files = new ArrayList<FileDescriptor>(elements.length);
+    final Set<String> names = new HashSet<String>();
+    for (PsiElement element : elements) {
+      if (element instanceof PsiNamedElement) {
+        names.add(((PsiNamedElement)element).getName());
+      }
+    }
     for (PsiElement element : elements) {
       PsiFile file = getContainingFile(element);
       if (file == null) continue;
       final PsiElement parent = element.getParent();
-      files.add(new FileDescriptor(file, parent == file ? element : parent));
+      files.add(new FileDescriptor(file, names.size() > 1 || parent == file ? element : parent));
       candidates.add(element.getNavigationElement());
     }
     

@@ -267,8 +267,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   }
 
   @Modifier
-  @Nullable
-  private static String getConstructorModifier(final PsiClass aClass) {
+  public static String getConstructorModifier(final PsiClass aClass) {
     @Modifier String modifier = PsiModifier.PUBLIC;
 
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
@@ -278,6 +277,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       modifier = PsiModifier.PACKAGE_LOCAL;
     }
     else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+      modifier = PsiModifier.PRIVATE;
+    }
+    else if (aClass.isEnum()) {
       modifier = PsiModifier.PRIVATE;
     }
 

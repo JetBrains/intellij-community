@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.SymLinkUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -170,22 +171,21 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    File ioFile = convertToIOFile(file);
-    if (file.isSymLink() && isRecursiveSymLink(ioFile)) {
+    if (isInvalidSymLink(file)) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
+    final File ioFile = convertToIOFile(file);
     final String[] names = ioFile.list();
     return names != null ? names : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  protected static boolean isRecursiveSymLink(File ioFile) {
-    try {
-      if (FileUtil.isAncestor(ioFile.getCanonicalFile(), ioFile, true)) return true;
-    }
-    catch (IOException ignore) {
-    }
-    return false;
+  protected static boolean isInvalidSymLink(@NotNull final VirtualFile file) {
+    if (!file.isSymLink()) return false;
+    final VirtualFile realFile = file.getRealFile();
+    return realFile == null ||
+           realFile == file ||
+           FileUtil.isAncestor(convertToIOFile(realFile), convertToIOFile(file), true);
   }
 
   @NotNull

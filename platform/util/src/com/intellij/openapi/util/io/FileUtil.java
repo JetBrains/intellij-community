@@ -42,8 +42,10 @@ import java.util.regex.Pattern;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtil {
   public static final int MEGABYTE = 1024 * 1024;
+  public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
+
   private static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
     protected byte[] initialValue() {
       return new byte[1024 * 20];
@@ -51,9 +53,9 @@ public class FileUtil {
   };
 
   // do not use channels to copy files larger than 5 Mb because of possible MapFailed error
-  private static final long CHANNELS_COPYING_LIMIT = 5L * 1024L * 1024L;
+  private static final long CHANNELS_COPYING_LIMIT = 5L * MEGABYTE;
   private static String ourCanonicalTempPathCache = null;
-  public static final String ASYNC_DELETE_EXTENSION = ".__del__";
+  private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
 
   @Nullable
   public static String getRelativePath(File base, File file) {
@@ -541,21 +543,22 @@ public class FileUtil {
   }
 
   public static boolean delete(@NotNull File file) {
-    File[] files = file.listFiles();
-    if (files != null) {
-      for (File file1 : files) {
-        if (!delete(file1)) return false;
+    if (!SymLinkUtil.isSymLink(file)) {
+      File[] files = file.listFiles();
+      if (files != null) {
+        for (File child : files) {
+          if (!delete(child)) return false;
+        }
       }
     }
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < MAX_FILE_DELETE_ATTEMPTS; i++) {
       if (file.delete() || !file.exists()) return true;
       try {
+        //noinspection BusyWait
         Thread.sleep(10);
       }
-      catch (InterruptedException ignored) {
-
-      }
+      catch (InterruptedException ignored) { }
     }
     return false;
   }

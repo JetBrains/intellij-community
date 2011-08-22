@@ -200,8 +200,27 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract boolean isDirectory();
 
+  /**
+   * Checks whether this file is a symbolic link.
+   *
+   * @since 11.0
+   * @return <code>true</code> if this file is a symbolic link, <code>false</code> otherwise
+   */
   public boolean isSymLink() {
     return false;
+  }
+
+  /**
+   * Attempts to resolve a symbolic link represented by this file and returns link target.
+   *
+   * @since 11.0
+   * @return <code>this</code> if the file isn't a symbolic link;
+   *         instance of <code>VirtualFile</code> if the link was successfully resolved;
+   *         <code>null</code> otherwise
+   */
+  @Nullable
+  public VirtualFile getRealFile() {
+    return this;
   }
 
   /**
