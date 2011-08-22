@@ -141,6 +141,10 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean shouldExpandNewRegion(PsiElement element, TextRange range, Map<TextRange, Boolean> rangeToExpandStatusMap) {
+    if (myApplyDefaultState) {
+      // Considering that this code is executed only on initial fold regions construction on editor opening.
+      return !FoldingPolicy.isCollapseByDefault(element);
+    }
     boolean caretInside;
     if (myEditor.getUserData(ALLOW_FOLDING_ON_CARET_LINE_KEY) == Boolean.TRUE) {
       caretInside = FoldingUtil.caretInsideRange(myEditor, range);
@@ -153,20 +157,8 @@ class UpdateFoldRegionsOperation implements Runnable {
       if (caretOffset > myEditor.getDocument().getTextLength()) {
         return false;
       }
-      if (caretOffset == 0 && myApplyDefaultState) {
-        // Caret is located at the zero position when the editor is just opened, so, any fold region that starts at the zero
-        // offset (e.g. file header provided by 'copyright' plugin) is always expanded. We want to avoid that, hence, corresponding
-        // control flow branch is introduced.
-        caretInside = false;
-      }
-      else {
-        final int currentLine = document.getLineNumber(caretOffset);
-        caretInside = firstLine <= currentLine && currentLine <= lastLine;
-      }
-    }
-
-    if (myApplyDefaultState) {
-      return caretInside || !FoldingPolicy.isCollapseByDefault(element);
+      final int currentLine = document.getLineNumber(caretOffset);
+      caretInside = firstLine <= currentLine && currentLine <= lastLine;
     }
 
     final Boolean oldStatus = rangeToExpandStatusMap.get(range);
