@@ -63,7 +63,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   }
 
   private final Win32Kernel myKernel = new Win32Kernel();
-  public static boolean checkMe = true;
+  public static boolean checkMe = false;
 
   private Win32LocalFileSystem() {
   }
