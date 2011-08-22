@@ -1,0 +1,11 @@
+import static <error descr="Cannot resolve symbol 'MyConstants'">MyConstants</error>.*;
+
+public class MyClient
+{
+    private int field = MyConstants.CONSTANT;
+}
+
+class MyConstants
+{
+    public static final int CONSTANT = 1;
+}
