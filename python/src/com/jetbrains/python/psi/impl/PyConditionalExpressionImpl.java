@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyConditionalExpression;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyUnionType;
@@ -44,5 +45,10 @@ public class PyConditionalExpressionImpl extends PyElementImpl implements PyCond
   public PyExpression getFalsePart() {
     final List<PyExpression> expressions = PsiTreeUtil.getChildrenOfTypeAsList(this, PyExpression.class);
     return expressions.size() == 3 ? expressions.get(2) : null;
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyConditionalExpression(this);
   }
 }

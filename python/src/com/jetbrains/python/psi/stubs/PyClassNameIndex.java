@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
@@ -67,9 +68,9 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   }
 
   private static GlobalSearchScope buildUnionScope(Project project, List<VirtualFile> testDirs) {
-    GlobalSearchScope scope = GlobalSearchScope.directoryScope(project, testDirs.get(0), true);
+    GlobalSearchScope scope = GlobalSearchScopes.directoryScope(project, testDirs.get(0), true);
     for (int i = 1; i < testDirs.size(); i++) {
-      scope = scope.union(GlobalSearchScope.directoryScope(project, testDirs.get(i), true));
+      scope = scope.union(GlobalSearchScopes.directoryScope(project, testDirs.get(i), true));
     }
     return scope;
   }

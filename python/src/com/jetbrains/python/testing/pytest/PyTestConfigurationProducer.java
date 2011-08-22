@@ -8,7 +8,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.module.ModuleUtil;
@@ -23,6 +22,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
   private PsiElement myPsiElement;
 
   public PyTestConfigurationProducer() {
-    super(ConfigurationTypeUtil.findConfigurationType(PyTestRunConfigurationType.class));
+    super(PythonTestConfigurationType.getInstance().PY_PYTEST_FACTORY);
   }
 
   @Override
@@ -106,16 +106,17 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
                                                                  ConfigurationContext context) {
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final RunConfiguration configuration = existingConfiguration.getConfiguration();
-      PyTestRunConfiguration pyTestRunConfiguration = (PyTestRunConfiguration)configuration;
-      final PsiElement element = location.getPsiElement();
-      PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory)element : element.getContainingFile();
-      if (file == null || !pyTestRunConfiguration.getTestToRun().equals(file.getVirtualFile().getPath())) {
-        continue;
-      }
-      PyFunction testFunction = findTestFunction(location);
-      String keyword = testFunction != null ? testFunction.getName() : null;
-      if (Comparing.equal(pyTestRunConfiguration.getKeywords(), keyword)) {
-        return existingConfiguration;
+      if (configuration instanceof PyTestRunConfiguration) {
+        final PsiElement element = location.getPsiElement();
+        PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory)element : element.getContainingFile();
+        if (file == null || !((PyTestRunConfiguration)configuration).getTestToRun().equals(file.getVirtualFile().getPath())) {
+          continue;
+        }
+        PyFunction testFunction = findTestFunction(location);
+        String keyword = testFunction != null ? testFunction.getName() : null;
+        if (Comparing.equal(((PyTestRunConfiguration)configuration).getKeywords(), keyword)) {
+          return existingConfiguration;
+        }
       }
     }
     return null;

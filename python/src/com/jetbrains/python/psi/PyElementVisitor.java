@@ -245,4 +245,8 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyBoolLiteralExpression(final PyBoolLiteralExpression node) {
     visitPyElement(node);
   }
+
+  public void visitPyConditionalExpression(PyConditionalExpression node) {
+    visitPyElement(node);
+  }
 }

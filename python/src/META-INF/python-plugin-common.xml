@@ -86,20 +86,14 @@
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointType"/>
 
-    <configurationType implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationType"/>
+    <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
+
     <configurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>
     <testSrcLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
 
-    <configurationType implementation="com.jetbrains.python.testing.pytest.PyTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
-
-    <configurationType implementation="com.jetbrains.python.testing.doctest.PythonDocTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
-
-    <configurationType implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
-
-    <configurationType implementation="com.jetbrains.python.testing.attest.PythonAtTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.attest.PythonAtTestConfigurationProducer"/>
 
     <referenceImporter implementation="com.jetbrains.python.codeInsight.imports.PythonReferenceImporter"/>
@@ -505,11 +499,10 @@
     <lang.psiStructureViewFactory language="ReST"
                                   implementationClass="com.jetbrains.rest.structureView.RestStructureViewFactory"/>
     <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
-    <projectService serviceInterface="com.jetbrains.rest.actions.PyRestructuredSettings"
-                    serviceImplementation="com.jetbrains.rest.actions.PyRestructuredSettings"/>
     <inspectionToolProvider implementation="com.jetbrains.rest.inspections.RestInspectionToolProvider"/>
     <lang.substitutor language="TEXT" implementationClass="com.jetbrains.rest.RestLanguageSubstitutor"/>
-    <configurationType implementation="com.jetbrains.rest.run.DocutilsRunConfigurationType"/>
+    <configurationType implementation="com.jetbrains.rest.run.RestRunConfigurationType"/>
+    <configurationProducer implementation="com.jetbrains.rest.run.docutils.DocutilsConfigurationProducer"/>
   </extensions>
 
   <extensionPoints>
@@ -663,24 +656,11 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <group text="Restructured Text" popup="true">
-      <group text="Sphinx actions" popup="true">
-        <action id="com.jetbrains.rest.actions.sphinx.RunSphinxQuickStartAction"
-                class="com.jetbrains.rest.actions.sphinx.RunSphinxQuickStartAction"
-                text="Sphinx quickstart" description="Allows to run sphinx quick-start action">
-        </action>
-        <action id="com.jetbrains.rest.actions.sphinx.RunSphinxMakeAction"
-                class="com.jetbrains.rest.actions.sphinx.RunSphinxMakeAction"
-                text="Run sphinx make targets..." description="Allows to run sphinx make tasks">
-        </action>
-        <action id="com.jetbrains.rest.actions.sphinx.RunSphinxBuildAction"
-                class="com.jetbrains.rest.actions.sphinx.RunSphinxBuildAction"
-                text="Run sphinx-build..." description="Allows to run sphinx-build action">
-        </action>
-      </group>
-
+    <action id="com.jetbrains.rest.actions.sphinx.RunSphinxQuickStartAction"
+            class="com.jetbrains.rest.actions.sphinx.RunSphinxQuickStartAction"
+            text="Sphinx quickstart" description="Allows to run sphinx quick-start action">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </group>
+    </action>
 
     <action id="ExecuteInPyConsoleAction"
             class="com.jetbrains.python.actions.ExecuteInConsoleAction"

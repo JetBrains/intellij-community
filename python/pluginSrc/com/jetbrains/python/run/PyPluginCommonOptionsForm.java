@@ -3,6 +3,7 @@ package com.jetbrains.python.run;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -46,7 +47,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
           append("[none]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
         else {
-          setIcon(module.getModuleType().getNodeIcon(false));
+          setIcon(ModuleType.get(module).getNodeIcon(false));
           append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }

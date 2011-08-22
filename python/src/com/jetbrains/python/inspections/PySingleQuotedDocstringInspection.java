@@ -34,8 +34,6 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    String myModificator = "";
-    int myLength = 0;
     public Visitor(final ProblemsHolder holder) {
       super(holder);
     }
@@ -46,9 +44,8 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
         return;
       }
       String stringText = string.getText();
-      myLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
-      myModificator = stringText.substring(0, myLength);
-      stringText = stringText.substring(myLength);
+      int length = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      stringText = stringText.substring(length);
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(string, PyDocStringOwner.class);
       if (docStringOwner != null) {
         if (docStringOwner.getDocStringExpression() == string)  {
@@ -59,17 +56,17 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
               if (stringText.startsWith("'''") && stringText.endsWith("'''")) {
                 quoteCount = 3;
               }
-              TextRange trStart = new TextRange(myLength, myLength+quoteCount);
-              TextRange trEnd = new TextRange(stringText.length()+myLength-quoteCount,
-                                              stringText.length()+myLength);
+              TextRange trStart = new TextRange(length, length+quoteCount);
+              TextRange trEnd = new TextRange(stringText.length()+length-quoteCount,
+                                              stringText.length()+length);
               if (string.getStringValue().isEmpty())
                 holder.registerProblem(string, PyBundle.message("INSP.message.single.quoted.docstring"),
-                                       new ConvertDocstringQuickFix(myModificator));
+                                       new ConvertDocstringQuickFix());
               else {
                 holder.registerProblem(string, trStart,
-                                       PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix(myModificator));
+                                       PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix());
                 holder.registerProblem(string, trEnd,
-                                       PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix(myModificator));
+                                       PyBundle.message("INSP.message.single.quoted.docstring"), new ConvertDocstringQuickFix());
               }
             }
           }

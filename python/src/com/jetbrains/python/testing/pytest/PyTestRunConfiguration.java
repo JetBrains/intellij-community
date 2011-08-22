@@ -8,14 +8,14 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
+public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration {
   private String myTestToRun = "";
   private String myKeywords = "";
   private String myParams = "";
@@ -25,7 +25,7 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
   private static final String PARAMS_FIELD = "params";
 
   public PyTestRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
-    super(name, module, factory);
+    super(module, factory, name);
   }
 
   protected ModuleBasedConfiguration createInstance() {
@@ -82,8 +82,6 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    super.checkConfiguration();
-
     if (!PyTestUtil.isPyTestInstalled(getSdkHome()))
       throw new RuntimeConfigurationError("No py.test runner found in selected interpreter");
   }
@@ -91,5 +89,10 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
   @Override
   public String suggestedName() {
     return "py.test in " + getName();
+  }
+
+  @Override
+  protected String getTitle() {
+    return "py.tests";
   }
 }

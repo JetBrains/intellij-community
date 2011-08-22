@@ -3,7 +3,7 @@ package com.jetbrains.python;
 import com.jetbrains.python.fixtures.PyCommandLineTestCase;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
-import com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationType;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public class PythonRunConfigurationTest extends PyCommandLineTestCase {
   private static final String PY_SCRIPT = "foo.py";
 
   public void testUnitTestCommandLine() {
-    PythonUnitTestRunConfiguration configuration = createConfiguration(PythonUnitTestConfigurationType.getInstance(),
+    PythonUnitTestRunConfiguration configuration = createConfiguration(PythonTestConfigurationType.getInstance(),
                                                                        PythonUnitTestRunConfiguration.class);
     configuration.setScriptName(PY_SCRIPT);
     final List<String> params = buildRunCommandLine(configuration);

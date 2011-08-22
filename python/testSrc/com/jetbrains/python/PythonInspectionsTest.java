@@ -296,11 +296,6 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doHighlightingTest(PyListCreationInspection.class);
   }
 
-  public void testPyCompatibilityInspection() {
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doHighlightingTest(PyCompatibilityInspection.class);
-  }
-
   public void testPyStringFormatInspection1() {    //PY-2836
     doHighlightingTest(PyStringFormatInspection.class);
   }

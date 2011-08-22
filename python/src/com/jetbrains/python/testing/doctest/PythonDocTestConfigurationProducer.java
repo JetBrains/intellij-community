@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.testing.PythonTestConfigurationProducer;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -18,7 +19,7 @@ import java.util.List;
 public class PythonDocTestConfigurationProducer extends PythonTestConfigurationProducer {
 
   public PythonDocTestConfigurationProducer() {
-    super(PythonDocTestRunConfigurationType.class);
+    super(PythonTestConfigurationType.getInstance().PY_DOCTEST_FACTORY);
   }
 
   protected boolean isTestFunction(PyFunction pyFunction) {

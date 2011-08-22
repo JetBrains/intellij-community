@@ -5,6 +5,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -275,6 +276,6 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   @Override
   public boolean excludeCompileBeforeLaunchOption() {
     final Module module = getModule();
-    return module != null ? module.getModuleType() instanceof PythonModuleTypeBase : true;
+    return module != null ? ModuleType.get(module) instanceof PythonModuleTypeBase : true;
   }
 }

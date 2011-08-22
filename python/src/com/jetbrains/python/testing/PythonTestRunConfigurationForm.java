@@ -240,6 +240,10 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
     return myPatternComponent;
   }
 
+  public LabeledComponent getTestFolderComponent() {
+    return myTestFolderComponent;
+  }
+
   public JRadioButton getFunctionRB() {
     return myTestFunctionRB;
   }

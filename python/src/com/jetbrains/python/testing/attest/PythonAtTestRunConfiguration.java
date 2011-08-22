@@ -19,7 +19,9 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
                                           implements PythonAtTestRunConfigurationParams {
   private String myPattern = ""; // pattern for modules in folder to match against
   protected String myTitle = "Attests";
-  protected PythonAtTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
+  public PythonAtTestRunConfiguration(RunConfigurationModule module,
+                                      ConfigurationFactory configurationFactory,
+                                      String name) {
     super(module, configurationFactory, name);
   }
 

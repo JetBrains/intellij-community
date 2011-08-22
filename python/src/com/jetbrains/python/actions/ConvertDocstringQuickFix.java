@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,9 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * For consistency, always use """triple double quotes""" around docstrings.
  */
 public class ConvertDocstringQuickFix implements LocalQuickFix {
-  String myModificator = "";
-  public ConvertDocstringQuickFix(String modificator) {
-    myModificator = modificator;
+  public ConvertDocstringQuickFix() {
   }
 
   @NotNull
@@ -35,14 +34,18 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
     if (expression instanceof PyStringLiteralExpression) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-      String content = expression.getText().substring(myModificator.length());
+      String stringText = expression.getText();
+      int prefixLength = PyStringLiteralExpressionImpl
+        .getPrefixLength(stringText);
+      String prefix = stringText.substring(0, prefixLength);
+      String content = expression.getText().substring(prefixLength);
       if (content.startsWith("'''") ) {
         content = content.substring(3, content.length()-3);
       } else {
         content = content.length() == 1 ? "" : content.substring(1, content.length()-1);
       }
 
-      PyExpression newString = elementGenerator.createDocstring(myModificator+"\"\"\"" + content + "\"\"\"").getExpression();
+      PyExpression newString = elementGenerator.createDocstring(prefix+"\"\"\"" + content + "\"\"\"").getExpression();
       expression.replace(newString);
     }
   }

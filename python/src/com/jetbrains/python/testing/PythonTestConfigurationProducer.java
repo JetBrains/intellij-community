@@ -9,12 +9,13 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -30,9 +31,8 @@ import java.util.List;
 
 abstract public class PythonTestConfigurationProducer extends RuntimeConfigurationProducer {
   protected PsiElement myPsiElement;
-
-  public PythonTestConfigurationProducer (final Class configurationTypeClass) {
-    super(ConfigurationTypeUtil.findConfigurationType(configurationTypeClass));
+  public PythonTestConfigurationProducer(final ConfigurationFactory configurationFactory) {
+    super(configurationFactory);
   }
 
   @Override
@@ -153,7 +153,6 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
 
     configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
     configuration.setFolderName(path);
-    configuration.setWorkingDirectory(path);
 
     configuration.setName(configuration.suggestedName());
     myPsiElement = dir;
@@ -165,7 +164,7 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     if (module == null) {
       return false;
     }
-    if (module.getModuleType() instanceof PythonModuleTypeBase) {
+    if (ModuleType.get(module) instanceof PythonModuleTypeBase) {
       return true;
     }
     final Facet[] allFacets = FacetManager.getInstance(module).getAllFacets();
@@ -222,8 +221,8 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     final VirtualFile parent = vFile.getParent();
     if (parent == null) return false;
 
-    cfg.setScriptName(containingFile.getName());
-    cfg.setWorkingDirectory(parent.getPath());
+    cfg.setScriptName(vFile.getPath());
+    cfg.setShortName(containingFile.getName());
 
     return true;
   }

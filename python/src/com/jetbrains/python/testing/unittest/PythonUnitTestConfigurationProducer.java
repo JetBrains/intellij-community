@@ -10,17 +10,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.testing.PythonTestConfigurationProducer;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.PythonUnitTestUtil;
-import com.jetbrains.python.testing.TestRunnerService;
+import com.jetbrains.python.testing.*;
 import org.jetbrains.annotations.Nullable;
 
 public class PythonUnitTestConfigurationProducer extends PythonTestConfigurationProducer {
   public PythonUnitTestConfigurationProducer() {
-    super(PythonUnitTestConfigurationType.class);
+    super(PythonTestConfigurationType.getInstance().PY_UNITTEST_FACTORY);
   }
 
   protected boolean isAvailable(Location location) {
