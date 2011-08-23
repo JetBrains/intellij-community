@@ -24,6 +24,7 @@ import com.intellij.ide.projectView.impl.ShowModulesAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,10 +72,15 @@ public class ScopeViewPane extends AbstractProjectViewPane {
         refreshProjectViewAlarm.addRequest(new Runnable(){
           public void run() {
             if (myProject.isDisposed()) return;
-            String subId = getSubId();
+            final String subId = getSubId();
+            final String id = myProjectView.getCurrentViewId();
             myProjectView.removeProjectPane(ScopeViewPane.this);
             myProjectView.addProjectPane(ScopeViewPane.this);
-            myProjectView.changeView(getId(), subId);
+            if (Comparing.strEqual(id, getId())) {
+              myProjectView.changeView(getId(), subId);
+            } else {
+              myProjectView.changeView(id);
+            }
           }
         },10);
       }
