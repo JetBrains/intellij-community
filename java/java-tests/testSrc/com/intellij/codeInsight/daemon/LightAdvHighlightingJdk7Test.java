@@ -75,6 +75,10 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
+  public void testSwitchByInaccessibleEnum() throws Exception {
+    doTest(false, false);
+  }
+
   public void testDiamondPos1() throws Exception {
     doTest(false, false);
   }
