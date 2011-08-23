@@ -311,7 +311,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
     @Override
     protected List<OrderRoot> selectRoots(@Nullable VirtualFile initialSelection) {
-      final FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, true, true, false, true, true);
+      final FileChooserDescriptor chooserDescriptor = myDescriptor.createAttachFilesChooserDescriptor();
       final String name = getLibraryEditor().getName();
       chooserDescriptor.setTitle(StringUtil.isEmpty(name) ? ProjectBundle.message("library.attach.files.action")
                                                           : ProjectBundle.message("library.attach.files.to.library.action", name));

@@ -12,6 +12,8 @@
  */
 package com.intellij.openapi.roots.libraries.ui;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +35,11 @@ public abstract class LibraryRootsComponentDescriptor {
   @NotNull
   public List<? extends RootDetector> getRootDetectors() {
     return Collections.emptyList();
+  }
+
+  @NotNull
+  public FileChooserDescriptor createAttachFilesChooserDescriptor() {
+    return FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
   }
 
   /**

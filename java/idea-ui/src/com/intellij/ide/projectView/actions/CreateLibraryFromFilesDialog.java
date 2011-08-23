@@ -25,15 +25,14 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.ModulesCombobox;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryNameAndLevelPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.PathUtil;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +71,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
       myModifiableModel = null;
       myLibrariesContainer = LibrariesContainerFactory.createContainer(project);
     }
-    myDefaultName = myLibrariesContainer.suggestUniqueLibraryName(suggestLibraryName(roots));
+    myDefaultName = myLibrariesContainer.suggestUniqueLibraryName(LibraryEditingUtil.suggestLibraryName(roots));
     myNameAndLevelPanel = new LibraryNameAndLevelPanel(builder, myDefaultName, myLibrariesContainer.getAvailableLevels(), LibrariesContainer.LibraryLevel.PROJECT);
     myNameAndLevelPanel.setDefaultName(myDefaultName);
     myModulesCombobox = new ModulesCombobox();
@@ -135,13 +134,6 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameAndLevelPanel.getLibraryNameField();
-  }
-
-  private static String suggestLibraryName(List<OrderRoot> roots) {
-    if (roots.size() >= 1) {
-      return FileUtil.getNameWithoutExtension(PathUtil.getFileName(roots.get(0).getFile().getPath()));
-    }
-    return "unnamed";
   }
 
   @Override
