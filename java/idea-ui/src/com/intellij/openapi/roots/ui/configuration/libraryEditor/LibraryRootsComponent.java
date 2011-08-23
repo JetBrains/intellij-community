@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -39,15 +38,16 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +61,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -84,8 +83,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private LibraryPropertiesEditor myPropertiesEditor;
   private Tree myTree;
   private LibraryTableTreeBuilder myTreeBuilder;
-  private static final Icon INVALID_ITEM_ICON = IconLoader.getIcon("/nodes/ppInvalid.png");
-  private static final Icon JAR_DIRECTORY_ICON = IconLoader.getIcon("/nodes/jarDirectory.png");
 
   private final Collection<Runnable> myListeners = new ArrayList<Runnable>();
   @Nullable private final Project myProject;
@@ -147,7 +144,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    new MyTreeSpeedSearch(myTree);
+    new LibraryRootsTreeSpeedSearch(myTree);
     myTree.setCellRenderer(new LibraryTreeRenderer());
     final MyTreeSelectionListener treeSelectionListener = new MyTreeSelectionListener();
     myTree.getSelectionModel().addTreeSelectionListener(treeSelectionListener);
@@ -433,10 +430,9 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       });
       librariesChanged(true);
     }
-
   }
 
-  protected void librariesChanged(boolean putFocusIntoTree) {
+  private void librariesChanged(boolean putFocusIntoTree) {
     updatePropertiesLabel();
     myTreeBuilder.queueUpdate();
     if (putFocusIntoTree) {
@@ -446,8 +442,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private void fireLibrariesChanged() {
-    Runnable[] runnables = myListeners.toArray(new Runnable[myListeners.size()]);
-    for (Runnable listener : runnables) {
+    Runnable[] listeners = myListeners.toArray(new Runnable[myListeners.size()]);
+    for (Runnable listener : listeners) {
       listener.run();
     }
   }
@@ -488,100 +484,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         }
       }
       return cls;
-    }
-  }
-
-
-
-  static Icon getIconForUrl(final String url, final boolean isValid, final boolean isJarDirectory) {
-    final Icon icon;
-    if (isValid) {
-      VirtualFile presentableFile;
-      if (isJarFileRoot(url)) {
-        presentableFile = LocalFileSystem.getInstance().findFileByPath(getPresentablePath(url));
-      }
-      else {
-        presentableFile = VirtualFileManager.getInstance().findFileByUrl(url);
-      }
-      if (presentableFile != null && presentableFile.isValid()) {
-        if (presentableFile.getFileSystem() instanceof HttpFileSystem) {
-          icon = PlatformIcons.WEB_ICON;
-        }
-        else {
-          if (presentableFile.isDirectory()) {
-            if (isJarDirectory) {
-              icon = JAR_DIRECTORY_ICON;
-            }
-            else {
-              icon = PlatformIcons.DIRECTORY_CLOSED_ICON;
-            }
-          }
-          else {
-            icon = IconUtilEx.getIcon(presentableFile, 0, null);
-          }
-        }
-      }
-      else {
-        icon = INVALID_ITEM_ICON;
-      }
-    }
-    else {
-      icon = INVALID_ITEM_ICON;
-    }
-    return icon;
-  }
-
-  static String getPresentablePath(final String url) {
-    String presentablePath = VirtualFileManager.extractPath(url);
-    if (isJarFileRoot(url)) {
-      presentablePath = presentablePath.substring(0, presentablePath.length() - JarFileSystem.JAR_SEPARATOR.length());
-    }
-    return presentablePath;
-  }
-
-  private static boolean isJarFileRoot(final String url) {
-    return VirtualFileManager.extractPath(url).endsWith(JarFileSystem.JAR_SEPARATOR);
-  }
-
-  private static class MyTreeSpeedSearch extends TreeSpeedSearch {
-    public MyTreeSpeedSearch(final Tree tree) {
-      super(tree);
-    }
-
-    public boolean isMatchingElement(Object element, String pattern) {
-      Object userObject = ((DefaultMutableTreeNode)((TreePath)element).getLastPathComponent()).getUserObject();
-      if (userObject instanceof ItemElementDescriptor) {
-        String str = getElementText(element);
-        if (str == null) {
-          return false;
-        }
-        if (!hasCapitals(pattern)) { // be case-sensitive only if user types capitals
-          str = str.toLowerCase();
-        }
-        if (pattern.contains(File.separator)) {
-          return compare(str,pattern);
-        }
-        final StringTokenizer tokenizer = new StringTokenizer(str, File.separator);
-        while (tokenizer.hasMoreTokens()) {
-          final String token = tokenizer.nextToken();
-          if (compare(token,pattern)) {
-            return true;
-          }
-        }
-        return false;
-      }
-      else {
-        return super.isMatchingElement(element, pattern);
-      }
-    }
-
-    private static boolean hasCapitals(String str) {
-      for (int idx = 0; idx < str.length(); idx++) {
-        if (Character.isUpperCase(str.charAt(idx))) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 
