@@ -164,6 +164,8 @@ public class PlaybackRunner {
       cmd = new KeyShortcutCommand(string, line);
     } else if (actualString.startsWith(ActionCommand.PREFIX)) {
       cmd = new ActionCommand(string, line);
+    } else if (actualString.startsWith(ToggleActionCommand.PREFIX)) {
+      cmd = new ToggleActionCommand(string, line);
     } else if (actualString.startsWith(StopCommand.PREFIX)) {
       cmd = new StopCommand(string, line);
     } else if (actualString.startsWith(AssertFocused.PREFIX)) {

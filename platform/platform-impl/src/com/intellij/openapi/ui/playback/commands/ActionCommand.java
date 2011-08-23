@@ -88,7 +88,7 @@ public class ActionCommand extends TypeCommand {
     return result;
   }
 
-  private InputEvent getInputEvent(String actionName) {
+  public static InputEvent getInputEvent(String actionName) {
     final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionName);
     KeyStroke keyStroke = null;
     for (Shortcut each : shortcuts) {
