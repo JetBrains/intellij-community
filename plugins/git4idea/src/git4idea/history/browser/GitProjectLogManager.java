@@ -102,6 +102,7 @@ public class GitProjectLogManager {
     if (myCurrentContent.get() != null) {
       final ChangesViewContentI cvcm = ChangesViewContentManager.getInstance(myProject);
       cvcm.removeContent(myCurrentContent.get());
+      myCurrentContent.set(null);
     }
     if (myConnection != null) {
       myConnection.disconnect();
