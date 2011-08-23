@@ -404,12 +404,14 @@ public class Splitter extends JPanel {
     return myDivider;
   }
 
-  protected class Divider extends JPanel {
+  public class Divider extends JPanel {
+    private boolean myResizeEnabled;
     protected boolean myDragging;
     protected Point myPoint;
 
     public Divider() {
       super(new GridBagLayout());
+      myResizeEnabled = true;
       setFocusable(false);
       enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
 
@@ -477,6 +479,7 @@ public class Splitter extends JPanel {
 
     protected void processMouseMotionEvent(MouseEvent e) {
       super.processMouseMotionEvent(e);
+      if (! myResizeEnabled) return;
       if (MouseEvent.MOUSE_DRAGGED == e.getID()) {
         myDragging = true;
         setCursor(
@@ -515,6 +518,7 @@ public class Splitter extends JPanel {
 
     protected void processMouseEvent(MouseEvent e) {
       super.processMouseEvent(e);
+      if (! myResizeEnabled) return;
       switch (e.getID()) {
         case MouseEvent.MOUSE_ENTERED: {
           setCursor(getOrientation() ? Cursor.getPredefinedCursor(9) : Cursor.getPredefinedCursor(11));
@@ -542,6 +546,10 @@ public class Splitter extends JPanel {
           break;
         }
       }
+    }
+
+    public void setResizeEnabled(boolean resizeEnabled) {
+      myResizeEnabled = resizeEnabled;
     }
   }
 }

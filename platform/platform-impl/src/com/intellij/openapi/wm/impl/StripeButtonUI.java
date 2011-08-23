@@ -27,7 +27,7 @@ import java.awt.geom.AffineTransform;
 /**
  * @author Vladimir Kondratyev
  */
-final class StripeButtonUI extends MetalToggleButtonUI{
+public final class StripeButtonUI extends MetalToggleButtonUI{
   private static final StripeButtonUI ourInstance=new StripeButtonUI();
 
   private static final Rectangle ourIconRect=new Rectangle();
@@ -43,13 +43,13 @@ final class StripeButtonUI extends MetalToggleButtonUI{
   }
 
   public Dimension getPreferredSize(final JComponent c){
-    final StripeButton button=(StripeButton)c;
+    final AnchoredButton button=(AnchoredButton)c;
     final Dimension dim=super.getPreferredSize(button);
 
     dim.width=(int)(4+dim.width*1.1f);
     dim.height+=4;
 
-    final ToolWindowAnchor anchor=button.getWindowInfo().getAnchor();
+    final ToolWindowAnchor anchor=button.getAnchor();
     if(ToolWindowAnchor.LEFT==anchor||ToolWindowAnchor.RIGHT==anchor){
       return new Dimension(dim.height,dim.width);
     } else{
@@ -58,7 +58,7 @@ final class StripeButtonUI extends MetalToggleButtonUI{
   }
 
   public void paint(final Graphics g,final JComponent c){
-    final StripeButton button=(StripeButton)c;
+    final AnchoredButton button=(AnchoredButton)c;
 
     final String text=button.getText();
     final Icon icon=(button.isEnabled()) ? button.getIcon() : button.getDisabledIcon();
@@ -73,7 +73,7 @@ final class StripeButtonUI extends MetalToggleButtonUI{
     ourViewRect.x=ourViewInsets.left;
     ourViewRect.y=ourViewInsets.top;
 
-    final ToolWindowAnchor anchor=button.getWindowInfo().getAnchor();
+    final ToolWindowAnchor anchor=button.getAnchor();
 
     // Use inverted height & width
     if(ToolWindowAnchor.RIGHT==anchor||ToolWindowAnchor.LEFT==anchor){
