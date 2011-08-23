@@ -35,7 +35,7 @@ import java.util.List;
  * @author Constantine.Plotnikov
  */
 public class PathUIUtils {
-  public static final RootDetector JAVA_SOURCE_ROOT_DETECTOR = new RootDetector(OrderRootType.SOURCES, false) {
+  public static final RootDetector JAVA_SOURCE_ROOT_DETECTOR = new RootDetector(OrderRootType.SOURCES, false, "sources") {
     @NotNull
     @Override
     public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate,
@@ -57,7 +57,7 @@ public class PathUIUtils {
    */
   public static VirtualFile[] scanAndSelectDetectedJavaSourceRoots(Component parentComponent, final VirtualFile[] rootCandidates) {
     final List<OrderRoot> orderRoots = RootDetectionUtil.detectRoots(Arrays.asList(rootCandidates), parentComponent, null,
-                                                                     Collections.singletonList(JAVA_SOURCE_ROOT_DETECTOR));
+                                                                     Collections.singletonList(JAVA_SOURCE_ROOT_DETECTOR), false);
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (OrderRoot root : orderRoots) {
       result.add(root.getFile());

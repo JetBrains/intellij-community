@@ -31,8 +31,9 @@ import org.jetbrains.annotations.NotNull;
 public class FileTypeBasedRootFilter extends RootFilter {
   private final FileType myFileType;
 
-  public FileTypeBasedRootFilter(OrderRootType rootType, boolean jarDirectory, @NotNull FileType fileType) {
-    super(rootType, jarDirectory);
+  public FileTypeBasedRootFilter(OrderRootType rootType, boolean jarDirectory, @NotNull FileType fileType,
+                                 final String presentableRootTypeName) {
+    super(rootType, jarDirectory, presentableRootTypeName);
     myFileType = fileType;
   }
 

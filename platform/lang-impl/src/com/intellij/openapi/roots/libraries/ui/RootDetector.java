@@ -28,10 +28,12 @@ import java.util.Collection;
 public abstract class RootDetector {
   private OrderRootType myRootType;
   private boolean myJarDirectory;
+  private String myPresentableRootTypeName;
 
-  protected RootDetector(OrderRootType rootType, boolean jarDirectory) {
+  protected RootDetector(OrderRootType rootType, boolean jarDirectory, String presentableRootTypeName) {
     myRootType = rootType;
     myJarDirectory = jarDirectory;
+    myPresentableRootTypeName = presentableRootTypeName;
   }
 
   public boolean isJarDirectory() {
@@ -40,6 +42,10 @@ public abstract class RootDetector {
 
   public OrderRootType getRootType() {
     return myRootType;
+  }
+
+  public String getPresentableRootTypeName() {
+    return myPresentableRootTypeName;
   }
 
   @NotNull

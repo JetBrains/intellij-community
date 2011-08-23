@@ -322,7 +322,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       final VirtualFile[] files = FileChooser.chooseFiles(myPanel, chooserDescriptor, initialSelection);
       if (files.length == 0) return Collections.emptyList();
 
-      return RootDetectionUtil.detectRoots(Arrays.asList(files), myPanel, myProject, myDetectors);
+      return RootDetectionUtil.detectRoots(Arrays.asList(files), myPanel, myProject, myDetectors, true);
     }
   }
 

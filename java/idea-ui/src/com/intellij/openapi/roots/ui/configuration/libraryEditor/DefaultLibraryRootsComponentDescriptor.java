@@ -49,11 +49,12 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
   @NotNull
   @Override
   public List<? extends RootDetector> getRootDetectors() {
-    return Arrays.asList(new FileTypeBasedRootFilter(OrderRootType.CLASSES, false, StdFileTypes.CLASS),
-                         new FileTypeBasedRootFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS),
+    return Arrays.asList(new FileTypeBasedRootFilter(OrderRootType.CLASSES, false, StdFileTypes.CLASS, "classes"),
+                         new FileTypeBasedRootFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"),
                          PathUIUtils.JAVA_SOURCE_ROOT_DETECTOR,
-                         new FileTypeBasedRootFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA),
-                         new FileTypeBasedRootFilter(JavadocOrderRootType.getInstance(), false, StdFileTypes.HTML),
+                         new FileTypeBasedRootFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"),
+                         new FileTypeBasedRootFilter(JavadocOrderRootType.getInstance(), false, StdFileTypes.HTML,
+                                                     "JavaDocs"),
                          new AnnotationsRootFilter());
   }
 
@@ -64,7 +65,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
 
   private static class AnnotationsRootFilter extends FileTypeBasedRootFilter {
     private AnnotationsRootFilter() {
-      super(AnnotationOrderRootType.getInstance(), false, StdFileTypes.XML);
+      super(AnnotationOrderRootType.getInstance(), false, StdFileTypes.XML, "external annotations");
     }
 
     @Override

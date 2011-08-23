@@ -27,8 +27,8 @@ import java.util.Collections;
  * @author nik
  */
 public abstract class RootFilter extends RootDetector {
-  public RootFilter(OrderRootType rootType, boolean jarDirectory) {
-    super(rootType, jarDirectory);
+  public RootFilter(OrderRootType rootType, boolean jarDirectory, final String presentableRootTypeName) {
+    super(rootType, jarDirectory, presentableRootTypeName);
   }
 
   public abstract boolean isAccepted(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator);
