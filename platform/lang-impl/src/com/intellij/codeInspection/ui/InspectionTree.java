@@ -165,7 +165,7 @@ public class InspectionTree extends Tree {
     final InspectionTool tool = getSelectedTool();
     if (getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection)) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
-    final List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
+    final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       traverseDescriptors((InspectionTreeNode)node, descriptors);
@@ -173,7 +173,7 @@ public class InspectionTree extends Tree {
     return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
   }
 
-  private static void traverseDescriptors(InspectionTreeNode node, List<CommonProblemDescriptor> descriptors){
+  private static void traverseDescriptors(InspectionTreeNode node, LinkedHashSet<CommonProblemDescriptor> descriptors){
     if (node instanceof ProblemDescriptionNode) {
       descriptors.add(((ProblemDescriptionNode)node).getDescriptor());
     }
