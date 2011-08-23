@@ -166,11 +166,6 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertEquals(CommonClassNames.JAVA_LANG_OBJECT, ((GrMethod) resolved).returnType.canonicalText);
   }
 
-  public void testNotAField() throws Exception {
-    PsiReference ref = configureByFile("notAField/A.groovy");
-    assertNull(ref.resolve());
-  }
-
   public void testUndefinedVar2() throws Exception {
     doUndefinedVarTest("undefinedVar2/A.groovy");
   }
