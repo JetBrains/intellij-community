@@ -27,11 +27,11 @@
       </component>
       <component id="32654" class="com.intellij.execution.configuration.EnvironmentVariablesComponent" binding="myEnvsComponent">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <labelInsets top="0" left="0" bottom="0" right="0"/>
           <labelLocation value="West"/>
+          <labelPreferredSize width="145" height="16"/>
           <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.labels.environment_variables"/>
         </properties>
       </component>
@@ -57,7 +57,7 @@
       <component id="a4f87" class="javax.swing.JLabel">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="143" height="-1"/>
+            <preferred-size width="145" height="-1"/>
           </grid>
         </constraints>
         <properties>

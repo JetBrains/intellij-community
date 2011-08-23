@@ -106,6 +106,7 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
+              <labelPreferredSize width="51" height="16"/>
               <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.method_label"/>
             </properties>
           </component>
