@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class MockPrinter implements Printer {
   private boolean myShouldReset = false;
   private boolean myHasPrinted = false;
+  private final StringBuilder myAllOut = new StringBuilder();
   private final StringBuilder myStdOut = new StringBuilder();
   private final StringBuilder myStdErr = new StringBuilder();
   private final StringBuilder myStdSys = new StringBuilder();
@@ -39,6 +40,7 @@ public class MockPrinter implements Printer {
   @Override
   public void print(String s, ConsoleViewContentType contentType) {
     myHasPrinted = true;
+    myAllOut.append(s);
     if (contentType == ConsoleViewContentType.NORMAL_OUTPUT) {
       myStdOut.append(s);
     }
@@ -48,6 +50,10 @@ public class MockPrinter implements Printer {
     else if (contentType == ConsoleViewContentType.SYSTEM_OUTPUT) {
       myStdSys.append(s);
     }
+  }
+
+  public String getAllOut() {
+    return myAllOut.toString();
   }
 
   public String getStdOut() {
