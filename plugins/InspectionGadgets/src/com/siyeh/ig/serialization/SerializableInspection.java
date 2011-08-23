@@ -58,7 +58,7 @@ public abstract class SerializableInspection extends BaseInspection {
                 ScrollPaneFactory.createScrollPane(table);
         UiUtils.setScrollPaneSize(scrollPane, 7, 25);
         final ActionToolbar toolbar =
-                UiUtils.createAddRemoveTreeAnnotationChooserToolbar(table,
+                UiUtils.createAddRemoveTreeClassChooserToolbar(table,
                         InspectionGadgetsBundle.message(
                                 "choose.super.class.to.ignore"));
         final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
