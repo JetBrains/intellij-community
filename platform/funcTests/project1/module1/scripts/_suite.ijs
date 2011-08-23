@@ -1,3 +1,8 @@
-%cd ../community/platform/funcTests/project1/module1/scripts
+%include include/init.ijs
 
-%include selectIn/projectView.ijs
+%include typeahead/chooseByName.ijs
+
+%include navbar/navigation.ijs
+
+%include selectIn/project_projectView.ijs
+%%include selectIn/project_packageView.ijs

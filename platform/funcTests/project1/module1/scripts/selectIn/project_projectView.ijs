@@ -1,5 +1,5 @@
-%action CloseProject
-%call openProjectClone(../community/platform/funcTests/project1)
+%include ../include/project1Init.ijs
+
 %action GotoClass
 PsiManager\n
 %action SelectIn
