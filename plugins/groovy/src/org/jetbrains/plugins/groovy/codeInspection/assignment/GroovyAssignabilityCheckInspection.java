@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -61,6 +62,8 @@ import java.util.Map;
  * @author Maxim.Medvedev
  */
 public class GroovyAssignabilityCheckInspection extends BaseInspection {
+  private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
+
   @Nls
   @NotNull
   @Override
@@ -223,16 +226,17 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       GrCodeReferenceElement refElement = newExpression.getReferenceElement();
       if (refElement == null) return;
 
+      checkConstructorCall(newExpression, refElement);
+    }
+
+    private void checkConstructorCall(GrConstructorCall newExpression, GroovyPsiElement refElement) {
       final GrArgumentList argList = newExpression.getArgumentList();
 
       final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
       final PsiElement constructor = constructorResolveResult.getElement();
+
       if (constructor != null) {
-        if (argList == null ||
-            argList.getExpressionArguments().length != 0 ||
-            ((PsiMethod)constructor).getParameterList().getParametersCount() != 0) {
-          checkMethodApplicability(constructorResolveResult, refElement);
-        }
+        checkConstructorApplicability(constructorResolveResult, refElement);
       }
       else {
         final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
@@ -240,7 +244,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           for (GroovyResolveResult result : results) {
             PsiElement resolved = result.getElement();
             if (resolved instanceof PsiMethod) {
-              if (!checkMethodApplicability(result, refElement)) return;
+              if (!checkConstructorApplicability(result, refElement)) return;
             }
           }
 
@@ -254,13 +258,24 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       checkNamedArgumentsType(newExpression);
     }
 
+    private  boolean checkConstructorApplicability(GroovyResolveResult constructorResolveResult, GroovyPsiElement place) {
+      final PsiElement element = constructorResolveResult.getElement();
+      LOG.assertTrue(element instanceof PsiMethod && ((PsiMethod)element).isConstructor());
+      final PsiMethod constructor = (PsiMethod)element;
+
+      final GrArgumentList argList = PsiUtil.getArgumentsList(place);
+      if (argList != null) {
+        final GrExpression[] exprArgs = argList.getExpressionArguments();
+
+        if (exprArgs.length == 0 &&  !PsiUtil.isConstructorHasRequiredParameters(constructor)) return true;
+      }
+      return checkMethodApplicability(constructorResolveResult, place);
+    }
+
     @Override
     public void visitConstructorInvocation(GrConstructorInvocation invocation) {
       super.visitConstructorInvocation(invocation);
-      final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
-      if (resolveResult.getElement() != null) {
-        checkMethodApplicability(resolveResult, invocation);
-      }
+      checkConstructorCall(invocation, invocation.getThisOrSuperKeyword());
     }
 
     @Override

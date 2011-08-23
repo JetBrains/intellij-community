@@ -630,7 +630,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       final GrArgumentList argList = newExpression.getArgumentList();
       if (argList != null &&
           argList.getExpressionArguments().length == 0 &&
-          ((PsiMethod)constructor).getParameterList().getParametersCount() == 0) {
+          !PsiUtil.isConstructorHasRequiredParameters((PsiMethod)constructor)) {
         checkDefaultMapConstructor(myHolder, argList, constructor);
       }
 

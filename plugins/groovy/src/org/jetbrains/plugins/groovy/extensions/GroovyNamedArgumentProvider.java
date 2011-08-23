@@ -87,9 +87,8 @@ public abstract class GroovyNamedArgumentProvider {
         if (element instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)element;
           PsiParameter[] parameters = method.getParameterList().getParameters();
-          if (!(parameters.length == 0 ? method.isConstructor() : canBeMap(parameters[0]))) {
-            continue;
-          }
+
+          if (!method.isConstructor() && !canBeMap(parameters[0])) continue;
 
           collectVariantsFromSimpleDescriptors(namedArguments, method);
         }

@@ -63,6 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
@@ -1218,5 +1219,14 @@ public class PsiUtil {
     if (clazz.isInterface()) return false;
     final GrModifierList modifierList = field.getModifierList();
     return modifierList == null || !modifierList.hasExplicitVisibilityModifiers();
+  }
+
+  public static boolean isConstructorHasRequiredParameters(PsiMethod constructor) {
+    LOG.assertTrue(constructor.isConstructor());
+    final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+    for (PsiParameter parameter : parameters) {
+      if (!(parameter instanceof GrParameter && ((GrParameter)parameter).isOptional())) return true;
+    }
+    return false;
   }
 }

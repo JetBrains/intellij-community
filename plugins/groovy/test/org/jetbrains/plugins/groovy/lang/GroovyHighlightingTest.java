@@ -452,4 +452,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testCallableProperty() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
+  
+  public void testConstructor() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }
