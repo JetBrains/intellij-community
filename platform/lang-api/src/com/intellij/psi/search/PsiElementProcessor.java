@@ -17,7 +17,7 @@ package com.intellij.psi.search;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiElementFilter;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
     }
 
     public PsiElement[] toArray() {
-      return PsiUtilBase.toPsiElementArray(myCollection);
+      return PsiUtilCore.toPsiElementArray(myCollection);
     }
 
     public Collection<T> getCollection() {

@@ -877,7 +877,7 @@ public class PsiTreeUtil {
       }
     }
 
-    return PsiUtilBase.toPsiElementArray(filteredElements);
+    return PsiUtilCore.toPsiElementArray(filteredElements);
   }
 
   public static boolean treeWalkUp(@NotNull final PsiScopeProcessor processor,
