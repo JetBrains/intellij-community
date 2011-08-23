@@ -27,6 +27,10 @@ public class OrderRoot {
   private final OrderRootType myType;
   private final boolean myJarDirectory;
 
+  public OrderRoot(@NotNull VirtualFile file, @NotNull OrderRootType type) {
+    this(file, type, false);
+  }
+
   public OrderRoot(@NotNull VirtualFile file, @NotNull OrderRootType type, boolean jarDirectory) {
     myFile = file;
     myType = type;
