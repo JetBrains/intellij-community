@@ -139,6 +139,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
       }
 
+      clearCache();
       notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
     }
   }
