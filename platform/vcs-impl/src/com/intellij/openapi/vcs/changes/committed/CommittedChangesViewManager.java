@@ -81,7 +81,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
     }, new Condition() {
       @Override
       public boolean value(Object o) {
-        return (! myProject.isOpen()) || myProject.isDisposed();
+        return (! myProject.isOpen()) || myProject.isDisposed() || myComponent == null;
       }
     });
   }
