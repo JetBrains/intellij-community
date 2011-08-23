@@ -23,11 +23,12 @@ import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -96,7 +97,7 @@ public class FormNode extends ProjectViewNode<Form>{
     for(BasePsiNode<? extends PsiElement> child: myChildren) {
       final PsiElement value = child.getValue();
       if (value == null || !value.isValid()) continue;
-      final FileStatus fileStatus = child.getFileStatus();
+      final FileStatus fileStatus = NavigationItemFileStatus.get(child);
       if (fileStatus != FileStatus.NOT_CHANGED) {
         return fileStatus;
       }

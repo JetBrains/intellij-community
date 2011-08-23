@@ -215,10 +215,6 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     return descriptor != null && descriptor.canNavigateToSource();
   }
 
-  public FileStatus getFileStatus() {
-    return SharedImplUtil.getFileStatus(this);
-  }
-
   @NotNull
   protected <T> T[] findChildrenByClass(Class<T> aClass) {
     List<T> result = new ArrayList<T>();

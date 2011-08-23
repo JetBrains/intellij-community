@@ -268,10 +268,6 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
     return canNavigate();
   }
 
-  public FileStatus getFileStatus() {
-    return SharedImplUtil.getFileStatus(this);
-  }
-
   public boolean isEquivalentTo(final PsiElement another) {
     return this == another;
   }

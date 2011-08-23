@@ -1,6 +1,7 @@
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -194,7 +195,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  private static class MyNavigationItem implements NavigationItem, ItemPresentation {
+  private static class MyNavigationItem implements PsiElementNavigationItem, ItemPresentation {
     private final NavigationItem myItem;
     private final ItemPresentation myPresentation;
 
@@ -234,8 +235,9 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       return myPresentation != null ? this : null;
     }
 
-    public FileStatus getFileStatus() {
-      return myItem.getFileStatus();
+    @Override
+    public PsiElement getTargetElement() {
+      return (PsiElement) myItem;
     }
 
     public void navigate(boolean requestFocus) {

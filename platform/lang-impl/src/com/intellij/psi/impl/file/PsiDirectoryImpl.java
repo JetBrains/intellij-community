@@ -557,10 +557,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     ProjectViewSelectInTarget.select(getProject(), this, ProjectViewPane.ID, null, getVirtualFile(), requestFocus);
   }
 
-  public FileStatus getFileStatus() {
-    return myFile != null ? FileStatusManager.getInstance(getProject()).getStatus(myFile) : FileStatus.NOT_CHANGED;
-  }
-
   protected Icon getElementIcon(final int flags) {
     return PlatformIcons.DIRECTORY_CLOSED_ICON;
   }

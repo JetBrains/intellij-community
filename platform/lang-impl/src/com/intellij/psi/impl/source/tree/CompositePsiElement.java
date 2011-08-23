@@ -23,7 +23,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
@@ -239,10 +238,6 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   public boolean canNavigateToSource() {
     return canNavigate();
-  }
-
-  public FileStatus getFileStatus() {
-    return SharedImplUtil.getFileStatus(this);
   }
 
   @NotNull

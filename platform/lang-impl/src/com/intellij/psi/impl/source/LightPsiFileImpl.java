@@ -24,13 +24,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -213,10 +211,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   @NotNull
   public SearchScope getUseScope() {
     return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
-  }
-
-  public FileStatus getFileStatus() {
-    return SharedImplUtil.getFileStatus(this);
   }
 
   public void navigate(boolean requestFocus) {

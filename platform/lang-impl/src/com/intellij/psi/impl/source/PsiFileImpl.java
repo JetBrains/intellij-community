@@ -862,10 +862,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return canNavigate();
   }
 
-  public FileStatus getFileStatus() {
-    return SharedImplUtil.getFileStatus(this);
-  }
-
   @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();

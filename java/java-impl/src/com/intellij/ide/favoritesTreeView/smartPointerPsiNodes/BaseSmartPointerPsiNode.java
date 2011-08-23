@@ -21,14 +21,13 @@ import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
@@ -38,7 +37,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> extends ProjectViewNode<Type> {
+public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> extends ProjectViewNode<Type> implements
+                                                                                                                  PsiElementNavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
 
   protected BaseSmartPointerPsiNode(Project project, Type value, ViewSettings viewSettings) {
@@ -61,13 +61,14 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
     return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement;
   }
 
-  public FileStatus getFileStatus() {
+  @Override
+  public PsiElement getTargetElement() {
     VirtualFile file = getVirtualFileForValue();
     if (file == null) {
-      return FileStatus.NOT_CHANGED;
+      return null;
     }
     else {
-      return FileStatusManager.getInstance(getProject()).getStatus(file);
+      return file.isDirectory() ? PsiManager.getInstance(getProject()).findDirectory(file) : PsiManager.getInstance(getProject()).findFile(file);
     }
   }
 

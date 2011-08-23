@@ -19,10 +19,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.reflect.*;
 
-abstract class XsltElementImpl extends LightElement implements Iconable, NavigationItem, XsltElement, ItemPresentation {
+abstract class XsltElementImpl extends LightElement implements Iconable, PsiElementNavigationItem, XsltElement, ItemPresentation {
 
     protected final @NotNull XmlTag myElement;
     protected final XsltElementFactory myElementFactory;
@@ -100,8 +100,8 @@ abstract class XsltElementImpl extends LightElement implements Iconable, Navigat
     }
 
     @Override
-    public FileStatus getFileStatus() {
-        return myElement instanceof NavigationItem ? ((NavigationItem)myElement).getFileStatus() : FileStatus.UNKNOWN;
+    public PsiElement getTargetElement() {
+        return myElement;
     }
 
     @Nullable
