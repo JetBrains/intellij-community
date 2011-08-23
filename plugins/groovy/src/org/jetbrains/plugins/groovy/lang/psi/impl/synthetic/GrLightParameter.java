@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightVariableBuilder;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +40,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   public GrLightParameter(@Nullable String name, @NotNull PsiType type, @NotNull PsiElement scope) {
     super(scope.getManager(), name, type, GroovyFileType.GROOVY_LANGUAGE);
     myScope = scope;
-    myModifierList = new GrLightModifierList(this, ArrayUtil.EMPTY_STRING_ARRAY);
+    myModifierList = new GrLightModifierList(this);
   }
 
   @NotNull
@@ -128,7 +127,9 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
 
   @Override
   public GrLightParameter setModifiers(String... modifiers) {
-    myModifierList = new GrLightModifierList(getContext(), modifiers);
+    GrLightModifierList modifiersList = new GrLightModifierList(getContext());
+    modifiersList.setModifiers(modifiers);
+    myModifierList = modifiersList;
     return this;
   }
 }

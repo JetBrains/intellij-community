@@ -78,7 +78,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myName = name;
     myParameterList = parameterList;
-    myModifierList = modifierList == null ? new GrLightModifierList(this, ArrayUtil.EMPTY_STRING_ARRAY) : modifierList;
+    myModifierList = modifierList == null ? new GrLightModifierList(this) : modifierList;
   }
 
   public void setNamedParametersArray(@NotNull String[] namedParametersArray) {
@@ -159,21 +159,23 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return myNamedParametersArray;
   }
 
-  public GrLightMethodBuilder addModifiers(String... modifiers) {
-    for (String modifier : modifiers) {
-      addModifier(modifier);
-    }
-    return this;
-  }
-
   public GrLightMethodBuilder addModifier(String modifier) {
     ((GrLightModifierList)myModifierList).addModifier(modifier);
     return this;
   }
 
+  public GrLightMethodBuilder addModifier(int modifier) {
+    ((GrLightModifierList)myModifierList).addModifier(modifier);
+    return this;
+  }
+
   public GrLightMethodBuilder setModifiers(String[] modifiers) {
-    ((GrLightModifierList)myModifierList).clearModifiers();
-    addModifiers(modifiers);
+    ((GrLightModifierList)myModifierList).setModifiers(modifiers);
+    return this;
+  }
+
+  public GrLightMethodBuilder setModifiers(int modifiers) {
+    ((GrLightModifierList)myModifierList).setModifiers(modifiers);
     return this;
   }
 
