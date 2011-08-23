@@ -135,7 +135,7 @@
         <properties/>
         <border type="none" title="AppEngine account"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
 </clientProperties>
         <children>
           <component id="b050a" class="javax.swing.JLabel">
