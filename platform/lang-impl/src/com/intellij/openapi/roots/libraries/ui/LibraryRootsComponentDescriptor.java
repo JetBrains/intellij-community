@@ -12,12 +12,11 @@
  */
 package com.intellij.openapi.roots.libraries.ui;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,6 +29,11 @@ public abstract class LibraryRootsComponentDescriptor {
    */
   @Nullable
   public abstract OrderRootTypePresentation getRootTypePresentation(@NotNull OrderRootType type);
+
+  @NotNull
+  public List<? extends RootDetector> getRootDetectors() {
+    return Collections.emptyList();
+  }
 
   /**
    * @return descriptors for 'Attach' buttons in the library roots editor

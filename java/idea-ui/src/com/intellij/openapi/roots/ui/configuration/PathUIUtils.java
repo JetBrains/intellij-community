@@ -16,11 +16,14 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.JavaUtilForVfs;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.DetectedSourceRootsDialog;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.roots.libraries.ui.RootDetector;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.RootDetectionUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.*;
@@ -32,8 +35,17 @@ import java.util.List;
  * @author Constantine.Plotnikov
  */
 public class PathUIUtils {
-  /** a private constructor */
-  private PathUIUtils() {}
+  public static final RootDetector JAVA_SOURCE_ROOT_DETECTOR = new RootDetector(OrderRootType.SOURCES, false) {
+    @NotNull
+    @Override
+    public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate,
+                                               @NotNull ProgressIndicator progressIndicator) {
+      return JavaUtilForVfs.suggestRoots(rootCandidate);
+    }
+  };
+
+  private PathUIUtils() {
+  }
 
   /**
    * This method takes a candidates for the project root, then scans the candidates and
@@ -43,34 +55,12 @@ public class PathUIUtils {
    * @param rootCandidates a candidates for roots
    * @return a array of source folders or empty array if non was selected or dialog was canceled.
    */
-  public static VirtualFile[] scanAndSelectDetectedJavaSourceRoots(Object parent, final VirtualFile[] rootCandidates) {
-    final Set<VirtualFile> result = new HashSet<VirtualFile>();
-    final Map<VirtualFile, List<VirtualFile>> detectedRootsMap = new LinkedHashMap<VirtualFile, List<VirtualFile>>();
-    // scan for roots
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        for (final VirtualFile candidate : rootCandidates) {
-          List<VirtualFile> detectedRoots = JavaUtilForVfs.suggestRoots(candidate);
-          if (!detectedRoots.isEmpty() && (detectedRoots.size() > 1 || detectedRoots.get(0) != candidate)) {
-            detectedRootsMap.put(candidate, detectedRoots);
-          } else {
-            result.add(candidate);
-          }
-        }
-      }
-    }, "Scanning for source roots", true, null);
-    if(!detectedRootsMap.isEmpty()) {
-      DetectedSourceRootsDialog dlg = parent instanceof Component ?
-                                      new DetectedSourceRootsDialog((Component)parent, detectedRootsMap) :
-                                      new DetectedSourceRootsDialog((Project)parent, detectedRootsMap);
-      dlg.show();
-      if (dlg.isOK()) {
-        result.addAll(dlg.getChosenRoots());
-      }
-      else {
-        // the empty result means that the entire root adding process will be cancelled.
-        result.clear();
-      }
+  public static VirtualFile[] scanAndSelectDetectedJavaSourceRoots(Component parentComponent, final VirtualFile[] rootCandidates) {
+    final List<OrderRoot> orderRoots = RootDetectionUtil.detectRoots(Arrays.asList(rootCandidates), parentComponent, null,
+                                                                     Collections.singletonList(JAVA_SOURCE_ROOT_DETECTOR));
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (OrderRoot root : orderRoots) {
+      result.add(root.getFile());
     }
     return VfsUtil.toVirtualFileArray(result);
   }

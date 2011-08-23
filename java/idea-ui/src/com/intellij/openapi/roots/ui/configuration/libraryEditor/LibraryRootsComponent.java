@@ -19,16 +19,17 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.*;
-import com.intellij.openapi.roots.libraries.ui.AttachRootButtonDescriptor;
-import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
-import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
-import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
+import com.intellij.openapi.roots.libraries.ui.*;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
@@ -39,6 +40,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.ScrollPaneFactory;
@@ -154,6 +156,12 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
     final JPanel buttonsPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false));
+    final List<? extends RootDetector> detectors = myDescriptor.getRootDetectors();
+    if (!detectors.isEmpty()) {
+      JButton button = new JButton(ProjectBundle.message("button.text.attach.files"));
+      button.addActionListener(new AttachFilesListener(detectors));
+      buttonsPanel.add(button);
+    }
     for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
       JButton button = new JButton(descriptor.getButtonText());
       button.addActionListener(new AttachItemAction(descriptor));
@@ -297,29 +305,35 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
   }
 
-  private class AttachItemAction implements ActionListener {
-    private VirtualFile myLastChosen = null;
-    private final AttachRootButtonDescriptor myDescriptor;
+  private class AttachFilesListener extends AttachItemActionBase {
+    private final List<? extends RootDetector> myDetectors;
 
-    protected AttachItemAction(AttachRootButtonDescriptor descriptor) {
-      myDescriptor = descriptor;
+    public AttachFilesListener(List<? extends RootDetector> detectors) {
+      myDetectors = detectors;
     }
 
-    public final void actionPerformed(ActionEvent e) {
-      VirtualFile toSelect = getFileToSelect();
-      final VirtualFile[] files = myDescriptor.selectFiles(myPanel, toSelect, myContextModule, getLibraryEditor());
-      if (files.length == 0) return;
-
-      final VirtualFile[] attachedFiles = attachFiles(myDescriptor.scanForActualRoots(files, myPanel), myDescriptor.getRootType(), myDescriptor.addAsJarDirectories());
-      if (attachedFiles.length > 0) {
-        myLastChosen = attachedFiles[0];
+    @Override
+    protected List<OrderRoot> selectRoots(@Nullable VirtualFile initialSelection) {
+      final FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, true, true, false, true, true);
+      final String name = getLibraryEditor().getName();
+      chooserDescriptor.setTitle(StringUtil.isEmpty(name) ? ProjectBundle.message("library.attach.files.action")
+                                                          : ProjectBundle.message("library.attach.files.to.library.action", name));
+      chooserDescriptor.setDescription(ProjectBundle.message("library.attach.files.description"));
+      if (myContextModule != null) {
+        chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myContextModule);
       }
-      fireLibrariesChanged();
-      myTree.requestFocus();
+      final VirtualFile[] files = FileChooser.chooseFiles(myPanel, chooserDescriptor, initialSelection);
+      if (files.length == 0) return Collections.emptyList();
+
+      return RootDetectionUtil.detectRoots(Arrays.asList(files), myPanel, myProject, myDetectors);
     }
+  }
+
+  public abstract class AttachItemActionBase implements ActionListener {
+    private VirtualFile myLastChosen = null;
 
     @Nullable
-    private VirtualFile getFileToSelect() {
+    protected VirtualFile getFileToSelect() {
       if (myLastChosen != null) {
         return myLastChosen;
       }
@@ -330,20 +344,56 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       }
       return getBaseDirectory();
     }
+
+    public final void actionPerformed(ActionEvent e) {
+      VirtualFile toSelect = getFileToSelect();
+      List<OrderRoot> roots = selectRoots(toSelect);
+      if (roots.isEmpty()) return;
+
+      final List<OrderRoot> attachedRoots = attachFiles(roots);
+      final OrderRoot first = ContainerUtil.getFirstItem(attachedRoots);
+      if (first != null) {
+        myLastChosen = first.getFile();
+      }
+      fireLibrariesChanged();
+      myTree.requestFocus();
+    }
+
+    protected abstract List<OrderRoot> selectRoots(@Nullable VirtualFile initialSelection);
   }
 
-  private VirtualFile[] attachFiles(final VirtualFile[] files, final OrderRootType rootType, final boolean isJarDirectories) {
-    final VirtualFile[] filesToAttach = filterAlreadyAdded(files, rootType);
-    if (filesToAttach.length > 0) {
+  private class AttachItemAction extends AttachItemActionBase {
+    private final AttachRootButtonDescriptor myDescriptor;
+
+    protected AttachItemAction(AttachRootButtonDescriptor descriptor) {
+      myDescriptor = descriptor;
+    }
+
+    @Override
+    protected List<OrderRoot> selectRoots(@Nullable VirtualFile initialSelection) {
+      final VirtualFile[] files = myDescriptor.selectFiles(myPanel, initialSelection, myContextModule, getLibraryEditor());
+      if (files.length == 0) return Collections.emptyList();
+
+      List<OrderRoot> roots = new ArrayList<OrderRoot>();
+      for (VirtualFile file : myDescriptor.scanForActualRoots(files, myPanel)) {
+        roots.add(new OrderRoot(file, myDescriptor.getRootType(), myDescriptor.addAsJarDirectories()));
+      }
+      return roots;
+    }
+  }
+
+  private List<OrderRoot> attachFiles(List<OrderRoot> roots) {
+    final List<OrderRoot> rootsToAttach = filterAlreadyAdded(roots);
+    if (!rootsToAttach.isEmpty()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           final LibraryEditor libraryEditor = getLibraryEditor();
-          for (VirtualFile file : filesToAttach) {
-            if (isJarDirectories) {
-              libraryEditor.addJarDirectory(file, false, rootType);
+          for (OrderRoot root : rootsToAttach) {
+            if (root.isJarDirectory()) {
+              libraryEditor.addJarDirectory(root.getFile(), false, root.getType());
             }
             else {
-              libraryEditor.addRoot(file, rootType);
+              libraryEditor.addRoot(root.getFile(), root.getType());
             }
           }
         }
@@ -351,19 +401,18 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       updatePropertiesLabel();
       myTreeBuilder.queueUpdate();
     }
-    return filesToAttach;
+    return rootsToAttach;
   }
 
-  private VirtualFile[] filterAlreadyAdded(VirtualFile[] files, final OrderRootType rootType) {
-    if (files == null || files.length == 0) {
-      return VirtualFile.EMPTY_ARRAY;
+  private List<OrderRoot> filterAlreadyAdded(@NotNull List<OrderRoot> roots) {
+    List<OrderRoot> result = new ArrayList<OrderRoot>();
+    for (OrderRoot root : roots) {
+      final VirtualFile[] libraryFiles = getLibraryEditor().getFiles(root.getType());
+      if (!ArrayUtil.contains(root.getFile(), libraryFiles)) {
+        result.add(root);
+      }
     }
-    final Set<VirtualFile> chosenFilesSet = new HashSet<VirtualFile>(Arrays.asList(files));
-    final Set<VirtualFile> alreadyAdded = new HashSet<VirtualFile>();
-    final VirtualFile[] libraryFiles = getLibraryEditor().getFiles(rootType);
-    ContainerUtil.addAll(alreadyAdded, libraryFiles);
-    chosenFilesSet.removeAll(alreadyAdded);
-    return VfsUtil.toVirtualFileArray(chosenFilesSet);
+    return result;
   }
 
   private class RemoveAction implements ActionListener {

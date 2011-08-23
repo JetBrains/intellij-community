@@ -101,11 +101,11 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
     final AttachSourcesProvider.AttachSourcesAction defaultAction;
     if (sourceFile != null) {
       panel.setText(ProjectBundle.message("library.sources.not.attached"));
-      defaultAction = new AttachJarAsSourcesAction(file, sourceFile, myProject);
+      defaultAction = new AttachJarAsSourcesAction(file);
     }
     else {
       panel.setText(ProjectBundle.message("library.sources.not.found"));
-      defaultAction = new ChooseAndAttachSourcesAction(myProject);
+      defaultAction = new ChooseAndAttachSourcesAction(myProject, panel);
     }
 
     TreeSet<AttachSourcesProvider.AttachSourcesAction> actions = new TreeSet<AttachSourcesProvider.AttachSourcesAction>(
@@ -189,13 +189,9 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
 
   private static class AttachJarAsSourcesAction implements AttachSourcesProvider.AttachSourcesAction {
     private final VirtualFile myClassFile;
-    private final VirtualFile mySourceFile;
-    private final Project myProject;
 
-    public AttachJarAsSourcesAction(VirtualFile classFile, VirtualFile sourceFile, Project project) {
+    public AttachJarAsSourcesAction(VirtualFile classFile) {
       myClassFile = classFile;
-      mySourceFile = sourceFile;
-      myProject = project;
     }
 
     public String getName() {
@@ -242,10 +238,12 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
   }
 
   private static class ChooseAndAttachSourcesAction implements AttachSourcesProvider.AttachSourcesAction {
-    private Project myProject;
+    private final Project myProject;
+    private final JComponent myParentComponent;
 
-    public ChooseAndAttachSourcesAction(Project project) {
+    public ChooseAndAttachSourcesAction(Project project, JComponent parentComponent) {
       myProject = project;
+      myParentComponent = parentComponent;
     }
 
     public String getName() {
@@ -263,7 +261,7 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
       final Library firstLibrary = libraries.get(0).getLibrary();
       VirtualFile[] roots = firstLibrary != null ? firstLibrary.getFiles(OrderRootType.CLASSES) : VirtualFile.EMPTY_ARRAY;
       VirtualFile[] candidates = FileChooser.chooseFiles(myProject, descriptor, roots.length == 0 ? null : roots[0]);
-      final VirtualFile[] files = PathUIUtils.scanAndSelectDetectedJavaSourceRoots(myProject, candidates);
+      final VirtualFile[] files = PathUIUtils.scanAndSelectDetectedJavaSourceRoots(myParentComponent, candidates);
       if (files.length == 0) {
         return new ActionCallback.Rejected();
       }
