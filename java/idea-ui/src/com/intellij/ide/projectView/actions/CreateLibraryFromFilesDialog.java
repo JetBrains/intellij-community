@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.ModulesCombobox;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryNameAndLevelPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
@@ -50,13 +51,13 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private final ModulesCombobox myModulesCombobox;
   private final Project myProject;
-  private final List<VirtualFile> myRoots;
+  private final List<OrderRoot> myRoots;
   private JPanel myPanel;
   private final LibrariesContainer myLibrariesContainer;
   private final String myDefaultName;
   private final ModifiableRootModel myModifiableModel;
 
-  public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<VirtualFile> roots) {
+  public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<OrderRoot> roots) {
     super(project, true);
     setTitle("Create Library");
     myProject = project;
@@ -114,15 +115,15 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
   }
 
   @Nullable
-  private Module findModule(List<VirtualFile> files) {
-    for (VirtualFile file : files) {
+  private Module findModule(List<OrderRoot> roots) {
+    for (OrderRoot root : roots) {
       Module module = null;
-      final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(file);
+      final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(root.getFile());
       if (local != null) {
         module = ModuleUtil.findModuleForFile(local, myProject);
       }
       if (module == null) {
-        module = ModuleUtil.findModuleForFile(file, myProject);
+        module = ModuleUtil.findModuleForFile(root.getFile(), myProject);
       }
       if (module != null) {
         return module;
@@ -136,21 +137,20 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     return myNameAndLevelPanel.getLibraryNameField();
   }
 
-  private static String suggestLibraryName(List<VirtualFile> files) {
-    if (files.size() >= 1) {
-      return FileUtil.getNameWithoutExtension(PathUtil.getFileName(files.get(0).getPath()));
+  private static String suggestLibraryName(List<OrderRoot> roots) {
+    if (roots.size() >= 1) {
+      return FileUtil.getNameWithoutExtension(PathUtil.getFileName(roots.get(0).getFile().getPath()));
     }
     return "unnamed";
   }
 
   @Override
   protected void doOKAction() {
-    final VirtualFile[] roots = myRoots.toArray(new VirtualFile[myRoots.size()]);
     final LibrariesContainer.LibraryLevel level = myNameAndLevelPanel.getLibraryLevel();
     AccessToken token = WriteAction.start();
     try {
       final Library library = myLibrariesContainer.createLibrary(myNameAndLevelPanel.getLibraryName(),
-                                                                 level, roots, VirtualFile.EMPTY_ARRAY);
+                                                                 level, myRoots);
       if (level == LibrariesContainer.LibraryLevel.MODULE) {
         myModifiableModel.commit();
       }

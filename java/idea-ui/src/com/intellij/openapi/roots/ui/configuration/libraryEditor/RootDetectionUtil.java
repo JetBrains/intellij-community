@@ -41,7 +41,7 @@ public class RootDetectionUtil {
   }
 
   public static List<OrderRoot> detectRoots(@NotNull final Collection<VirtualFile> rootCandidates,
-                                            @NotNull Component parentComponent,
+                                            @Nullable Component parentComponent,
                                             @Nullable Project project,
                                             @NotNull final List<? extends RootDetector> detectors,
                                             boolean allowUserToSelectRootTypeIfNothingIsDetected) {
@@ -68,7 +68,9 @@ public class RootDetectionUtil {
     }.queue();
 
     if (!suggestedRoots.isEmpty()) {
-      final DetectedSourceRootsDialog dialog = new DetectedSourceRootsDialog(parentComponent, suggestedRoots);
+      final DetectedSourceRootsDialog dialog = parentComponent != null
+                                               ? new DetectedSourceRootsDialog(parentComponent, suggestedRoots)
+                                               : new DetectedSourceRootsDialog(project, suggestedRoots);
       dialog.show();
       if (!dialog.isOK()) {
         return Collections.emptyList();

@@ -384,15 +384,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     if (!rootsToAttach.isEmpty()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          final LibraryEditor libraryEditor = getLibraryEditor();
-          for (OrderRoot root : rootsToAttach) {
-            if (root.isJarDirectory()) {
-              libraryEditor.addJarDirectory(root.getFile(), false, root.getType());
-            }
-            else {
-              libraryEditor.addRoot(root.getFile(), root.getType());
-            }
-          }
+          getLibraryEditor().addRoots(rootsToAttach);
         }
       });
       updatePropertiesLabel();

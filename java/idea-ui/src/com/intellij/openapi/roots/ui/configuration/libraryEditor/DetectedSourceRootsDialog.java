@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TitlePanel;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -28,8 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This dialog allows selecting source paths inside selected source archives or directories.
@@ -41,7 +43,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
   /**
    * A tree with paths.  The tree relies on the CheckboxTree for selection and unselection policy.
    */
-  private final CheckboxTree myTree;
+  private CheckboxTree myTree;
   /**
    * Root node for the tree. The tree is three-level:
    * <ul>
@@ -50,37 +52,27 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
    * <li>The third level are paths with java sources inside pervious selection.</li>
    * </ul>
    */
-  private final CheckedTreeNode myRootNode;
-  /**
-   * A scrollable pane that contains myTree
-   */
-  private final JScrollPane myPane;
+  private CheckedTreeNode myRootNode;
+  private JScrollPane myPane;
 
   public DetectedSourceRootsDialog(Component component, List<SuggestedChildRootInfo> suggestedRoots) {
-    this(component, createTree(suggestedRoots));
+    super(component, true);
+    init(suggestedRoots);
   }
 
-  /**
-   * A constructor
-   *
-   * @param component a parent component
-   * @param tree      a checkbox tree to use
-   */
-  private DetectedSourceRootsDialog(Component component, CheckedTreeNode tree) {
-    super(component, true);
-    myRootNode = tree;
+  public DetectedSourceRootsDialog(Project project, List<SuggestedChildRootInfo> suggestedRoots) {
+    super(project, true);
+    init(suggestedRoots);
+  }
+
+  private void init(List<SuggestedChildRootInfo> suggestedRoots) {
+    myRootNode = createTree(suggestedRoots);
     myTree = createCheckboxTree();
     myPane = ScrollPaneFactory.createScrollPane(myTree);
     setTitle("Detected Source Roots");
     init();
   }
 
-
-  /**
-   * Create a checkbox tree component for this dialog
-   *
-   * @return a created component
-   */
   private CheckboxTree createCheckboxTree() {
     CheckboxTree tree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(true) {
       public void customizeRenderer(JTree tree,
