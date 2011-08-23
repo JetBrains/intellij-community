@@ -45,9 +45,8 @@ public class AlternativeJREPanel extends JPanel {
     super(new GridBagLayout());
 
     myCbEnabled = new JCheckBox(ExecutionBundle.message("run.configuration.use.alternate.jre.checkbox"));
-    myCbEnabled.setPreferredSize(new Dimension(154, 16));
     final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                                                         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
+                                                         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     add(myCbEnabled, gc);
 
     myFieldWithHistory = new TextFieldWithHistory();
@@ -64,11 +63,13 @@ public class AlternativeJREPanel extends JPanel {
                                         TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     gc.gridx = 1;
     gc.weightx = 1;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.insets.left = 10;
     add(myPathField, gc);
     InsertPathAction.addTo(myFieldWithHistory.getTextEditor());
 
-    gc.weighty = 1;
-    add(Box.createVerticalBox(), gc);
+    //gc.weighty = 1;
+    //add(Box.createVerticalBox(), gc);
 
     myCbEnabled.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -104,5 +105,13 @@ public class AlternativeJREPanel extends JPanel {
   public void init(String path, boolean isEnabled){
     setPathEnabled(isEnabled);
     setPath(path);
+  }
+  
+  public void setCheckBoxPreferredSize(Dimension d) {
+    myCbEnabled.setPreferredSize(d);
+  }
+  
+  public Dimension getCheckBoxPreferredSize() {
+    return myCbEnabled.getPreferredSize();
   }
 }

@@ -119,6 +119,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     createView();
     moduleSelector = new ConfigurationModuleSelector(project, getModulesComponent());
     commonJavaParameters.setModuleContext(moduleSelector.getModule());
+    commonJavaParameters.setLabelsPreferredSize(moduleClasspath.getLabelPreferredSize());
     moduleClasspath.getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         commonJavaParameters.setModuleContext(moduleSelector.getModule());

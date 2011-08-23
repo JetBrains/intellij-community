@@ -55,7 +55,6 @@
             </constraints>
             <properties>
               <selected value="false"/>
-              <text resource-bundle="org/jetbrains/plugins/groovy/GroovyBundle" key="debug.option"/>
             </properties>
           </component>
           <hspacer id="317a0">
@@ -71,13 +70,12 @@
         </constraints>
         <properties>
           <labelLocation value="West"/>
+          <labelPreferredSize width="145" height="16"/>
         </properties>
       </component>
       <component id="5f62b" class="javax.swing.JLabel">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="144" height="-1"/>
-          </grid>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="Script Parameters:"/>
@@ -85,9 +83,7 @@
       </component>
       <component id="c5c05" class="javax.swing.JLabel">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="144" height="-1"/>
-          </grid>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="VM Options:"/>
@@ -95,9 +91,7 @@
       </component>
       <component id="86e25" class="javax.swing.JLabel">
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="144" height="-1"/>
-          </grid>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <labelFor value="d1e7d"/>
@@ -113,7 +107,7 @@
       <component id="5194" class="javax.swing.JLabel">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="144" height="-1"/>
+            <preferred-size width="145" height="-1"/>
           </grid>
         </constraints>
         <properties>

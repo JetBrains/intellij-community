@@ -224,7 +224,9 @@
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties/>
+            <properties>
+              <labelsPreferredSize width="213" height="16"/>
+            </properties>
           </component>
           <component id="350c9" class="com.intellij.openapi.ui.LabeledComponent" binding="myModule">
             <constraints>
@@ -235,6 +237,7 @@
               <enabled value="true"/>
               <labelInsets top="7" left="0" bottom="2" right="0"/>
               <labelLocation value="West"/>
+              <labelPreferredSize width="213" height="25"/>
               <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.use.classpath.and.jdk.of.module.label"/>
             </properties>
           </component>
@@ -242,7 +245,9 @@
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties/>
+            <properties>
+              <checkBoxPreferredSize width="213" height="23"/>
+            </properties>
           </component>
         </children>
       </grid>

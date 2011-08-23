@@ -49,7 +49,7 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <labelPreferredSize width="108" height="16"/>
+              <labelPreferredSize width="109" height="16"/>
               <text value="M&amp;ethod"/>
             </properties>
           </component>
@@ -59,7 +59,7 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <labelPreferredSize width="108" height="16"/>
+              <labelPreferredSize width="109" height="16"/>
               <text value="&amp;Suite"/>
             </properties>
           </component>
@@ -85,7 +85,7 @@
                 </constraints>
                 <properties>
                   <labelLocation value="West"/>
-                  <labelPreferredSize width="108" height="16"/>
+                  <labelPreferredSize width="109" height="16"/>
                   <text value="Packa&amp;ge"/>
                 </properties>
               </component>
@@ -124,7 +124,7 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <labelPreferredSize width="108" height="16"/>
+              <labelPreferredSize width="109" height="16"/>
               <text value="&amp;Class"/>
             </properties>
           </component>
@@ -134,6 +134,7 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
+              <labelPreferredSize width="109" height="16"/>
               <text value="&amp;Output directory"/>
             </properties>
           </component>
@@ -143,7 +144,7 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <labelPreferredSize width="108" height="16"/>
+              <labelPreferredSize width="109" height="16"/>
               <text value="&amp;Group"/>
             </properties>
           </component>
@@ -172,6 +173,7 @@
                 </constraints>
                 <properties>
                   <labelLocation value="West"/>
+                  <labelPreferredSize width="213" height="16"/>
                   <text value="Use classpath and JDK of m&amp;odule"/>
                 </properties>
               </component>
@@ -179,7 +181,9 @@
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
-                <properties/>
+                <properties>
+                  <checkBoxPreferredSize width="213" height="23"/>
+                </properties>
               </component>
               <grid id="f5de" binding="commonParametersPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
                 <constraints>
