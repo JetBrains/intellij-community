@@ -18,7 +18,6 @@ import javax.swing.event.ChangeEvent;
  */
 public abstract class TabbedModuleEditor extends ModuleEditor {
 
-  public static final String EDITOR_NAME = "selectedEditor";
   private static final String SELECTED_EDITOR_KEY = TabbedModuleEditor.class.getName() + ".selectedEditor";
 
   private TabbedPaneWrapper myTabbedPane;
@@ -66,13 +65,13 @@ public abstract class TabbedModuleEditor extends ModuleEditor {
 
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     if (place != null) {
-      myTabbedPane.setSelectedTitle((String)place.getPath(EDITOR_NAME));
+      selectEditor((String)place.getPath(SELECTED_EDITOR_NAME));
     }
     return new ActionCallback.Done();
   }
 
   public void queryPlace(@NotNull final Place place) {
-    place.putPath(EDITOR_NAME, getSavedSelectedEditor());
+    place.putPath(SELECTED_EDITOR_NAME, getSavedSelectedEditor());
   }
 
   @Nullable

@@ -162,7 +162,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private ModuleEditor doCreateModuleEditor(final Module module) {
-    final ModuleEditor moduleEditor = new TabbedModuleEditor(myProject, this, module) {
+    final ModuleEditor moduleEditor = new HeaderHidingTabbedModuleEditor(myProject, this, module) {
       @Override
       public ProjectFacetsConfigurator getFacetsConfigurator() {
         return myFacetsConfigurator;

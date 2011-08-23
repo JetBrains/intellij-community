@@ -62,6 +62,7 @@ import java.util.List;
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
+  public static final String SELECTED_EDITOR_NAME = "selectedEditor";
 
   private final Project myProject;
   private JPanel myGenericSettingsPanel;
