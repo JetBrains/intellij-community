@@ -27,7 +27,7 @@
         </constraints>
         <properties>
           <labelLocation value="West"/>
-          <labelPreferredSize width="215" height="16"/>
+          <labelPreferredSize width="215" height="22"/>
           <text resource-bundle="messages/ExecutionBundle" key="application.configuration.main.class.label"/>
         </properties>
       </component>
