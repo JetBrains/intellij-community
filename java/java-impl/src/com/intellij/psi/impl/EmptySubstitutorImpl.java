@@ -38,13 +38,12 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor {
   }
 
   public PsiSubstitutor put(PsiTypeParameter classParameter, PsiType mapping){
-    final PsiSubstitutor substitutor = new PsiSubstitutorImpl();
-    return substitutor.put(classParameter, mapping);
+    return new PsiSubstitutorImpl(classParameter, mapping);
   }
+
   public PsiSubstitutor putAll(PsiClass parentClass, PsiType[] mappings){
     if(!parentClass.hasTypeParameters()) return this;
-    final PsiSubstitutor substitutor = new PsiSubstitutorImpl();
-    return substitutor.putAll(parentClass, mappings);
+    return new PsiSubstitutorImpl(parentClass, mappings);
   }
 
   public PsiSubstitutor putAll(PsiSubstitutor another) {

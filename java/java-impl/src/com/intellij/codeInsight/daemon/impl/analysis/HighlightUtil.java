@@ -2173,6 +2173,13 @@ public class HighlightUtil {
     }
     if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
       highlightInfo = HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref);
+    } else if (resolved instanceof PsiClass) {
+      if (Comparing.strEqual(((PsiClass)resolved).getQualifiedName(), ((PsiClass)resolved).getName())) {
+        final PsiElement parent = ref.getParent();
+        if (parent instanceof PsiImportStaticReferenceElement || parent instanceof PsiImportStaticStatement) {
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, refName, JavaErrorMessages.message("cannot.resolve.symbol", refName.getText()));
+        }
+      }
     }
     return highlightInfo;
   }
@@ -2264,6 +2271,7 @@ public class HighlightUtil {
         QuickFixAction.registerQuickFixAction(highlightInfo, action, null);
       }
     }
+    ChangeParameterClassFix.registerQuickFixAction(parameter, itemType, highlightInfo);
   }
 
   @Nullable

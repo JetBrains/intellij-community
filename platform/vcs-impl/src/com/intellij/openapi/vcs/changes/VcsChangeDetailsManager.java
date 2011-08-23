@@ -16,6 +16,8 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffPanel;
@@ -32,6 +34,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import com.intellij.vcsUtil.UIVcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +59,6 @@ public class VcsChangeDetailsManager {
   // todo also check for size
   private final LinkedList<DiffPanel> myDiffPanelCache;
   private final Project myProject;
-  private Details<Change, Pair<RefreshablePanel, Disposable>> myDetails;
   private final BackgroundTaskQueue myQueue;
 
   public VcsChangeDetailsManager(final Project project) {
@@ -79,10 +81,6 @@ public class VcsChangeDetailsManager {
     });
   }
 
-  public void setDetails(Details<Change, Pair<RefreshablePanel, Disposable>> details) {
-    myDetails = details;
-  }
-
   public boolean canComment(final Change change) {
     return getProvider(change) != null;
   }
@@ -96,24 +94,28 @@ public class VcsChangeDetailsManager {
   }
 
   // true -> loading
-  public boolean getPanel(final Change change) {
+  public boolean getPanel(final Change change, final Details<Change, Pair<RefreshablePanel, Disposable>> details) {
     // text details
     final VcsChangeDetailsProvider<?> provider = getProvider(change);
     if (provider == null) {
       return false;
     }
 
-    myQueue.run(new LoaderTask(myProject, provider, change, myDetails));
+    myQueue.run(new LoaderTask(myProject, provider, change, details), ModalityState.current(), null);
     return true;
   }
 
-  private static class LoaderTask<T> extends Task.Backgroundable {
+  public static VcsChangeDetailsManager getInstance(Project project) {
+    return ServiceManager.getService(project, VcsChangeDetailsManager.class);
+  }
+
+  private static class LoaderTask<T> extends ModalityIgnorantBackgroundableTask {
     private T myResult;
     private final VcsChangeDetailsProvider<T> myProvider;
     private final Change myChange;
     private final Details<Change, Pair<RefreshablePanel, Disposable>> myDetails;
 
-    private LoaderTask(@Nullable Project project, final VcsChangeDetailsProvider provider, final Change change,
+    private LoaderTask(@Nullable Project project, final VcsChangeDetailsProvider<T> provider, final Change change,
                        final Details<Change, Pair<RefreshablePanel, Disposable>> consumer) {
       super(project, provider.getProgressTitle(), false, BackgroundFromStartOption.getInstance());
       myProvider = provider;
@@ -122,20 +124,35 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
-    public void run(@NotNull ProgressIndicator indicator) {
-      if (myProject.isDisposed() || ! myProject.isOpen() || !Comparing.equal(myChange, myDetails.getCurrentlySelected())) return;
-      //if (! myProvider.canComment(myChange)) return;
-      myResult = myProvider.load(myChange);
+    protected void doInAwtIfFail(Exception e) {
+      System.out.println("FAIL");
     }
 
     @Override
-    public void onSuccess() {
+    protected void doInAwtIfCancel() {
+      System.out.println("CANCEL");
+    }
+
+    @Override
+    protected void doInAwtIfSuccess() {
       if (myProject.isDisposed() || ! myProject.isOpen()) return;
       if (myResult != null) {
         final Pair<RefreshablePanel, Disposable> pair = myProvider.comment(myChange, myResult);
-        myDetails.take(myChange, pair);
+        try {
+          myDetails.take(myChange, pair);
+        }
+        catch (Details.AlreadyDisposedException e) {
+          if (pair != null && pair.getSecond() != null) {
+            Disposer.dispose(pair.getSecond());
+          }
+        }
       }
-      // todo else?
+    }
+
+    @Override
+    protected void runImpl(@NotNull ProgressIndicator indicator) {
+      if (myProject.isDisposed() || ! myProject.isOpen() || !Comparing.equal(myChange, myDetails.getCurrentlySelected())) return;
+      myResult = myProvider.load(myChange);
     }
   }
 

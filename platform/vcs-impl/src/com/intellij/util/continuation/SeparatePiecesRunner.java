@@ -85,7 +85,7 @@ public class SeparatePiecesRunner extends GeneralRunner {
     }
   }
 
-  static class TaskWrapper extends Task.Backgroundable {
+  static class TaskWrapper extends ModalityIgnorantBackgroundableTask {
     private final TaskDescriptor myTaskDescriptor;
     private final GeneralRunner myGeneralRunner;
 
@@ -100,33 +100,23 @@ public class SeparatePiecesRunner extends GeneralRunner {
     }
 
     @Override
-    public void run(@NotNull ProgressIndicator indicator) {
-      try {
-        myTaskDescriptor.run(myGeneralRunner);
-      } catch (Exception e) {
-        doCancel();
-        return;
-      }
-
-      if (! indicator.isCanceled()) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myGeneralRunner.ping();
-          }
-        });
-      } else {
-        doCancel();
-      }
+    protected void doInAwtIfFail(Exception e) {
+      doInAwtIfCancel();
     }
 
-    private void doCancel() {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myGeneralRunner.onCancel();
-        }
-      });
+    @Override
+    protected void doInAwtIfCancel() {
+      myGeneralRunner.onCancel();
+    }
+
+    @Override
+    protected void doInAwtIfSuccess() {
+      myGeneralRunner.ping();
+    }
+
+    @Override
+    protected void runImpl(@NotNull ProgressIndicator indicator) {
+      myTaskDescriptor.run(myGeneralRunner);
     }
   }
 }

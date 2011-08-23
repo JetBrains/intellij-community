@@ -25,6 +25,8 @@ import java.awt.event.ComponentListener;
  *         Time: 1:30 PM
  */
 public abstract class AdjustComponentWhenShown {
+  private boolean myIsAdjusted;
+
   protected boolean canExecute() {
     return true;
   }
@@ -35,27 +37,33 @@ public abstract class AdjustComponentWhenShown {
     final ComponentListener listener = new ComponentListener() {
       @Override
       public void componentResized(ComponentEvent e) {
+        impl();
+      }
+
+      private void impl() {
         if (canExecute()) {
           if (init()) {
             component.removeComponentListener(this);
+            myIsAdjusted = true;
           }
         }
       }
+
       @Override
       public void componentMoved(ComponentEvent e) {
       }
       @Override
       public void componentShown(ComponentEvent e) {
-        if (canExecute()) {
-          if (init()) {
-            component.removeComponentListener(this);
-          }
-        }
+        impl();
       }
       @Override
       public void componentHidden(ComponentEvent e) {
       }
     };
     component.addComponentListener(listener);
+  }
+
+  public boolean isAdjusted() {
+    return myIsAdjusted;
   }
 }

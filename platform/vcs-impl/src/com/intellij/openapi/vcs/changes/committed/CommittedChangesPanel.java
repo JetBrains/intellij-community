@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,6 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private final RepositoryLocation myLocation;
   private int myMaxCount = 0;
   private final MyFilterComponent myFilterComponent = new MyFilterComponent();
-  private final JLabel myErrorLabel = new JLabel();
   private final List<Runnable> myShouldBeCalledOnDispose;
   private volatile boolean myDisposed;
   private volatile boolean myInLoad;
@@ -81,9 +80,6 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myBrowser = new CommittedChangesTreeBrowser(project, new ArrayList<CommittedChangeList>());
     Disposer.register(this, myBrowser);
     add(myBrowser, BorderLayout.CENTER);
-
-    myErrorLabel.setForeground(Color.red);
-    add(myErrorLabel, BorderLayout.SOUTH);
 
     final VcsCommittedViewAuxiliary auxiliary = provider.createActions(myBrowser, location);
 
@@ -270,10 +266,6 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       runnable.run();
     }
     myDisposed = true;
-  }
-
-  public void setErrorText(String text) {
-    myErrorLabel.setText(text);
   }
 
   private class MyFilterComponent extends FilterComponent implements ChangeListFilteringStrategy {

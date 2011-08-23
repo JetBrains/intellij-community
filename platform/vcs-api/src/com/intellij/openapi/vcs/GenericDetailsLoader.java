@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Consumer;
@@ -28,10 +29,11 @@ import java.util.concurrent.atomic.AtomicReference;
  *         Date: 6/29/11
  *         Time: 11:38 PM
  */
-public class GenericDetailsLoader<Id, Data> implements Details<Id,Data> {
+public class GenericDetailsLoader<Id, Data> implements Details<Id,Data>, Disposable {
   private final Consumer<Id> myLoader;
   private final ValueConsumer<Id, Data> myValueConsumer;
   private final AtomicReference<Id> myCurrentlySelected;
+  private boolean myIsDisposed;
 
   public GenericDetailsLoader(final Consumer<Id> loader, final PairConsumer<Id, Data> valueConsumer) {
     myLoader = loader;
@@ -41,6 +43,7 @@ public class GenericDetailsLoader<Id, Data> implements Details<Id,Data> {
 
   public void updateSelection(@Nullable final Id id, boolean force) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myIsDisposed) return;
     myValueConsumer.setId(id);
 
     final Id wasId = myCurrentlySelected.getAndSet(id);
@@ -54,13 +57,19 @@ public class GenericDetailsLoader<Id, Data> implements Details<Id,Data> {
   }
 
   @Override
-  public void take(Id id, Data data) {
+  public void take(Id id, Data data) throws AlreadyDisposedException {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myIsDisposed) throw new AlreadyDisposedException();
     myValueConsumer.consume(id, data);
   }
 
   @Override
   public Id getCurrentlySelected() {
     return myCurrentlySelected.get();
+  }
+
+  @Override
+  public void dispose() {
+    myIsDisposed = true;
   }
 }

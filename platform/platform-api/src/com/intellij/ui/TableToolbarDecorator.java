@@ -163,7 +163,8 @@ class TableToolbarDecorator extends ToolbarDecorator {
   protected void installDnD() {
     if (myUpAction != null && myUpActionEnabled
         && myDownAction != null && myDownActionEnabled
-        && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        && !ApplicationManager.getApplication().isHeadlessEnvironment()
+        && myTableModel instanceof EditableModel) {
       TableRowsDnDSupport.install(myTable, (EditableModel)myTableModel);
     }
   }

@@ -425,4 +425,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     final NewVirtualFileSystem fs = getFileSystem();
     return fs instanceof LocalFileSystem && ((LocalFileSystem)fs).isSymLink(this);
   }
+
+  @Override
+  public VirtualFile getRealFile() {
+    final NewVirtualFileSystem fs = getFileSystem();
+    return fs instanceof LocalFileSystem ? ((LocalFileSystem)fs).getRealFile(this) : super.getRealFile();
+  }
 }

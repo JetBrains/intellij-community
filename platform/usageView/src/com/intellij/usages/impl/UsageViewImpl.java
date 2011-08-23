@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -65,6 +66,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
@@ -1060,7 +1062,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myModel.areTargetsValid();
   }
 
-  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator,Disposable {
+  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator,Disposable, CopyProvider {
     @Nullable private OccurenceNavigatorSupport mySupport;
 
     private MyPanel(@NotNull JTree tree) {
@@ -1108,6 +1110,24 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       return mySupport != null ? mySupport.getPreviousOccurenceActionName() : "";
     }
 
+    @Override
+    public void performCopy(DataContext dataContext) {
+      final Node selectedNode = getSelectedNode();
+      assert selectedNode instanceof UsageNode;
+      final String plainText = ((UsageNode)selectedNode).getUsage().getPresentation().getPlainText();
+      CopyPasteManager.getInstance().setContents(new StringSelection(plainText.trim()));
+    }
+
+    @Override
+    public boolean isCopyEnabled(DataContext dataContext) {
+      return getSelectedNode() instanceof UsageNode;
+    }
+
+    @Override
+    public boolean isCopyVisible(DataContext dataContext) {
+      return true;
+    }
+
     public void calcData(final DataKey key, final DataSink sink) {
       Node node = getSelectedNode();
 
@@ -1145,7 +1165,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       else if (key == PlatformDataKeys.HELP_ID) {
         sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
       }
-
+      else if (key == PlatformDataKeys.COPY_PROVIDER) {
+        sink.put(PlatformDataKeys.COPY_PROVIDER, this);
+      }
       else if (node != null) {
         Object userObject = node.getUserObject();
         if (userObject instanceof TypeSafeDataProvider) {

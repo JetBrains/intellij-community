@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,13 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
@@ -45,7 +47,6 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   private final MessageBus myBus;
   private CommittedChangesTreeBrowser myBrowser;
   private MessageBusConnection myConnection;
-  private final JLabel myErrorLabel = new JLabel();
 
   public IncomingChangesViewProvider(final Project project, final MessageBus bus) {
     myProject = project;
@@ -65,8 +66,6 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
 
     JPanel contentPane = new JPanel(new BorderLayout());
     contentPane.add(myBrowser, BorderLayout.CENTER);
-    contentPane.add(myErrorLabel, BorderLayout.SOUTH);
-    myErrorLabel.setForeground(Color.red);
     return contentPane;
   }
 
@@ -115,16 +114,9 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     }
 
     public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (lastError != null) {
-            myErrorLabel.setText("Error refreshing changes: " + lastError.getMessage());
-          }
-          else {
-            myErrorLabel.setText("");
-          }
-        }
-      });
+      if (lastError != null) {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, lastError.getMessage(), MessageType.ERROR);
+      }
     }
   }
 }

@@ -46,6 +46,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -77,6 +81,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
   private final Runnable myInclusionListener;
   @Nullable private ChangeNodeDecorator myChangeDecorator;
+  private Runnable myGenericSelectionListener;
 
   public ChangesTreeList(final Project project, Collection<T> initiallyIncluded, final boolean showCheckboxes,
                          final boolean highlightProblems, @Nullable final Runnable inclusionListener, @Nullable final ChangeNodeDecorator decorator) {
@@ -200,6 +205,23 @@ public abstract class ChangesTreeList<T> extends JPanel {
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
     myTree.getEmptyText().setText(emptyText);
     myList.getEmptyText().setText(emptyText);
+  }
+
+  // generic, both for tree and list
+  public void addSelectionListener(final Runnable runnable) {
+    myGenericSelectionListener = runnable;
+    myList.addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        myGenericSelectionListener.run();
+      }
+    });
+    myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        myGenericSelectionListener.run();
+      }
+    });
   }
 
   public void setChangeDecorator(@Nullable ChangeNodeDecorator changeDecorator) {

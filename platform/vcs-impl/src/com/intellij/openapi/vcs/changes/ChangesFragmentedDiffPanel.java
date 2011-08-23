@@ -33,6 +33,8 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -411,7 +413,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     return myRefreshablePanel;
   }
 
-  private class PopupAction extends AnAction {
+  private class PopupAction extends DumbAwareAction {
     private Component myParent;
     private AnAction myUsual;
     private AnAction myNumbered;
@@ -457,7 +459,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     }
   }
 
-  private class MyShowSettingsButton extends ActionButton {
+  private class MyShowSettingsButton extends ActionButton implements DumbAware {
     MyShowSettingsButton() {
       this(new PopupAction(), new Presentation(), ActionPlaces.CHANGES_LOCAL_DIFF_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }

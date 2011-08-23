@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.MouseDragHelper;
@@ -44,7 +45,7 @@ import java.beans.PropertyChangeListener;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class StripeButton extends JToggleButton implements ActionListener {
+public final class StripeButton extends AnchoredButton implements ActionListener {
   private final Color ourBackgroundColor = new Color(247, 243, 239);
 
   /**
@@ -85,8 +86,14 @@ public final class StripeButton extends JToggleButton implements ActionListener 
     repaint();
   }
 
+  @Override
   public int getMnemonic2() {
     return myMnemonic;
+  }
+
+  @Override
+  public ToolWindowAnchor getAnchor() {
+    return getWindowInfo().getAnchor();
   }
 
   WindowInfoImpl getWindowInfo() {

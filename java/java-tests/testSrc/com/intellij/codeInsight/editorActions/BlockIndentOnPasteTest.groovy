@@ -462,6 +462,25 @@ line to paste #2
 '''
     doTest(before, toPaste, expected, TestFileType.TEXT)
   }
+
+  def testPlainTextMultilinePasteWithCaretAfterSelection() {
+    def before = '''\
+<selection>  line1</selection><caret>\
+'''
+
+    def toPaste =
+    '''\
+line to paste #1
+line to paste #2
+'''
+
+
+    def expected = '''\
+line to paste #1
+line to paste #2
+'''
+    doTest(before, toPaste, expected, TestFileType.TEXT)
+  }
   
   def doTest(before, toPaste, expected, fileType = TestFileType.JAVA) {
     configureFromFileText("${getTestName(false)}.$fileType.extension", before)

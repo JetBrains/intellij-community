@@ -227,7 +227,12 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
 
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(property.getProject()).intersectWith(globalSearchScope);
     final PsiManagerImpl manager = (PsiManagerImpl)property.getManager();
-    String name = property.getName();
+    String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return property.getName();
+      }
+    });
     if (name == null) return true;
 
     manager.startBatchFilesProcessingMode();

@@ -25,7 +25,9 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -63,7 +65,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
         PsiClass aClass = ((PsiMember)resolved).getContainingClass();
         if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true)) {
           String qName = aClass.getQualifiedName();
-          if (qName != null) {
+          if (qName != null && !Comparing.strEqual(qName, aClass.getName())) {
             qName = qName + "." +refExpr.getReferenceName();
             if (file instanceof PsiJavaFile) {
               PsiImportList importList = ((PsiJavaFile)file).getImportList();

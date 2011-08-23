@@ -1,4 +1,4 @@
 // "Add constructor parameter" "true"
-class A {
+public class A {
     private final A field;<caret>
 }

@@ -25,6 +25,7 @@ import java.util.Set;
 
 public interface ChangesBrowserExtender {
   void addToolbarActions(final DialogWrapper dialogWrapper);
+  // for changelists list
   void addSelectedListChangeListener(SelectedListChangeListener listener);
   
   Collection<AbstractVcs> getAffectedVcses();

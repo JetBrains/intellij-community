@@ -67,12 +67,17 @@ public class SymLinkHandlingTest extends LightPlatformTestCase {
     final VirtualFile linkVDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkDir);
     assertTrue("link=" + linkDir + ", vLink=" + linkVDir, linkVDir != null && linkVDir.isDirectory() && linkVDir.isSymLink());
 
-    assertTrue(targetDir.getAbsolutePath(), targetDir.setWritable(true, false) && targetDir.canWrite());
-    linkVDir.refresh(false, true);
-    assertTrue(linkVDir.getPath(), linkVDir.isWritable());
-    assertTrue(targetDir.getAbsolutePath(), targetDir.setWritable(false, false) && !targetDir.canWrite());
-    linkVDir.refresh(false, true);
-    assertFalse(linkVDir.getPath(), linkVDir.isWritable());
+    if (!SystemInfo.isWindows) {
+      assertTrue(targetDir.getAbsolutePath(), targetDir.setWritable(true, false) && targetDir.canWrite());
+      linkVDir.refresh(false, true);
+      assertTrue(linkVDir.getPath(), linkVDir.isWritable());
+      assertTrue(targetDir.getAbsolutePath(), targetDir.setWritable(false, false) && !targetDir.canWrite());
+      linkVDir.refresh(false, true);
+      assertFalse(linkVDir.getPath(), linkVDir.isWritable());
+    }
+    else {
+      assertEquals(linkVDir.getPath(), targetDir.canWrite(), linkVDir.isWritable());
+    }
   }
 
   public void testLinkDeleteIsSafe() throws Exception {
@@ -122,14 +127,20 @@ public class SymLinkHandlingTest extends LightPlatformTestCase {
     final File parentDir = linkFile.getParentFile();
     assertTrue("link=" + link + ", parent=" + parentDir, parentDir != null && (parentDir.isDirectory() || parentDir.mkdirs()));
 
-    final ProcessBuilder builder = new ProcessBuilder("ln", "-s", target, linkFile.getAbsolutePath());
+    final ProcessBuilder builder;
+    if (SystemInfo.isWindows) {
+      builder = new File(target).isDirectory()
+                ? new ProcessBuilder("cmd", "/C", "mklink", "/D", linkFile.getAbsolutePath(), target)
+                : new ProcessBuilder("cmd", "/C", "mklink", linkFile.getAbsolutePath(), target);
+    }
+    else {
+      builder = new ProcessBuilder("ln", "-s", target, linkFile.getAbsolutePath());
+    }
     final Process process = builder.start();
     final int res = process.waitFor();
     assertTrue(builder.command() + ": " + res, res == 0);
     final File targetFile = new File(target);
-    assertTrue("target=" + target + ", link=" + linkFile,
-               linkFile.exists() == targetFile.exists() &&
-               linkFile.getCanonicalPath().equals(targetFile.getAbsolutePath()) == targetFile.exists());
+    assertEquals("target=" + target + ", link=" + linkFile, targetFile.exists(), linkFile.exists());
     return linkFile;
   }
 }

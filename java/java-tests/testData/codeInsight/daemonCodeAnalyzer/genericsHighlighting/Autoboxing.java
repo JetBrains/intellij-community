@@ -4,7 +4,7 @@ public class Autoboxing {
     }
 
     public boolean compare(Short s, Integer i) {
-         return <error descr="Operator '==' cannot be applied to 'java.lang.Integer','java.lang.Short'">i == s</error>; //comparing as references 
+         return <error descr="Operator '==' cannot be applied to 'java.lang.Integer', 'java.lang.Short'">i == s</error>; //comparing as references
     }
 
     void f(Integer i) {
@@ -15,7 +15,7 @@ public class Autoboxing {
 
     {
       Object data = 1;
-      boolean is1 = <error descr="Operator '==' cannot be applied to 'java.lang.Object','int'">data == 1</error>;
+      boolean is1 = <error descr="Operator '==' cannot be applied to 'java.lang.Object', 'int'">data == 1</error>;
     }
 
     //IDEADEV-5549: Short and double are convertible
