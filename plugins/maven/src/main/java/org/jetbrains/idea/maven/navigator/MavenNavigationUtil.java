@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
@@ -47,7 +48,7 @@ public class MavenNavigationUtil {
   public static Navigatable createNavigatableForPom(final Project project, final VirtualFile file) {
     if (file == null || !file.isValid()) return null;
     final PsiFile result = PsiManager.getInstance(project).findFile(file);
-    return result == null ? null : new Navigatable.Adapter() {
+    return result == null ? null : new NavigatableAdapter() {
       public void navigate(boolean requestFocus) {
         int offset = 0;
         if (result instanceof XmlFile) {
@@ -69,7 +70,7 @@ public class MavenNavigationUtil {
 
   @Nullable
   public static Navigatable createNavigatableForDependency(final Project project, final VirtualFile file, final MavenArtifact artifact) {
-    return new Navigatable.Adapter() {
+    return new NavigatableAdapter() {
       public void navigate(boolean requestFocus) {
         final PsiFile pom = PsiManager.getInstance(project).findFile(file);
         if (pom instanceof XmlFile) {

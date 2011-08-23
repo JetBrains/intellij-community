@@ -15,10 +15,6 @@
  */
 package com.intellij.pom;
 
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-
 public interface Navigatable {
   /**
    * Open editor and select/navigate to the object there if possible.
@@ -38,29 +34,4 @@ public interface Navigatable {
    * Source means some kind of editor
    */
   boolean canNavigateToSource();
-
-/**
- * Very often both methods <code>canNavigate</code> and <code>canNavigateToSource</code>
- * return <code>true</code>. This adapter class lets focus on navigation
- * routine only.
- *
- * @author Konstantin Bulenkov
- */
-  abstract class Adapter implements Navigatable {
-    public boolean canNavigate() {
-      return true;
-    }
-
-    public boolean canNavigateToSource() {
-      return true;
-    }
-
-    public static void navigate(Project project, VirtualFile file, boolean requestFocus) {
-      navigate(project, file, 0, requestFocus);
-    }
-
-    public static void navigate(Project project, VirtualFile file, int offset, boolean requestFocus) {
-      new OpenFileDescriptor(project, file, offset).navigate(requestFocus);
-    }
-  }
 }
