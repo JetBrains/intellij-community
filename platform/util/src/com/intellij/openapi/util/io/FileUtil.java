@@ -347,7 +347,7 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempDirectory(@NotNull @NonNls String prefix, @NonNls String suffix) throws IOException {
+  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.mkdir();
@@ -356,7 +356,7 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempDirectory(File dir, @NotNull @NonNls String prefix, @NonNls String suffix) throws IOException {
+  public static File createTempDirectory(File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     File file = doCreateTempFile(prefix, suffix, dir);
     file.delete();
     file.mkdir();
@@ -365,14 +365,14 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @NonNls String suffix, final boolean create)
+  public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, final boolean create)
     throws IOException {
     return createTempFile(dir, prefix, suffix, create, true);
   }
 
   public static File createTempFile(@NonNls final File dir,
                                     @NotNull @NonNls String prefix,
-                                    @NonNls String suffix,
+                                    @Nullable @NonNls String suffix,
                                     final boolean create,
                                     boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(prefix, suffix, dir);
@@ -387,12 +387,12 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempFile(@NotNull @NonNls String prefix, @NonNls String suffix) throws IOException {
+  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     return createTempFile(prefix, suffix, false); //false until TeamCity fixes its plugin
   }
 
   @NotNull
-  public static File createTempFile(@NotNull @NonNls String prefix, @NonNls String suffix, boolean deleteOnExit) throws IOException {
+  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.createNewFile();
@@ -543,7 +543,7 @@ public class FileUtil {
   }
 
   public static boolean delete(@NotNull File file) {
-    if (!SymLinkUtil.isSymLink(file)) {
+    if (file.isDirectory() && !SymLinkUtil.isSymLink(file)) {
       File[] files = file.listFiles();
       if (files != null) {
         for (File child : files) {

@@ -53,17 +53,20 @@ public class ExecUtil {
       throw new IOException("Template '" + templateName + "' not found by " + loader);
     }
 
-    final StringBuilder template = new StringBuilder(FileUtil.loadTextAndClose(stream));
-    if (variables != null) {
-      for (Map.Entry<String, String> var : variables.entrySet()) {
-        final String name = var.getKey();
-        final int pos = template.indexOf(name);
-        if (pos >= 0) {
-          template.replace(pos, pos + name.length(), var.getValue());
-        }
+    final String template = FileUtil.loadTextAndClose(stream);
+    if (variables == null || variables.size() == 0) {
+      return template;
+    }
+
+    final StringBuilder buffer = new StringBuilder(template);
+    for (Map.Entry<String, String> var : variables.entrySet()) {
+      final String name = var.getKey();
+      final int pos = buffer.indexOf(name);
+      if (pos >= 0) {
+        buffer.replace(pos, pos + name.length(), var.getValue());
       }
     }
-    return template.toString();
+    return buffer.toString();
   }
 
   public static File createTempExecutableScript(@NotNull final String prefix,

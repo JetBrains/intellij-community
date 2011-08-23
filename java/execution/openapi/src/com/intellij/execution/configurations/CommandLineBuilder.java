@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
@@ -31,34 +30,43 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Computable;
 
 public class CommandLineBuilder {
-  private static final Logger LOG = Logger.getInstance("#" + CommandLineBuilder.class.getName());
+  private CommandLineBuilder() { }
 
   public static GeneralCommandLine createFromJavaParameters(final SimpleJavaParameters javaParameters) throws CantRunException {
     return createFromJavaParameters(javaParameters, false);
   }
 
   /**
-   * In order to avoid too long cmd problem dynamic classpath can be used
+   * In order to avoid too long cmd problem dynamic classpath can be used - if allowed by both  {@code dynamicClasspath} parameter
+   * and project settings.
+   *
+   * @param javaParameters   parameters.
+   * @param project          a project to get a dynamic classpath setting from.
    * @param dynamicClasspath whether system properties and project settings will be able to cause using dynamic classpath. If false,
-   * classpath will always be passed through the command line.
+   *                         classpath will always be passed through the command line.
+   * @return a command line.
+   * @throws CantRunException if there are problems with JDK setup.
    */
-  public static GeneralCommandLine createFromJavaParameters(final SimpleJavaParameters javaParameters, final Project project, final boolean dynamicClasspath) throws CantRunException {
+  public static GeneralCommandLine createFromJavaParameters(final SimpleJavaParameters javaParameters,
+                                                            final Project project,
+                                                            final boolean dynamicClasspath) throws CantRunException {
     return createFromJavaParameters(javaParameters, dynamicClasspath && JdkUtil.useDynamicClasspath(project));
   }
 
   /**
-   * @param javaParameters parameters
-   * @param forceDynamicClasspath whether dynamic classpath will be used for this execution, to prevent problems caused by too long command line
-   * @return command line
-   * @throws CantRunException if there are problems with JDK setup
+   * @param javaParameters        parameters.
+   * @param forceDynamicClasspath whether dynamic classpath will be used for this execution, to prevent problems caused by too long command line.
+   * @return a command line.
+   * @throws CantRunException if there are problems with JDK setup.
    */
-  public static GeneralCommandLine createFromJavaParameters(final SimpleJavaParameters javaParameters, final boolean forceDynamicClasspath) throws CantRunException {
+  public static GeneralCommandLine createFromJavaParameters(final SimpleJavaParameters javaParameters,
+                                                            final boolean forceDynamicClasspath) throws CantRunException {
     try {
       return ApplicationManager.getApplication().runReadAction(new Computable<GeneralCommandLine>() {
         public GeneralCommandLine compute() {
           try {
             final Sdk jdk = javaParameters.getJdk();
-            if(jdk == null) {
+            if (jdk == null) {
               throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
             }
 
@@ -66,9 +74,9 @@ public class CommandLineBuilder {
             if (!(sdkType instanceof JavaSdkType)) {
               throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
             }
-            
+
             final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(jdk);
-            if(exePath == null) {
+            if (exePath == null) {
               throw new CantRunException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"));
             }
             if (javaParameters.getMainClass() == null) {
@@ -84,11 +92,12 @@ public class CommandLineBuilder {
       });
     }
     catch (RuntimeException e) {
-      if(e.getCause() instanceof CantRunException)
+      if (e.getCause() instanceof CantRunException) {
         throw (CantRunException)e.getCause();
-      else
+      }
+      else {
         throw e;
+      }
     }
   }
-
 }
