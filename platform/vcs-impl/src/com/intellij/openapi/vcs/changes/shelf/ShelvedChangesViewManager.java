@@ -48,6 +48,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -318,7 +319,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         }
         for (final ShelvedChange shelvedChange : shelvedChanges) {
           if (shelvedChange.getBeforePath() != null && ! FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {
-            final Navigatable.Adapter navigatable = new Navigatable.Adapter() {
+            final NavigatableAdapter navigatable = new NavigatableAdapter() {
               @Override
               public void navigate(boolean requestFocus) {
                 final VirtualFile vf = shelvedChange.getBeforeVFUnderProject(myProject);

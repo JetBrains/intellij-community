@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryKind;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
@@ -120,7 +121,7 @@ public abstract class MvcFramework {
                                      "Error", Messages.getErrorIcon()) == 1) {
           return;
         }
-        ProjectSettingsService.getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), "Dependencies", false);
+        ProjectSettingsService.getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), ClasspathEditor.NAME, false);
       }
       module.putUserData(CREATE_APP_STRUCTURE, null);
       final int result = Messages.showYesNoCancelDialog(module.getProject(),

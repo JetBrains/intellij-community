@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -132,7 +133,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
 
     public FileStatus getFileStatus() {
-      return isValid() ? getPsiClass().getFileStatus() : null;
+      return isValid() ? NavigationItemFileStatus.get(getPsiClass()) : null;
     }
 
     private PsiClass getPsiClass() {

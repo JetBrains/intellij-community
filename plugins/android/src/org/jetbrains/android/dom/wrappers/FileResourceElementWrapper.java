@@ -19,12 +19,12 @@ package org.jetbrains.android.dom.wrappers;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -45,7 +45,7 @@ import javax.swing.*;
  * Time: 10:06:22 PM
  * To change this template use File | Settings | File Templates.
  */
-public class FileResourceElementWrapper implements PsiFile, ResourceElementWrapper {
+public class FileResourceElementWrapper implements PsiFile, ResourceElementWrapper, PsiElementNavigationItem {
   private final PsiFile myWrappee;
   private final PsiDirectory myResourceDir;
 
@@ -377,10 +377,6 @@ public class FileResourceElementWrapper implements PsiFile, ResourceElementWrapp
     };
   }
 
-  public FileStatus getFileStatus() {
-    return myWrappee.getFileStatus();
-  }
-
   public void navigate(boolean requestFocus) {
     myWrappee.navigate(requestFocus);
   }
@@ -395,5 +391,10 @@ public class FileResourceElementWrapper implements PsiFile, ResourceElementWrapp
 
   public void checkSetName(String name) throws IncorrectOperationException {
     myWrappee.checkSetName(name);
+  }
+
+  @Override
+  public PsiElement getTargetElement() {
+    return myWrappee;
   }
 }

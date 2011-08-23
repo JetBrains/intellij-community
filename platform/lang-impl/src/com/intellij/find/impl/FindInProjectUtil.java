@@ -707,10 +707,6 @@ public class FindInProjectUtil {
       return myItemPresentation;
     }
 
-    public FileStatus getFileStatus() {
-      return FileStatus.NOT_CHANGED;
-    }
-
     public void navigate(boolean requestFocus) {
       throw new UnsupportedOperationException();
     }

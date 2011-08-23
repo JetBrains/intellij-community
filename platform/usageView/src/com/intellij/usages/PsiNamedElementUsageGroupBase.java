@@ -1,6 +1,7 @@
 package com.intellij.usages;
 
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -10,7 +11,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.impl.rules.FileGroupingRule;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,7 +50,7 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
   }
 
   public FileStatus getFileStatus() {
-    return isValid() ? getElement().getFileStatus() : null;
+    return isValid() ? NavigationItemFileStatus.get(getElement()) : null;
   }
 
   public boolean isValid() {

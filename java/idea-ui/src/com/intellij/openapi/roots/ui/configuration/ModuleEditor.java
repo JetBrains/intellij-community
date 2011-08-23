@@ -37,8 +37,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.EventDispatcher;
@@ -48,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -65,26 +62,23 @@ import java.util.List;
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
+  public static final String SELECTED_EDITOR_NAME = "selectedEditor";
 
-  public static final String MODULE_TAB = "moduleTab";
   private final Project myProject;
   private JPanel myGenericSettingsPanel;
   private ModifiableRootModel myModifiableRootModel; // important: in order to correctly update OrderEntries UI use corresponding proxy for the model
 
-  private static String ourSelectedTabName;
-
-  private TabbedPaneWrapper myTabbedPane;
   private final ModulesProvider myModulesProvider;
   private String myName;
   private final Module myModule;
 
-  private final List<ModuleConfigurationEditor> myEditors = new ArrayList<ModuleConfigurationEditor>();
+  protected final List<ModuleConfigurationEditor> myEditors = new ArrayList<ModuleConfigurationEditor>();
   private ModifiableRootModel myModifiableRootModelProxy;
 
   private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
 
-  private History myHistory;
+  protected History myHistory;
 
   public ModuleEditor(Project project, ModulesProvider modulesProvider,
                       @NotNull Module module) {
@@ -94,7 +88,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     myName = module.getName();
   }
 
-  public void init(final String selectedTab, History history) {
+  public void init(History history) {
     myHistory = history;
 
     for (ModuleConfigurationEditor each : myEditors) {
@@ -103,10 +97,24 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
     }
 
-    setSelectedTabName(selectedTab);
+    restoreSelectedEditor();
   }
 
   public abstract ProjectFacetsConfigurator getFacetsConfigurator();
+
+  protected abstract JComponent createCenterPanel();
+
+  @Nullable
+  public abstract ModuleConfigurationEditor getSelectedEditor();
+
+  public abstract void selectEditor(String displayName);
+
+  protected abstract void restoreSelectedEditor();
+
+  @Nullable
+  public abstract ModuleConfigurationEditor getEditor(@NotNull String displayName);
+
+  protected abstract void disposeCenterPanel();
 
   public interface ChangeListener extends EventListener {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
@@ -225,50 +233,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
     myGenericSettingsPanel.add(northPanel, BorderLayout.NORTH);
 
-    myTabbedPane = new TabbedPaneWrapper(this);
-
-    for (ModuleConfigurationEditor editor : myEditors) {
-      myTabbedPane.addTab(editor.getDisplayName(), editor.getIcon(), editor.createComponent(), null);
-      editor.reset();
-    }
-    setSelectedTabName(ourSelectedTabName);
-
-    myGenericSettingsPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
-    myTabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        ourSelectedTabName = getSelectedTabName();
-        if (myHistory != null) {
-          myHistory.pushQueryPlace();
-        }
-      }
-    });
-
+    final JComponent component = createCenterPanel();
+    myGenericSettingsPanel.add(component, BorderLayout.CENTER);
     return myGenericSettingsPanel;
-  }
-
-  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
-    myTabbedPane.setSelectedTitle((String)place.getPath(MODULE_TAB));
-    return new ActionCallback.Done();
-  }
-
-  public void queryPlace(@NotNull final Place place) {
-    place.putPath(MODULE_TAB, ourSelectedTabName);
-  }
-
-  public static String getSelectedTab(){
-    return ourSelectedTabName;
-  }
-
-  private int getEditorTabIndex(final String editorName) {
-    if (myTabbedPane != null && editorName != null) {
-      final int tabCount = myTabbedPane.getTabCount();
-      for (int idx = 0; idx < tabCount; idx++) {
-        if (editorName.equals(myTabbedPane.getTitleAt(idx))) {
-          return idx;
-        }
-      }
-    }
-    return -1;
   }
 
   public JPanel getPanel() {
@@ -310,10 +277,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
       myEditors.clear();
 
-      if (myTabbedPane != null) {
-        ourSelectedTabName = getSelectedTabName();
-        myTabbedPane = null;
-      }
+      disposeCenterPanel();
 
       if (myModifiableRootModel != null) {
         myModifiableRootModel.dispose();
@@ -352,31 +316,6 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   public String getName() {
     return myName;
-  }
-
-  @Nullable
-  public String getSelectedTabName() {
-    return myTabbedPane == null || myTabbedPane.getSelectedIndex() == -1 ? null : myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex());
-  }
-
-  public void setSelectedTabName(@Nullable String name) {
-    if (name != null) {
-      getPanel();
-      final int editorTabIndex = getEditorTabIndex(name);
-      if (editorTabIndex >= 0 && editorTabIndex < myTabbedPane.getTabCount()) {
-        myTabbedPane.setSelectedIndex(editorTabIndex);
-        ourSelectedTabName = name;
-      }
-    }
-  }
-
-  @Nullable
-  public ModuleConfigurationEditor getEditor(@NotNull String tabName) {
-    int index = getEditorTabIndex(tabName);
-    if (0 <= index && index < myEditors.size()) {
-      return myEditors.get(index);
-    }
-    return null;
   }
 
   private class ModifiableRootModelInvocationHandler implements InvocationHandler {
@@ -578,15 +517,11 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   @Nullable
   public String getHelpTopic() {
-    if (myTabbedPane == null || myEditors.isEmpty()) {
+    if (myEditors.isEmpty()) {
       return null;
     }
-    final int selectedIdx = myTabbedPane.getSelectedIndex();
-    if (selectedIdx == -1) {
-      return null;
-    }
-    final ModuleConfigurationEditor moduleElementsEditor = myEditors.get(selectedIdx);
-    return moduleElementsEditor.getHelpTopic();
+    final ModuleConfigurationEditor selectedEditor = getSelectedEditor();
+    return selectedEditor != null ? selectedEditor.getHelpTopic() : null;
   }
 
   public void setModuleName(final String name) {

@@ -2265,7 +2265,7 @@ public class CompileDriver {
     return false;
   }
 
-  private void showNotSpecifiedError(@NonNls final String resourceId, List<String> modules, String tabNameToSelect) {
+  private void showNotSpecifiedError(@NonNls final String resourceId, List<String> modules, String editorNameToSelect) {
     String nameToSelect = null;
     final StringBuilder names = StringBuilderSpinAllocator.alloc();
     final String message;
@@ -2296,7 +2296,7 @@ public class CompileDriver {
     }
 
     Messages.showMessageDialog(myProject, message, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-    showConfigurationDialog(nameToSelect, tabNameToSelect);
+    showConfigurationDialog(nameToSelect, editorNameToSelect);
   }
 
   private boolean validateOutputAndSourcePathsIntersection() {

@@ -122,8 +122,8 @@ public class IdeaProjectSettingsService extends ProjectSettingsService {
   }
 
   @Override
-  public void showModuleConfigurationDialog(String moduleToSelect, String tabNameToSelect, boolean showModuleWizard) {
-    ModulesConfigurator.showDialog(myProject, moduleToSelect, tabNameToSelect, showModuleWizard);
+  public void showModuleConfigurationDialog(String moduleToSelect, String editorNameToSelect, boolean showModuleWizard) {
+    ModulesConfigurator.showDialog(myProject, moduleToSelect, editorNameToSelect, showModuleWizard);
   }
 
   @Override

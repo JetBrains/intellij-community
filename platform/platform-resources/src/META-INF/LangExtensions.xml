@@ -185,7 +185,7 @@
                   serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"/>
 
   <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
-                  serviceImplementation="com.intellij.psi.search.ProjectScopeBuilder"/>
+                  serviceImplementation="com.intellij.psi.search.ProjectScopeBuilderImpl"/>
 
   <projectService serviceInterface="com.intellij.facet.ProjectWideFacetListenersRegistry"
                   serviceImplementation="com.intellij.facet.impl.ProjectWideFacetListenersRegistryImpl"/>

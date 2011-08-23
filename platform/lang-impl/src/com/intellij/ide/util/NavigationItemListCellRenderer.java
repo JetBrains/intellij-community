@@ -19,6 +19,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -143,7 +144,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
           }
         }
 
-        FileStatus status = element.getFileStatus();
+        FileStatus status = NavigationItemFileStatus.get(element);
         if (status != FileStatus.NOT_CHANGED) {
           color = status.getColor();
         }

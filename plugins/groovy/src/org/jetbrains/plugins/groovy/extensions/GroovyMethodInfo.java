@@ -6,6 +6,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
@@ -22,6 +23,9 @@ public class GroovyMethodInfo {
   private String myReturnType;
 
   private Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> myNamedArguments;
+
+  private GroovyMethodDescriptor.NamedArgumentProvider myNamedArgProviderInstance;
+  private String myNamedArgProviderClassName;
 
   public static Map<String, Map<String, List<GroovyMethodInfo>>> getMethodMap() {
     Map<String, Map<String, List<GroovyMethodInfo>>> res = MAP;
@@ -97,8 +101,13 @@ public class GroovyMethodInfo {
 
     Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> namedArgumentsMap = method.getArgumentsMap();
     if (namedArgumentsMap != null) {
-      assert info.myNamedArguments == null;
+      assert !info.isProvideNamedArguments();
       info.myNamedArguments = namedArgumentsMap;
+    }
+
+    if (method.namedArgsProvider != null) {
+      assert !info.isProvideNamedArguments();
+      info.myNamedArgProviderClassName = method.namedArgsProvider;
     }
   }
 
@@ -107,9 +116,26 @@ public class GroovyMethodInfo {
     return myReturnType;
   }
 
-  @Nullable
-  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedArguments() {
-    return myNamedArguments;
+  public void addNamedArguments(Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> res, @NotNull GrCall call, @NotNull PsiMethod method) {
+    if (myNamedArguments != null) {
+      res.putAll(myNamedArguments);
+    }
+    else if (myNamedArgProviderClassName != null) {
+      if (myNamedArgProviderInstance == null) {
+        try {
+          myNamedArgProviderInstance = (GroovyMethodDescriptor.NamedArgumentProvider)Class.forName(myNamedArgProviderClassName).newInstance();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+
+      myNamedArgProviderInstance.collectNamedArguments(res, call, method);
+    }
+  }
+
+  public boolean isProvideNamedArguments() {
+    return myNamedArguments != null || myNamedArgProviderClassName != null;
   }
 
   public boolean isApplicable(@NotNull PsiMethod method) {

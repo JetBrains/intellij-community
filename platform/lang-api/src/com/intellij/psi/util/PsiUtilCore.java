@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.psi.util;
 
-/*
- * @author max
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+
+/**
+ * @author yole
  */
-package com.intellij.psi.search;
-
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-
-public abstract class ProjectScopeBuilder {
-  public static ProjectScopeBuilder getInstance(Project project) {
-    return ServiceManager.getService(project, ProjectScopeBuilder.class);
+public class PsiUtilCore {
+  @NotNull
+  public static PsiElement[] toPsiElementArray(@NotNull Collection<? extends PsiElement> collection) {
+    if (collection.isEmpty()) return PsiElement.EMPTY_ARRAY;
+    return collection.toArray(new PsiElement[collection.size()]);
   }
-
-  public abstract GlobalSearchScope buildLibrariesScope();
-
-  public abstract GlobalSearchScope buildAllScope();
-
-  public abstract GlobalSearchScope buildProjectScope();
 }
