@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.HashMap;
@@ -19,7 +20,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -103,10 +106,6 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     myComponent.add(rightPanel);
   }
 
-// this is the first
-//
-//   }
-
   @Override
   public JComponent getComponent() {
     return myComponent;
@@ -126,17 +125,20 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       ));
     }
 
+    Map<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>> entity2nodes
+      = new HashMap<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>>();
     int counter = 0;
-    DefaultMutableTreeNode root = buildNode(project, counter++);
+    DefaultMutableTreeNode root = buildNode(project, entity2nodes, counter++);
+    
     for (GradleModule module : project.getModules()) {
-      DefaultMutableTreeNode moduleNode = buildNode(module, counter++);
+      DefaultMutableTreeNode moduleNode = buildNode(module, entity2nodes, counter++);
       root.add(moduleNode);
       Collection<GradleDependency> dependencies = module.getDependencies();
       if (!dependencies.isEmpty()) {
         DefaultMutableTreeNode dependenciesNode
           = new DefaultMutableTreeNode(GradleBundle.message("gradle.import.structure.tree.node.dependencies"));
         for (GradleDependency dependency : dependencies) {
-          dependenciesNode.add(buildNode(dependency, counter++));
+          dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
         }
         moduleNode.add(dependenciesNode);
       } 
@@ -145,12 +147,25 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     myTree.setSelectionPath(new TreePath(root));
   }
 
-  private <T extends GradleEntity> DefaultMutableTreeNode buildNode(@NotNull T entity, int counter) {
-    DefaultMutableTreeNode result = new DefaultMutableTreeNode(myFactory.buildDescriptor(entity));
-    GradleProjectStructureNodeSettings settings = myFactory.buildSettings(entity);
-    String cardName = String.valueOf(counter);
-    myCards.put(result, cardName);
-    mySettingsPanel.add(settings.getComponent(), cardName);
+  private <T extends GradleEntity> DefaultMutableTreeNode buildNode(
+    @NotNull T entity, @NotNull Map<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>> processed, int counter)
+  {
+    // TODO den add doc
+    GradleProjectStructureNode result = new GradleProjectStructureNode(myFactory.buildDescriptor(entity));
+    Pair<String, Collection<GradleProjectStructureNode>> pair = processed.get(entity);
+    if (pair == null) {
+      String cardName = String.valueOf(counter);
+      List<GradleProjectStructureNode> nodes = new ArrayList<GradleProjectStructureNode>();
+      nodes.add(result);
+      processed.put(entity, new Pair<String, Collection<GradleProjectStructureNode>>(cardName, nodes));
+      GradleProjectStructureNodeSettings settings = myFactory.buildSettings(entity, myTreeModel, nodes);
+      myCards.put(result, cardName);
+      mySettingsPanel.add(settings.getComponent(), cardName);
+    } 
+    else {
+      pair.second.add(result);
+      myCards.put(result, pair.first);
+    }
     return result;
   }
   

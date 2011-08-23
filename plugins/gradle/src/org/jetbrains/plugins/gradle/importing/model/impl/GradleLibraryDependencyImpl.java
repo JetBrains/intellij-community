@@ -21,7 +21,7 @@ public class GradleLibraryDependencyImpl extends AbstractGradleDependency implem
 
   private final Map<LibraryPathType, String> myPaths = new HashMap<LibraryPathType, String>();
   
-  private final String myName;
+  private String myName;
 
   public GradleLibraryDependencyImpl(@NotNull String name) {
     myName = name;
@@ -31,6 +31,11 @@ public class GradleLibraryDependencyImpl extends AbstractGradleDependency implem
   @Override
   public String getName() {
     return myName;
+  }
+
+  @Override
+  public void setName(@NotNull String name) {
+    myName = name;
   }
 
   @Nullable
@@ -46,6 +51,22 @@ public class GradleLibraryDependencyImpl extends AbstractGradleDependency implem
   @Override
   public void invite(@NotNull GradleEntityVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myPaths.hashCode();
+    result = 31 * result + myName.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GradleLibraryDependencyImpl that = (GradleLibraryDependencyImpl)o;
+    return myName.equals(that.myName) && myPaths.equals(that.myPaths);
   }
 
   @Override

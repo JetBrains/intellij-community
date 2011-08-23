@@ -56,7 +56,27 @@ public class GradleContentRootImpl implements Serializable, GradleContentRoot {
   public void invite(@NotNull GradleEntityVisitor visitor) {
     visitor.visit(this);
   }
-  
+
+  @Override
+  public int hashCode() {
+    int result = myData.hashCode();
+    result = 31 * result + myRootPath.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GradleContentRootImpl that = (GradleContentRootImpl)o;
+
+    if (!myData.equals(that.myData)) return false;
+    if (!myRootPath.equals(that.myRootPath)) return false;
+
+    return true;
+  }
+
   @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();

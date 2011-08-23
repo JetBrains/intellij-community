@@ -94,6 +94,32 @@ public class GradleProjectImpl implements Serializable, GradleProject {
   }
 
   @Override
+  public int hashCode() {
+    int result = myModules.hashCode();
+    result = 31 * result + myCompileOutputPath.hashCode();
+    result = 31 * result + myName.hashCode();
+    result = 31 * result + myJdk.hashCode();
+    result = 31 * result + myLanguageLevel.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GradleProjectImpl that = (GradleProjectImpl)o;
+
+    if (!myCompileOutputPath.equals(that.myCompileOutputPath)) return false;
+    if (!myJdk.equals(that.myJdk)) return false;
+    if (myLanguageLevel != that.myLanguageLevel) return false;
+    if (!myModules.equals(that.myModules)) return false;
+    if (!myName.equals(that.myName)) return false;
+
+    return true;
+  }
+
+  @Override
   public String toString() {
     return String.format("project '%s'. Jdk: '%s', language level: '%s', modules: %s",
                          getName(), getJdkName(), getLanguageLevel(), getModules());

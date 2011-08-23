@@ -2,6 +2,9 @@ package org.jetbrains.plugins.gradle.remote.impl;
 
 import com.intellij.execution.rmi.RemoteObject;
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.HashMap;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
@@ -54,7 +57,12 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     // TODO den use OfflineIdeaProject as soon as gradle guys provide support for non-resolved libraries there.
     //OfflineIdeaProject project = connection.getModel(OfflineIdeaProject.class);
     GradleProjectImpl result = populateProject(project, projectPath);
-    populateModules(project, result);
+    
+    // We need two different steps ('create' and 'populate') in order to handle module dependencies, i.e. when one module is
+    // configured to be dependency for another one, corresponding dependency module object should be available during
+    // populating dependent module object.
+    Map<String, Pair<GradleModuleImpl, IdeaModule>> modules = createModules(project, result);
+    populateModules(modules.values(), result);
     return result;
   }
 
@@ -67,44 +75,53 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     return result;
   }
 
-  private static void populateModules(@NotNull IdeaProject gradleProject, @NotNull GradleProjectImpl intellijProject)
+  @NotNull
+  private static Map<String, Pair<GradleModuleImpl, IdeaModule>> createModules(@NotNull IdeaProject gradleProject,
+                                                                           @NotNull GradleProjectImpl intellijProject)
     throws IllegalStateException
   {
     DomainObjectSet<? extends IdeaModule> gradleModules = gradleProject.getModules();
     if (gradleModules == null || gradleModules.isEmpty()) {
       throw new IllegalStateException("No modules found for the target project: " + gradleProject);
     }
-    Map<String, GradleModule> modules = new HashMap<String, GradleModule>();
+    Map<String, Pair<GradleModuleImpl, IdeaModule>> result = new HashMap<String, Pair<GradleModuleImpl, IdeaModule>>();
     for (IdeaModule gradleModule : gradleModules) {
       if (gradleModule == null) {
         continue;
       }
-      GradleModuleImpl module = populateModule(gradleModule, intellijProject);
-      String moduleName = module.getName();
-      GradleModule previouslyParsedModule = modules.get(moduleName);
-      if (modules.containsKey(moduleName)) {
+      String moduleName = gradleModule.getName();
+      if (moduleName == null) {
+        throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
+      }
+      GradleModuleImpl intellijModule = new GradleModuleImpl(moduleName);
+      Pair<GradleModuleImpl, IdeaModule> previouslyParsedModule = result.get(moduleName);
+      if (previouslyParsedModule != null) {
         throw new IllegalStateException(
-          String.format("Modules with duplicate name (%s) detected: '%s' and '%s'", moduleName, module, previouslyParsedModule)
+          String.format("Modules with duplicate name (%s) detected: '%s' and '%s'", moduleName, intellijModule, previouslyParsedModule)
         );
       }
-      modules.put(moduleName, module);
-      intellijProject.addModule(module);
+      result.put(moduleName, new Pair<GradleModuleImpl, IdeaModule>(intellijModule, gradleModule));
+      intellijProject.addModule(intellijModule);
+    }
+    return result;
+  }
+
+  private static void populateModules(@NotNull Iterable<Pair<GradleModuleImpl, IdeaModule>> modules, 
+                                      @NotNull GradleProject intellijProject)
+    throws IllegalStateException
+  {
+    for (Pair<GradleModuleImpl, IdeaModule> pair : modules) {
+      populateModule(pair.second, pair.first, intellijProject);
     }
   }
 
-  @NotNull
-  private static GradleModuleImpl populateModule(@NotNull IdeaModule gradleModule, @NotNull GradleProject intellijProject)
+  private static void populateModule(@NotNull IdeaModule gradleModule, @NotNull GradleModuleImpl intellijModule,
+                                     @NotNull GradleProject intellijProject)
     throws IllegalStateException
   {
-    String name = gradleModule.getName();
-    if (name == null) {
-      throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
-    } 
-    GradleModuleImpl result = new GradleModuleImpl(name);
-    populateContentRoots(gradleModule, result);
-    populateCompileOutputSettings(gradleModule.getCompilerOutput(), result);
-    populateDependencies(gradleModule, result, intellijProject);
-    return result;
+    populateContentRoots(gradleModule, intellijModule);
+    populateCompileOutputSettings(gradleModule.getCompilerOutput(), intellijModule);
+    populateDependencies(gradleModule, intellijModule, intellijProject);
   }
 
   private static void populateContentRoots(@NotNull IdeaModule gradleModule, @NotNull GradleModuleImpl intellijModule) {
@@ -177,6 +194,11 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
         intellijDependency = buildDependency((IdeaModuleDependency)dependency, intellijProject);
       }
       else if (dependency instanceof IdeaSingleEntryLibraryDependency) {
+        GradleLibraryDependency createdDependency = getCreatedDependency((IdeaSingleEntryLibraryDependency)dependency, intellijProject);
+        if (createdDependency != null) {
+          intellijModule.addDependency(createdDependency);
+          return;
+        } 
         intellijDependency = buildDependency((IdeaSingleEntryLibraryDependency)dependency);
       }
 
@@ -193,6 +215,32 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     }
   }
 
+  @Nullable
+  private static GradleLibraryDependency getCreatedDependency(final @NotNull IdeaSingleEntryLibraryDependency gradleDependency,
+                                                              @NotNull GradleProject intellijProject)
+  {
+    final Ref<GradleLibraryDependency> result = new Ref<GradleLibraryDependency>();
+    GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
+      @Override
+      public void visit(@NotNull GradleLibraryDependency dependency) {
+        String path = dependency.getPath(LibraryPathType.BINARY);
+        if (path != null && gradleDependency.getFile().equals(new File(path))) {
+          result.set(dependency);
+        }
+      }
+    };
+    for (GradleModule intellijModule : intellijProject.getModules()) {
+      for (GradleDependency intellijDependency : intellijModule.getDependencies()) {
+        intellijDependency.invite(visitor);
+        if (result.get() != null) {
+          return result.get();
+        }
+      }
+    }
+    return null;
+  }
+  
+  @NotNull
   private static AbstractGradleDependency buildDependency(@NotNull IdeaModuleDependency dependency, @NotNull GradleProject intellijProject)
     throws IllegalStateException
   {
@@ -223,6 +271,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     ));
   }
 
+  @NotNull
   private static AbstractGradleDependency buildDependency(@NotNull IdeaSingleEntryLibraryDependency dependency)
     throws IllegalStateException
   {
@@ -234,7 +283,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     }
     
     // TODO den use library name from gradle api when it's ready
-    GradleLibraryDependencyImpl result = new GradleLibraryDependencyImpl(binaryPath.getName());
+    GradleLibraryDependencyImpl result = new GradleLibraryDependencyImpl(FileUtil.getNameWithoutExtension(binaryPath));
     result.addPath(LibraryPathType.BINARY, binaryPath.getAbsolutePath());
 
     File sourcePath = dependency.getSource();
@@ -323,4 +372,24 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   public void setSettings(@NotNull RemoteGradleProcessSettings settings) {
     mySettings.set(settings); 
   }
+  
+  // TODO den remove
+  //private static class Context {
+  //
+  //  /** Project representation provided by the gradle tooling api. */
+  //  public IdeaProject      gradleProject;
+  //  /** Project representation built by IJ gradle plugin on the basis of the project info provided by the gradle tooling api. */
+  //  public GradleProject    ideaProject;
+  //  /** Module representation provided by the gradle tooling api. */
+  //  public IdeaModule       gradleModule;
+  //  /** Module representation built by IJ gradle plugin on the basis of the module info provided by the gradle tooling api. */
+  //  public GradleModuleImpl ideaModule;
+  //  
+  //  private final Map<>
+  //
+  //  @Nullable
+  //  public GradleModuleImpl getModule(@NotNull String name) {
+  //    
+  //  }
+  //}
 }

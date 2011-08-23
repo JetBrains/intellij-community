@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.GradleProject;
+import org.jetbrains.plugins.gradle.util.GradleUiUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +18,6 @@ import java.awt.event.ItemListener;
  */
 public class GradleProjectSettings implements GradleProjectStructureNodeSettings {
 
-  private final JTextField myNameTextField         = new JTextField();
   private final JComboBox  myLanguageLevelComboBox = new JComboBox(LanguageLevel.values());
   
   private final JComponent    myComponent;
@@ -26,10 +26,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
   public GradleProjectSettings(@NotNull GradleProject project) {
     myProject = project;
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-    
-    builder.add("gradle.import.structure.settings.label.name", myNameTextField);
-    myNameTextField.setText(project.getName());
-
+    GradleUiUtil.configureNameControl(builder, project);
     builder.add("gradle.import.structure.settings.label.language.level", myLanguageLevelComboBox);
     myLanguageLevelComboBox.setSelectedItem(project.getLanguageLevel());
     

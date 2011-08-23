@@ -10,4 +10,6 @@ public interface Named {
 
   @NotNull
   String getName();
+
+  void setName(@NotNull String name);
 }

@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.GradleModule;
+import org.jetbrains.plugins.gradle.util.GradleUiUtil;
 
 import javax.swing.*;
 
@@ -13,18 +14,13 @@ import javax.swing.*;
  */
 public class GradleModuleSettings implements GradleProjectStructureNodeSettings {
 
-  private final JTextField myNameTextField = new JTextField();
-
   private final JComponent   myComponent;
   private final GradleModule myModule;
 
   public GradleModuleSettings(@NotNull GradleModule module) {
     myModule = module;
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-
-    builder.add("gradle.import.structure.settings.label.name", myNameTextField);
-    myNameTextField.setText(module.getName());
-
+    GradleUiUtil.configureNameControl(builder, myModule);
     myComponent = builder.build();
   }
 

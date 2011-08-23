@@ -1,12 +1,16 @@
 package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.*;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.Collection;
 
 /**
  * Allows to build various entities related to the 'project structure' view elements.
@@ -29,8 +33,8 @@ public class GradleProjectStructureFactory {
 
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
-  public <T extends GradleEntity> NodeDescriptor<GradleEntity> buildDescriptor(@NotNull T entity) {
-    final Ref<NodeDescriptor<GradleEntity>> result = new Ref<NodeDescriptor<GradleEntity>>();
+  public <T extends GradleEntity> GradleProjectStructureNodeDescriptor buildDescriptor(@NotNull T entity) {
+    final Ref<GradleProjectStructureNodeDescriptor> result = new Ref<GradleProjectStructureNodeDescriptor>();
     entity.invite(new GradleEntityVisitor() {
       @Override
       public void visit(@NotNull GradleProject project) {
@@ -62,7 +66,10 @@ public class GradleProjectStructureFactory {
 
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
-  public GradleProjectStructureNodeSettings buildSettings(@NotNull GradleEntity entity) {
+  public GradleProjectStructureNodeSettings buildSettings(@NotNull GradleEntity entity,
+                                                          @NotNull final DefaultTreeModel treeModel,
+                                                          @NotNull final Collection<GradleProjectStructureNode> treeNodes)
+  {
     // TODO den remove
     final GradleProjectStructureNodeSettings toRemove = new GradleProjectStructureNodeSettings() {
       @Override
@@ -85,7 +92,7 @@ public class GradleProjectStructureFactory {
 
       @Override
       public void visit(@NotNull GradleModule module) {
-        result.set(new GradleModuleSettings(module)); 
+        result.set(new GradleModuleSettings(wrap(GradleModule.class, module, treeModel, treeNodes))); 
       }
 
       @Override
@@ -96,16 +103,54 @@ public class GradleProjectStructureFactory {
 
       @Override
       public void visit(@NotNull GradleModuleDependency dependency) {
-        // TODO den implement
-        result.set(toRemove);
+        result.set(new GradleModuleSettings(wrap(GradleModule.class, dependency.getModule(), treeModel, treeNodes)));
       }
 
       @Override
       public void visit(@NotNull GradleLibraryDependency dependency) {
-        // TODO den implement
-        result.set(toRemove);
+        result.set(new GradleLibrarySettings(wrap(GradleLibraryDependency.class, dependency, treeModel, treeNodes)));
       }
     });
     return result.get();
+  }
+
+  /**
+   * Wraps target entity into proxy that handles logic of UI update for the corresponding nodes.
+   * 
+   * @param interfaceClass  target entity business interface
+   * @param delegate        target entity to wrap
+   * @param model           model of the target tree
+   * @param treeNodes       tree nodes that represent the given entity
+   * @param <T>             target entity business interface
+   * @return                UI-aware proxy of the given entity
+   */
+  @SuppressWarnings("unchecked")
+  private static <T> T wrap(@NotNull Class<T> interfaceClass, @NotNull final T delegate, @NotNull final DefaultTreeModel model,
+                            @NotNull final Collection<GradleProjectStructureNode> treeNodes)
+  {
+    final Method triggerMethod;
+    try {
+      triggerMethod = Named.class.getMethod("setName", String.class);
+    }
+    catch (NoSuchMethodException e) {
+      // Never expect to be here.
+      throw new RuntimeException("Unexpected exception occurred", e);
+    }
+    InvocationHandler invocationHandler = new InvocationHandler() {
+      @Override
+      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        Object result = method.invoke(delegate, args);
+        if (method.equals(triggerMethod)) {
+          for (GradleProjectStructureNode node : treeNodes) {
+            node.getDescriptor().setName(args[0].toString());
+            model.nodeChanged(node);
+          }
+        }
+        return result;
+      }
+    };
+    ClassLoader classLoader = GradleProjectStructureFactory.class.getClassLoader();
+    Class<?>[] interfaces = {interfaceClass};
+    return (T)Proxy.newProxyInstance(classLoader, interfaces, invocationHandler);
   }
 }
