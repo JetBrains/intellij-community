@@ -198,11 +198,5 @@ public abstract class PsiManager extends UserDataHolderBase {
                                                                                                         T;
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
 
-  public abstract void registerLanguageInjector(@NotNull LanguageInjector injector);
-
-  public abstract void registerLanguageInjector(@NotNull LanguageInjector injector, Disposable parentDisposable);
-
-  public abstract void unregisterLanguageInjector(@NotNull LanguageInjector injector);
-
   public abstract void dropFileCaches(@NotNull PsiFile file);
 }

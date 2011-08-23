@@ -48,7 +48,6 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
@@ -89,8 +88,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   private static final Key<PsiFile> CACHED_PSI_FILE_COPY_IN_FILECONTENT = Key.create("CACHED_PSI_FILE_COPY_IN_FILECONTENT");
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = Topic.create("ANY_PSI_CHANGE_TOPIC",AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
-
-  private final List<LanguageInjector> myLanguageInjectors = ContainerUtil.createEmptyCOWList();
 
   public PsiManagerImpl(Project project,
                         final ProjectRootManagerEx projectRootManagerEx,
@@ -220,31 +217,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       }
     });
   }
-
-  @NotNull
-  public List<? extends LanguageInjector> getLanguageInjectors() {
-    return myLanguageInjectors;
-  }
-
-  public void registerLanguageInjector(@NotNull LanguageInjector injector) {
-    myLanguageInjectors.add(injector);
-    InjectedLanguageManagerImpl.getInstanceImpl(myProject).psiManagerInjectorsChanged();
-  }
-
-  public void registerLanguageInjector(@NotNull final LanguageInjector injector, Disposable parentDisposable) {
-    registerLanguageInjector(injector);
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        unregisterLanguageInjector(injector);
-      }
-    });
-  }
-
-  public void unregisterLanguageInjector(@NotNull LanguageInjector injector) {
-    myLanguageInjectors.remove(injector);
-    InjectedLanguageManagerImpl.getInstanceImpl(myProject).psiManagerInjectorsChanged();
-  }
-
 
   public void projectClosed() {
   }

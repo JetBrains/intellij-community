@@ -30,6 +30,8 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
@@ -194,7 +196,7 @@ public class MyTestInjector {
       }
     });
 
-    LanguageInjector myInjector = new LanguageInjector() {
+    final LanguageInjector myInjector = new LanguageInjector() {
       public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces placesToInject) {
         if (host instanceof XmlAttributeValue) {
           XmlAttributeValue value = (XmlAttributeValue)host;
@@ -303,7 +305,14 @@ public class MyTestInjector {
       }
     };
 
-    psiManager.registerLanguageInjector(myInjector, parent);
+    final ExtensionPoint<LanguageInjector> extensionPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
+    extensionPoint.registerExtension(myInjector);
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        extensionPoint.unregisterExtension(myInjector);
+      }
+    });
   }
 
   private static void inject(final PsiLanguageInjectionHost host, final InjectedLanguagePlaces placesToInject, final Language language) {

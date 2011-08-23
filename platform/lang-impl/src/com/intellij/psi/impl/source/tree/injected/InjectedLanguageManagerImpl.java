@@ -37,7 +37,6 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -95,17 +94,15 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   public void psiManagerInjectorsChanged() {
-    PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(myProject);
-    List<? extends LanguageInjector> injectors = psiManager.getLanguageInjectors();
     LanguageInjector[] extensions = Extensions.getExtensions(LanguageInjector.EXTENSION_POINT_NAME);
-    if (injectors.isEmpty() && extensions.length == 0) {
+    if (extensions.length == 0) {
       MultiHostInjector prev = myPsiManagerRegisteredInjectorsAdapter.getAndSet(null);
       if (prev != null) {
         unregisterMultiHostInjector(prev);
       }
     }
     else {
-      PsiManagerRegisteredInjectorsAdapter adapter = new PsiManagerRegisteredInjectorsAdapter(psiManager);
+      PsiManagerRegisteredInjectorsAdapter adapter = new PsiManagerRegisteredInjectorsAdapter();
       if (myPsiManagerRegisteredInjectorsAdapter.compareAndSet(null, adapter)) {
         registerMultiHostInjector(adapter);
       }
@@ -314,12 +311,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   private static class PsiManagerRegisteredInjectorsAdapter implements MultiHostInjector {
-    private final PsiManagerEx myPsiManager;
-
-    private PsiManagerRegisteredInjectorsAdapter(PsiManagerEx psiManager) {
-      myPsiManager = psiManager;
-    }
-
     public void getLanguagesToInject(@NotNull final MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement context) {
       final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
       InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
@@ -331,9 +322,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
             .doneInjecting();
         }
       };
-      for (LanguageInjector injector : myPsiManager.getLanguageInjectors()) {
-        injector.getLanguagesToInject(host, placesRegistrar);
-      }
       for (LanguageInjector injector : Extensions.getExtensions(LanguageInjector.EXTENSION_POINT_NAME)) {
         injector.getLanguagesToInject(host, placesRegistrar);
       }
