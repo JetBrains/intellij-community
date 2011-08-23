@@ -1,22 +1,4 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <application-components>
-    <component>
-      <interface-class>com.intellij.spellchecker.state.CachedDictionaryState</interface-class>
-      <implementation-class>com.intellij.spellchecker.state.CachedDictionaryState</implementation-class>
-    </component>
-  </application-components>
-
-  <project-components>
-    <component>
-      <interface-class>com.intellij.spellchecker.state.ProjectDictionaryState</interface-class>
-      <implementation-class>com.intellij.spellchecker.state.ProjectDictionaryState</implementation-class>
-    </component>
-      <component>
-      <interface-class>com.intellij.spellchecker.state.AggregatedDictionaryState</interface-class>
-      <implementation-class>com.intellij.spellchecker.state.AggregatedDictionaryState</implementation-class>
-    </component>
-  </project-components>
-
 
   <actions>
     <group id="com.intellij.spellchecker.actions.SpellingPopupActionGroup"
@@ -50,5 +32,9 @@
     <spellchecker.support implementation="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
     <spellchecker.support implementation="com.intellij.spellchecker.tokenizer.HtmlSpellcheckingStrategy"/>
     <spellchecker.bundledDictionaryProvider implementation="com.intellij.spellchecker.DefaultBundledDictionariesProvider"/>
+
+    <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>
+    <projectService serviceImplementation="com.intellij.spellchecker.state.AggregatedDictionaryState"/>
+    <applicationService serviceImplementation="com.intellij.spellchecker.state.CachedDictionaryState"/>
   </extensions>
 </idea-plugin>

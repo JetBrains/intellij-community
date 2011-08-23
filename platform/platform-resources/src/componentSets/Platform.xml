@@ -6,11 +6,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
-      <implementation-class>com.intellij.ide.util.AppPropertiesComponentImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.fileTypes.FileTypeManager</interface-class>
       <implementation-class>com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl</implementation-class>
     </component>
@@ -133,12 +128,6 @@
 
   <project-components>
     <component>
-      <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
-      <implementation-class>com.intellij.ide.util.ProjectPropertiesComponentImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.notification.EventLog$ProjectTracker</implementation-class>
       <skipForDefaultProject/>
     </component>
@@ -157,6 +146,7 @@
     <component>
       <interface-class>com.intellij.openapi.vcs.FileStatusManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.FileStatusManagerImpl</implementation-class>
+      <loadForDefaultProject/>
     </component>
 
     <component>
@@ -166,6 +156,7 @@
     <component>
       <interface-class>com.intellij.openapi.vfs.encoding.EncodingProjectManager</interface-class>
       <implementation-class>com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl</implementation-class>
+      <loadForDefaultProject/>
     </component>
 
     <component>

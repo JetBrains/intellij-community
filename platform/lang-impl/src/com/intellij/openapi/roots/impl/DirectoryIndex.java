@@ -29,8 +29,6 @@ public abstract class DirectoryIndex {
     return ServiceManager.getService(project, DirectoryIndex.class);
   }
 
-  
-
   @TestOnly
   public abstract void checkConsistency();
 

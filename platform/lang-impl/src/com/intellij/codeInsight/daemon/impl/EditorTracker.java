@@ -29,7 +29,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -52,9 +51,6 @@ public class EditorTracker extends AbstractProjectComponent {
   private final WindowManager myWindowManager;
   private final EditorFactory myEditorFactory;
 
-  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) 
-  private final ToolWindowManager myToolwindowManager;
-
   private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
   private final Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
   private final Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
@@ -65,14 +61,12 @@ public class EditorTracker extends AbstractProjectComponent {
   private IdeFrameImpl myIdeFrame;
   private Window myActiveWindow = null;
 
-  //todo:
-  //toolwindow manager is unfortunately needed since
-  //it actually initializes frame in WindowManager
-  public EditorTracker(Project project, final WindowManager windowManager, final EditorFactory editorFactory, ToolWindowManager toolwindowManager) {
+  public EditorTracker(Project project,
+                       final WindowManager windowManager,
+                       final EditorFactory editorFactory) {
     super(project);
     myWindowManager = windowManager;
     myEditorFactory = editorFactory;
-    myToolwindowManager = toolwindowManager;
   }
 
   public void projectOpened() {

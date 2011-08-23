@@ -40,24 +40,29 @@
     <component>
       <interface-class>com.intellij.openapi.roots.ProjectRootManager</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerImpl</implementation-class>
+      <loadForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.roots.impl.DirectoryIndex</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.DirectoryIndexImpl</implementation-class>
+      <loadForDefaultProject/>
     </component>
 
     <component>
       <interface-class>com.intellij.psi.PsiManager</interface-class>
       <implementation-class>com.intellij.psi.impl.PsiManagerImpl</implementation-class>
+      <loadForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.psi.PsiDocumentManager</interface-class>
       <implementation-class>com.intellij.psi.impl.PsiDocumentManagerImpl</implementation-class>
+      <loadForDefaultProject/>
     </component>
 
     <component>
       <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>
       <implementation-class>com.intellij.openapi.module.impl.ModuleManagerImpl</implementation-class>
+      <loadForDefaultProject/>
     </component>
 
     <component>
@@ -87,9 +92,11 @@
     <component>
       <interface-class>com.intellij.pom.tree.TreeAspect</interface-class>
       <implementation-class>com.intellij.pom.tree.TreeAspect</implementation-class>
+      <loadForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.psi.impl.source.PostprocessReformattingAspect</implementation-class>
+      <loadForDefaultProject/>
       <!-- <skipForDefaultProject/> -->
     </component>
 
@@ -97,9 +104,11 @@
       <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
       <option name="workspace" value="true"/>
+      <loadForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTracker</implementation-class>
+      <loadForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
@@ -176,6 +185,7 @@
     <component>
       <interface-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</interface-class>
       <implementation-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</implementation-class>
+      <loadForDefaultProject/>
     </component>
 
     <component>

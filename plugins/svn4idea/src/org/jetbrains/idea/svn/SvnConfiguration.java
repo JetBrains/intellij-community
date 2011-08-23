@@ -17,10 +17,12 @@
 
 package org.jetbrains.idea.svn;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -28,11 +30,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.annotate.AnnotationListener;
-import com.intellij.util.io.DataExternalizer;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
@@ -53,7 +53,15 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.*;
 
-public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
+@State(
+  name = "SvnConfiguration",
+  storages = {
+    @Storage(
+      file = "$WORKSPACE_FILE$"
+    )
+  }
+)
+public class SvnConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnConfiguration");
   public final static int ourMaxAnnotateRevisionsDefault = 500;
 
@@ -104,8 +112,30 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private final List<AnnotationListener> myAnnotationListeners;
   private SvnInteractiveAuthenticationProvider myInteractiveProvider;
 
+  @Override
+  public Element getState() {
+    Element element = new Element("state");
+    try {
+      writeExternal(element);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    return element;
+  }
+
+  @Override
+  public void loadState(Element state) {
+    try {
+      readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+  }
+
   public static SvnConfiguration getInstance(final Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, SvnConfiguration.class);
+    return ServiceManager.getService(project, SvnConfiguration.class);
   }
 
   public SvnConfiguration(final Project project) {
@@ -376,23 +406,6 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
       element.addContent(new Element("supportedVersion").setText("" + mySupportOptions.myVersion));
     }
     element.setAttribute("maxAnnotateRevisions", "" + myMaxAnnotateRevisions);
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "SvnConfiguration";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public boolean isKeepLocks() {

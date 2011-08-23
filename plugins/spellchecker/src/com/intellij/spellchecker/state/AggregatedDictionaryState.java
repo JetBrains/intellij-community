@@ -60,7 +60,7 @@ public class AggregatedDictionaryState {
 
   public void loadState() {
     assert project != null;
-    cachedDictionaryState = ServiceManager.getService(project, CachedDictionaryState.class);
+    cachedDictionaryState = ServiceManager.getService(CachedDictionaryState.class);
     projectDictionaryState = ServiceManager.getService(project, ProjectDictionaryState.class);
     currentUser = System.getProperty("user.name");
     retrieveDictionaries();

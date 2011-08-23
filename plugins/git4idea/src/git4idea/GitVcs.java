@@ -19,6 +19,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -95,7 +96,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private static final VcsKey ourKey = createKey(NAME);
 
   private final ChangeProvider myChangeProvider;
-  private final CheckinEnvironment myCheckinEnvironment;
+  private final GitCheckinEnvironment myCheckinEnvironment;
   private final RollbackEnvironment myRollbackEnvironment;
   private final GitUpdateEnvironment myUpdateEnvironment;
   private final GitAnnotationProvider myAnnotationProvider;
@@ -137,8 +138,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public GitVcs(@NotNull Project project,
-                @NotNull final GitChangeProvider gitChangeProvider,
-                @NotNull final GitCheckinEnvironment gitCheckinEnvironment,
                 @NotNull final ProjectLevelVcsManager gitVcsManager,
                 @NotNull final GitAnnotationProvider gitAnnotationProvider,
                 @NotNull final GitDiffProvider gitDiffProvider,
@@ -149,8 +148,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     super(project, NAME);
     myVcsManager = gitVcsManager;
     myAppSettings = gitSettings;
-    myChangeProvider = gitChangeProvider;
-    myCheckinEnvironment = gitCheckinEnvironment;
+    myChangeProvider = project.isDefault() ? null : ServiceManager.getService(project, GitChangeProvider.class);
+    myCheckinEnvironment = project.isDefault() ? null : ServiceManager.getService(project, GitCheckinEnvironment.class);
     myAnnotationProvider = gitAnnotationProvider;
     myDiffProvider = gitDiffProvider;
     myHistoryProvider = gitHistoryProvider;
@@ -163,7 +162,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
-    myCommitAndPushExecutor = new GitCommitAndPushExecutor(gitCheckinEnvironment);
+    myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
     myReferenceTracker = new GitReferenceTracker(myProject, this, myReferenceListeners.getMulticaster());
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
   }

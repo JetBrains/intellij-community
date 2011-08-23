@@ -16,9 +16,8 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,7 +48,7 @@ import java.util.List;
     )
     }
 )
-public final class VcsConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
+public final class VcsConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.VcsConfiguration");
 
   @NonNls private static final String VALUE_ATTR = "value";
@@ -144,10 +143,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   private final PerformInBackgroundOption myCheckoutOption = new CheckoutInBackgroundOption();
   private final PerformInBackgroundOption myAddRemoveOption = new AddRemoveInBackgroundOption();
 
-  public static VcsConfiguration createEmptyConfiguration() {
-    return new VcsConfiguration();
-  }
-
   private VcsConfiguration() {
   }
 
@@ -219,28 +214,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   }
 
   public static VcsConfiguration getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, VcsConfiguration.class);
-  }
-
-  public void projectOpened() {
-
-  }
-
-  public void projectClosed() {
-
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "VcsManagerConfiguration";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
+    return ServiceManager.getService(project, VcsConfiguration.class);
   }
 
   public void saveCommitMessage(final String comment) {

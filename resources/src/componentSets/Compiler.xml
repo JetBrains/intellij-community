@@ -13,6 +13,7 @@
     <component>
       <interface-class>com.intellij.compiler.CompilerConfiguration</interface-class>
       <implementation-class>com.intellij.compiler.CompilerConfigurationImpl</implementation-class>
+      <loadForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.compiler.impl.CompilerCacheManager</implementation-class>

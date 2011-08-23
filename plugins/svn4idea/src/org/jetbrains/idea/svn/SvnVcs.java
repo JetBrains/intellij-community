@@ -180,8 +180,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return Boolean.valueOf(System.getProperty(systemParameterName));
   }
 
-  public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final ChangeListManager changeListManager,
-                final VcsDirtyScopeManager vcsDirtyScopeManager) {
+  public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration) {
     super(project, VCS_NAME);
     LOG.debug("ct");
     myRootsToWorkingCopies = new RootsToWorkingCopies(myProject);
@@ -221,7 +220,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       };
     }
 
-    myFrameStateListener = new MyFrameStateListener(changeListManager, vcsDirtyScopeManager);
+    myFrameStateListener = project.isDefault() ? null : new MyFrameStateListener(ChangeListManager.getInstance(project),
+                                                                                 VcsDirtyScopeManager.getInstance(project));
     myWorkingCopiesContent = new WorkingCopiesContent(this);
 
     // remove used some time before old notification group ids

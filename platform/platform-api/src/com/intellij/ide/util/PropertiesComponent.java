@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,11 +24,11 @@ public abstract class PropertiesComponent {
   public abstract void unsetValue(String name);
 
   public static PropertiesComponent getInstance(Project project) {
-    return project.getComponent(PropertiesComponent.class);
+    return ServiceManager.getService(project, PropertiesComponent.class);
   }
 
   public static PropertiesComponent getInstance() {
-    return ApplicationManager.getApplication().getComponent(PropertiesComponent.class);
+    return ServiceManager.getService(PropertiesComponent.class);
   }
 
   public final boolean isTrueValue(@NonNls String name) {

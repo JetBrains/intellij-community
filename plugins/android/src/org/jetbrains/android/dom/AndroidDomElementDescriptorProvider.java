@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.dom;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
@@ -70,7 +71,9 @@ public class AndroidDomElementDescriptorProvider implements XmlElementDescriptor
   }
 
   public XmlElementDescriptor getDescriptor(XmlTag tag) {
-    final DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
+    Project project = tag.getProject();
+    if (project.isDefault()) return null;
+    final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
     String className = null;
     if (domElement instanceof LayoutViewElement) {
       className = AndroidUtils.VIEW_CLASS_NAME;

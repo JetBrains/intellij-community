@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -33,20 +34,20 @@ import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 
 import java.util.List;
 
 @State(name = "MavenRunner", storages = {@Storage( file = "$WORKSPACE_FILE$")})
-public class MavenRunner extends SimpleProjectComponent implements PersistentStateComponent<MavenRunnerSettings> {
+public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();
+  private final Project myProject;
 
   public static MavenRunner getInstance(Project project) {
-    return project.getComponent(MavenRunner.class);
+    return ServiceManager.getService(project, MavenRunner.class);
   }
 
   public MavenRunner(final Project project) {
-    super(project);
+    myProject = project;
   }
 
   public MavenRunnerSettings getSettings() {

@@ -43,7 +43,7 @@ public abstract class XmlSchemaProvider {
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String namespace, @Nullable Module module, @NotNull PsiFile file) {
     final boolean dumb = DumbService.getInstance(file.getProject()).isDumb();
-
+    if (file.getProject().isDefault()) return null;
     for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
       if (dumb && !DumbService.isDumbAware(provider)) {
         continue;
