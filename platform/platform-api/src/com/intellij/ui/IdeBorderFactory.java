@@ -58,10 +58,8 @@ public class IdeBorderFactory {
   }
 
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont) {
-    Font font = UIUtil.getBorderFont(hasSmallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, hasBoldFont);
-    int indent = hasIndent ? (hasBoldFont ? 18 : 15) : 0;
     Insets insets = new Insets(5, 0, 10, 0);
-    return new IdeaTitledBorder(title, font, UIUtil.getBorderColor(), indent, 1, insets);
+    return createTitledBorder(title, hasBoldFont, hasIndent, hasSmallFont, insets);
   }
 
     public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont, Insets insets) {
@@ -82,8 +80,8 @@ public class IdeBorderFactory {
   }
 
 
-  public static class SimpleWithIndent {
-    private SimpleWithIndent() {
+  public static class PlainWithIndent {
+    private PlainWithIndent() {
     }
 
     public static TitledBorder createTitledBorder(Border border,
@@ -96,8 +94,8 @@ public class IdeBorderFactory {
     }
   }
 
-  public static class SimpleWithoutIndent {
-    private SimpleWithoutIndent() {
+  public static class PlainWithoutIndent {
+    private PlainWithoutIndent() {
     }
 
     public static TitledBorder createTitledBorder(Border border,

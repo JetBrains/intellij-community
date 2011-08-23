@@ -36,7 +36,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
             </clientProperties>
             <border type="etched" title-resource-bundle="messages/UIDesignerBundle" title-key="group.vertical.size.policy"/>
             <children>
@@ -73,7 +73,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
             </clientProperties>
             <border type="etched" title-resource-bundle="messages/UIDesignerBundle" title-key="group.horizontal.size.policy"/>
             <children>

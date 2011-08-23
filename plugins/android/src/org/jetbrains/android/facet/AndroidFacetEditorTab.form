@@ -115,7 +115,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithoutIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithoutIndent"/>
                 </clientProperties>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.facet.settings.res.overlay.panel.title"/>
                 <children>
@@ -178,7 +178,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
                 </clientProperties>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apk.settings.title"/>
                 <children>
@@ -240,7 +240,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
                 </clientProperties>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.aidl.settings.title"/>
                 <children>
@@ -275,7 +275,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
                 </clientProperties>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.apt.settings.title"/>
                 <children>

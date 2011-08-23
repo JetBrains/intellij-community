@@ -195,7 +195,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
             </clientProperties>
             <border type="etched" title-resource-bundle="messages/ApplicationBundle" title-key="title.spaces"/>
             <children>

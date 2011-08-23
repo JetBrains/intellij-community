@@ -178,7 +178,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithoutIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithoutIndent"/>
                 </clientProperties>
                 <border type="none" title-resource-bundle="messages/ExecutionBundle" title-key="applet.configuration.applet.parameters.label"/>
                 <children>

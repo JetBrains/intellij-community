@@ -39,7 +39,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
         </clientProperties>
         <border type="none" title-resource-bundle="messages/UIDesignerBundle" title-key="title.default.alignment"/>
         <children>
@@ -110,7 +110,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
         </clientProperties>
         <border type="none" title-resource-bundle="messages/UIDesignerBundle" title-key="title.size"/>
         <children>

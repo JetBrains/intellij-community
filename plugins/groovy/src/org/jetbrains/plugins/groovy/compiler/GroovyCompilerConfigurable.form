@@ -53,7 +53,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithoutIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithoutIndent"/>
         </clientProperties>
         <border type="etched" title="Exclude from stub generation"/>
         <children/>
