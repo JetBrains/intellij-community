@@ -75,7 +75,7 @@ public abstract class GroovyNamedArgumentProvider {
     GroovyResolveResult[] callVariants = call.getCallVariants(null);
 
     if (callVariants.length == 0) {
-      for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
+      for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
         namedArgumentProvider.getNamedArguments(call, null, argumentName, forCompletion, namedArguments);
       }
     }
@@ -94,7 +94,7 @@ public abstract class GroovyNamedArgumentProvider {
           collectVariantsFromSimpleDescriptors(namedArguments, method);
         }
 
-        for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
+        for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
           namedArgumentProvider.getNamedArguments(call, element, argumentName, forCompletion, namedArguments);
         }
       }
@@ -104,12 +104,11 @@ public abstract class GroovyNamedArgumentProvider {
   }
 
   private static void collectVariantsFromSimpleDescriptors(Map<String, ArgumentDescriptor> res, PsiMethod method) {
-    PsiClass containingClass = method.getContainingClass();
-    if (containingClass != null) {
-      Map<String, ArgumentDescriptor> map =
-        SimpleGroovyNamedArgumentProvider.getMethodMap(containingClass.getQualifiedName(), method.getName());
-      if (map != null) {
-        res.putAll(map);
+    for (GroovyMethodInfo methodInfo : GroovyMethodInfo.getInfos(method)) {
+      Map<String, ArgumentDescriptor> namedArguments = methodInfo.getNamedArguments();
+      if (namedArguments != null && methodInfo.isApplicable(method)) {
+        res.putAll(namedArguments);
+        break;
       }
     }
   }
