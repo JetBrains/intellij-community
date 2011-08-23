@@ -23,6 +23,7 @@ import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.ExporterToTextFile;
+import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -648,7 +649,19 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public String getReportText() {
       final Element rootElement = new Element("root");
       rootElement.setAttribute("isBackward", String.valueOf(!myForward));
-      for (PsiFile file : myDependencies.keySet()) {
+      final List<PsiFile> files = new ArrayList<PsiFile>(myDependencies.keySet());
+      Collections.sort(files, new Comparator<PsiFile>() {
+        @Override
+        public int compare(PsiFile f1, PsiFile f2) {
+          final VirtualFile virtualFile1 = f1.getVirtualFile();
+          final VirtualFile virtualFile2 = f2.getVirtualFile();
+          if (virtualFile1 != null && virtualFile2 != null) {
+            return virtualFile1.getPath().compareToIgnoreCase(virtualFile2.getPath());
+          }
+          return 0;
+        }
+      });
+      for (PsiFile file : files) {
         final Element fileElement = new Element("file");
         fileElement.setAttribute("path", file.getVirtualFile().getPath());
         for (PsiFile dep : myDependencies.get(file)) {
