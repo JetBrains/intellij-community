@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibrary
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -140,6 +141,7 @@ public class LibraryOptionsPanel implements Disposable {
                                  boolean showDoNotCreateOption, final List<? extends FrameworkLibraryVersion> versions) {
     //todo[nik] create mySettings only in apply() method
     mySettings = new LibraryCompositionSettings(libraryDescription, baseDirectoryPath, currentFrameworkVersion, versions);
+    Disposer.register(this, mySettings);
     List<Library> libraries = calculateSuitableLibraries();
 
     myButtonEnumModel = RadioButtonEnumModel.bindEnum(Choice.class, myButtonGroup);
