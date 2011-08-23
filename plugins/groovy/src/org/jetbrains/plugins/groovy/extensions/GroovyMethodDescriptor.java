@@ -1,11 +1,14 @@
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 
 import java.util.*;
 
@@ -40,6 +43,9 @@ public class GroovyMethodDescriptor {
 
   @Attribute("namedArgs")
   public String namedArgs;
+
+  @Attribute("namedArgsProvider")
+  public String namedArgsProvider;
 
   @Attribute("namedArgsShowFirst")
   public Boolean isNamedArgsShowFirst;
@@ -90,6 +96,8 @@ public class GroovyMethodDescriptor {
       assert isNamedArgsShowFirst == null;
       return null;
     }
+
+    assert namedArgsProvider == null;
 
     Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> res =
       new HashMap<String, GroovyNamedArgumentProvider.ArgumentDescriptor>();
@@ -148,4 +156,7 @@ public class GroovyMethodDescriptor {
     return descriptor;
   }
 
+  public interface NamedArgumentProvider {
+    void collectNamedArguments(Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> res, @NotNull GrCall callExpression, @NotNull PsiMethod method);
+  }
 }

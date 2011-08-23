@@ -90,7 +90,7 @@ public abstract class GroovyNamedArgumentProvider {
 
           if (!method.isConstructor() && !canBeMap(parameters[0])) continue;
 
-          collectVariantsFromSimpleDescriptors(namedArguments, method);
+          collectVariantsFromSimpleDescriptors(namedArguments, call, method);
         }
 
         for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
@@ -102,11 +102,10 @@ public abstract class GroovyNamedArgumentProvider {
     return namedArguments;
   }
 
-  private static void collectVariantsFromSimpleDescriptors(Map<String, ArgumentDescriptor> res, PsiMethod method) {
+  private static void collectVariantsFromSimpleDescriptors(Map<String, ArgumentDescriptor> res, @NotNull GrCall call, @NotNull PsiMethod method) {
     for (GroovyMethodInfo methodInfo : GroovyMethodInfo.getInfos(method)) {
-      Map<String, ArgumentDescriptor> namedArguments = methodInfo.getNamedArguments();
-      if (namedArguments != null && methodInfo.isApplicable(method)) {
-        res.putAll(namedArguments);
+      if (methodInfo.isProvideNamedArguments() && methodInfo.isApplicable(method)) {
+        methodInfo.addNamedArguments(res, call, method);
         break;
       }
     }
@@ -253,7 +252,7 @@ public abstract class GroovyNamedArgumentProvider {
     }
   }
 
-  protected static class TypeCondition extends ArgumentDescriptor {
+  public static class TypeCondition extends ArgumentDescriptor {
     private final PsiType myType;
 
     public TypeCondition(PsiType type, PsiElement navigationElement) {
