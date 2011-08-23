@@ -24,5 +24,5 @@ public interface PlaybackCommand {
   ActionCallback execute(PlaybackContext context);
   boolean canGoFurther();
 
-  File getBaseDir();
+  File getScriptDir();
 }

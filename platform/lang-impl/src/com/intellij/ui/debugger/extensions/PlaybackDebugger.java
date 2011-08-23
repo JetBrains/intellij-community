@@ -56,6 +56,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.PlaybackDebugger");
 
+  private static final Color ERROR_COLOR = Color.RED;
+  private static final Color MESSAGE_COLOR = Color.BLACK;
+  private static final Color CODE_COLOR = Color.BLUE;
 
   private JPanel myComponent;
 
@@ -375,9 +378,15 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private void startWhenFrameActive() {
     myLog.setText(null);
 
-    addInfo("Waiting for IDE frame activation", -1, false);
+    addInfo("Waiting for IDE frame activation", -1, MESSAGE_COLOR);
     myRunner = new PlaybackRunner(myCodeEditor.getText(), this, false);
-
+    VirtualFile file = pathToFile();
+    if (file != null) {
+      VirtualFile scriptDir = file.getParent();
+      if (scriptDir != null) {
+        myRunner.setScriptDir(new File(scriptDir.getPresentableUrl()));
+      }
+    }
 
     new Thread() {
       @Override
@@ -426,7 +435,16 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   public void message(final String text, final int currentLine) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
-        addInfo(text, currentLine, false);
+        addInfo(text, currentLine, MESSAGE_COLOR);
+      }
+    });
+  }
+
+  @Override
+  public void code(final String text, final int currentLine) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        addInfo(text, currentLine, CODE_COLOR);
       }
     });
   }
@@ -478,16 +496,15 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myLog.setText(null);
   }
 
-  private void addInfo(String text, int line, boolean isError) {
+  private void addInfo(String text, int line, Color fg) {
     if (text == null || text.length() == 0) return;
     Document doc = myLog.getDocument();
     SimpleAttributeSet attr = new SimpleAttributeSet();
     StyleConstants.setFontFamily(attr, UIManager.getFont("Label.font").getFontName());
     StyleConstants.setFontSize(attr, UIManager.getFont("Label.font").getSize());
-    StyleConstants.setForeground(attr, isError ? Color.RED : Color.BLACK);
+    StyleConstants.setForeground(attr, fg);
     try {
-      String lineText = line > 0 ? "[" + line + "] ": "";
-      doc.insertString(doc.getLength(), lineText + text + "\n", attr);
+      doc.insertString(doc.getLength(), text + "\n", attr);
     }
     catch (BadLocationException e) {
       LOG.error(e);
@@ -496,7 +513,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private void addError(String text, int line) {
-    addInfo(text, line, true);
+    addInfo(text, line, ERROR_COLOR);
     scrollToLast();
   }
 

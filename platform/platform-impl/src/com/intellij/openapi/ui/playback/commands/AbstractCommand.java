@@ -30,7 +30,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
   private final String myText;
   private final int myLine;
 
-  private File myBaseDir;
+  private File myScriptDir;
   
   public AbstractCommand(String text, int line) {
     myText = text != null ? text : null;
@@ -79,7 +79,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
   protected abstract ActionCallback _execute(PlaybackContext context);
 
   public void dumpCommand(final PlaybackRunner.StatusCallback cb) {
-    cb.message(getText(), getLine());
+    cb.code(getText(), getLine());
   }
 
   public void dumpError(final PlaybackRunner.StatusCallback cb, final String text) {
@@ -87,13 +87,13 @@ public abstract class AbstractCommand implements PlaybackCommand {
   }
 
   @Override
-  public File getBaseDir() {
-    return myBaseDir;
+  public File getScriptDir() {
+    return myScriptDir;
   }
 
 
-  public PlaybackCommand setBaseDir(File baseDir) {
-    myBaseDir = baseDir;
+  public PlaybackCommand setScriptDir(File scriptDir) {
+    myScriptDir = scriptDir;
     return this;
   }
 }

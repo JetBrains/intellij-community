@@ -43,7 +43,7 @@ public class PlaybackRunner {
   private ActionCallback myActionCallback;
   private boolean myStopRequested;
   private final boolean myUseDirectActionCall;
-  private File myBaseDir;
+  private File myScriptDir;
 
   public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall) {
     myScript = script;
@@ -65,11 +65,11 @@ public class PlaybackRunner {
         @Override
         public void run() {
           if (myUseDirectActionCall) {
-            executeFrom(0);
+            executeFrom(0, getScriptDir());
           } else {
             IdeEventQueue.getInstance().doWhenReady(new Runnable() {
               public void run() {
-                executeFrom(0);
+                executeFrom(0, getScriptDir());
               }
             });
           }
@@ -84,7 +84,7 @@ public class PlaybackRunner {
     return myActionCallback;
   }
 
-  private void executeFrom(final int cmdIndex) {
+  private void executeFrom(final int cmdIndex, File baseDir) {
     if (cmdIndex < myCommands.size()) {
       final PlaybackCommand cmd = myCommands.get(cmdIndex);
       if (myStopRequested) {
@@ -92,11 +92,12 @@ public class PlaybackRunner {
         myActionCallback.setRejected();
         return;
       }
-      final ActionCallback cmdCallback = cmd.execute(new PlaybackContext(myCallback, cmdIndex, myRobot, myUseDirectActionCall, cmd));
+      final PlaybackContext context = new PlaybackContext(myCallback, cmdIndex, myRobot, myUseDirectActionCall, cmd, baseDir);
+      final ActionCallback cmdCallback = cmd.execute(context);
       cmdCallback.doWhenDone(new Runnable() {
         public void run() {
           if (cmd.canGoFurther()) {
-            executeFrom(cmdIndex + 1);
+            executeFrom(cmdIndex + 1, context.getBaseDir());
           }
           else {
             myActionCallback.setDone();
@@ -116,10 +117,10 @@ public class PlaybackRunner {
   }
 
   private void parse() {
-    includeScript(myScript, myCommands, 0);
+    includeScript(myScript, getScriptDir(), myCommands, 0);
   }
 
-  private void includeScript(String scriptText, ArrayList<PlaybackCommand> commandList, int line) {
+  private void includeScript(String scriptText, File scriptDir, ArrayList<PlaybackCommand> commandList, int line) {
     final StringTokenizer tokens = new StringTokenizer(scriptText, "\n");
     while (tokens.hasMoreTokens()) {
       final String eachLine = tokens.nextToken();
@@ -128,7 +129,7 @@ public class PlaybackRunner {
       String includeCmd = AbstractCommand.CMD_PREFIX + "include";
 
       if (eachLine.startsWith(includeCmd)) {
-        File file = PlaybackCallFacade.getFile(getBaseDir(), eachLine.substring(includeCmd.length()).trim());
+        File file = new PathMacro().setScriptDir(scriptDir).resolveFile(eachLine.substring(includeCmd.length()).trim(), scriptDir);
         if (!file.exists()) {
           commandList.add(new ErrorCommand("Cannot find file to include: " + file.getAbsolutePath(), line));
           return;
@@ -136,41 +137,20 @@ public class PlaybackRunner {
         try {
           String include = FileUtil.loadFile(file);
           myCommands.add(new PrintCommand(eachLine, line));
-          includeScript(include, commandList, 0);
+          includeScript(include, file.getParentFile(), commandList, 0);
         }
         catch (IOException e) {
           commandList.add(new ErrorCommand("Error reading file: " + file.getAbsolutePath(), line));
           return;
         }
-      } else if (eachLine.startsWith(cdCmd)) {
-        File dir = new File(eachLine.substring(cdCmd.length()).trim());
-        if (!dir.exists()) {
-          commandList.add(new ErrorCommand("Cannot cd to: " + dir.getPath(), line));
-          return;
-        }
-        
-        if (dir.isAbsolute()) {
-          myBaseDir = dir;
-          commandList.add(new PrintCommand("Base dir set to: " + myBaseDir.getAbsolutePath(), line++));
-        } else {
-          dir = new File(getBaseDir(), dir.getPath());
-          if (!dir.exists()) {
-            commandList.add(new ErrorCommand("Cannot cd to: " + dir.getAbsolutePath(), line));
-            return;
-          } else {
-            myBaseDir = dir;
-            commandList.add(new PrintCommand("Base dir set to: " + myBaseDir.getAbsolutePath(), line++));
-          }
-        }
-        
       } else {
-        final PlaybackCommand cmd = createCommand(eachLine, line++);
+        final PlaybackCommand cmd = createCommand(eachLine, line++, scriptDir);
         commandList.add(cmd);
       }
     }
   }
 
-  private PlaybackCommand createCommand(String string, int line) {
+  private PlaybackCommand createCommand(String string, int line, File scriptDir) {
     AbstractCommand cmd;
     String actualString = string.toLowerCase();
 
@@ -183,18 +163,20 @@ public class PlaybackRunner {
     } else if (actualString.startsWith(KeyShortcutCommand.PREFIX)) {
       cmd = new KeyShortcutCommand(string, line);
     } else if (actualString.startsWith(ActionCommand.PREFIX)) {
-      return new ActionCommand(string, line);
+      cmd = new ActionCommand(string, line);
     } else if (actualString.startsWith(StopCommand.PREFIX)) {
-      return new StopCommand(string, line);
+      cmd = new StopCommand(string, line);
     } else if (actualString.startsWith(AssertFocused.PREFIX)) {
       return new AssertFocused(string, line);
     } else if (actualString.startsWith(CallCommand.PREFIX)) {
-      return new CallCommand(string, line);
+      cmd = new CallCommand(string, line);
+    } else if (actualString.startsWith(CdCommand.PREFIX)) {
+      cmd = new CdCommand(string, line);
     } else {
       cmd = new AlphaNumericTypeCommand(string, line);
     }
 
-    cmd.setBaseDir(getBaseDir());
+    cmd.setScriptDir(scriptDir);
     
     return cmd;
   }
@@ -207,14 +189,20 @@ public class PlaybackRunner {
     myStopRequested = true;
   }
 
-  public File getBaseDir() {
-    return myBaseDir != null ? myBaseDir : new File(System.getProperty("user.dir"));
+  public File getScriptDir() {
+    return myScriptDir != null ? myScriptDir : new File(System.getProperty("user.dir"));
+  }
+
+  public void setScriptDir(File baseDir) {
+    myScriptDir = baseDir;
   }
 
   public interface StatusCallback {
     void error(String text, int currentLine);
 
     void message(String text, int currentLine);
+
+    void code(String text, int currentLine);
 
     public abstract static class Edt implements StatusCallback {
       public final void error(final String text, final int currentLine) {
@@ -244,6 +232,21 @@ public class PlaybackRunner {
       }
 
       public abstract void messageEdt(String text, int curentLine);
+
+      @Override
+      public void code(final String text, final int currentLine) {
+        if (SwingUtilities.isEventDispatchThread()) {
+          codeEdt(text, currentLine);
+        } else {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              codeEdt(text, currentLine);
+            }
+          });
+        }
+      }
+
+      public abstract void codeEdt(String text, int curentLine);
     }
   }
 

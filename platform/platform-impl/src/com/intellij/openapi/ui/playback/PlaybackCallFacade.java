@@ -24,11 +24,8 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -47,9 +44,10 @@ public class PlaybackCallFacade {
   public static AsyncResult<String> openProjectClone(final PlaybackContext context, String path) {
     try {
       File parentDir = FileUtil.createTempDirectory("funcTest", "");
-      File sourceDir = getFile(context.getCurrentCmd().getBaseDir(), path);
+      File sourceDir = context.getPathMacro().resolveFile(path, context.getBaseDir());
       
-      FileUtil.copyDir(sourceDir, parentDir);     
+      context.getCallback().message("Cloning project: " + sourceDir.getAbsolutePath(), context.getCurrentLine());
+      FileUtil.copyDir(sourceDir, parentDir);
       File projectDir = new File(parentDir, sourceDir.getName());
       return openProject(context, projectDir.getAbsolutePath());
     }
@@ -62,7 +60,7 @@ public class PlaybackCallFacade {
     return openProject(context, RecentProjectsManagerBase.getInstance().getLastProjectPath());
   }
 
-  public static AsyncResult<String> openProject(final PlaybackContext context, String path) {
+  public static AsyncResult<String> openProject(final PlaybackContext context, final String path) {
     final AsyncResult<String> result = new AsyncResult<String>();
     final ProjectManager pm = ProjectManager.getInstance();
     final Ref<ProjectManagerListener> listener = new Ref<ProjectManagerListener>();
@@ -76,7 +74,7 @@ public class PlaybackCallFacade {
             DumbService.getInstance(project).runWhenSmart(new Runnable() {
               @Override
               public void run() {
-                result.setDone("opened successfully: " + project.getProjectFilePath());
+                result.setDone("Opened successfully: " + project.getProjectFilePath());
               }
             });
           }
@@ -85,13 +83,18 @@ public class PlaybackCallFacade {
     });
     pm.addProjectManagerListener(listener.get());
 
-    try {
-      pm.loadAndOpenProject(path);
-    }
-    catch (Exception e) {
-      context.getCallback().error(e.getMessage(), context.getCurrentLine());
-      result.setRejected();
-    }
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          pm.loadAndOpenProject(path);
+        }
+        catch (Exception e) {
+          context.getCallback().error(e.getMessage(), context.getCurrentLine());
+          result.setRejected();
+        }
+      }
+    });
 
     return result;
   }
@@ -224,14 +227,6 @@ public class PlaybackCallFacade {
       eachParent = eachParent.getParent();
     }
     return actual;
-  }
-
-  public static File getFile(File baseDir, String path) {
-    File sourceDir = new File(path);
-    if (!sourceDir.isAbsolute()) {
-      sourceDir = new File(baseDir, path);
-    }
-    return sourceDir;
   }
 
 }

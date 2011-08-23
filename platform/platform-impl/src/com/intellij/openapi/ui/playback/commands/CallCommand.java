@@ -90,14 +90,14 @@ public class CallCommand extends AbstractCommand {
        @Override
        public void run(String s) {
          if (s != null) {
-           context.getCallback().message("[" + methodName + "] " + s, getLine());
+           context.getCallback().message(s, getLine());
          }
          cmdResult.setDone();
        }
      }).doWhenRejected(new AsyncResult.Handler<String>() {
        @Override
        public void run(String s) {
-         context.getCallback().error("[" + methodName + "] "  + s, getLine());
+         context.getCallback().error(s, getLine());
          cmdResult.setDone();
        }
      }); 

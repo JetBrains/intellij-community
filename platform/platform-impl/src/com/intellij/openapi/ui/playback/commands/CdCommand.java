@@ -18,25 +18,42 @@ package com.intellij.openapi.ui.playback.commands;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 
+import java.io.File;
+import java.io.IOException;
+
 /**
  * Created by IntelliJ IDEA.
  * User: kirillk
- * Date: 8/17/11
- * Time: 1:12 PM
+ * Date: 8/23/11
+ * Time: 10:11 AM
  * To change this template use File | Settings | File Templates.
  */
-public class PrintCommand extends AbstractCommand {
+public class CdCommand extends AbstractCommand {
 
-  private String myText;
-  
-  public PrintCommand(String text, int line) {
-    super("", line);
-    myText = text;
+  public static final String PREFIX = CMD_PREFIX + "cd";
+  private String myDir;
+
+  public CdCommand(String text, int line) {
+    super(text, line);
+    myDir = text.substring(PREFIX.length()).trim();
   }
 
   @Override
   protected ActionCallback _execute(PlaybackContext context) {
-    context.getCallback().code(myText, getLine());
+    File file = context.getPathMacro().resolveFile(myDir, context.getBaseDir());
+    if (!file.exists()) {
+      context.getCallback().message("Cannot cd, directory doesn't exist: " + file.getAbsoluteFile(), getLine());
+      return new ActionCallback.Rejected();
+    }
+
+    try {
+      context.setBaseDir(file.getCanonicalFile());
+    }
+    catch (IOException e) {
+      context.setBaseDir(file);
+    }
+    
+    context.getCallback().message("{base.dir} set to " + context.getBaseDir().getAbsolutePath(), getLine());
     return new ActionCallback.Done();
   }
 }

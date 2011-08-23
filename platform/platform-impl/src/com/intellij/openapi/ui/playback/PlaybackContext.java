@@ -32,13 +32,15 @@ public class PlaybackContext {
   private Robot myRobot;
   private boolean myUseDirectActionCall;
   private PlaybackCommand myCurrentCmd;
-
-  public PlaybackContext(PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, PlaybackCommand currentCmd) {
+  private File myBaseDir;
+  
+  public PlaybackContext(PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, PlaybackCommand currentCmd, File baseDir) {
     myCallback = callback;
     myCurrentLine = currentLine;
     myRobot = robot;
     myUseDirectActionCall = useDriectActionCall;
     myCurrentCmd = currentCmd;
+    myBaseDir = baseDir;
   }
 
   public PlaybackRunner.StatusCallback getCallback() {
@@ -59,5 +61,17 @@ public class PlaybackContext {
 
   public PlaybackCommand getCurrentCmd() {
     return myCurrentCmd;
+  }
+  
+  public File getBaseDir() {
+    return myBaseDir != null ? myBaseDir : new File(System.getProperty("user.dir"));
+  }
+  
+  public PathMacro getPathMacro() {
+    return new PathMacro().setScriptDir(getCurrentCmd().getScriptDir()).setBaseDir(getBaseDir());
+  }
+
+  public void setBaseDir(File dir) {
+    myBaseDir = dir;
   }
 }
