@@ -137,9 +137,7 @@ public class PasteHandler extends EditorActionHandler {
       // then, hence, inserted block of text should be indented according to the selection start as well.
       final int blockIndentAnchorColumn;
       final int caretOffset = caretModel.getOffset();
-      if (selectionModel.hasSelection() && caretOffset >= selectionModel.getSelectionStart()
-          && caretOffset < selectionModel.getSelectionEnd()) 
-      {
+      if (selectionModel.hasSelection() && caretOffset >= selectionModel.getSelectionStart()) {
         blockIndentAnchorColumn = editor.offsetToLogicalPosition(selectionModel.getSelectionStart()).column;
       }
       else {
