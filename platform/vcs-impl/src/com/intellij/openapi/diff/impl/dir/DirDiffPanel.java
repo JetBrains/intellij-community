@@ -19,9 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -109,6 +107,25 @@ public class DirDiffPanel implements Disposable {
           update(false);
         }
         myDiffWindow.setTitle(myModel.getTitle());
+      }
+    });
+    new AnAction("Change diff operation") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        changeOperationForSelectedRow();
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("SPACE"), myTable);
+    myTable.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (myTable.getRowCount() > 0 && e.getClickCount() > 1) {
+          final int row = myTable.rowAtPoint(e.getPoint());
+          final int col = myTable.columnAtPoint(e.getPoint());
+
+          if (row != -1 && col == ((myTable.getColumnCount() - 1) / 2)) {
+            changeOperationForSelectedRow();
+          }
+        }
       }
     });
     myTable.addKeyListener(new KeyAdapter() {
@@ -257,6 +274,17 @@ public class DirDiffPanel implements Disposable {
     } else {
       myTargetDirField.setButtonEnabled(false);
       myTargetDirField.getButton().setVisible(false);
+    }
+  }
+
+  private void changeOperationForSelectedRow() {
+    final int row = myTable.getSelectedRow();
+    if (row != -1) {
+      final DirDiffElement element = myModel.getElementAt(row);
+      if (element != null) {
+        element.setNextOperation();
+        myModel.fireTableRowsUpdated(row, row);
+      }
     }
   }
 
