@@ -141,7 +141,9 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     myProgramParameters.setComponent(new RawCommandLineEditor());
     myProgramParameters.getComponent().setDialogCaption(myProgramParameters.getRawText());
     myProgramParameters.setLabelLocation(BorderLayout.WEST);
-    myVMParameters.setLabelPreferredSize(new Dimension(myProgramParameters.getLabelPreferredSize().width - 4, myProgramParameters.getLabelPreferredSize().height));
+
+    myProgramParameters.setLabelPreferredSize(myProgramParameters.getLabelPreferredSize());
+    myVMParameters.setLabelPreferredSize(myProgramParameters.getLabelPreferredSize());
 
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0);

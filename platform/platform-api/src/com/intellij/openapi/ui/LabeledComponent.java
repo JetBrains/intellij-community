@@ -31,6 +31,9 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
   private Comp myComponent;
   private String myLabelConstraints = BorderLayout.NORTH;
 
+  private static final Dimension notSpecifiedSize = new Dimension(-1, -1);
+  private Dimension labelPreferredSize = notSpecifiedSize;
+
   public LabeledComponent() {
     super(new BorderLayout(AbstractLayout.DEFAULT_HGAP, AbstractLayout.DEFAULT_VGAP));
     insertLabel();
@@ -50,11 +53,15 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
   }
 
   public void setLabelPreferredSize(Dimension d) {
+    if (notSpecifiedSize.equals(d)) {
+      d = null;
+    }
+    labelPreferredSize = d;
     myLabel.setPreferredSize(d);
   }
 
   public Dimension getLabelPreferredSize() {
-    return myLabel.getPreferredSize();
+    return labelPreferredSize;
   }
 
   public void setText(String textWithMnemonic) {

@@ -27,6 +27,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
@@ -34,6 +35,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,9 +56,12 @@ public class CommonProgramParametersPanel extends JPanel {
   private Module myModuleContext = null;
   private boolean myHaveModuleContext = false;
 
+  protected static final Dimension notSpecifiedSize = new Dimension(-1, -1);
+  protected Dimension labelsPreferredSize = notSpecifiedSize;
+
   public CommonProgramParametersPanel() {
     super();
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new VerticalFlowLayout(VerticalFlowLayout.MIDDLE, 0, 5, true, false));
     
     initComponents();
     copyDialogCaption(myProgramParametersComponent);
@@ -106,8 +112,6 @@ public class CommonProgramParametersPanel extends JPanel {
     myEnvVariablesComponent.setLabelLocation(BorderLayout.WEST);
     myProgramParametersComponent.setLabelLocation(BorderLayout.WEST);
     myWorkingDirectoryComponent.setLabelLocation(BorderLayout.WEST);
-    myProgramParametersComponent.setLabelPreferredSize(new Dimension(myEnvVariablesComponent.getLabelPreferredSize().width - 4, myEnvVariablesComponent.getLabelPreferredSize().height));
-    myWorkingDirectoryComponent.setLabelPreferredSize(myProgramParametersComponent.getLabelPreferredSize());
 
     addComponents();
 
@@ -166,5 +170,20 @@ public class CommonProgramParametersPanel extends JPanel {
 
     myEnvVariablesComponent.setEnvs(configuration.getEnvs());
     myEnvVariablesComponent.setPassParentEnvs(configuration.isPassParentEnvs());
+  }
+
+  public void setLabelsPreferredSize(Dimension d) {
+    if (notSpecifiedSize.equals(d)) {
+      d = null;
+    }
+    labelsPreferredSize = d;
+    myEnvVariablesComponent.setLabelPreferredSize(d);
+    myProgramParametersComponent.setLabelPreferredSize(d);
+    myWorkingDirectoryComponent.setLabelPreferredSize(d);
+  }
+
+  @Nullable
+  public Dimension getLabelsPreferredSize() {
+    return labelsPreferredSize;
   }
 }

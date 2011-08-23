@@ -19,6 +19,7 @@ import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.RawCommandLineEditor;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -36,10 +37,15 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
     copyDialogCaption(myVMParameters);
 
     myVMParameters.setLabelLocation(BorderLayout.WEST);
-    myVMParameters.setLabelPreferredSize(super.getProgramParametersComponent().getLabelPreferredSize());
 
     add(myVMParameters);
     super.addComponents();
+  }
+
+  @Override
+  public void setLabelsPreferredSize(Dimension d) {
+    super.setLabelsPreferredSize(d);
+    myVMParameters.setLabelPreferredSize(d);
   }
 
   public void setVMParameters(String text) {

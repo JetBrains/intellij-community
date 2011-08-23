@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,8 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public class Win32Kernel {
-
+  public static final int FILE_ATTRIBUTE_READONLY = 0x0001;
   public static final int FILE_ATTRIBUTE_DIRECTORY = 0x0010;
-  public static final int FILE_ATTRIBUTE_READONLY =  0x0001;
 
   private final IdeaWin32 myKernel = new IdeaWin32();
 
@@ -39,7 +38,6 @@ public class Win32Kernel {
   }
 
   public String[] list(String absolutePath) {
-
     FileInfo[] fileInfos = myKernel.listChildren(absolutePath.replace('/', '\\') + "\\*.*");
     if (fileInfos == null) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -62,7 +60,7 @@ public class Win32Kernel {
   }
 
   public void exists(String path) throws FileNotFoundException {
-      getInfo(path);
+    getInfo(path);
   }
 
   public boolean isDirectory(String path) throws FileNotFoundException {
@@ -88,7 +86,6 @@ public class Win32Kernel {
   private FileInfo getInfo(String path) throws FileNotFoundException {
     FileInfo info = myCache.get(path);
     if (info == null) {
-
       info = myKernel.getInfo(path.replace('/', '\\'));
       if (info == null) {
         throw new FileNotFoundException(path);

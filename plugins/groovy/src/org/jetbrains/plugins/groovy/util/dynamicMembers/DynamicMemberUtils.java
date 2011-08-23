@@ -8,6 +8,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -26,6 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DynamicMemberUtils {
 
+  public static final Key<Map<String, String>> COMMENT_KEY = Key.create("DynamicMemberUtils:COMMENT_KEY");
+  
   private static final Key<ConcurrentHashMap<String, ClassMemberHolder>> KEY = Key.create("DynamicMemberUtils");
 
   private DynamicMemberUtils() {
@@ -82,6 +86,20 @@ public class DynamicMemberUtils {
     return true;
   }
 
+  public static boolean checkVersion(PsiMethod method, String grailsVersion) {
+    String since = getCommentValue(method, "@since");
+    if (since == null) return true;
+
+    return grailsVersion.compareTo(since) >= 0;
+  }
+  
+  @Nullable
+  public static String getCommentValue(PsiMethod method, String commentTagName) {
+    Map<String, String> commentMap = method.getUserData(COMMENT_KEY);
+    if (commentMap == null) return null;
+    return commentMap.get(commentTagName);
+  }
+  
   public static class ClassMemberHolder {
     private final String myClassSource;
 
@@ -139,6 +157,20 @@ public class DynamicMemberUtils {
 
       for (GrMethod method : psiClass.getGroovyMethods()) {
         PsiMethod dynamicMethod = new GrDynamicMethodWithCache(method, classSource);
+
+        GrDocComment comment = method.getDocComment();
+        if (comment != null) {
+          Map<String, String> commentMap = new HashMap<String, String>();
+          for (GrDocTag tag : comment.getTags()) {
+            String tagText = tag.getText().trim();
+            String valueText = tag.getValueElement().getText().trim();
+            assert tagText.endsWith(valueText);
+            
+            commentMap.put(tagText.substring(0, tagText.length() - valueText.length()).trim(), valueText);
+          }
+          
+          dynamicMethod.putUserData(COMMENT_KEY, commentMap);
+        }
 
         multiMap.putValue(null, dynamicMethod);
         multiMap.putValue(method.getName(), dynamicMethod);

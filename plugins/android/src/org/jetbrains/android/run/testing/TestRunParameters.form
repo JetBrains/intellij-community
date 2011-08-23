@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.android.run.testing.TestRunParameters">
-  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="5" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="5" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="475" height="272"/>
+      <xy x="20" y="20" width="475" height="187"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <component id="cacd8" class="javax.swing.JRadioButton" binding="myAllInPackageButton">
         <constraints>
-          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="92" height="45"/>
-          </grid>
+          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <actionCommand resource-bundle="messages/ExecutionBundle" key="jnit.configuration.all.tests.in.package.radio"/>
@@ -21,9 +19,7 @@
       </component>
       <component id="45298" class="javax.swing.JRadioButton" binding="myClassButton">
         <constraints>
-          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="52" height="45"/>
-          </grid>
+          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <actionCommand resource-bundle="messages/ExecutionBundle" key="junit.configuration.test.class.radio"/>
@@ -34,9 +30,7 @@
       </component>
       <component id="43d58" class="javax.swing.JRadioButton" binding="myTestMethodButton">
         <constraints>
-          <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="63" height="45"/>
-          </grid>
+          <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <actionCommand resource-bundle="messages/ExecutionBundle" key="junit.configuration.test.method.radio"/>
@@ -47,7 +41,7 @@
       <component id="23c94" class="javax.swing.JLabel">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="29" height="45"/>
+            <preferred-size width="29" height="30"/>
           </grid>
         </constraints>
         <properties>
@@ -109,6 +103,7 @@
         <properties>
           <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
           <enabled value="true"/>
+          <labelLocation value="West"/>
           <text resource-bundle="messages/AndroidBundle" key="android.test.run.configuration.instrumentation.label"/>
         </properties>
       </component>

@@ -36,24 +36,25 @@ public class TitledSeparator extends JPanel {
   public TitledSeparator(String text) {
     this(text, false, true);
   }
-  
+
   public TitledSeparator(String text, boolean boldFont, boolean smallFont) {
     setLayout(new GridBagLayout());
+
     this.myLabel = new JLabel();
     add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
-    Color oldColor = UIManager.getColor("Separator.foreground");
-    UIManager.put("Separator.foreground", UIUtil.getBorderColor());
+
     JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
-    UIManager.put("Separator.foreground", oldColor);
+    separator.setForeground(UIUtil.getBorderColor());
     add(separator,
         new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                                new Insets(3, 0, 0, 0), 0, 0));
-    setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
 
-    setTitleFont(UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont));
+    setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
+
+    myLabel.setFont(UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont));
+    myLabel.setText(text);
     this.boldFont = boldFont;
     this.smallFont = smallFont;
-    setText(text);
   }
 
   public String getText() {

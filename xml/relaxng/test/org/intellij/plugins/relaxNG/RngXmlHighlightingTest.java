@@ -42,7 +42,7 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
         final ExternalResourceManagerEx m = ExternalResourceManagerEx.getInstanceEx();
         m.addResource("urn:test:simple.rng", toAbsolutePath("highlighting/simple.rng"));
         m.addResource("urn:test:addressBook", toAbsolutePath("highlighting/rnc/addressbook.rnc"));
-        m.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("highlighting/relaxng.rng"));
+        //m.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("highlighting/relaxng.rng"));
         m.addResource("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"));
         m.addResource("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"));
         m.addResource("urn:intelliForm:AttachmentFilter", toAbsolutePath("highlighting/attachment-filter.rng"));
