@@ -503,7 +503,11 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       if (myDirty) {
         if (!dirty) {
           myDirtyStatusUpdateInProgress = true;
-          markClean();
+          if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
+          if (!myCorrupted) {
+            myStorage.putInt(0, myVersion.correctlyClosedMagic);
+            myDirty = false;
+          }
           myDirtyStatusUpdateInProgress = false;
         }
       }
@@ -518,7 +522,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  private synchronized void markCorrupted() {
+  protected synchronized void markCorrupted() {
     if (!myCorrupted) {
       myCorrupted = true;
       try {
@@ -528,14 +532,6 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       catch (IOException e) {
         // ignore...
       }
-    }
-  }
-
-  private void markClean() throws IOException {
-    if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
-    if (!myCorrupted) {
-      myStorage.putInt(0, myVersion.correctlyClosedMagic);
-      myDirty = false;
     }
   }
 

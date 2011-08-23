@@ -92,4 +92,8 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
       myHashcodeToIdCache.clear();
     }
   }
+
+  public void markCorrupted() {
+    myEnumerator.markCorrupted();
+  }
 }
