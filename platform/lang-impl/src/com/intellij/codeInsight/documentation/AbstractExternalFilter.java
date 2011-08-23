@@ -293,7 +293,9 @@ public abstract class AbstractExternalFilter {
       data.append(P);
     }
 
-    while (((read = buf.readLine()) != null) && read.indexOf(endSection) == -1 && read.indexOf(greatestEndSection) == -1) {
+    while (((read = buf.readLine()) != null) &&
+           StringUtil.indexOfIgnoreCase(read, endSection, 0) == -1 &&
+           StringUtil.indexOfIgnoreCase(read, greatestEndSection, 0) == -1) {
       if (read.toUpperCase().indexOf(HR) == -1) {
         appendLine(data, read);
       }

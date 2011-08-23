@@ -60,7 +60,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   public static boolean isOfType(Module module) {
-    return module.getModuleType() instanceof PluginModuleType;
+    return get(module) instanceof PluginModuleType;
   }
 
   public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext,
@@ -107,7 +107,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   @Nullable
   public static XmlFile getPluginXml(Module module, boolean initialize) {
     if (module == null) return null;
-    if (!(module.getModuleType() instanceof PluginModuleType)) return null;
+    if (!(get(module) instanceof PluginModuleType)) return null;
 
     final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
     if (buildConfiguration == null) return null;
@@ -137,7 +137,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     final List<Module> candidates = new ArrayList<Module>(modules.length);
     final Set<Module> deps = new HashSet<Module>(modules.length);
     for (Module m : modules) {
-      if (m.getModuleType() == getInstance()) {
+      if (get(m) == getInstance()) {
         deps.clear();
         PluginBuildUtil.getDependencies(m, deps);
 

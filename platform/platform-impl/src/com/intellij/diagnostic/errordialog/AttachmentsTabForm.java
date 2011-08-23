@@ -25,7 +25,7 @@ public class AttachmentsTabForm {
   private LabeledTextComponent myFileTextArea;
 
   private final ColumnInfo<Attachment, Boolean> ENABLED_COLUMN =
-    new ColumnInfo<Attachment, Boolean>(DiagnosticBundle.message("error.dialog.attachment.path.column.title")) {
+    new ColumnInfo<Attachment, Boolean>(DiagnosticBundle.message("error.dialog.attachment.include.column.title")) {
       @Override
       public Boolean valueOf(Attachment attachment) {
         return attachment.isIncluded();
@@ -53,7 +53,7 @@ public class AttachmentsTabForm {
     };
 
   private static final ColumnInfo<Attachment, String> PATH_COLUMN =
-    new ColumnInfo<Attachment, String>(DiagnosticBundle.message("error.dialog.attachment.include.column.title")) {
+    new ColumnInfo<Attachment, String>(DiagnosticBundle.message("error.dialog.attachment.path.column.title")) {
       @Override
       public String valueOf(Attachment attachment) {
         return attachment.getPath();

@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -268,7 +269,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       scheduleDispose(project);
       throw e;
     }
-    catch (final StateStorage.StateStorageException e) {
+    catch (final StateStorageException e) {
       scheduleDispose(project);
       throw e;
     }
@@ -292,13 +293,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     try {
       return doLoadProject(filePath);
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (StateStorageException e) {
       throw new IOException(e.getMessage());
     }
   }
 
   @Nullable
-  private Project doLoadProject(String filePath) throws IOException, StateStorage.StateStorageException {
+  private Project doLoadProject(String filePath) throws IOException, StateStorageException {
     filePath = canonicalize(filePath);
     ProjectImpl project = null;
     try {
@@ -342,7 +343,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       catch (IOException e) {
         LOG.error(e);
       }
-      catch (StateStorage.StateStorageException e) {
+      catch (StateStorageException e) {
         LOG.error(e);
       }
     }
@@ -458,7 +459,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
       return project;
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (StateStorageException e) {
       throw new IOException(e.getMessage());
     }
   }
@@ -471,7 +472,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   @Nullable
   public Project loadProjectWithProgress(final String filePath, Ref<Boolean> canceled) throws IOException {
     final IOException[] io = {null};
-    final StateStorage.StateStorageException[] stateStorage = {null};
+    final StateStorageException[] stateStorage = {null};
 
     if (filePath != null) {
       refreshProjectFiles(filePath);
@@ -483,7 +484,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
         try {
           if (indicator != null) {
-            indicator.setText(ProjectBundle.message("loading.components.for", filePath));
+            indicator.setText(ProjectBundle.message("loading.components.for", FileUtil.toSystemDependentName(filePath)));
             indicator.setIndeterminate(true);
           }
           project[0] = doLoadProject(filePath);
@@ -492,7 +493,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           io[0] = e;
           return;
         }
-        catch (StateStorage.StateStorageException e) {
+        catch (StateStorageException e) {
           stateStorage[0] = e;
           return;
         }
@@ -614,7 +615,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           try {
             reloadOk[0] = ((ApplicationImpl)app).getStateStore().reload(causes, components);
           }
-          catch (StateStorage.StateStorageException e) {
+          catch (StateStorageException e) {
             Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
                                        ProjectBundle.message("project.reload.failed.title"));
           }
@@ -681,7 +682,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           LOG.debug("[RELOAD] Reloading project/components...");
           reloadOk[0] = ((ProjectEx)project).getStateStore().reload(causes);
         }
-        catch (StateStorage.StateStorageException e) {
+        catch (StateStorageException e) {
           Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
                                      ProjectBundle.message("project.reload.failed.title"));
         }

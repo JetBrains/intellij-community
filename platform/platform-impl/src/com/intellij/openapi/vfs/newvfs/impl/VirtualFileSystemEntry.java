@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -256,7 +255,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   public void rename(final Object requestor, @NotNull @NonNls final String newName) throws IOException {
     if (getName().equals(newName)) return;
-    if (!VfsUtil.isValidName(newName)) {
+    if (!isValidName(newName)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
     }
 
@@ -298,7 +297,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
     }
 
-    return VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+    return EncodingManager.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
       public VirtualFile compute() throws IOException {
         return ourPersistence.copyFile(requestor, VirtualFileSystemEntry.this, newParent, copyName);
       }
@@ -310,7 +309,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
-    VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+    EncodingManager.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
       public VirtualFile compute() throws IOException {
         ourPersistence.moveFile(requestor, VirtualFileSystemEntry.this, newParent);
         return VirtualFileSystemEntry.this;
@@ -425,5 +424,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public boolean isSymLink() {
     final NewVirtualFileSystem fs = getFileSystem();
     return fs instanceof LocalFileSystem && ((LocalFileSystem)fs).isSymLink(this);
+  }
+
+  @Override
+  public VirtualFile getRealFile() {
+    final NewVirtualFileSystem fs = getFileSystem();
+    return fs instanceof LocalFileSystem ? ((LocalFileSystem)fs).getRealFile(this) : super.getRealFile();
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.packaging.ui.TreeNodePresentation;
@@ -70,8 +71,8 @@ public class ModuleElementPresentation extends TreeNodePresentation {
       presentationData.setIcons(PlatformIcons.TEST_SOURCE_FOLDER);
     }
     else if (module != null) {
-      presentationData.setOpenIcon(module.getModuleType().getNodeIcon(true));
-      presentationData.setClosedIcon(module.getModuleType().getNodeIcon(false));
+      presentationData.setOpenIcon(ModuleType.get(module).getNodeIcon(true));
+      presentationData.setClosedIcon(ModuleType.get(module).getNodeIcon(false));
     }
     String moduleName;
     if (module != null) {

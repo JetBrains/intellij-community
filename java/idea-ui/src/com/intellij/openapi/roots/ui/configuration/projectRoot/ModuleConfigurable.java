@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
@@ -91,11 +92,11 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
   }
 
   public Icon getIcon() {
-    return myModule.getModuleType().getNodeIcon(false);
+    return ModuleType.get(myModule).getNodeIcon(false);
   }
 
   public Icon getIcon(final boolean open) {
-    return myModule.getModuleType().getNodeIcon(open);
+    return ModuleType.get(myModule).getNodeIcon(open);
   }
 
   public Module getModule() {

@@ -17,12 +17,12 @@ package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.PsiFile;
@@ -64,7 +64,7 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
     final String source = StringUtil.decapitalize(builders.get(0).getScope().getDisplayName());
     final String target = StringUtil.decapitalize(myTargetScope.getDisplayName());
     final String message = AnalysisScopeBundle.message("no.dependencies.found.message", source, target);
-    ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.DEPENDENCIES, MessageType.INFO, message);
+    NotificationGroup.toolWindowGroup("Dependencies", ToolWindowId.DEPENDENCIES, true).createNotification(message, MessageType.INFO).notify(myProject);
     return false;
   }
 

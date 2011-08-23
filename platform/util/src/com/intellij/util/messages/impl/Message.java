@@ -31,6 +31,7 @@ public final class Message {
 
   public Message(@NotNull Topic topic, @NotNull Method listenerMethod, Object[] args) {
     myTopic = topic;
+    listenerMethod.setAccessible(true);
     myListenerMethod = listenerMethod;
     myArgs = args;
   }

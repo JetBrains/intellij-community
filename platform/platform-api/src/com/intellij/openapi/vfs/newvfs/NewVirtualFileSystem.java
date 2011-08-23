@@ -19,7 +19,6 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -28,88 +27,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface {
-  @NonNls private static final String FILE_SEPARATORS = "/" + File.separator;
+public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface, CachingVirtualFileSystem {
   private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = new HashMap<VirtualFileListener, VirtualFileListener>();
 
   public abstract boolean isCaseSensitive();
 
   @Nullable
-  public VirtualFile findFileByPath(@NotNull @NonNls final String path) {
-    final String normalizedPath = normalize(path);
-    if (normalizedPath == null) return null;
-    final String basePath = extractRootPath(normalizedPath);
-    NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
-    if (file == null || !file.exists()) return null;
-
-    if (normalizedPath.length() < basePath.length()) {
-      return null;
-    }
-    for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
-      if (pathElement.length() == 0 || ".".equals(pathElement)) continue;
-      if ("..".equals(pathElement)) {
-        file = file.getParent();
-      }
-      else {
-        file = file.findChild(pathElement);
-      }
-
-      if (file == null) return null;
-    }
-
-    return file;
-  }
-
-  @Nullable
-  public VirtualFile findFileByPathIfCached(@NotNull @NonNls final String path) {
-    final String normalizedPath = normalize(path);
-    if (normalizedPath == null) return null;
-    final String basePath = extractRootPath(normalizedPath);
-    NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
-    if (file == null || !file.exists()) return null;
-
-    for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
-      if (pathElement.length() == 0 || ".".equals(pathElement)) continue;
-      if ("..".equals(pathElement)) {
-        file = file.getParent();
-      }
-      else {
-        file = file.findChildIfCached(pathElement);
-      }
-
-      if (file == null) return null;
-    }
-
-    return file;
-  }
-
-  @Nullable
-  public VirtualFile refreshAndFindFileByPath(@NotNull final String path) {
-    final String normalizedPath = normalize(path);
-    if (normalizedPath == null) return null;
-    final String basePath = extractRootPath(normalizedPath);
-    NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
-    if (file == null || !file.exists()) return null;
-
-    for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
-      if (pathElement.length() == 0 || ".".equals(pathElement)) continue;
-      if ("..".equals(pathElement)) {
-        file = file.getParent();
-      }
-      else {
-        file = file.refreshAndFindChild(pathElement);
-      }
-
-      if (file == null) return null;
-    }
-
-    return file;
-  }
+  public abstract VirtualFile findFileByPathIfCached(@NotNull @NonNls final String path);
 
   @Nullable
   protected String normalize(final String path) {
@@ -118,10 +46,6 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
 
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
     refresh(asynchronous);
-  }
-
-  public void refresh(final boolean asynchronous) {
-    RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
   }
 
   public boolean isReadOnly() {

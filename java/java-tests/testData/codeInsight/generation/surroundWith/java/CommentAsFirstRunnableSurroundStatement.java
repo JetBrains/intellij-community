@@ -1,6 +1,6 @@
 class Test {
     void foo() {
-        <selection>// This is comment"
+        <selection><caret>// This is comment"
             int i = 1;</selection>
     }
 }

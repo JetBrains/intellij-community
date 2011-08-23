@@ -181,7 +181,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   @Nullable
   public ModuleType getSelectedModuleType() {
     final Module module = getSelectedModule();
-    return module != null ? module.getModuleType() : null;
+    return module != null ? ModuleType.get(module) : null;
   }
 
   @Nullable

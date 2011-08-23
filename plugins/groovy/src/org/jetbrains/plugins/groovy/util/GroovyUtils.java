@@ -63,7 +63,7 @@ public abstract class GroovyUtils {
 
   public static boolean isSuitableModule(Module module) {
     if (module == null) return false;
-    return isAcceptableModuleType(module.getModuleType());
+    return isAcceptableModuleType(ModuleType.get(module));
   }
 
   public static boolean isAcceptableModuleType(ModuleType type) {

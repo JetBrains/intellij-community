@@ -89,10 +89,15 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
                     })) return;
     super.onActionPerformed(context, tabbedWindow, successfully, handler);
     if (successfully){
-      Project project = context.getProject();
+      final Project project = context.getProject();
       LOG.assertTrue(project != null);
       LOG.assertTrue(mySelectedConfiguration != null);
-      final BrowserPanel browserPanel = new BrowserPanel(mySelectedConfiguration, project);
+      final BrowserPanel browserPanel = new BrowserPanel(mySelectedConfiguration, project, new Consumer<VcsException>() {
+        @Override
+        public void consume(VcsException e) {
+          VcsBalloonProblemNotifier.showOverChangesView(project, e.getMessage(), MessageType.ERROR);
+        }
+      });
       tabbedWindow.addTab(TITLE, browserPanel,
                           true, true, true, true, browserPanel.getActionGroup(), "cvs.browse");
       tabbedWindow.ensureVisible(project);

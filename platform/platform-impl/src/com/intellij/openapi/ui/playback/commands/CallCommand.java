@@ -17,11 +17,9 @@ package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.playback.PlaybackCallFacade;
 import com.intellij.openapi.ui.playback.PlaybackContext;
-import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 
-import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -41,19 +39,19 @@ public class CallCommand extends AbstractCommand {
   }
 
   @Override
-  protected ActionCallback _execute(final PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
+  protected ActionCallback _execute(final PlaybackContext context) {
     final ActionCallback cmdResult = new ActionCallback();
 
     final String cmd = getText().substring(PREFIX.length()).trim();
     final int open = cmd.indexOf("(");
     if (open == -1) {
-      cb.error("( expected", getLine());
+      context.getCallback().error("( expected", getLine());
       return new ActionCallback.Done();
     }
 
     final int close = cmd.lastIndexOf(")");
     if (close == -1) {
-      cb.error(") expected", getLine());
+      context.getCallback().error(") expected", getLine());
       return new ActionCallback.Done();
     }
 
@@ -71,12 +69,12 @@ public class CallCommand extends AbstractCommand {
     try {
      final Method m = PlaybackCallFacade.class.getMethod(methodName, types);
      if (!m.getReturnType().isAssignableFrom(AsyncResult.class)) {
-       cb.error("Method " + methodName + " must return AsyncResult object", getLine());
+       context.getCallback().error("Method " + methodName + " must return AsyncResult object", getLine());
        return new ActionCallback.Rejected();
      }
      
      Object[] actualArgs = noArgs ? new Object[1] : new Object[args.length + 1];
-     actualArgs[0] = new PlaybackContext(cb, getLine());
+     actualArgs[0] = context;
       for (int i = 1; i < actualArgs.length; i++) {
         actualArgs[i] = args[i - 1];
       }
@@ -84,7 +82,7 @@ public class CallCommand extends AbstractCommand {
 
      AsyncResult result = (AsyncResult<String>)m.invoke(null, actualArgs);
      if (result == null) {
-       cb.error("Method " + methodName + " must return AsyncResult object, but was null", getLine());
+       context.getCallback().error("Method " + methodName + " must return AsyncResult object, but was null", getLine());
        return new ActionCallback.Done();
      }
       
@@ -92,27 +90,27 @@ public class CallCommand extends AbstractCommand {
        @Override
        public void run(String s) {
          if (s != null) {
-          cb.message("[" + methodName + "] "  + s, getLine());
+           context.getCallback().message("[" + methodName + "] " + s, getLine());
          }
          cmdResult.setDone();
        }
      }).doWhenRejected(new AsyncResult.Handler<String>() {
        @Override
        public void run(String s) {
-         cb.error("[" + methodName + "] "  + s, getLine());
+         context.getCallback().error("[" + methodName + "] "  + s, getLine());
          cmdResult.setDone();
        }
      }); 
       
     }
     catch (NoSuchMethodException e) {
-      cb.error("No method found in PlaybackCallFacade", getLine());
+      context.getCallback().error("No method found in PlaybackCallFacade", getLine());
     }
     catch (InvocationTargetException e) {
-      cb.error("InvocationTargetException while executing command: " + cmd, getLine());
+      context.getCallback().error("InvocationTargetException while executing command: " + cmd, getLine());
     }
     catch (IllegalAccessException e) {
-      cb.error("IllegalAccessException while executing command: " + cmd, getLine());
+      context.getCallback().error("IllegalAccessException while executing command: " + cmd, getLine());
     }
     return cmdResult;
   }

@@ -38,7 +38,7 @@ import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
-import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -384,7 +384,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       showError(project, VcsBundle.message("patch.apply.partially.applied"), false);
     } else if (ApplyPatchStatus.SUCCESS.equals(status)) {
       final String message = VcsBundle.message("patch.apply.success.applied.text");
-      AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
+      VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
     }
   }
 

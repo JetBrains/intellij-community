@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -119,15 +120,25 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public void activate(@Nullable final Runnable runnable, boolean autoFocusContents, boolean forced) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    final String activity = "toolWindow:" + getId();
+    UiActivityMonitor.getInstance().addActivity(myToolWindowManager.getProject(), activity);
+
     myToolWindowManager.activateToolWindow(myId, forced, autoFocusContents);
 
-    if (runnable != null) {
-      getActivation().doWhenDone(new Runnable() {
-        public void run() {
-          myToolWindowManager.invokeLater(runnable);
-        }
-      });
-    }
+    getActivation().doWhenDone(new Runnable() {
+      public void run() {
+        myToolWindowManager.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (runnable != null) {
+              runnable.run();
+            }
+            UiActivityMonitor.getInstance().removeActivity(myToolWindowManager.getProject(), activity);
+          }
+        });
+      }
+    });
   }
 
   public final boolean isActive() {

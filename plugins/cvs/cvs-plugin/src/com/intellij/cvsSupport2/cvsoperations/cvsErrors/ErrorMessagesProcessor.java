@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,8 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsErrors;
 
+import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
-import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
-import com.intellij.cvsSupport2.cvsoperations.cvsErrors.ErrorProcessor;
-import com.intellij.cvsSupport2.cvsoperations.cvsErrors.ErrorProcessor;
-import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +29,6 @@ public class ErrorMessagesProcessor extends CvsMessagesAdapter implements ErrorP
   private final List<VcsException> myErrors;
   private final List<VcsException> myWarnings;
 
-
   public ErrorMessagesProcessor(List<VcsException> errors) {
     myErrors = errors;
     myWarnings = new ArrayList<VcsException>();
@@ -43,7 +39,6 @@ public class ErrorMessagesProcessor extends CvsMessagesAdapter implements ErrorP
   }
 
   public void addError(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot) {
-
     addErrorOnCurrentMessage(relativeFilePath, message, cvsFileSystem, myErrors, cvsRoot);
   }
 
@@ -51,17 +46,18 @@ public class ErrorMessagesProcessor extends CvsMessagesAdapter implements ErrorP
     addErrorOnCurrentMessage(relativeFilePath, message, cvsFileSystem, myWarnings, cvsRoot);
   }
 
-  private void addErrorOnCurrentMessage(String relativeFileName,
-                                        String message,
-                                        ICvsFileSystem cvsFileSystem,
-                                        List collection, String cvsRoot) {
+  private static void addErrorOnCurrentMessage(String relativeFileName,
+                                               String message,
+                                               ICvsFileSystem cvsFileSystem,
+                                               List<VcsException> collection,
+                                               String cvsRoot) {
     VirtualFile vFile = getVirtualFile(cvsFileSystem, relativeFileName);
     VcsException vcsException = new CvsException(message, cvsRoot);
     if (vFile != null) vcsException.setVirtualFile(vFile);
     collection.add(vcsException);
   }
 
-  private VirtualFile getVirtualFile(ICvsFileSystem cvsFileSystem, String relativeFileName) {
+  private static VirtualFile getVirtualFile(ICvsFileSystem cvsFileSystem, String relativeFileName) {
     if (cvsFileSystem == null) return null;
     if (relativeFileName == null) return null;
     return CvsVfsUtil.findFileByIoFile(cvsFileSystem.getLocalFileSystem().getFile(relativeFileName));

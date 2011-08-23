@@ -1,4 +1,4 @@
-// "Add String as 2 parameter to method set" "true"
+// "Add 'String' as 2nd parameter to method 'set'" "true"
 import java.util.List;
 
 public class X<T> {

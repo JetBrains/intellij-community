@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * The main entry point for accessing the PSI services for a project.
  */
 public abstract class PsiManager extends UserDataHolderBase {
+
   /**
    * Returns the PSI manager instance for the specified project.
    *
@@ -113,26 +114,6 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param listener the listener instance.
    */
   public abstract void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener);
-
-  /**
-   * Returns the code style manager for the project. The code style manager can be used
-   * to reformat code fragments, get names for elements according to the user's code style
-   * and work with import statements and full-qualified names.
-   *
-   * @return the code style manager instance.
-   */
-  @NotNull
-  public abstract CodeStyleManager getCodeStyleManager();
-
-  /**
-   * Returns the search helper for the project, which provides low-level search and
-   * find usages functionality. It can be used to perform operations like finding references
-   * to an element, finding overriding / inheriting elements, finding to do items and so on.
-   *
-   * @return the search helper instance.
-   */
-  @NotNull
-  public abstract PsiSearchHelper getSearchHelper();
 
   /**
    * Returns the modification tracker for the project, which can be used to get the PSI
@@ -229,8 +210,6 @@ public abstract class PsiManager extends UserDataHolderBase {
   public abstract <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws
                                                                                                         T;
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
-
-  public abstract void postponeAutoFormattingInside(Runnable runnable);
 
   public abstract void registerLanguageInjector(@NotNull LanguageInjector injector);
 

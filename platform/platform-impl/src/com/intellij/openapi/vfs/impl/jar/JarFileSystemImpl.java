@@ -23,9 +23,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
@@ -314,5 +312,24 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   public int getRank() {
     return 2;
+  }
+
+  public void refresh(final boolean asynchronous) {
+    RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
+  }
+
+  @Override
+  public VirtualFile findFileByPath(@NotNull @NonNls String path) {
+    return VfsImplUtil.findFileByPath(this, path);
+  }
+
+  @Override
+  public VirtualFile findFileByPathIfCached(@NotNull @NonNls String path) {
+    return VfsImplUtil.findFileByPathIfCached(this, path);
+  }
+
+  @Override
+  public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
+    return VfsImplUtil.refreshAndFindFileByPath(this, path);
   }
 }

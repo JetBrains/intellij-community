@@ -1,0 +1,364 @@
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.openapi.editor.impl;
+
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.SweepProcessor;
+import com.intellij.openapi.util.Segment;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/**
+ * User: cdr
+ */
+public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerTree");
+  private static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
+
+  private final PrioritizedDocumentListener myListener;
+  private final Document myDocument;
+
+  protected RangeMarkerTree(Document document) {
+    myDocument = document;
+    myListener = new PrioritizedDocumentListener() {
+      public int getPriority() {
+        return EditorDocumentPriorities.RANGE_MARKER; // Need to make sure we invalidate all the stuff before someone (like LineStatusTracker) starts to modify highlights.
+      }
+
+      public void beforeDocumentChange(DocumentEvent event) {}
+
+      public void documentChanged(DocumentEvent e) {
+        updateMarkersOnChange(e);
+      }
+    };
+
+    document.addDocumentListener(myListener);
+  }
+
+  @Override
+  protected int compareEqualStartIntervals(@NotNull IntervalTreeImpl.IntervalNode<T> i1, @NotNull IntervalTreeImpl.IntervalNode<T> i2) {
+    RMNode o1 = (RMNode)i1;
+    RMNode o2 = (RMNode)i2;
+    boolean greedyL1 = o1.isGreedyToLeft();
+    boolean greedyL2 = o2.isGreedyToLeft();
+    if (greedyL1 != greedyL2) return greedyL1 ? -1 : 1;
+
+    int o1Length = o1.intervalEnd() - o1.intervalStart();
+    int o2Length = o2.intervalEnd() - o2.intervalStart();
+    int d = o1Length - o2Length;
+    if (d != 0) return d;
+
+    boolean greedyR1 = o1.isGreedyToRight();
+    boolean greedyR2 = o2.isGreedyToRight();
+    if (greedyR1 != greedyR2) return greedyR1 ? -1 : 1;
+
+    return 0;
+  }
+
+  public void dispose() {
+    myDocument.removeDocumentListener(myListener);
+  }
+
+  private static final int DUPLICATE_LIMIT = 30; // assertion: no more than DUPLICATE_LIMIT range markers are allowed to be registered at given (start, end)
+  @Override
+  public RangeMarkerTree<T>.RMNode addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+    RangeMarkerImpl marker = (RangeMarkerImpl)interval;
+    marker.setValid(true);
+    RangeMarkerTree<T>.RMNode node = (RMNode)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
+
+    if (DEBUG && node.intervals.size() > DUPLICATE_LIMIT) {
+      l.readLock().lock();
+      try {
+        String msg = errMsg(node);
+        if (msg != null) {
+          System.gc();
+          System.gc();
+          System.gc();
+          msg = errMsg(node);
+          if (msg != null) {
+            LOG.error(msg);
+          }
+        }
+      }
+      finally {
+        l.readLock().unlock();
+      }
+    }
+    return node;
+  }
+  private String errMsg(RMNode node) {
+    final StringBuilder msg = new StringBuilder();
+    final AtomicInteger alive = new AtomicInteger();
+    node.processAliveKeys(new Processor<Object>() {
+      @Override
+      public boolean process(Object t) {
+        msg.append(t).append("\n");
+        alive.incrementAndGet();
+        return true;
+      }
+    });
+    if (alive.get() > DUPLICATE_LIMIT) {
+      msg.insert(0, "Too many range markers (" + alive +") registered in "+this+":\n");
+
+      return msg.toString();
+    }
+
+    return null;
+  }
+
+  @NotNull
+  @Override
+  protected RMNode createNewNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+    return new RMNode(key, start, end, greedyToLeft, greedyToRight);
+  }
+
+  @Override
+  protected void checkBelongsToTheTree(T interval, boolean assertInvalid) {
+    assert ((RangeMarkerImpl)interval).myDocument == myDocument;
+    super.checkBelongsToTheTree(interval, assertInvalid);
+  }
+
+  @Override
+  protected RangeMarkerTree<T>.RMNode lookupNode(@NotNull T key) {
+    return (RMNode)((RangeMarkerImpl)key).myNode;
+  }
+
+  @Override
+  protected void setNode(@NotNull T key, IntervalNode intervalNode) {
+    ((RangeMarkerImpl)key).myNode = (RMNode)intervalNode;
+  }
+
+  public class RMNode extends IntervalTreeImpl.IntervalNode<T> {
+    private final boolean isExpandToLeft;
+    private final boolean isExpandToRight;
+
+    public RMNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight) {
+      super(RangeMarkerTree.this, key, start, end);
+      isExpandToLeft = greedyToLeft;
+      isExpandToRight = greedyToRight;
+    }
+
+    public boolean isGreedyToLeft() {
+      return isExpandToLeft;
+    }
+
+    public boolean isGreedyToRight() {
+      return isExpandToRight;
+    }
+
+    @Override
+    public String toString() {
+      return (isGreedyToLeft() ? "[" : "(") + intervalStart() + "," + intervalEnd() + (isGreedyToRight() ? "]" : ")");
+    }
+  }
+
+  private void updateMarkersOnChange(DocumentEvent e) {
+    long start = System.currentTimeMillis();
+    try {
+      l.writeLock().lock();
+      if (size() == 0) return;
+      checkMax(true);
+
+      modCount++;
+      List<IntervalNode> affected = new SmartList<IntervalNode>();
+      collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected);
+      checkMax(false);
+
+      if (!affected.isEmpty()) {
+        for (IntervalNode node : affected) {
+          // assumption: interval.getEndOffset() will never be accessed during remove()
+          int startOffset = node.intervalStart();
+          int endOffset = node.intervalEnd();
+          removeNode(node);
+          checkMax(false);
+          node.clearDelta();   // we can do it because all the deltas up from the root to this node were cleared in the collectAffectedMarkersAndShiftSubtrees
+          node.setParent(null);
+          node.setLeft(null);
+          node.setRight(null);
+          node.setValid(true);
+          assert node.intervalStart() == startOffset;
+          assert node.intervalEnd() == endOffset;
+        }
+        checkMax(true);
+        for (IntervalNode node : affected) {
+          List<Getable<T>> keys = node.intervals;
+          if (keys.isEmpty()) continue; // collected away
+
+          RangeMarkerImpl marker = null;
+          for (int i = keys.size() - 1; i >= 0; i--) {
+            Getable<T> key = keys.get(i);
+            marker = (RangeMarkerImpl)key.get();
+            if (marker != null) {
+              if (!marker.isValid()) {
+                // marker can become invalid on its own, e.g. FoldRegion
+                node.removeIntervalInternal(i);
+                continue;
+              }
+              break;
+            }
+          }
+          if (marker == null) continue; // node remains removed from the tree
+          marker.documentChanged(e);
+          if (marker.isValid()) {
+            RMNode insertedNode = (RMNode)findOrInsert(node);
+            // can change if two range become the one
+            if (insertedNode != node) {
+              // merge happened
+              for (Getable<T> key : keys) {
+                T interval = key.get();
+                if (interval == null) continue;
+                insertedNode.addInterval(interval);
+              }
+            }
+            assert marker.isValid();
+          }
+          else {
+            node.setValid(false);
+          }
+        }
+      }
+      checkMax(true);
+
+      IntervalNode root = getRoot();
+      assert root == null || root.maxEnd + root.delta <= myDocument.getTextLength();
+    }
+    finally {
+      l.writeLock().unlock();
+      long finish = System.currentTimeMillis();
+    }
+  }
+
+  // returns true if all deltas involved are still 0
+  private boolean collectAffectedMarkersAndShiftSubtrees(IntervalNode root, @NotNull DocumentEvent e, @NotNull List<IntervalNode> affected) {
+    if (root == null) return true;
+    boolean norm = pushDelta(root);
+
+    int maxEnd = root.maxEnd;
+    assert root.isValid();
+
+    int offset = e.getOffset();
+    int affectedEndOffset = offset + e.getOldLength();
+    boolean hasAliveKeys = root.hasAliveKey(false);
+    if (!hasAliveKeys) {
+      // marker was garbage collected
+      affected.add(root);
+    }
+    if (offset > maxEnd) {
+      // no need to bother
+    }
+    else if (affectedEndOffset < root.intervalStart()) {
+      // shift entire subtree
+      int lengthDelta = e.getNewLength() - e.getOldLength();
+      int newD = root.changeDelta(lengthDelta);
+      norm &= newD == 0;
+      IntervalNode left = root.getLeft();
+      if (left != null) {
+        int newL = left.changeDelta(-lengthDelta);
+        norm &= newL == 0;
+      }
+      norm &= pushDelta(root);
+      norm &= collectAffectedMarkersAndShiftSubtrees(left, e, affected);
+      correctMax(root, 0);
+    }
+    else {
+      if (offset <= root.intervalEnd()) {
+        // unlucky enough so that change affects the interval
+        if (hasAliveKeys) affected.add(root); // otherwise we've already added it
+        root.setValid(false);  //make invisible
+      }
+
+      norm &= collectAffectedMarkersAndShiftSubtrees(root.getLeft(), e, affected);
+      norm &= collectAffectedMarkersAndShiftSubtrees(root.getRight(), e, affected);
+      correctMax(root,0);
+    }
+    return norm;
+  }
+
+  public boolean sweep(final int start, final int end, @NotNull final SweepProcessor<T> sweepProcessor) {
+    return sweep(new Generator<T>() {
+      @Override
+      public boolean generate(Processor<T> processor) {
+        return processOverlappingWith(start, end, processor);
+      }
+    }, sweepProcessor);
+  }
+
+  public interface Generator<T> {
+    boolean generate(Processor<T> processor);
+  }
+
+  public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
+    final Queue<T> ends = new PriorityQueue<T>(5, new Comparator<T>() {
+      public int compare(T o1, T o2) {
+        return o1.getEndOffset() - o2.getEndOffset();
+      }
+    });
+    final List<T> starts = new ArrayList<T>();
+    if (!generator.generate(new Processor<T>() {
+      public boolean process(T marker) {
+        // decide whether previous marker ends here or new marker begins
+        int start = marker.getStartOffset();
+        while (true) {
+          assert ends.size() == starts.size();
+          T previous = ends.peek();
+          if (previous != null) {
+            int prevEnd = previous.getEndOffset();
+            if (prevEnd <= start) {
+              if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
+              ends.remove();
+              boolean removed = starts.remove(previous);
+              assert removed;
+              continue;
+            }
+          }
+          break;
+        }
+        if (!sweepProcessor.process(start, marker, true, ends)) return false;
+        starts.add(marker);
+        ends.offer(marker);
+
+        return true;
+      }
+    })) return false;
+
+    while (!ends.isEmpty()) {
+      assert ends.size() == starts.size();
+      T previous = ends.remove();
+      int prevEnd = previous.getEndOffset();
+      if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
+      boolean removed = starts.remove(previous);
+      assert removed;
+    }
+
+    return true;
+  }
+
+  @Override
+  void reportInvalidation(RangeMarkerEx markerEx, Object reason) {
+    if (markerEx.isTrackInvalidation()) {
+      LOG.error("Range marker invalidated: "+markerEx +"; say thanks to the "+ reason);
+    }
+  }
+}

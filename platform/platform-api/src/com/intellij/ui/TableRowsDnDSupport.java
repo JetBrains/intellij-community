@@ -64,11 +64,13 @@ public class TableRowsDnDSupport {
                 model.exchangeRows(min, min + 1);
                 min++;
               }
+              table.getSelectionModel().setSelectionInterval(min, min);
             } else {
               while (max > min) {
                 model.exchangeRows(max, max - 1);
                 max--;
               }
+              table.getSelectionModel().setSelectionInterval(max, max);
             }
           }
         }

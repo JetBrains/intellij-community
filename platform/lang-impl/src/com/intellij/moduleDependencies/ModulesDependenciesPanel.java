@@ -27,6 +27,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -530,7 +531,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       }
       MyUserObject node = (MyUserObject)userObject;
       Module module = node.getModule();
-      setIcon(module.getModuleType().getNodeIcon(expanded));
+      setIcon(ModuleType.get(module).getNodeIcon(expanded));
       if (node.isInCycle()){
         append(module.getName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
       } else {

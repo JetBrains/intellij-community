@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.PathMacroSubstitutor;
-import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import org.jdom.Element;
@@ -108,11 +105,11 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return ourConversionProblemsStorage;
   }
 
-  public void load() throws IOException, StateStorage.StateStorageException {
+  public void load() throws IOException, StateStorageException {
     getMainStorageData(); //load it
   }
 
-  public BaseStorageData getMainStorageData() throws StateStorage.StateStorageException {
+  public BaseStorageData getMainStorageData() throws StateStorageException {
     return (BaseStorageData) getMainStorage().getStorageData(false);
   }
 

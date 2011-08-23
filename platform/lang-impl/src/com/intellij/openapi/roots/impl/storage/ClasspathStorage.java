@@ -19,6 +19,7 @@ package com.intellij.openapi.roots.impl.storage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;

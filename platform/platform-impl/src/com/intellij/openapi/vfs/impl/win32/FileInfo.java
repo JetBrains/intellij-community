@@ -29,6 +29,7 @@ public class FileInfo {
     public String name;
     public int attributes;
     public long timestamp;
+    public long length;
 
     public String toString() {
         return name;

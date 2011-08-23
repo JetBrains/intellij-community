@@ -114,7 +114,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
 
     if (directory != null) {
 
-      final CodeStyleManager codeStyleManager = PsiManager.getInstance(myProject).getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(PsiManager.getInstance(myProject).getProject());
       final PsiJavaFile reformattedFile = (PsiJavaFile)codeStyleManager.reformat(JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(newFile));
 
       if (directory.findFile(reformattedFile.getName()) != null) return reformattedFile.getClasses()[0];

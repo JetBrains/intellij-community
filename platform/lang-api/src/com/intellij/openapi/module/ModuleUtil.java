@@ -80,7 +80,7 @@ public class ModuleUtil {
   @Nullable
   public static Module getParentModuleOfType(ModuleType expectedModuleType, Module module) {
     if (module == null) return null;
-    if (expectedModuleType.equals(module.getModuleType())) return module;
+    if (expectedModuleType.equals(ModuleType.get(module))) return module;
     final List<Module> parents = getParentModulesOfType(expectedModuleType, module);
     return parents.isEmpty() ? null : parents.get(0);
   }
@@ -90,7 +90,7 @@ public class ModuleUtil {
     final List<Module> parents = ModuleManager.getInstance(module.getProject()).getModuleDependentModules(module);
     ArrayList<Module> modules = new ArrayList<Module>();
     for (Module parent : parents) {
-      if (expectedModuleType.equals(parent.getModuleType())) {
+      if (expectedModuleType.equals(ModuleType.get(parent))) {
         modules.add(parent);
       }
     }

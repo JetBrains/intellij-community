@@ -34,6 +34,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -112,7 +113,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       boolean trunc = index < text.length();
       text = text.substring(0, index);
       buffer.append(" = ");
-      buffer.append(text);
+      buffer.append(StringUtil.escapeXml(text));
       if (trunc) {
         buffer.append("...");
       }

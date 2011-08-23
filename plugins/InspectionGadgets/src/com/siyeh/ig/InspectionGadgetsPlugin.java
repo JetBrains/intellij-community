@@ -769,6 +769,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(TestMethodIsPublicVoidNoArgInspection.class);
         m_inspectionClasses.add(TestMethodWithoutAssertionInspection.class);
         m_inspectionClasses.add(UnconstructableTestCaseInspection.class);
+        m_inspectionClasses.add(UseOfObsoleteAssertInspection.class);
     }
 
     private void registerJavaBeansInspections() {

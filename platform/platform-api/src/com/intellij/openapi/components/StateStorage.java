@@ -57,24 +57,7 @@ public interface StateStorage {
     List<IFile> getAllStorageFiles();
   }
 
-  class StateStorageException extends RuntimeException {
-    public StateStorageException() {
-    }
-
-    public StateStorageException(final String message) {
-      super(message);
-    }
-
-    public StateStorageException(final String message, final Throwable cause) {
-      super(message, cause);
-    }
-
-    public StateStorageException(final Throwable cause) {
-      super(cause);
-    }
-  }
-
-  interface Listener {
+    interface Listener {
     void storageFileChanged(final VirtualFileEvent event, final StateStorage storage);
   }
 }

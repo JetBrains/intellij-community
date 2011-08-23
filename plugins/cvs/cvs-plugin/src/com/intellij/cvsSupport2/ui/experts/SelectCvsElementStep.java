@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.ui.experts;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootException;
@@ -81,7 +82,7 @@ public class SelectCvsElementStep extends WizardStep {
       final boolean logged = performer.loginAll(new ModalityContextImpl(ModalityState.current(), false), false);
       return logged && errors.isNull();
     } catch (CvsRootException e) {
-      Messages.showErrorDialog(e.getMessage(), "Invalid CVS Root");
+      Messages.showErrorDialog(e.getMessage(), CvsBundle.message("error.title.invalid.cvs.root"));
       return false;
     }
   }
@@ -113,7 +114,12 @@ public class SelectCvsElementStep extends WizardStep {
   }
 
   protected JComponent createComponent() {
-    myCvsTree = new CvsTree(myProject, myAllowRootSelection, mySelectionMode, myShowModules, myShowFiles);
+    myCvsTree = new CvsTree(myProject, myAllowRootSelection, mySelectionMode, myShowModules, myShowFiles, new Consumer<VcsException>() {
+      @Override
+      public void consume(VcsException e) {
+        Messages.showErrorDialog(e.getMessage(), CvsBundle.message("error.title.cvs.error"));
+      }
+    });
     myCvsTree.init();
     myCvsTree.addSelectionObserver(new Observer() {
       public void update(Observable o, Object arg) {

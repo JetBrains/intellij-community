@@ -21,3 +21,10 @@ class JSResolveUtil {
     static interface Resolver<T extends F> {}
     static class F {}
 }
+
+
+class TestIDEA62515 {
+  public static interface Model<T> {}
+  public class Inner {}
+  public static class Foo implements Model<Inner> {}
+}

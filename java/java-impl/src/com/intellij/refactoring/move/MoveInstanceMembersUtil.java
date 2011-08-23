@@ -18,6 +18,7 @@ package com.intellij.refactoring.move;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -60,7 +61,7 @@ public class MoveInstanceMembersUtil {
         if (expression instanceof PsiThisExpression) {
           final PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)expression).getQualifier();
           PsiClass thisClass = thisQualifier == null ? PsiTreeUtil.getParentOfType(expression, PsiClass.class, true) : ((PsiClass)thisQualifier.resolve());
-          if (thisClass != null) {
+          if (thisClass != null && !PsiTreeUtil.isAncestor( refMember,thisClass, false)) {
             addReferencedMember(map, thisClass, null);
           }
         }
@@ -168,7 +169,7 @@ public class MoveInstanceMembersUtil {
           initializerCopy = newExpression;
         }
         ((PsiAssignmentExpression)statement.getExpression()).getRExpression().replace(initializerCopy);
-        statement = (PsiExpressionStatement)field.getManager().getCodeStyleManager().reformat(statement);
+        statement = (PsiExpressionStatement)CodeStyleManager.getInstance(field.getManager().getProject()).reformat(statement);
         body.add(statement);
         initializer.delete();
       }

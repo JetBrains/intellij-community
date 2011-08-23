@@ -237,8 +237,10 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
             }
           }
         }
-
-        info.myReference.bindToElement(element);
+        final PsiElement refElement = info.myReference.getElement();
+        if (refElement != null && refElement.isValid()) {
+          info.myReference.bindToElement(element);
+        }
       } else if (usageInfo instanceof NonCodeUsageInfo) {
         nonCodeUsages.add((NonCodeUsageInfo)usageInfo);
       }

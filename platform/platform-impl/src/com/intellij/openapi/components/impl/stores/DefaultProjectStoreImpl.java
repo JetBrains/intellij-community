@@ -115,7 +115,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Nullable
-      public StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorage.StateStorageException {
+      public StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException {
         return storage;
       }
 
@@ -145,7 +145,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @Nullable
       public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation)
-      throws StateStorage.StateStorageException {
+      throws StateStorageException {
         return storage;
       }
 
@@ -174,7 +174,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
 
-  public void load() throws IOException, StateStorage.StateStorageException {
+  public void load() throws IOException, StateStorageException {
     if (myElement == null) return;
     super.load();
   }
@@ -187,11 +187,11 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     }
 
     public void setState(@NotNull final Storage[] storageSpecs, final Object component, final String componentName, final Object state)
-    throws StateStorage.StateStorageException {
+    throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
 
-    public void setStateInOldStorage(final Object component, final String componentName, final Object state) throws StateStorage.StateStorageException {
+    public void setStateInOldStorage(final Object component, final String componentName, final Object state) throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
   }
@@ -209,7 +209,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
     }
 
-    public List<IFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {
+    public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
       return Collections.emptyList();
     }
 
@@ -217,7 +217,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       return Collections.emptyList();
     }
 
-    public void save() throws StateStorage.StateStorageException {
+    public void save() throws StateStorageException {
       saveSession.save();
     }
   }

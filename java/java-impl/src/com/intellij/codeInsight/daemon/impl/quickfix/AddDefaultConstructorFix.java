@@ -16,15 +16,20 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.GenerateConstructorHandler;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 
 public class AddDefaultConstructorFix extends AddMethodFix {
   public AddDefaultConstructorFix(PsiClass aClass) {
-    super("public " + aClass.getName() + "() {}", aClass);
+    super(generateConstructor(aClass), aClass);
     setText(QuickFixBundle.message("add.default.constructor.text", aClass.getName()));
   }
 
+  private static String generateConstructor(PsiClass aClass) {
+    final String constructorModifier = GenerateConstructorHandler.getConstructorModifier(aClass);
+    return constructorModifier + (constructorModifier.isEmpty() ? "" : " ") + aClass.getName() + "() {}";
+  }
 
   @NotNull
   public String getFamilyName() {

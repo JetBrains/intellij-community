@@ -16,11 +16,15 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -62,4 +66,14 @@ public class JavaCodeContextType extends TemplateContextType {
     return new JavaFileHighlighter();
   }
 
+  @Override
+  public Document createDocument(CharSequence text, Project project) {
+    if (project == null) {
+      return super.createDocument(text, project);
+    }
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiElementFactory factory = psiFacade.getElementFactory();
+    final JavaCodeFragment fragment = factory.createCodeBlockCodeFragment((String)text, psiFacade.findPackage(""), true);
+    return PsiDocumentManager.getInstance(project).getDocument(fragment);
+  }
 }

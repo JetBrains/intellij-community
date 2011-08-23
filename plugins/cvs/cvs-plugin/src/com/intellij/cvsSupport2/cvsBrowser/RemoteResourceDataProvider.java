@@ -15,10 +15,13 @@
  */
 package com.intellij.cvsSupport2.cvsBrowser;
 
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.Consumer;
+
 public interface RemoteResourceDataProvider {
 
   RemoteResourceDataProvider NOT_EXPANDABLE = new RemoteResourceDataProvider(){
-    public void fillContentFor(GetContentCallback callback) {}
+    public void fillContentFor(GetContentCallback callback, Consumer<VcsException> errorCallback) {}
 
     @Override
     public RemoteResourceDataProvider getChildrenDataProvider() {
@@ -26,7 +29,7 @@ public interface RemoteResourceDataProvider {
     }
   };
 
-  void fillContentFor(GetContentCallback callback);
+  void fillContentFor(GetContentCallback callback, Consumer<VcsException> errorCallback);
 
   RemoteResourceDataProvider getChildrenDataProvider();
 }

@@ -209,8 +209,7 @@ public class StaticMethodOnlyUsedInOneClassInspection
         public PsiClass getUsageClass(final PsiMethod method) {
             final ProgressManager progressManager =
                     ProgressManager.getInstance();
-            final PsiManager manager = method.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
+            final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(method.getProject());
             final String name = method.getName();
             final GlobalSearchScope scope =
                     GlobalSearchScope.allScope(method.getProject());

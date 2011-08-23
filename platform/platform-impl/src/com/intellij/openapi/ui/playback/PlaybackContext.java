@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.ui.playback;
 
+import java.awt.*;
+import java.io.File;
+
 /**
  * Created by IntelliJ IDEA.
  * User: kirillk
@@ -26,10 +29,16 @@ public class PlaybackContext {
   
   private PlaybackRunner.StatusCallback myCallback;
   private int myCurrentLine;
+  private Robot myRobot;
+  private boolean myUseDirectActionCall;
+  private PlaybackCommand myCurrentCmd;
 
-  public PlaybackContext(PlaybackRunner.StatusCallback callback, int currentLine) {
+  public PlaybackContext(PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, PlaybackCommand currentCmd) {
     myCallback = callback;
     myCurrentLine = currentLine;
+    myRobot = robot;
+    myUseDirectActionCall = useDriectActionCall;
+    myCurrentCmd = currentCmd;
   }
 
   public PlaybackRunner.StatusCallback getCallback() {
@@ -38,5 +47,17 @@ public class PlaybackContext {
 
   public int getCurrentLine() {
     return myCurrentLine;
+  }
+
+  public Robot getRobot() {
+    return myRobot;
+  }
+
+  public boolean isUseDirectActionCall() {
+    return myUseDirectActionCall;
+  }
+
+  public PlaybackCommand getCurrentCmd() {
+    return myCurrentCmd;
   }
 }

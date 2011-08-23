@@ -150,13 +150,13 @@ public class OldReferenceResolver {
           }
         }
 
-        if (subj instanceof PsiField && PsiTreeUtil.isAncestor(clss, scope, false)) {
+        if (subj instanceof PsiField && PsiTreeUtil.isAncestor(scope, clss, false)) {
           // probably replacing field with a getter
           if (myReplaceFieldsWithGetters != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) {
             if (myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL ||
                 myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE &&
                 !JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible((PsiMember)subj, newExpr, null)) {
-              newExpr = replaceFieldWithGetter(newExpr, (PsiField)subj);
+              newExpr = replaceFieldWithGetter(newExpr, (PsiField)subj, oldRef.getQualifierExpression() == null && !((PsiField)subj).hasModifierProperty(PsiModifier.STATIC));
             }
           }
         }
@@ -210,7 +210,7 @@ public class OldReferenceResolver {
     }
   }
 
-  private PsiElement replaceFieldWithGetter(PsiElement expr, PsiField psiField) throws IncorrectOperationException {
+  private PsiElement replaceFieldWithGetter(PsiElement expr, PsiField psiField, boolean qualify) throws IncorrectOperationException {
     if (RefactoringUtil.isAssignmentLHS(expr)) {
       // todo: warning
       return expr;
@@ -228,9 +228,13 @@ public class OldReferenceResolver {
         String id = getter.getName();
         String qualifier = null;
         if (newExpr instanceof PsiReferenceExpression) {
-          final PsiExpression qualifierExpression = ((PsiReferenceExpression)newExpr).getQualifierExpression();
-          if (qualifierExpression != null) {
-            qualifier = qualifierExpression.getText();
+          if (qualify) {
+            qualifier = getInstanceRef(factory).getText();
+          } else {
+            final PsiExpression qualifierExpression = ((PsiReferenceExpression)newExpr).getQualifierExpression();
+            if (qualifierExpression != null) {
+              qualifier = qualifierExpression.getText();
+            }
           }
         }
         PsiMethodCallExpression getterCall =

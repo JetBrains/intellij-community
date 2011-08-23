@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.SymLinkUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -329,10 +330,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       if (existingFile != null) {
         if (!isAlreadyWatched(result)) {
           final ModalityState modalityState = ModalityState.current();
-          existingFile.refresh(true, toWatchRecursively, null, modalityState);
+          RefreshQueue.getInstance().refresh(true, toWatchRecursively, null, modalityState, existingFile);
           if (existingFile.isDirectory() && !toWatchRecursively && existingFile instanceof NewVirtualFile) {
             for (VirtualFile child : ((NewVirtualFile)existingFile).getCachedChildren()) {
-              child.refresh(true, false, null, modalityState);
+              RefreshQueue.getInstance().refresh(true, false, null, modalityState, child);
             }
           }
         }
@@ -469,6 +470,12 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   @Override
   public boolean isSymLink(@NotNull final VirtualFile file) {
     return SymLinkUtil.isSymLink(file.getPath());
+  }
+
+  @Override
+  public VirtualFile getRealFile(@NotNull final VirtualFile file) {
+    final String realPath = SymLinkUtil.resolveSymLink(file.getPath());
+    return realPath != null ? findFileByPath(realPath) : null;
   }
 
   public boolean isWritable(@NotNull final VirtualFile file) {

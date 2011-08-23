@@ -118,7 +118,9 @@ public class ExpectedTypesProvider {
       parent = parent.getParent();
     }
     MyParentVisitor visitor = new MyParentVisitor(expr, forCompletion, classProvider, voidable, usedAfter);
-    parent.accept(visitor);
+    if (parent != null) {
+      parent.accept(visitor);
+    }
     return visitor.getResult();
   }
 

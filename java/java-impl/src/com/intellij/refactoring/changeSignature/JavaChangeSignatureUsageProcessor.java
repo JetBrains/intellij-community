@@ -779,8 +779,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
     PsiReferenceList methodThrowsList = (PsiReferenceList)method.getThrowsList().replace(throwsList);
     methodThrowsList = (PsiReferenceList)JavaCodeStyleManager.getInstance(method.getProject()).shortenClassReferences(methodThrowsList);
-    method.getManager().getCodeStyleManager().reformatRange(method, method.getParameterList().getTextRange().getEndOffset(),
-                                                            methodThrowsList.getTextRange().getEndOffset());
+    CodeStyleManager.getInstance(method.getManager().getProject())
+        .reformatRange(method, method.getParameterList().getTextRange().getEndOffset(),
+                       methodThrowsList.getTextRange().getEndOffset());
   }
 
   private static void fixJavadocsForChangedMethod(PsiMethod method, JavaChangeInfo changeInfo, int newParamsLength) throws IncorrectOperationException {

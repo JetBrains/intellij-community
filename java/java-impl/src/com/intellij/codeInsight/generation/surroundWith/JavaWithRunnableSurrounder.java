@@ -17,14 +17,21 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,10 +44,12 @@ public class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
     return CodeInsightBundle.message("surround.with.runnable.template");
   }
 
-  public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
+  public TextRange surroundStatements(Project project, final Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = container.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    final String baseName = "runnable";
+    final String uniqueName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(baseName, container, false);
 
     @NonNls String text = "Runnable runnable = new Runnable(){\npublic void run(){\n}};";
     PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)factory.createStatementFromText(text, null);
@@ -48,7 +57,12 @@ public class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
 
     declarationStatement = (PsiDeclarationStatement)container.addAfter(declarationStatement, statements[statements.length - 1]);
 
-    PsiVariable variable = (PsiVariable)declarationStatement.getDeclaredElements()[0];
+    final PsiVariable variable = (PsiVariable)declarationStatement.getDeclaredElements()[0];
+
+    if (!Comparing.strEqual(uniqueName, baseName)) {
+      variable.setName(uniqueName);
+    }
+
     PsiNewExpression newExpression = (PsiNewExpression)variable.getInitializer();
     PsiElement[] children = newExpression.getChildren();
     PsiAnonymousClass anonymousClass = (PsiAnonymousClass)children[children.length - 1];
@@ -59,8 +73,22 @@ public class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
 
     makeVariablesFinal(body, body);
 
-    TextRange range = variable.getNameIdentifier().getTextRange();
-    return range;
+    final int textOffset = variable.getNameIdentifier().getTextOffset();
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+    editor.getCaretModel().moveToOffset(textOffset);
+    new VariableInplaceRenamer(variable, editor){
+      @Override
+      protected void moveOffsetAfter(boolean success) {
+        super.moveOffsetAfter(success);
+        if (success) {
+          final PsiNamedElement renamedVariable = getVariable();
+          if (renamedVariable != null) {
+            editor.getCaretModel().moveToOffset(renamedVariable.getTextRange().getEndOffset());
+          }
+        }
+      }
+    }.performInplaceRename();
+    return null;
   }
 
   private static void makeVariablesFinal(PsiElement scope, PsiCodeBlock body) throws IncorrectOperationException{

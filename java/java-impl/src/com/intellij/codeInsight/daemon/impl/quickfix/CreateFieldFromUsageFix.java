@@ -22,7 +22,6 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -54,10 +52,6 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
   }
 
   protected void invokeImpl(final PsiClass targetClass) {
-    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) {
-      return;
-    }
-
     final Project project = myReferenceExpression.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 

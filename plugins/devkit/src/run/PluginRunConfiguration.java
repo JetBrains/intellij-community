@@ -25,6 +25,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -207,7 +208,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     List<Module> modules = new ArrayList<Module>();
     Module[] allModules = ModuleManager.getInstance(getProject()).getModules();
     for (Module module : allModules) {
-      if (module.getModuleType() == PluginModuleType.getInstance()) {
+      if (ModuleType.get(module) == PluginModuleType.getInstance()) {
         modules.add(module);
       }
     }

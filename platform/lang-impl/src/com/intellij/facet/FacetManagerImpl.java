@@ -169,7 +169,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
         continue;
       }
 
-      ModuleType moduleType = myModule.getModuleType();
+      ModuleType moduleType = ModuleType.get(myModule);
       if (!type.isSuitableModuleType(moduleType)) {
         addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.0.facets.are.not.allowed.in.1",
                                                                       type.getPresentableName(), moduleType.getName()));

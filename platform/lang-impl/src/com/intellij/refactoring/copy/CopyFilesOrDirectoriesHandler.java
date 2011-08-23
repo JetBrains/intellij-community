@@ -23,8 +23,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -254,7 +254,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
       if (newName == null) newName = directory.getName();
       final PsiDirectory existing = targetDirectory.findSubdirectory(newName);
       final PsiDirectory subdirectory = existing == null ? targetDirectory.createSubdirectory(newName) : existing;
-      VfsUtil.doActionAndRestoreEncoding(directory.getVirtualFile(), new ThrowableComputable<VirtualFile, IOException>() {
+      EncodingManager.doActionAndRestoreEncoding(directory.getVirtualFile(), new ThrowableComputable<VirtualFile, IOException>() {
         public VirtualFile compute() {
           return subdirectory.getVirtualFile();
         }

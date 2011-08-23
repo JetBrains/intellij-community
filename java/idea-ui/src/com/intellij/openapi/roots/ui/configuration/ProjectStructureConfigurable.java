@@ -68,7 +68,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   private final UIState myUiState = new UIState();
   private Splitter mySplitter;
   private JComponent myToolbarComponent;
-  @NonNls private static final String CATEGORY = "category";
+  @NonNls public static final String CATEGORY = "category";
   private JComponent myToFocus;
   private boolean myWasUiDisposed;
   private ConfigurationErrorsComponent myErrorsComponent;
@@ -322,6 +322,10 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     finally {
       HeavyProcessLatch.INSTANCE.processFinished();
     }
+  }
+
+  public void hideSidePanel() {
+    mySplitter.getFirstComponent().setVisible(false);
   }
 
   public void disposeUIResources() {

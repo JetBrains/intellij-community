@@ -288,8 +288,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             }
             final ProgressManager progressManager =
                     ProgressManager.getInstance();
-            final PsiManager manager = element.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
+            final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
             final GlobalSearchScope scope =
                     GlobalSearchScope.projectScope(element.getProject());
             return searchHelper.isCheapEnoughToSearch(name, scope, null,

@@ -21,6 +21,7 @@ import com.intellij.ide.projectView.impl.ModuleGroupUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -240,7 +241,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
         final Module module = (Module)value;
         append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         int flags1 = expanded ? Iconable.ICON_FLAG_OPEN : Iconable.ICON_FLAG_CLOSED;
-        setIcon(module.getModuleType().getNodeIcon((flags1 & Iconable.ICON_FLAG_OPEN) != 0));
+        setIcon(ModuleType.get(module).getNodeIcon((flags1 & Iconable.ICON_FLAG_OPEN) != 0));
       } else if (value instanceof ModuleGroup) {
         append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(expanded ? PlatformIcons.OPENED_MODULE_GROUP_ICON : PlatformIcons.CLOSED_MODULE_GROUP_ICON);

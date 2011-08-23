@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.compiler.make.BuildParticipantProvider;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.util.Collection;
@@ -28,7 +29,7 @@ import java.util.Collections;
  */
 public class PluginBuildParticipantProvider extends BuildParticipantProvider {
   public Collection<PluginBuildParticipant> getParticipants(final Module module) {
-    if (module.getModuleType() != PluginModuleType.getInstance()) {
+    if (ModuleType.get(module) != PluginModuleType.getInstance()) {
       return Collections.emptyList();
     }
 

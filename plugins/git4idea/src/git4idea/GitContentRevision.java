@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -154,13 +155,30 @@ public class GitContentRevision implements ContentRevision {
     } else {
       file = createPath(vcsRoot, path, isDeleted, canBeDeleted, unescapePath);
     }
-    
+    return createRevision(file, revisionNumber, project);
+  }
+  
+  private static ContentRevision createRevision(@NotNull FilePath filePath, @Nullable VcsRevisionNumber revisionNumber, @NotNull Project project) {
     if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
-      return createRevisionImpl(file, (GitRevisionNumber)revisionNumber, project, null);
+      return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, null);
     }
     else {
-      return CurrentContentRevision.create(file);
+      return CurrentContentRevision.create(filePath);
     }
+  }
+
+  public static ContentRevision createRevisionForTypeChange(@NotNull Project project, @NotNull VirtualFile vcsRoot,
+                                                            @NotNull String path,
+                                                            @Nullable VcsRevisionNumber revisionNumber, boolean unescapePath) throws VcsException {
+    final FilePath filePath;
+    if (revisionNumber == null) {
+      File file = new File(makeAbsolutePath(vcsRoot, path, unescapePath));
+      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      filePath = virtualFile == null ? new FilePathImpl(file, false) : new FilePathImpl(virtualFile);
+    } else {
+      filePath = createPath(vcsRoot, path, false, false, unescapePath);
+    }
+    return createRevision(filePath, revisionNumber, project);
   }
 
   public static FilePath createPath(VirtualFile vcsRoot, String path, boolean isDeleted, boolean canBeDeleted, boolean unescapePath) throws VcsException {

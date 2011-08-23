@@ -1,7 +1,6 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.AbstractQuery;
 import com.intellij.util.Processor;
@@ -21,6 +20,6 @@ public class SearchRequestQuery extends AbstractQuery<PsiReference> {
 
   @Override
   protected boolean processResults(@NotNull Processor<PsiReference> consumer) {
-    return PsiManager.getInstance(myProject).getSearchHelper().processRequests(myRequests, consumer);
+    return PsiSearchHelper.SERVICE.getInstance(myProject).processRequests(myRequests, consumer);
   }
 }

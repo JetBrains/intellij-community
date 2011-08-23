@@ -36,6 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -383,7 +384,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
       final PsiManager psiManager = PsiManager.getInstance(myProject);
 
-      if (GroovyUtils.isAcceptableModuleType(module.getModuleType())) {
+      if (GroovyUtils.isAcceptableModuleType(ModuleType.get(module))) {
         for (final VirtualFile file : moduleFiles) {
           if (shouldCompile(file, configuration, psiManager)) {
             (index.isInTestSourceContent(file) ? toCompileTests : toCompile).add(file);

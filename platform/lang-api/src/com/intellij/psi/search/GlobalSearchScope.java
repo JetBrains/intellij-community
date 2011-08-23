@@ -17,25 +17,22 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.PsiBundle;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
@@ -109,7 +106,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         result.add(element2);
       }
     }
-    return new LocalSearchScope(PsiUtilBase.toPsiElementArray(result), null, localScope2.isIgnoreInjectedPsi());
+    return new LocalSearchScope(result.toArray(new PsiElement[result.size()]), null, localScope2.isIgnoreInjectedPsi());
   }
 
   @NotNull
@@ -159,22 +156,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public static GlobalSearchScope projectScope(@NotNull Project project) {
     return ProjectScope.getProjectScope(project);
-  }
-
-  public static GlobalSearchScope projectProductionScope(@NotNull Project project) {
-    return new IntersectionScope(projectScope(project),
-                                 new ProductionScopeFilter(project),
-                                 PsiBundle.message("psi.search.scope.production.files"));
-  }
-
-  public static GlobalSearchScope projectTestScope(@NotNull Project project) {
-    return new IntersectionScope(projectScope(project),
-                                 new TestScopeFilter(project),
-                                 PsiBundle.message("psi.search.scope.test.files"));
-  }
-
-  public static GlobalSearchScope filterScope(@NotNull Project project, @NotNull NamedScope set) {
-    return new FilterScopeAdapter(project, set);
   }
 
   public static GlobalSearchScope notScope(@NotNull final GlobalSearchScope scope) {
@@ -240,33 +221,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return module.getModuleWithDependentsScope();
   }
 
-  public static GlobalSearchScope directoryScope(@NotNull PsiDirectory directory, final boolean withSubdirectories) {
-    return new DirectoryScope(directory, withSubdirectories);
-  }
-
-  public static GlobalSearchScope directoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
-    return new DirectoryScope(project, directory, withSubdirectories);
-  }
-
-  public static GlobalSearchScope fileScope(@NotNull PsiFile psiFile) {
-    return new FileScope(psiFile.getProject(), psiFile.getVirtualFile());
-  }
-
-  public static GlobalSearchScope fileScope(final Project project, final VirtualFile virtualFile) {
-    return new FileScope(project, virtualFile);
-  }
-
-  public static GlobalSearchScope filesScope(final Project project, final Collection<VirtualFile> files) {
-    if (files.isEmpty()) return EMPTY_SCOPE;
-    return files.size() == 1? fileScope(project, files.iterator().next()) : new FilesScope(project, files);
-  }
-
-  private static class IntersectionScope extends GlobalSearchScope {
+  static class IntersectionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
     private final String myDisplayName;
 
-    private IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
+    IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
       super(scope1.getProject() == null ? scope2.getProject() : scope1.getProject());
       myScope1 = scope1;
       myScope2 = scope2;
@@ -414,217 +374,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
   }
 
-  private static class ProductionScopeFilter extends GlobalSearchScope {
-    private final ProjectFileIndex myFileIndex;
-
-    private ProductionScopeFilter(@NotNull Project project) {
-      super(project);
-      myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    }
-
-    public boolean contains(VirtualFile file) {
-      return myFileIndex.isInSourceContent(file) && !myFileIndex.isInTestSourceContent(file);
-    }
-
-    public int compare(VirtualFile file1, VirtualFile file2) {
-      return 0;
-    }
-
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
-    }
-
-    public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
-      return !testSources;
-    }
-
-    public boolean isSearchInLibraries() {
-      return false;
-    }
-  }
-
-  private static class TestScopeFilter extends GlobalSearchScope {
-    private final ProjectFileIndex myFileIndex;
-
-    private TestScopeFilter(@NotNull Project project) {
-      super(project);
-      myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    }
-
-    public boolean contains(VirtualFile file) {
-      return myFileIndex.isInTestSourceContent(file);
-    }
-
-    public int compare(VirtualFile file1, VirtualFile file2) {
-      return 0;
-    }
-
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
-    }
-
-    public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
-      return testSources;
-    }
-
-    public boolean isSearchInLibraries() {
-      return false;
-    }
-  }
-
-  private static class DirectoryScope extends GlobalSearchScope {
-    private final VirtualFile myDirectory;
-    private final boolean myWithSubdirectories;
-
-    private DirectoryScope(@NotNull PsiDirectory directory, final boolean withSubdirectories) {
-      super(directory.getProject());
-      myWithSubdirectories = withSubdirectories;
-      myDirectory = directory.getVirtualFile();
-    }
-
-    private DirectoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
-      super(project);
-      myWithSubdirectories = withSubdirectories;
-      myDirectory = directory;
-    }
-
-    public boolean contains(VirtualFile file) {
-      if (myWithSubdirectories) {
-        return VfsUtil.isAncestor(myDirectory, file, false);
-      }
-      else {
-        return myDirectory.equals(file.getParent());
-      }
-    }
-
-    public int compare(VirtualFile file1, VirtualFile file2) {
-      return 0;
-    }
-
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
-    }
-
-    public boolean isSearchInLibraries() {
-      return false;
-    }
-
-    public String toString() {
-      //noinspection HardCodedStringLiteral
-      return "directory scope: " + myDirectory + "; withSubdirs:"+myWithSubdirectories;
-    }
-  }
-
-  private static class FileScope extends GlobalSearchScope {
-    private final VirtualFile myVirtualFile;
-    private final Module myModule;
-
-    private FileScope(final Project project, final VirtualFile virtualFile) {
-      super(project);
-      myVirtualFile = virtualFile;
-      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      myModule = myVirtualFile != null ? fileIndex.getModuleForFile(myVirtualFile) : null;
-    }
-
-    public boolean contains(VirtualFile file) {
-      return Comparing.equal(myVirtualFile, file);
-    }
-
-    public int compare(VirtualFile file1, VirtualFile file2) {
-      return 0;
-    }
-
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return aModule == myModule;
-    }
-
-    public boolean isSearchInLibraries() {
-      return myModule == null;
-    }
-  }
-
-  private static class FilesScope extends GlobalSearchScope {
-    private final Collection<VirtualFile> myFiles;
-
-    public FilesScope(final Project project, final Collection<VirtualFile> files) {
-      super(project);
-      myFiles = files;
-    }
-
-    @Override
-    public boolean contains(final VirtualFile file) {
-      return myFiles.contains(file);
-    }
-
-    @Override
-    public int compare(final VirtualFile file1, final VirtualFile file2) {
-      return 0;
-    }
-
-    @Override
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
-    }
-
-    @Override
-    public boolean isSearchInLibraries() {
-      return false;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof FilesScope)) return false;
-
-      return myFiles.equals(((FilesScope)o).myFiles);
-    }
-
-    @Override
-    public int hashCode() {
-      return myFiles.hashCode();
-    }
-  }
-
-  private static class FilterScopeAdapter extends GlobalSearchScope {
-    private final NamedScope mySet;
-    private final PsiManager myManager;
-
-    private FilterScopeAdapter(@NotNull Project project, @NotNull NamedScope set) {
-      super(project);
-      mySet = set;
-      myManager = PsiManager.getInstance(project);
-    }
-
-    public boolean contains(VirtualFile file) {
-      NamedScopesHolder holder = NamedScopeManager.getInstance(getProject());
-      final PackageSet packageSet = mySet.getValue();
-      if (packageSet != null) {
-        if (packageSet instanceof PackageSetBase) return ((PackageSetBase)packageSet).contains(file, holder);
-        PsiFile psiFile = myManager.findFile(file);
-        if (psiFile == null) return false;
-        return packageSet.contains(psiFile, holder);
-      }
-      return false;
-    }
-
-    public String getDisplayName() {
-      return mySet.getName();
-    }
-
-    public int compare(VirtualFile file1, VirtualFile file2) {
-      return 0;
-
-    }
-
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true; //TODO (optimization?)
-    }
-
-    public boolean isSearchInLibraries() {
-      return true; //TODO (optimization?)
-    }
-  }
-
   @NotNull
   public static GlobalSearchScope getScopeRestrictedByFileTypes (@NotNull GlobalSearchScope scope, final FileType... fileTypes) {
     LOG.assertTrue(fileTypes.length > 0);
@@ -642,7 +391,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public boolean contains(VirtualFile file) {
       if (!super.contains(file)) return false;
 
-      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+      final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
       for (FileType otherFileType : myFileTypes) {
         if (fileType.equals(otherFileType)) return true;
       }

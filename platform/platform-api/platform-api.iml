@@ -10,6 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="util" exported="" />
     <orderEntry type="module" module-name="extensions" exported="" />
+    <orderEntry type="module" module-name="core-api" exported="" />
     <orderEntry type="library" exported="" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="library" exported="" name="jgoodies-forms" level="project" />

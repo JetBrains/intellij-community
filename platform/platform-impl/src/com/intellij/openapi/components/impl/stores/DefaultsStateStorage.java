@@ -18,6 +18,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jdom.Document;

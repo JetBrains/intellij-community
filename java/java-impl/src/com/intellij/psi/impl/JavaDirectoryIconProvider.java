@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.ide.IconProvider;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -56,7 +57,7 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
       else if (isContentRoot) {
         Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vFile);
         if (module != null) {
-          symbolIcon = module.getModuleType().getNodeIcon(isOpen);
+          symbolIcon = ModuleType.get(module).getNodeIcon(isOpen);
         }
         else {
           symbolIcon = isOpen ? PlatformIcons.CONTENT_ROOT_ICON_OPEN : PlatformIcons.CONTENT_ROOT_ICON_CLOSED;

@@ -102,8 +102,6 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
     try {
       Method listenerMethod = message.getListenerMethod();
-      // Method.invoke must be faster when Method.override is set to true
-      listenerMethod.setAccessible(true);
 
       if (handler == myDefaultHandler) {
         myDefaultHandler.handle(listenerMethod, message.getArgs());

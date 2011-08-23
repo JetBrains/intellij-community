@@ -20,14 +20,13 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -104,11 +103,6 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
     RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, this);
   }
 
-  @Override
-  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable, ModalityState modalityState) {
-    RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, modalityState, this);
-  }
-
   public long getModificationStamp() {
     return myModificationStamp;
   }
@@ -145,7 +139,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
       throw new IOException("Destination already exists: " + newParent.getPath() + "/" + getName());
     }
 
-    VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+    EncodingManager.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
       public VirtualFile compute() throws IOException {
         getFileSystem().moveFile(requestor, NewVirtualFile.this, newParent);
         return NewVirtualFile.this;

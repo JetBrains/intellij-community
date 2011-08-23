@@ -29,7 +29,7 @@ public class FrameworkSupportUtil {
   }
 
   public static List<FrameworkSupportProvider> getProviders(@NotNull Module module) {
-    return getProviders(module.getModuleType(), module);
+    return getProviders(ModuleType.get(module), module);
   }
 
   private static List<FrameworkSupportProvider> getProviders(@NotNull ModuleType moduleType, @Nullable Module module) {

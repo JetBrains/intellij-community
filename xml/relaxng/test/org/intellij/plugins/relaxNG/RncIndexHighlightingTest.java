@@ -45,4 +45,9 @@ public class RncIndexHighlightingTest extends AbstractIndexTest {
   public void testInspectionUsedDefine() throws Throwable {
     doHighlightingTest("used-define.rnc");
   }
+
+  public void testInclude1() throws Throwable {
+    myTestFixture.configureByFiles("include1.rnc", "include1_1.rnc", "include1_2.rnc");
+    doCustomHighlighting(true, false);
+  }
 }

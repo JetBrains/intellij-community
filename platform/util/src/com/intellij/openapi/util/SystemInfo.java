@@ -50,12 +50,12 @@ public class SystemInfo {
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
-  public static final boolean areSymLinksSupported = isUnix;
+  public static final boolean areSymLinksSupported = isUnix ||
+                                                     isWindows && OS_VERSION.compareTo("6.0") >= 0 && isJavaVersionAtLeast("1.7");
 
   public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
   public static final boolean is64Bit = !is32Bit;
   public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
-
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
   public static final String nativeFileManagerName = isMac ? "Finder" : isGnome ? "Nautilus" : isKDE ? "Konqueror" : "Explorer";

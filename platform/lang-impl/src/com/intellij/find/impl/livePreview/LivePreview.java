@@ -250,7 +250,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
       }
       myVisibleAreaListenersToRemove.clear();
       Project project = mySearchResults.getProject();
-      if (!project.isDisposed()) {
+      if (project != null && !project.isDisposed()) {
         for (RangeHighlighter h : myHighlighters) {
           HighlightManager.getInstance(project).removeSegmentHighlighter(editor, h);
         }

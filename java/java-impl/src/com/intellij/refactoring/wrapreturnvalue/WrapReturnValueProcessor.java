@@ -259,7 +259,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
     try {
       final PsiJavaFile psiFile = (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText(className + ".java", classString);
-      final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
       if (myCreateInnerClass) {
         final PsiClass containingClass = method.getContainingClass();
         final PsiElement innerClass = containingClass.add(psiFile.getClasses()[0]);

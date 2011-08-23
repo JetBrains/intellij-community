@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.refactoring.introduceVariable;
 
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
@@ -69,7 +70,7 @@ public class XsltIntroduceVariableAction extends BaseIntroduceAction<IntroduceVa
             assert node1 != null;
             final ASTNode node2 = element.getNode();
             assert node2 != null;
-            xmlTag.getManager().getCodeStyleManager().reformatNewlyAddedElement(node1, node2);
+          CodeStyleManager.getInstance(xmlTag.getManager().getProject()).reformatNewlyAddedElement(node1, node2);
 
             final XPathVariableReference var = XPathChangeUtil.createVariableReference(expression, name);
             expression.replace(var);

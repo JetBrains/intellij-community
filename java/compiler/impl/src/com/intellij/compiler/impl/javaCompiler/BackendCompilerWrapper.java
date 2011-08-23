@@ -60,6 +60,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.Chunk;
 import com.intellij.util.cls.ClsFormatException;
 import gnu.trove.THashMap;
@@ -345,7 +346,7 @@ public class BackendCompilerWrapper {
       return; // should not invoke javac with empty sources list
     }
 
-    ModuleType moduleType = chunk.getModules()[0].getModuleType();
+    ModuleType moduleType = ModuleType.get(chunk.getModules()[0]);
     if (!(chunk.getJdk().getSdkType() instanceof JavaSdkType) &&
         !(moduleType instanceof JavaModuleType || moduleType.createModuleBuilder() instanceof JavaModuleBuilder)) {
       // TODO
@@ -584,7 +585,8 @@ public class BackendCompilerWrapper {
                                     final String packagePrefix, final List<File> filesToRefresh, final Map<String, Collection<TranslatingCompiler.OutputItem>> results) throws CacheCorruptedException {
     final Ref<CacheCorruptedException> exRef = new Ref<CacheCorruptedException>(null);
     final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-    final GlobalSearchScope srcRootScope = GlobalSearchScope.moduleScope(module).intersectWith(GlobalSearchScope.directoryScope(myProject, sourceRoot, true));
+    final GlobalSearchScope srcRootScope = GlobalSearchScope.moduleScope(module).intersectWith(
+        GlobalSearchScopes.directoryScope(myProject, sourceRoot, true));
     
     final ContentIterator contentIterator = new ContentIterator() {
       public boolean processFile(final VirtualFile child) {

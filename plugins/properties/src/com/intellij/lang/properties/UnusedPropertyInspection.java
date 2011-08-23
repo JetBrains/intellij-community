@@ -24,10 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -57,7 +54,7 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
     Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return super.buildVisitor(holder, isOnTheFly, session);
     final GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
-    final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
+    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
     return new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {

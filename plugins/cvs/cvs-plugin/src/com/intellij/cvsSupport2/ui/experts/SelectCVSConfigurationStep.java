@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package com.intellij.cvsSupport2.ui.experts;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.config.ui.SelectCvsConfgurationPanel;
+import com.intellij.cvsSupport2.config.ui.SelectCvsConfigurationPanel;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
@@ -28,28 +29,28 @@ import java.util.Observer;
  * author: lesya
  */
 public class SelectCVSConfigurationStep extends WizardStep{
-  private final SelectCvsConfgurationPanel mySelectCvsConfgurationPanel;
+  private final SelectCvsConfigurationPanel mySelectCvsConfigurationPanel;
   private final Observer myObserver;
 
 
   public SelectCVSConfigurationStep(Project project, CvsWizard wizard) {
-    super(com.intellij.CvsBundle.message("dialog.title.select.cvs.configuration"), wizard);
-    mySelectCvsConfgurationPanel = new SelectCvsConfgurationPanel(project);
+    super(CvsBundle.message("dialog.title.select.cvs.configuration"), wizard);
+    mySelectCvsConfigurationPanel = new SelectCvsConfigurationPanel(project);
     myObserver = new Observer() {
           public void update(Observable o, Object arg) {
             getWizard().updateStep();
           }
         };
-    mySelectCvsConfgurationPanel.getObservable().addObserver(myObserver);
+    mySelectCvsConfigurationPanel.getObservable().addObserver(myObserver);
     init();
   }
 
   protected void dispose() {
-    mySelectCvsConfgurationPanel.getObservable().deleteObserver(myObserver);
+    mySelectCvsConfigurationPanel.getObservable().deleteObserver(myObserver);
   }
 
   public boolean nextIsEnabled() {
-    return mySelectCvsConfgurationPanel.getSelectedConfiguration() != null;
+    return mySelectCvsConfigurationPanel.getSelectedConfiguration() != null;
   }
 
   public boolean setActive() {
@@ -58,17 +59,17 @@ public class SelectCVSConfigurationStep extends WizardStep{
 
   protected JComponent createComponent() {
     JPanel result = new JPanel(new BorderLayout());
-    result.add(mySelectCvsConfgurationPanel, BorderLayout.CENTER);
+    result.add(mySelectCvsConfigurationPanel, BorderLayout.CENTER);
     JPanel buttonPanel = new JPanel(new BorderLayout());
     result.add(buttonPanel, BorderLayout.SOUTH);
     return result;
   }
 
   public CvsRootConfiguration getSelectedConfiguration() {
-    return mySelectCvsConfgurationPanel.getSelectedConfiguration();
+    return mySelectCvsConfigurationPanel.getSelectedConfiguration();
   }
 
   public Component getPreferredFocusedComponent() {
-    return mySelectCvsConfgurationPanel.getJList();
+    return mySelectCvsConfigurationPanel.getJList();
   }
 }

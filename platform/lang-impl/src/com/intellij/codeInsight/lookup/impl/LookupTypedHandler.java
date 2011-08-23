@@ -25,6 +25,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -80,7 +81,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
           AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor, null);
         }
 
-        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, null, modificationStamp);
+        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()), modificationStamp);
 
         final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
         if (completion != null) {

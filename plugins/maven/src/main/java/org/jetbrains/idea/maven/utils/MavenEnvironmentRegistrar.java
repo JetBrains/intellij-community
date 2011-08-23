@@ -42,7 +42,12 @@ public class MavenEnvironmentRegistrar implements ApplicationComponent {
   private void registerFileTypes() {
     // we should not change file types in unit test mode
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    FileTypeManager.getInstance().associateExtension(XmlFileType.INSTANCE, MavenConstants.POM_EXTENSION);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        FileTypeManager.getInstance().associateExtension(XmlFileType.INSTANCE, MavenConstants.POM_EXTENSION);
+      }
+    });
   }
 
   private void registerPathVariable() {

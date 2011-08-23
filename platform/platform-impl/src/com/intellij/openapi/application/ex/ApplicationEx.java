@@ -38,8 +38,6 @@ public interface ApplicationEx extends Application {
    */
   void load(String optionsPath) throws IOException, InvalidDataException;
 
-  boolean isInternal();
-
   @NotNull
   String getName();
 

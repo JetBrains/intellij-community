@@ -19,6 +19,7 @@ package com.intellij.openapi.module.impl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -30,7 +31,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.project.Project;
@@ -40,7 +40,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.StripedLockConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,11 +59,9 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleImpl");
 
   @NotNull private final Project myProject;
-  private ModuleType myModuleType = null;
   private boolean isModuleAdded;
 
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
-  @NonNls public static final String ELEMENT_TYPE = "type";
 
   private final Map<Integer, GlobalSearchScope> myScopeCache = new StripedLockConcurrentHashMap<Integer, GlobalSearchScope>();
 
@@ -74,6 +71,8 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
   private String myName;
+
+  private IModuleStore myComponentStore;
 
   public ModuleImpl(String filePath, Project project) {
     super(project);
@@ -85,16 +84,24 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     init(filePath);
   }
 
-  protected void boostrapPicoContainer() {
+  protected void bootstrapPicoContainer() {
     Extensions.instantiateArea(PluginManager.AREA_IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
-    super.boostrapPicoContainer();
+    super.bootstrapPicoContainer();
     getPicoContainer().registerComponentImplementation(IComponentStore.class, ModuleStoreImpl.class);
     getPicoContainer().registerComponentImplementation(ModulePathMacroManager.class);
   }
 
   @NotNull
-  public IModuleStore getStateStore() {
-    return (IModuleStore)super.getStateStore();
+  public synchronized IModuleStore getStateStore() {
+    if (myComponentStore == null) {
+      myComponentStore = (IModuleStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+    }
+    return myComponentStore;
+  }
+
+  @Override
+  public void initializeComponent(Object component, boolean service) {
+    getStateStore().initComponent(component, service);
   }
 
   private void init(String filePath) {
@@ -168,6 +175,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     isModuleAdded = false;
     disposeComponents();
     Extensions.disposeArea(this);
+    myComponentStore = null;
     super.dispose();
   }
 
@@ -198,12 +206,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   @NotNull
-  public ModuleType getModuleType() {
-    LOG.assertTrue(myModuleType != null, "Module type not initialized yet");
-    return myModuleType;
-  }
-
-  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -222,11 +224,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     for (ModuleComponent component : getComponents(ModuleComponent.class)) {
       component.moduleAdded();
     }
-  }
-
-  public void setModuleType(ModuleType type) {
-    myModuleType = type;
-    setOption(ELEMENT_TYPE, type.getId());
   }
 
   public void setOption(@NotNull String optionName, @NotNull String optionValue) {
@@ -307,6 +304,11 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
+  }
+
+  @Override
+  protected boolean logSlowComponents() {
+    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
   }
 
   private class MyVirtualFileListener extends VirtualFileAdapter {

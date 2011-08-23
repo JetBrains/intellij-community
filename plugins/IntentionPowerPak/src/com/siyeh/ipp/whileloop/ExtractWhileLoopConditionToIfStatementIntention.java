@@ -70,7 +70,7 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
         } else {
             return;
         }
-        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
         codeStyleManager.reformat(newElement);
     }
 }

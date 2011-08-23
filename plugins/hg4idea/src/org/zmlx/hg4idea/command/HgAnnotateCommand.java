@@ -22,6 +22,7 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationLine;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,7 +30,7 @@ import java.util.regex.Pattern;
 public class HgAnnotateCommand {
 
   private static final Pattern LINE_PATTERN = Pattern.compile(
-    "(.+)\\s+([0-9]+)\\s+([0-9a-f]+)\\s+([0-9]{4}-[0-9]{2}-[0-9]{2}):([0-9]+):\\s(.*)"
+    "\\s*(.+)\\s+([0-9]+)\\s+([0-9a-fA-F]+)\\s+([0-9]{4}-[0-9]{2}-[0-9]{2}):\\s*([0-9]+):\\s(.*)"
   );
 
   private static final int USER_GROUP = 1;
@@ -39,10 +40,10 @@ public class HgAnnotateCommand {
   private static final int LINE_NUMBER_GROUP = 5;
   private static final int CONTENT_GROUP = 6;
 
-  private final Project project;
+  private final Project myProject;
 
   public HgAnnotateCommand(Project project) {
-    this.project = project;
+    myProject = project;
   }
 
   public List<HgAnnotationLine> execute(@NotNull HgFile hgFile, VcsFileRevision revision) {
@@ -54,14 +55,19 @@ public class HgAnnotateCommand {
       arguments.add(revisionNumber.getChangeset());
     }
     arguments.add(hgFile.getRelativePath());
-    final HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(hgFile.getRepo(), "annotate", arguments);
+    final HgCommandResult result = new HgCommandExecutor(myProject).executeInCurrentThread(hgFile.getRepo(), "annotate", arguments);
 
-    final List<HgAnnotationLine> annotations = new ArrayList<HgAnnotationLine>();
     if (result == null) {
-      return annotations;
+      return Collections.emptyList();
     }
 
-    for (String line : result.getOutputLines()) {
+    List<String> outputLines = result.getOutputLines();
+    return parse(outputLines);
+  }
+
+  private static List<HgAnnotationLine> parse(List<String> outputLines) {
+    List<HgAnnotationLine> annotations = new ArrayList<HgAnnotationLine>(outputLines.size());
+    for (String line : outputLines) {
       Matcher matcher = LINE_PATTERN.matcher(line);
       if (matcher.matches()) {
         String user = matcher.group(USER_GROUP);

@@ -38,4 +38,20 @@ public class HgAnnotationLine {
     return fields.get(field);
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (!(obj instanceof HgAnnotationLine)) {
+      return false;
+    }
+    HgAnnotationLine other = (HgAnnotationLine) obj;
+    return fields.equals(other.fields);
+  }
+
+  @Override
+  public int hashCode() {
+    return fields.hashCode();
+  }
 }

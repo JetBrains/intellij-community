@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -74,7 +75,7 @@ public class OrderEntryCellAppearanceUtils {
       return new SimpleTextCellAppearance(presentableName, icon, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
     }
     else if (orderEntry instanceof ModuleOrderEntry) {
-      final Icon icon = ((ModuleOrderEntry)orderEntry).getModule().getModuleType().getNodeIcon(false);
+      final Icon icon = ModuleType.get(((ModuleOrderEntry)orderEntry).getModule()).getNodeIcon(false);
       return SimpleTextCellAppearance.normal(orderEntry.getPresentableName(), icon);
     }
     else return CompositeAppearance.single(orderEntry.getPresentableName());
@@ -158,7 +159,7 @@ public class OrderEntryCellAppearanceUtils {
   }
 
   public static CellAppearance forModule(Module module) {
-    return SimpleTextCellAppearance.normal(module.getName(), module.getModuleType().getNodeIcon(false));
+    return SimpleTextCellAppearance.normal(module.getName(), ModuleType.get(module).getNodeIcon(false));
   }
 
   public static CellAppearance forContentEntry(ContentEntry contentEntry) {

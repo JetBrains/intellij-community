@@ -20,26 +20,30 @@
             <properties/>
             <border type="none"/>
             <children>
-              <grid id="f2b31" layout-manager="BorderLayout" hgap="0" vgap="0">
+              <grid id="f2b31" layout-manager="BorderLayout" hgap="0" vgap="3">
                 <constraints border-constraint="Center"/>
                 <properties/>
-                <border type="none"/>
+                <border type="empty">
+                  <size top="1" left="0" bottom="0" right="0"/>
+                </border>
                 <children>
                   <grid id="b2cb3" layout-manager="BorderLayout" hgap="0" vgap="0">
-                    <constraints border-constraint="North"/>
+                    <constraints border-constraint="Center"/>
                     <properties/>
                     <border type="none"/>
                     <children>
                       <component id="44ee8" class="com.intellij.ui.HyperlinkLabel$Croppable" binding="myInfoLabel">
                         <constraints border-constraint="West"/>
+                        <properties/>
                       </component>
                       <component id="3f648" class="com.intellij.ui.HyperlinkLabel$Croppable" binding="myDisableLink">
                         <constraints border-constraint="Center"/>
+                        <properties/>
                       </component>
                     </children>
                   </grid>
-                  <grid id="a2fe0" layout-manager="BorderLayout" hgap="0" vgap="0">
-                    <constraints border-constraint="Center"/>
+                  <grid id="a2fe0" binding="myForeignPluginWarningPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints border-constraint="South"/>
                     <properties/>
                     <border type="none"/>
                     <children>
@@ -80,28 +84,11 @@
               </grid>
             </children>
           </grid>
-          <grid id="3e6fb" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+          <grid id="3e6fb" binding="myTabsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints border-constraint="Center"/>
             <properties/>
             <border type="none"/>
-            <children>
-              <grid id="e8f39" binding="myTabsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-                <border type="none">
-                  <size top="5" left="0" bottom="0" right="0"/>
-                </border>
-                <children/>
-              </grid>
-              <hspacer id="2b69d">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-              </hspacer>
-            </children>
+            <children/>
           </grid>
           <grid id="3eb3d" binding="myCredentialsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints border-constraint="South"/>

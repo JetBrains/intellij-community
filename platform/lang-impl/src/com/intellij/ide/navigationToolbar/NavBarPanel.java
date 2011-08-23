@@ -444,7 +444,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     else if (object instanceof Project) {
       return;
     }
-    hideHint();
+    hideHint(true);
   }
 
   private void ctrlClick(final int index) {
@@ -521,16 +521,25 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   void cancelPopup() {
+    cancelPopup(false);
+  }
+
+
+  void cancelPopup(boolean ok) {
     if (myNodePopup != null) {
-      myNodePopup.hide();
+      myNodePopup.hide(ok);
       myNodePopup = null;
     }
   }
 
   void hideHint() {
-    cancelPopup();
+    hideHint(false);
+  }
+
+  void hideHint(boolean ok) {
+    cancelPopup(ok);
     if (myHint != null) {
-      myHint.hide();
+      myHint.hide(ok);
       myHint = null;
     }
   }

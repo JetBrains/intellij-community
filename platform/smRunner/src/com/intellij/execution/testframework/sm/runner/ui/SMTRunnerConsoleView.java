@@ -17,9 +17,6 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
@@ -27,7 +24,6 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,27 +105,5 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
 
   public SMTestRunnerResultsForm getResultsViewer() {
     return myResultsViewer;
-  }
-
-  public void attachToProcess(final ProcessHandler processHandler) {
-    super.attachToProcess(processHandler);
-    if (processHandler == null) {
-      return;
-    }
-    processHandler.addProcessListener(new ProcessListener() {
-      @Override
-      public void startNotified(ProcessEvent event) {}
-
-      @Override
-      public void processTerminated(ProcessEvent event) {
-        myResultsViewer.onFinish();
-      }
-
-      @Override
-      public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {}
-
-      @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {}
-    });
   }
 }

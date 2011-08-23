@@ -37,7 +37,7 @@ import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
@@ -136,7 +136,7 @@ public class CommitHelper {
               text += ", " + failed + " " + StringUtil.pluralize("change", failed) + " failed to commit";
             }
             String content = StringUtil.isEmpty(myCommitMessage) ? text : text + ": " + myCommitMessage;
-            AbstractCommonUpdateAction.NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION).notify( myProject);
+            VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION).notify( myProject);
             return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
           }
         };

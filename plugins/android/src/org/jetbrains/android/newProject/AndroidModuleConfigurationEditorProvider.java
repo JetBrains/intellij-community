@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.newProject;
 
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
@@ -35,7 +36,7 @@ import java.util.ArrayList;
 public class AndroidModuleConfigurationEditorProvider implements ModuleConfigurationEditorProvider {
   public ModuleConfigurationEditor[] createEditors(ModuleConfigurationState state) {
     final Module module = state.getRootModel().getModule();
-    if (module.getModuleType() != AndroidModuleType.getInstance()) {
+    if (ModuleType.get(module) != AndroidModuleType.getInstance()) {
       return ModuleConfigurationEditor.EMPTY;
     }
 

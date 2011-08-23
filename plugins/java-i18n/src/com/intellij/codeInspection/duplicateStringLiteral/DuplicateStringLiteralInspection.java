@@ -100,7 +100,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     final String stringToFind = (String)value;
     if (stringToFind.length() == 0) return;
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(originalExpression.getProject());
-    final PsiSearchHelper searchHelper = holder.getFile().getManager().getSearchHelper();
+    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(holder.getFile().getProject());
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.isEmpty()) return;
     // put longer strings first

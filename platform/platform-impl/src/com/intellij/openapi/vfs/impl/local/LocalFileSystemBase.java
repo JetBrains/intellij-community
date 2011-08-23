@@ -20,11 +20,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.SymLinkUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -51,20 +54,20 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public VirtualFile findFileByPath(@NotNull String path) {
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
-    return super.findFileByPath(canonicalPath);
+    return VfsImplUtil.findFileByPath(this, path);
   }
 
   public VirtualFile findFileByPathIfCached(@NotNull String path) {
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
-    return super.findFileByPathIfCached(canonicalPath);
+    return VfsImplUtil.findFileByPathIfCached(this, canonicalPath);
   }
 
   @Nullable
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
-    return super.refreshAndFindFileByPath(canonicalPath);
+    return VfsImplUtil.refreshAndFindFileByPath(this, canonicalPath);
   }
 
   public VirtualFile findFileByIoFile(File file) {
@@ -168,22 +171,21 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    File ioFile = convertToIOFile(file);
-    if (file.isSymLink() && isRecursiveSymLink(ioFile)) {
+    if (isInvalidSymLink(file)) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
+    final File ioFile = convertToIOFile(file);
     final String[] names = ioFile.list();
     return names != null ? names : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  protected static boolean isRecursiveSymLink(File ioFile) {
-    try {
-      if (FileUtil.isAncestor(ioFile.getCanonicalFile(), ioFile, true)) return true;
-    }
-    catch (IOException ignore) {
-    }
-    return false;
+  protected static boolean isInvalidSymLink(@NotNull final VirtualFile file) {
+    if (!file.isSymLink()) return false;
+    final VirtualFile realFile = file.getRealFile();
+    return realFile == null ||
+           realFile == file ||
+           FileUtil.isAncestor(convertToIOFile(realFile), convertToIOFile(file), true);
   }
 
   @NotNull
@@ -406,7 +408,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
-    return FileUtil.loadFileBytes(convertToIOFile(file));
+      FileInputStream stream = new FileInputStream(convertToIOFile(file));
+      try {
+        return FileUtil.loadBytes(stream, (int)file.getLength());
+      }
+      finally {
+        stream.close();
+      }
   }
 
   @NotNull
@@ -602,5 +610,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     catch (IOException e) {
       return originalFileName;
     }
+  }
+
+  public void refresh(final boolean asynchronous) {
+    RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
   }
 }

@@ -22,11 +22,15 @@ package com.intellij.openapi.vfs.ex.temp;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -212,6 +216,25 @@ public class TempFileSystem extends NewVirtualFileSystem {
         setTimeStamp(file, modStamp);
       }
     };
+  }
+
+  public void refresh(final boolean asynchronous) {
+    RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
+  }
+
+  @Override
+  public VirtualFile findFileByPath(@NotNull @NonNls String path) {
+    return VfsImplUtil.findFileByPath(this, path);
+  }
+
+  @Override
+  public VirtualFile findFileByPathIfCached(@NotNull @NonNls String path) {
+    return VfsImplUtil.findFileByPathIfCached(this, path);
+  }
+
+  @Override
+  public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
+    return VfsImplUtil.refreshAndFindFileByPath(this, path);
   }
 
   public long getLength(@NotNull final VirtualFile file) {

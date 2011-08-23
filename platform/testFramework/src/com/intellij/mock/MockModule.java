@@ -4,7 +4,6 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -55,12 +54,6 @@ public class MockModule extends MockComponentManager implements Module {
   @Override
   public GlobalSearchScope getModuleTestsWithDependentsScope() {
     return new MockGlobalSearchScope();
-  }
-
-  @Override
-  @NotNull
-  public ModuleType getModuleType() {
-    throw new UnsupportedOperationException("Method getModuleType is not yet implemented in " + getClass().getName());
   }
 
   @Override

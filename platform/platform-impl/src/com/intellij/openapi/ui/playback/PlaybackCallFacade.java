@@ -15,17 +15,20 @@
  */
 package com.intellij.openapi.ui.playback;
 
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.UiActivityMonitor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -44,12 +47,9 @@ public class PlaybackCallFacade {
   public static AsyncResult<String> openProjectClone(final PlaybackContext context, String path) {
     try {
       File parentDir = FileUtil.createTempDirectory("funcTest", "");
-      File sourceDir = new File(path);
-      if (!sourceDir.isAbsolute()) {
-        sourceDir = new File(System.getProperty("work.dir"), path);
-      }
+      File sourceDir = getFile(context.getCurrentCmd().getBaseDir(), path);
       
-      FileUtil.copyDir(sourceDir, parentDir);
+      FileUtil.copyDir(sourceDir, parentDir);     
       File projectDir = new File(parentDir, sourceDir.getName());
       return openProject(context, projectDir.getAbsolutePath());
     }
@@ -57,7 +57,11 @@ public class PlaybackCallFacade {
       return new AsyncResult.Rejected<String>("Cannot create temp directory for clone");
     }
   }
-  
+
+  public static AsyncResult<String> openLastProject(final PlaybackContext context) {
+    return openProject(context, RecentProjectsManagerBase.getInstance().getLastProjectPath());
+  }
+
   public static AsyncResult<String> openProject(final PlaybackContext context, String path) {
     final AsyncResult<String> result = new AsyncResult<String>();
     final ProjectManager pm = ProjectManager.getInstance();
@@ -69,7 +73,12 @@ public class PlaybackCallFacade {
           @Override
           public void run() {
             pm.removeProjectManagerListener(listener.get());
-            result.setDone("opened successfully: " + project.getProjectFilePath());
+            DumbService.getInstance(project).runWhenSmart(new Runnable() {
+              @Override
+              public void run() {
+                result.setDone("opened successfully: " + project.getProjectFilePath());
+              }
+            });
           }
         });
       }
@@ -87,10 +96,16 @@ public class PlaybackCallFacade {
     return result;
   }
 
+  public static AsyncResult<String> flushUiActivity(PlaybackContext context) {
+    AsyncResult<String> result = new AsyncResult<String>();
+    getActivityReady(context).notify(result);
+    return result;
+  }
+
   public static AsyncResult<String> printFocus(final PlaybackContext context) {
     final AsyncResult result = new AsyncResult<String>();
 
-    UiActivityMonitor.getInstance().getBusy().getReady(context).doWhenProcessed(new Runnable() {
+    getActivityReady(context).doWhenProcessed(new Runnable() {
       @Override
       public void run() {
         final LinkedHashMap<String, String> focusInfo = getFocusInfo();
@@ -131,7 +146,7 @@ public class PlaybackCallFacade {
       }
     }
 
-    UiActivityMonitor.getInstance().getBusy().getReady(context).doWhenDone(new Runnable() {
+    getActivityReady(context).doWhenDone(new Runnable() {
       @Override
       public void run() {
         try {
@@ -144,6 +159,10 @@ public class PlaybackCallFacade {
     });
 
     return result;
+  }
+
+  private static ActionCallback getActivityReady(PlaybackContext context) {
+    return UiActivityMonitor.getInstance().getBusy().getReady(context);
   }
 
   private static void doAssert(Map<String, String> expected, AsyncResult<String> result, PlaybackContext context) throws AssertionError {
@@ -206,4 +225,13 @@ public class PlaybackCallFacade {
     }
     return actual;
   }
+
+  public static File getFile(File baseDir, String path) {
+    File sourceDir = new File(path);
+    if (!sourceDir.isAbsolute()) {
+      sourceDir = new File(baseDir, path);
+    }
+    return sourceDir;
+  }
+
 }

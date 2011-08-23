@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
@@ -71,7 +71,8 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   }
 
   public static void processValues(VirtualFile virtualFile, FileBasedIndex.ValueProcessor<ImageInfo> processor, Project project) {
-    FileBasedIndex.getInstance().processValues(INDEX_ID, Math.abs(FileBasedIndex.getFileId(virtualFile)), virtualFile, processor, GlobalSearchScope.fileScope(project, virtualFile));
+    FileBasedIndex.getInstance().processValues(INDEX_ID, Math.abs(FileBasedIndex.getFileId(virtualFile)), virtualFile, processor, GlobalSearchScopes
+        .fileScope(project, virtualFile));
   }
 
   public DataExternalizer<ImageInfo> getValueExternalizer() {

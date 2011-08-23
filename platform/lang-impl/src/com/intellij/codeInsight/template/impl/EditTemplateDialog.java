@@ -88,7 +88,7 @@ public class EditTemplateDialog extends DialogWrapper {
     myKeyField=new JTextField();
     myDescription=new JTextField();
     myGroupCombo=new ComboBox(-1);
-    myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString());
+    myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString(), context);
 
     init();
     reset();

@@ -17,10 +17,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.PathMacroSubstitutor;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -68,12 +65,12 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public void load() throws IOException, StateStorage.StateStorageException {
+  public void load() throws IOException, StateStorageException {
     super.load();
 
     final ModuleFileData storageData = getMainStorageData();
     final String moduleTypeId = storageData.myOptions.get(ModuleImpl.ELEMENT_TYPE);
-    myModule.setModuleType(ModuleTypeManager.getInstance().findByID(moduleTypeId));
+    myModule.setOption(Module.ELEMENT_TYPE, ModuleTypeManager.getInstance().findByID(moduleTypeId).getId());
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) return;
 
@@ -92,7 +89,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
   }
 
-  public ModuleFileData getMainStorageData() throws StateStorage.StateStorageException {
+  public ModuleFileData getMainStorageData() throws StateStorageException {
     return (ModuleFileData)super.getMainStorageData();
   }
 
@@ -208,7 +205,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     try {
       getMainStorageData().setOption(optionName,  optionValue);
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (StateStorageException e) {
       LOG.error(e);
     }
   }
@@ -217,7 +214,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     try {
       getMainStorageData().clearOption(optionName);
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (StateStorageException e) {
       LOG.error(e);
     }
   }
@@ -226,7 +223,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     try {
       return getMainStorageData().getOptionValue(optionName);
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (StateStorageException e) {
       LOG.error(e);
       return null;
     }

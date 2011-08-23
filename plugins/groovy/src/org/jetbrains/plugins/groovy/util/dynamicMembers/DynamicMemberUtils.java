@@ -112,7 +112,7 @@ public class DynamicMemberUtils {
 
       int i = 0;
       for (PsiField field : fields) {
-        PsiField dynamicField = new MyGrDynamicPropertyImpl(null, (GrField)field, null, classSource);
+        PsiField dynamicField = new MyGrDynamicPropertyImpl(psiClass, (GrField)field, null, classSource);
         PsiField[] dynamicFieldArray = new PsiField[]{dynamicField};
 
         if (field.hasModifierProperty(PsiModifier.STATIC)) {
@@ -241,8 +241,9 @@ public class DynamicMemberUtils {
     return element instanceof DynamicElement && classSource.equals(((DynamicElement)element).getSource());
   }
 
-  private interface DynamicElement {
+  public interface DynamicElement {
     String getSource();
+    PsiClass getSourceClass();
   }
 
   private static class GrDynamicMethodWithCache extends GrDynamicMethodImpl implements DynamicElement {
@@ -293,19 +294,31 @@ public class DynamicMemberUtils {
     public String getSource() {
       return mySource;
     }
+
+    @Override
+    public PsiClass getSourceClass() {
+      return myMethod.getContainingClass();
+    }
   }
 
   private static class MyGrDynamicPropertyImpl extends GrDynamicPropertyImpl implements DynamicElement {
     private final String mySource;
-
+    private final PsiClass myClass;
+    
     private MyGrDynamicPropertyImpl(PsiClass containingClass, GrField field, PsiElement navigationalElement, String source) {
-      super(containingClass, field, navigationalElement);
+      super(null, field, navigationalElement);
+      myClass = containingClass;
       mySource = source;
     }
 
     @Override
     public String getSource() {
       return mySource;
+    }
+
+    @Override
+    public PsiClass getSourceClass() {
+      return myClass;
     }
   }
 }

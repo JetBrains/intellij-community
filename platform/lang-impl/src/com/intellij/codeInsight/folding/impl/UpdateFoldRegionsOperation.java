@@ -141,6 +141,10 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean shouldExpandNewRegion(PsiElement element, TextRange range, Map<TextRange, Boolean> rangeToExpandStatusMap) {
+    if (myApplyDefaultState) {
+      // Considering that this code is executed only on initial fold regions construction on editor opening.
+      return !FoldingPolicy.isCollapseByDefault(element);
+    }
     boolean caretInside;
     if (myEditor.getUserData(ALLOW_FOLDING_ON_CARET_LINE_KEY) == Boolean.TRUE) {
       caretInside = FoldingUtil.caretInsideRange(myEditor, range);
@@ -155,10 +159,6 @@ class UpdateFoldRegionsOperation implements Runnable {
       }
       final int currentLine = document.getLineNumber(caretOffset);
       caretInside = firstLine <= currentLine && currentLine <= lastLine;
-    }
-
-    if (myApplyDefaultState) {
-      return caretInside || !FoldingPolicy.isCollapseByDefault(element);
     }
 
     final Boolean oldStatus = rangeToExpandStatusMap.get(range);

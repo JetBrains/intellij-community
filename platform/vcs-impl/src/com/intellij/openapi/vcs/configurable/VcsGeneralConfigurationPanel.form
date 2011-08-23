@@ -13,86 +13,16 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <grid id="e714c" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <grid id="aa6eb" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="2c789" class="javax.swing.JCheckBox" binding="myCbOfferToMoveChanges">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/VcsBundle" key="checkbox.changelist.move.offer"/>
-                </properties>
-              </component>
-              <component id="5f121" class="javax.swing.JCheckBox" binding="myForceNonEmptyComment">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/VcsBundle" key="checkbox.force.non.empty.messages"/>
-                </properties>
-              </component>
-              <component id="9ee4d" class="javax.swing.JCheckBox" binding="myShowReadOnlyStatusDialog">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/VcsBundle" key="checkbox.show.clear.read.only.status.dialog"/>
-                </properties>
-              </component>
-              <grid id="da366" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
-                <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-                <border type="none"/>
-                <children>
-                  <component id="d6cff" class="javax.swing.JLabel">
-                    <constraints/>
-                    <properties>
-                      <labelFor value="c8cb8"/>
-                      <text resource-bundle="messages/VcsBundle" key="create.changelist.on.failed.commit"/>
-                    </properties>
-                  </component>
-                  <component id="c8cb8" class="javax.swing.JComboBox" binding="myFailedCommitChangelistCombo" default-binding="true">
-                    <constraints/>
-                    <properties>
-                      <model>
-                        <item value="Yes"/>
-                        <item value="No"/>
-                        <item value="Ask"/>
-                      </model>
-                    </properties>
-                  </component>
-                </children>
-              </grid>
-            </children>
-          </grid>
-        </children>
-      </grid>
       <grid id="4ec1c" binding="myAddConfirmationPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
+        </clientProperties>
         <border type="etched" title="When files are created"/>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
-</clientProperties>
         <children>
           <component id="61373" class="javax.swing.JRadioButton" binding="myShowDialogOnAddingFile">
             <constraints>
@@ -127,10 +57,10 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
+        </clientProperties>
         <border type="etched" title="When empty changelist becomes inactive"/>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
-</clientProperties>
         <children>
           <component id="7b546" class="javax.swing.JRadioButton">
             <constraints>
@@ -165,10 +95,10 @@
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
+        </clientProperties>
         <border type="etched" title="When files are deleted"/>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
-</clientProperties>
         <children>
           <component id="1256b" class="javax.swing.JRadioButton" binding="myShowDialogOnRemovingFile">
             <constraints>
@@ -209,10 +139,10 @@
           </grid>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
+        </clientProperties>
         <border type="etched" title-resource-bundle="messages/VcsBundle" title-key="border.display.dialog.when.commands.invoked"/>
-<clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
-</clientProperties>
         <children/>
       </grid>
       <hspacer id="308c6">
@@ -220,6 +150,66 @@
           <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
       </hspacer>
+      <grid id="aa6eb" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="2c789" class="javax.swing.JCheckBox" binding="myCbOfferToMoveChanges">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/VcsBundle" key="checkbox.changelist.move.offer"/>
+            </properties>
+          </component>
+          <component id="5f121" class="javax.swing.JCheckBox" binding="myForceNonEmptyComment">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/VcsBundle" key="checkbox.force.non.empty.messages"/>
+            </properties>
+          </component>
+          <component id="9ee4d" class="javax.swing.JCheckBox" binding="myShowReadOnlyStatusDialog">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/VcsBundle" key="checkbox.show.clear.read.only.status.dialog"/>
+            </properties>
+          </component>
+          <grid id="da366" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="d6cff" class="javax.swing.JLabel">
+                <constraints/>
+                <properties>
+                  <labelFor value="c8cb8"/>
+                  <text resource-bundle="messages/VcsBundle" key="create.changelist.on.failed.commit"/>
+                </properties>
+              </component>
+              <component id="c8cb8" class="javax.swing.JComboBox" binding="myFailedCommitChangelistCombo" default-binding="true">
+                <constraints/>
+                <properties>
+                  <model>
+                    <item value="Yes"/>
+                    <item value="No"/>
+                    <item value="Ask"/>
+                  </model>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
     </children>
   </grid>
   <buttonGroups>

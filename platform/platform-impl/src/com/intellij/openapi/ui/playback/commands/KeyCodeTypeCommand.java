@@ -16,14 +16,12 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.TypingTarget;
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.List;
 import java.util.*;
 
 public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
@@ -37,7 +35,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
   }
 
   @Override
-  public ActionCallback _execute(final PlaybackRunner.StatusCallback cb, final Robot robot, boolean directActionCall) {
+  public ActionCallback _execute(final PlaybackContext context) {
     String text = getText().substring(PREFIX.length()).trim();
 
     int textDelim = text.indexOf(" ");
@@ -66,11 +64,11 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
         }
       }).doWhenRejected(new Runnable() {
         public void run() {
-          typeCodes(cb, robot, codes).notify(result);
+          typeCodes(context.getCallback(), context.getRobot(), codes).notify(result);
         }
       });
     } else {
-      typeCodes(cb, robot, codes).notify(result);
+      typeCodes(context.getCallback(), context.getRobot(), codes).notify(result);
     }
 
     return result;

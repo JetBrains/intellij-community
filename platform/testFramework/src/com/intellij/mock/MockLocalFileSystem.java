@@ -186,6 +186,11 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
+  public VirtualFile findFileByPathIfCached(@NotNull @NonNls String path) {
+    return findFileByPath(path);
+  }
+
+  @Override
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     return false;
   }

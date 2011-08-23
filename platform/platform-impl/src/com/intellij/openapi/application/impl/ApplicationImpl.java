@@ -29,7 +29,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.*;
@@ -62,6 +62,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +85,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
+
+  private IApplicationStore myComponentStore;
 
   private boolean myTestModeFlag;
   private final boolean myHeadlessMode;
@@ -162,16 +165,23 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   };
 
-  protected void boostrapPicoContainer() {
-    super.boostrapPicoContainer();
+  protected void bootstrapPicoContainer() {
+    super.bootstrapPicoContainer();
     getPicoContainer().registerComponentImplementation(IComponentStore.class, StoresFactory.getApplicationStoreClass());
     getPicoContainer().registerComponentImplementation(ApplicationPathMacroManager.class);
   }
 
-  @Override
   @NotNull
   public synchronized IApplicationStore getStateStore() {
-    return (IApplicationStore)super.getStateStore();
+    if (myComponentStore == null) {
+      myComponentStore = (IApplicationStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+    }
+    return myComponentStore;
+  }
+
+  @Override
+  public void initializeComponent(Object component, boolean service) {
+    getStateStore().initComponent(component, service);
   }
 
   public ApplicationImpl(boolean isInternal,
@@ -494,13 +504,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     loadComponentRoamingTypes();
 
+    HeavyProcessLatch.INSTANCE.processStarted();
     try {
       getStateStore().load();
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (StateStorageException e) {
       throw new IOException(e.getMessage());
     }
-
+    finally {
+      HeavyProcessLatch.INSTANCE.processFinished();
+    }
   }
 
   @Override
@@ -550,6 +563,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     disposeComponents();
 
     ourThreadExecutorsService.shutdownNow();
+    myComponentStore = null;
     super.dispose();
   }
 
@@ -834,7 +848,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void runReadAction(@NotNull final Runnable action) {
-    final AccessToken token = acquireReadActionLock();
+    final AccessToken token = acquireReadActionLockImpl(false);
 
     try {
       action.run();
@@ -862,7 +876,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public <T> T runReadAction(@NotNull final Computable<T> computation) {
-    final AccessToken token = acquireReadActionLock();
+    final AccessToken token = acquireReadActionLockImpl(false);
 
     try {
       return computation.compute();
@@ -1071,11 +1085,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public AccessToken acquireReadActionLock() {
+    return acquireReadActionLockImpl(true);
+  }
+
+  private AccessToken acquireReadActionLockImpl(boolean explicit) {
     /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
      * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */
     if (isReadAccessAllowed()) return AccessToken.EMPTY_ACCESS_TOKEN;
 
-    return new ReadAccessToken();
+    return new ReadAccessToken(explicit);
   }
 
   @Override
@@ -1143,11 +1161,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private class ReadAccessToken extends AccessToken {
-    ReadAccessToken() {
+    private final boolean myExplicit;
+
+    ReadAccessToken(boolean explicit) {
+      myExplicit = explicit;
       LOG.assertTrue(!Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
       try {
         myActionsLock.readLock().acquire();
-        acquired();
+        if (myExplicit) acquired();
       }
       catch (InterruptedException e) {
         throw new RuntimeInterruptedException(e);
@@ -1157,7 +1178,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     @Override
     public void finish() {
       myActionsLock.readLock().release();
-      released();
+      if (myExplicit) released();
     }
   }
 
@@ -1210,7 +1231,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void _saveSettings() { // public for testing purposes
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
-        doSave();
+        StoreUtil.doSave(getStateStore());
       }
       catch (final Throwable ex) {
         if (isUnitTestMode()) {
@@ -1313,6 +1334,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     return false;
+  }
+
+  @Override
+  protected boolean logSlowComponents() {
+    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
   }
 
   @Override

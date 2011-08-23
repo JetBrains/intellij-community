@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -72,7 +73,7 @@ public class CreateTemplateFix extends AbstractFix {
         // the start tag of the newly created tag
         final XmlTag dummy1 = (XmlTag)parentTag.addAfter(XmlElementFactory.getInstance(project).createTagFromText(DUMMY_TAG, XMLLanguage.INSTANCE), tag);
         templateTag = (XmlTag)parentTag.addAfter(templateTag, dummy1);
-        templateTag = (XmlTag)tag.getManager().getCodeStyleManager().reformat(templateTag);
+      templateTag = (XmlTag)CodeStyleManager.getInstance(tag.getManager().getProject()).reformat(templateTag);
 
         final XmlTag dummy2 = templateTag.findFirstSubTag("dummy");
 

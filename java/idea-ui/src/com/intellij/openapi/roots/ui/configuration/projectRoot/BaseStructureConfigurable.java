@@ -368,12 +368,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
           if (object instanceof MyNode) {
             final NamedConfigurable namedConfigurable = ((MyNode)object).getConfigurable();
             if (namedConfigurable != null) {
-              final Object editableObject = namedConfigurable.getEditableObject();
-              if (editableObject instanceof Sdk || editableObject instanceof Module || editableObject instanceof Facet || editableObject instanceof Artifact) return true;
-              if (editableObject instanceof Library) {
-                final LibraryTable table = ((Library)editableObject).getTable();
-                return table == null || table.isEditable();
-              }
+              return canBeRemoved(namedConfigurable.getEditableObject());
             }
           }
           return false;
@@ -402,23 +397,43 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       final MyNode node = (MyNode)last;
       final NamedConfigurable configurable = node.getConfigurable();
       final Object editableObject = configurable.getEditableObject();
-      if (editableObject instanceof Sdk) {
-        removeJdk((Sdk)editableObject);
-      }
-      else if (editableObject instanceof Module) {
-        if (!removeModule((Module)editableObject)) return false;
-      }
-      else if (editableObject instanceof Facet) {
-        if (removeFacet((Facet)editableObject).isEmpty()) return false;
-      }
-      else if (editableObject instanceof Library) {
-        if (!removeLibrary((Library)editableObject)) return false;
-      }
-      else if (editableObject instanceof Artifact) {
-        removeArtifact((Artifact)editableObject);
-      }
+
+      return removeObject(editableObject);
+    }
+  }
+
+  protected boolean canBeRemoved(final Object editableObject) {
+    if (editableObject instanceof Sdk ||
+        editableObject instanceof Module ||
+        editableObject instanceof Facet ||
+        editableObject instanceof Artifact) {
       return true;
     }
+    if (editableObject instanceof Library) {
+      final LibraryTable table = ((Library)editableObject).getTable();
+      return table == null || table.isEditable();
+    }
+    return false;
+  }
+
+  protected boolean removeObject(final Object editableObject) {
+    // todo keep only removeModule() and removeFacet() here because other removeXXX() are empty here and overridden in subclasses? Override removeObject() instead?
+    if (editableObject instanceof Sdk) {
+      removeJdk((Sdk)editableObject);
+    }
+    else if (editableObject instanceof Module) {
+      if (!removeModule((Module)editableObject)) return false;
+    }
+    else if (editableObject instanceof Facet) {
+      if (removeFacet((Facet)editableObject).isEmpty()) return false;
+    }
+    else if (editableObject instanceof Library) {
+      if (!removeLibrary((Library)editableObject)) return false;
+    }
+    else if (editableObject instanceof Artifact) {
+      removeArtifact((Artifact)editableObject);
+    }
+    return true;
   }
 
   protected void removeArtifact(Artifact artifact) {

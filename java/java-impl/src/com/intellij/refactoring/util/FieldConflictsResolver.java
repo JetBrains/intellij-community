@@ -142,7 +142,7 @@ public class FieldConflictsResolver {
       expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("A." + member.getName(), null);
       expressionFromText.setQualifierExpression(factory.createReferenceExpression(qualifyingClass));
     }
-    CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
     expressionFromText = (PsiReferenceExpression)codeStyleManager.reformat(expressionFromText);
     return (PsiReferenceExpression)referenceExpression.replace(expressionFromText);
   }

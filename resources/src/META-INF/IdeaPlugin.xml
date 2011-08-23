@@ -193,8 +193,10 @@
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="javaTrue" order="last"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
 
-    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.BasicToClassNameDelegator" id="basic2ClassName"
-                            order="first, before javaMemberName, after xml"/>
+    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaBasicToClassNameDelegator" id="javaBasic2ClassName"
+                            order="first, before javaMemberName"/>
+    <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlBasicToClassNameDelegator" id="basic2ClassName"
+                            order="first, after xml"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaCompletionContributor" id="javaLegacy"
                             order="last, before legacy, before default, before javaClassName"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor"
@@ -436,7 +438,10 @@
       <className>com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction</className>
       <category>Imports</category>
     </intentionAction>
-
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ExpandStaticImportAction</className>
+      <category>Imports</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInspection.actions.UnimplementInterfaceAction</className>

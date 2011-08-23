@@ -102,7 +102,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
       processor.ignoreElement(entryPoint);
     }
 
-    final PsiSearchHelper helper = PsiManager.getInstance(project).getSearchHelper();
+    final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(project);
     final AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {

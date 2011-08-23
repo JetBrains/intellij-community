@@ -20,7 +20,7 @@ package org.jetbrains.plugins.groovy.refactoring.optimizeImports;
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspe
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer
 import org.jetbrains.plugins.groovy.util.TestUtils
 
- /**
+/**
  * @author ilyas
  */
 public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
@@ -189,7 +189,7 @@ class Fooxx <caret>{
 
       doOptimizeImports();
       PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-      ((DocumentEx)myFixture.getEditor().getDocument()).stripTrailingSpaces(false);
+      TrailingSpacesStripper.stripIfNotCurrentLine(myFixture.getEditor().getDocument(), false);
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
     }
     finally {

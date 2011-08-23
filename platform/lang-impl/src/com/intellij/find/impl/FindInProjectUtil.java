@@ -447,7 +447,7 @@ public class FindInProjectUtil {
     CacheManager cacheManager = ((PsiManagerEx)pm).getCacheManager();
     SearchScope customScope = findModel.getCustomScope();
     @NotNull GlobalSearchScope scope = psiDirectory != null
-                                       ? GlobalSearchScope.directoryScope(psiDirectory, true)
+                                       ? GlobalSearchScopes.directoryScope(psiDirectory, true)
                                        : module != null
                                          ? moduleContentScope(module)
                                          : customScope instanceof GlobalSearchScope
@@ -534,7 +534,7 @@ public class FindInProjectUtil {
     for (VirtualFile root : contentRoots) {
       PsiDirectory directory = psiManager.findDirectory(root);
       if (directory != null) {
-        GlobalSearchScope moduleContent = GlobalSearchScope.directoryScope(directory, true);
+        GlobalSearchScope moduleContent = GlobalSearchScopes.directoryScope(directory, true);
         result = result == null ? moduleContent : result.uniteWith(moduleContent);
       }
     }

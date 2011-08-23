@@ -15,28 +15,36 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.DataManager;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.DocumentRunnable;
-import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.Set;
 
 public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
-  private final Set<DocumentEx> myDocumentsToStripLater = new THashSet<DocumentEx>();
+  private final Set<Document> myDocumentsToStripLater = new THashSet<Document>();
 
   @Override
   public void beforeAllDocumentsSaving() {
-    Set<DocumentEx> documentsToStrip = new THashSet<DocumentEx>(myDocumentsToStripLater);
+    Set<Document> documentsToStrip = new THashSet<Document>(myDocumentsToStripLater);
     myDocumentsToStripLater.clear();
-    for (DocumentEx documentEx : documentsToStrip) {
-      strip(documentEx);
+    for (Document document : documentsToStrip) {
+      strip(document);
     }
   }
 
@@ -57,10 +65,9 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
     if (doStrip) {
       final boolean inChangedLinesOnly = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-      DocumentEx ex = (DocumentEx)document;
-      boolean success = ex.stripTrailingSpaces(inChangedLinesOnly);
+      boolean success = stripIfNotCurrentLine((DocumentImpl)document, inChangedLinesOnly);
       if (!success) {
-        myDocumentsToStripLater.add(ex);
+        myDocumentsToStripLater.add(document);
       }
     }
 
@@ -86,6 +93,33 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
         });
       }
     }
+  }
+
+  public static boolean stripIfNotCurrentLine(Document document, boolean inChangedLinesOnly) {
+    if (document instanceof DocumentWindow) {
+      document = ((DocumentWindow) document).getDelegate();
+    }
+    if (!(document instanceof DocumentImpl)) {
+      return true;
+    }
+    DataContext dataContext = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getFocusOwner());
+    Editor activeEditor = PlatformDataKeys.EDITOR.getData(dataContext);
+
+    // when virtual space enabled, we can strip whitespace anywhere
+    boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();
+
+    VisualPosition visualCaret = activeEditor == null ? null : activeEditor.getCaretModel().getVisualPosition();
+    int caretLine = activeEditor == null ? -1 : activeEditor.getCaretModel().getLogicalPosition().line;
+    int caretOffset = activeEditor == null ? -1 : activeEditor.getCaretModel().getOffset();
+
+    final Project project = activeEditor == null ? null : activeEditor.getProject();
+    boolean markAsNeedsStrippingLater = ((DocumentImpl) document).stripTrailingSpaces(project, inChangedLinesOnly, isVirtualSpaceEnabled,
+                                                                                      caretLine, caretOffset);
+
+    if (!ShutDownTracker.isShutdownHookRunning() && activeEditor != null) {
+      activeEditor.getCaretModel().moveToVisualPosition(visualCaret);
+    }
+    return !markAsNeedsStrippingLater;
   }
 
   @Override

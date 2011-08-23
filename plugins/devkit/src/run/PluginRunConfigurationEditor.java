@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -126,7 +127,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
       public void customize(JList list, final Module module, int index, boolean selected, boolean hasFocus) {
         if (module != null) {
           setText(module.getName());
-          setIcon(module.getModuleType().getNodeIcon(true));
+          setIcon(ModuleType.get(module).getNodeIcon(true));
         }
       }
     });
@@ -134,17 +135,26 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     myVMParameters.setText(DevKitBundle.message("vm.parameters"));
     myVMParameters.setComponent(new RawCommandLineEditor());
     myVMParameters.getComponent().setDialogCaption(myVMParameters.getRawText());
+    myVMParameters.setLabelLocation(BorderLayout.WEST);
 
     myProgramParameters.setText(DevKitBundle.message("program.parameters"));
     myProgramParameters.setComponent(new RawCommandLineEditor());
     myProgramParameters.getComponent().setDialogCaption(myProgramParameters.getRawText());
+    myProgramParameters.setLabelLocation(BorderLayout.WEST);
+    myVMParameters.setLabelPreferredSize(new Dimension(myProgramParameters.getLabelPreferredSize().width - 4, myProgramParameters.getLabelPreferredSize().height));
 
-    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0);
+
+    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0);
     wholePanel.add(myVMParameters, gc);
     wholePanel.add(myProgramParameters, gc);
     wholePanel.add(myShowLogs, gc);
+    gc.gridwidth = 1;
+    gc.gridy = 3;
+    gc.weightx = 0;
     wholePanel.add(myModuleLabel, gc);
     gc.weighty = 1;
+    gc.gridx = 1;
+    gc.weightx = 1;
     wholePanel.add(myModules, gc);
     return wholePanel;
   }

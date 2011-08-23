@@ -103,6 +103,12 @@ public class CommonProgramParametersPanel extends JPanel {
     myWorkingDirectoryComponent = LabeledComponent.create(panel, ExecutionBundle.message("run.configuration.working.directory.label"));
     myEnvVariablesComponent = new EnvironmentVariablesComponent();
 
+    myEnvVariablesComponent.setLabelLocation(BorderLayout.WEST);
+    myProgramParametersComponent.setLabelLocation(BorderLayout.WEST);
+    myWorkingDirectoryComponent.setLabelLocation(BorderLayout.WEST);
+    myProgramParametersComponent.setLabelPreferredSize(new Dimension(myEnvVariablesComponent.getLabelPreferredSize().width - 4, myEnvVariablesComponent.getLabelPreferredSize().height));
+    myWorkingDirectoryComponent.setLabelPreferredSize(myProgramParametersComponent.getLabelPreferredSize());
+
     addComponents();
 
     setPreferredSize(new Dimension(10, 10));

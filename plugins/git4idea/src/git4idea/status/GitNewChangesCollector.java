@@ -165,17 +165,19 @@ class GitNewChangesCollector extends GitChangesCollector {
             reportModified(filepath, head);
           } else if (yStatus == 'D') {
             reportDeleted(filepath, head);
+          } else if (yStatus == 'T') {
+            reportTypeChanged(filepath, head);
           } else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
 
         case 'M':
-          if (yStatus == ' ' || yStatus == 'M') {
+          if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
             reportModified(filepath, head);
           } else if (yStatus == 'D') {
             reportDeleted(filepath, head);
-          }  else {
+          } else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -185,7 +187,7 @@ class GitNewChangesCollector extends GitChangesCollector {
           // NB: no "break" here!
           // we treat "Copy" as "Added", but we still have to read the old path not to break the format parsing.
         case 'A':
-          if (yStatus == 'M' || yStatus == ' ') {
+          if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportAdded(filepath);
           } else if (yStatus == 'D') {
             // added + deleted => no change (from IDEA point of view).
@@ -197,7 +199,7 @@ class GitNewChangesCollector extends GitChangesCollector {
           break;
 
         case 'D':
-          if (yStatus == 'M' || yStatus == ' ') {
+          if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportDeleted(filepath, head);
           } else if (yStatus == 'U') { // DU - unmerged, deleted by us
             reportConflict(head, filepath);
@@ -211,7 +213,7 @@ class GitNewChangesCollector extends GitChangesCollector {
           break;
 
         case 'U':
-          if (yStatus == 'U' || yStatus == 'A' || yStatus == 'D') {
+          if (yStatus == 'U' || yStatus == 'A' || yStatus == 'D' || yStatus == 'T') {
             // UU - unmerged, both modified; UD - unmerged, deleted by them; UA - umerged, added by them
             reportConflict(head, filepath);
           } else {
@@ -225,8 +227,18 @@ class GitNewChangesCollector extends GitChangesCollector {
 
           if (yStatus == 'D') {
             reportDeleted(filepath, head);
-          } else if (yStatus == ' ' || yStatus == 'M') {
+          } else if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
             reportRename(head, filepath, oldFilename);
+          } else {
+            throwYStatus(output, handler, line, xStatus, yStatus);
+          }
+          break;
+
+        case 'T'://TODO
+          if (yStatus == ' ' || yStatus == 'M') {
+            reportTypeChanged(filepath, head);
+          } else if (yStatus == 'D') {
+            reportDeleted(filepath, head);
           } else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
@@ -288,6 +300,12 @@ class GitNewChangesCollector extends GitChangesCollector {
   private void reportModified(String filepath, VcsRevisionNumber head) throws VcsException {
     ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, false, true, false);
     ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false, false);
+    reportChange(FileStatus.MODIFIED, before, after);
+  }
+
+  private void reportTypeChanged(String filepath, VcsRevisionNumber head) throws VcsException {
+    ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, false, true, false);
+    ContentRevision after = GitContentRevision.createRevisionForTypeChange(myProject, myVcsRoot, filepath, null, false);
     reportChange(FileStatus.MODIFIED, before, after);
   }
 

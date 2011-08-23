@@ -99,8 +99,11 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
                                boolean forReading,
                                boolean forWriting) {
     if (!(refWhat instanceof RefField)) return;
-    if (!(refFrom instanceof RefMethod) || !((RefMethod)refFrom).isConstructor() || ((PsiField)refWhat.getElement()).hasInitializer() ||
-      ((RefMethod)refFrom).getOwnerClass() != ((RefField)refWhat).getOwnerClass()) {
+    if (!(refFrom instanceof RefMethod) ||
+        !((RefMethod)refFrom).isConstructor() ||
+        ((PsiField)refWhat.getElement()).hasInitializer() ||
+        ((RefMethod)refFrom).getOwnerClass() != ((RefField)refWhat).getOwnerClass() ||
+        ((RefField)refWhat).isStatic()) {
       if (!referencedFromClassInitializer  && forWriting) {
         ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
       }

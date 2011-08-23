@@ -49,7 +49,7 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
   }
 
   public JComponent createComponent() {
-    myPanel = new JPanel(new BorderLayout());
+    myPanel = new JPanel(new BorderLayout(10, 5));
     final JPanel contentPanel = new JPanel(new BorderLayout());
     myPanel.add(contentPanel, BorderLayout.NORTH);
     contentPanel.add(new JLabel(myFrameworkName + " home:"), BorderLayout.WEST);

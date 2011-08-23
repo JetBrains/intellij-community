@@ -7,9 +7,9 @@
     </constraints>
     <properties/>
     <clientProperties>
-      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
+      <BorderFactoryClass class="java.lang.String" value=""/>
     </clientProperties>
-    <border type="none" title=""/>
+    <border type="none"/>
     <children>
       <component id="e9af6" class="javax.swing.JLabel" binding="myTitleLabel">
         <constraints>

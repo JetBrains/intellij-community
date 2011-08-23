@@ -20,7 +20,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,9 +27,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
 * User: anna
@@ -51,7 +50,8 @@ class TestDirectory extends TestPackage {
   public SourceScope getSourceScope() {
     final String dirName = myConfiguration.getPersistentData().getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
-    final GlobalSearchScope globalSearchScope = file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.directoryScope(myProject, file, true);
+    final GlobalSearchScope globalSearchScope = file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopes
+        .directoryScope(myProject, file, true);
     return new SourceScope() {
       @Override
       public GlobalSearchScope getGlobalSearchScope() {

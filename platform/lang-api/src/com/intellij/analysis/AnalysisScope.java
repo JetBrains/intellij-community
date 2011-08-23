@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.ProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
@@ -637,14 +638,14 @@ public class AnalysisScope {
       case CUSTOM:
         return myScope;
       case DIRECTORY:
-        return GlobalSearchScope.directoryScope((PsiDirectory)myElement, true);
+        return GlobalSearchScopes.directoryScope((PsiDirectory)myElement, true);
       case FILE:
         return new LocalSearchScope(myElement);
       case INVALID:
         return LocalSearchScope.EMPTY;
       case MODULE:
         GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
-        return myIncludeTestSource ? moduleScope : GlobalSearchScope.notScope(GlobalSearchScope.projectTestScope(myModule.getProject())).intersectWith(moduleScope);
+        return myIncludeTestSource ? moduleScope : GlobalSearchScope.notScope(GlobalSearchScopes.projectTestScope(myModule.getProject())).intersectWith(moduleScope);
       case MODULES:
         SearchScope scope = GlobalSearchScope.EMPTY_SCOPE;
         for (Module module : myModules) {
@@ -652,7 +653,7 @@ public class AnalysisScope {
         }
         return scope;
       case PROJECT:
-        return myIncludeTestSource ? GlobalSearchScope.projectScope(myProject) : GlobalSearchScope.projectProductionScope(myProject);
+        return myIncludeTestSource ? GlobalSearchScope.projectScope(myProject) : GlobalSearchScopes.projectProductionScope(myProject);
       case VIRTUAL_FILES:
         return new GlobalSearchScope() {
           @Override

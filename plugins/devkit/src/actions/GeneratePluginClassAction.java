@@ -20,6 +20,7 @@ import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -77,7 +78,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
     final Module module = getModule(directory);
 
     if (module != null) {
-      if (module.getModuleType() == PluginModuleType.getInstance()) {
+      if (ModuleType.get(module) == PluginModuleType.getInstance()) {
         addPluginModule(module);
       } else {
         final List<Module> candidateModules = PluginModuleType.getCandidateModules(module);

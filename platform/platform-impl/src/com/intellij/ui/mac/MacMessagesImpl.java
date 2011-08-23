@@ -50,7 +50,7 @@ public class MacMessagesImpl extends MacMessages{
         if (window instanceof JFrame) {
           JFrame frame = (JFrame)window;
           JRootPane rootPane = frame.getRootPane();
-          if (rootPane.getClientProperty(MAC_SHEET_ACTIVE) == Boolean.TRUE &&
+          if (rootPane.getClientProperty(MacUtil.MAC_NATIVE_WINDOW_SHOWING) == Boolean.TRUE &&
               fakeDialogTitle.equals(rootPane.getClientProperty(MAC_SHEET_ID))) {
             processResult(rootPane, returnCode.intValue(), suppressState.intValue());
             break;
@@ -59,7 +59,7 @@ public class MacMessagesImpl extends MacMessages{
         else if (window instanceof JDialog) {
           JDialog dialog = (JDialog)window;
           JRootPane rootPane = dialog.getRootPane();
-          if (rootPane.getClientProperty(MAC_SHEET_ACTIVE) == Boolean.TRUE &&
+          if (rootPane.getClientProperty(MacUtil.MAC_NATIVE_WINDOW_SHOWING) == Boolean.TRUE &&
               fakeDialogTitle.equals(rootPane.getClientProperty(MAC_SHEET_ID))) {
             processResult(rootPane, returnCode.intValue(), suppressState.intValue());
           }
@@ -107,10 +107,9 @@ public class MacMessagesImpl extends MacMessages{
     rootPane.putClientProperty(MAC_SHEET_RESULT, returnCode);
     rootPane.putClientProperty(MAC_SHEET_SUPPRESS, suppressDialog == 1 ? Boolean.TRUE : Boolean.FALSE);
     rootPane.putClientProperty(MAC_SHEET_ID, null);
-    rootPane.putClientProperty(MAC_SHEET_ACTIVE, null);
+    rootPane.putClientProperty(MacUtil.MAC_NATIVE_WINDOW_SHOWING, null);
   }
 
-  private static final String MAC_SHEET_ACTIVE = "mac_sheet_active";
   private static final String MAC_SHEET_RESULT = "mac_sheet_result";
   private static final String MAC_SHEET_SUPPRESS = "mac_sheet_suppress";
   private static final String MAC_SHEET_ID = "mac_sheet_id";
@@ -244,10 +243,10 @@ public class MacMessagesImpl extends MacMessages{
       }
 
       if (fakeTitle != null) {
-        pane.putClientProperty(MAC_SHEET_ACTIVE, Boolean.TRUE);
+        pane.putClientProperty(MacUtil.MAC_NATIVE_WINDOW_SHOWING, Boolean.TRUE);
         pane.putClientProperty(MAC_SHEET_ID, fakeTitle);
 
-        startModal(pane);
+        MacUtil.startModal(pane);
         Integer result = (Integer)pane.getClientProperty(MAC_SHEET_RESULT);
         boolean suppress = Boolean.TRUE == pane.getClientProperty(MAC_SHEET_SUPPRESS);
         
@@ -329,38 +328,5 @@ public class MacMessagesImpl extends MacMessages{
                                       String message,
                                       @Nullable Window window) {
     return showAlertDialog(title, okText, alternateText, cancelText, message, window, false, null);
-  }
-
-  private static synchronized void startModal(JRootPane pane) {
-    try {
-      if (SwingUtilities.isEventDispatchThread()) {
-        EventQueue theQueue = pane.getToolkit().getSystemEventQueue();
-
-        while (pane.getClientProperty(MAC_SHEET_ACTIVE) == Boolean.TRUE) {
-          AWTEvent event = theQueue.getNextEvent();
-          Object source = event.getSource();
-          if (event instanceof ActiveEvent) {
-            ((ActiveEvent)event).dispatch();
-          }
-          else if (source instanceof Component) {
-            ((Component)source).dispatchEvent(event);
-          }
-          else if (source instanceof MenuComponent) {
-            ((MenuComponent)source).dispatchEvent(event);
-          }
-          else {
-            System.err.println("Unable to dispatch: " + event);
-          }
-        }
-      }
-      else {
-        while (pane.getClientProperty(MAC_SHEET_ACTIVE) == Boolean.TRUE) {
-          // TODO:
-          //wait();
-        }
-      }
-    }
-    catch (InterruptedException ignored) {
-    }
   }
 }

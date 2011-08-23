@@ -934,8 +934,9 @@ public class Bar {
 
   public void testArrays() {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
-    type 'Arrays'
-    assert myFixture.lookupElementStrings == ['Arrays', 'ArrayStoreException']
+    type 'Arrays.'
+    myFixture.checkResult "class Foo {{ Arrays.<caret> }}"
+    assert !lookup
   }
 
 

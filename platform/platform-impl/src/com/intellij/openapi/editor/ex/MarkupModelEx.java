@@ -25,7 +25,6 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Iterator;
 
 /**
@@ -60,10 +59,6 @@ public interface MarkupModelEx extends MarkupModel {
 
   // runs change attributes action and fires highlighterChanged event if there were changes
   void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<RangeHighlighterEx> changeAttributesAction);
-
-  interface SweepProcessor<T> {
-    boolean process(int offset, T interval, boolean atStart, Collection<T> overlappingIntervals);
-  }
 
   boolean sweep(int start, int end, @NotNull final SweepProcessor<RangeHighlighterEx> sweepProcessor);
 }

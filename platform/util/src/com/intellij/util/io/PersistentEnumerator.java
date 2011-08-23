@@ -15,7 +15,7 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,9 +25,6 @@ import java.io.IOException;
  * @author jeka
  */
 public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
-  protected static final int NULL_ID = 0;
-
   private static final int DIRTY_MAGIC = 0xbabe0589;
   private static final int VERSION = 6;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac + VERSION;
@@ -53,7 +50,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
 
   public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     super(file, new MappedFileSimpleStorage(file, initialSize), dataDescriptor, initialSize, ourVersion,
-          new RecordBufferHandler());
+          new RecordBufferHandler(), true);
   }
 
   protected  void setupEmptyFile() throws IOException {
@@ -81,8 +78,8 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     }
   }
 
-  protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
-    try {
+  protected synchronized int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
+    synchronized (ourLock) {
       int depth = 0;
       final int valueHC = myDataDescriptor.getHashCode(value);
       int hc = valueHC;
@@ -166,15 +163,6 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
         return newId;
       }
     }
-    catch (IOException io) {
-      markCorrupted();
-      throw io;
-    }
-    catch (Throwable e) {
-      markCorrupted();
-      LOG.error(e);
-      throw new RuntimeException(e);
-    }
   }
 
   protected int writeData(final Data value, int hashCode) {
@@ -224,6 +212,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
       return (int)enumerator.myStorage.length();
     }
 
+    @NotNull
     @Override
     byte[] getRecordBuffer(PersistentEnumerator t) {
       return myBuffer;

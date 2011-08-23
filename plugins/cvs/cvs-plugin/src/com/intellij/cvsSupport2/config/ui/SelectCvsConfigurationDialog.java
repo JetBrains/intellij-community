@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.cvsSupport2.config.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.config.ui.SelectCvsConfgurationPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 
@@ -28,11 +28,11 @@ import java.util.Observer;
  * author: lesya
  */
 public class SelectCvsConfigurationDialog extends DialogWrapper {
-  private final SelectCvsConfgurationPanel myPanel;
+  private final SelectCvsConfigurationPanel myPanel;
 
   public SelectCvsConfigurationDialog(Project project) {
     super(true);
-    myPanel = new SelectCvsConfgurationPanel(project);
+    myPanel = new SelectCvsConfigurationPanel(project);
     setOKActionEnabled(myPanel.getSelectedConfiguration() != null);
 
     myPanel.getObservable().addObserver(new Observer() {
@@ -40,7 +40,7 @@ public class SelectCvsConfigurationDialog extends DialogWrapper {
         setOKActionEnabled(myPanel.getSelectedConfiguration() != null);
       }
     });
-    setTitle(com.intellij.CvsBundle.message("dialog.title.select.cvs.root.configuration"));
+    setTitle(CvsBundle.message("dialog.title.select.cvs.root.configuration"));
 
     init();
   }
@@ -56,6 +56,4 @@ public class SelectCvsConfigurationDialog extends DialogWrapper {
   public CvsRootConfiguration getSelectedConfiguration() {
     return myPanel.getSelectedConfiguration();
   }
-
-
 }

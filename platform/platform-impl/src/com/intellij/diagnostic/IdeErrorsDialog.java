@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.HeaderlessTabbedPane;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
@@ -58,9 +59,10 @@ import java.util.List;
 
 public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class.getName());
-  private static final boolean INTERNAL_MODE = ApplicationManagerEx.getApplicationEx().isInternal();
+  public static final boolean INTERNAL_MODE = ApplicationManagerEx.getApplicationEx().isInternal();
   @NonNls private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
   public static DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
+  public static final int COMPONENTS_WIDTH = 670;
 
   private JPanel myContentPane;
   private JPanel myBackButtonPanel;
@@ -72,6 +74,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private HyperlinkLabel.Croppable myDisableLink;
   private JPanel myCredentialsPanel;
   private HyperlinkLabel myCredentialsLabel;
+  private JPanel myForeignPluginWarningPanel;
 
   private int myIndex = 0;
   private final List<ArrayList<AbstractMessage>> myMergedMessages = new ArrayList<ArrayList<AbstractMessage>>();
@@ -99,6 +102,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       moveSelectionToEarliestMessage();
     }
     setCancelButtonText(CommonBundle.message("close.action.name"));
+    setModal(false);
   }
 
   private boolean moveSelectionToMessage(LogMessage defaultMessage) {
@@ -148,6 +152,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
+  @Override
+  protected void createDefaultActions() {
+    super.createDefaultActions();
+    getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
+  }
+
   private class ForwardAction extends AnAction implements DumbAware {
     public ForwardAction() {
       super("");
@@ -184,21 +194,19 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   protected JComponent createCenterPanel() {
     DefaultActionGroup goBack = new DefaultActionGroup();
     BackAction back = new BackAction();
-    //back
-    //  .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_DOWN_MASK)), getRootPane());
     goBack.add(back);
     ActionToolbar backToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, goBack, true);
+    backToolbar.getComponent().setBorder(IdeBorderFactory.createEmptyBorder(0));
     backToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myBackButtonPanel.add(backToolbar.getComponent(), BorderLayout.CENTER);
 
     DefaultActionGroup goForward = new DefaultActionGroup();
     ForwardAction forward = new ForwardAction();
     new ShadowAction(forward, ActionManager.getInstance().getAction("Forward"), getRootPane());
-    //forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_DOWN_MASK)),
-    //                                  getRootPane());
     goForward.add(forward);
     ActionToolbar forwardToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, goForward, true);
     forwardToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    forwardToolbar.getComponent().setBorder(IdeBorderFactory.createEmptyBorder(0));
     myNextButtonPanel.add(forwardToolbar.getComponent(), BorderLayout.CENTER);
 
     myTabs = new HeaderlessTabbedPane(getDisposable());
@@ -473,10 +481,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
         if (plugin == null) {
           // unknown plugin
-          myForeignPluginWarningLabel.setVisible(false);
+          myForeignPluginWarningPanel.setVisible(false);
           return;
         }
-        myForeignPluginWarningLabel.setVisible(true);
+        myForeignPluginWarningPanel.setVisible(true);
         String vendor = plugin.getVendor();
         String contactInfo = plugin.getVendorUrl();
         if (StringUtil.isEmpty(contactInfo)) {
@@ -506,11 +514,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
             myForeignPluginWarningLabel.setHyperlinkTarget(contactInfo);
           }
         }
-        myForeignPluginWarningLabel.setVisible(true);
+        myForeignPluginWarningPanel.setVisible(true);
         return;
       }
     }
-    myForeignPluginWarningLabel.setVisible(false);
+    myForeignPluginWarningPanel.setVisible(false);
   }
 
   private void updateTabs() {
@@ -537,7 +545,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
             // take first line
             msg = msg.substring(0, i);
           }
-          msg = StringUtil.first(msg, 200, true);
           myCommentsTabForm.setErrorText(msg);
         }
         else {

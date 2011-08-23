@@ -50,14 +50,14 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   @Deprecated
   @Nullable
-  private StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorage.StateStorageException {
+  private StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorageException {
     return getStateStorageManager().getStateStorage(storageSpec);
   }
 
   @Deprecated
   @Nullable
   private StateStorage getOldStorage(final Object component, final String componentName, final StateStorageOperation operation)
-      throws StateStorage.StateStorageException {
+      throws StateStorageException {
     return getStateStorageManager().getOldStorage(component, componentName, operation);
   }
 
@@ -133,13 +133,13 @@ abstract class ComponentStoreImpl implements IComponentStore {
       mySession = session;
       return mySession;
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (StateStorageException e) {
       LOG.info(e);
       throw new IOException(e.getMessage());
     }
   }
 
-  protected SaveSessionImpl createSaveSession() throws StateStorage.StateStorageException {
+  protected SaveSessionImpl createSaveSession() throws StateStorageException {
     return new SaveSessionImpl();
   }
 
@@ -216,7 +216,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   @Nullable
   private static Element getJdomState(final Object component, final String componentName, @NotNull final StateStorage defaultsStorage)
-      throws StateStorage.StateStorageException {
+      throws StateStorageException {
     ComponentRoamingManager roamingManager = ComponentRoamingManager.getInstance();
     if (!roamingManager.typeSpecified(componentName)) {
       if (component instanceof RoamingTypeDisabled) {
@@ -354,7 +354,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   @NotNull
   protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
-                                                   final StateStorageOperation operation) throws StateStorage.StateStorageException {
+                                                   final StateStorageOperation operation) throws StateStorageException {
     final State stateSpec = getStateSpec(persistentStateComponent);
 
     final Storage[] storages = stateSpec.storages();
@@ -382,10 +382,10 @@ abstract class ComponentStoreImpl implements IComponentStore {
         return storageChooser.selectStorages(storages, persistentStateComponent, operation);
       }
       catch (InstantiationException e) {
-        throw new StateStorage.StateStorageException(e);
+        throw new StateStorageException(e);
       }
       catch (IllegalAccessException e) {
-        throw new StateStorage.StateStorageException(e);
+        throw new StateStorageException(e);
       }
     }
   }
@@ -410,7 +410,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
       try {
         return myStorageManagerSaveSession.getAllStorageFilesToSave();
       }
-      catch (StateStorage.StateStorageException e) {
+      catch (StateStorageException e) {
         throw new IOException(e.getMessage());
       }
     }
@@ -424,7 +424,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
           try {
             settingsSavingComponent.save();
           }
-          catch (StateStorage.StateStorageException e) {
+          catch (StateStorageException e) {
             LOG.info(e);
             throw new IOException(e.getMessage());
           }
@@ -435,7 +435,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
         myStorageManagerSaveSession.save();
       }
-      catch (StateStorage.StateStorageException e) {
+      catch (StateStorageException e) {
         LOG.info(e);
         throw new IOException(e.getMessage());
       }
@@ -465,7 +465,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
       }
     }
 
-    protected void commit() throws StateStorage.StateStorageException {
+    protected void commit() throws StateStorageException {
       final StateStorageManager storageManager = getStateStorageManager();
 
       final StateStorageManager.ExternalizationSession session = storageManager.startExternalization();
@@ -520,7 +520,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull final Set<String> componentNames)
-      throws StateStorage.StateStorageException {
+      throws StateStorageException {
     for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
       assert pair != null;
       final StateStorage storage = pair.second;

@@ -25,11 +25,9 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
-import gnu.trove.TIntHash;
-import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -40,11 +38,11 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Dec 18, 2007
  */
-public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key>{
+public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key> implements PersistentMap<Key, Value> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentHashMap");
 
   private PersistentHashMapValueStorage myValueStorage;
-  private final DataExternalizer<Value> myValueExternalizer;
+  protected final DataExternalizer<Value> myValueExternalizer;
   private static final long NULL_ADDR = 0;
   private static final int INITIAL_INDEX_SIZE;
   static {
@@ -163,6 +161,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         return recordHandler.recordWriteOffset(enumerator, buf);
       }
 
+      @NotNull
       @Override
       byte[] getRecordBuffer(PersistentEnumeratorBase enumerator) {
         return myIntAddressForNewRecord ? mySmallRecordBuffer : myRecordBuffer;
@@ -461,7 +460,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private int transformedKeys;
   private int requests;
 
-  private int updateValueId(int keyId, HeaderRecord value, HeaderRecord oldValue, Key key, int processingKey) throws IOException {
+  private int updateValueId(int keyId, HeaderRecord value, HeaderRecord oldValue, @Nullable Key key, int processingKey) throws IOException {
     final boolean newKey = oldValue == null || oldValue.address == NULL_ADDR;
     if (newKey) ++requests;
     boolean defaultSizeInfo = true;
@@ -494,7 +493,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     if (doHardConsistencyChecks) {
       HeaderRecord checkRecord = readValueId(keyId);
       if (checkRecord.address != value.address) {
-        assert false:value.address; int a = 1;
+        assert false:value.address;
       }
     }
     return keyId;

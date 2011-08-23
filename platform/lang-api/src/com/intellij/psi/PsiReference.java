@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
