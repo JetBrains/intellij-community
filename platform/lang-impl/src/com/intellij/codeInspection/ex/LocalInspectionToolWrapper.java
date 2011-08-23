@@ -23,6 +23,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -130,10 +131,13 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          view.getProvider().appendToolNodeContent(myToolNode,
-                                                   (InspectionTreeNode)myToolNode.getParent(), getContext().getUIOptions().SHOW_STRUCTURE,
-                                                   contents, problems, (DefaultTreeModel)view.getTree().getModel());
-          getContext().addView(view);
+          final GlobalInspectionContextImpl context = getContext();
+          if (context != null) {
+            view.getProvider().appendToolNodeContent(myToolNode,
+                                                     (InspectionTreeNode)myToolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
+                                                     contents, problems, (DefaultTreeModel)view.getTree().getModel());
+            getContext().addView(view);
+          }
         }
       });
     }
