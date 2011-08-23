@@ -78,7 +78,7 @@ public class RngParser {
   static final PropertyMap EMPTY_PROPS = new PropertyMapBuilder().toPropertyMap();
 
   public static DPattern getCachedPattern(final PsiFile descriptorFile, final ErrorHandler eh) {
-    final CachedValuesManager mgr = descriptorFile.getManager().getCachedValuesManager();
+    final CachedValuesManager mgr = CachedValuesManager.getManager(descriptorFile.getProject());
 
     return mgr.getCachedValue(descriptorFile, PATTERN_KEY, new CachedValueProvider<DPattern>() {
       public Result<DPattern> compute() {
@@ -176,7 +176,7 @@ public class RngParser {
         }
       };
 
-      final CachedValuesManager mgr = descriptorFile.getManager().getCachedValuesManager();
+      final CachedValuesManager mgr = CachedValuesManager.getManager(descriptorFile.getProject());
       value = mgr.createCachedValue(provider,  false);
       descriptorFile.putUserData(SCHEMA_KEY, value);
     }

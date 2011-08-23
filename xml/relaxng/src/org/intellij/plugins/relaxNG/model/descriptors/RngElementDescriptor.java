@@ -122,7 +122,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   }
 
   private static <D extends PsiElement, T, P> T getCachedValue(D context, P p, Key<ParameterizedCachedValue<T, P>> key, ParameterizedCachedValueProvider<T, P> provider) {
-    final CachedValuesManager mgr = context.getManager().getCachedValuesManager();
+    final CachedValuesManager mgr = CachedValuesManager.getManager(context.getProject());
     return mgr.getParameterizedCachedValue(context, key, provider, false, p);
   }
 

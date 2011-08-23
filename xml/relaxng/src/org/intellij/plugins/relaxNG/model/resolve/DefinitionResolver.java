@@ -168,7 +168,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
     final PsiElement psiElement = scope.getPsiElement();
     if (psiElement == null || !psiElement.isValid()) return null;
 
-    final CachedValuesManager manager = psiElement.getManager().getCachedValuesManager();
+    final CachedValuesManager manager = CachedValuesManager.getManager(psiElement.getProject());
     CachedValue<Map<String, Set<Define>>> data = psiElement.getUserData(KEY);
     if (data == null || !((DefinitionResolver)data.getValueProvider()).isValid()) {
       final DefinitionResolver resolver = new DefinitionResolver(scope);

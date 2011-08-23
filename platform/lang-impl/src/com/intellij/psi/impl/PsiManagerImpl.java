@@ -37,7 +37,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
@@ -52,7 +51,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -79,13 +77,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final CacheManager myCacheManager;
   private final PsiModificationTrackerImpl myModificationTracker;
   private final ResolveCache myResolveCache;
-  private final NotNullLazyValue<CachedValuesManager> myCachedValuesManager = new NotNullLazyValue<CachedValuesManager>() {
-    @NotNull
-    @Override
-    protected CachedValuesManager compute() {
-      return CachedValuesManager.getManager(myProject);
-    }
-  };
 
   private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = ContainerUtil.createEmptyCOWList();
   private final List<PsiTreeChangeListener> myTreeChangeListeners = ContainerUtil.createEmptyCOWList();
@@ -690,11 +681,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   @NotNull
   public PsiModificationTracker getModificationTracker() {
     return myModificationTracker;
-  }
-
-  @NotNull
-  public CachedValuesManager getCachedValuesManager() {
-    return myCachedValuesManager.getValue();
   }
 
   public void moveDirectory(@NotNull final PsiDirectory dir, @NotNull PsiDirectory newParent) throws IncorrectOperationException {

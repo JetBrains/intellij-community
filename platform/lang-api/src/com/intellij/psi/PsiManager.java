@@ -20,9 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -124,16 +121,6 @@ public abstract class PsiManager extends UserDataHolderBase {
   @NotNull
   public abstract PsiModificationTracker getModificationTracker();
 
-
-  /**
-   * Returns the cached values manager for the project, which can be used to create values
-   * which are automatically recalculated based on changes of the elements on which they depend.
-   *
-   * @return the cached values manager instance.
-   * @see CachedValuesManager#getManager(com.intellij.openapi.project.Project)
-   */
-  @NotNull
-  public abstract CachedValuesManager getCachedValuesManager();
 
   /**
    * Moves the specified file to the specified directory.
