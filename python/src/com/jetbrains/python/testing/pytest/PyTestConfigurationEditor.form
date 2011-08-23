@@ -19,7 +19,7 @@
       <component id="f43db" class="javax.swing.JLabel" binding="myTargetLabel">
         <constraints>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="144" height="-1"/>
+            <preferred-size width="145" height="-1"/>
           </grid>
         </constraints>
         <properties>
@@ -68,7 +68,7 @@
       </component>
       <component id="7f66a" class="javax.swing.JLabel" binding="myName">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <font style="1"/>
