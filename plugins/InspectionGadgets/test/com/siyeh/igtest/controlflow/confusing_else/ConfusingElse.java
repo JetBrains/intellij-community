@@ -51,4 +51,13 @@ public class ConfusingElse {
         }
         return o;
     }
+
+    void elseIf(int i) {
+        if (i == 1) {
+            return;
+        } else if (i == 3) {
+            System.out.println("i = " + i);
+        }
+        System.out.println();
+    }
 }
