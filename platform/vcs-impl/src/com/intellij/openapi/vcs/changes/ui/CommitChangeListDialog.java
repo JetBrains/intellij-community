@@ -102,7 +102,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final PseudoMap<Object, Object> myAdditionalData;
   private String myHelpId;
   
-  private final JCheckBox myCheckSpellingBox;
   private SplitterWithSecondHideable myDetailsSplitter;
   private static final String DETAILS_SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_OPTION";
   private static final String DETAILS_SHOW_OPTION = "CommitChangeListDialog.DETAILS_SHOW_OPTION";
@@ -880,8 +879,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     infoPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
 
     rootPane.add(myWarningLabel, BorderLayout.SOUTH);
-
-    commonPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
 
     final JPanel wrapper = new JPanel(new GridBagLayout());
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
