@@ -145,10 +145,6 @@ public class UsageViewContext {
       return presentation;
     }
 
-    public FileStatus getFileStatus() {
-      return null;
-    }
-
     public void navigate(boolean requestFocus) {
       throw new UnsupportedOperationException();
     }
