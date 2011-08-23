@@ -74,10 +74,9 @@ public class UIUtil {
 
     JComponent c = (JComponent)comp;
 
-    if (SystemInfo.isMac) {
+    if (isUnderAquaLookAndFeel()) {
       c.putClientProperty("JComponent.sizeVariant", style == Style.REGULAR ? "regular" : style == Style.SMALL ? "small" : "mini");
-    }
-    else {
+    } else {
       c.setFont(getFont(style == Style.REGULAR ? FontSize.NORMAL : style == Style.SMALL ? FontSize.SMALL : FontSize.MINI, c.getFont()));
     }
     Container p = c.getParent();
@@ -260,9 +259,9 @@ public class UIUtil {
 
     switch (size) {
       case SMALL:
-        return base.deriveFont(defFont.getSize() * (SystemInfo.isMac ? 0.85f: 0.8f));
+        return base.deriveFont(defFont.getSize() - 2f);
       case MINI:
-        return base.deriveFont(defFont.getSize() * 0.7f);
+        return base.deriveFont(defFont.getSize() - 4f);
       default:
         return base.deriveFont(defFont.getSize());
     }
@@ -270,12 +269,13 @@ public class UIUtil {
 
   @NotNull
   public static Font getBorderFont(@NotNull UIUtil.FontSize size, boolean isBold) {
-    Font defFont = UIUtil.getBorderFont();
+    Font defFont = getBorderFont();
     if (size == UIUtil.FontSize.SMALL) {
+      defFont = defFont.deriveFont(defFont.getSize() - 2f);
       if (isBold) {
-        return defFont.deriveFont((float)Math.max(defFont.getSize() - 2, 11)).deriveFont(Font.BOLD);
+        defFont = defFont.deriveFont(Font.BOLD);
       }
-      return defFont.deriveFont((float)Math.max(defFont.getSize() - 2, 11));
+      return defFont;
     }
     if (isBold) {
       return defFont.deriveFont(Font.BOLD);
