@@ -29,7 +29,7 @@ import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-class EmptyCacheManager implements CacheManager {
+public class EmptyCacheManager implements CacheManager {
   public void initialize() {
   }
 

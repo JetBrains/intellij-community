@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
-import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
 import com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
@@ -110,19 +109,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileTypeManager, fileDocumentManager,
                                                                                                     projectRootManagerEx);
-    final CompositeCacheManager cacheManager = new CompositeCacheManager();
-    if (isProjectDefault) {
-      cacheManager.addCacheManager(new EmptyCacheManager());
-    }
-    else {
-      cacheManager.addCacheManager(new IndexCacheManagerImpl(this));
-    }
-    final CacheManager[] managers = myProject.getComponents(CacheManager.class);
-    for (CacheManager manager : managers) {
-      cacheManager.addCacheManager(manager);
-    }
 
-    myCacheManager = cacheManager;
+    myCacheManager = isProjectDefault ? new EmptyCacheManager() : new IndexCacheManagerImpl(this);
 
     myModificationTracker = new PsiModificationTrackerImpl(myProject);
     myTreeChangePreprocessors.add(myModificationTracker);
