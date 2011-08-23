@@ -402,6 +402,7 @@ def reorder(String home, String targetDirectory) {
       arg(value: "$home/lib")
       classpath {
         pathelement(location: util.output)
+        pathelement(location: "$home/lib/jna.jar")
       }
     }
   }

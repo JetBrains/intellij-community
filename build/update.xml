@@ -49,6 +49,7 @@
         <arg value="${project.home}/lib"/>
         <classpath>
           <pathelement location="${modules.output}/production/util"/>
+          <pathelement location="${project.home}/lib/jna.jar"/>
         </classpath>
       </java>
 
