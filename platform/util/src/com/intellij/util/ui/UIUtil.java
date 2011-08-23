@@ -69,15 +69,17 @@ public class UIUtil {
   private static final String TABLE_DECORATION_KEY = "TABLE_DECORATION_KEY";
   private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
 
-  public static void applyStyle(@NotNull Style style, @NotNull Component comp) {
+  public static void applyStyle(@NotNull ComponentStyle componentStyle, @NotNull Component comp) {
     if (!(comp instanceof JComponent)) return;
 
     JComponent c = (JComponent)comp;
 
     if (isUnderAquaLookAndFeel()) {
-      c.putClientProperty("JComponent.sizeVariant", style == Style.REGULAR ? "regular" : style == Style.SMALL ? "small" : "mini");
+      c.putClientProperty("JComponent.sizeVariant",
+                          componentStyle == ComponentStyle.REGULAR ? "regular" : componentStyle == ComponentStyle.SMALL ? "small" : "mini");
     } else {
-      c.setFont(getFont(style == Style.REGULAR ? FontSize.NORMAL : style == Style.SMALL ? FontSize.SMALL : FontSize.MINI, c.getFont()));
+      c.setFont(getFont(
+        componentStyle == ComponentStyle.REGULAR ? FontSize.NORMAL : componentStyle == ComponentStyle.SMALL ? FontSize.SMALL : FontSize.MINI, c.getFont()));
     }
     Container p = c.getParent();
     if (p != null) {
@@ -86,6 +88,9 @@ public class UIUtil {
   }
 
   public enum FontSize { NORMAL, SMALL, MINI }
+  public enum ComponentStyle {REGULAR, SMALL, MINI}
+  public enum FontColor {NORMAL, BRIGHTER}
+
 
   public static final char MNEMONIC = 0x1B;
   @NonNls public static final String HTML_MIME = "text/html";
@@ -268,19 +273,26 @@ public class UIUtil {
   }
 
   @NotNull
-  public static Font getBorderFont(@NotNull UIUtil.FontSize size, boolean isBold) {
+  public static Font getBorderFont(@NotNull FontSize size, boolean isBold) {
     Font defFont = getBorderFont();
-    if (size == UIUtil.FontSize.SMALL) {
+    if (size == FontSize.SMALL) {
       defFont = defFont.deriveFont(defFont.getSize() - 2f);
-      if (isBold) {
-        defFont = defFont.deriveFont(Font.BOLD);
-      }
-      return defFont;
+    }
+    if (size == FontSize.MINI) {
+      defFont = defFont.deriveFont(defFont.getSize() - 4f);
     }
     if (isBold) {
-      return defFont.deriveFont(Font.BOLD);
+      defFont = defFont.deriveFont(Font.BOLD);
     }
     return defFont;
+  }
+
+  public static Color getLabelFontColor(FontColor fontColor) {
+    Color defColor = getLabelForeground();
+    if (fontColor == FontColor.BRIGHTER) {
+      return new Color(Math.min(defColor.getRed() + 50, 255), Math.min(defColor.getGreen() + 50, 255), Math.min(defColor.getBlue() + 50, 255));
+    }
+    return defColor;
   }
 
   public static Font getLabelFont() {
@@ -2367,8 +2379,6 @@ public class UIUtil {
 
     return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane;
   }
-
-  public enum Style {REGULAR, SMALL, MINI}
 
   public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay, @NotNull ActionListener listener) {
     return new Timer(delay, listener){

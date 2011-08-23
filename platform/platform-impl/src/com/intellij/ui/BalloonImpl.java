@@ -253,7 +253,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       new AwtVisitor(myContent) {
         @Override
         public boolean visit(Component component) {
-          UIUtil.applyStyle(UIUtil.Style.SMALL, component);
+          UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, component);
           return false;
         }
       };

@@ -87,7 +87,7 @@ public abstract class DialogWrapper {
   /**
    * The shared instance of default border for dialog's content pane.
    */
-  public static final Border ourDefaultBorder = BorderFactory.createEmptyBorder(8, 8, 8, 8);
+  public static final Border ourDefaultBorder = BorderFactory.createEmptyBorder(5, 8, 5, 5);
 
   private float myHorizontalStretch = 1.0f;
   private float myVerticalStretch = 1.0f;
