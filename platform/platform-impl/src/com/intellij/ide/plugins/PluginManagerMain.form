@@ -39,7 +39,7 @@
                     </constraints>
                     <properties/>
                     <clientProperties>
-                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
+                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                     </clientProperties>
                     <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="group.vendor"/>
                     <children>
@@ -119,7 +119,7 @@
                         </constraints>
                         <properties/>
                         <clientProperties>
-                          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithoutIndent"/>
+                          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
                         </clientProperties>
                         <border type="none" title-resource-bundle="messages/IdeBundle" title-key="editbox.plugin.description"/>
                         <children>
@@ -152,7 +152,7 @@
                         </constraints>
                         <properties/>
                         <clientProperties>
-                          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithoutIndent"/>
+                          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
                         </clientProperties>
                         <border type="none" title-resource-bundle="messages/IdeBundle" title-key="editbox.plugin.change.notes"/>
                         <children>
@@ -199,7 +199,7 @@
                         </constraints>
                         <properties/>
                         <clientProperties>
-                          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
+                          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                         </clientProperties>
                         <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="label.plugin.home.page"/>
                         <children>
@@ -222,7 +222,7 @@
                         </constraints>
                         <properties/>
                         <clientProperties>
-                          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
+                          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                         </clientProperties>
                         <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="plugin.version.label"/>
                         <children>

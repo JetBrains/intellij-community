@@ -14,7 +14,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
         <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.layout.preview.edit.configuration.device.panel.title"/>
         <children/>
@@ -26,7 +26,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
           <html.disable class="java.lang.Boolean" value="false"/>
         </clientProperties>
         <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.layout.preview.edit.configuration.configuration.title"/>
