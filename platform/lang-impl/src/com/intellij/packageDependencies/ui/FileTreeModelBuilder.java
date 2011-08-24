@@ -497,7 +497,7 @@ public class FileTreeModelBuilder {
         DirectoryNode parentDirectoryNode = myModuleDirNodes.get(directory);
         if (parentDirectoryNode != null
             || !myCompactEmptyMiddlePackages
-            || sourceRoot == directory
+            || (sourceRoot != null && VfsUtil.isAncestor(directory, sourceRoot, false) && fileIndex.getSourceRootForFile(directory) != null)
             || directory == contentRoot) {
           getModuleDirNode(directory, module, (DirectoryNode)directoryNode).add(directoryNode);
         }
