@@ -52,10 +52,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -164,7 +161,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       .disableUpAction()
       .addExtraAction(new DeleteFromFavoritesAction() {
         {
-          getTemplatePresentation().setIcon(PlatformIcons.DELETE_ICON);
+          getTemplatePresentation().setIcon(IconUtil.getRemoveRowIcon());
         }
 
         @Override
