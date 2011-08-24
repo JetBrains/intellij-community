@@ -57,10 +57,6 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
           return value instanceof YAMLCompoundValue && !((YAMLCompoundValue)value).getYAMLElements().isEmpty()
                  ? PlatformIcons.XML_TAG_ICON : PlatformIcons.PROPERTY_ICON;
         }
-
-        public TextAttributesKey getTextAttributesKey() {
-          return null;
-        }
       };
     }
     if (myElement instanceof YAMLDocument){
@@ -75,10 +71,6 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
 
         public Icon getIcon(boolean open) {
           return PlatformIcons.XML_TAG_ICON;
-        }
-
-        public TextAttributesKey getTextAttributesKey() {
-          return null;
         }
       };
     }

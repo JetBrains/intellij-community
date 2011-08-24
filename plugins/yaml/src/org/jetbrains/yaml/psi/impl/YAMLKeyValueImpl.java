@@ -106,10 +106,6 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
       public Icon getIcon(boolean open) {
         return PlatformIcons.PROPERTY_ICON;
       }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
     };
   }
 
