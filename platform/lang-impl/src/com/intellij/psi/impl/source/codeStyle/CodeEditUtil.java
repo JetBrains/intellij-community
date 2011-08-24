@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
