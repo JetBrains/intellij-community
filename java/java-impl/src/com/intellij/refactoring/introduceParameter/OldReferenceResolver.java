@@ -228,8 +228,9 @@ public class OldReferenceResolver {
         String id = getter.getName();
         String qualifier = null;
         if (newExpr instanceof PsiReferenceExpression) {
-          if (qualify) {
-            qualifier = getInstanceRef(factory).getText();
+          final PsiExpression instanceRef = getInstanceRef(factory);
+          if (qualify && instanceRef != null) {
+            qualifier = instanceRef.getText();
           } else {
             final PsiExpression qualifierExpression = ((PsiReferenceExpression)newExpr).getQualifierExpression();
             if (qualifierExpression != null) {
