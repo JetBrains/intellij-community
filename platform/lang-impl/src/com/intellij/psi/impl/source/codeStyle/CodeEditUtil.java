@@ -338,25 +338,6 @@ public class CodeEditUtil {
     return result;
   }
 
-  @Nullable
-  public static String getStringWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, PsiFile file) {
-    final FormattingModelBuilder modelBuilder = LanguageFormatting.INSTANCE.forContext(file);
-    if (modelBuilder == null) {
-      final LeafElement leafElement = TreeUtil.nextLeaf((TreeElement)first, null);
-      if (leafElement != second) {
-        return leafElement.getText();
-      }
-      else {
-        return null;
-      }
-    }
-    else {
-      final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
-      return getWhiteSpaceBeforeToken(second, file, true).generateNewWhiteSpace(settings.getIndentOptions(file.getFileType()));
-    }
-
-  }
-
   private static IndentInfo getWhiteSpaceBeforeToken(@NotNull final ASTNode tokenNode, final PsiFile file, final boolean mayChangeLineFeeds) {
     final Project project = file.getProject();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
