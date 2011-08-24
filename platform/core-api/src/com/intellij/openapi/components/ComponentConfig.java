@@ -20,7 +20,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 
 import java.util.HashMap;
@@ -55,6 +54,11 @@ public class ComponentConfig {
 
   public String getInterfaceClass() {
     return interfaceClass;
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public String getHeadlessImplementationClass() {
+    return headlessImplementationClass;
   }
 
   public boolean isLoadForDefaultProject() {
