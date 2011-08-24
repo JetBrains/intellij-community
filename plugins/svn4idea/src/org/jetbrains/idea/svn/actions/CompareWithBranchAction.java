@@ -199,7 +199,10 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
             }
             final SvnVcs vcs = SvnVcs.getInstance(myProject);
             SVNURL svnurl = getURLInBranch(vcs, baseUrl);
-            if (svnurl == null) return;
+            if (svnurl == null) {
+              reportNotFound(baseUrl);
+              return;
+            }
             remoteTitleBuilder.append(svnurl.toString());
             SVNWCClient client = vcs.createWCClient();
             client.doGetFileContents(svnurl, SVNRevision.UNDEFINED, SVNRevision.HEAD, true, baos);
