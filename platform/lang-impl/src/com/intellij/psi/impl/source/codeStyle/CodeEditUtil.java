@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -298,8 +299,8 @@ public class CodeEditUtil {
   }
 
   private static void markToReformatBeforeOrInsertWhitespace(final ASTNode left, @NotNull final ASTNode right) {
-    final Language leftLang = left != null ? PsiUtilBase.getNotAnyLanguage(left) : null;
-    final Language rightLang = PsiUtilBase.getNotAnyLanguage(right);
+    final Language leftLang = left != null ? PsiUtilCore.getNotAnyLanguage(left) : null;
+    final Language rightLang = PsiUtilCore.getNotAnyLanguage(right);
 
     ASTNode generatedWhitespace = null;
     if (leftLang != null && leftLang.isKindOf(rightLang)) {

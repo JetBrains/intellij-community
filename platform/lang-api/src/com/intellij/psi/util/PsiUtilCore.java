@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,5 +30,12 @@ public class PsiUtilCore {
   public static PsiElement[] toPsiElementArray(@NotNull Collection<? extends PsiElement> collection) {
     if (collection.isEmpty()) return PsiElement.EMPTY_ARRAY;
     return collection.toArray(new PsiElement[collection.size()]);
+  }
+
+  public static Language getNotAnyLanguage(ASTNode node) {
+    if (node == null) return Language.ANY;
+
+    final Language lang = node.getElementType().getLanguage();
+    return lang == Language.ANY ? getNotAnyLanguage(node.getTreeParent()) : lang;
   }
 }
