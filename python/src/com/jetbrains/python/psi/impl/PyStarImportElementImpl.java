@@ -103,10 +103,6 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
       public Icon getIcon(final boolean open) {
         return null;
       }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
     };
   }
 

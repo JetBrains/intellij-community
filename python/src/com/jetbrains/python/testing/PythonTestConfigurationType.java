@@ -28,7 +28,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
   }
 
   private final static Icon ICON = IconLoader.getIcon(
-    "/com/jetbrains/python/icons/python.png");
+    "/com/jetbrains/python/icons/pythonTests.png");
 
   private static class PythonUnitTestConfigurationFactory extends ConfigurationFactory {
     protected PythonUnitTestConfigurationFactory(ConfigurationType configurationType) {
