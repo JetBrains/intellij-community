@@ -488,38 +488,6 @@ public abstract class MvcFramework {
     return new File(grailsWorkDir, "projects/" + root.getName() + "/plugins");
   }
 
-  public Map<String, String> getInstalledPluginVersions(@NotNull Module module) {
-    final PropertiesFile properties = MvcModuleStructureUtil.findApplicationProperties(module, this);
-    if (properties == null) {
-      return Collections.emptyMap();
-    }
-
-    return getInstalledPluginVersions(properties);
-  }
-
-  public static Map<String, String> getInstalledPluginVersions(@NotNull PropertiesFile properties) {
-    Map<String, String> pluginNames = new HashMap<String, String>();
-
-    for (final IProperty property : properties.getProperties()) {
-      String propName = property.getName();
-      if (propName != null) {
-        propName = propName.trim();
-        if (propName.startsWith("plugins.")) {
-          String pluginName = propName.substring("plugins.".length());
-          String pluginVersion = property.getValue();
-          if (pluginName.length() > 0 && pluginVersion != null) {
-            pluginVersion = pluginVersion.trim();
-            if (pluginVersion.length() > 0) {
-              pluginNames.put(pluginName, pluginVersion);
-            }
-          }
-        }
-      }
-    }
-
-    return pluginNames;
-  }
-
   protected abstract String getCommonPluginSuffix();
 
   public abstract String getGlobalPluginsModuleName();
