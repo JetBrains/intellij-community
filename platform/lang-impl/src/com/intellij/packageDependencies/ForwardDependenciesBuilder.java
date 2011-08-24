@@ -86,12 +86,13 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     if (getScopeOfInterest() != null && !getScopeOfInterest().contains(file)) return;
 
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    final VirtualFile virtualFile = file.getVirtualFile();
     if (indicator != null) {
       if (indicator.isCanceled()) {
         throw new ProcessCanceledException();
       }
       indicator.setText(AnalysisScopeBundle.message("package.dependencies.progress.text"));
-      final VirtualFile virtualFile = file.getVirtualFile();
+
       if (virtualFile != null) {
         indicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, getProject()));
       }
@@ -100,16 +101,22 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
       }
     }
 
+    final boolean isInLibrary =  virtualFile == null || fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile);
     final Set<PsiFile> collectedDeps = new HashSet<PsiFile>();
     final HashSet<PsiFile> processed = new HashSet<PsiFile>();
     collectedDeps.add(file);
     do {
       if (depth++ > getTransitiveBorder()) return;
       for (PsiFile psiFile : new HashSet<PsiFile>(collectedDeps)) {
-        if (indicator != null) {
-          final VirtualFile virtualFile = psiFile.getVirtualFile();
-          if (virtualFile != null) {
-            indicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, getProject()));
+        final VirtualFile vFile = psiFile.getVirtualFile();
+        if (vFile != null) {
+
+          if (indicator != null) {
+            indicator.setText2(ProjectUtil.calcRelativeToProjectPath(vFile, getProject()));
+          }
+
+          if (!isInLibrary && (fileIndex.isInLibraryClasses(vFile) || fileIndex.isInLibrarySource(vFile))) {
+            processed.add(psiFile);
           }
         }
         final Set<PsiFile> found = new HashSet<PsiFile>();
