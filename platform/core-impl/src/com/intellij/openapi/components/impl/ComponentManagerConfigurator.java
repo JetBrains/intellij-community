@@ -33,7 +33,7 @@ class ComponentManagerConfigurator {
 
   private void loadSingleConfig(final boolean defaultProject, final ComponentConfig config, final PluginDescriptor descriptor) {
     if (defaultProject) {
-      if (config.skipForDefaultProject || !config.isLoadForDefaultProject())
+      if (!config.isLoadForDefaultProject())
         return;
     }
     if (!myComponentManager.isComponentSuitable(config.options)) return;

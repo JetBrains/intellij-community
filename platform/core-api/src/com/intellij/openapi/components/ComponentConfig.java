@@ -26,23 +26,16 @@ import com.intellij.util.xmlb.annotations.Transient;
 import java.util.HashMap;
 import java.util.Map;
 
-@Tag("component")
 public class ComponentConfig {
   public static final ComponentConfig[] EMPTY_ARRAY = new ComponentConfig[0];
-  @Tag("implementation-class")
-  public String implementationClass;
 
-  @Tag("interface-class")
-  public String interfaceClass;
+  protected String implementationClass;
 
-  @Tag("headless-implementation-class")
-  public String headlessImplementationClass;
+  protected String interfaceClass;
 
-  @Tag(value = "skipForDefaultProject", textIfEmpty="true")
-  public boolean skipForDefaultProject;
+  protected String headlessImplementationClass;
 
-  @Tag(value = "loadForDefaultProject", textIfEmpty="true")
-  public boolean loadForDefaultProject;
+  protected boolean loadForDefaultProject;
 
   @Property(surroundWithTag = false)
   @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value")
@@ -75,11 +68,27 @@ public class ComponentConfig {
   public boolean prepareClasses(boolean headless) {
     if (headless && headlessImplementationClass != null) {
       if (StringUtil.isEmpty(headlessImplementationClass)) return false;
-      implementationClass = headlessImplementationClass;
+      setImplementationClass(headlessImplementationClass);
     }
     if (StringUtil.isEmpty(interfaceClass)) {
-      interfaceClass = implementationClass;
+      setInterfaceClass(implementationClass);
     }
     return true;
+  }
+
+  public void setImplementationClass(String implementationClass) {
+    this.implementationClass = implementationClass;
+  }
+
+  public void setInterfaceClass(String interfaceClass) {
+    this.interfaceClass = interfaceClass;
+  }
+
+  public void setHeadlessImplementationClass(String headlessImplementationClass) {
+    this.headlessImplementationClass = headlessImplementationClass;
+  }
+
+  public void setLoadForDefaultProject(boolean loadForDefaultProject) {
+    this.loadForDefaultProject = loadForDefaultProject;
   }
 }
