@@ -1,8 +1,6 @@
-setProperty("basedir", "${ant.project.properties.basedir}")
-
+setProperty("basedir", "${ant.project.properties.basedir}/../python/build")
 
 setProperty("projectHome", "${basedir}/../..")
-setProperty("projectHome", "")
 setProperty("outDir", "${projectHome}/out/python")
 setProperty("ideaDir", "${outDir}/idea")
 setProperty("ideaHome", "${ideaDir}/jdk16")
@@ -33,56 +31,15 @@ setProperty("artifactsDir", "${output}/artifacts")
 setProperty("classesDir", "${basedir}/dist/classes")
 setProperty("testClassesDir", "${basedir}/dist/test-classes")
 
-ant.path(id: "classpath.lib") {
-  fileset(dir: "${ideaLib}") {
-    include(name: "?*.jar")
-  }
-  fileset(dir: "${ideaPlugins}/yaml/lib") {
-    include(name: "yaml.jar")
-  }
-}
-
-ant.path(id: "sourcepath") {
-  dirset(dir: "${pluginHome}") {
-    include(name: "resources")
-    include(name: "src")
-    include(name: "pluginSrc")
-    include(name: "pydevSrc")
-  }
-  dirset(dir: "${pluginHome}/../ultimate/ultimate-verifier") {
-    include(name: "src")
-  }
-}
-
-//<!-- The task requires the following libraries from IntelliJ IDEA distribution: -->
-//<!--   javac2.jar; jdom.jar; asm.jar; asm-commons.jar -->
-ant.taskdef(name: "javac2", classname: "com.intellij.ant.Javac2") {
-  classpath(refid: "classpath.lib")
-}
-
-//<!-- Compiler options -->
-setProperty("compilerDebug", "on")
-setProperty("compilerGenerateNoWarnings", "off")
-setProperty("compilerArgs", "")
-setProperty("compilerMaxMemory", "256m")
-
-ant.patternset(id: "sources.pt") {
-  exclude(name: "**/.svn/**")
-}
-ant.patternset(id: "resources.pt") {
-  include(name: "**/?*.properties")
-  include(name: "**/?*.template")
-  include(name: "**/?*.xml")
-  include(name: "**/?*.gif")
-  include(name: "**/?*.png")
-  include(name: "**/?*.txt")
-  include(name: "**/?*.jpeg")
-  include(name: "**/?*.jpg")
-  include(name: "**/?*.html")
-  include(name: "**/?*.dtd")
-  include(name: "**/?*.tld")
-  include(name: "**/?*.py")
-  include(name: "**/?*.ft")
+target(name: "clean", description: "Cleanup output") {
+  ant.delete(dir: "${output}", failonerror: "false")
+  ant.delete(dir: "${classesDir}", failonerror: "false")
+  ant.delete(dir: "${outDir}/classes", failonerror: "false")
+  ant.delete(dir: "${outDir}/dist", failonerror: "false")
+  ant.delete(dir: "${outDir}/artifacts", failonerror: "false")
+  ant.delete(dir: "${outDir}/jar", failonerror: "false")
+  ant.delete(dir: "${outDir}/deploy", failonerror: "false")
+  ant.delete(dir: "${ideaDir}/jdk16", failonerror: "false")
 }
 
 target(name: "unzip") {
@@ -92,18 +49,59 @@ target(name: "unzip") {
   }
 }
 
-target(name: "clean", description: "Cleanup output") {
-  ant.delete(dir: "${output}")
-  ant.delete(dir: "${classesDir}")
-  ant.delete(dir: "${outDir}/classes", failonerror: "false")
-  ant.delete(dir: "${outDir}/dist", failonerror: "false")
-  ant.delete(dir: "${outDir}/artifacts", failonerror: "false")
-  ant.delete(dir: "${outDir}/jar", failonerror: "false")
-  ant.delete(dir: "${outDir}/deploy", failonerror: "false")
-  ant.delete(dir: "${ideaDir}/jdk16", failonerror: "false")
-}
-
 target(name: "compile", description: "Compile module python") {
+  depends("unzip")
+  ant.path(id: "classpath.lib") {
+    fileset(dir: "${ideaLib}") {
+      include(name: "?*.jar")
+    }
+    fileset(dir: "${ideaPlugins}/yaml/lib") {
+      include(name: "yaml.jar")
+    }
+  }
+
+  ant.path(id: "sourcepath") {
+    dirset(dir: "${pluginHome}") {
+      include(name: "resources")
+      include(name: "src")
+      include(name: "pluginSrc")
+      include(name: "pydevSrc")
+    }
+    dirset(dir: "${pluginHome}/../ultimate/ultimate-verifier") {
+      include(name: "src")
+    }
+  }
+  //<!-- The task requires the following libraries from IntelliJ IDEA distribution: -->
+  //<!--   javac2.jar; jdom.jar; asm.jar; asm-commons.jar -->
+  ant.taskdef(name: "javac2", classname: "com.intellij.ant.Javac2") {
+    classpath(refid: "classpath.lib")
+  }
+
+  //<!-- Compiler options -->
+  setProperty("compilerDebug", "on")
+  setProperty("compilerGenerateNoWarnings", "off")
+  setProperty("compilerArgs", "")
+  setProperty("compilerMaxMemory", "256m")
+
+  ant.patternset(id: "sources.pt") {
+    exclude(name: "**/.svn/**")
+  }
+  ant.patternset(id: "resources.pt") {
+    include(name: "**/?*.properties")
+    include(name: "**/?*.template")
+    include(name: "**/?*.xml")
+    include(name: "**/?*.gif")
+    include(name: "**/?*.png")
+    include(name: "**/?*.txt")
+    include(name: "**/?*.jpeg")
+    include(name: "**/?*.jpg")
+    include(name: "**/?*.html")
+    include(name: "**/?*.dtd")
+    include(name: "**/?*.tld")
+    include(name: "**/?*.py")
+    include(name: "**/?*.ft")
+  }
+
   ant.loadfile(srcfile: "${ideaHome}/build.txt", property: "ideaBuildNumber") {
     filterchain() {
       deletecharacters(chars: "IU-")
