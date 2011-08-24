@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * @deprecated use {@link com.intellij.framework.detection.FrameworkDetector} instead
+ *
  * @author nik
  */
 public abstract class UnderlyingFacetSelector<T, U extends FacetConfiguration> {
