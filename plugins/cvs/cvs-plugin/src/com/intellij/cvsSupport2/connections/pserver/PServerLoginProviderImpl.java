@@ -51,19 +51,19 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
 
   @Nullable
   private static String requestForPassword(String cvsroot) {
-    PasswordPromptDialog passwordDialog = new PasswordPromptDialog(CvsBundle.message("propmt.text.enter.password.for.cvs.root", cvsroot),
-                                                                   CvsBundle.message("propmt.title.enter.password.for.cvs.root"), null);
+    PasswordPromptDialog passwordDialog = new PasswordPromptDialog(CvsBundle.message("prompt.text.enter.password.for.cvs.root", cvsroot),
+                                                                   CvsBundle.message("prompt.title.enter.password.for.cvs.root"), null);
     passwordDialog.show();
     if (!passwordDialog.isOK()) return null;
     return PServerPasswordScrambler.getInstance().scramble(passwordDialog.getPassword());
   }
 
   public CvsLoginWorker getLoginWorker(final ModalityContext executor, final Project project, final PServerCvsSettings pServerCvsSettings) {
-    return new MyLoginWorker(project, pServerCvsSettings, executor);
+    return new PServerLoginWorker(project, pServerCvsSettings, executor);
   }
 
-  private static class MyLoginWorker extends CvsLoginWorkerImpl<PServerCvsSettings> {
-    private MyLoginWorker(final Project project, final PServerCvsSettings settings, final ModalityContext executor) {
+  private static class PServerLoginWorker extends CvsLoginWorkerImpl<PServerCvsSettings> {
+    private PServerLoginWorker(final Project project, final PServerCvsSettings settings, final ModalityContext executor) {
       super(project, settings, executor);
     }
 
@@ -176,5 +176,4 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     }
     return null;
   }
-
 }

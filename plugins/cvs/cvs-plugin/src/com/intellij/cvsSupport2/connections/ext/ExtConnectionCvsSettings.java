@@ -62,7 +62,7 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
   }
 
   public int getDefaultPort() {
-    return ExtConnection.DEFAULT_PORT;
+    return 22;
   }
 
   public CvsLoginWorker getLoginWorker(ModalityContext executor, Project project) {

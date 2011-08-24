@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
 
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -114,53 +114,52 @@ public class SSHPasswordProviderImpl implements NamedComponent, JDOMExternalizab
     }
     element.addContent(passwords);
 
-    passwords = new Element(PPKPASSWORDS);
+    Element ppkPasswords = new Element(PPKPASSWORDS);
     for (final String cvsRoot : myCvsRootToStoringPPKPasswordMap.keySet()) {
       Element password = new Element(PASSWORD);
       password.setAttribute(CVSROOT_ATTR, cvsRoot);
       password.setAttribute(PASSWORD_ATTR, PServerPasswordScrambler.getInstance().scramble(myCvsRootToStoringPPKPasswordMap.get(cvsRoot)));
-      passwords.addContent(password);
+      ppkPasswords.addContent(password);
     }
-    element.addContent(passwords);
-
+    element.addContent(ppkPasswords);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
     Element passwords = element.getChild(PASSWORDS);
     if (passwords != null) {
-      for (Iterator eachPasswordElement = passwords.getChildren(PASSWORD).iterator(); eachPasswordElement.hasNext();){
-        Element passElement = (Element)eachPasswordElement.next();
+      for (Element passElement : (List<Element>)passwords.getChildren(PASSWORD)) {
         String cvsRoot = passElement.getAttributeValue(CVSROOT_ATTR);
         String password = passElement.getAttributeValue(PASSWORD_ATTR);
-        if ((cvsRoot != null) && (password != null))
+        if ((cvsRoot != null) && (password != null)) {
           myCvsRootToStoringPasswordMap.put(cvsRoot, PServerPasswordScrambler.getInstance().unscramble(password));
+        }
       }
     }
-    passwords = element.getChild(PPKPASSWORDS);
-    if (passwords != null) {
-      for (Iterator eachPasswordElement = passwords.getChildren(PASSWORD).iterator(); eachPasswordElement.hasNext();){
-        Element passElement = (Element)eachPasswordElement.next();
+
+    Element ppkPasswords = element.getChild(PPKPASSWORDS);
+    if (ppkPasswords != null) {
+      for (Element passElement : (List<Element>)ppkPasswords.getChildren(PASSWORD)) {
         String cvsRoot = passElement.getAttributeValue(CVSROOT_ATTR);
         String password = passElement.getAttributeValue(PASSWORD_ATTR);
-        if ((cvsRoot != null) && (password != null))
+        if ((cvsRoot != null) && (password != null)) {
           myCvsRootToStoringPPKPasswordMap.put(cvsRoot, PServerPasswordScrambler.getInstance().unscramble(password));
+        }
       }
     }
 
   }
 
-  public void removePasswordFor(String stringRepsentation) {
+  public void removePasswordFor(String stringRepresentation) {
     synchronized (myLock) {
-      myCvsRootToPasswordMap.remove(stringRepsentation);
-      myCvsRootToStoringPasswordMap.remove(stringRepsentation);
+      myCvsRootToPasswordMap.remove(stringRepresentation);
+      myCvsRootToStoringPasswordMap.remove(stringRepresentation);
     }
   }
 
-  public void removePPKPasswordFor(String stringRepsentation) {
+  public void removePPKPasswordFor(String stringRepresentation) {
     synchronized (myLock) {
-      myCvsRootToPPKPasswordMap.remove(stringRepsentation);
-      myCvsRootToStoringPPKPasswordMap.remove(stringRepsentation);
+      myCvsRootToPPKPasswordMap.remove(stringRepresentation);
+      myCvsRootToStoringPPKPasswordMap.remove(stringRepresentation);
     }
   }
-
 }

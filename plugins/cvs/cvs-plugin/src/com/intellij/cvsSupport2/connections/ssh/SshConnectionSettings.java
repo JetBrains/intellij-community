@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,13 +68,13 @@ public class SshConnectionSettings extends CvsConnectionSettings {
   }
 
   public CvsLoginWorkerImpl getLoginWorker(ModalityContext executor, Project project) {
-    return new MyLoginWorker(project, executor, getCvsRootAsString(), this);
+    return new SshLoginWorker(project, executor, getCvsRootAsString(), this);
   }
 
-  private class MyLoginWorker extends CvsLoginWorkerImpl<SshConnectionSettings> {
+  private class SshLoginWorker extends CvsLoginWorkerImpl<SshConnectionSettings> {
     private final String myCvsRoot;
 
-    private MyLoginWorker(Project project, ModalityContext executor, String cvsRoot, final SshConnectionSettings sshConnectionSettings) {
+    private SshLoginWorker(Project project, ModalityContext executor, String cvsRoot, final SshConnectionSettings sshConnectionSettings) {
       super(project, sshConnectionSettings, executor);
       myCvsRoot = cvsRoot;
     }
@@ -108,5 +108,4 @@ public class SshConnectionSettings extends CvsConnectionSettings {
   public CommandException processException(CommandException t) {
     return t;
   }
-
 }
