@@ -17,6 +17,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -53,5 +54,32 @@ public class ComponentConfig {
   @Transient
   public ClassLoader getClassLoader() {
     return pluginDescriptor != null ? pluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+  }
+
+  public String getImplementationClass() {
+    return implementationClass;
+  }
+
+  public String getInterfaceClass() {
+    return interfaceClass;
+  }
+
+  public boolean isLoadForDefaultProject() {
+    return loadForDefaultProject;
+  }
+
+  /**
+   * @param headless
+   * @return false if the component should not be loaded in headless mode
+   */
+  public boolean prepareClasses(boolean headless) {
+    if (headless && headlessImplementationClass != null) {
+      if (StringUtil.isEmpty(headlessImplementationClass)) return false;
+      implementationClass = headlessImplementationClass;
+    }
+    if (StringUtil.isEmpty(interfaceClass)) {
+      interfaceClass = implementationClass;
+    }
+    return true;
   }
 }
