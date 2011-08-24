@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import org.jetbrains.annotations.NotNull;
@@ -29,18 +31,31 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class Win32LocalFileSystem extends LocalFileSystemBase {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem");
 
   private static boolean ourIsAvailable;
 
   static {
-    try {
-      System.loadLibrary("IdeaWin32");
-      ourIsAvailable = true;
-    }
-    catch (Throwable e) {
-      ourIsAvailable = false;
+    if (SystemInfo.isWindows) {
+      try {
+        System.load(PathManager.getHomePath() + "/community/bin/win/IdeaWin32.dll");
+        ourIsAvailable = true;
+      }
+      catch (Throwable t0) {
+        try {
+          System.load(PathManager.getHomePath() + "/bin/win/IdeaWin32.dll");
+          ourIsAvailable = true;
+        }
+        catch (Throwable t1) {
+          try {
+            System.loadLibrary("IdeaWin32");
+            ourIsAvailable = true;
+          }
+          catch (Throwable t2) {
+            ourIsAvailable = false;
+          }
+        }
+      }
     }
   }
 
@@ -56,7 +71,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   };
 
   public static Win32LocalFileSystem getWin32Instance() {
-    if (!isAvailable()) throw new RuntimeException("dll is not loaded");
+    if (!isAvailable()) throw new RuntimeException("DLL is not loaded");
     Win32LocalFileSystem fileSystem = THREAD_LOCAL.get();
     fileSystem.myKernel.clearCache();
     return fileSystem;
@@ -65,8 +80,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   private final Win32Kernel myKernel = new Win32Kernel();
   public static boolean checkMe = false;
 
-  private Win32LocalFileSystem() {
-  }
+  private Win32LocalFileSystem() { }
 
   @Override
   public String[] list(VirtualFile file) {
