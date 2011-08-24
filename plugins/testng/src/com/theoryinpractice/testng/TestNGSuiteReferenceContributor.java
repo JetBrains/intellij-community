@@ -63,6 +63,11 @@ public class TestNGSuiteReferenceContributor extends PsiReferenceContributor {
     methodSelectorProvider.setOption(JavaClassReferenceProvider.EXTEND_CLASS_NAMES, new String[]{IMethodSelector.class.getName()});
     registrar.registerReferenceProvider(ourMethodSelectorPattern, methodSelectorProvider);
 
-    registrar.registerReferenceProvider(ourSuiteFilePattern, new PathListReferenceProvider());
+    registrar.registerReferenceProvider(ourSuiteFilePattern, new PathListReferenceProvider(){
+      @Override
+      protected boolean disableNonSlashedPaths() {
+        return false;
+      }
+    });
   }
 }
