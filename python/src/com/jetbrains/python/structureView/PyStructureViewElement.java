@@ -1,6 +1,7 @@
 package com.jetbrains.python.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -205,7 +206,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   }
 
   public ItemPresentation getPresentation() {
-    return new ItemPresentation() {
+    return new ColoredItemPresentation() {
       public String getPresentableText() {
         final String unnamed = "<unnamed>";
         if (myElement instanceof PyFunction) {
@@ -234,6 +235,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
       }
 
       @Nullable
+      @Override
       public TextAttributesKey getTextAttributesKey() {
         if (isInherited()) {
           return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
