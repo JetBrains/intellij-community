@@ -23,7 +23,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 /**
-* @author nik
+ * Provides automatic detection of root type for files added to a library. Implementations of this class should be returned from
+ * {@link LibraryRootsComponentDescriptor#getRootDetectors} method
+ *
+ * @see RootFilter
+ * @see FileTypeBasedRootFilter
+ * @author nik
 */
 public abstract class RootDetector {
   private OrderRootType myRootType;
@@ -48,6 +53,12 @@ public abstract class RootDetector {
     return myPresentableRootTypeName;
   }
 
+  /**
+   * Find suitable roots in {@code rootCandidate} or its descendants.
+   * @param rootCandidate file selected in the file chooser by user
+   * @param progressIndicator can be used to show information about the progress and to abort searching if process is cancelled
+   * @return suitable roots
+   */
   @NotNull
   public abstract Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator);
 }

@@ -26,6 +26,8 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Implementation of {@link RootDetector} which detects a root by presence of files of some specified type under it
+ *
  * @author nik
  */
 public class FileTypeBasedRootFilter extends RootFilter {
