@@ -180,7 +180,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
     Set<String> frameworkNames = new HashSet<String>();
     for (final DetectedFrameworkDescription description : FrameworkDetectionUtil.removeDisabled(newDescriptions, oldDescriptions)) {
-      frameworkNames.add(description.getFrameworkType().getPresentableName());
+      frameworkNames.add(description.getDetector().getFrameworkType().getPresentableName());
     }
     if (!frameworkNames.isEmpty()) {
       String names = StringUtil.join(frameworkNames, ", ");
@@ -230,10 +230,9 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
   }
 
   private void showSetupFrameworksDialog(Notification notification) {
-    IdentityHashMap<DetectedFrameworkDescription, Integer> frameworksToId = new IdentityHashMap<DetectedFrameworkDescription, Integer>();
     List<? extends DetectedFrameworkDescription> descriptions;
     try {
-      descriptions = getValidDetectedFrameworks(frameworksToId);
+      descriptions = getValidDetectedFrameworks();
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(myProject).showDumbModeNotification("Information about detected frameworks is not available until indices are built");
@@ -251,12 +250,13 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       List<DetectedFrameworkDescription> selected = dialog.getSelectedFrameworks();
       FrameworkDetectionUtil.setupFrameworks(selected, myProject);
       for (DetectedFrameworkDescription description : selected) {
-        myDetectedFrameworksData.putExistentFrameworkFiles(frameworksToId.get(description), description.getRelatedFiles());
+        final int detectorId = FrameworkDetectorRegistry.getInstance().getDetectorId(description.getDetector());
+        myDetectedFrameworksData.putExistentFrameworkFiles(detectorId, description.getRelatedFiles());
       }
     }
   }
 
-  private List<? extends DetectedFrameworkDescription> getValidDetectedFrameworks(IdentityHashMap<DetectedFrameworkDescription, Integer> frameworksToId) {
+  private List<? extends DetectedFrameworkDescription> getValidDetectedFrameworks() {
     final MultiMap<Integer,DetectedFrameworkDescription> frameworksMap = myDetectedFrameworksData.getDetectedFrameworks();
     List<DetectedFrameworkDescription> descriptions = new ArrayList<DetectedFrameworkDescription>();
     final FileBasedIndex index = FileBasedIndex.getInstance();
@@ -284,7 +284,6 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
       for (DetectedFrameworkDescription framework : frameworks) {
         descriptions.add(framework);
-        frameworksToId.put(framework, id);
       }
     }
     return FrameworkDetectionUtil.removeDisabled(descriptions);
@@ -298,7 +297,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
   @TestOnly
   public List<? extends DetectedFrameworkDescription> getDetectedFrameworks() {
-    return getValidDetectedFrameworks(new IdentityHashMap<DetectedFrameworkDescription, Integer>());
+    return getValidDetectedFrameworks();
   }
 
   private void ensureIndexIsUpToDate(final Collection<Integer> detectors) {

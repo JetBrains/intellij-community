@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -89,6 +90,14 @@ public abstract class FrameworkDetector {
    * @return {@link FrameworkType} instance which will be used to present the framework in 'Frameworks Detected' dialog and 'Disable Detection' settings
    */
   public abstract FrameworkType getFrameworkType();
+
+  /**
+   * @return {@link FrameworkType} instance describing framework which is required for this framework.
+   */
+  @Nullable
+  public FrameworkType getUnderlyingFrameworkType() {
+    return null;
+  }
 
   @NotNull
   public final String getDetectorId() {
