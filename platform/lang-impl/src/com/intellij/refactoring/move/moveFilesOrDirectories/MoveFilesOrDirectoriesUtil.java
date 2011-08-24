@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
@@ -32,8 +33,10 @@ import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,20 +47,48 @@ public class MoveFilesOrDirectoriesUtil {
   private MoveFilesOrDirectoriesUtil() {
   }
 
-  // Does not process non-code usages!
+  /**
+   * Moves the specified directory to the specified parent directory. Does not process non-code usages!
+   *
+   * @param dir          the directory to move.
+   * @param newParentDir the directory to move <code>dir</code> into.
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   public static void doMoveDirectory(final PsiDirectory aDirectory, final PsiDirectory destDirectory) throws IncorrectOperationException {
     PsiManager manager = aDirectory.getManager();
     // do actual move
-    manager.moveDirectory(aDirectory, destDirectory);
+    checkMove(aDirectory, destDirectory);
+
+    try {
+      aDirectory.getVirtualFile().move(manager, destDirectory.getVirtualFile());
+    }
+    catch (IOException e) {
+      throw new IncorrectOperationException(e.toString(),e);
+    }
   }
 
-  // Does not process non-code usages!
+  /**
+   * Moves the specified file to the specified directory. Does not process non-code usages!
+   *
+   * @param file         the file to move.
+   * @param newDirectory the directory to move the file into.
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   public static void doMoveFile(final PsiFile file, final PsiDirectory newDirectory) throws IncorrectOperationException {
     PsiManager manager = file.getManager();
     // the class is already there, this is true when multiple classes are defined in the same file
     if (!newDirectory.equals(file.getContainingDirectory())) {
       // do actual move
-      manager.moveFile(file, newDirectory);
+      checkMove(file, newDirectory);
+
+      try {
+        final VirtualFile virtualFile = file.getVirtualFile();
+        assert virtualFile != null;
+        virtualFile.move(manager, newDirectory.getVirtualFile());
+      }
+      catch (IOException e) {
+        throw new IncorrectOperationException(e.toString(),e);
+      }
     }
   }
 
@@ -120,7 +151,7 @@ public class MoveFilesOrDirectoriesUtil {
                   });
                   if (fileExist) continue;
                 }
-                manager.checkMove(psiElement, targetDirectory);
+                checkMove(psiElement, targetDirectory);
                 els.add(psiElement);
               }
               final Runnable callback = new Runnable() {
@@ -229,6 +260,33 @@ public class MoveFilesOrDirectoriesUtil {
     else {
       return null;
     }
+  }
+
+  /**
+   * Checks if it is possible to move the specified PSI element under the specified container,
+   * and throws an exception if the move is not possible. Does not actually modify anything.
+   *
+   * @param element      the element to check the move possibility.
+   * @param newContainer the target container element to move into.
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
+  public static void checkMove(@NotNull PsiElement element, @NotNull PsiElement newContainer) throws IncorrectOperationException {
+    if (element instanceof PsiDirectoryContainer) {
+      PsiDirectory[] dirs = ((PsiDirectoryContainer)element).getDirectories();
+      if (dirs.length == 0) {
+        throw new IncorrectOperationException();
+      }
+      else if (dirs.length > 1) {
+        throw new IncorrectOperationException(
+          "Moving of packages represented by more than one physical directory is not supported.");
+      }
+      checkMove(dirs[0], newContainer);
+      return;
+    }
+
+    //element.checkDelete(); //move != delete + add
+    newContainer.checkAdd(element);
+    checkIfMoveIntoSelf(element, newContainer);
   }
 
   public static void checkIfMoveIntoSelf(PsiElement element, PsiElement newContainer) throws IncorrectOperationException {
