@@ -15,7 +15,6 @@
  */
 package com.intellij.navigation;
 
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -53,12 +52,4 @@ public interface ItemPresentation {
    */
   @Nullable
   Icon getIcon(boolean open);
-
-  /**
-   * Returns the text attributes for rendering the item text.
-   *
-   * @return the text attributes, or null if default text attributes should be used
-   */
-  @Nullable
-  TextAttributesKey getTextAttributesKey();
 }

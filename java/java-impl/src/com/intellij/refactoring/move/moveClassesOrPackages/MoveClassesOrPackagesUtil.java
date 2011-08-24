@@ -29,6 +29,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
@@ -183,7 +184,7 @@ public class MoveClassesOrPackagesUtil {
 
     if (subdirectoryInDest == null) {
       VirtualFile virtualFile = dir.getVirtualFile();
-      manager.moveDirectory(dir, destination);
+      MoveFilesOrDirectoriesUtil.doMoveDirectory(dir, destination);
       movedPaths.add(virtualFile);
     }
     else {
@@ -195,7 +196,7 @@ public class MoveClassesOrPackagesUtil {
         catch (IncorrectOperationException e) {
           continue;
         }
-        manager.moveFile(file, subdirectoryInDest);
+        MoveFilesOrDirectoriesUtil.doMoveFile(file, subdirectoryInDest);
       }
 
       final PsiDirectory[] subdirectories = dir.getSubdirectories();
@@ -242,7 +243,7 @@ public class MoveClassesOrPackagesUtil {
 
     newClass = aClass;
     if (!moveDestination.equals(file.getContainingDirectory())) {
-      aClass.getManager().moveFile(file, moveDestination);
+      MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
       if (file instanceof PsiClassOwner && newPackage != null) {
         ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
       }

@@ -23,6 +23,7 @@ public class GradleProjectSettingsBuilder {
   private final JPanel             myResult            = new JPanel(new GridBagLayout());
   private final GridBagConstraints myLabelConstraint   = new GridBagConstraints();
   private final GridBagConstraints myControlConstraint = new GridBagConstraints();
+  private final GridBagConstraints myErrorLabelConstraint = new GridBagConstraints();
 
   public GradleProjectSettingsBuilder() {
     myLabelConstraint.anchor = myControlConstraint.anchor = GridBagConstraints.WEST;
@@ -30,6 +31,9 @@ public class GradleProjectSettingsBuilder {
     myControlConstraint.gridwidth = GridBagConstraints.REMAINDER;
     myControlConstraint.weightx = 1;
     myControlConstraint.fill = GridBagConstraints.HORIZONTAL;
+    
+    myErrorLabelConstraint.gridwidth = GridBagConstraints.REMAINDER;
+    myErrorLabelConstraint.insets.top = 3;
   }
 
   /**
@@ -38,15 +42,24 @@ public class GradleProjectSettingsBuilder {
    * 
    * @param labelKey  bundle key to use for retrieving setting's label name
    * @param control   GUI control for managing target setting's value
+   * @return          holder to use for the validation error messages for the target control
    */
-  public void add(@NotNull @PropertyKey(resourceBundle = GradleBundle.PATH_TO_BUNDLE) String labelKey, @NotNull JComponent control) {
+  public JLabel add(@NotNull @PropertyKey(resourceBundle = GradleBundle.PATH_TO_BUNDLE) String labelKey, @NotNull JComponent control) {
     JLabel label = new JLabel(GradleBundle.message(labelKey));
     myResult.add(label, myLabelConstraint);
     myResult.add(control, myControlConstraint);
 
     if (myLabelConstraint.insets.top <= 0) {
       myLabelConstraint.insets.top = myControlConstraint.insets.top = 15;
-    } 
+    }
+    
+    JLabel errorLabel = new JLabel();
+    Font font = errorLabel.getFont();
+    errorLabel.setFont(font.deriveFont((float)font.getSize() - 2));
+    errorLabel.setForeground(Color.RED);
+    errorLabel.setVisible(false);
+    myResult.add(errorLabel, myErrorLabelConstraint);
+    return errorLabel;
   }
 
   /**

@@ -146,7 +146,7 @@ public class DetectedFrameworksTree extends CheckboxTree {
   private void createNodesGroupedByType(CheckedTreeNode root, final List<? extends DetectedFrameworkDescription> frameworks) {
     Map<FrameworkType, FrameworkTypeNode> groupNodes = new HashMap<FrameworkType, FrameworkTypeNode>();
     for (DetectedFrameworkDescription framework : frameworks) {
-      final FrameworkType type = framework.getFrameworkType();
+      final FrameworkType type = framework.getDetector().getFrameworkType();
       FrameworkTypeNode group = groupNodes.get(type);
       if (group == null) {
         group = new FrameworkTypeNode(type);

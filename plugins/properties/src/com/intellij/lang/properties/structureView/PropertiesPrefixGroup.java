@@ -57,9 +57,6 @@ public class PropertiesPrefixGroup implements Group {
         return null;
       }
 
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
       public Icon getIcon(boolean open) {
         return IconLoader.getIcon("/nodes/advice.png");
       }

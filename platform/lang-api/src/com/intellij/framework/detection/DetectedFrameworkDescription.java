@@ -15,37 +15,52 @@
  */
 package com.intellij.framework.detection;
 
-import com.intellij.framework.FrameworkType;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 /**
+ * Describes the detected framework
+ *
+ * @see FrameworkDetector#detect(java.util.Collection, FrameworkDetectionContext)
  * @author nik
  */
 public abstract class DetectedFrameworkDescription {
-  @NotNull
-  public abstract FrameworkType getFrameworkType();
-
+  /**
+   * @return files accepted by {@link FrameworkDetector} which belong to detected framework
+   */
   @NotNull
   public abstract Collection<? extends VirtualFile> getRelatedFiles();
 
+  /**
+   * @return text to show in 'Setup Frameworks' dialog when this framework is selected
+   */
   @NotNull
-  public abstract String getSetupDescription();
+  public abstract String getSetupText();
 
-  @Nullable
-  public FrameworkType getUnderlyingType() {
-    return null;
-  }
+  /**
+   * @return detector which detects this framework
+   */
+  @NotNull
+  public abstract FrameworkDetector getDetector();
 
+  /**
+   * Check whether the framework can be added to the project or not
+   * @param allDetectedFrameworks all frameworks currently detected in the project
+   * @return {@code true} if
+   */
   public boolean canSetupFramework(@NotNull Collection<? extends DetectedFrameworkDescription> allDetectedFrameworks) {
     return true;
   }
 
+  /**
+   * Setup support for the framework in the project (e.g. add required facets or libraries)
+   * @param modifiableModelsProvider used to modify the project structure
+   * @param modulesProvider can be used to find modules
+   */
   public abstract void setupFramework(@NotNull ModifiableModelsProvider modifiableModelsProvider, @NotNull ModulesProvider modulesProvider);
 
   public abstract boolean equals(Object obj);

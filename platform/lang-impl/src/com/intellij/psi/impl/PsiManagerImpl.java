@@ -50,9 +50,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -61,7 +59,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -641,49 +638,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   @NotNull
   public PsiModificationTracker getModificationTracker() {
     return myModificationTracker;
-  }
-
-  public void moveDirectory(@NotNull final PsiDirectory dir, @NotNull PsiDirectory newParent) throws IncorrectOperationException {
-    checkMove(dir, newParent);
-
-    try {
-      dir.getVirtualFile().move(this, newParent.getVirtualFile());
-    }
-    catch (IOException e) {
-      throw new IncorrectOperationException(e.toString(),e);
-    }
-  }
-
-  public void moveFile(@NotNull final PsiFile file, @NotNull PsiDirectory newParent) throws IncorrectOperationException {
-    checkMove(file, newParent);
-
-    try {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      assert virtualFile != null;
-      virtualFile.move(this, newParent.getVirtualFile());
-    }
-    catch (IOException e) {
-      throw new IncorrectOperationException(e.toString(),e);
-    }
-  }
-
-  public void checkMove(@NotNull PsiElement element, @NotNull PsiElement newContainer) throws IncorrectOperationException {
-    if (element instanceof PsiDirectoryContainer) {
-      PsiDirectory[] dirs = ((PsiDirectoryContainer)element).getDirectories();
-      if (dirs.length == 0) {
-        throw new IncorrectOperationException();
-      }
-      else if (dirs.length > 1) {
-        throw new IncorrectOperationException(
-          "Moving of packages represented by more than one physical directory is not supported.");
-      }
-      checkMove(dirs[0], newContainer);
-      return;
-    }
-
-    //element.checkDelete(); //move != delete + add
-    newContainer.checkAdd(element);
-    MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(element, newContainer);
   }
 
   public void startBatchFilesProcessingMode() {

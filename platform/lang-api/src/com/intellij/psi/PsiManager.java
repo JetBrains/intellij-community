@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,35 +119,6 @@ public abstract class PsiManager extends UserDataHolderBase {
    */
   @NotNull
   public abstract PsiModificationTracker getModificationTracker();
-
-
-  /**
-   * Moves the specified file to the specified directory.
-   *
-   * @param file         the file to move.
-   * @param newParentDir the directory to move the file into.
-   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
-   */
-  public abstract void moveFile(@NotNull PsiFile file, @NotNull PsiDirectory newParentDir) throws IncorrectOperationException;
-
-  /**
-   * Moves the specified directory to the specified parent directory.
-   *
-   * @param dir          the directory to move.
-   * @param newParentDir the directory to move <code>dir</code> into.
-   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
-   */
-  public abstract void moveDirectory(@NotNull PsiDirectory dir, @NotNull PsiDirectory newParentDir) throws IncorrectOperationException;
-
-  /**
-   * Checks if it is possible to move the specified PSI element under the specified container,
-   * and throws an exception if the move is not possible. Does not actually modify anything.
-   *
-   * @param element      the element to check the move possibility.
-   * @param newContainer the target container element to move into.
-   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
-   */
-  public abstract void checkMove(@NotNull PsiElement element, @NotNull PsiElement newContainer) throws IncorrectOperationException;
 
   /**
    * Notifies the PSI manager that a batch operation sequentially processing multiple files

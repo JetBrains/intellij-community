@@ -19,13 +19,15 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
+import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
@@ -33,6 +35,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +44,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,10 +53,10 @@ import java.util.List;
 */
 public class CreateNewLibraryAction extends DumbAwareAction {
   private final @Nullable LibraryType myType;
-  private BaseLibrariesConfigurable myLibrariesConfigurable;
-  private @Nullable Project myProject;
+  private final BaseLibrariesConfigurable myLibrariesConfigurable;
+  private final Project myProject;
 
-  private CreateNewLibraryAction(@NotNull String text, @Nullable Icon icon, @Nullable LibraryType type, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @Nullable Project project) {
+  private CreateNewLibraryAction(@NotNull String text, @Nullable Icon icon, @Nullable LibraryType type, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @NotNull Project project) {
     super(text, null, icon);
     myType = type;
     myLibrariesConfigurable = librariesConfigurable;
@@ -61,39 +65,39 @@ public class CreateNewLibraryAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final LibrariesModifiableModel modifiableModel = myLibrariesConfigurable.getModelProvider().getModifiableModel();
-    final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel), myType);
-    if (myProject != null){
-      final BaseLibrariesConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
-      final ExistingLibraryEditor libraryEditor = modifiableModel.getLibraryEditor(library);
-      if (libraryEditor.hasChanges()) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable(){
-          public void run() {
-            libraryEditor.commit();  //update lib node
-          }
-        });
-      }
-      final DefaultMutableTreeNode
-        libraryNode = MasterDetailsComponent.findNodeByObject((TreeNode)rootConfigurable.getTree().getModel().getRoot(), library);
-      rootConfigurable.selectNodeInTree(libraryNode);
-      appendLibraryToModules(ModuleStructureConfigurable.getInstance(myProject), library);
+    LibraryRootsComponentDescriptor componentDescriptor = null;
+    if (myType != null) {
+      componentDescriptor = myType.createLibraryRootsComponentDescriptor();
     }
-  }
+    if (componentDescriptor == null) {
+      componentDescriptor = new DefaultLibraryRootsComponentDescriptor();
+    }
+    final FileChooserDescriptor chooserDescriptor = componentDescriptor.createAttachFilesChooserDescriptor();
+    chooserDescriptor.setTitle("Select Library Files");
+    final VirtualFile[] rootCandidates = FileChooser.chooseFiles(myLibrariesConfigurable.getTree(), chooserDescriptor, myProject.getBaseDir());
+    if (rootCandidates.length == 0) {
+      return;
+    }
 
-  private void appendLibraryToModules(final ModuleStructureConfigurable rootConfigurable, final Library libraryToSelect) {
-    final List<Module> modules = getSuitableModules(rootConfigurable, myType);
-    if (modules.isEmpty()) return;
-    final ChooseModulesDialog dlg = new ChooseModulesDialog(myProject,
-                                                            modules, ProjectBundle.message("choose.modules.dialog.title"),
-                                                            ProjectBundle
-                                                              .message("choose.modules.dialog.description", libraryToSelect.getName()));
-    dlg.show();
-    if (dlg.isOK()) {
-      final List<Module> chosenModules = dlg.getChosenElements();
-      for (Module module : chosenModules) {
-        rootConfigurable.addLibraryOrderEntry(module, libraryToSelect);
-      }
+    final List<OrderRoot> roots = RootDetectionUtil
+        .detectRoots(Arrays.asList(rootCandidates), myLibrariesConfigurable.getTree(), myProject, componentDescriptor.getRootDetectors(),
+                     true);
+    final LibrariesModifiableModel modifiableModel = myLibrariesConfigurable.getModelProvider().getModifiableModel();
+    final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel, roots), myType);
+
+    final BaseLibrariesConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
+    final ExistingLibraryEditor libraryEditor = modifiableModel.getLibraryEditor(library);
+    libraryEditor.addRoots(roots);
+    if (libraryEditor.hasChanges()) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        public void run() {
+          libraryEditor.commit();  //update lib node
+        }
+      });
     }
+    final DefaultMutableTreeNode
+      libraryNode = MasterDetailsComponent.findNodeByObject((TreeNode)rootConfigurable.getTree().getModel().getRoot(), library);
+    rootConfigurable.selectNodeInTree(libraryNode);
   }
 
   private static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable, final @Nullable LibraryType type) {
@@ -106,10 +110,10 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     return modules;
   }
 
-  public static AnAction[] createActionOrGroup(@NotNull String text, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @Nullable Project project) {
+  public static AnAction[] createActionOrGroup(@NotNull String text, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @NotNull Project project) {
     final LibraryType<?>[] extensions = LibraryType.EP_NAME.getExtensions();
     List<LibraryType<?>> suitableTypes = new ArrayList<LibraryType<?>>();
-    if (project != null && librariesConfigurable instanceof ProjectLibrariesConfigurable) {
+    if (librariesConfigurable instanceof ProjectLibrariesConfigurable) {
       final ModuleStructureConfigurable configurable = ModuleStructureConfigurable.getInstance(project);
       for (LibraryType<?> extension : extensions) {
         if (!getSuitableModules(configurable, extension).isEmpty()) {

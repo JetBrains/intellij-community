@@ -47,9 +47,11 @@ import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -1067,6 +1069,12 @@ public class HighlightUtil {
         errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
         if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
           QuickFixAction.registerQuickFixAction(errorResult, new AddTypeCastFix(PsiType.INT, expression));
+        }
+      } else {
+        final PsiClass member = PsiUtil.resolveClassInClassTypeOnly(type);
+        if (member != null && !PsiUtil.isAccessible(member, expression, null)) {
+          String message = PsiFormatUtil.formatClass(member, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME) + " is inaccessible here";
+          errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
         }
       }
     }

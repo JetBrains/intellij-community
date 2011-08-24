@@ -47,7 +47,7 @@ import java.util.*;
 public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable  {
   protected String myLevel;
 
-  protected BaseLibrariesConfigurable(final Project project) {
+  protected BaseLibrariesConfigurable(final @NotNull Project project) {
     super(project);
   }
 

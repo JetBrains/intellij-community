@@ -19,7 +19,6 @@ package com.intellij.util.xml.structure;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.util.Function;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -110,10 +109,5 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   public Icon getIcon(boolean open) {
     if (!myElement.isValid()) return null;
     return myElement.getPresentation().getIcon();
-  }
-
-  @Nullable
-  public TextAttributesKey getTextAttributesKey() {
-    return null;
   }
 }

@@ -374,10 +374,6 @@ public class ValueResourceElementWrapper implements XmlAttributeValue, ResourceE
       public Icon getIcon(boolean open) {
         return null;
       }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
     };
   }
 

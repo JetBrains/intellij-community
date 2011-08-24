@@ -27,11 +27,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Use this class to support auto-detection for your type of facets if presence of facet may be detected by presence of a specific file
- * called <i>facet descriptor</i> in the module content. IDEA runs facet detectors when a module is created from existing sources and
- * when files are created or changed in the opened project
+ * @deprecated use {@link com.intellij.framework.detection.FrameworkDetector} instead
  *
- * @see com.intellij.facet.FacetType#registerDetectors(FacetDetectorRegistry)
  * @author nik
  */
 public interface FacetDetectorRegistry<C extends FacetConfiguration> {

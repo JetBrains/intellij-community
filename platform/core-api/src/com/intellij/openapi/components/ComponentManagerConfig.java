@@ -23,15 +23,15 @@ import org.jetbrains.annotations.NonNls;
 public class ComponentManagerConfig {
   @Tag(APPLICATION_COMPONENTS)
   @AbstractCollection(surroundWithTag = false)
-  public ComponentConfig[] applicationComponents;
+  public OldComponentConfig[] applicationComponents;
 
   @Tag(PROJECT_COMPONENTS)
   @AbstractCollection(surroundWithTag = false)
-  public ComponentConfig[] projectComponents;
+  public OldComponentConfig[] projectComponents;
 
   @Tag(MODULE_COMPONENTS)
   @AbstractCollection(surroundWithTag = false)
-  public ComponentConfig[] moduleComponents;
+  public OldComponentConfig[] moduleComponents;
 
   @NonNls public static final String APPLICATION_COMPONENTS = "application-components";
   @NonNls public static final String PROJECT_COMPONENTS = "project-components";

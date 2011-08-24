@@ -370,10 +370,6 @@ public class FileResourceElementWrapper implements PsiFile, ResourceElementWrapp
       public Icon getIcon(boolean open) {
         return null;
       }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
     };
   }
 

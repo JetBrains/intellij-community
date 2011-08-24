@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,13 +38,15 @@ public class JavaUtilForVfs {
    * <li>It contains at least one Java file.</li>
    * <li>Java file is located in the subfolder that matches package statement in the file.</li>
    * </ol>
+   *
    * @param dir a directory to scan
+   * @param progressIndicator
    * @return a list of found source roots within directory. If no source roots are found, a empty list is returned.
    */
-  public static List<VirtualFile> suggestRoots(VirtualFile dir) {
+  public static List<VirtualFile> suggestRoots(VirtualFile dir, ProgressIndicator progressIndicator) {
     ArrayList<VirtualFile> foundDirectories = new ArrayList<VirtualFile>();
     try{
-      suggestRootsImpl(dir, foundDirectories);
+      suggestRootsImpl(dir, progressIndicator, foundDirectories);
     }
     catch(PathFoundException ignore){
     }
@@ -60,7 +61,9 @@ public class JavaUtilForVfs {
     }
   }
 
-  private static void suggestRootsImpl(VirtualFile dir, ArrayList<? super VirtualFile> foundDirectories) throws PathFoundException {
+  private static void suggestRootsImpl(VirtualFile dir,
+                                       ProgressIndicator progressIndicator,
+                                       ArrayList<? super VirtualFile> foundDirectories) throws PathFoundException {
     if (!dir.isDirectory()) {
       return;
     }
@@ -69,13 +72,10 @@ public class JavaUtilForVfs {
     if (typeManager.isFileIgnored(dir) || StringUtil.startsWithIgnoreCase(dirName, "testdata")) {
       return;
     }
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (progressIndicator != null) {
-      if (progressIndicator.isCanceled()) {
-        return;
-      }
-      progressIndicator.setText2(dir.getPath());
+    if (progressIndicator.isCanceled()) {
+      return;
     }
+    progressIndicator.setText2(dir.getPath());
 
     VirtualFile[] list = dir.getChildren();
     if (list == null || list.length == 0) {
@@ -105,7 +105,7 @@ public class JavaUtilForVfs {
     for (VirtualFile child : list) {
       if (child.isDirectory()) {
         try {
-          suggestRootsImpl(child, foundDirectories);
+          suggestRootsImpl(child, progressIndicator, foundDirectories);
         }
         catch (PathFoundException found) {
           if (!found.myDirectory.equals(child)) {

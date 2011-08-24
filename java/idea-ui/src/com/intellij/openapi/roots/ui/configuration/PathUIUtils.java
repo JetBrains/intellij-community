@@ -40,7 +40,7 @@ public class PathUIUtils {
     @Override
     public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate,
                                                @NotNull ProgressIndicator progressIndicator) {
-      return JavaUtilForVfs.suggestRoots(rootCandidate);
+      return JavaUtilForVfs.suggestRoots(rootCandidate, progressIndicator);
     }
   };
 

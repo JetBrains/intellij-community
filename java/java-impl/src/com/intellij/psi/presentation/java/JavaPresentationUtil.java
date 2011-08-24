@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.presentation.java;
 
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -30,8 +31,8 @@ public class JavaPresentationUtil {
   private JavaPresentationUtil() {
   }
 
-  public static ItemPresentation getMethodPresentation(final PsiMethod psiMethod) {
-    return new ItemPresentation() {
+  public static ColoredItemPresentation getMethodPresentation(final PsiMethod psiMethod) {
+    return new ColoredItemPresentation() {
       public String getPresentableText() {
         return PsiFormatUtil.formatMethod(
           psiMethod,
@@ -40,6 +41,7 @@ public class JavaPresentationUtil {
         );
       }
 
+      @Override
       public TextAttributesKey getTextAttributesKey() {
         if (psiMethod.isDeprecated()) {
           return CodeInsightColors.DEPRECATED_ATTRIBUTES;
@@ -88,10 +90,6 @@ public class JavaPresentationUtil {
 
       public String getLocationString() {
         return "";
-      }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
       }
 
       public Icon getIcon(boolean open) {

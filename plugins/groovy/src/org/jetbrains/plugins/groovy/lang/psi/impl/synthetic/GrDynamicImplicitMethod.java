@@ -355,11 +355,6 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
     return GroovyIcons.METHOD;
   }
 
-  @Nullable
-  public TextAttributesKey getTextAttributesKey() {
-    return null;
-  }
-
   public GrMethod getMethod() {
     return myMethod;
   }

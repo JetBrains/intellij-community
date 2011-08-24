@@ -94,11 +94,6 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
         return getName();
     }
 
-    @Nullable
-    public TextAttributesKey getTextAttributesKey() {
-        return null;
-    }
-
     @Override
     public PsiElement getTargetElement() {
         return myElement;

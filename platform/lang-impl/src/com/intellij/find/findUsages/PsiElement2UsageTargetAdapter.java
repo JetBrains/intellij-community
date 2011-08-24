@@ -226,10 +226,6 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
       return null;
     }
 
-    public TextAttributesKey getTextAttributesKey() {
-      return null;
-    }
-
     public Icon getIcon(boolean open) {
       final ComputableIcon computableIcon = open ? myIconOpen : myIconClosed;
       return computableIcon == null? null : computableIcon.getIcon();

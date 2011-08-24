@@ -13,25 +13,20 @@ import javax.swing.*;
  */
 public class GradleModuleSettings implements GradleProjectStructureNodeSettings {
 
-  private final JTextField myNameTextField = new JTextField();
-
   private final JComponent   myComponent;
   private final GradleModule myModule;
+  private final JLabel       myNameErrorLabel;
 
   public GradleModuleSettings(@NotNull GradleModule module) {
     myModule = module;
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-
-    builder.add("gradle.import.structure.settings.label.name", myNameTextField);
-    myNameTextField.setText(module.getName());
-
+    myNameErrorLabel = GradleAdjustImportSettingsUtil.configureNameControl(builder, myModule);
     myComponent = builder.build();
   }
 
   @Override
-  public boolean commit() {
-    // TODO den implement 
-    return true;
+  public boolean validate() {
+    return GradleAdjustImportSettingsUtil.validate(myModule, myNameErrorLabel);
   }
 
   @NotNull

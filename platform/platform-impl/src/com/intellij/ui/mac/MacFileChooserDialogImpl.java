@@ -61,20 +61,20 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
     public boolean callback(ID self, String selector, ID panel, ID filename) {
       if (filename == null || filename.intValue() == 0) return false;
       final String fileName = Foundation.toStringViaUTF8(filename);
-      try {
-        SwingUtilities.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
-          }
-        });
-      }
-      catch (Exception e) {
-        return false;
-      }
+      //try {
+      //  SwingUtilities.invokeAndWait(new Runnable() {
+      //    @Override
+      //    public void run() {
+      //      LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
+      //    }
+      //  });
+      //}
+      //catch (Exception e) {
+      //  return false;
+      //}
  
       final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
-      return virtualFile != null && (virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
+      return virtualFile == null || (virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
     }
   };
 
@@ -83,20 +83,20 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       if (filename == null || filename.intValue() == 0) return false;
       final String fileName = Foundation.toStringViaUTF8(filename);
 
-      try {
-        SwingUtilities.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
-          }
-        });
-      }
-      catch (Exception e) {
-        return false;
-      }
+      //try {
+      //  SwingUtilities.invokeAndWait(new Runnable() {
+      //    @Override
+      //    public void run() {
+      //      LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
+      //    }
+      //  });
+      //}
+      //catch (Exception e) {
+      //  return false;
+      //}
 
       final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
-      return virtualFile != null && (!virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
+      return virtualFile == null || (!virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
     }
   };
 

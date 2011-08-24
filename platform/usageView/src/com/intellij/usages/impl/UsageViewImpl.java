@@ -1113,14 +1113,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     @Override
     public void performCopy(DataContext dataContext) {
       final Node selectedNode = getSelectedNode();
-      assert selectedNode instanceof UsageNode;
-      final String plainText = ((UsageNode)selectedNode).getUsage().getPresentation().getPlainText();
+      assert selectedNode != null;
+      final String plainText = selectedNode.getText(UsageViewImpl.this);
       CopyPasteManager.getInstance().setContents(new StringSelection(plainText.trim()));
     }
 
     @Override
     public boolean isCopyEnabled(DataContext dataContext) {
-      return getSelectedNode() instanceof UsageNode;
+      return getSelectedNode() != null;
     }
 
     @Override

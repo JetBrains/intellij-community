@@ -237,38 +237,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     LOG.error(ex);
   }
 
-  public void registerComponent(Class interfaceClass, Class implementationClass) {
-    registerComponent(interfaceClass, implementationClass, null);
-
-  }
-
-  @SuppressWarnings({"unchecked"})
-  public void registerComponent(Class interfaceClass, Class implementationClass, Map options) {
-    LOG.warn("Deprecated method usage: registerComponent", new Throwable());
-
-    final ComponentConfig config = new ComponentConfig();
-    config.implementationClass = implementationClass.getName();
-    config.interfaceClass = interfaceClass.getName();
-    config.options = options;
-    registerComponent(config);
-  }
-
   @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
   public synchronized void registerComponent(final ComponentConfig config, final PluginDescriptor pluginDescriptor) {
-    if (isHeadless()) {
-      String headlessImplClass = config.headlessImplementationClass;
-      if (headlessImplClass != null) {
-        if (headlessImplClass.trim().length() == 0) {
-          return;
-        }
-        config.implementationClass = headlessImplClass;
-      }
-    }
-
-    config.implementationClass = config.implementationClass.trim();
-
-    if (config.interfaceClass == null) config.interfaceClass = config.implementationClass;
-    config.interfaceClass = config.interfaceClass.trim();
+    if (!config.prepareClasses(isHeadless())) return;
 
     config.pluginDescriptor =  pluginDescriptor;
     myComponentsRegistry.registerComponent(config);
@@ -399,7 +370,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Nullable
   public Object getComponent(final ComponentConfig componentConfig) {
-    return getPicoContainer().getComponentInstance(componentConfig.interfaceClass);
+    return getPicoContainer().getComponentInstance(componentConfig.getInterfaceClass());
   }
 
   public ComponentConfig getConfig(Class componentImplementation) {
@@ -448,8 +419,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       ClassLoader loader = config.getClassLoader();
 
       try {
-        final Class<?> interfaceClass = Class.forName(config.interfaceClass, true, loader);
-        final Class<?> implementationClass = Class.forName(config.implementationClass, true, loader);
+        final Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
+        final Class<?> implementationClass = Class.forName(config.getImplementationClass(), true, loader);
 
         if (myInterfaceToClassMap.get(interfaceClass) != null) {
           throw new Error("ComponentSetup for component " + interfaceClass.getName() + " already registered");
@@ -574,7 +545,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     public Object getComponentKey() {
-      return myConfig.interfaceClass;
+      return myConfig.getInterfaceClass();
     }
 
     public Class getComponentImplementation() {
@@ -603,7 +574,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         Class<?> implementationClass = null;
 
         try {
-          implementationClass = Class.forName(myConfig.implementationClass, true, loader);
+          implementationClass = Class.forName(myConfig.getImplementationClass(), true, loader);
         }
         catch (Exception e) {
           @NonNls final String message = "Error while registering component: " + myConfig;

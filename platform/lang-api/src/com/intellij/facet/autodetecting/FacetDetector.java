@@ -27,9 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
- * Base class for facet detectors
+ * @deprecated use {@link com.intellij.framework.detection.FrameworkDetector} instead
  *
- * @see FacetDetectorRegistry
  * @author nik
  */
 public abstract class FacetDetector<T, C extends FacetConfiguration> {

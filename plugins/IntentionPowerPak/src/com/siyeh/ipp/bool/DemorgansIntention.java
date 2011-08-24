@@ -87,6 +87,12 @@ public class DemorgansIntention extends MutablyNamedIntention {
                     ParenthesesUtils.OR_PRECEDENCE) {
                 return '(' + negated.getText() + ')';
             }
+            final PsiElement conditionParent = condition.getParent();
+            if (conditionParent instanceof PsiExpression &&
+                ParenthesesUtils.getPrecedence(negated) > ParenthesesUtils.AND_PRECEDENCE &&
+                ParenthesesUtils.getPrecedence((PsiExpression)conditionParent) > ParenthesesUtils.AND_PRECEDENCE){
+              return '(' + negated.getText() + ')';
+            }
             return negated.getText();
         } else if (ComparisonUtils.isComparison(condition)) {
             final PsiBinaryExpression binaryExpression =

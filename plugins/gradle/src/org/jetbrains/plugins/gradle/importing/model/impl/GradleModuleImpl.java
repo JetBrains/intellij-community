@@ -24,7 +24,7 @@ public class GradleModuleImpl implements GradleModule, Serializable {
   
   private boolean myInheritProjectCompileOutputPath = true;
   
-  private final String myName;
+  private String myName;
 
   public GradleModuleImpl(@NotNull String name) {
     myName = name;
@@ -34,6 +34,11 @@ public class GradleModuleImpl implements GradleModule, Serializable {
   @Override
   public String getName() {
     return myName;
+  }
+
+  @Override
+  public void setName(@NotNull String name) {
+    myName = name; 
   }
 
   @NotNull
@@ -83,7 +88,35 @@ public class GradleModuleImpl implements GradleModule, Serializable {
   public void invite(@NotNull GradleEntityVisitor visitor) {
     visitor.visit(this);
   }
-  
+
+  @Override
+  public int hashCode() {
+    int result = myContentRoots.hashCode();
+    result = 31 * result + myCompileOutputPaths.hashCode();
+    result = 31 * result + myDependencies.hashCode();
+    result = 31 * result + myDependenciesView.hashCode();
+    result = 31 * result + (myInheritProjectCompileOutputPath ? 1 : 0);
+    result = 31 * result + myName.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GradleModuleImpl that = (GradleModuleImpl)o;
+
+    if (myInheritProjectCompileOutputPath != that.myInheritProjectCompileOutputPath) return false;
+    if (!myCompileOutputPaths.equals(that.myCompileOutputPaths)) return false;
+    if (!myContentRoots.equals(that.myContentRoots)) return false;
+    if (!myDependencies.equals(that.myDependencies)) return false;
+    if (!myDependenciesView.equals(that.myDependenciesView)) return false;
+    if (!myName.equals(that.myName)) return false;
+
+    return true;
+  }
+
   @Override
   public String toString() {
     return String.format(

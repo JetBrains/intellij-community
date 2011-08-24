@@ -30,15 +30,15 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -66,8 +66,8 @@ public class LibraryEditingUtil {
     return false;
   }
 
-  public static String suggestNewLibraryName(LibraryTable.ModifiableModel table) {
-    return suggestNewLibraryName(table, "Unnamed");
+  public static String suggestNewLibraryName(LibraryTable.ModifiableModel table, List<OrderRoot> roots) {
+    return suggestNewLibraryName(table, suggestLibraryName(roots));
   }
 
   public static String suggestNewLibraryName(LibraryTable.ModifiableModel table,
@@ -78,6 +78,13 @@ public class LibraryEditingUtil {
       candidateName = baseName + (idx++);
     }
     return candidateName;
+  }
+
+  public static String suggestLibraryName(@NotNull List<OrderRoot> roots) {
+    if (roots.size() >= 1) {
+      return FileUtil.getNameWithoutExtension(PathUtil.getFileName(roots.get(0).getFile().getPath()));
+    }
+    return "Unnamed";
   }
 
   public static Predicate<Library> getNotAddedLibrariesCondition(final ModuleRootModel rootModel) {

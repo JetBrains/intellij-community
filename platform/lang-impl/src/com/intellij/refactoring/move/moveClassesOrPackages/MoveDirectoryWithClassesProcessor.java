@@ -23,7 +23,6 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiDirectory;
@@ -37,6 +36,7 @@ import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -281,7 +281,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
 
     public void checkMove(PsiFile psiFile) throws IncorrectOperationException {
       if (myTargetDirectory != null) {
-        psiFile.getManager().checkMove(psiFile, myTargetDirectory);
+        MoveFilesOrDirectoriesUtil.checkMove(psiFile, myTargetDirectory);
       }
     }
   }

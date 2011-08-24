@@ -134,7 +134,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       throw new ConfigurationException(GradleBundle.message("gradle.import.text.error.directory.instead.file"));
     }
     try {
-      // TODO den derive target project for 'import module from gradle'.
+      // TODO den derive target project for 'import module from gradle' (for 'add module' functionality).
       Project project = ProjectManager.getInstance().getDefaultProject();
       ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), true) {
         @Override
