@@ -22,14 +22,16 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -91,6 +93,7 @@ public class VariableInplaceRenamer {
   public static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<ResolveSnapshotProvider>(
     "com.intellij.rename.inplace.resolveSnapshotProvider"
   );
+  private static final String RENAME_TITLE = RefactoringBundle.message("rename.title");
 
   private PsiNamedElement myElementToRename;
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
@@ -282,7 +285,11 @@ public class VariableInplaceRenamer {
                 super.templateFinished(template, brokenOff);
                 moveOffsetAfter(!brokenOff);
                 if (myNewName != null) {
-                  performAutomaticRename(myNewName, getVariable());
+                  ApplicationManager.getApplication().invokeLater(new Runnable() {
+                    public void run() {
+                      performAutomaticRename(myNewName, getVariable());
+                    }
+                  });
                 }
               }
 
@@ -318,7 +325,7 @@ public class VariableInplaceRenamer {
           }
         });
       }
-    }, RefactoringBundle.message("rename.title"), null);
+    }, RENAME_TITLE, null);
 
   }
 
@@ -389,15 +396,16 @@ public class VariableInplaceRenamer {
           final UsageInfo[] usageInfos = usages.toArray(new UsageInfo[usages.size()]);
           final MultiMap<PsiElement,UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
           for (final PsiNamedElement element : renamer.getElements()) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
+            new WriteCommandAction(myProject, RENAME_TITLE) {
+              @Override
+              protected void run(com.intellij.openapi.application.Result result) throws Throwable {
                 final String newElementName = renamer.getNewName(element);
                 if (newElementName != null) {
                   final Collection<UsageInfo> infos = classified.get(element);
                   RenameUtil.doRenameGenericNamedElement(element, newElementName, infos.toArray(new UsageInfo[infos.size()]), null);
                 }
               }
-            });
+            }.execute();
           }
         }
       }
