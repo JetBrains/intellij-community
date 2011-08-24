@@ -34,6 +34,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -114,14 +115,16 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)));
               }
             }
-            if (annotated.isDeclaredNotNull && manager.isNullable(getter, false)) {
-              holder.registerProblem(nameIdentifier, InspectionsBundle.message(
-                "inspection.nullable.problems.annotated.field.getter.conflict", StringUtil.getShortName(anno), nullableSimpleName),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)));
-            } else if (annotated.isDeclaredNullable && manager.isNotNull(getter, false)) {
-              holder.registerProblem(nameIdentifier, InspectionsBundle.message(
-                "inspection.nullable.problems.annotated.field.getter.conflict", StringUtil.getShortName(anno), notNullSimpleName),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)));
+            if (PropertyUtils.isSimpleGetter(getter)) {
+              if (annotated.isDeclaredNotNull && manager.isNullable(getter, false)) {
+                holder.registerProblem(nameIdentifier, InspectionsBundle.message(
+                  "inspection.nullable.problems.annotated.field.getter.conflict", StringUtil.getShortName(anno), nullableSimpleName),
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)));
+              } else if (annotated.isDeclaredNullable && manager.isNotNull(getter, false)) {
+                holder.registerProblem(nameIdentifier, InspectionsBundle.message(
+                  "inspection.nullable.problems.annotated.field.getter.conflict", StringUtil.getShortName(anno), notNullSimpleName),
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)));
+              }
             }
           }
 
@@ -141,22 +144,24 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                      new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
             }
-            if (annotated.isDeclaredNotNull && manager.isNullable(parameter, false)) {
-              final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
-              assert nameIdentifier1 != null : parameter;
-              holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
-                                     "inspection.nullable.problems.annotated.field.setter.parameter.conflict",
-                                     StringUtil.getShortName(anno), nullableSimpleName),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                     new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
-            }
-            else if (annotated.isDeclaredNullable && manager.isNotNull(parameter, false)) {
-              final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
-              assert nameIdentifier1 != null : parameter;
-              holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
-                "inspection.nullable.problems.annotated.field.setter.parameter.conflict", StringUtil.getShortName(anno), notNullSimpleName),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                     new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
+            if (PropertyUtils.isSimpleSetter(setter)) {
+              if (annotated.isDeclaredNotNull && manager.isNullable(parameter, false)) {
+                final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
+                assert nameIdentifier1 != null : parameter;
+                holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
+                                       "inspection.nullable.problems.annotated.field.setter.parameter.conflict",
+                                       StringUtil.getShortName(anno), nullableSimpleName),
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                       new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
+              }
+              else if (annotated.isDeclaredNullable && manager.isNotNull(parameter, false)) {
+                final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
+                assert nameIdentifier1 != null : parameter;
+                holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
+                  "inspection.nullable.problems.annotated.field.setter.parameter.conflict", StringUtil.getShortName(anno), notNullSimpleName),
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                       new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
+              }
             }
             if (containingClass == null) {
               return;
