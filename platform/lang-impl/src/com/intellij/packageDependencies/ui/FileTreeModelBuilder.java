@@ -345,7 +345,8 @@ public class FileTreeModelBuilder {
         rootToReload = null; //need to reload from parent / mostly for problems view
       }
     } else {
-      while (rootToReload == null && dirToReload != null){
+      //reload parents of compacted nodes as getFileParentNode() may expand them
+      while ((rootToReload == null || (rootToReload instanceof DirectoryNode && ((DirectoryNode)rootToReload).getCompactedDirNode() != null)) && dirToReload != null){
         dirToReload = dirToReload.getParent();
         rootToReload = myModuleDirNodes.get(dirToReload);
       }
