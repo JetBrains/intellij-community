@@ -181,8 +181,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return Boolean.valueOf(System.getProperty(systemParameterName));
   }
 
-  public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final ChangeListManager changeListManager,
-                final VcsDirtyScopeManager vcsDirtyScopeManager, final SvnLoadedBrachesStorage storage) {
+  public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBrachesStorage storage) {
     super(project, VCS_NAME);
     myLoadedBranchesStorage = storage;
     LOG.debug("ct");
