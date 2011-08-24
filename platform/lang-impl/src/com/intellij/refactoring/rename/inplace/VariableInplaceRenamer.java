@@ -285,11 +285,16 @@ public class VariableInplaceRenamer {
                 super.templateFinished(template, brokenOff);
                 moveOffsetAfter(!brokenOff);
                 if (myNewName != null) {
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  final Runnable runnable = new Runnable() {
                     public void run() {
                       performAutomaticRename(myNewName, getVariable());
                     }
-                  });
+                  };
+                  if (ApplicationManager.getApplication().isUnitTestMode()){
+                    runnable.run();
+                  } else {
+                    ApplicationManager.getApplication().invokeLater(runnable);
+                  }
                 }
               }
 
