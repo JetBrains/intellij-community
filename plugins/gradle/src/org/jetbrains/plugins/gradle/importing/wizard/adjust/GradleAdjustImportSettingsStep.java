@@ -14,9 +14,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -172,16 +170,17 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
 
     List<GradleModule> modules = new ArrayList<GradleModule>(project.getModules());
     Collections.sort(modules, Named.COMPARATOR);
+    List<MutableTreeNode> moduleNodes = new ArrayList<MutableTreeNode>();
 
     for (GradleModule module : modules) {
       DefaultMutableTreeNode moduleNode = buildNode(module, entity2nodes, counter++);
-      root.add(moduleNode);
+      moduleNodes.add(moduleNode);
       Collection<GradleDependency> dependencies = module.getDependencies();
       if (!dependencies.isEmpty()) {
         DefaultMutableTreeNode dependenciesNode
           = new DefaultMutableTreeNode(GradleBundle.message("gradle.import.structure.tree.node.dependencies"));
         final List<GradleModuleDependency> moduleDependencies = new ArrayList<GradleModuleDependency>();
-        final List<GradleLibraryDependency> libraryDependencies = new ArrayList<GradleLibraryDependency>();
+        final List<GradleLibrary> libraryDependencies = new ArrayList<GradleLibrary>();
         GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
           @Override
           public void visit(@NotNull GradleModuleDependency dependency) {
@@ -190,7 +189,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
 
           @Override
           public void visit(@NotNull GradleLibraryDependency dependency) {
-            libraryDependencies.add(dependency);
+            libraryDependencies.add(dependency.getLibrary());
           }
         };
         for (GradleDependency dependency : dependencies) {
@@ -201,14 +200,41 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
         for (GradleModuleDependency dependency : moduleDependencies) {
           dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
         }
-        for (GradleLibraryDependency dependency : libraryDependencies) {
+        for (GradleLibrary dependency : libraryDependencies) {
           dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
         }
         moduleNode.add(dependenciesNode);
       }
     }
+
     myTreeModel.setRoot(root);
     myTree.setSelectionPath(new TreePath(root));
+    
+    Collection<? extends GradleLibrary> libraries = project.getLibraries();
+    if (libraries.isEmpty()) {
+      for (MutableTreeNode node : moduleNodes) {
+        root.add(node);
+      }
+    }
+    else {
+      // Insert intermediate 'modules' and 'libraries' nodes if the project has both libraries and nodes.
+      DefaultMutableTreeNode modulesNode = new DefaultMutableTreeNode(GradleBundle.message("gradle.import.structure.tree.node.modules"));
+      for (MutableTreeNode node : moduleNodes) {
+        modulesNode.add(node);
+      }
+      root.add(modulesNode);
+
+      List<GradleLibrary> sortedLibraries = new ArrayList<GradleLibrary>(libraries);
+      Collections.sort(sortedLibraries, Named.COMPARATOR);
+      DefaultMutableTreeNode librariesNode = new DefaultMutableTreeNode(GradleBundle.message("gradle.import.structure.tree.node.libraries"));
+      for (GradleLibrary library : sortedLibraries) {
+        librariesNode.add(buildNode(library, entity2nodes, counter++));
+      }
+      root.add(librariesNode);
+
+      myTree.expandPath(new TreePath(modulesNode.getPath()));
+      myTree.expandPath(new TreePath(librariesNode.getPath()));
+    }
   }
 
   private <T extends GradleEntity> DefaultMutableTreeNode buildNode(

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.remote.impl;
 import com.intellij.execution.rmi.RemoteObject;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.HashMap;
 import org.gradle.tooling.GradleConnector;
@@ -196,12 +195,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
         intellijDependency = buildDependency((IdeaModuleDependency)dependency, intellijProject);
       }
       else if (dependency instanceof IdeaSingleEntryLibraryDependency) {
-        GradleLibraryDependency createdDependency = getCreatedDependency((IdeaSingleEntryLibraryDependency)dependency, intellijProject);
-        if (createdDependency != null) {
-          intellijModule.addDependency(createdDependency);
-          return;
-        } 
-        intellijDependency = buildDependency((IdeaSingleEntryLibraryDependency)dependency);
+        intellijDependency = buildDependency((IdeaSingleEntryLibraryDependency)dependency, intellijProject);
       }
 
       if (intellijDependency == null) {
@@ -217,31 +211,6 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     }
   }
 
-  @Nullable
-  private static GradleLibraryDependency getCreatedDependency(final @NotNull IdeaSingleEntryLibraryDependency gradleDependency,
-                                                              @NotNull GradleProject intellijProject)
-  {
-    final Ref<GradleLibraryDependency> result = new Ref<GradleLibraryDependency>();
-    GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
-      @Override
-      public void visit(@NotNull GradleLibraryDependency dependency) {
-        String path = dependency.getPath(LibraryPathType.BINARY);
-        if (path != null && gradleDependency.getFile().equals(new File(path))) {
-          result.set(dependency);
-        }
-      }
-    };
-    for (GradleModule intellijModule : intellijProject.getModules()) {
-      for (GradleDependency intellijDependency : intellijModule.getDependencies()) {
-        intellijDependency.invite(visitor);
-        if (result.get() != null) {
-          return result.get();
-        }
-      }
-    }
-    return null;
-  }
-  
   @NotNull
   private static AbstractGradleDependency buildDependency(@NotNull IdeaModuleDependency dependency, @NotNull GradleProject intellijProject)
     throws IllegalStateException
@@ -274,7 +243,8 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   @NotNull
-  private static AbstractGradleDependency buildDependency(@NotNull IdeaSingleEntryLibraryDependency dependency)
+  private static AbstractGradleDependency buildDependency(@NotNull IdeaSingleEntryLibraryDependency dependency, 
+                                                          @NotNull GradleProject intellijProject)
     throws IllegalStateException
   {
     File binaryPath = dependency.getFile();
@@ -285,19 +255,28 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     }
     
     // TODO den use library name from gradle api when it's ready
-    GradleLibraryDependencyImpl result = new GradleLibraryDependencyImpl(FileUtil.getNameWithoutExtension(binaryPath));
-    result.addPath(LibraryPathType.BINARY, binaryPath.getAbsolutePath());
+    GradleLibraryImpl library = new GradleLibraryImpl(FileUtil.getNameWithoutExtension(binaryPath));
+    library.addPath(LibraryPathType.BINARY, binaryPath.getAbsolutePath());
 
     File sourcePath = dependency.getSource();
     if (sourcePath != null) {
-      result.addPath(LibraryPathType.SOURCE, sourcePath.getAbsolutePath());
+      library.addPath(LibraryPathType.SOURCE, sourcePath.getAbsolutePath());
     }
 
     File javadocPath = dependency.getJavadoc();
     if (javadocPath != null) {
-      result.addPath(LibraryPathType.JAVADOC, javadocPath.getAbsolutePath());
+      library.addPath(LibraryPathType.JAVADOC, javadocPath.getAbsolutePath());
     }
-    return result;
+
+    if (!intellijProject.addLibrary(library)) {
+      for (GradleLibrary registeredLibrary : intellijProject.getLibraries()) {
+        if (registeredLibrary.equals(library)) {
+          return new GradleLibraryDependencyImpl(registeredLibrary);
+        }
+      }
+    }
+    
+    return new GradleLibraryDependencyImpl(library);
   }
 
   @Nullable

@@ -20,6 +20,10 @@ public class GradleEntityVisitorAdapter implements GradleEntityVisitor {
   }
 
   @Override
+  public void visit(@NotNull GradleLibrary library) {
+  }
+
+  @Override
   public void visit(@NotNull GradleModuleDependency dependency) {
   }
 

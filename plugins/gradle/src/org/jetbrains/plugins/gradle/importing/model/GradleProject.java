@@ -27,4 +27,16 @@ public interface GradleProject extends Named, GradleEntity {
   
   @NotNull
   Set<? extends GradleModule> getModules();
+  
+  @NotNull
+  Set<? extends GradleLibrary> getLibraries();
+  /**
+   * Offers given library to register for the current project.
+   * 
+   * @param library  library to register
+   * @return         <code>true</code> if no such a library is already registered (given library is stored);
+   *                 <code>false</code> if such a library (in terms of {@link Object#equals(Object)}) is already registered
+   *                 within the current project (it's not replaced by the given one then)
+   */
+  boolean addLibrary(@NotNull GradleLibrary library);
 }

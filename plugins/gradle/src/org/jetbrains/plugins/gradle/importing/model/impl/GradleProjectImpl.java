@@ -4,6 +4,7 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.importing.model.GradleEntityVisitor;
+import org.jetbrains.plugins.gradle.importing.model.GradleLibrary;
 import org.jetbrains.plugins.gradle.importing.model.GradleModule;
 import org.jetbrains.plugins.gradle.importing.model.GradleProject;
 
@@ -25,7 +26,8 @@ public class GradleProjectImpl implements Serializable, GradleProject {
   private static final LanguageLevel DEFAULT_LANGUAGE_LEVEL = LanguageLevel.JDK_1_6;
   private static final String        DEFAULT_JDK            = "1.6";
 
-  private final Set<GradleModuleImpl> myModules = new HashSet<GradleModuleImpl>();
+  private final Set<GradleModule>  myModules   = new HashSet<GradleModule>();
+  private final Set<GradleLibrary> myLibraries = new HashSet<GradleLibrary>();
 
   private final String myCompileOutputPath;
   
@@ -83,7 +85,7 @@ public class GradleProjectImpl implements Serializable, GradleProject {
     } 
   }
 
-  public void addModule(@NotNull GradleModuleImpl module) {
+  public void addModule(@NotNull GradleModule module) {
     myModules.add(module);
   }
   
@@ -93,6 +95,17 @@ public class GradleProjectImpl implements Serializable, GradleProject {
     return myModules;
   }
 
+  @NotNull
+  @Override
+  public Set<? extends GradleLibrary> getLibraries() {
+    return myLibraries;
+  }
+
+  @Override
+  public boolean addLibrary(@NotNull GradleLibrary library) {
+    return myLibraries.add(library);
+  }
+  
   @Override
   public void invite(@NotNull GradleEntityVisitor visitor) {
     visitor.visit(this);

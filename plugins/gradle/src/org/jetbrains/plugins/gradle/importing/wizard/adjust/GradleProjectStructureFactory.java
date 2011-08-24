@@ -52,13 +52,18 @@ public class GradleProjectStructureFactory {
       }
 
       @Override
+      public void visit(@NotNull GradleLibrary library) {
+        result.set(new GradleProjectStructureNodeDescriptor(library, library.getName(), LIB_ICON));
+      }
+
+      @Override
       public void visit(@NotNull GradleModuleDependency dependency) {
-        result.set(new GradleProjectStructureNodeDescriptor(dependency, dependency.getModule().getName(), MODULE_ICON));
+        visit(dependency.getModule());
       }
 
       @Override
       public void visit(@NotNull GradleLibraryDependency dependency) {
-        result.set(new GradleProjectStructureNodeDescriptor(dependency, dependency.getName(), LIB_ICON));
+        visit(dependency.getLibrary());
       }
     });
     return result.get();
@@ -102,13 +107,18 @@ public class GradleProjectStructureFactory {
       }
 
       @Override
+      public void visit(@NotNull GradleLibrary library) {
+        result.set(new GradleLibrarySettings(wrap(GradleLibrary.class, library, treeModel, treeNodes))); 
+      }
+
+      @Override
       public void visit(@NotNull GradleModuleDependency dependency) {
-        result.set(new GradleModuleSettings(wrap(GradleModule.class, dependency.getModule(), treeModel, treeNodes)));
+        visit(dependency.getModule());
       }
 
       @Override
       public void visit(@NotNull GradleLibraryDependency dependency) {
-        result.set(new GradleLibrarySettings(wrap(GradleLibraryDependency.class, dependency, treeModel, treeNodes)));
+        visit(dependency.getLibrary());
       }
     });
     return result.get();
