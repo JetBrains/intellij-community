@@ -215,7 +215,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       ModuleConfigurable configurable = new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER);
       final MyNode moduleNode = new MyNode(configurable);
       boolean nodesAdded = myFacetEditorFacade.addFacetsNodes(module, moduleNode);
-      nodesAdded |= addNodesFromExtensions(module, moduleNode);
+      nodesAdded |= addNodesFromExtensions(module, moduleNode, myContext.myModulesConfigurator.getModuleEditor(module).getModifiableRootModel());
       if (nodesAdded) {
         myTree.setShowsRootHandles(true);
       }
@@ -251,10 +251,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     //myProjectNode.add(myLevel2Nodes.get(LibraryTablesRegistrar.PROJECT_LEVEL));
   }
 
-  private boolean addNodesFromExtensions(final Module module, final MyNode moduleNode) {
+  private boolean addNodesFromExtensions(final Module module, final MyNode moduleNode, ModifiableRootModel modifiableRootModel) {
     boolean nodesAdded= false;
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      nodesAdded |= extension.addModuleNodeChildren(module, moduleNode, TREE_UPDATER);
+      nodesAdded |= extension.addModuleNodeChildren(module, moduleNode, modifiableRootModel, TREE_UPDATER);
     }
     return nodesAdded;
   }
@@ -294,8 +294,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           });
         addNode(moduleNode, moduleGroupNode);
       }
-      myFacetEditorFacade.addFacetsNodes((Module)moduleNode.getConfigurable().getEditableObject(), moduleNode);
-      addNodesFromExtensions((Module)moduleNode.getConfigurable().getEditableObject(), moduleNode);
+      Module module = (Module)moduleNode.getConfigurable().getEditableObject();
+      myFacetEditorFacade.addFacetsNodes(module, moduleNode);
+      addNodesFromExtensions(module, moduleNode, myContext.myModulesConfigurator.getModuleEditor(module).getModifiableRootModel());
     }
     ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
     return true;
@@ -343,10 +344,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     roots.add(myRoot);
     checkApply(roots, ProjectBundle.message("rename.message.prefix.module"), ProjectBundle.message("rename.module.title"));
 
-    if (myContext.myModulesConfigurator.isModified()) myContext.myModulesConfigurator.apply();
-
+    // extensions should be applied first, since some can write to modifiable model that is committed later by myModulesConfigurator.apply()
+    boolean isModulesConfiguratorModifiedByExtension = false;
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      extension.apply();
+      if (extension.isModified()) {
+        isModulesConfiguratorModifiedByExtension |= extension.isModulesConfiguratorModified();
+        extension.apply();
+      }
+    }
+
+    if (isModulesConfiguratorModifiedByExtension || myContext.myModulesConfigurator.isModified()) {
+      myContext.myModulesConfigurator.apply();
     }
   }
 
@@ -521,7 +529,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (parent == null) parent = myRoot;
     addNode(node, parent);
     myFacetEditorFacade.addFacetsNodes(module, node);
-    addNodesFromExtensions(module, node);
+    addNodesFromExtensions(module, node, myContext.myModulesConfigurator.getModuleEditor(module).getModifiableRootModel());
     ((DefaultTreeModel)myTree.getModel()).reload(parent);
     selectNodeInTree(node);
     final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
@@ -730,7 +738,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           }
         };
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-          result.addAll(extension.createAddActions(selectedObjectRetriever, TREE_UPDATER));
+          result.addAll(extension.createAddActions(selectedObjectRetriever, TREE_UPDATER, myContext.myModulesConfigurator));
         }
 
         return result.toArray(new AnAction[result.size()]);
