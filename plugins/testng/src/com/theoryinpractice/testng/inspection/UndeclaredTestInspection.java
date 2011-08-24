@@ -103,7 +103,8 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
                   final XmlAttribute attribute = tag.getAttribute("name");
                   if (attribute == null) return true;
                   final String value = attribute.getValue();
-                  if (!value.equals(StringUtil.getQualifiedName(packageQName, "*"))) return true;
+                  if (value == null) return true;
+                  if (!(value.equals(StringUtil.getQualifiedName(packageQName, "*")) || value.equals(packageQName))) return true;
                 }
                 found[0] = true;
                 return false;

@@ -37,6 +37,11 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     return getReferencesByElement(element);
   }
+
+  protected boolean disableNonSlashedPaths() {
+    return true;
+  }
+
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
 
     PsiReference[] result = PsiReference.EMPTY_ARRAY;
@@ -45,7 +50,7 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
     final TextRange range = manipulator.getRangeInElement(element);
     String s = range.substring(element.getText());
     int offset = range.getStartOffset();
-    if (!s.trim().startsWith("/")) {
+    if (disableNonSlashedPaths() && !s.trim().startsWith("/")) {
       return result;
     }
     int pos = -1;
