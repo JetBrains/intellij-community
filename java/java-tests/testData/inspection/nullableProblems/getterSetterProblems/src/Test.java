@@ -40,7 +40,7 @@ class C {
   }
 
   @NotNull C c1;
-  @Nullable
+  @org.jetbrains.annotations.Nullable
   public C getC1() {
     if (c1 != null) {
       return null;
