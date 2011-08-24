@@ -2,7 +2,6 @@ package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.GradleLibraryDependency;
-import org.jetbrains.plugins.gradle.util.GradleUiUtil;
 
 import javax.swing.*;
 
@@ -14,19 +13,19 @@ public class GradleLibrarySettings implements GradleProjectStructureNodeSettings
 
   private final GradleLibraryDependency myLibraryDependency;
   private final JComponent              myComponent;
+  private final JLabel                  myNameErrorLabel;
   
   public GradleLibrarySettings(@NotNull GradleLibraryDependency libraryDependency) {
     myLibraryDependency = libraryDependency;
     
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-    GradleUiUtil.configureNameControl(builder, libraryDependency);
+    myNameErrorLabel = GradleAdjustImportSettingsUtil.configureNameControl(builder, libraryDependency);
     myComponent = builder.build();
   }
 
   @Override
-  public boolean commit() {
-    // TODO den implement 
-    return false;
+  public boolean validate() {
+    return GradleAdjustImportSettingsUtil.validate(myLibraryDependency, myNameErrorLabel);
   }
 
   @NotNull

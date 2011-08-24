@@ -73,7 +73,7 @@ public class GradleProjectStructureFactory {
     // TODO den remove
     final GradleProjectStructureNodeSettings toRemove = new GradleProjectStructureNodeSettings() {
       @Override
-      public boolean commit() {
+      public boolean validate() {
         return true;
       }
 

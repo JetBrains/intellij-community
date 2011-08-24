@@ -71,6 +71,11 @@ public class GradleProjectImpl implements Serializable, GradleProject {
     return myLanguageLevel;
   }
 
+  @Override
+  public void setLanguageLevel(@NotNull LanguageLevel level) {
+    myLanguageLevel = level;
+  }
+
   public void setLanguageLevel(@Nullable String languageLevel) {
     LanguageLevel level = LanguageLevel.parse(languageLevel);
     if (level != null) {

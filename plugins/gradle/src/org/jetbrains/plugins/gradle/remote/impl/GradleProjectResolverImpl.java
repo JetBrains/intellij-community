@@ -151,7 +151,8 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
   
   private static void populateContentRoot(@NotNull GradleContentRootImpl contentRoot, SourceType type,
-                                          @Nullable Iterable<? extends IdeaSourceDirectory> dirs) {
+                                          @Nullable Iterable<? extends IdeaSourceDirectory> dirs)
+  {
     if (dirs == null) {
       return;
     }
@@ -161,7 +162,8 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
   
   private static void populateCompileOutputSettings(@Nullable IdeaCompilerOutput gradleSettings,
-                                                    @NotNull GradleModuleImpl intellijModule) {
+                                                    @NotNull GradleModuleImpl intellijModule)
+  {
     if (gradleSettings == null) {
       return;
     }
@@ -372,24 +374,4 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   public void setSettings(@NotNull RemoteGradleProcessSettings settings) {
     mySettings.set(settings); 
   }
-  
-  // TODO den remove
-  //private static class Context {
-  //
-  //  /** Project representation provided by the gradle tooling api. */
-  //  public IdeaProject      gradleProject;
-  //  /** Project representation built by IJ gradle plugin on the basis of the project info provided by the gradle tooling api. */
-  //  public GradleProject    ideaProject;
-  //  /** Module representation provided by the gradle tooling api. */
-  //  public IdeaModule       gradleModule;
-  //  /** Module representation built by IJ gradle plugin on the basis of the module info provided by the gradle tooling api. */
-  //  public GradleModuleImpl ideaModule;
-  //  
-  //  private final Map<>
-  //
-  //  @Nullable
-  //  public GradleModuleImpl getModule(@NotNull String name) {
-  //    
-  //  }
-  //}
 }

@@ -2,7 +2,6 @@ package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.GradleModule;
-import org.jetbrains.plugins.gradle.util.GradleUiUtil;
 
 import javax.swing.*;
 
@@ -16,18 +15,18 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
 
   private final JComponent   myComponent;
   private final GradleModule myModule;
+  private final JLabel       myNameErrorLabel;
 
   public GradleModuleSettings(@NotNull GradleModule module) {
     myModule = module;
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-    GradleUiUtil.configureNameControl(builder, myModule);
+    myNameErrorLabel = GradleAdjustImportSettingsUtil.configureNameControl(builder, myModule);
     myComponent = builder.build();
   }
 
   @Override
-  public boolean commit() {
-    // TODO den implement 
-    return true;
+  public boolean validate() {
+    return GradleAdjustImportSettingsUtil.validate(myModule, myNameErrorLabel);
   }
 
   @NotNull
