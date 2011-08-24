@@ -117,7 +117,7 @@ import java.util.List;
       file = "$WORKSPACE_FILE$"
     )}
 )
-public final class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
+public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private final CopyPasteDelegator myCopyPasteDelegator;
   private boolean isInitialized;
