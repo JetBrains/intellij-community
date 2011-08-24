@@ -9,6 +9,7 @@ import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FileContentPattern;
 import com.intellij.j2ee.web.WebUtilImpl;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
@@ -49,7 +50,7 @@ public class AppEngineFrameworkDetector extends FacetBasedFrameworkDetector<AppE
   @NotNull
   @Override
   public FileType getFileType() {
-    return AppEngineFrameworkDetector.super.getFileType();
+    return StdFileTypes.XML;
   }
 
   @NotNull
