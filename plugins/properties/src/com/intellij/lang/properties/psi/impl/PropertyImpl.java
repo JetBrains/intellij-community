@@ -403,10 +403,6 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
       public Icon getIcon(final boolean open) {
         return null;
       }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
     };
   }
 }

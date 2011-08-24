@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.presentation.java;
 
-import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
@@ -80,8 +80,8 @@ public class ClassPresentationUtil {
   }
 
   @NotNull
-  public static ItemPresentation getPresentation(@NotNull final PsiClass psiClass) {
-    return new ItemPresentation() {
+  public static ColoredItemPresentation getPresentation(@NotNull final PsiClass psiClass) {
+    return new ColoredItemPresentation() {
       public String getPresentableText() {
         return getNameForClass(psiClass, false);
       }
@@ -97,6 +97,7 @@ public class ClassPresentationUtil {
         return null;
       }
 
+      @Override
       public TextAttributesKey getTextAttributesKey() {
         if (psiClass.isDeprecated()) {
           return CodeInsightColors.DEPRECATED_ATTRIBUTES;

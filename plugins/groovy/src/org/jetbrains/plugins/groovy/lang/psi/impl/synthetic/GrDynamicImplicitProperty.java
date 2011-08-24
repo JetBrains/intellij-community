@@ -92,11 +92,6 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     return null;
   }
 
-  @Nullable
-  public TextAttributesKey getTextAttributesKey() {
-    return null;
-  }
-
   @NotNull
   public SearchScope getUseScope() {
     return GlobalSearchScope.projectScope(myProject);

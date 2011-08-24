@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.structure.itemsPresentations.impl;
 
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -30,7 +31,7 @@ import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPrese
  * User: Dmitry.Krasilschikov
  * Date: 31.10.2007
  */
-public class GroovyMethodItemPresentation extends GroovyItemPresentation {
+public class GroovyMethodItemPresentation extends GroovyItemPresentation implements ColoredItemPresentation{
   private final boolean isInherit;
   private final NotNullLazyValue<String> myPresentableText = new NotNullLazyValue<String>() {
     @NotNull
@@ -72,6 +73,7 @@ public class GroovyMethodItemPresentation extends GroovyItemPresentation {
   }
 
   @Nullable
+  @Override
   public TextAttributesKey getTextAttributesKey() {
     return isInherit ? CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES : null;
   }

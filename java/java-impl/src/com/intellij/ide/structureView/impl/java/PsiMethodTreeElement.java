@@ -70,6 +70,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   }
 
 
+  @Override
   public TextAttributesKey getTextAttributesKey() {
     if (isInherited()) return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
     return super.getTextAttributesKey();

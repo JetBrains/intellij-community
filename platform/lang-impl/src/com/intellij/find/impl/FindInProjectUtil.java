@@ -669,10 +669,6 @@ public class FindInProjectUtil {
       public Icon getIcon(boolean open) {
         return null;
       }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
     };
 
     public StringUsageTarget(String _stringToFind) {

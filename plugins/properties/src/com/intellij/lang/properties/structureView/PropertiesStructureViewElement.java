@@ -66,10 +66,6 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement 
         }
       }
 
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
-
       public String getLocationString() {
         return null;
       }

@@ -60,10 +60,6 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
         return PropertiesFileStructureViewElement.this.getPresentableText();
       }
 
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
-
       public String getLocationString() {
         return null;
       }

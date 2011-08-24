@@ -17,6 +17,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -130,7 +131,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     if (value instanceof NavigationItem) {
       TextAttributesKey attributesKey = null;
       final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
-      if (presentation != null) attributesKey = presentation.getTextAttributesKey();
+      if (presentation instanceof ColoredItemPresentation) attributesKey = ((ColoredItemPresentation) presentation).getTextAttributesKey();
 
       if (attributesKey != null) {
         attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);

@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.structure.itemsPresentations;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
@@ -42,10 +41,5 @@ public abstract class GroovyItemPresentation implements ItemPresentation {
   @Nullable
     public Icon getIcon(boolean open) {
     return  myElement.getIcon(Iconable.ICON_FLAG_OPEN);
-  }
-
-  @Nullable
-    public TextAttributesKey getTextAttributesKey() {
-    return null;
   }
 }

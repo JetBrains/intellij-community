@@ -218,11 +218,6 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
                 ": " + myFunctionDecl.getReturnType().getName() : null;
       }
 
-      @Nullable
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
-
       public Icon getIcon(int i) {
         return IconLoader.getIcon("/icons/function.png");
       }

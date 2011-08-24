@@ -435,10 +435,6 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
         return "(groovy script" + (packageName.isEmpty() ? "" : ", " + packageName) + ")";
       }
 
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
-
       public Icon getIcon(boolean open) {
         return GroovyScriptClass.this.getIcon(ICON_FLAG_VISIBILITY | ICON_FLAG_READ_STATUS);
       }

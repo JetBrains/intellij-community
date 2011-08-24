@@ -149,11 +149,6 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         return qName != null ? qName.toString() : hasPrefix() ? getPrefix() + ":" + getName() : getName();
     }
 
-    @Nullable
-    public TextAttributesKey getTextAttributesKey() {
-        return null;
-    }
-
     @NotNull
     @Override
     @SuppressWarnings({ "RawUseOfParameterizedType" })
