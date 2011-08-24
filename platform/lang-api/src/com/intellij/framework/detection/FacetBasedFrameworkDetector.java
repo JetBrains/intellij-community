@@ -17,8 +17,6 @@ package com.intellij.framework.detection;
 
 import com.intellij.facet.*;
 import com.intellij.framework.FrameworkType;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,11 +92,5 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
 
   public boolean isSuitableUnderlyingFacetConfiguration(FacetConfiguration underlying, C configuration, Set<VirtualFile> files) {
     return true;
-  }
-
-  @NotNull
-  @Override
-  public FileType getFileType() {
-    return StdFileTypes.XML;
   }
 }
