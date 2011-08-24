@@ -17,6 +17,7 @@ package com.intellij.javaee;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.ServiceManager;
@@ -426,6 +427,25 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     myModificationCount++;
     myDefaultHtmlDoctype = defaultHtmlDoctype;
     fireExternalResourceChanged();
+  }
+
+  public static void registerResourceTemporarily(final String url, final String location, Disposable disposable) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        getInstance().addResource(url, location);
+      }
+    });
+
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            getInstance().removeResource(url);
+          }
+        });
+      }
+    });
   }
 
   static class Resource {

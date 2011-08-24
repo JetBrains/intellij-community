@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -707,23 +706,5 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final PsiPackage aPackage = myJavaFacade.findPackage(name);
     assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;
-  }
-  protected void registerResourceTemporarily(final String url, final String location) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        ExternalResourceManager.getInstance().addResource(url, location);
-      }
-    });
-
-    Disposer.register(getTestRootDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ExternalResourceManager.getInstance().removeResource(url);
-          }
-        });
-      }
-    });
   }
 }
