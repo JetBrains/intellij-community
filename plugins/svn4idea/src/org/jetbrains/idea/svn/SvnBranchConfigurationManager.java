@@ -60,10 +60,12 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnBranchConfigurationManager");
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
+  private final SvnLoadedBrachesStorage myStorage;
 
-  public SvnBranchConfigurationManager(final Project project, final ProjectLevelVcsManager vcsManager) {
+  public SvnBranchConfigurationManager(final Project project, final ProjectLevelVcsManager vcsManager, final SvnLoadedBrachesStorage storage) {
     myProject = project;
     myVcsManager = vcsManager;
+    myStorage = storage;
     myBunch = new NewRootBunch(project);
   }
 
@@ -72,7 +74,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   public static class ConfigurationBean {
-    public Map<String, SvnBranchConfiguration> myConfigurationMap = new HashMap<String, SvnBranchConfiguration>();
+    public Map<String, SvnBranchConfiguration> myConfigurationMap = new TreeMap<String, SvnBranchConfiguration>();
     /**
      * version of "support SVN in IDEA". for features tracking. should grow
      */
@@ -122,7 +124,6 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       for (String origKey : origMap.keySet()) {
         map.put(origKey, origMap.get(origKey).getValue());
       }
-      configuration.setBranchMap(map);
       result.myConfigurationMap.put(key, helper.prepareForSerialization(configuration));
     }
     result.mySupportsUserInfoFilter = true;
@@ -159,7 +160,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
         // check if cancel had been put 
         if (! vcs.isVcsBackgroundOperationsAllowed(myRoot)) return;
         if (myAll || (! oldUrls.contains(newBranchUrl))) {
-          new NewRootBunch.BranchesLoadRunnable(myProject, myBunch, newBranchUrl, InfoReliability.defaultValues, myRoot, null).run();
+          new NewRootBunch.BranchesLoadRunnable(myProject, myBunch, newBranchUrl, InfoReliability.defaultValues, myRoot, null, true).run();
         }
       }
     }
@@ -193,13 +194,14 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       final SvnBranchConfigurationNew newConfig = new SvnBranchConfigurationNew();
       newConfig.setTrunkUrl(configToConvert.getTrunkUrl());
       newConfig.setUserinfoInUrl(configToConvert.isUserinfoInUrl());
-      final Map<String, List<SvnBranchItem>> oldMap = configToConvert.getBranchMap();
       for (String branchUrl : configToConvert.getBranchUrls()) {
-        List<SvnBranchItem> items = oldMap.get(branchUrl);
-        items = ((items == null) || (items.isEmpty())) ? new ArrayList<SvnBranchItem>() : items;
-        whatToInit.add(new Pair<VirtualFile, SvnBranchConfigurationNew>(root, newConfig));
-        newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(items,
-            (items.isEmpty()) ? InfoReliability.defaultValues : InfoReliability.setByUser));
+        List<SvnBranchItem> stored = getStored(branchUrl);
+        if (stored != null && ! stored.isEmpty()) {
+          newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(stored, InfoReliability.setByUser));
+        } else {
+          whatToInit.add(new Pair<VirtualFile, SvnBranchConfigurationNew>(root, newConfig));
+          newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(), InfoReliability.empty));
+        }
       }
 
       myBunch.updateForRoot(root, new InfoStorage<SvnBranchConfigurationNew>(newConfig, InfoReliability.setByUser), null);
@@ -227,6 +229,14 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     myConfigurationBean = object;
   }
 
+  private List<SvnBranchItem> getStored(String branchUrl) {
+    Collection<SvnBranchItem> collection = myStorage.get(branchUrl);
+    if (collection == null) return null;
+    final List<SvnBranchItem> items = new ArrayList<SvnBranchItem>(collection);
+    Collections.sort(items);
+    return items;
+  }
+
   private static class UrlSerializationHelper {
     private final SvnVcs myVcs;
 
@@ -248,24 +258,9 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
         newBranchesList.add(serializeUrl(s, withUserInfo));
       }
 
-      final Map<String, List<SvnBranchItem>> map = configuration.getBranchMap();
-      final Map<String, List<SvnBranchItem>> newMap = new HashMap<String, List<SvnBranchItem>>(map.size(), 1.0f);
-      for (Map.Entry<String, List<SvnBranchItem>> entry : map.entrySet()) {
-        final List<SvnBranchItem> items = entry.getValue();
-        if (items != null) {
-          final List<SvnBranchItem> newItems = new ArrayList<SvnBranchItem>();
-          for (SvnBranchItem item : items) {
-            newItems.add(new SvnBranchItem(serializeUrl(item.getUrl(), withUserInfo), new java.util.Date(item.getCreationDateMillis()),
-                                           item.getRevision()));
-          }
-          newMap.put(serializeUrl(entry.getKey(), withUserInfo), newItems);
-        }
-      }
-
       final SvnBranchConfiguration result = new SvnBranchConfiguration();
       result.setTrunkUrl(trunkUrl);
       result.setBranchUrls(newBranchesList);
-      result.setBranchMap(newMap);
       result.setUserinfoInUrl(withUserInfo.isNull() ? false : withUserInfo.get());
       return result;
     }
@@ -286,24 +281,9 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
         newBranchesList.add(deserializeUrl(s, userInfo));
       }
 
-      final Map<String, List<SvnBranchItem>> map = configuration.getBranchMap();
-      final Map<String, List<SvnBranchItem>> newMap = new HashMap<String, List<SvnBranchItem>>(map.size(), 1.0f);
-      for (Map.Entry<String, List<SvnBranchItem>> entry : map.entrySet()) {
-        final List<SvnBranchItem> items = entry.getValue();
-        if (items != null) {
-          final List<SvnBranchItem> newItems = new ArrayList<SvnBranchItem>();
-          for (SvnBranchItem item : items) {
-            newItems.add(new SvnBranchItem(deserializeUrl(item.getUrl(), userInfo), new java.util.Date(item.getCreationDateMillis()),
-                                           item.getRevision()));
-          }
-          newMap.put(deserializeUrl(entry.getKey(), userInfo), newItems);
-        }
-      }
-
       final SvnBranchConfiguration result = new SvnBranchConfiguration();
       result.setTrunkUrl(newTrunkUrl);
       result.setBranchUrls(newBranchesList);
-      result.setBranchMap(newMap);
       result.setUserinfoInUrl(userInfo != null && userInfo.length() > 0);
       return result;
     }

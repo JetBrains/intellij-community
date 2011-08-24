@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.actions;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -27,11 +28,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.branchConfig.InfoReliability;
+import org.jetbrains.idea.svn.branchConfig.NewRootBunch;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.BranchConfigurationDialog;
@@ -181,52 +185,40 @@ public class SelectBranchPopup {
         });
       }
       else {
-        showBranchPopup(selectedValue, true);
+        showBranchPopup(selectedValue);
       }
       return FINAL_CHOICE;
     }
 
     @Nullable
-    private List<SvnBranchItem> loadBranches(final String selectedBranchesHolder, final boolean cached) {
-      if (cached) {
-        return myConfiguration.getBranches(selectedBranchesHolder);
-      }
-
-      final List<SvnBranchItem> result = new ArrayList<SvnBranchItem>();
+    private void loadBranches(final String selectedBranchesHolder, final Runnable runnable) {
       final ProgressManager pm = ProgressManager.getInstance();
-
-      final boolean wasCanceled = ! pm.runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          final ProgressIndicator pi = pm.getProgressIndicator();
-          final Semaphore s = new Semaphore();
-          s.down();
-          final Ref<Boolean> completedRef = new Ref<Boolean>();
-          final SvnBranchConfigManager manager = SvnBranchConfigurationManager.getInstance(myProject).getSvnBranchConfigManager();
-          manager.reloadBranches(myVcsRoot, selectedBranchesHolder, new Consumer<List<SvnBranchItem>>() {
-            public void consume(final List<SvnBranchItem> svnBranchItems) {
-              result.addAll(svnBranchItems);
-              completedRef.set(true);
-              s.up();
-            }
-          });
-          while (true) {
-            s.waitFor(500);
-            if (Boolean.TRUE.equals(completedRef.get())) break;
-            pi.checkCanceled();
-          }
+      pm.run(new ModalityIgnorantBackgroundableTask(myProject, SvnBundle.message("compare.with.branch.progress.loading.branches")) {
+        @Override
+        protected void doInAwtIfFail(Exception e) {
+          runnable.run();
         }
-      }, SvnBundle.message("compare.with.branch.progress.loading.branches"), true, myProject);
 
+        @Override
+        protected void doInAwtIfCancel() {
+          runnable.run();
+        }
 
-      if (wasCanceled) {
-        return myConfiguration.getBranches(selectedBranchesHolder);
-      } else {
-        return result;
-      }
+        @Override
+        protected void doInAwtIfSuccess() {
+          runnable.run();
+        }
+
+        @Override
+        protected void runImpl(@NotNull ProgressIndicator indicator) {
+          final SvnBranchConfigManager manager = SvnBranchConfigurationManager.getInstance(myProject).getSvnBranchConfigManager();
+          new NewRootBunch.BranchesLoadRunnable(myProject, manager, selectedBranchesHolder, InfoReliability.setByUser, myVcsRoot, null, false).run();
+        }
+      });
     }
 
-    private void showBranchPopup(final String selectedValue, final boolean cached) {
-      List<SvnBranchItem> branches = loadBranches(selectedValue, cached);
+    private void showBranchPopup(final String selectedValue) {
+      List<SvnBranchItem> branches = myConfiguration.getBranches(selectedValue);
       if (branches == null) {
         return;
       }
@@ -247,7 +239,12 @@ public class SelectBranchPopup {
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                  showBranchPopup(selectedValue, false);
+                  loadBranches(selectedValue, new Runnable() {
+                    @Override
+                    public void run() {
+                      showBranchPopup(selectedValue);
+                    }
+                  });
                 }
               });
               return;

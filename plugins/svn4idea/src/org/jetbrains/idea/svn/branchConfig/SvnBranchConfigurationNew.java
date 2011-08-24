@@ -17,13 +17,16 @@ package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -62,11 +65,18 @@ public class SvnBranchConfigurationNew {
 
   public List<String> getBranchUrls() {
     final ArrayList<String> result = new ArrayList<String>(myBranchMap.keySet());
-    Collections.sort(result);
-    return result;
+    final List<String> cutList = ObjectsConvertor.convert(result, new Convertor<String, String>() {
+      @Override
+      public String convert(String s) {
+        return cutEndSlash(s);
+      }
+    });
+    Collections.sort(cutList);
+    return cutList;
   }
 
-  public void addBranches(final String branchParentName, final InfoStorage<List<SvnBranchItem>> items) {
+  public void addBranches(String branchParentName, final InfoStorage<List<SvnBranchItem>> items) {
+    branchParentName = ensureEndSlash(branchParentName);
     InfoStorage<List<SvnBranchItem>> current = myBranchMap.get(branchParentName);
     if (current != null) {
       LOG.info("Branches list not added for : '" + branchParentName + "; this branch parent URL is already present.");
@@ -75,7 +85,16 @@ public class SvnBranchConfigurationNew {
     myBranchMap.put(branchParentName, items);
   }
 
-  public void updateBranch(final String branchParentName, final InfoStorage<List<SvnBranchItem>> items) {
+  public static String ensureEndSlash(String name) {
+    return name.trim().endsWith("/") ? name : name + "/";
+  }
+  
+  private static String cutEndSlash(String name) {
+    return name.endsWith("/") && name.length() > 0 ? name.substring(0, name.length() - 1) : name;
+  }
+
+  public void updateBranch(String branchParentName, final InfoStorage<List<SvnBranchItem>> items) {
+    branchParentName = ensureEndSlash(branchParentName);
     final InfoStorage<List<SvnBranchItem>> current = myBranchMap.get(branchParentName);
     if (current == null) {
       LOG.info("Branches list not updated for : '" + branchParentName + "; since config has changed.");
@@ -89,20 +108,9 @@ public class SvnBranchConfigurationNew {
   }
 
   public List<SvnBranchItem> getBranches(String url) {
+    url = ensureEndSlash(url);
     return myBranchMap.get(url).getValue();
   }
-
-  /*public SvnBranchConfiguration createFromVcsRootBranches() {
-    final SvnBranchConfiguration result = new SvnBranchConfiguration();
-    result.setTrunkUrl(myTrunkUrl);
-    final Map<String, List<SvnBranchItem>> branchMap = result.getBranchMap();
-    for (String key : myBranchMap.keySet()) {
-      result.setTrunkUrl(key);
-      final List<SvnBranchItem> list = myBranchMap.get(key).getT();
-      branchMap.put(key, list);
-    }
-    return result;
-  }*/
 
   public SvnBranchConfigurationNew copy() {
     SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
@@ -119,16 +127,16 @@ public class SvnBranchConfigurationNew {
 
   @Nullable
   public String getBaseUrl(String url) {
-    if ((myTrunkUrl != null) && url.startsWith(myTrunkUrl)) {
-      return myTrunkUrl;
+    if (myTrunkUrl != null) {
+      if (SVNPathUtil.isAncestor(myTrunkUrl, url)) {
+        return cutEndSlash(myTrunkUrl);
+      }
     }
     for(String branchUrl: myBranchMap.keySet()) {
-      if (url.startsWith(branchUrl)) {
-        int pos = url.indexOf('/', branchUrl.length()+1);
-        if (pos >= 0) {
-          return url.substring(0, pos);
-        }
-        return branchUrl;
+      if (SVNPathUtil.isAncestor(branchUrl, url)) {
+        String relativePath = SVNPathUtil.getRelativePath(branchUrl, url);
+        int secondSlash = relativePath.indexOf("/");
+        return cutEndSlash(branchUrl + (secondSlash == -1 ? relativePath : relativePath.substring(0, secondSlash)));
       }
     }
     return null;
@@ -140,27 +148,8 @@ public class SvnBranchConfigurationNew {
     if (baseUrl == null) {
       return null;
     }
-    if (myBranchMap.isEmpty()) {
-      return baseUrl;
-    }
-    int commonPrefixLength = getCommonPrefixLength(url, myTrunkUrl);
-    for (String branchUrl : myBranchMap.keySet()) {
-      commonPrefixLength = Math.min(commonPrefixLength, getCommonPrefixLength(url, branchUrl));
-      if (commonPrefixLength <= 0) {
-        return baseUrl;
-      }
-    }
-    return baseUrl.substring(commonPrefixLength);
-  }
-
-  private static int getCommonPrefixLength(final String s1, final String s2) {
-    final int minLength = Math.min(s1.length(), s2.length());
-    for(int i=0; i< minLength; i++) {
-      if (s1.charAt(i) != s2.charAt(i)) {
-        return i;
-      }
-    }
-    return minLength;
+    int lastSlash = baseUrl.lastIndexOf("/");
+    return lastSlash == -1 ? baseUrl : baseUrl.substring(lastSlash + 1);
   }
 
   @Nullable
@@ -171,12 +160,11 @@ public class SvnBranchConfigurationNew {
 
   @Nullable
   public SVNURL getWorkingBranch(final SVNURL someUrl) throws SVNException {
-    final BranchSearcher branchSearcher = new BranchSearcher(someUrl);
-    iterateUrls(branchSearcher);
-
-    return branchSearcher.getResult();
+    String baseUrl = getBaseUrl(someUrl.toString());
+    return baseUrl == null ? null : SVNURL.parseURIEncoded(baseUrl);
   }
 
+  // todo not checked
   // todo +-
   @Nullable
   public String getGroupToLoadToReachUrl(final SVNURL url) throws SVNException {
@@ -209,6 +197,7 @@ public class SvnBranchConfigurationNew {
     }
   }
 
+  // to retrieve mappings between existing in the project working copies and their URLs
   @Nullable
   public Map<String,String> getUrl2FileMappings(final Project project, final VirtualFile root) {
     try {
@@ -220,7 +209,8 @@ public class SvnBranchConfigurationNew {
     }
   }
 
-  public void removeBranch(final String url) {
+  public void removeBranch(String url) {
+    url = ensureEndSlash(url);
     myBranchMap.remove(url);
   }
 
@@ -261,6 +251,7 @@ public class SvnBranchConfigurationNew {
     boolean accept(final String url) throws SVNException;
   }
 
+  // todo not checked
   private static class BranchSearcher implements UrlListener {
     private final SVNURL mySomeUrl;
     private SVNURL myResult;

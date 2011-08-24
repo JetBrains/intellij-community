@@ -38,7 +38,7 @@ public interface SvnBranchConfigManager {
   SvnBranchConfigurationNew getConfig(@NotNull VirtualFile root);
 
   void reloadBranches(@NotNull VirtualFile root, @NotNull String branchParentUrl,
-                             Consumer<List<SvnBranchItem>> callback);
+                      Consumer<List<SvnBranchItem>> callback);
   @Nullable
   @CalledInBackground
   SVNURL getWorkingBranchWithReload(final SVNURL svnurl, final VirtualFile root);
