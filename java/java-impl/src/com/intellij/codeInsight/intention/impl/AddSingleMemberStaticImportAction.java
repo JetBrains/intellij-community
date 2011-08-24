@@ -21,6 +21,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -69,8 +70,17 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
             qName = qName + "." +refExpr.getReferenceName();
             if (file instanceof PsiJavaFile) {
               PsiImportList importList = ((PsiJavaFile)file).getImportList();
-              if (importList != null && importList.findSingleImportStatement(refExpr.getReferenceName()) == null) {
-                return qName;
+              if (importList != null) {
+                for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
+                  if (staticStatement.isOnDemand()) {
+                    if (staticStatement.resolveTargetClass() == aClass) {
+                      return null;
+                    }
+                  }
+                }
+                if (importList.findSingleImportStatement(refExpr.getReferenceName()) == null) {
+                  return qName;
+                }
               }
             }
           }
