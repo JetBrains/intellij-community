@@ -50,12 +50,18 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
   private Project myProject;
 
+  private static final Callback SHOULD_ENABLE_URL = new Callback() {
+    public boolean callback(ID self, String selector, ID panel, ID url) {
+      return true;
+    }
+  };
+
   private static final Callback SHOULD_SHOW_FILENAME_CALLBACK = new Callback() {
       public boolean callback(ID self, String selector, ID panel, ID filename) {
         if (filename == null || filename.intValue() == 0) return false;
         final String fileName = Foundation.toStringViaUTF8(filename);
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
-        return virtualFile != null && (virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
+        final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
+        return virtualFile == null || (virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
       }
     };
 
@@ -63,8 +69,8 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       public boolean callback(ID self, String selector, ID panel, ID filename) {
         if (filename == null || filename.intValue() == 0) return false;
         final String fileName = Foundation.toStringViaUTF8(filename);
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
-        return virtualFile != null && (!virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
+        final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
+        return virtualFile == null || (!virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
       }
     };
 
