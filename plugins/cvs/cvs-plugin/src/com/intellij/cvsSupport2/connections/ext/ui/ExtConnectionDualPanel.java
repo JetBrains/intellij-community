@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package com.intellij.cvsSupport2.connections.ext.ui;
 
-import com.intellij.cvsSupport2.config.CvsRootEditor;
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ExtConfiguration;
 import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshConnectionSettingsPanel;
-import com.intellij.CvsBundle;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -34,13 +33,14 @@ public class ExtConnectionDualPanel {
 
   private final JPanel myPanel = new JPanel(new BorderLayout());
   private final JPanel myDualPanel = new JPanel(new CardLayout());
-  private final JCheckBox myUseInternalImplementationCheckBox = new JCheckBox(CvsBundle.message("checkbox.text.use.internal.ssh.implementation"));
+  private final JCheckBox myUseInternalImplementationCheckBox =
+    new JCheckBox(CvsBundle.message("checkbox.text.use.internal.ssh.implementation"));
   @NonNls private static final String EXT = "EXT";
   @NonNls private static final String SSH = "SSH";
 
-  public ExtConnectionDualPanel(final CvsRootEditor rootProvider) {
+  public ExtConnectionDualPanel() {
     myExtSettingsPanel = new ExtConnectionSettingsPanel();
-    mySshSettingsPanel = new SshConnectionSettingsPanel(rootProvider);
+    mySshSettingsPanel = new SshConnectionSettingsPanel();
 
     myDualPanel.add(myExtSettingsPanel.getPanel(), EXT);
     myDualPanel.add(mySshSettingsPanel.getPanel(), SSH);
@@ -54,7 +54,6 @@ public class ExtConnectionDualPanel {
         updatePage();
       }
     });
-
   }
 
   private void updatePage() {
@@ -65,7 +64,6 @@ public class ExtConnectionDualPanel {
     } else {
       cardLayout.show(myDualPanel, EXT);
     }
-
   }
 
   public JPanel getPanel() {
