@@ -15,6 +15,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -28,8 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -53,14 +53,40 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
                          new FileTypeBasedRootFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"),
                          PathUIUtils.JAVA_SOURCE_ROOT_DETECTOR,
                          new FileTypeBasedRootFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"),
-                         new FileTypeBasedRootFilter(JavadocOrderRootType.getInstance(), false, StdFileTypes.HTML,
-                                                     "JavaDocs"),
+                         new JavadocRootDetector(),
                          new AnnotationsRootFilter());
   }
 
   public static OrderRootTypePresentation getDefaultPresentation(OrderRootType type) {
     final OrderRootTypeUIFactory factory = OrderRootTypeUIFactory.FACTORY.getByKey(type);
     return new OrderRootTypePresentation(factory.getNodeText(), factory.getIcon());
+  }
+
+  private static class JavadocRootDetector extends RootDetector {
+    private JavadocRootDetector() {
+      super(JavadocOrderRootType.getInstance(), false, "JavaDocs");
+    }
+
+    @NotNull
+    @Override
+    public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
+      List<VirtualFile> result = new ArrayList<VirtualFile>();
+      collectJavadocRoots(rootCandidate, result, progressIndicator);
+      return result;
+    }
+
+    private static void collectJavadocRoots(VirtualFile file, List<VirtualFile> result, ProgressIndicator progressIndicator) {
+      if (!file.isDirectory()) return;
+
+      if (file.findChild("allclasses-frame.html") != null && file.findChild("allclasses-noframe.html") != null) {
+        result.add(file);
+        return;
+      }
+      progressIndicator.checkCanceled();
+      for (VirtualFile child : file.getChildren()) {
+        collectJavadocRoots(child, result, progressIndicator);
+      }
+    }
   }
 
   private static class AnnotationsRootFilter extends FileTypeBasedRootFilter {

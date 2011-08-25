@@ -82,6 +82,8 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     final List<OrderRoot> roots = RootDetectionUtil
         .detectRoots(Arrays.asList(rootCandidates), myLibrariesConfigurable.getTree(), myProject, componentDescriptor.getRootDetectors(),
                      true);
+    if (roots.isEmpty()) return;
+
     final LibrariesModifiableModel modifiableModel = myLibrariesConfigurable.getModelProvider().getModifiableModel();
     final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel, roots), myType);
 
