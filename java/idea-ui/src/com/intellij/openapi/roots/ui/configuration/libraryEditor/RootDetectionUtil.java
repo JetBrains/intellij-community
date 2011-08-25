@@ -68,9 +68,9 @@ public class RootDetectionUtil {
     }.queue();
 
     if (!suggestedRoots.isEmpty()) {
-      final DetectedSourceRootsDialog dialog = parentComponent != null
-                                               ? new DetectedSourceRootsDialog(parentComponent, suggestedRoots)
-                                               : new DetectedSourceRootsDialog(project, suggestedRoots);
+      final DetectedRootsChooserDialog dialog = parentComponent != null
+                                               ? new DetectedRootsChooserDialog(parentComponent, suggestedRoots)
+                                               : new DetectedRootsChooserDialog(project, suggestedRoots);
       dialog.show();
       if (!dialog.isOK()) {
         return Collections.emptyList();

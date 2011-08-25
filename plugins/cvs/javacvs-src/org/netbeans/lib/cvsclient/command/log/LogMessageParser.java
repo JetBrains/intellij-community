@@ -57,7 +57,7 @@ final public class LogMessageParser extends AbstractMessageParser {
   @NonNls private static final String FINAL_SPLIT = "=============";
   @NonNls private static final String FINAL_SPLIT_WITH_TAB = "\t=============";
 
-  private static final SyncDateFormat[] EXPECTED_DATE_FORMATS = new SyncDateFormat[3];
+  private static final SyncDateFormat[] EXPECTED_DATE_FORMATS = new SyncDateFormat[2];
   @NonNls private static final String NO_FILE_MESSAGE = "no file";
 
   static {
@@ -335,7 +335,7 @@ final public class LogMessageParser extends AbstractMessageParser {
         revision.setDate(parsedDate);
       }
       else {
-        BugLog.getInstance().showException(new Exception(JavaCvsSrcBundle.message("line.could.be.be.parsed.error.message", line)));
+        BugLog.getInstance().showException(new Exception(JavaCvsSrcBundle.message("line.could.not.be.parsed.error.message", line)));
       }
     }
     if (token.hasMoreTokens()) {

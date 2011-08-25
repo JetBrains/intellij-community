@@ -784,9 +784,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         try {
           final String modulePresentation = IdeBundle.message("project.new.wizard.module.identification");
           final NamePathComponent component = new NamePathComponent(IdeBundle.message("label.project.name"), IdeBundle.message(
-            "label.component.file.location", StringUtil.capitalize(modulePresentation)), 'a', 'l', IdeBundle.message(
+            "label.component.file.location", StringUtil.capitalize(modulePresentation)), IdeBundle.message(
             "title.select.project.file.directory", modulePresentation), IdeBundle.message("description.select.project.file.directory",
-                                                                                          StringUtil.capitalize(modulePresentation)));
+                                                                                          StringUtil.capitalize(modulePresentation)), true, false);
           final DialogWrapper copyModuleDialog = new DialogWrapper(myTree, false) {
             {
               setTitle(ProjectBundle.message("copy.module.dialog.title"));

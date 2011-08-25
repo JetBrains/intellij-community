@@ -81,9 +81,12 @@ public class NamePathComponent extends JPanel{
     myNameLabel = new JLabel(nameLabelText);
     if (bold) myNameLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     myNameLabel.setLabelFor(myTfName);
-    this.add(myNameLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    Insets insets = new Insets(0, 0, 5, 0);
+    this.add(myNameLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                 insets, 0, 0));
 
-    this.add(myTfName, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 8, 0), 0, 0));
+    this.add(myTfName, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                              insets, 0, 0));
     // todo: review texts
     final FileChooserDescriptor chooserDescriptor = (FileChooserDescriptor)BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR.clone();
     chooserDescriptor.setHideIgnored(hideIgnored);
@@ -93,11 +96,14 @@ public class NamePathComponent extends JPanel{
         myIsPathChangedByUser = true;
       }
     };
-    myPathPanel = new FieldPanel(myTfPath, pathLabelText, null, browseButtonActionListener, null);
-    final JLabel locationLabel = myPathPanel.getFieldLabel();
+    myPathPanel = new FieldPanel(myTfPath, null, null, browseButtonActionListener, null);
+    final JLabel locationLabel = new JLabel(pathLabelText);
     locationLabel.setLabelFor(myTfPath);
     if (bold) locationLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    this.add(myPathPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 0, 0, 0), 0, 0));
+    this.add(locationLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                   insets, 0, 0));
+    this.add(myPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                                 insets, 0, 0));
   }
 
   public String getNameValue() {

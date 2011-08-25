@@ -116,7 +116,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       myMappings.putAll(mappings);
       cleanup();
     }
-    handleMappingChange(mappings.keySet(), oldFiles, true);
+    handleMappingChange(mappings.keySet(), oldFiles, !getProject().isDefault());
   }
 
   public void setMapping(final VirtualFile file, T dialect) {

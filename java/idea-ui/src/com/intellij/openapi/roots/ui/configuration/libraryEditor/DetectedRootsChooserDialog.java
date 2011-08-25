@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TitlePanel;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -34,12 +36,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This dialog allows selecting source paths inside selected source archives or directories.
+ * This dialog allows selecting paths inside selected archives or directories.
  *
  * @author max
  * @author Constantine.Plotnikov
  */
-public class DetectedSourceRootsDialog extends DialogWrapper {
+public class DetectedRootsChooserDialog extends DialogWrapper {
   /**
    * A tree with paths.  The tree relies on the CheckboxTree for selection and unselection policy.
    */
@@ -49,27 +51,31 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
    * <ul>
    * <li>The root is a fake node that just holds child nodes.</li>
    * <li>The second level is archives or directories selected on the previous selection step.</li>
-   * <li>The third level are paths with java sources inside pervious selection.</li>
+   * <li>The third level are detected roots inside previous selection.</li>
    * </ul>
    */
   private CheckedTreeNode myRootNode;
   private JScrollPane myPane;
+  private String myDescription;
 
-  public DetectedSourceRootsDialog(Component component, List<SuggestedChildRootInfo> suggestedRoots) {
+  public DetectedRootsChooserDialog(Component component, List<SuggestedChildRootInfo> suggestedRoots) {
     super(component, true);
     init(suggestedRoots);
   }
 
-  public DetectedSourceRootsDialog(Project project, List<SuggestedChildRootInfo> suggestedRoots) {
+  public DetectedRootsChooserDialog(Project project, List<SuggestedChildRootInfo> suggestedRoots) {
     super(project, true);
     init(suggestedRoots);
   }
 
   private void init(List<SuggestedChildRootInfo> suggestedRoots) {
+    myDescription = "<html><body>" + ApplicationNamesInfo.getInstance().getFullProductName() +
+                    " just scanned files and detected the following " + StringUtil.pluralize("root", suggestedRoots.size()) + ".<br>" +
+                    "Select items in the tree below or press Cancel to cancel operation.</body></html>";
     myRootNode = createTree(suggestedRoots);
     myTree = createCheckboxTree();
     myPane = ScrollPaneFactory.createScrollPane(myTree);
-    setTitle("Detected Source Roots");
+    setTitle("Detected Roots");
     init();
   }
 
@@ -155,8 +161,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
 
   @Override
   protected JComponent createTitlePane() {
-    return new TitlePanel("Choose Source Roots", "<html><body>IntelliJ IDEA just scanned files and detected following source root(s).<br>" +
-                                                 "Select items in the tree below or press Cancel to cancel operation.</body></html>");
+    return new TitlePanel("Choose Roots", myDescription);
   }
 
   @Nullable
@@ -172,6 +177,6 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
   @NonNls
   @Override
   protected String getDimensionServiceKey() {
-    return "DetectedSourceRootsDialog";
+    return "DetectedRootsChooserDialog";
   }
 }
