@@ -53,6 +53,7 @@ import java.io.IOException;
 public class CopyReferenceAction extends AnAction {
   public CopyReferenceAction() {
     super();
+    setEnabledInModalContext(true);
     setInjectedContext(true);
   }
 
