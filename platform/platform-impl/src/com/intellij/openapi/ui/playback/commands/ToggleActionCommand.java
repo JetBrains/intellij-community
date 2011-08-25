@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 
 import java.awt.*;
@@ -41,6 +42,11 @@ public class ToggleActionCommand extends AbstractCommand {
   
   public ToggleActionCommand(String text, int line) {
     super(text, line);
+  }
+
+  @Override
+  protected boolean isAwtThread() {
+    return true;
   }
 
   @Override
@@ -77,12 +83,16 @@ public class ToggleActionCommand extends AbstractCommand {
     final InputEvent inputEvent = ActionCommand.getInputEvent(actionId);
     final ActionCallback result = new ActionCallback();
 
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
+    context.getRobot().delay(Registry.intValue("actionSystem.playback.autodelay"));
+
+    IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
+    fm.doWhenFocusSettlesDown(new Runnable() {
       @Override
       public void run() {
         final Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
         AnActionEvent event =
-            new AnActionEvent(inputEvent, DataManager.getInstance().getDataContext(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()), ActionPlaces.UNKNOWN,
+            new AnActionEvent(inputEvent, DataManager.getInstance()
+                .getDataContext(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()), ActionPlaces.UNKNOWN,
                               presentation, ActionManager.getInstance(), 0);
 
         ActionUtil.performDumbAwareUpdate(action, event, false);
@@ -95,7 +105,8 @@ public class ToggleActionCommand extends AbstractCommand {
               result.setDone();
             }
           });
-        } else {
+        }
+        else {
           result.setDone();
         }
       }
