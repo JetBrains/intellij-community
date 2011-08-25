@@ -145,8 +145,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
     final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, cvsLocation.getRootFile());
 
+    final Calendar calendar = Calendar.getInstance();
+    calendar.set(1970, 2, 2);
+    Date dateFrom = calendar.getTime();
     final CvsChangeList[] result = new CvsChangeList[1];
-    final CvsResult executionResult = runRLogOperation(connectionSettings, module, new Date(1000), null, new Consumer<LogInformationWrapper>() {
+    final CvsResult executionResult = runRLogOperation(connectionSettings, module, dateFrom, null, new Consumer<LogInformationWrapper>() {
       public void consume(LogInformationWrapper wrapper) {
         if (result[0] != null) return;
         final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
@@ -302,6 +305,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     LoadHistoryOperation operation = new LoadHistoryOperation(settings, module, dateFrom, dateTo, log);
 
     CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
+    //executor.setShowErrors(false);
     executor.performActionSync(new CommandCvsHandler(CvsBundle.message("browse.changes.load.history.progress.title"), operation),
                                CvsOperationExecutorCallback.EMPTY);
 
