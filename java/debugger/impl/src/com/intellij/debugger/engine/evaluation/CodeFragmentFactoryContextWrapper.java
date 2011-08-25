@@ -70,6 +70,7 @@ public class CodeFragmentFactoryContextWrapper implements CodeFragmentFactory{
   
   
   private PsiElement wrapContext(Project project, final PsiElement originalContext) {
+    if (project.isDefault()) return originalContext;
     PsiElement context = originalContext;
     final DebugProcessImpl process = DebuggerManagerEx.getInstanceEx(project).getContext().getDebugProcess();
     if (process != null) {
