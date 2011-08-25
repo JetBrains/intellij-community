@@ -63,16 +63,16 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
         final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
         PsiPackage classPackage = (PsiPackage)packageReference.resolve();
         List<LocalQuickFix> availableFixes = new ArrayList<LocalQuickFix>();
-        if (classPackage == null || !Comparing.equal(dirPackage.getQualifiedName(), packageReference.getText(), true)) {
+        if (classPackage == null || !Comparing.equal(dirPackage.getQualifiedName(), packageReference.getQualifiedName(), true)) {
           availableFixes.add(new AdjustPackageNameFix(packageName));
-          MoveToPackageFix moveToPackageFix = new MoveToPackageFix(classPackage != null ? classPackage.getQualifiedName() : packageReference.getText());
+          MoveToPackageFix moveToPackageFix = new MoveToPackageFix(classPackage != null ? classPackage.getQualifiedName() : packageReference.getQualifiedName());
           if (moveToPackageFix.isAvailable(file)) {
             availableFixes.add(moveToPackageFix);
           }
         }
         if (!availableFixes.isEmpty()){
           String description = JavaErrorMessages.message("package.name.file.path.mismatch",
-                                                         packageReference.getText(),
+                                                         packageReference.getQualifiedName(),
                                                          dirPackage.getQualifiedName());
           LocalQuickFix[] fixes = availableFixes.toArray(new LocalQuickFix[availableFixes.size()]);
           ProblemDescriptor descriptor =
