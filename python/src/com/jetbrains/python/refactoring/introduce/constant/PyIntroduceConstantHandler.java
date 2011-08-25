@@ -15,8 +15,8 @@ import java.util.Collection;
 /**
  * @author Alexey.Ivanov
  */
-public class ConstantIntroduceHandler extends IntroduceHandler {
-  public ConstantIntroduceHandler() {
+public class PyIntroduceConstantHandler extends IntroduceHandler {
+  public PyIntroduceConstantHandler() {
     super(new ConstantValidator(), PyBundle.message("refactoring.introduce.constant.dialog.title"));
   }
 

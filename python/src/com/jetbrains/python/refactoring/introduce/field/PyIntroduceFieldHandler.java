@@ -34,9 +34,9 @@ import java.util.Set;
 /**
  * @author Dennis.Ushakov
  */
-public class FieldIntroduceHandler extends IntroduceHandler {
+public class PyIntroduceFieldHandler extends IntroduceHandler {
 
-  public FieldIntroduceHandler() {
+  public PyIntroduceFieldHandler() {
     super(new IntroduceFieldValidator(), RefactoringBundle.message("introduce.field.title"));
   }
 
