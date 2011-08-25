@@ -27,6 +27,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -41,6 +42,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -465,16 +467,20 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public void checkVersion() {
     final String executable = myAppSettings.getPathToGit();
     try {
+      myVersion = null; // to set to null if next statement will fail
       myVersion = GitVersion.identifyVersion(executable);
       if (!myVersion.isSupported() && !myProject.isDefault()) {
-        showMessage(GitBundle.message("vcs.unsupported.version", myVersion, GitVersion.MIN),
-                    ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+        String message = GitBundle.message("vcs.unsupported.version", myVersion, GitVersion.MIN);
+        showMessage(message, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+        VcsBalloonProblemNotifier.showOverVersionControlView(myProject, message, MessageType.ERROR);
       }
     } catch (Exception e) {
       final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
+      String message = GitBundle.message("vcs.unable.to.run.git", executable, reason);
       if (!myProject.isDefault()) {
-        showMessage(GitBundle.message("vcs.unable.to.run.git", executable, reason), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+        showMessage(message, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
       }
+      VcsBalloonProblemNotifier.showOverVersionControlView(myProject, message, MessageType.ERROR);
     }
   }
 
