@@ -50,6 +50,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.JBTableWithHintProvider;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableScrollingUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -681,7 +682,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
   }
 
-  private static class MyTable extends Table implements DataProvider {
+  private static class MyTable extends JBTableWithHintProvider implements DataProvider {
     @Override
     public boolean getScrollableTracksViewportWidth() {
       return true;
@@ -691,16 +692,21 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
         final int[] selected = getSelectedRows();
         if (selected.length == 1) {
-          final Object at = getValueAt(selected[0], 0);
-          if (at instanceof UsageNode) {
-            final Usage usage = ((UsageNode)at).getUsage();
-            if (usage instanceof UsageInfo2UsageAdapter) {
-              final PsiElement element = ((UsageInfo2UsageAdapter)usage).getElement();
-              if (element != null) {
-                final PsiElement view = UsageToPsiElementProvider.findAppropriateParentFrom(element);
-                return view == null ? element : view;
-              }
-            }
+          return getPsiElementForHint(getValueAt(selected[0], 0));
+        }
+      }
+      return null;
+    }
+
+    @Override
+    protected PsiElement getPsiElementForHint(Object selectedValue) {
+      if (selectedValue instanceof UsageNode) {
+        final Usage usage = ((UsageNode)selectedValue).getUsage();
+        if (usage instanceof UsageInfo2UsageAdapter) {
+          final PsiElement element = ((UsageInfo2UsageAdapter)usage).getElement();
+          if (element != null) {
+            final PsiElement view = UsageToPsiElementProvider.findAppropriateParentFrom(element);
+            return view == null ? element : view;
           }
         }
       }

@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBListWithHintProvider;
+import com.intellij.ui.JBTableWithHintProvider;
 
 import java.awt.*;
 
@@ -70,8 +71,12 @@ public abstract class PopupUpdateProcessor extends JBPopupAdapter {
       if (fromQuickSearch) {
         ChooseByNameBase.JPanelProvider panelProvider = (ChooseByNameBase.JPanelProvider)focusedComponent.getParent();
         panelProvider.registerHint(windowEvent.asPopup());
-      } else if (focusedComponent != null && focusedComponent instanceof JBListWithHintProvider) {
-        ((JBListWithHintProvider)focusedComponent).registerHint(windowEvent.asPopup());
+      } else if (focusedComponent != null) {
+        if (focusedComponent instanceof JBListWithHintProvider) {
+          ((JBListWithHintProvider)focusedComponent).registerHint(windowEvent.asPopup());
+        } else if (focusedComponent instanceof JBTableWithHintProvider) {
+          ((JBTableWithHintProvider)focusedComponent).registerHint(windowEvent.asPopup());
+        }
       }
     }
   }
