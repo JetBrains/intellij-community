@@ -41,6 +41,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
@@ -83,6 +84,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -101,10 +103,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -381,11 +380,67 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         }
 
         if (!hasImplicitDefConstructor && (defConstructor == null || !PsiUtil.isAccessible(typeDefinition, defConstructor))) {
-          final TextRange range = getMethodHeaderTextRange((GrMethod)method);
-          holder.createErrorAnnotation(range, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName));
+          holder.createErrorAnnotation(getMethodHeaderTextRange((GrMethod)method),
+                                       GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName));
         }
       }
     }
+
+    checkRecursiveConstructors(holder, constructors);
+  }
+
+  private static void checkRecursiveConstructors(AnnotationHolder holder, PsiMethod[] constructors) {
+    Map<PsiMethod, PsiMethod> nodes = new HashMap<PsiMethod, PsiMethod>(constructors.length);
+
+    Set<PsiMethod> set = ContainerUtil.set(constructors);
+
+    for (PsiMethod constructor : constructors) {
+      if (!(constructor instanceof GrMethod)) continue;
+
+      final GrOpenBlock block = ((GrMethod)constructor).getBlock();
+      if (block == null) continue;
+
+      final GrStatement[] statements = block.getStatements();
+      if (statements.length <= 0 || !(statements[0] instanceof GrConstructorInvocation)) continue;
+
+      final PsiMethod resolved = ((GrConstructorInvocation)statements[0]).resolveMethod();
+      if (!set.contains(resolved)) continue;
+
+      nodes.put(constructor, resolved);
+    }
+
+    Set<PsiMethod> checked = new HashSet<PsiMethod>();
+
+    Set<PsiMethod> current;
+    for (PsiMethod constructor : constructors) {
+      if (!checked.add(constructor)) continue;
+
+      current = new HashSet<PsiMethod>();
+      current.add(constructor);
+      for (constructor = nodes.get(constructor); constructor != null && current.add(constructor); constructor = nodes.get(constructor)) {
+        checked.add(constructor);
+      }
+
+      if (constructor != null) {
+        PsiMethod circleStart = constructor;
+        do {
+          holder.createErrorAnnotation(getMethodHeaderTextRange((GrMethod)constructor),
+                                       GroovyBundle.message("recursive.constructor.invocation"));
+          constructor = nodes.get(constructor);
+        }
+        while (constructor != circleStart);
+      }
+    }
+  }
+
+  private static TextRange getMethodHeaderTextRange(GrMethod method) {
+    final GrModifierList modifierList = method.getModifierList();
+    final GrParameterList parameterList = method.getParameterList();
+
+    int startOffset = modifierList.getTextRange().getStartOffset();
+    int endOffset = parameterList.getTextRange().getEndOffset() + 1;
+
+    return new TextRange(startOffset, endOffset);
   }
 
   @Override
@@ -957,14 +1012,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     return new TextRange(startOffset, endOffset);
   }
 
-  private static TextRange getMethodHeaderTextRange(GrMethod method) {
-    final int startOffset = method.getTextOffset();
-    final ASTNode node = method.getNode().findChildByType(GroovyTokenTypes.mRPAREN);
-    assert node != null;
-    int endOffset = node.getTextRange().getEndOffset();
-    return new TextRange(startOffset, endOffset);
-  }
-
   private static void registerImplementsMethodsFix(GrTypeDefinition typeDefinition, Annotation annotation) {
     annotation.registerFix(QuickFixFactory.getInstance().createImplementMethodsFix(typeDefinition));
   }
@@ -1193,8 +1240,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         String signaturePresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
         for (GrMethod method : methods) {
           //noinspection ConstantConditions
-          holder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("method.duplicate", signaturePresentation,
-                                                                                              method.getContainingClass().getName()));
+          holder.createErrorAnnotation(getMethodHeaderTextRange(method), GroovyBundle
+            .message("method.duplicate", signaturePresentation, method.getContainingClass().getName()));
         }
       }
     }
@@ -1569,7 +1616,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       GrField field = (GrField)member;
       PsiElement identifier = field.getNameIdentifierGroovy();
       final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-      holder.createInfoAnnotation(identifier, null).setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
+      holder.createInfoAnnotation(identifier, null).setTextAttributes(
+        isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
     }
   }
 
