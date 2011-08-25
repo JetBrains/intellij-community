@@ -24,13 +24,13 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeView;
-import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -51,6 +51,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
@@ -411,13 +414,14 @@ public abstract class MvcFramework {
     }
   }
 
-  private static void extractPlugins(@Nullable VirtualFile pluginRoot, Map<String, VirtualFile> res) {
+  private static void extractPlugins(Project project, @Nullable VirtualFile pluginRoot, Map<String, VirtualFile> res) {
     if (pluginRoot != null) {
       VirtualFile[] children = pluginRoot.getChildren();
       if (children != null) {
         for (VirtualFile child : children) {
-          if (child.isDirectory()) {
-            res.put(child.getName(), child);
+          String pluginName = getInstalledPluginNameByPath(project, child);
+          if (pluginName != null) {
+            res.put(pluginName, child);
           }
         }
       }
@@ -428,13 +432,12 @@ public abstract class MvcFramework {
     return getCommonPluginRoots(module, refresh);
   }
 
-  protected void collectCommonPluginRoots(Map<String, VirtualFile> result, @NotNull Module module, boolean refresh) {
+  public void collectCommonPluginRoots(Map<String, VirtualFile> result, @NotNull Module module, boolean refresh) {
     if (isCommonPluginsModule(module)) {
-      String appDirName = getApplicationDirectoryName();
-
       for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
-        if (root.findChild(appDirName) != null) {
-          result.put(root.getName(), root);
+        String pluginName = getInstalledPluginNameByPath(module.getProject(), root);
+        if (pluginName != null) {
+          result.put(pluginName, root);
         }
       }
     }
@@ -442,9 +445,9 @@ public abstract class MvcFramework {
       VirtualFile root = findAppRoot(module);
       if (root == null) return;
 
-      extractPlugins(root.findChild(MvcModuleStructureUtil.PLUGINS_DIRECTORY), result);
-      extractPlugins(MvcModuleStructureUtil.findFile(getCommonPluginsDir(module), refresh), result);
-      extractPlugins(MvcModuleStructureUtil.findFile(getGlobalPluginsDir(module), refresh), result);
+      extractPlugins(module.getProject(), root.findChild(MvcModuleStructureUtil.PLUGINS_DIRECTORY), result);
+      extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getCommonPluginsDir(module), refresh), result);
+      extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getGlobalPluginsDir(module), refresh), result);
     }
   }
 
@@ -486,38 +489,6 @@ public abstract class MvcFramework {
     if (root == null) return null;
 
     return new File(grailsWorkDir, "projects/" + root.getName() + "/plugins");
-  }
-
-  public Map<String, String> getInstalledPluginVersions(@NotNull Module module) {
-    final PropertiesFile properties = MvcModuleStructureUtil.findApplicationProperties(module, this);
-    if (properties == null) {
-      return Collections.emptyMap();
-    }
-
-    return getInstalledPluginVersions(properties);
-  }
-
-  public static Map<String, String> getInstalledPluginVersions(@NotNull PropertiesFile properties) {
-    Map<String, String> pluginNames = new HashMap<String, String>();
-
-    for (final IProperty property : properties.getProperties()) {
-      String propName = property.getName();
-      if (propName != null) {
-        propName = propName.trim();
-        if (propName.startsWith("plugins.")) {
-          String pluginName = propName.substring("plugins.".length());
-          String pluginVersion = property.getValue();
-          if (pluginName.length() > 0 && pluginVersion != null) {
-            pluginVersion = pluginVersion.trim();
-            if (pluginVersion.length() > 0) {
-              pluginNames.put(pluginName, pluginVersion);
-            }
-          }
-        }
-      }
-    }
-
-    return pluginNames;
   }
 
   protected abstract String getCommonPluginSuffix();
@@ -608,4 +579,28 @@ public abstract class MvcFramework {
   private static boolean isScriptFile(VirtualFile virtualFile) {
     return !virtualFile.isDirectory() && isScriptFileName(virtualFile.getName());
   }
+
+  @Nullable
+  public static String getInstalledPluginNameByPath(Project project, @NotNull VirtualFile pluginPath) {
+    VirtualFile pluginXml = pluginPath.findChild("plugin.xml");
+    if (pluginXml == null) return null;
+
+    PsiFile pluginXmlPsi = PsiManager.getInstance(project).findFile(pluginXml);
+    if (!(pluginXmlPsi instanceof XmlFile)) return null;
+
+    XmlTag rootTag = ((XmlFile)pluginXmlPsi).getRootTag();
+    if (rootTag == null || !"plugin".equals(rootTag.getName())) return null;
+
+    XmlAttribute attrName = rootTag.getAttribute("name");
+    if (attrName == null) return null;
+
+    String res = attrName.getValue();
+    if (res == null) return null;
+
+    res = res.trim();
+    if (res.length() == 0) return null;
+
+    return res;
+  }
+
 }
