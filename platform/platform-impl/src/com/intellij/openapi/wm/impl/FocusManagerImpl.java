@@ -908,7 +908,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     Component toFocus = null;
     if (myLastFocusedFrame != null) {
       WeakReference<Component> c = myLastFocused.get(myLastFocusedFrame);
-      if (c.get() != null && c.get().isShowing()) {
+      if (c != null && c.get() != null && c.get().isShowing()) {
         toFocus = c.get();
       } else {
         toFocus = getFocusTargetFor(myLastFocusedFrame.getComponent());
