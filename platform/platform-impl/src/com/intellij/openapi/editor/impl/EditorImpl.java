@@ -4728,7 +4728,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myCommandProcessor != null) {
         Runnable runnable = new Runnable() {
           public void run() {
-            if (processMousePressed(e) && myProject != null) {
+            if (processMousePressed(e) && myProject != null && !myProject.isDefault()) {
               IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
             }
           }
