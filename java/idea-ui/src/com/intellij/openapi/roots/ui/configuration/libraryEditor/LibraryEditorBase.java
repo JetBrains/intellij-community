@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -44,4 +45,16 @@ public abstract class LibraryEditorBase implements LibraryEditor {
   public abstract void setProperties(LibraryProperties properties);
 
   public abstract void setType(@NotNull LibraryType<?> type);
+
+  @Override
+  public void addRoots(Collection<? extends OrderRoot> roots) {
+    for (OrderRoot root : roots) {
+      if (root.isJarDirectory()) {
+        addJarDirectory(root.getFile(), false, root.getType());
+      }
+      else {
+        addRoot(root.getFile(), root.getType());
+      }
+    }
+  }
 }

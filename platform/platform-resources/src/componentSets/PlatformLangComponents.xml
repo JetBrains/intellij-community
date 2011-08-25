@@ -27,6 +27,7 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+      <loadForDefaultProject/>
     </component>
   </project-components>
 

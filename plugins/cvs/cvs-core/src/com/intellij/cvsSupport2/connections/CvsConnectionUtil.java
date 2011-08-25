@@ -30,7 +30,6 @@ import org.netbeans.lib.cvsclient.connection.PServerConnection;
 import java.io.File;
 
 public class CvsConnectionUtil {
-  public static final int DEFAULT_PSERVER_PORT = 2401;
 
   private CvsConnectionUtil() {
   }
@@ -49,7 +48,6 @@ public class CvsConnectionUtil {
                                                                            proxySettings.getType(),
                                                                            proxySettings.getLogin(),
                                                                            proxySettings.getPassword());
-    final ConnectionPoolI pool = SshConnectionPool.getInstance();
     final SshAuthentication authentication;
     if (sshConfiguration.USE_PPK) {
       authentication = new SshPublicKeyAuthentication(new File(sshConfiguration.PATH_TO_PPK), getUserName(settings), sshPasswordProvider,
@@ -58,7 +56,7 @@ public class CvsConnectionUtil {
     else {
       authentication = new SshPasswordAuthentication(getUserName(settings), sshPasswordProvider, settings.getCvsRootAsString());
     }
-    return pool.getConnection(settings.REPOSITORY, connectionSettings, authentication);
+    return SshConnectionPool.getInstance().getConnection(settings.REPOSITORY, connectionSettings, authentication);
   }
 
   public static IConnection createExtConnection(final CvsRootData settings,
@@ -69,9 +67,7 @@ public class CvsConnectionUtil {
                                                 final ErrorRegistry errorRegistry,
                                                 final int timeout) {
     if (extConfiguration.USE_INTERNAL_SSH_IMPLEMENTATION) {
-      return createSshConnection(settings, sshConfiguration, proxySettings,
-                                 sshPasswordProvider,
-                                 timeout);
+      return createSshConnection(settings, sshConfiguration, proxySettings, sshPasswordProvider, timeout);
     }
     else {
       return new ExtConnection(settings.HOST, getUserName(settings), settings.REPOSITORY, extConfiguration, errorRegistry);
@@ -88,25 +84,14 @@ public class CvsConnectionUtil {
                                                                        proxySettings.TYPE,
                                                                        proxySettings.getLogin(),
                                                                        proxySettings.getPassword());
-
     return new PServerConnection(connectionSettings, root.USER, root.PASSWORD, adjustRepository(root));
   }
 
   private static String getUserName(CvsRootData settings) {
-    final String login;
-    if (settings.USER.isEmpty()) {
-      login = SystemProperties.getUserName();
-    } else {
-      login = settings.USER;
-    }
-    return login;
+    return settings.USER.isEmpty() ? SystemProperties.getUserName() : settings.USER;
   }
 
   private static String adjustRepository(CvsRootData root) {
-    if (root.REPOSITORY != null) {
-      return root.REPOSITORY.replace('\\', '/');
-    } else {
-      return null;
-    }
+    return (root.REPOSITORY != null) ? root.REPOSITORY.replace('\\', '/') : null;
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 
 /**
  * @author yole
@@ -29,7 +30,7 @@ public class LanguageTokenSeparatorGenerators extends LanguageExtension<TokenSep
   private LanguageTokenSeparatorGenerators() {
     super("com.intellij.lang.tokenSeparatorGenerator", new TokenSeparatorGenerator() {
       public ASTNode generateWhitespaceBetweenTokens(ASTNode left, ASTNode right) {
-        Language l = PsiUtilBase.getNotAnyLanguage(left);
+        Language l = PsiUtilCore.getNotAnyLanguage(left);
         final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
         if (parserDefinition != null) {
           PsiManager manager = right.getTreeParent().getPsi().getManager();

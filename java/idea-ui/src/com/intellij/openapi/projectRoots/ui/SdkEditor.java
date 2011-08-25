@@ -130,7 +130,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
     myTabbedPane = new TabbedPaneWrapper(myDisposable);
     for (OrderRootType type : OrderRootType.getAllTypes()) {
-      if (mySdk == null || mySdk.getSdkType().isRootTypeApplicable(type)) {
+      if (mySdk == null || showTabForType(type)) {
         final PathEditor pathEditor = OrderRootTypeUIFactory.FACTORY.getByKey(type).createPathEditor(mySdk);
         if (pathEditor != null) {
           myTabbedPane.addTab(pathEditor.getDisplayName(), pathEditor.createComponent());
@@ -145,11 +145,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       }
     });
 
-    myHomeComponent = new TextFieldWithBrowseButton(new ActionListener(){
-      public void actionPerformed(ActionEvent e){
-        doSelectHomePath();
-      }
-    });
+    myHomeComponent = createHomeComponent();
     myHomeComponent.getTextField().setEditable(false);
 
     myHomeFieldLabel = new JLabel(getHomeFieldLabelValue());
@@ -160,6 +156,18 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myMainPanel.add(myAdditionalDataPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0));
 
     myMainPanel.add(myTabbedPane.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0));
+  }
+
+  protected TextFieldWithBrowseButton createHomeComponent() {
+    return new TextFieldWithBrowseButton(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        doSelectHomePath();
+      }
+    });
+  }
+
+  protected boolean showTabForType(OrderRootType type) {
+    return mySdk.getSdkType().isRootTypeApplicable(type);
   }
 
   private String getHomeFieldLabelValue() {

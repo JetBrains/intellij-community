@@ -83,6 +83,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static final String OUTPUT_ROOTS_FILENAME = "output_roots.dat";
   private static final FileAttribute ourSourceFileAttribute = new FileAttribute("_make_source_file_info_", 3);
   private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);
+  private static final Key<Map<String, VirtualFile>> SOURCE_FILES_CACHE = Key.create("_source_url_to_vfile_cache_");
 
   private final Object myDataLock = new Object();
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
@@ -221,10 +222,20 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           final VirtualFileManager vfm = VirtualFileManager.getInstance();
           final LocalFileSystem lfs = LocalFileSystem.getInstance();
           final List<String> zombieEntries = new ArrayList<String>();
+          final Map<String, VirtualFile> srcFileCache = getFileCache(context);
           for (String outputPath : outputsToDelete.keySet()) {
             final SourceUrlClassNamePair classNamePair = outputsToDelete.get(outputPath);
             final String sourceUrl = classNamePair.getSourceUrl();
-            final VirtualFile srcFile = vfm.findFileByUrl(sourceUrl);
+
+            final VirtualFile srcFile;
+            if (srcFileCache.containsKey(sourceUrl)) {
+              srcFile = srcFileCache.get(sourceUrl);
+            }
+            else {
+              srcFile = vfm.findFileByUrl(sourceUrl);
+              srcFileCache.put(sourceUrl, srcFile);
+            }
+
             final boolean sourcePresent = srcFile != null;
             if (sourcePresent) {
               if (!compiler.isCompilableFile(srcFile, context)) {
@@ -274,6 +285,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       }
     }
+  }
+
+  private static Map<String, VirtualFile> getFileCache(CompileContext context) {
+    Map<String, VirtualFile> cache = context.getUserData(SOURCE_FILES_CACHE);
+    if (cache == null) {
+      context.putUserData(SOURCE_FILES_CACHE, cache = new HashMap<String, VirtualFile>());
+    }
+    return cache;
   }
 
   private static int getFileId(final VirtualFile file) {

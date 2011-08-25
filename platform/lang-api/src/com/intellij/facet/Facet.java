@@ -76,16 +76,6 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     return isDisposed;
   }
 
-  @Deprecated
-  public final boolean isImplicit() {
-    return myImplicit;
-  }
-
-  @Deprecated
-  public final void setImplicit(final boolean implicit) {
-    myImplicit = implicit;
-  }
-
   /**
    * Called when the module containing this facet is initialized
    */

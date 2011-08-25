@@ -149,11 +149,6 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
         public Icon getIcon(boolean open) {
           return myIcon;
         }
-
-        @Nullable
-        public TextAttributesKey getTextAttributesKey() {
-          return null;
-        }
       };
     }
 

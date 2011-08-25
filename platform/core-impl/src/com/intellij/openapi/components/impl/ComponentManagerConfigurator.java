@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,10 @@ class ComponentManagerConfigurator {
   }
 
   private void loadSingleConfig(final boolean defaultProject, final ComponentConfig config, final PluginDescriptor descriptor) {
-    if (defaultProject && config.skipForDefaultProject) return;
+    if (defaultProject) {
+      if (!config.isLoadForDefaultProject())
+        return;
+    }
     if (!myComponentManager.isComponentSuitable(config.options)) return;
 
     myComponentManager.registerComponent(config, descriptor);

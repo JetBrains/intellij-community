@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -436,16 +437,30 @@ public class GroovyInlineMethodUtil {
       setDefaultValuesToParameters(method, null, call);
       return;
     }
+    // first parameter may have map type
+    final GrNamedArgument[] namedArguments = argumentList.getNamedArguments();
+    boolean firstParamIsMap = namedArguments.length > 0;
+
     ArrayList<GrExpression> exprs = new ArrayList<GrExpression>();
+    if (firstParamIsMap) {
+      StringBuilder mapArg = new StringBuilder();
+      mapArg.append('[');
+      for (GrNamedArgument namedArgument : namedArguments) {
+        mapArg.append(namedArgument.getText()).append(", ");
+      }
+
+      mapArg.delete(mapArg.length() - 2, mapArg.length());
+      mapArg.append(']');
+      exprs.add(GroovyPsiElementFactory.getInstance(call.getProject()).createExpressionFromText(mapArg.toString()));
+    }
+
     ContainerUtil.addAll(exprs, argumentList.getExpressionArguments());
     ContainerUtil.addAll(exprs, call.getClosureArguments());
 
-    // first parameter may have map type
-    boolean firstParamIsMap = argumentList.getNamedArguments().length > 0;
     GrParameter[] parameters = method.getParameters();
     if (parameters.length == 0) return;
     GrParameter firstParam = parameters[0];
-    while (exprs.size() > parameters.length - (firstParamIsMap ? 1 : 0)) {
+    while (exprs.size() > parameters.length) {
       exprs.remove(exprs.size() - 1);
     }
 
@@ -457,7 +472,7 @@ public class GroovyInlineMethodUtil {
         }
       }
     }
-    nonDefault = exprs.size() - nonDefault;
+    nonDefault = exprs.size() - nonDefault - (firstParamIsMap ? 1 : 0);
     // Parameters that will be replaced by its default values
     Set<String> nameFilter = new HashSet<String>();
     for (GrParameter parameter : parameters) {
@@ -473,9 +488,9 @@ public class GroovyInlineMethodUtil {
         }
       }
     }
-    // todo add named arguments
+
     setDefaultValuesToParameters(method, nameFilter, call);
-    setValuesToParameters(method, call, exprs, nameFilter, firstParamIsMap);
+    setValuesToParameters(method, call, exprs, nameFilter);
   }
 
    /**
@@ -508,17 +523,15 @@ public class GroovyInlineMethodUtil {
    * @param call
    * @param values          values vector
    * @param nameFilter
-   * @param firstParamIsMap
    */
-  private static void setValuesToParameters(GrMethod method, GrCallExpression call, List<GrExpression> values, Set<String> nameFilter,
-                                            boolean firstParamIsMap)
-      throws IncorrectOperationException {
-    if (nameFilter == null) {
-      nameFilter = new HashSet<String>();
-    }
+  private static void setValuesToParameters(GrMethod method, GrCallExpression call, List<GrExpression> values, Set<String> nameFilter)
+    throws IncorrectOperationException {
     GrParameter[] parameters = method.getParameters();
     if (parameters.length == 0) return;
-    int i = firstParamIsMap ? 1 : 0;
+    
+    if (nameFilter == null) nameFilter = new HashSet<String>();
+    
+    int i = 0;
     for (GrExpression value : values) {
       while (i < parameters.length && nameFilter.contains(parameters[i].getName())) i++;
       if (i < parameters.length) {

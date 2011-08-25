@@ -172,11 +172,6 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
       public Icon getIcon(boolean open) {
         return GrTypeDefinitionImpl.this.getIcon(ICON_FLAG_VISIBILITY | ICON_FLAG_READ_STATUS);
       }
-
-      @Nullable
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
     };
   }
 

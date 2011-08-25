@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * @deprecated use {@link com.intellij.framework.detection.FrameworkDetector} instead
+ *
  * @author nik
  */
 public abstract class DetectedFacetPresentation {

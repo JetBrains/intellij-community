@@ -18,8 +18,8 @@ import javax.swing.*;
  * @author nik
  */
 public class OrderRootTypePresentation {
-  private String myNodeText;
-  private Icon myIcon;
+  private final String myNodeText;
+  private final Icon myIcon;
 
   public OrderRootTypePresentation(String nodeText, Icon icon) {
     myNodeText = nodeText;

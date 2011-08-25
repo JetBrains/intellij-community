@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.COPY_TO;
+import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,6 +35,7 @@ public class DirDiffElement {
   private final long myTargetLength;
   private final String myName;
   private DirDiffOperation myOperation;
+  private DirDiffOperation myDefaultOperation;
 
   private DirDiffElement(@Nullable DiffElement source, @Nullable DiffElement target, DType type, String name) {
     myType = type;
@@ -44,20 +45,20 @@ public class DirDiffElement {
     myTargetLength = target == null || target.isContainer() ? -1 : target.getSize();
     myName = name;
     if (type == DType.ERROR) {
-      myOperation = DirDiffOperation.NONE;
+      myDefaultOperation = DirDiffOperation.NONE;
     }
     else if (isSource()) {
-      myOperation = COPY_TO;
+      myDefaultOperation = COPY_TO;
     }
     else if (isTarget()) {
-      myOperation = DirDiffOperation.COPY_FROM;
+      myDefaultOperation = DirDiffOperation.COPY_FROM;
     }
     else if (type == DType.EQUAL) {
-      myOperation = DirDiffOperation.EQUAL;
+      myDefaultOperation = DirDiffOperation.EQUAL;
     }
     else if (type == DType.CHANGED) {
       assert source != null;
-      myOperation = DirDiffOperation.MERGE;
+      myDefaultOperation = DirDiffOperation.MERGE;
     }
   }
 
@@ -149,7 +150,18 @@ public class DirDiffElement {
   }
 
   public DirDiffOperation getOperation() {
-    return myOperation;
+    return myOperation == null ? myDefaultOperation : myOperation;
+  }
+
+  public void setNextOperation() {
+    final DirDiffOperation op = getOperation();
+    if (myType == DType.SOURCE) {
+      myOperation = op == COPY_TO ? DELETE : op == DELETE ? NONE : COPY_TO;
+    } else if (myType == DType.TARGET) {
+      myOperation = op == COPY_FROM ? DELETE : op == DELETE ? NONE : COPY_FROM;
+    } else if (myType == DType.CHANGED) {
+      myOperation = op == MERGE ? COPY_FROM : op == COPY_FROM ? COPY_TO : op == COPY_TO ? NONE : MERGE;
+    }
   }
 
   public Icon getIcon() {

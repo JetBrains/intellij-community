@@ -82,7 +82,7 @@ public class GitCloneDialog extends DialogWrapper {
   }
 
   public String getSourceRepositoryURL() {
-    return myRepositoryURL.getText();
+    return getCurrentUrlText();
   }
 
   public String getParentDirectory() {
@@ -131,7 +131,7 @@ public class GitCloneDialog extends DialogWrapper {
 
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        myTestURL = myRepositoryURL.getText();
+        myTestURL = getCurrentUrlText();
         GitSimpleHandler handler = new GitSimpleHandler(myProject, new File("."), GitCommand.LS_REMOTE);
         handler.addParameters(myTestURL, "master");
 
@@ -198,7 +198,7 @@ public class GitCloneDialog extends DialogWrapper {
    * @return true if repository URL is OK.
    */
   private boolean checkRepositoryURL() {
-    String repository = myRepositoryURL.getText();
+    String repository = getCurrentUrlText();
     if (repository.length() == 0) {
       setErrorText(null);
       setOKActionEnabled(false);
@@ -244,6 +244,10 @@ public class GitCloneDialog extends DialogWrapper {
     return false;
   }
 
+  private String getCurrentUrlText() {
+    return myRepositoryURL.getText().trim();
+  }
+
   private void createUIComponents() {
     myRepositoryURL = new EditorComboBox("");
     final GitRememberedInputs rememberedInputs = GitRememberedInputs.getInstance();
@@ -252,7 +256,7 @@ public class GitCloneDialog extends DialogWrapper {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         // enable test button only if something is entered in repository URL
-        final String url = myRepositoryURL.getText();
+        final String url = getCurrentUrlText();
         myTestButton.setEnabled(url.length() != 0);
         if (myDefaultDirectoryName.equals(myDirectoryName.getText()) || myDirectoryName.getText().length() == 0) {
           // modify field if it was unmodified or blank

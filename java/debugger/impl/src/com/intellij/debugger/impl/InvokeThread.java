@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.VMDisconnectedException;
 
+import java.util.List;
 import java.util.concurrent.*;
 
 /**
@@ -142,6 +143,14 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
         break;
       }
       catch (EventQueueClosedException e) {
+        final List<E> unprocessed = myEvents.clearQueue();
+        for (E event : unprocessed) {
+          try {
+            processEvent(event);
+          }
+          catch (Throwable ignored) {
+          }
+        }
         break;
       }
       catch (RuntimeException e) {

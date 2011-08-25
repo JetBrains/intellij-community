@@ -12,13 +12,10 @@
   </application-components>
   <project-components>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.VcsConfiguration</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.vcs.ProjectLevelVcsManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
+      <loadForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.changes.VcsChangeDetailsManager</interface-class>
@@ -104,9 +101,6 @@
     </component>
     <component><interface-class>com.intellij.openapi.vcs.impl.VcsBaseContentProvider</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
-    </component>
-    <component><interface-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings</interface-class>
-    <implementation-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings</implementation-class>
     </component>
     <component><interface-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotation</interface-class>
     <implementation-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl</implementation-class></component>

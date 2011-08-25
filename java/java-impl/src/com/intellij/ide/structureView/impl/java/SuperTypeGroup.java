@@ -122,10 +122,6 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     return 1;
   }
 
-  public TextAttributesKey getTextAttributesKey() {
-    return null;
-  }
-
   public void addMethod(final TreeElement superMethod) {
      myChildren.add(superMethod);
   }

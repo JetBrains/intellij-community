@@ -40,7 +40,7 @@ import java.io.IOException;
  * @author peter
  */
 public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
-  public static final DefaultLightProjectDescriptor GROOVY_17_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+  public static final DefaultLightProjectDescriptor GROOVY_18_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
@@ -59,7 +59,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GROOVY_17_PROJECT_DESCRIPTOR;
+    return GROOVY_18_PROJECT_DESCRIPTOR;
   }
 
   public void testDuplicateClosurePrivateVariable() throws Throwable {
@@ -442,6 +442,18 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testUnknownVarInArgList() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
+  
+  public void testImplicitEnumCoercion() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
+
+  public void testCallableProperty() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
+  
+  public void testConstructor() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 }

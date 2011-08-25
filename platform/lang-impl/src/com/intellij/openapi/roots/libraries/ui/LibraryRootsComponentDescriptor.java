@@ -12,15 +12,20 @@
  */
 package com.intellij.openapi.roots.libraries.ui;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
+ * Allows to customize a library editor
+ *
+ * @see com.intellij.openapi.roots.libraries.LibraryType#createLibraryRootsComponentDescriptor
+ *
  * @author nik
  */
 public abstract class LibraryRootsComponentDescriptor {
@@ -30,6 +35,24 @@ public abstract class LibraryRootsComponentDescriptor {
    */
   @Nullable
   public abstract OrderRootTypePresentation getRootTypePresentation(@NotNull OrderRootType type);
+
+  /**
+   * Provides root detectors for 'Attach Files' button. They will be used to automatically assign {@link OrderRootType}s for selected files.
+   *
+   * @return list of {@link RootDetector}'s implementations
+   */
+  @NotNull
+  public List<? extends RootDetector> getRootDetectors() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * @return descriptor for the file chooser which will be shown when 'Attach Files' button is pressed
+   */
+  @NotNull
+  public FileChooserDescriptor createAttachFilesChooserDescriptor() {
+    return FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
+  }
 
   /**
    * @return descriptors for 'Attach' buttons in the library roots editor

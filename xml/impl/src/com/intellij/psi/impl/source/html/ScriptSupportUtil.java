@@ -24,6 +24,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
@@ -55,34 +56,35 @@ public class ScriptSupportUtil {
                                             PsiElement place) {
     CachedValue<XmlTag[]> myCachedScriptTags = element.getUserData(CachedScriptTagsKey);
     if (myCachedScriptTags == null) {
-      myCachedScriptTags = element.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlTag[]>() {
-        @Override
-        public Result<XmlTag[]> compute() {
-          final List<XmlTag> scriptTags = new ArrayList<XmlTag>();
-          final XmlDocument document = HtmlUtil.getRealXmlDocument(element.getDocument());
+      myCachedScriptTags = CachedValuesManager.getManager(element.getProject())
+          .createCachedValue(new CachedValueProvider<XmlTag[]>() {
+            @Override
+            public Result<XmlTag[]> compute() {
+              final List<XmlTag> scriptTags = new ArrayList<XmlTag>();
+              final XmlDocument document = HtmlUtil.getRealXmlDocument(element.getDocument());
 
-          if (document != null) {
-            PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
-              public boolean execute(final PsiElement element) {
-                if (element instanceof XmlTag) {
-                  final XmlTag tag = (XmlTag)element;
+              if (document != null) {
+                PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
+                  public boolean execute(final PsiElement element) {
+                    if (element instanceof XmlTag) {
+                      final XmlTag tag = (XmlTag)element;
 
-                  if (SCRIPT_TAG.equalsIgnoreCase(tag.getName())) {
-                    final XmlElementDescriptor descriptor = tag.getDescriptor();
-                    if (descriptor != null && SCRIPT_TAG.equals(descriptor.getName())) {
-                      scriptTags.add(tag);
+                      if (SCRIPT_TAG.equalsIgnoreCase(tag.getName())) {
+                        final XmlElementDescriptor descriptor = tag.getDescriptor();
+                        if (descriptor != null && SCRIPT_TAG.equals(descriptor.getName())) {
+                          scriptTags.add(tag);
+                        }
+                      }
                     }
+                    return true;
                   }
-                }
-                return true;
+                };
+                XmlUtil.processXmlElements(document, psiElementProcessor, true);
               }
-            };
-            XmlUtil.processXmlElements(document,psiElementProcessor, true);
-          }
 
-          return new Result<XmlTag[]>(scriptTags.toArray(new XmlTag[scriptTags.size()]), element);
-        }
-      }, false);
+              return new Result<XmlTag[]>(scriptTags.toArray(new XmlTag[scriptTags.size()]), element);
+            }
+          }, false);
       element.putUserData(CachedScriptTagsKey, myCachedScriptTags);
     }
 

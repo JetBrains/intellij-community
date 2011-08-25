@@ -138,7 +138,7 @@ public class ConfusingElseInspection extends BaseInspection {
                 return;
             }
             final PsiStatement elseBranch = statement.getElseBranch();
-            if (elseBranch == null || elseBranch instanceof PsiIfStatement) {
+            if (elseBranch == null) {
                 return;
             }
             if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {

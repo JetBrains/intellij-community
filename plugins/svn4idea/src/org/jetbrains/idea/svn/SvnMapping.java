@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +92,12 @@ public class SvnMapping {
 
   @Nullable
   public String getRootForPath(final String path) {
-    return myFile2UrlMap.floorKey(path);
+    String floor = myFile2UrlMap.floorKey(path);
+    NavigableMap<String, RootUrlInfo> head = myFile2UrlMap.headMap(floor, true);
+    for (String root : head.descendingKeySet()) {
+      if (startsWithForPaths(root, path)) return root;
+    }
+    return null;
   }
 
   public Collection<String> getUrls() {
@@ -132,5 +139,9 @@ public class SvnMapping {
     public int compare(String o1, String o2) {
       return FileUtil.comparePaths(o1, o2);
     }
+  }
+  
+  private boolean startsWithForPaths(final String parent, final String child) {
+    return SystemInfo.isFileSystemCaseSensitive ? child.startsWith(parent) : (StringUtil.startsWithIgnoreCase(child, parent));
   }
 }

@@ -19,7 +19,7 @@
         </properties>
         <border type="none" title-resource-bundle="org/intellij/images/ImagesBundle" title-key="main.page.border.title"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
 </clientProperties>
         <children>
           <component id="74001" class="javax.swing.JLabel" binding="smartZoomingWidthLabel">
@@ -202,7 +202,7 @@
         <properties/>
         <border type="none" title-resource-bundle="org/intellij/images/ImagesBundle" title-key="external.editor.border.title"/>
 <clientProperties>
-  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
+  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
 </clientProperties>
         <children>
           <component id="55972" class="javax.swing.JLabel" binding="externalEditorLabel">

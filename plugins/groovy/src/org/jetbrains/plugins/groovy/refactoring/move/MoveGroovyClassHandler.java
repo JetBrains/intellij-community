@@ -23,6 +23,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       final PsiClass[] classes = ((GroovyFile)file).getClasses();
       if (classes.length == 1) {
         if (!moveDestination.equals(file.getContainingDirectory())) {
-          aClass.getManager().moveFile(file, moveDestination);
+          MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
           ((PsiClassOwner)file).setPackageName(newPackageName);
         }
         return ((GroovyFile)file).getScriptClass();

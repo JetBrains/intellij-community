@@ -17,29 +17,24 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Tag("component")
 public class ComponentConfig {
   public static final ComponentConfig[] EMPTY_ARRAY = new ComponentConfig[0];
-  @Tag("implementation-class")
-  public String implementationClass;
 
-  @Tag("interface-class")
-  public String interfaceClass;
+  protected String implementationClass;
 
-  @Tag("headless-implementation-class")
-  public String headlessImplementationClass;
+  protected String interfaceClass;
 
-  //todo: empty tag means TRUE
-  @Tag(value = "skipForDefaultProject", textIfEmpty="true")
-  public boolean skipForDefaultProject;
+  protected String headlessImplementationClass;
+
+  protected boolean loadForDefaultProject;
 
   @Property(surroundWithTag = false)
   @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value")
@@ -51,5 +46,53 @@ public class ComponentConfig {
   @Transient
   public ClassLoader getClassLoader() {
     return pluginDescriptor != null ? pluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+  }
+
+  public String getImplementationClass() {
+    return implementationClass;
+  }
+
+  public String getInterfaceClass() {
+    return interfaceClass;
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public String getHeadlessImplementationClass() {
+    return headlessImplementationClass;
+  }
+
+  public boolean isLoadForDefaultProject() {
+    return loadForDefaultProject;
+  }
+
+  /**
+   * @param headless
+   * @return false if the component should not be loaded in headless mode
+   */
+  public boolean prepareClasses(boolean headless) {
+    if (headless && headlessImplementationClass != null) {
+      if (StringUtil.isEmpty(headlessImplementationClass)) return false;
+      setImplementationClass(headlessImplementationClass);
+    }
+    if (StringUtil.isEmpty(interfaceClass)) {
+      setInterfaceClass(implementationClass);
+    }
+    return true;
+  }
+
+  public void setImplementationClass(String implementationClass) {
+    this.implementationClass = implementationClass;
+  }
+
+  public void setInterfaceClass(String interfaceClass) {
+    this.interfaceClass = interfaceClass;
+  }
+
+  public void setHeadlessImplementationClass(String headlessImplementationClass) {
+    this.headlessImplementationClass = headlessImplementationClass;
+  }
+
+  public void setLoadForDefaultProject(boolean loadForDefaultProject) {
+    this.loadForDefaultProject = loadForDefaultProject;
   }
 }

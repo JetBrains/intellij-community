@@ -139,6 +139,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
       }
 
+      clearCache();
       notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
     }
   }
@@ -245,7 +246,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
     processAdapters();
     internalUnregisterExtension(extension, null);
-    clearCache();
   }
 
   private int getExtensionIndex(@NotNull T extension) {
@@ -261,6 +261,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     myExtensions.remove(index);
 
     myLoadedAdapters.remove(index);
+
+    clearCache();
 
     notifyListenersOnRemove(extension, pluginDescriptor);
 

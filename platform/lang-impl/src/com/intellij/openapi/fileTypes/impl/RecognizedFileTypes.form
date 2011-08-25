@@ -7,7 +7,7 @@
     </constraints>
     <properties/>
     <clientProperties>
-      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithoutIndent"/>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
     </clientProperties>
     <border type="etched" title-resource-bundle="messages/FileTypesBundle" title-key="filetypes.recognized.group"/>
     <children>

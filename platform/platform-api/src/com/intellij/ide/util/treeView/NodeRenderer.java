@@ -16,6 +16,7 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -98,10 +99,13 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   }
 
   public static SimpleTextAttributes getSimpleTextAttributes(final ItemPresentation presentation) {
-    final TextAttributesKey textAttributesKey = presentation.getTextAttributesKey();
-    if (textAttributesKey == null) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
-    final TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributesKey);
-    return textAttributes == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.fromTextAttributes(textAttributes);
+    if (presentation instanceof ColoredItemPresentation) {
+      final TextAttributesKey textAttributesKey = ((ColoredItemPresentation) presentation).getTextAttributesKey();
+      if (textAttributesKey == null) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      final TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributesKey);
+      return textAttributes == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.fromTextAttributes(textAttributes);
+    }
+    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
 }

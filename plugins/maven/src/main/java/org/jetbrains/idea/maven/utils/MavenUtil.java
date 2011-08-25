@@ -37,6 +37,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -462,7 +463,38 @@ public class MavenUtil {
       }
     }
 
+    if (SystemInfo.isMac) {
+      final File brewDir = new File("/usr/local/Cellar/maven");
+      final String[] list = brewDir.list();
+      if (list == null || list.length == 0) {
+        return null;
+      }
+
+      if (list.length == 1) {
+        final File home;
+        if ((home = fromBrew(brewDir, list)) != null) {
+          return home;
+        }
+      }
+      else {
+        Arrays.sort(list, new Comparator<String>() {
+          @Override
+          public int compare(String o1, String o2) {
+            return StringUtil.compareVersionNumbers(o2, o1);
+          }
+        });
+
+        return fromBrew(brewDir, list);
+      }
+    }
+
     return null;
+  }
+  
+  @Nullable
+  private static File fromBrew(File brewDir, String[] list) {
+    final File file = new File(brewDir, list[0] + "/libexec");
+    return isValidMavenHome(file) ? file : null;
   }
 
   public static boolean isEmptyOrSpaces(@Nullable String str) {

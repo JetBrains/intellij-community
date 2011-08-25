@@ -16,8 +16,6 @@
 
 package org.jetbrains.idea.svn;
 
-import org.jetbrains.idea.svn.integrate.SvnBranchItem;
-
 import java.util.*;
 
 /**
@@ -26,12 +24,10 @@ import java.util.*;
 public class SvnBranchConfiguration {
   private String myTrunkUrl;
   private List<String> myBranchUrls;
-  private Map<String, List<SvnBranchItem>> myBranchMap;
   private boolean myUserinfoInUrl;
 
   public SvnBranchConfiguration() {
     myBranchUrls = new ArrayList<String>();
-    myBranchMap = new HashMap<String, List<SvnBranchItem>>();
   }
 
   public boolean isUserinfoInUrl() {
@@ -57,13 +53,5 @@ public class SvnBranchConfiguration {
 
   public List<String> getBranchUrls() {
     return myBranchUrls;
-  }
-
-  public Map<String, List<SvnBranchItem>> getBranchMap() {
-    return myBranchMap;
-  }
-
-  public void setBranchMap(final Map<String, List<SvnBranchItem>> branchMap) {
-    myBranchMap = branchMap;
   }
 }

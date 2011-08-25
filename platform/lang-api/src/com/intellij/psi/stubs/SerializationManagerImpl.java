@@ -111,6 +111,11 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     }
   }
 
+  @Override
+  public void flushNameStorage() {
+    myNameStorage.force();
+  }
+
   public void registerSerializer(@NotNull StubSerializer<? extends StubElement> serializer) {
     myAllSerializers.add(serializer);
     try {

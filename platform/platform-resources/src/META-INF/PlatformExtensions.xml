@@ -2,6 +2,11 @@
   <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   <appStarter implementation="com.intellij.openapi.diff.DiffApplication"/>
 
+  <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"
+                      serviceImplementation="com.intellij.ide.util.AppPropertiesComponentImpl"/>
+  <projectService serviceInterface="com.intellij.ide.util.PropertiesComponent"
+                  serviceImplementation="com.intellij.ide.util.ProjectPropertiesComponentImpl"/>
+
   <applicationService serviceInterface="com.intellij.openapi.actionSystem.JBAwtEventQueue"
                       serviceImplementation="com.intellij.openapi.actionSystem.impl.JBAwtEventQueueImpl"/>
 

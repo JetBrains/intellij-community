@@ -35,6 +35,7 @@ import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.ui.ClassNameReferenceEditor;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -358,7 +359,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
           final PsiDirectory targetDirectory = destination.getTargetIfExists(element.getContainingFile());
           if (targetDirectory != null) {
-            manager.checkMove(aClass, targetDirectory);
+            MoveFilesOrDirectoriesUtil.checkMove(aClass, targetDirectory);
           }
         }
       }

@@ -16,6 +16,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmet
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Map;
 import java.util.Set;
@@ -118,10 +120,10 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
         return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, true);
       }
     }
-    else if ("with".equals(methodName) && params.length == 1) {
+    else if (GdkMethodUtil.WITH.equals(methodName) && params.length == 1) {
       return type;
     }
-    else if ("eachWithIndex".equals(methodName)) {
+    else if (GdkMethodUtil.EACH_WITH_INDEX.equals(methodName)) {
       PsiType res = findTypeForIteration(qualifier, closure);
       if (params.length == 2 && res != null) {
         if (index == 0) {
@@ -147,7 +149,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
         }
       }
     }
-    else if ("inject".equals(methodName) && params.length == 2) {
+    else if (GdkMethodUtil.INJECT.equals(methodName) && params.length == 2) {
       if (index == 0) {
         return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, closure);
       }
@@ -160,25 +162,25 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
         return getEntryForMap(type, closure);
       }
     }
-    else if ("eachPermutation".equals(methodName) && params.length == 1) {
+    else if (GdkMethodUtil.EACH_PERMUTATION.equals(methodName) && params.length == 1) {
       final PsiType itemType = findTypeForIteration(qualifier, closure);
       if (itemType != null) {
         return JavaPsiFacade.getElementFactory(closure.getProject()).createTypeFromText(
-          "java.util.ArrayList<" + itemType.getCanonicalText() + ">", closure);
+          CommonClassNames.JAVA_UTIL_ARRAY_LIST + "<" + itemType.getCanonicalText() + ">", closure);
       }
-      return TypesUtil.createTypeByFQClassName("java.util.ArrayList", closure);
+      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_ARRAY_LIST, closure);
     }
-    else if ("withDefault".equals(methodName)) {
+    else if (GdkMethodUtil.WITH_DEFAULT.equals(methodName)) {
       if (params.length == 1 && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
         return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, true);
       }
     }
-    else if ("sort".equals(methodName)) {
+    else if (GdkMethodUtil.SORT.equals(methodName)) {
       if (params.length < 3) {
         return findTypeForIteration(qualifier, closure);
       }
     }
-    else if ("withStream".equals(methodName)) {
+    else if (GdkMethodUtil.WITH_STREAM.equals(methodName)) {
       final PsiMethod method = ((GrMethodCall)parent).resolveMethod();
       if (method != null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -187,13 +189,13 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
         }
       }
     }
-    else if ("withStreams".equals(methodName)) {
+    else if (GdkMethodUtil.WITH_STREAMS.equals(methodName)) {
       if (index == 0) {
         return TypesUtil.createTypeByFQClassName("java.io.InputStream", closure);
       }
       else if (index == 1) return TypesUtil.createTypeByFQClassName("java.io.OutputStream", closure);
     }
-    else if ("withObjectStreams".equals(methodName)) {
+    else if (GdkMethodUtil.WITH_OBJECT_STREAMS.equals(methodName)) {
       if (index == 0) {
         return TypesUtil.createTypeByFQClassName("java.io.ObjectInputStream", closure);
       }
@@ -230,10 +232,10 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return ((GrRangeType)iterType).getIterationType();
     }
 
-    if (InheritanceUtil.isInheritor(iterType, "groovy.lang.IntRange")) {
+    if (InheritanceUtil.isInheritor(iterType, GroovyCommonClassNames.GROOVY_LANG_INT_RANGE)) {
       return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, context);
     }
-    if (InheritanceUtil.isInheritor(iterType, "groovy.lang.ObjectRange")) {
+    if (InheritanceUtil.isInheritor(iterType, GroovyCommonClassNames.GROOVY_LANG_OBJECT_RANGE)) {
       PsiElement element = qualifier;
       element = skipParentheses(element, false);
       if (element instanceof GrReferenceExpression) {

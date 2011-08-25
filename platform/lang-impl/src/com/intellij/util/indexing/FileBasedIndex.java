@@ -636,6 +636,10 @@ public class FileBasedIndex implements ApplicationComponent {
         requestRebuild(indexId);
       }
     }
+
+    if (!HeavyProcessLatch.INSTANCE.isRunning() && modCount == myLocalModCount) { // do not interfere with 'main' jobs
+      SerializationManager.getInstance().flushNameStorage();
+    }
   }
 
   /**

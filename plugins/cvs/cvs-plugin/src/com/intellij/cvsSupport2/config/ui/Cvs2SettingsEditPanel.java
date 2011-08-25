@@ -18,7 +18,6 @@ package com.intellij.cvsSupport2.config.ui;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.config.CvsRootEditor;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsMethod;
 import com.intellij.cvsSupport2.connections.CvsRootData;
@@ -48,7 +47,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 
-public class Cvs2SettingsEditPanel implements CvsRootEditor {
+public class Cvs2SettingsEditPanel {
 
   private JPanel myPanel;
   private final BooleanValueHolder myIsInUpdating = new BooleanValueHolder(false);
@@ -86,8 +85,8 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
     myCvsRootConfigurationPanel.add(myCvsRootConfigurationPanelView.getPanel(), BorderLayout.CENTER);
 
     myConnectionSettingsPanel.setLayout(new CardLayout());
-    myExtConnectionSettingsEditor = new ExtConnectionDualPanel(this);
-    mySshConnectionSettingsEditor = new SshConnectionSettingsPanel(this);
+    myExtConnectionSettingsEditor = new ExtConnectionDualPanel();
+    mySshConnectionSettingsEditor = new SshConnectionSettingsPanel();
     myLocalConnectionSettingsPanel = new LocalConnectionSettingsPanel();
     myConnectionSettingsPanel.add(myExtConnectionSettingsEditor.getPanel(), CvsMethod.EXT_METHOD.getDisplayName());
     myConnectionSettingsPanel.add(new JPanel(), CvsMethod.PSERVER_METHOD.getDisplayName());
@@ -320,9 +319,5 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
   public void setReadOnly() {
     myCvsRootConfigurationPanelView.setReadOnly();
     setEnabled(myDateOrRevisionOrTagSettingsPanel, false);
-  }
-
-  public String getCurrentRoot() {
-    return myCvsRootConfigurationPanelView.getCvsRoot();
   }
 }

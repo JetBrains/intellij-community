@@ -134,11 +134,6 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
     return null;
   }
 
-  @Nullable
-  public TextAttributesKey getTextAttributesKey() {
-    return null;
-  }
-
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     return null;
   }

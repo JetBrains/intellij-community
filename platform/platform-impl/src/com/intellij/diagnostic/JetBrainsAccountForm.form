@@ -15,7 +15,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
         </clientProperties>
         <border type="etched" title-resource-bundle="messages/DiagnosticBundle" title-key="diagnostic.error.report.login.group"/>
         <children>

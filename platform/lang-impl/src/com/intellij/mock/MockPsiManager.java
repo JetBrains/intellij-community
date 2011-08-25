@@ -23,18 +23,13 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.PsiCachedValuesFactory;
+import com.intellij.psi.impl.EmptyCacheManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
 import com.intellij.psi.impl.file.impl.FileManager;
-import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -50,10 +45,9 @@ import java.util.Map;
 public class MockPsiManager extends PsiManagerEx {
   private final Project myProject;
   private final Map<VirtualFile,PsiDirectory> myDirectories = new THashMap<VirtualFile, PsiDirectory>();
-  private CachedValuesManagerImpl myCachedValuesManager;
   private MockFileManager myMockFileManager;
   private PsiModificationTrackerImpl myPsiModificationTracker;
-  private final CompositeCacheManager myCompositeCacheManager = new CompositeCacheManager();
+  private final CacheManager myCacheManager = new EmptyCacheManager();
   private ResolveCache myResolveCache;
 
   public MockPsiManager() {
@@ -104,29 +98,11 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   @NotNull
-  public CodeStyleManager getCodeStyleManager() {
-    return CodeStyleManager.getInstance(myProject);
-  }
-
-  @NotNull
-  public PsiSearchHelper getSearchHelper() {
-    return new PsiSearchHelperImpl(this);
-  }
-
-  @NotNull
   public PsiModificationTracker getModificationTracker() {
     if (myPsiModificationTracker == null) {
       myPsiModificationTracker = new PsiModificationTrackerImpl(myProject);
     }
     return myPsiModificationTracker;
-  }
-
-  @NotNull
-  public CachedValuesManager getCachedValuesManager() {
-    if (myCachedValuesManager == null) {
-      myCachedValuesManager = new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(this));
-    }
-    return myCachedValuesManager;
   }
 
   public void moveFile(@NotNull PsiFile file, @NotNull PsiDirectory newParentDir) throws IncorrectOperationException {
@@ -254,6 +230,6 @@ public class MockPsiManager extends PsiManagerEx {
 
   @NotNull
   public CacheManager getCacheManager() {
-    return myCompositeCacheManager;
+    return myCacheManager;
   }
 }

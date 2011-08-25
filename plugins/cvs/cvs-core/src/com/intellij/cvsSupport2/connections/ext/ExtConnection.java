@@ -33,18 +33,13 @@ import java.util.StringTokenizer;
 /**
  * author: lesya
  */
-
 public class ExtConnection extends ConnectionOnProcess {
 
   @NonNls public static final String DEFAULT_RSH = "ssh";
 
-  public static final int DEFAULT_PORT = 22;
-
   private final String myHost;
   private final String myUserName;
   private final ExtConfiguration myConfiguration;
-  
-  
 
   public ExtConnection(String host, String user, String repository, ExtConfiguration configuration, ErrorRegistry errorRegistry) {
     super(repository, errorRegistry);
@@ -86,7 +81,7 @@ public class ExtConnection extends ConnectionOnProcess {
     InputStreamWrapper streamWrapper = new InputStreamWrapper(myInputStream, stopper, new ReadWriteStatistics());
     try {
       int i;
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       while (true) {
         i = streamWrapper.read();
         if (i == -1 || i == '\n' || i == ' ' || i == '\r') break;
@@ -131,6 +126,4 @@ public class ExtConnection extends ConnectionOnProcess {
 
     return command;
   }
-
 }
-

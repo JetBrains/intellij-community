@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightVariableBase;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,7 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
 
   @Override
   protected PsiModifierList createModifierList() {
-    return new GrLightModifierList(this, ArrayUtil.EMPTY_STRING_ARRAY);
+    return new GrLightModifierList(this);
   }
 
   public String toString() {

@@ -614,7 +614,7 @@ public class Messages {
   @Nullable
   public static String showEditableChooseDialog(String message,
                                                 String title,
-                                                Icon icon,
+                                                @Nullable Icon icon,
                                                 String[] values,
                                                 String initialValue,
                                                 InputValidator validator) {
@@ -632,7 +632,7 @@ public class Messages {
     }
   }
 
-  public static int showChooseDialog(String message, String title, String[] values, String initialValue, Icon icon) {
+  public static int showChooseDialog(String message, String title, String[] values, String initialValue, @Nullable Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
@@ -1197,7 +1197,7 @@ public class Messages {
     public ChooseDialog(Project project,
                         String message,
                         String title,
-                        Icon icon,
+                        @Nullable Icon icon,
                         String[] values,
                         String initialValue,
                         String[] options,
@@ -1207,17 +1207,17 @@ public class Messages {
       myComboBox.setSelectedItem(initialValue);
     }
 
-    public ChooseDialog(Project project, String message, String title, Icon icon, String[] values, String initialValue) {
+    public ChooseDialog(Project project, String message, String title, @Nullable Icon icon, String[] values, String initialValue) {
       this(project, message, title, icon, values, initialValue, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
     }
 
-    public ChooseDialog(Component parent, String message, String title, Icon icon, String[] values, String initialValue) {
+    public ChooseDialog(Component parent, String message, String title, @Nullable Icon icon, String[] values, String initialValue) {
       super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
       myComboBox.setModel(new DefaultComboBoxModel(values));
       myComboBox.setSelectedItem(initialValue);
     }
 
-    public ChooseDialog(String message, String title, Icon icon, String[] values, String initialValue) {
+    public ChooseDialog(String message, String title, @Nullable Icon icon, String[] values, String initialValue) {
       super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
       myComboBox.setModel(new DefaultComboBoxModel(values));
       myComboBox.setSelectedItem(initialValue);

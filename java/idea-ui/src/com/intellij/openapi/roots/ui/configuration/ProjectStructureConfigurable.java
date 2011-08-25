@@ -81,7 +81,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   private final Project myProject;
-  private final ModuleManager myModuleManager;
   private final FacetStructureConfigurable myFacetStructureConfigurable;
   private final ArtifactsStructureConfigurable myArtifactsStructureConfigurable;
 
@@ -109,13 +108,13 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   private final JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>", JLabel.CENTER);
 
-  public ProjectStructureConfigurable(final Project project, final ModuleManager moduleManager, final ProjectLibrariesConfigurable projectLibrariesConfigurable,
+  public ProjectStructureConfigurable(final Project project,
+                                      final ProjectLibrariesConfigurable projectLibrariesConfigurable,
                                       final GlobalLibrariesConfigurable globalLibrariesConfigurable,
                                       final ModuleStructureConfigurable moduleStructureConfigurable,
                                       FacetStructureConfigurable facetStructureConfigurable,
                                       ArtifactsStructureConfigurable artifactsStructureConfigurable) {
     myProject = project;
-    myModuleManager = moduleManager;
     myFacetStructureConfigurable = facetStructureConfigurable;
     myArtifactsStructureConfigurable = artifactsStructureConfigurable;
 
@@ -371,12 +370,12 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return navigateTo(place, requestFocus);
   }
 
-  public ActionCallback select(@Nullable final String moduleToSelect, String tab, final boolean requestFocus) {
+  public ActionCallback select(@Nullable final String moduleToSelect, @Nullable String editorNameToSelect, final boolean requestFocus) {
     Place place = createPlaceFor(myModulesConfig);
     if (moduleToSelect != null) {
       final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
       assert module != null;
-      place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, module).putPath(ModuleEditor.MODULE_TAB, tab);
+      place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, module).putPath(ModuleEditor.SELECTED_EDITOR_NAME, editorNameToSelect);
     }
     return navigateTo(place, requestFocus);
   }
@@ -440,7 +439,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
         if (node != null) {
           ModuleConfigurable moduleConfigurable = (ModuleConfigurable)node.getConfigurable();
           ModuleEditor moduleEditor = moduleConfigurable.getModuleEditor();
-          moduleEditor.setSelectedTabName(ClasspathEditor.NAME);
+          moduleEditor.selectEditor(ClasspathEditor.NAME);
           if (orderEntry != null) {
             ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.NAME);
             if (editor instanceof ClasspathEditor) {

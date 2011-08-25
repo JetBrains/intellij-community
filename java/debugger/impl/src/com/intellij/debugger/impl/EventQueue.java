@@ -17,9 +17,10 @@ package com.intellij.debugger.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -118,7 +119,13 @@ public class EventQueue<E> {
   }
 
   public E get() throws EventQueueClosedException {
-    return myCurrentEvent = getEvent();
+    try {
+      return myCurrentEvent = getEvent();
+    }
+    catch (EventQueueClosedException e) {
+      myCurrentEvent = null; // cleanup
+      throw e;
+    }
   }
 
   public boolean isClosed() {
@@ -129,11 +136,14 @@ public class EventQueue<E> {
     return myCurrentEvent;
   }
 
-  @TestOnly
-  public void clearQueue() {
-    myCurrentEvent = null;
-    for (LinkedList event : myEvents) {
-      event.clear();
+  public List<E> clearQueue() {
+    final List<E> allEvents = new ArrayList<E>();
+    for (int i = 0; i < myEvents.length; i++) {
+      final LinkedList<E> eventList = getEventsList(i);
+      while (!eventList.isEmpty()) {
+        allEvents.add(eventList.poll());
+      }
     }
+    return allEvents;
   }
 }

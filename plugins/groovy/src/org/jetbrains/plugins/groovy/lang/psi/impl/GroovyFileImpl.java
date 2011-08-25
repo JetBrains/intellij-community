@@ -19,21 +19,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.ElementBase;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -583,35 +576,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
     return this;
-  }
-
-  private static final UserDataCache<CachedValue<GlobalSearchScope>, GroovyFile, GlobalSearchScope> RESOLVE_SCOPE_CACHE = new UserDataCache<CachedValue<GlobalSearchScope>, GroovyFile, GlobalSearchScope>("RESOLVE_SCOPE_CACHE") {
-    @Override
-    protected CachedValue<GlobalSearchScope> compute(final GroovyFile file, final GlobalSearchScope baseScope) {
-      return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<GlobalSearchScope>() {
-        public Result<GlobalSearchScope> compute() {
-          GlobalSearchScope scope = GroovyScriptTypeDetector.getScriptType(file).patchResolveScope(file, baseScope);
-          return Result.create(scope, file, ProjectRootManager.getInstance(file.getProject()));
-        }
-      }, false);
-    }
-  };
-  public GlobalSearchScope getFileResolveScope() {
-    final PsiElement context = getContext();
-    if (context instanceof GroovyFile) {
-      return context.getResolveScope();
-    }
-
-    final VirtualFile vFile = getOriginalFile().getVirtualFile();                                        
-    if (vFile == null) {
-      return GlobalSearchScope.allScope(getProject());
-    }
-
-    final GlobalSearchScope baseScope = ((FileManagerImpl)((PsiManagerEx)getManager()).getFileManager()).getDefaultResolveScope(vFile);
-    if (isScript()) {
-      return RESOLVE_SCOPE_CACHE.get(this, baseScope).getValue();
-    }
-    return baseScope;
   }
 }
 

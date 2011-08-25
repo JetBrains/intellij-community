@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.branchConfig;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -37,11 +38,12 @@ public class BranchesLoader {
   private BranchesLoader() {
   }
 
-  public static List<SvnBranchItem> loadBranches(final Project project, final String url) throws SVNException {
+  public static List<SvnBranchItem> loadBranches(final Project project, final String url, boolean passive) throws SVNException {
     final List<SvnBranchItem> result = new LinkedList<SvnBranchItem>();
 
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    final ISVNAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager();
+    final ISVNAuthenticationManager passiveManager = passive ? configuration.getPassiveAuthenticationManager() : configuration.getInteractiveManager(
+            SvnVcs.getInstance(project));
 
     final SVNLogClient logClient = new SVNLogClient(passiveManager, configuration.getOptions(project));
     final SVNURL branchesUrl = SVNURL.parseURIEncoded(url);

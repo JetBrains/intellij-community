@@ -51,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 
-public class PsiUtilBase {
+public class PsiUtilBase extends PsiUtilCore {
   @SuppressWarnings("ConstantConditions")
   public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
       @NotNull
@@ -563,13 +563,6 @@ public class PsiUtilBase {
     while (true);
   }
 
-  public static Language getNotAnyLanguage(ASTNode node) {
-    if (node == null) return Language.ANY;
-
-    final Language lang = node.getElementType().getLanguage();
-    return lang == Language.ANY ? getNotAnyLanguage(node.getTreeParent()) : lang;
-  }
-
   /**
    * Tries to find editor for the given element.
    * <p/>
@@ -620,12 +613,6 @@ public class PsiUtilBase {
       }
     }
     return null;
-  }
-
-  @NotNull
-  public static PsiElement[] toPsiElementArray(@NotNull Collection<? extends PsiElement> collection) {
-    if (collection.isEmpty()) return PsiElement.EMPTY_ARRAY;
-    return collection.toArray(new PsiElement[collection.size()]);
   }
 
   @NotNull

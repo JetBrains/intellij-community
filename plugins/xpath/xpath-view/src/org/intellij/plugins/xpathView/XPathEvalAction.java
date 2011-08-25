@@ -456,10 +456,6 @@ public class XPathEvalAction extends XPathAction {
             return myItemPresentation;
         }
 
-        public FileStatus getFileStatus() {
-            return FileStatus.NOT_CHANGED;
-        }
-
         public void navigate(boolean requestFocus) {
         }
 

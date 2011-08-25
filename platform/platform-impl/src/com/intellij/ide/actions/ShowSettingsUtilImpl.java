@@ -43,7 +43,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final String PREFER_CLASSIC_OPTIONS_EDITOR = "PREFER_CLASSIC_OPTIONS_EDITOR";
 
   public void showSettingsDialog(Project project, ConfigurableGroup[] group) {
-    _showSettingsDialog(project, group, null);
+    try {
+      _showSettingsDialog(project, group, null);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   private static void _showSettingsDialog(final Project project, ConfigurableGroup[] group, Configurable toSelect) {
@@ -144,7 +149,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
   }
 
-  public boolean editConfigurable(Project project, String dimensionServiceKey, Configurable configurable) {
+  public boolean editConfigurable(Project project, String dimensionServiceKey, @NotNull Configurable configurable) {
     return editConfigurable(null, project, configurable, dimensionServiceKey, null);
   }
 

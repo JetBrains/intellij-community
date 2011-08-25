@@ -66,10 +66,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -585,15 +582,17 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public void showStatusText(final String text) {
-    myStatusUpdateAlarm.cancelAllRequests();
-    myStatusUpdateAlarm.addRequest(new Runnable() {
-      public void run() {
-        final WindowManager wm = WindowManager.getInstance();
-        if (wm != null) {
-          wm.getStatusBar(myProject).setInfo(text);
+    if (!myStatusUpdateAlarm.isDisposed()) {
+      myStatusUpdateAlarm.cancelAllRequests();
+      myStatusUpdateAlarm.addRequest(new Runnable() {
+        public void run() {
+          final WindowManager wm = WindowManager.getInstance();
+          if (wm != null) {
+            wm.getStatusBar(myProject).setInfo(text);
+          }
         }
-      }
-    }, 50);
+      }, 50);
+    }
   }
 
   static Connector findConnector(String connectorName) throws ExecutionException {
@@ -848,7 +847,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public void dispose() {
     NodeRendererSettings.getInstance().removeListener(mySettingsListener);
-    myStatusUpdateAlarm.dispose();
+    Disposer.dispose(myStatusUpdateAlarm);
   }
 
   public DebuggerManagerThreadImpl getManagerThread() {

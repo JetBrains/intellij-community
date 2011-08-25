@@ -15,20 +15,31 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.util.PlatformIcons;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
 class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
-    private final ItemElement myElement;
+  private static final Icon INVALID_ITEM_ICON = IconLoader.getIcon("/nodes/ppInvalid.png");
+  private static final Icon JAR_DIRECTORY_ICON = IconLoader.getIcon("/nodes/jarDirectory.png");
+  private final ItemElement myElement;
 
     public ItemElementDescriptor(NodeDescriptor parentDescriptor, ItemElement element) {
       super(null, parentDescriptor);
       myElement = element;
       final String url = element.getUrl();
-      myName = LibraryRootsComponent.getPresentablePath(url).replace('/', File.separatorChar);
-      myOpenIcon = myClosedIcon = LibraryRootsComponent.getIconForUrl(url, element.isValid(), element.isJarDirectory());
+      myName = getPresentablePath(url).replace('/', File.separatorChar);
+      myOpenIcon = myClosedIcon = getIconForUrl(url, element.isValid(), element.isJarDirectory());
     }
 
     public boolean update() {
@@ -41,4 +52,54 @@ class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
     public ItemElement getElement() {
       return myElement;
     }
+
+  private static Icon getIconForUrl(final String url, final boolean isValid, final boolean isJarDirectory) {
+    final Icon icon;
+    if (isValid) {
+      VirtualFile presentableFile;
+      if (isJarFileRoot(url)) {
+        presentableFile = LocalFileSystem.getInstance().findFileByPath(getPresentablePath(url));
+      }
+      else {
+        presentableFile = VirtualFileManager.getInstance().findFileByUrl(url);
+      }
+      if (presentableFile != null && presentableFile.isValid()) {
+        if (presentableFile.getFileSystem() instanceof HttpFileSystem) {
+          icon = PlatformIcons.WEB_ICON;
+        }
+        else {
+          if (presentableFile.isDirectory()) {
+            if (isJarDirectory) {
+              icon = JAR_DIRECTORY_ICON;
+            }
+            else {
+              icon = PlatformIcons.DIRECTORY_CLOSED_ICON;
+            }
+          }
+          else {
+            icon = IconUtilEx.getIcon(presentableFile, 0, null);
+          }
+        }
+      }
+      else {
+        icon = INVALID_ITEM_ICON;
+      }
+    }
+    else {
+      icon = INVALID_ITEM_ICON;
+    }
+    return icon;
   }
+
+  static String getPresentablePath(final String url) {
+    String presentablePath = VirtualFileManager.extractPath(url);
+    if (isJarFileRoot(url)) {
+      presentablePath = presentablePath.substring(0, presentablePath.length() - JarFileSystem.JAR_SEPARATOR.length());
+    }
+    return presentablePath;
+  }
+
+  private static boolean isJarFileRoot(final String url) {
+    return VirtualFileManager.extractPath(url).endsWith(JarFileSystem.JAR_SEPARATOR);
+  }
+}

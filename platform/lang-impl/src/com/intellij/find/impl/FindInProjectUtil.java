@@ -669,10 +669,6 @@ public class FindInProjectUtil {
       public Icon getIcon(boolean open) {
         return null;
       }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
     };
 
     public StringUsageTarget(String _stringToFind) {
@@ -705,10 +701,6 @@ public class FindInProjectUtil {
 
     public ItemPresentation getPresentation() {
       return myItemPresentation;
-    }
-
-    public FileStatus getFileStatus() {
-      return FileStatus.NOT_CHANGED;
     }
 
     public void navigate(boolean requestFocus) {

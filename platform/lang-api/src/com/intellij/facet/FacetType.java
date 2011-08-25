@@ -107,8 +107,8 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   }
 
   /**
-   * Override this method to support auto-detection for facets of this type
-   * @param registry a {@link com.intellij.facet.autodetecting.FacetDetectorRegistry} instance to register facet detectors
+   * @deprecated this method is not called by IDEA core anymore. Use {@link com.intellij.framework.detection.FrameworkDetector} extension
+   * to provide automatic detection for facets
    */
   public void registerDetectors(FacetDetectorRegistry<C> registry) {
   }

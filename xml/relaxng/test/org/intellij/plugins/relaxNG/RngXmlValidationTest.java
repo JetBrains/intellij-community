@@ -90,7 +90,7 @@ public class RngXmlValidationTest extends HighlightingTestBase {
         final ExternalResourceManager mgr = ExternalResourceManager.getInstance();
         mgr.addResource("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"));
         mgr.addResource("urn:test:simple.rnc", toAbsolutePath("validation/simple.rnc"));
-        mgr.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("validation/relaxng.rng"));
+        //mgr.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("validation/relaxng.rng"));
       }
     });
   }

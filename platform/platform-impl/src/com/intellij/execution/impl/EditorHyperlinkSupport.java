@@ -33,7 +33,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.pom.Navigatable;
+import com.intellij.pom.NavigatableAdapter;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
@@ -319,7 +319,7 @@ public class EditorHyperlinkSupport {
     int newIndex = ranges.isEmpty() ? -1 : i == ranges.size() ? 0 : (i + delta + ranges.size()) % ranges.size();
     final RangeHighlighter next = newIndex < ranges.size() && newIndex >= 0 ? ranges.get(newIndex) : null;
     if (next == null) return null;
-    return new OccurenceNavigator.OccurenceInfo(new Navigatable.Adapter() {
+    return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
       public void navigate(final boolean requestFocus) {
         action.consume(next);
         linkFollowed(editor, ranges, next);

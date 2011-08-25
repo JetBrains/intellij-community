@@ -21,6 +21,7 @@ import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FileContentPattern;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -78,7 +79,7 @@ public class AndroidFrameworkDetector extends FacetBasedFrameworkDetector<Androi
   @NotNull
   @Override
   public FileType getFileType() {
-    return AndroidFrameworkDetector.super.getFileType();
+    return StdFileTypes.XML;
   }
 
   @NotNull

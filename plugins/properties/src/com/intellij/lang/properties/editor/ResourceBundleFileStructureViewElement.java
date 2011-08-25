@@ -80,10 +80,6 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
       public Icon getIcon(boolean open) {
         return PropertiesFileType.FILE_ICON;
       }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
     };
   }
 

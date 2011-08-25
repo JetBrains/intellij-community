@@ -197,25 +197,29 @@ public class BranchConfigurationDialog extends DialogWrapper {
 
   private static class MyListModel extends AbstractListModel {
     private final SvnBranchConfigurationNew myConfiguration;
+    private List<String> myBranchUrls;
 
     public MyListModel(final SvnBranchConfigurationNew configuration) {
       myConfiguration = configuration;
+      myBranchUrls = myConfiguration.getBranchUrls();
     }
 
     public int getSize() {
-      return myConfiguration.getBranchUrls().size();
+      return myBranchUrls.size();
     }
 
     public Object getElementAt(final int index) {
-      return myConfiguration.getBranchUrls().get(index);
+      return myBranchUrls.get(index);
     }
 
     public void fireItemAdded() {
       final int index = myConfiguration.getBranchUrls().size() - 1;
+      myBranchUrls = myConfiguration.getBranchUrls();
       super.fireIntervalAdded(this, index, index);
     }
 
     public void fireItemRemoved(final int index) {
+      myBranchUrls = myConfiguration.getBranchUrls();
       super.fireIntervalRemoved(this, index, index);
     }
   }

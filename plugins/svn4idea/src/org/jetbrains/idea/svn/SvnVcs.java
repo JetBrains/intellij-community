@@ -151,6 +151,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final SvnAuthenticationNotifier myAuthNotifier;
   private static RareLogger.LogFilter[] ourLogFilters;
+  private final SvnLoadedBrachesStorage myLoadedBranchesStorage;
 
   static {
     SVNJNAUtil.setJNAEnabled(true);
@@ -180,9 +181,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return Boolean.valueOf(System.getProperty(systemParameterName));
   }
 
-  public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final ChangeListManager changeListManager,
-                final VcsDirtyScopeManager vcsDirtyScopeManager) {
+  public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBrachesStorage storage) {
     super(project, VCS_NAME);
+    myLoadedBranchesStorage = storage;
     LOG.debug("ct");
     myRootsToWorkingCopies = new RootsToWorkingCopies(myProject);
     myConfiguration = svnConfiguration;
@@ -221,7 +222,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       };
     }
 
-    myFrameStateListener = new MyFrameStateListener(changeListManager, vcsDirtyScopeManager);
+    myFrameStateListener = project.isDefault() ? null : new MyFrameStateListener(ChangeListManager.getInstance(project),
+                                                                                 VcsDirtyScopeManager.getInstance(project));
     myWorkingCopiesContent = new WorkingCopiesContent(this);
 
     // remove used some time before old notification group ids
@@ -417,6 +419,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     });
 
     vcsManager.addVcsListener(myRootsToWorkingCopies);
+
+    myLoadedBranchesStorage.activate();
   }
 
   private static void initLogFilters() {
@@ -500,6 +504,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     mySvnBranchPointsCalculator.deactivate();
     mySvnBranchPointsCalculator = null;
     myWorkingCopiesContent.deactivate();
+    myLoadedBranchesStorage.deactivate();
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {

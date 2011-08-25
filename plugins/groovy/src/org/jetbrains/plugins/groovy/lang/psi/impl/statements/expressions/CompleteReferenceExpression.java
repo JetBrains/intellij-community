@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
@@ -158,7 +159,7 @@ public class CompleteReferenceExpression {
                                                                  @Nullable PrefixMatcher matcher) {
     String propName;
     PsiType propType;
-    final boolean inUseScope = ResolveUtil.isInUseScope(resolveResult);
+    final boolean inUseScope = GdkMethodUtil.isInUseScope(resolveResult);
     final boolean getter = isSimplePropertyGetter(accessor, null, inUseScope);
     if (getter) {
       propName = getPropertyNameByGetter(accessor);

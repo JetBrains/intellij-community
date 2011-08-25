@@ -42,10 +42,20 @@ public interface FoundationLibrary extends Library {
   ID class_createInstance(ID pClass, int extraBytes);
   Pointer sel_registerName(String selectorName);
 
+  ID class_replaceMethod(ID cls, Pointer selName, Callback impl, String types);
+  
+  ID objc_getMetaClass(String name);
+  
   ID objc_msgSend(ID receiver, Pointer selector, Object... args);
 
   boolean class_respondsToSelector(ID cls, Pointer selName);
   boolean class_addMethod(ID cls, Pointer selName, Callback imp, String types);
+  
+  boolean class_addMethod(ID cls, Pointer selName, ID imp, String types);
+  
+  boolean class_isMetaClass(ID cls);
+  
+  ID NSStringFromSelector(Pointer selector);
 
   Pointer objc_getClass(Pointer clazz);
 }

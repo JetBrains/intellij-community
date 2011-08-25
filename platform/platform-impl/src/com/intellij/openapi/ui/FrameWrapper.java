@@ -109,7 +109,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       myStatusBar.install((IdeFrame)frame);
     }
 
-    myFocusTrackback = new FocusTrackback(this, null, true);
+    myFocusTrackback = new FocusTrackback(this, IdeFocusManager.findInstance().getFocusOwner(), true);
 
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     WindowAdapter focusListener = new WindowAdapter() {

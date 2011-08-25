@@ -12,21 +12,17 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.ui.AttachRootButtonDescriptor;
-import com.intellij.openapi.roots.libraries.ui.ChooserBasedAttachRootButtonDescriptor;
-import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
-import com.intellij.openapi.roots.libraries.ui.OrderRootTypePresentation;
+import com.intellij.openapi.roots.libraries.ui.*;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +43,19 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
   @NotNull
   @Override
   public List<? extends AttachRootButtonDescriptor> createAttachButtons() {
-    return Arrays.asList(new AttachClassesDescriptor(), new AttachJarDirectoriesDescriptor(),
-                         new AttachSourcesDescriptor(), new AttachJarSourcesDirectoriesDescriptor(),
-                         new AttachAnnotationsDescriptor(), new AttachJavadocDescriptor(),
-                         new AttachUrlJavadocDescriptor());
+    return Arrays.asList(new AttachUrlJavadocDescriptor());
+  }
+
+  @NotNull
+  @Override
+  public List<? extends RootDetector> getRootDetectors() {
+    return Arrays.asList(new FileTypeBasedRootFilter(OrderRootType.CLASSES, false, StdFileTypes.CLASS, "classes"),
+                         new FileTypeBasedRootFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"),
+                         PathUIUtils.JAVA_SOURCE_ROOT_DETECTOR,
+                         new FileTypeBasedRootFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"),
+                         new FileTypeBasedRootFilter(JavadocOrderRootType.getInstance(), false, StdFileTypes.HTML,
+                                                     "JavaDocs"),
+                         new AnnotationsRootFilter());
   }
 
   public static OrderRootTypePresentation getDefaultPresentation(OrderRootType type) {
@@ -58,132 +63,14 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     return new OrderRootTypePresentation(factory.getNodeText(), factory.getIcon());
   }
 
-  private static class AttachClassesDescriptor extends ChooserBasedAttachRootButtonDescriptor {
-    private AttachClassesDescriptor() {
-      super(OrderRootType.CLASSES, ProjectBundle.message("module.libraries.attach.classes.button"));
-    }
-
-    public FileChooserDescriptor createChooserDescriptor() {
-      return new FileChooserDescriptor(false, true, true, false, false, true);
-    }
-
-    public String getChooserTitle(final String libraryName) {
-      if (StringUtil.isEmpty(libraryName)) {
-        return ProjectBundle.message("library.attach.classes.action");
-      }
-      else {
-        return ProjectBundle.message("library.attach.classes.to.library.action", libraryName);
-      }
-    }
-
-    public String getChooserDescription() {
-      return ProjectBundle.message("library.attach.classes.description");
-    }
-  }
-
-  private static class AttachJarDirectoriesDescriptor extends ChooserBasedAttachRootButtonDescriptor {
-    private AttachJarDirectoriesDescriptor() {
-      super(OrderRootType.CLASSES, ProjectBundle.message("module.libraries.attach.jar.directories.button"));
-    }
-
-    public FileChooserDescriptor createChooserDescriptor() {
-      return FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
-    }
-
-    public boolean addAsJarDirectories() {
-      return true;
-    }
-
-    public String getChooserTitle(final String libraryName) {
-      if (StringUtil.isEmpty(libraryName)) {
-        return ProjectBundle.message("library.attach.jar.directory.action");
-      }
-      else {
-        return ProjectBundle.message("library.attach.jar.directory.to.library.action", libraryName);
-      }
-    }
-
-    public String getChooserDescription() {
-      return ProjectBundle.message("library.attach.jar.directory.description");
-    }
-  }
-
-  private static class AttachJarSourcesDirectoriesDescriptor extends ChooserBasedAttachRootButtonDescriptor {
-    private AttachJarSourcesDirectoriesDescriptor() {
-      super(OrderRootType.SOURCES, ProjectBundle.message("module.libraries.attach.jar.sources.directories.button"));
-    }
-
-    public FileChooserDescriptor createChooserDescriptor() {
-      return FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
-    }
-
-    public boolean addAsJarDirectories() {
-      return true;
-    }
-
-    public String getChooserTitle(final String libraryName) {
-      if (StringUtil.isEmpty(libraryName)) {
-        return ProjectBundle.message("library.attach.jar.sources.directory.action");
-      }
-      else {
-        return ProjectBundle.message("library.attach.jar.sources.directory.to.library.action", libraryName);
-      }
-    }
-
-    public String getChooserDescription() {
-      return ProjectBundle.message("library.attach.jar.sources.directory.description");
-    }
-  }
-
-  private static class AttachSourcesDescriptor extends ChooserBasedAttachRootButtonDescriptor {
-    private AttachSourcesDescriptor() {
-      super(OrderRootType.SOURCES, ProjectBundle.message("module.libraries.attach.sources.button"));
-    }
-
-    public String getChooserTitle(final String libraryName) {
-      return ProjectBundle.message("library.attach.sources.action");
-    }
-
-    public String getChooserDescription() {
-      return ProjectBundle.message("library.attach.sources.description");
-    }
-
-    @NotNull
-    public VirtualFile[] scanForActualRoots(@NotNull final VirtualFile[] rootCandidates, JComponent parent) {
-      return PathUIUtils.scanAndSelectDetectedJavaSourceRoots(parent, rootCandidates);
-    }
-  }
-
-  private static class AttachAnnotationsDescriptor extends ChooserBasedAttachRootButtonDescriptor {
-    private AttachAnnotationsDescriptor() {
-      super(AnnotationOrderRootType.getInstance(), ProjectBundle.message("attach.annotations.button"));
-    }
-
-    public String getChooserTitle(final String libraryName) {
-      return ProjectBundle.message("library.attach.external.annotations.action");
-    }
-
-    public String getChooserDescription() {
-      return ProjectBundle.message("library.attach.external.annotations.description");
+  private static class AnnotationsRootFilter extends FileTypeBasedRootFilter {
+    private AnnotationsRootFilter() {
+      super(AnnotationOrderRootType.getInstance(), false, StdFileTypes.XML, "external annotations");
     }
 
     @Override
-    public FileChooserDescriptor createChooserDescriptor() {
-      return FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    }
-  }
-
-  private static class AttachJavadocDescriptor extends ChooserBasedAttachRootButtonDescriptor {
-    private AttachJavadocDescriptor() {
-      super(JavadocOrderRootType.getInstance(), ProjectBundle.message("module.libraries.javadoc.attach.button"));
-    }
-
-    public String getChooserTitle(final String libraryName) {
-      return ProjectBundle.message("library.attach.javadoc.action");
-    }
-
-    public String getChooserDescription() {
-      return ProjectBundle.message("library.attach.javadoc.description");
+    protected boolean isFileAccepted(VirtualFile virtualFile) {
+      return super.isFileAccepted(virtualFile) && virtualFile.getName().equals(ExternalAnnotationsManager.ANNOTATIONS_XML);
     }
   }
 

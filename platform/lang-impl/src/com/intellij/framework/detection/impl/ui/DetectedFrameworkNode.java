@@ -43,13 +43,9 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
     myContext = context;
   }
 
-  public DetectedFrameworkDescription getDescription() {
-    return myDescription;
-  }
-
   @Override
   public void renderNode(ColoredTreeCellRenderer renderer) {
-    renderer.setIcon(myDescription.getFrameworkType().getIcon());
+    renderer.setIcon(myDescription.getDetector().getFrameworkType().getIcon());
     final Collection<? extends VirtualFile> files = myDescription.getRelatedFiles();
     final VirtualFile firstFile = ContainerUtil.getFirstItem(files);
     LOG.assertTrue(firstFile != null);
@@ -77,7 +73,7 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
 
   @Override
   public String getCheckedDescription() {
-    return myDescription.getSetupDescription();
+    return myDescription.getSetupText();
   }
 
   @Override
@@ -88,7 +84,7 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
   @Override
   public void disableDetection(DetectionExcludesConfiguration configuration) {
     for (VirtualFile file : myDescription.getRelatedFiles()) {
-      configuration.addExcludedFile(file, myDescription.getFrameworkType());
+      configuration.addExcludedFile(file, myDescription.getDetector().getFrameworkType());
     }
   }
 

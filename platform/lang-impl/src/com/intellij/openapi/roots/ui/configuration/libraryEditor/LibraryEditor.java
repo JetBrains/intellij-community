@@ -18,8 +18,11 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author nik
@@ -55,4 +58,6 @@ public interface LibraryEditor {
 
   @Nullable
   LibraryType<?> getType();
+
+  void addRoots(Collection<? extends OrderRoot> roots);
 }

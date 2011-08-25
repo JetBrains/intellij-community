@@ -16,6 +16,7 @@
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiDocCommentOwner;
@@ -24,7 +25,8 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiUtil;
 
-public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends PsiTreeElementBase<Value> implements AccessLevelProvider {
+public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends PsiTreeElementBase<Value> implements AccessLevelProvider,
+                                                                                                                      ColoredItemPresentation {
   private final boolean myIsInherited;
 
   protected JavaClassTreeElementBase(boolean isInherited, Value element) {
@@ -60,7 +62,7 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
 
   @Override
   public TextAttributesKey getTextAttributesKey() {
-    return  isDeprecated() ? CodeInsightColors.DEPRECATED_ATTRIBUTES : super.getTextAttributesKey();
+    return isDeprecated() ? CodeInsightColors.DEPRECATED_ATTRIBUTES : null;
   }
 
   private boolean isDeprecated(){

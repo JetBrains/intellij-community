@@ -16,9 +16,9 @@
 package com.intellij.framework.detection.impl;
 
 import com.intellij.facet.*;
-import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
+import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
@@ -41,7 +41,6 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
   private final C myConfiguration;
   private final Set<VirtualFile> myRelatedFiles;
   private final FacetType<F,C> myFacetType;
-  private final FrameworkType myFrameworkType;
 
   public FacetBasedDetectedFrameworkDescription(FacetBasedFrameworkDetector<F, C> detector,
                                                 @NotNull C configuration,
@@ -50,23 +49,6 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
     myConfiguration = configuration;
     myRelatedFiles = files;
     myFacetType = detector.getFacetType();
-    myFrameworkType = createFrameworkType(myFacetType);
-  }
-
-  public static FrameworkType createFrameworkType(final FacetType<?, ?> facetType) {
-    return new FrameworkType(facetType.getStringId(), facetType.getPresentableName(), facetType.getIcon());
-  }
-
-  @NotNull
-  @Override
-  public FrameworkType getFrameworkType() {
-    return myFrameworkType;
-  }
-
-  @Override
-  public FrameworkType getUnderlyingType() {
-    final FacetTypeId<?> underlyingTypeId = myFacetType.getUnderlyingFacetType();
-    return underlyingTypeId != null ? createFrameworkType(FacetTypeRegistry.getInstance().findFacetType(underlyingTypeId)) : null;
   }
 
   @NotNull
@@ -81,8 +63,14 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
 
   @NotNull
   @Override
-  public String getSetupDescription() {
+  public String getSetupText() {
     return "'" + myFacetType.getPresentableName() + "' facet will be added to '" + getModuleName() + "' module";
+  }
+
+  @NotNull
+  @Override
+  public FrameworkDetector getDetector() {
+    return myDetector;
   }
 
   protected abstract String getModuleName();

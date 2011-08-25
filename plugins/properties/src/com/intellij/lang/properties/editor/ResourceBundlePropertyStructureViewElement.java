@@ -23,6 +23,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -66,7 +67,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   }
 
   public ItemPresentation getPresentation() {
-    return new ItemPresentation() {
+    return new ColoredItemPresentation() {
       public String getPresentableText() {
         return myPresentableName == null ? myPropertyName : myPresentableName;
       }
@@ -79,6 +80,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
         return PlatformIcons.PROPERTY_ICON;
       }
 
+      @Override
       public TextAttributesKey getTextAttributesKey() {
         boolean isComplete = PropertiesUtil.isPropertyComplete(myProject, myResourceBundle, myPropertyName);
 

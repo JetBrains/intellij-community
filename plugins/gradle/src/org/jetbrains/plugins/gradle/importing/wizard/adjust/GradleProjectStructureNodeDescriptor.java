@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.GradleEntity;
+import org.jetbrains.plugins.gradle.importing.model.Named;
 
 import javax.swing.*;
 
@@ -26,11 +27,16 @@ public class GradleProjectStructureNodeDescriptor extends NodeDescriptor<GradleE
 
   @Override
   public boolean update() {
-    return false;
+    // TODO den check
+    return true;
   }
 
   @Override
   public GradleEntity getElement() {
     return myData;
+  }
+
+  public void setName(@NotNull String name) {
+    myName = name;
   }
 }

@@ -23,6 +23,7 @@ public interface GradleProject extends Named, GradleEntity {
   
   @NotNull
   LanguageLevel getLanguageLevel();
+  void setLanguageLevel(@NotNull LanguageLevel level);
   
   @NotNull
   Set<? extends GradleModule> getModules();

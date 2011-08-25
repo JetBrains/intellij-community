@@ -37,7 +37,7 @@ class Test {<caret>}
     generateImplementation(findMethod(Object.name, "Object"))
     myFixture.checkResult """
 class Test {
-    def Test() {
+    Test() {
         super()    //To change body of overridden methods use File | Settings | File Templates.
     }
 }

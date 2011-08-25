@@ -90,7 +90,7 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     }
     final LocalQuickFix[] fix = createFixes(location);
     final String description = inspection.buildErrorString(location);
-    registerError(location, description, fix);
+    registerError(location, description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
   protected void registerMethodError(GrMethod method, Object... args) {
@@ -99,7 +99,7 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     }
     final LocalQuickFix[] fix = createFixes(method);
     final String description = inspection.buildErrorString(args);
-    registerError(method.getNameIdentifierGroovy(), description, fix);
+    registerError(method.getNameIdentifierGroovy(), description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
   protected void registerVariableError(GrVariable variable, Object... args) {
@@ -108,7 +108,7 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     }
     final LocalQuickFix[] fix = createFixes(variable);
     final String description = inspection.buildErrorString(args);
-    registerError(variable.getNameIdentifierGroovy(), description, fix);
+    registerError(variable.getNameIdentifierGroovy(), description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
   protected void registerMethodCallError(GrMethodCallExpression method, Object... args) {
@@ -117,20 +117,27 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     }
     final LocalQuickFix[] fix = createFixes(method);
     final String description = inspection.buildErrorString(args);
-    registerError(((GrReferenceExpression) method.getInvokedExpression()).getReferenceNameElement(), description, fix);
+    registerError(((GrReferenceExpression) method.getInvokedExpression()).getReferenceNameElement(), description, fix,
+                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  private void registerError(@NotNull PsiElement location, String description,
-                             LocalQuickFix[] fixes) {
-    problemsHolder.registerProblem(location,
-        description,
-        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
+  private void registerError(@NotNull PsiElement location,
+                             String description,
+                             LocalQuickFix[] fixes,
+                             ProblemHighlightType highlightType) {
+    problemsHolder.registerProblem(location, description, highlightType, fixes);
   }
 
   protected void registerError(@NotNull PsiElement location, Object... args) {
+    registerError(location, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, args);
+  }
+
+  protected void registerError(@NotNull PsiElement location,
+                               ProblemHighlightType highlightType,
+                               Object... args) {
     final LocalQuickFix[] fix = createFixes(location);
     final String description = inspection.buildErrorString(args);
-    registerError(location, description, fix);
+    registerError(location, description, fix, highlightType);
   }
 
   @Nullable

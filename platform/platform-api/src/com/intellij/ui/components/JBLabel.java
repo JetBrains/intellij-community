@@ -20,15 +20,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class JBLabel extends JLabel {
-  private UIUtil.Style myStyle = UIUtil.Style.REGULAR;
+  private UIUtil.ComponentStyle myComponentStyle = UIUtil.ComponentStyle.REGULAR;
+  private UIUtil.FontColor myFontColor = UIUtil.FontColor.NORMAL;
 
   public JBLabel() {
   }
 
-  public JBLabel(@NotNull UIUtil.Style style) {
-    setStyle(style);
+  public JBLabel(@NotNull UIUtil.ComponentStyle componentStyle) {
+    setComponentStyle(componentStyle);
   }
 
   public JBLabel(@Nullable Icon image) {
@@ -39,9 +41,9 @@ public class JBLabel extends JLabel {
     super(text);
   }
 
-  public JBLabel(@NotNull String text, @NotNull UIUtil.Style style) {
+  public JBLabel(@NotNull String text, @NotNull UIUtil.ComponentStyle componentStyle) {
     super(text);
-    setStyle(style);
+    setComponentStyle(componentStyle);
   }
 
   public JBLabel(@NotNull String text, int horizontalAlignment) {
@@ -56,12 +58,26 @@ public class JBLabel extends JLabel {
     super(text, icon, horizontalAlignment);
   }
 
-  public void setStyle(@NotNull UIUtil.Style style) {
-    myStyle = style;
-    UIUtil.applyStyle(style, this);
+  public void setComponentStyle(@NotNull UIUtil.ComponentStyle componentStyle) {
+    myComponentStyle = componentStyle;
+    UIUtil.applyStyle(componentStyle, this);
   }
 
-  public UIUtil.Style getStyle() {
-    return myStyle;
+  public UIUtil.ComponentStyle getComponentStyle() {
+    return myComponentStyle;
+  }
+
+  public UIUtil.FontColor getFontColor() {
+    return myFontColor;
+  }
+
+  public void setFontColor(@NotNull UIUtil.FontColor fontColor) {
+    myFontColor = fontColor;
+    setForeground(null);
+  }
+
+  @Override
+  public void setForeground(Color fg) {
+    super.setForeground(UIUtil.getLabelFontColor(myFontColor));
   }
 }

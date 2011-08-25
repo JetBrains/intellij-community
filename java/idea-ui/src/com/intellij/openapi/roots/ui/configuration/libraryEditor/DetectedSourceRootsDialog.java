@@ -29,8 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,7 +43,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
   /**
    * A tree with paths.  The tree relies on the CheckboxTree for selection and unselection policy.
    */
-  private final CheckboxTree myTree;
+  private CheckboxTree myTree;
   /**
    * Root node for the tree. The tree is three-level:
    * <ul>
@@ -53,79 +52,27 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
    * <li>The third level are paths with java sources inside pervious selection.</li>
    * </ul>
    */
-  private final CheckedTreeNode myRootNode;
-  /**
-   * A scrollable pane that contains myTree
-   */
-  private final JScrollPane myPane;
+  private CheckedTreeNode myRootNode;
+  private JScrollPane myPane;
 
-  /**
-   * A constructor
-   *
-   * @param project       a project context
-   * @param detectedRoots a roots detected inside file
-   * @param baseRoot      base root file
-   */
-  public DetectedSourceRootsDialog(Project project, List<VirtualFile> detectedRoots, VirtualFile baseRoot) {
-    this(project, createTree(baseRoot, detectedRoots));
-  }
-
-  /**
-   * A constructor
-   *
-   * @param project       a project context
-   * @param detectedRoots a map from baseRoot to detected roots inside file
-   */
-  public DetectedSourceRootsDialog(Project project, Map<VirtualFile, List<VirtualFile>> detectedRoots) {
-    this(project, createTree(detectedRoots));
-  }
-
-  /**
-   * A constructor
-   *
-   * @param component     a parent component
-   * @param detectedRoots a map from baseRoot to detected roots inside file
-   */
-  public DetectedSourceRootsDialog(Component component, Map<VirtualFile, List<VirtualFile>> detectedRoots) {
-    this(component, createTree(detectedRoots));
-  }
-
-  /**
-   * A constructor
-   *
-   * @param project a project context
-   * @param tree    a checkbox tree to use
-   */
-  private DetectedSourceRootsDialog(Project project, CheckedTreeNode tree) {
-    super(project, true);
-    myRootNode = tree;
-    myTree = createCheckboxTree();
-    myPane = ScrollPaneFactory.createScrollPane(myTree);
-    setTitle("Detected Source Roots");
-    init();
-  }
-
-  /**
-   * A constructor
-   *
-   * @param component a parent component
-   * @param tree      a checkbox tree to use
-   */
-  private DetectedSourceRootsDialog(Component component, CheckedTreeNode tree) {
+  public DetectedSourceRootsDialog(Component component, List<SuggestedChildRootInfo> suggestedRoots) {
     super(component, true);
-    myRootNode = tree;
+    init(suggestedRoots);
+  }
+
+  public DetectedSourceRootsDialog(Project project, List<SuggestedChildRootInfo> suggestedRoots) {
+    super(project, true);
+    init(suggestedRoots);
+  }
+
+  private void init(List<SuggestedChildRootInfo> suggestedRoots) {
+    myRootNode = createTree(suggestedRoots);
     myTree = createCheckboxTree();
     myPane = ScrollPaneFactory.createScrollPane(myTree);
     setTitle("Detected Source Roots");
     init();
   }
 
-
-  /**
-   * Create a checkbox tree component for this dialog
-   *
-   * @return a created component
-   */
   private CheckboxTree createCheckboxTree() {
     CheckboxTree tree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(true) {
       public void customizeRenderer(JTree tree,
@@ -137,7 +84,17 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
                                         boolean hasFocus) {
         if (!(value instanceof CheckedTreeNode)) return;
         CheckedTreeNode node = (CheckedTreeNode)value;
-        VirtualFile file = (VirtualFile)node.getUserObject();
+        final Object userObject = node.getUserObject();
+        VirtualFile file;
+        if (userObject instanceof SuggestedChildRootInfo) {
+          file = ((SuggestedChildRootInfo)userObject).getSuggestedRoot();
+        }
+        else if (userObject instanceof VirtualFile) {
+          file = (VirtualFile)userObject;
+        }
+        else {
+          return;
+        }
         String text;
         SimpleTextAttributes attributes;
         Icon icon;
@@ -158,7 +115,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
           icon = PlatformIcons.DIRECTORY_CLOSED_ICON;
         }
         else {
-          text = file == null ? "found files" : file.getPresentableUrl();
+          text = file.getPresentableUrl();
           if (text == null) {
             isValid = false;
           }
@@ -180,46 +137,20 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
     return tree;
   }
 
-  /**
-   * Create tree basing on baseRoot and detectedRoots
-   *
-   * @param detectedRoots a detected roots (map from base root to detected roots)
-   * @return a root node of the tree
-   */
-  private static CheckedTreeNode createTree(Map<VirtualFile, List<VirtualFile>> detectedRoots) {
+  private static CheckedTreeNode createTree(List<SuggestedChildRootInfo> suggestedRoots) {
     CheckedTreeNode root = new CheckedTreeNode(null);
-    for (Map.Entry<VirtualFile, List<VirtualFile>> e : detectedRoots.entrySet()) {
-      root.add(createTreeNode(e.getKey(), e.getValue()));
+    Map<VirtualFile, CheckedTreeNode> rootCandidateNodes = new HashMap<VirtualFile, CheckedTreeNode>();
+    for (SuggestedChildRootInfo rootInfo : suggestedRoots) {
+      final VirtualFile rootCandidate = rootInfo.getRootCandidate();
+      CheckedTreeNode parent = rootCandidateNodes.get(rootCandidate);
+      if (parent == null) {
+        parent = new CheckedTreeNode(rootCandidate);
+        rootCandidateNodes.put(rootCandidate, parent);
+        root.add(parent);
+      }
+      parent.add(new CheckedTreeNode(rootInfo));
     }
     return root;
-  }
-
-  /**
-   * Create tree basing on baseRoot and detectedRoots
-   *
-   * @param baseRoot      a base root
-   * @param detectedRoots a detected roots
-   * @return a root node of the tree
-   */
-  private static CheckedTreeNode createTree(final VirtualFile baseRoot, final List<VirtualFile> detectedRoots) {
-    CheckedTreeNode root = new CheckedTreeNode(null);
-    root.add(createTreeNode(baseRoot, detectedRoots));
-    return root;
-  }
-
-  /**
-   * Create tree node from baseRoot and detectedRoots
-   *
-   * @param baseRoot      a base root
-   * @param detectedRoots a detected roots
-   * @return a root node for the base root
-   */
-  private static CheckedTreeNode createTreeNode(final VirtualFile baseRoot, final List<VirtualFile> detectedRoots) {
-    CheckedTreeNode node = new CheckedTreeNode(baseRoot);
-    for (VirtualFile f : detectedRoots) {
-      node.add(new CheckedTreeNode(f));
-    }
-    return node;
   }
 
   @Override
@@ -234,21 +165,8 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
     return myPane;
   }
 
-  /**
-   * @return roots that has been chosen using this dialog
-   */
-  public List<VirtualFile> getChosenRoots() {
-    ArrayList<VirtualFile> rc = new ArrayList<VirtualFile>();
-    for (Enumeration be = myRootNode.children(); be.hasMoreElements();) {
-      CheckedTreeNode baseFileNode = (CheckedTreeNode)be.nextElement();
-      for (Enumeration de = baseFileNode.children(); de.hasMoreElements();) {
-        CheckedTreeNode dirNode = (CheckedTreeNode)de.nextElement();
-        if (dirNode.isChecked()) {
-          rc.add((VirtualFile)dirNode.getUserObject());
-        }
-      }
-    }
-    return rc;
+  public SuggestedChildRootInfo[] getChosenRoots() {
+    return myTree.getCheckedNodes(SuggestedChildRootInfo.class, null);
   }
 
   @NonNls

@@ -103,6 +103,9 @@
 
     <annotator language="XML" implementationClass="org.jetbrains.idea.maven.dom.annotator.MavenDomGutterAnnotator"/>
     <virtualFileSystem key="maven-properties" implementationClass="org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem"/>
+
+    <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.execution.MavenRunner"/>
   </extensions>
 
   <application-components>
@@ -113,15 +116,8 @@
 
   <project-components>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.idea.maven.project.MavenProjectsManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.execution.MavenRunner</implementation-class>
-      <option name="workspace" value="true"/>
+      <loadForDefaultProject/>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.indices.MavenProjectIndicesManager</implementation-class>

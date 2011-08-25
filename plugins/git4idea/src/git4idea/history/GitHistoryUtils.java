@@ -83,6 +83,8 @@ public class GitHistoryUtils {
     h.addParameters("-n1", parser.getPretty());
     if (branch != null && !branch.isEmpty()) {
       h.addParameters(branch);
+    } else {
+      h.addParameters("--all");
     }
     h.endOptions();
     h.addRelativePaths(filePath);
@@ -105,6 +107,8 @@ public class GitHistoryUtils {
     h.addParameters("-n1", parser.getPretty());
     if (branch != null && !branch.isEmpty()) {
       h.addParameters(branch);
+    } else {
+      h.addParameters("--all");
     }
     h.endOptions();
     h.addRelativePaths(filePath);

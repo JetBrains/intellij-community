@@ -37,6 +37,26 @@ public abstract class AbstractGradleDependency implements GradleDependency, Seri
   }
 
   @Override
+  public int hashCode() {
+    int result = myScope.hashCode();
+    result = 31 * result + (myExported ? 1 : 0);
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    AbstractGradleDependency that = (AbstractGradleDependency)o;
+
+    if (myExported != that.myExported) return false;
+    if (myScope != that.myScope) return false;
+
+    return true;
+  }
+
+  @Override
   public String toString() {
     return "scope: " + getScope() + ", exported: " + isExported();
   }

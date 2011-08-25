@@ -353,6 +353,8 @@ public class RedundantCastUtil {
             //branches need to be of the same type
             if (!Comparing.equal(operand.getType(), ((PsiConditionalExpression)parent).getType())) return;
           }
+        } else if (parent instanceof PsiSynchronizedStatement && (expr instanceof PsiExpression && ((PsiExpression)expr).getType() instanceof PsiPrimitiveType)) {
+          return;
         }
         processAlreadyHasTypeCast(typeCast);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ public class PServerCvsSettings extends CvsConnectionSettings {
 
   public PServerCvsSettings(CvsRootConfiguration cvsRootConfiguration) {
     super(cvsRootConfiguration);
-    PORT = CvsConnectionUtil.DEFAULT_PSERVER_PORT;
   }
 
   protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
@@ -49,7 +48,7 @@ public class PServerCvsSettings extends CvsConnectionSettings {
   }
 
   public int getDefaultPort() {
-    return CvsConnectionUtil.DEFAULT_PSERVER_PORT;
+    return 2401;
   }
 
   public CvsLoginWorker getLoginWorker(ModalityContext executor, Project project) {

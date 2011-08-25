@@ -1,12 +1,13 @@
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -194,7 +195,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  private static class MyNavigationItem implements NavigationItem, ItemPresentation {
+  private static class MyNavigationItem implements PsiElementNavigationItem, ItemPresentation {
     private final NavigationItem myItem;
     private final ItemPresentation myPresentation;
 
@@ -223,7 +224,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
 
     @Nullable
     public TextAttributesKey getTextAttributesKey() {
-      return myPresentation.getTextAttributesKey();
+      return myPresentation instanceof ColoredItemPresentation ? ((ColoredItemPresentation) myPresentation).getTextAttributesKey() : null;
     }
 
     public String getName() {
@@ -234,8 +235,9 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       return myPresentation != null ? this : null;
     }
 
-    public FileStatus getFileStatus() {
-      return myItem.getFileStatus();
+    @Override
+    public PsiElement getTargetElement() {
+      return (PsiElement) myItem;
     }
 
     public void navigate(boolean requestFocus) {
@@ -256,7 +258,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
         final PsiMetaData data = ((PsiMetaOwner)item).getMetaData();
         if (data instanceof PsiPresentableMetaData) {
           final PsiPresentableMetaData metaData = (PsiPresentableMetaData)data;
-          presentation = new ItemPresentation() {
+          presentation = new ColoredItemPresentation() {
             public String getPresentableText() {
               return metaData.getName();
             }
@@ -272,9 +274,10 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
             }
 
             @Nullable
+            @Override
             public TextAttributesKey getTextAttributesKey() {
               final ItemPresentation p = item.getPresentation();
-              return p != null ? p.getTextAttributesKey() : null;
+              return p instanceof ColoredItemPresentation ? ((ColoredItemPresentation) p).getTextAttributesKey() : null;
             }
           };
         } else {

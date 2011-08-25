@@ -16,23 +16,15 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.formatting.FormatterEx;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.*;
 import com.intellij.openapi.command.AbnormalCommandTerminationException;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -306,8 +298,8 @@ public class CodeEditUtil {
   }
 
   private static void markToReformatBeforeOrInsertWhitespace(final ASTNode left, @NotNull final ASTNode right) {
-    final Language leftLang = left != null ? PsiUtilBase.getNotAnyLanguage(left) : null;
-    final Language rightLang = PsiUtilBase.getNotAnyLanguage(right);
+    final Language leftLang = left != null ? PsiUtilCore.getNotAnyLanguage(left) : null;
+    final Language rightLang = PsiUtilCore.getNotAnyLanguage(right);
 
     ASTNode generatedWhitespace = null;
     if (leftLang != null && leftLang.isKindOf(rightLang)) {
@@ -336,55 +328,6 @@ public class CodeEditUtil {
     int currentIndex = -1;
     while((currentIndex = text.indexOf('\n', currentIndex + 1)) >= 0) result++;
     return result;
-  }
-
-  @Nullable
-  public static String getStringWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, PsiFile file) {
-    final FormattingModelBuilder modelBuilder = LanguageFormatting.INSTANCE.forContext(file);
-    if (modelBuilder == null) {
-      final LeafElement leafElement = TreeUtil.nextLeaf((TreeElement)first, null);
-      if (leafElement != second) {
-        return leafElement.getText();
-      }
-      else {
-        return null;
-      }
-    }
-    else {
-      final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
-      return getWhiteSpaceBeforeToken(second, file, true).generateNewWhiteSpace(settings.getIndentOptions(file.getFileType()));
-    }
-
-  }
-
-  private static IndentInfo getWhiteSpaceBeforeToken(@NotNull final ASTNode tokenNode, final PsiFile file, final boolean mayChangeLineFeeds) {
-    final Project project = file.getProject();
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    final int tokenStartOffset = tokenNode.getStartOffset();
-
-    final boolean oldValue = settings.XML_KEEP_LINE_BREAKS;
-    final int oldKeepBlankLines = settings.XML_KEEP_BLANK_LINES;
-    settings.XML_KEEP_BLANK_LINES = 0;
-    try {
-      final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-      final PsiElement element = file.findElementAt(tokenStartOffset);
-
-      if (builder != null && LanguageFormatting.INSTANCE.forContext(element) != null) {
-        final TextRange textRange = element.getTextRange();
-        final FormattingModel model = builder.createModel(file, settings);
-        return FormatterEx.getInstanceEx().getWhiteSpaceBefore(model.getDocumentModel(), model.getRootBlock(), settings,
-                                                               settings.getIndentOptions(file.getFileType()), textRange,
-                                                               mayChangeLineFeeds);
-      }
-      else {
-        return new IndentInfo(0, 0, 0);
-      }
-
-    }
-    finally {
-      settings.XML_KEEP_LINE_BREAKS = oldValue;
-      settings.XML_KEEP_BLANK_LINES = oldKeepBlankLines;
-    }
   }
 
   public static boolean isNodeGenerated(final ASTNode node) {

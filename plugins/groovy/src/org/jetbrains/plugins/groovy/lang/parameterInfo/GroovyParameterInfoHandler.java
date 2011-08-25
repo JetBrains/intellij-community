@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -116,12 +117,13 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     return null;
   }
 
+  @SuppressWarnings("unchecked")
   public void showParameterInfo(@NotNull GroovyPsiElement place, CreateParameterInfoContext context) {
     GroovyResolveResult[] variants = ResolveUtil.getCallVariants(place);
     final Condition<GroovyResolveResult> condition = new Condition<GroovyResolveResult>() {
       public boolean value(GroovyResolveResult groovyResolveResult) {
         final PsiElement element = groovyResolveResult.getElement();
-        return element instanceof PsiMethod ||
+        return element instanceof PsiMethod && !groovyResolveResult.isInvokedOnProperty() ||
                element instanceof GrVariable && ((GrVariable)element).getTypeGroovy() instanceof GrClosureType;
       }
     };
@@ -129,7 +131,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     final PsiElement parent = place.getParent();
     if (parent instanceof GrMethodCall) {
       final GrExpression invoked = ((GrMethodCall)parent).getInvokedExpression();
-      if (!(invoked instanceof GrReferenceExpression && ((GrReferenceExpression)invoked).resolve() instanceof PsiMethod)) {
+      if (!(invoked instanceof GrReferenceExpression &&
+            ((GrReferenceExpression)invoked).advancedResolve() instanceof PsiMethod &&
+            !((GrReferenceExpression)invoked).advancedResolve().isInvokedOnProperty())) {
         final PsiType type = invoked.getType();
         if (type instanceof GrClosureType) {
           elementToShow.add(type);
@@ -172,7 +176,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
           for (int j = 0; j < parameters.length; j++) {
             parameterTypes[j] = parameters[j].getType();
           }
-          if (ResolveUtil.isInUseScope(resolveResult)) {
+          if (GdkMethodUtil.isInUseScope(resolveResult)) {
             parameterTypes = ArrayUtil.remove(parameterTypes, 0);
           }
           argTypes = PsiUtil.getArgumentTypes(place, false);
@@ -342,7 +346,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
 
       PsiParameter[] parms = method.getParameterList().getParameters();
       final GroovyResolveResult resolveResult = (GroovyResolveResult)o;
-      if (ResolveUtil.isInUseScope(resolveResult)) {
+      if (GdkMethodUtil.isInUseScope(resolveResult)) {
         parms = ArrayUtil.remove(parms, 0);
       }
       int numParams = parms.length;

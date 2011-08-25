@@ -119,18 +119,40 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     }
     PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, PsiWhileStatement.class);
     if (statement instanceof PsiIfStatement) {
-      PsiExpression condition = ((PsiIfStatement)statement).getCondition();
-      if (condition instanceof PsiInstanceOfExpression) {
-        if (atSameLine(condition, editor) || insideEmptyBlockOfStatement(statement, element)) {
-          return (PsiInstanceOfExpression)condition;
-        }
-      }
+      final PsiExpression condition = ((PsiIfStatement)statement).getCondition();
+      return retrieveInstanceOfFromCondition(editor, element, statement, condition);
     }
     else if (statement instanceof PsiWhileStatement) {
-      PsiExpression condition = ((PsiWhileStatement)statement).getCondition();
-      if (condition instanceof PsiInstanceOfExpression) {
-        if (atSameLine(condition, editor) || insideEmptyBlockOfStatement(statement, element)) {
-          return (PsiInstanceOfExpression)condition;
+      final PsiExpression condition = ((PsiWhileStatement)statement).getCondition();
+      return retrieveInstanceOfFromCondition(editor, element, statement, condition);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiInstanceOfExpression retrieveInstanceOfFromCondition(Editor editor,
+                                                                         PsiElement element,
+                                                                         PsiStatement statement,
+                                                                         PsiExpression condition) {
+    if (condition instanceof PsiInstanceOfExpression) {
+      if (atSameLine(condition, editor) || insideEmptyBlockOfStatement(statement, element)) {
+        return (PsiInstanceOfExpression)condition;
+      }
+    } else if (condition instanceof PsiPolyadicExpression) {
+      final PsiExpression[] operands = ((PsiPolyadicExpression)condition).getOperands();
+      if (((PsiPolyadicExpression)condition).getOperationTokenType() ==  JavaTokenType.ANDAND) {
+        PsiInstanceOfExpression expr = null;
+        for (PsiExpression operand : operands) {
+          if (operand instanceof PsiInstanceOfExpression) {
+            if (expr != null) {
+              expr = null;
+              break;
+            }
+            expr = (PsiInstanceOfExpression)operand;
+          }
+        }
+        if (expr != null && insideEmptyBlockOfStatement(statement, element)) {
+          return expr;
         }
       }
     }

@@ -16,15 +16,12 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author peter
@@ -62,9 +59,6 @@ public abstract class PsiManagerEx extends PsiManager {
 
   @NotNull
   public abstract CacheManager getCacheManager();
-
-  @NotNull
-  public abstract List<? extends LanguageInjector> getLanguageInjectors();
 
   public abstract void beforeChange(boolean isPhysical);
 

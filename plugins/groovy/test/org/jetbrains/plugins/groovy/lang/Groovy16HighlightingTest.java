@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -29,7 +30,7 @@ public class Groovy16HighlightingTest extends LightCodeInsightFixtureTestCase {
     return TestUtils.getTestDataPath() + "highlighting/";
   }
 
-  private void doTest(LocalInspectionTool... tools) throws Exception {
+  private void doTest(LocalInspectionTool... tools) {
     myFixture.enableInspections(tools);
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
   }
@@ -37,4 +38,7 @@ public class Groovy16HighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testInnerEnum() throws Exception {doTest();}
   public void testSuperWithNotEnclosingClass() throws Throwable {doTest();}
   public void testThisWithWrongQualifier() throws Throwable {doTest();}
+
+  public void testImplicitEnumCoercion1_6() {
+    doTest(new GroovyAssignabilityCheckInspection());}
 }

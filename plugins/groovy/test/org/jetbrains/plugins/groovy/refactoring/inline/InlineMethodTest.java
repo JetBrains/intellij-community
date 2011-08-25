@@ -115,6 +115,10 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
       }
     });
   }
+  
+  public void testInlineNamedArgs() {
+    doTest();
+  }
 
   protected void doTest() {
     doTest(new GroovyInlineHandler());

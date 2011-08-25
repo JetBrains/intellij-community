@@ -269,10 +269,6 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
     return canNavigate();
   }
 
-  public FileStatus getFileStatus() {
-    return SharedImplUtil.getFileStatus(this);
-  }
-
   @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();

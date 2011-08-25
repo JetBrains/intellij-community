@@ -17,28 +17,23 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 public class GrLightModifierList extends LightElement implements GrModifierList {
 
-  public static final String[] PUBLIC_STATIC = {PsiModifier.PUBLIC, PsiModifier.STATIC};
-  public static final String[] PRIVATE_STATIC_FINAL = {PsiModifier.PRIVATE, PsiModifier.STATIC, PsiModifier.FINAL};
-  public static final String[] PRIVATE = {PsiModifier.PRIVATE};
-
-  private String[] myModifiers;
+  private int myModifiers;
 
   private final PsiElement myParent;
 
-  public GrLightModifierList(@NotNull PsiElement parent, @NotNull String[] modifiers) {
+  public GrLightModifierList(@NotNull PsiElement parent) {
     super(parent.getManager(), parent.getLanguage());
-    myModifiers = modifiers;
     myParent = parent;
   }
 
@@ -48,15 +43,25 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   }
 
   public void addModifier(String modifier) {
-    myModifiers = ArrayUtil.append(myModifiers, modifier, ArrayUtil.STRING_ARRAY_FACTORY);
+    int code = GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
+    assert code != 0;
+    myModifiers |= code;
   }
 
-  public void setModifiers(String[] modifiers) {
+  public void addModifier(int modifier) {
+    myModifiers |= modifier;
+  }
+
+  public void setModifiers(int modifiers) {
     myModifiers = modifiers;
   }
 
-  public void clearModifiers() {
-    myModifiers = ArrayUtil.EMPTY_STRING_ARRAY;
+  public void setModifiers(String[] modifiers) {
+    myModifiers = 0;
+
+    for (String modifier : modifiers) {
+      addModifier(modifier);
+    }
   }
 
   public boolean hasModifierProperty(@NotNull String name){
@@ -64,7 +69,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   }
 
   public boolean hasExplicitModifier(@NotNull String name) {
-    return ArrayUtil.contains(name, myModifiers);
+    return (myModifiers & GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(name)) != 0;
   }
 
   public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
@@ -114,10 +119,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
 
   @Override
   public boolean hasExplicitVisibilityModifiers() {
-    for (String modifier : myModifiers) {
-      if (modifier.equals(PsiModifier.PRIVATE) || modifier.equals(PsiModifier.PUBLIC) || modifier.equals(PsiModifier.PROTECTED)) return true;
-    }
-    return false;
+    return (myModifiers & (GrModifierFlags.PUBLIC_MASK | GrModifierFlags.PRIVATE_MASK | GrModifierFlags.PROTECTED_MASK)) != 0;
   }
 
   @Override

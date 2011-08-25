@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
 
@@ -127,7 +127,7 @@ class Aaa {
     new Aaa(<caret>)
   }
 }
-""", false)
+""", true)
   }
 
   public void testHasHashMapConstructor() {
@@ -145,7 +145,7 @@ class Aaa {
     new Aaa(<caret>)
   }
 }
-""", false)
+""", true)
   }
 
   public void testMapNotFirstConstructor() {
@@ -215,7 +215,7 @@ class Aaa {
     new Aaa(<caret>)
   }
 }
-""", false)
+""", true)
   }
 
   public void testAlreadyHasNonMapParameter() {

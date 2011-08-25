@@ -250,7 +250,8 @@ public class ProjectSdksModel implements SdkModel {
     doAdd((ProjectJdkImpl) sdk, null);
   }
 
-  private void doAdd(ProjectJdkImpl newSdk, @Nullable Consumer<Sdk> updateTree) {
+  public void doAdd(ProjectJdkImpl newSdk, @Nullable Consumer<Sdk> updateTree) {
+    myModified = true;
     myProjectSdks.put(newSdk, newSdk);
     if (updateTree != null) {
       updateTree.consume(newSdk);

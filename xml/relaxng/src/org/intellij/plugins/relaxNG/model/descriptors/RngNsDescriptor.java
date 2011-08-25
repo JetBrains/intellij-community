@@ -27,10 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -106,16 +103,18 @@ public class RngNsDescriptor implements XmlNSDescriptor, Validator {
   }
 
   private XmlElementDescriptor findRootDescriptor(final XmlTag tag) {
-    return tag.getManager().getCachedValuesManager().getParameterizedCachedValue(tag, ROOT_KEY, new ParameterizedCachedValueProvider<XmlElementDescriptor, RngNsDescriptor>() {
-      public CachedValueProvider.Result<XmlElementDescriptor> compute(RngNsDescriptor o) {
-        final XmlElementDescriptor descr = o.findRootDescriptorInner(tag);
-        if (descr != null) {
-          return CachedValueProvider.Result.create(descr, tag, descr.getDependences(), o.getDependences());
-        } else {
-          return CachedValueProvider.Result.create(null, tag, o.getDependences());
-        }
-      }
-    }, false, this);
+    return CachedValuesManager.getManager(tag.getProject())
+        .getParameterizedCachedValue(tag, ROOT_KEY, new ParameterizedCachedValueProvider<XmlElementDescriptor, RngNsDescriptor>() {
+          public CachedValueProvider.Result<XmlElementDescriptor> compute(RngNsDescriptor o) {
+            final XmlElementDescriptor descr = o.findRootDescriptorInner(tag);
+            if (descr != null) {
+              return CachedValueProvider.Result.create(descr, tag, descr.getDependences(), o.getDependences());
+            }
+            else {
+              return CachedValueProvider.Result.create(null, tag, o.getDependences());
+            }
+          }
+        }, false, this);
   }
 
   private XmlElementDescriptor findRootDescriptorInner(XmlTag tag) {

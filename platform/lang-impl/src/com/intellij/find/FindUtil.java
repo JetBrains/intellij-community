@@ -698,6 +698,7 @@ public class FindUtil {
   public static void processNotFound(final Editor editor, String stringToFind, FindModel model, Project project) {
     String message = FindBundle.message("find.search.string.not.found.message", stringToFind);
 
+    short position = HintManager.UNDER;
     if (model.isGlobal()) {
       final FindModel newModel = (FindModel)model.clone();
       FindManager findManager = FindManager.getInstance(project);
@@ -737,6 +738,7 @@ public class FindUtil {
             message = FindBundle.message("find.search.again.from.bottom.action.message", message);
           }
           editor.putUserData(KEY, Direction.UP);
+          position = HintManager.ABOVE;
         }
       }
       CaretListener listener = new CaretListener() {
@@ -749,7 +751,7 @@ public class FindUtil {
     }
     JComponent component = HintUtil.createInformationLabel(JDOMUtil.escapeText(message, false, false));
     final LightweightHint hint = new LightweightHint(component);
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, position,
                                HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
                                0, false);
   }

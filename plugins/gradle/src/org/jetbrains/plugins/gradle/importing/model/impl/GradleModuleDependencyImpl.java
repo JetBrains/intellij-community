@@ -33,6 +33,20 @@ public class GradleModuleDependencyImpl extends AbstractGradleDependency impleme
   }
 
   @Override
+  public int hashCode() {
+    return myModule.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GradleModuleDependencyImpl that = (GradleModuleDependencyImpl)o;
+    return myModule.equals(that.myModule);
+  }
+
+  @Override
   public String toString() {
     return super.toString() + ", dependency module: " + getModule();
   }

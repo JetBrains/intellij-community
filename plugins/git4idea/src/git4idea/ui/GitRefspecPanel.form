@@ -7,7 +7,7 @@
     </constraints>
     <properties/>
     <clientProperties>
-      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$SimpleWithoutIndent"/>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
     </clientProperties>
     <border type="none" title-resource-bundle="git4idea/i18n/GitBundle" title-key="refspec.title" title-position="2">
       <font/>

@@ -1,14 +1,13 @@
 package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.model.GradleDependency;
-import org.jetbrains.plugins.gradle.importing.model.GradleEntity;
-import org.jetbrains.plugins.gradle.importing.model.GradleModule;
-import org.jetbrains.plugins.gradle.importing.model.GradleProject;
+import org.jetbrains.plugins.gradle.importing.model.*;
 import org.jetbrains.plugins.gradle.importing.wizard.AbstractImportFromGradleWizardStep;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
@@ -19,8 +18,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * Is assumed to address the following concerns:
@@ -40,11 +39,16 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
 
   private final GradleProjectStructureFactory myFactory            = GradleProjectStructureFactory.INSTANCE;
   private final JPanel                        myComponent          = new JPanel(new GridLayout(1, 2));
-  private final DefaultTreeModel              myTreeModel          = new DefaultTreeModel(new DefaultMutableTreeNode("unnamed"));
+  private final DefaultTreeModel              myTreeModel          =
+    new DefaultTreeModel(new DefaultMutableTreeNode("unnamed"));
   private final Tree                          myTree               = new Tree(myTreeModel);
   private final CardLayout                    mySettingsCardLayout = new CardLayout();
   private final JPanel                        mySettingsPanel      = new JPanel(mySettingsCardLayout);
-  private final Map<Object, String>           myCards              = new HashMap<Object, String>();
+  
+  private final Map<GradleProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>> myCards =
+    new HashMap<GradleProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>>();
+  
+  private boolean myOnValidateAttempt;
 
   public GradleAdjustImportSettingsStep(WizardContext context) {
     super(context);
@@ -53,13 +57,45 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     myTree.setShowsRootHandles(true);
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      private boolean myIgnore;
+      @SuppressWarnings("SuspiciousMethodCalls")
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        Object node = myTree.getLastSelectedPathComponent();
-        String cardName = myCards.get(node);
-        if (cardName == null) {
-          cardName = EMPTY_CARD_NAME;
+        if (myIgnore) {
+          return;
         }
+
+        TreePath oldPath = e.getOldLeadSelectionPath();
+        if (oldPath == null) {
+          onNodeChange();
+          return;
+        }
+        Object oldNode = oldPath.getLastPathComponent();
+        if (oldNode == null) {
+          onNodeChange();
+          return;
+        } 
+        
+        Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(oldNode);
+        if (pair == null || pair.second.validate()) {
+          onNodeChange();
+          return;
+        }
+        
+        myIgnore = true;
+        try {
+          myTree.getSelectionModel().setSelectionPath(oldPath);
+        }
+        finally {
+          myIgnore = false;
+        }
+      }
+
+      @SuppressWarnings("SuspiciousMethodCalls")
+      private void onNodeChange() {
+        Object node = myTree.getLastSelectedPathComponent();
+        Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(node);
+        String cardName = pair == null ? EMPTY_CARD_NAME : pair.first;
         mySettingsCardLayout.show(mySettingsPanel, cardName);
       }
     });
@@ -103,10 +139,6 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     myComponent.add(rightPanel);
   }
 
-// this is the first
-//
-//   }
-
   @Override
   public JComponent getComponent() {
     return myComponent;
@@ -114,10 +146,17 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
 
   @Override
   public void updateStep() {
+    if (myOnValidateAttempt) {
+      // We assume that this method is called when project validation triggered by end-user fails (he or she pressed 'Next'/'Finish' 
+      // button at the wizard and current state is invalid). So, there is no need to rebuild the model then.
+      myOnValidateAttempt = false;
+      return;
+    }
+
     myCards.clear();
     mySettingsPanel.removeAll();
     mySettingsPanel.add(new JPanel(), EMPTY_CARD_NAME);
-    
+
     GradleProject project = getBuilder().getGradleProject();
     if (project == null) {
       throw new IllegalStateException(String.format(
@@ -126,36 +165,105 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       ));
     }
 
+    Map<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>> entity2nodes
+      = new HashMap<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>>();
     int counter = 0;
-    DefaultMutableTreeNode root = buildNode(project, counter++);
-    for (GradleModule module : project.getModules()) {
-      DefaultMutableTreeNode moduleNode = buildNode(module, counter++);
+    DefaultMutableTreeNode root = buildNode(project, entity2nodes, counter++);
+
+    List<GradleModule> modules = new ArrayList<GradleModule>(project.getModules());
+    Collections.sort(modules, Named.COMPARATOR);
+
+    for (GradleModule module : modules) {
+      DefaultMutableTreeNode moduleNode = buildNode(module, entity2nodes, counter++);
       root.add(moduleNode);
       Collection<GradleDependency> dependencies = module.getDependencies();
       if (!dependencies.isEmpty()) {
         DefaultMutableTreeNode dependenciesNode
           = new DefaultMutableTreeNode(GradleBundle.message("gradle.import.structure.tree.node.dependencies"));
+        final List<GradleModuleDependency> moduleDependencies = new ArrayList<GradleModuleDependency>();
+        final List<GradleLibraryDependency> libraryDependencies = new ArrayList<GradleLibraryDependency>();
+        GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
+          @Override
+          public void visit(@NotNull GradleModuleDependency dependency) {
+            moduleDependencies.add(dependency);
+          }
+
+          @Override
+          public void visit(@NotNull GradleLibraryDependency dependency) {
+            libraryDependencies.add(dependency);
+          }
+        };
         for (GradleDependency dependency : dependencies) {
-          dependenciesNode.add(buildNode(dependency, counter++));
+          dependency.invite(visitor);
+        }
+        Collections.sort(moduleDependencies, GradleModuleDependency.COMPARATOR);
+        Collections.sort(libraryDependencies, Named.COMPARATOR);
+        for (GradleModuleDependency dependency : moduleDependencies) {
+          dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
+        }
+        for (GradleLibraryDependency dependency : libraryDependencies) {
+          dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
         }
         moduleNode.add(dependenciesNode);
-      } 
+      }
     }
     myTreeModel.setRoot(root);
     myTree.setSelectionPath(new TreePath(root));
   }
 
-  private <T extends GradleEntity> DefaultMutableTreeNode buildNode(@NotNull T entity, int counter) {
-    DefaultMutableTreeNode result = new DefaultMutableTreeNode(myFactory.buildDescriptor(entity));
-    GradleProjectStructureNodeSettings settings = myFactory.buildSettings(entity);
-    String cardName = String.valueOf(counter);
-    myCards.put(result, cardName);
-    mySettingsPanel.add(settings.getComponent(), cardName);
+  private <T extends GradleEntity> DefaultMutableTreeNode buildNode(
+    @NotNull T entity, @NotNull Map<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>> processed, int counter)
+  {
+    // We build tree node, its settings control and map them altogether. The only trick here is that nodes can reuse the same
+    // settings control (e.g. more than one node may have the same library as a dependency, so, library dependency node for
+    // every control will use the same settings control).
+    GradleProjectStructureNode result = new GradleProjectStructureNode(myFactory.buildDescriptor(entity));
+    Pair<String, Collection<GradleProjectStructureNode>> pair = processed.get(entity);
+    if (pair == null) {
+      String cardName = String.valueOf(counter);
+      List<GradleProjectStructureNode> nodes = new ArrayList<GradleProjectStructureNode>();
+      nodes.add(result);
+      processed.put(entity, new Pair<String, Collection<GradleProjectStructureNode>>(cardName, nodes));
+      GradleProjectStructureNodeSettings settings = myFactory.buildSettings(entity, myTreeModel, nodes);
+      myCards.put(result, new Pair<String, GradleProjectStructureNodeSettings>(cardName, settings));
+      mySettingsPanel.add(settings.getComponent(), cardName);
+    } 
+    else {
+      pair.second.add(result);
+      for (GradleProjectStructureNode node : pair.second) {
+        Pair<String, GradleProjectStructureNodeSettings> settingsPair = myCards.get(node);
+        if (settingsPair != null) {
+          myCards.put(result, settingsPair);
+          break;
+        } 
+      }
+    }
     return result;
   }
-  
+
+  @SuppressWarnings("SuspiciousMethodCalls")
+  @Override
+  public boolean validate() throws ConfigurationException {
+    // Validate current card.
+    Object node = myTree.getLastSelectedPathComponent();
+    Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(node);
+    if (pair != null && !pair.second.validate()) {
+      myOnValidateAttempt = true;
+      return false;
+    }
+
+    for (Map.Entry<GradleProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>> entry : myCards.entrySet()) {
+      if (!entry.getValue().second.validate()) {
+        myTree.getSelectionModel().setSelectionPath(new TreePath(entry.getKey().getPath()));
+        //mySettingsCardLayout.show(mySettingsPanel, entry.getValue().first);
+        myOnValidateAttempt = true;
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Override
   public void updateDataModel() {
-    // TODO den implement 
   }
 }

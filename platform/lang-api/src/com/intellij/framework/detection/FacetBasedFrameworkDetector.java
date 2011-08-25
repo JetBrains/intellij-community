@@ -15,12 +15,8 @@
  */
 package com.intellij.framework.detection;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.FacetType;
+import com.intellij.facet.*;
 import com.intellij.framework.FrameworkType;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +29,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * Implementation of {@link FrameworkDetector} for frameworks configured via facets
+ *
  * @author nik
  */
 public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends FacetConfiguration> extends FrameworkDetector {
@@ -42,6 +40,12 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
 
   public abstract FacetType<F, C> getFacetType();
 
+  /**
+   * Override this method if several facets of this type are allowed in a single module
+   * @param files files accepted by detector's filter
+   * @param existentFacetConfigurations configuration of facets of this type already added or detected in the module
+   * @return configurations with corresponding files
+   */
   @NotNull
   public List<Pair<C,Collection<VirtualFile>>> createConfigurations(@NotNull Collection<VirtualFile> files,
                                                                     @NotNull Collection<C> existentFacetConfigurations) {
@@ -52,6 +56,11 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
     return Collections.emptyList();
   }
 
+  /**
+   * Override this method if only one facet of this type are allowed in a single module
+   * @param files files accepted by detector's filter
+   * @return configuration for detected facet
+   */
   @Nullable
   protected C createConfiguration(Collection<VirtualFile> files) {
     return getFacetType().createDefaultConfiguration();
@@ -71,13 +80,17 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
     return new FrameworkType(getFacetType().getStringId(), getFacetType().getPresentableName(), getFacetType().getIcon());
   }
 
-  public boolean isSuitableUnderlyingFacetConfiguration(FacetConfiguration underlying, C configuration, Set<VirtualFile> files) {
-    return true;
+  public static FrameworkType createFrameworkType(final FacetType<?, ?> facetType) {
+    return new FrameworkType(facetType.getStringId(), facetType.getPresentableName(), facetType.getIcon());
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
-    return StdFileTypes.XML;
+  public FrameworkType getUnderlyingFrameworkType() {
+    final FacetTypeId<?> underlyingTypeId = getFacetType().getUnderlyingFacetType();
+    return underlyingTypeId != null ? createFrameworkType(FacetTypeRegistry.getInstance().findFacetType(underlyingTypeId)) : null;
+  }
+
+  public boolean isSuitableUnderlyingFacetConfiguration(FacetConfiguration underlying, C configuration, Set<VirtualFile> files) {
+    return true;
   }
 }

@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -60,7 +61,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
     if (resolve != null) {
       if (!(resolve instanceof PsiMethod)) return;
       PsiMethod method = (PsiMethod)resolve;
-      if (method.getParameterList().getParametersCount() > 0 || !method.isConstructor()) return;
+      if (!method.isConstructor()) return;
     }
 
     GrNewExpression newCall = (GrNewExpression)call;
@@ -79,7 +80,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
 
       PsiClass aClass = (PsiClass)element;
 
-      if (!isClassHasDefaultConstructorWithMap(aClass)) continue;
+      if (!isClassHasConstructorWithMap(aClass)) continue;
 
       PsiClassType classType = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
 
@@ -100,41 +101,26 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
     }
   }
 
-  private static boolean isClassHasDefaultConstructorWithMap(PsiClass aClass) {
+  private static boolean isClassHasConstructorWithMap(PsiClass aClass) {
     PsiMethod[] constructors = aClass.getConstructors();
 
     if (constructors.length == 0) return true;
-
-    boolean hasDefaultConstructor = false;
 
     for (PsiMethod constructor : constructors) {
       PsiParameterList parameterList = constructor.getParameterList();
 
       PsiParameter[] parameters = parameterList.getParameters();
 
-      if (parameters.length == 0) {
-        hasDefaultConstructor = true;
-      }
-      else {
-        if (InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_MAP)) {
-          boolean hasRequiredParameter = false;
+      if (parameters.length == 0) return true;
 
-          for (int i = 1; i < parameters.length; i++) {
-            PsiParameter parameter = parameters[i];
-            if (!(parameter instanceof GrParameter) || !((GrParameter)parameter).isOptional()) {
-              hasRequiredParameter = true;
-              break;
-            }
-          }
+      final PsiParameter first = parameters[0];
+      if (InheritanceUtil.isInheritor(first.getType(), CommonClassNames.JAVA_UTIL_MAP)) return true;
+      if (first instanceof GrParameter && ((GrParameter)first).getTypeGroovy() == null) return true;
 
-          if (!hasRequiredParameter) {
-            return false;
-          }
-        }
-      }
+      //if constructor has only optional parameters it can be used as default constructor with map args
+      if (!PsiUtil.isConstructorHasRequiredParameters(constructor)) return true;
     }
-
-    return hasDefaultConstructor;
+    return false;
   }
 
   private static class MyPsiScopeProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {

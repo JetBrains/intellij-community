@@ -28,6 +28,9 @@ import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import java.io.File;
 import java.util.*;
 
+/**
+ * Holds what working copies we have for URLs
+ */
 @State(
   name = "SvnBranchMapperManager",
   storages = {

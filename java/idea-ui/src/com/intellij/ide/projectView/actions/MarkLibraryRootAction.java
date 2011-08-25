@@ -21,6 +21,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.DefaultLibraryRootsComponentDescriptor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.RootDetectionUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -38,41 +41,57 @@ public class MarkLibraryRootAction extends AnAction {
     final Project project = getEventProject(e);
     if (project == null) return;
 
-    final List<VirtualFile> jars = getJarRoots(e);
+    final List<VirtualFile> jars = getRoots(e);
     if (jars.isEmpty()) return;
 
-    new CreateLibraryFromFilesDialog(project, jars).show();
+    final List<OrderRoot> roots = RootDetectionUtil.detectRoots(jars, null, project, new DefaultLibraryRootsComponentDescriptor().getRootDetectors(), true);
+    new CreateLibraryFromFilesDialog(project, roots).show();
   }
 
   @NotNull
-  private static List<VirtualFile> getJarRoots(AnActionEvent e) {
+  private static List<VirtualFile> getRoots(AnActionEvent e) {
     final Project project = getEventProject(e);
     final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (project == null || files == null || files.length == 0) return Collections.emptyList();
 
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    List<VirtualFile> archives = new ArrayList<VirtualFile>();
+    List<VirtualFile> roots = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
-      addJarRoot(archives, file, fileIndex);
       if (file.isDirectory()) {
-        for (VirtualFile child : file.getChildren()) {
-          addJarRoot(archives, child, fileIndex);
+        roots.add(file);
+      }
+      else {
+        final VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(file);
+        if (root != null) {
+          roots.add(root);
         }
       }
     }
-    return archives;
-  }
-
-  private static void addJarRoot(List<VirtualFile> archives, VirtualFile file, ProjectFileIndex index) {
-    final VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(file);
-    if (root != null && !index.isInLibraryClasses(root)) {
-      archives.add(root);
-    }
+    return roots;
   }
 
   @Override
   public void update(AnActionEvent e) {
-    boolean visible = !getJarRoots(e).isEmpty();
+    final Project project = getEventProject(e);
+    boolean visible = false;
+    if (project != null) {
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      for (VirtualFile root : getRoots(e)) {
+        if (!root.isInLocalFileSystem() && !fileIndex.isInLibraryClasses(root)) {
+          visible = true;
+          break;
+        }
+        if (root.isInLocalFileSystem() && root.isDirectory()) {
+          for (VirtualFile child : root.getChildren()) {
+            final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(child);
+            if (jarRoot != null && !fileIndex.isInLibraryClasses(child)) {
+              visible = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(visible);
   }

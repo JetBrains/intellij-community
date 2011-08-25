@@ -111,10 +111,15 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
   }
 
   private static boolean processReferencesInUIForms(Processor<PsiReference> processor,
-                                                   PsiEnumConstant enumConstant,
+                                                   final PsiEnumConstant enumConstant,
                                                    GlobalSearchScope scope, final LocalSearchScope filterScope) {
     PsiManagerImpl manager = (PsiManagerImpl)enumConstant.getManager();
-    String className = enumConstant.getName();
+    String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return enumConstant.getName();
+      }
+    });
     return className == null || processReferencesInUIFormsInner(className, enumConstant, processor, scope, manager, filterScope);
 
   }

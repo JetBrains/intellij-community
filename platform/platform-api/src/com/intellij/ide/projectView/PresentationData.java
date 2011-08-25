@@ -16,13 +16,14 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationWithSeparator;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
-import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Default implementation of the {@link ItemPresentation} interface.
  */
 
-public class PresentationData implements ItemPresentation, ComparableObject {
+public class PresentationData implements ColoredItemPresentation, ComparableObject {
 
   protected final CopyOnWriteArrayList<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createEmptyCOWList();
 
@@ -171,7 +172,9 @@ public class PresentationData implements ItemPresentation, ComparableObject {
     setOpenIcon(presentation.getIcon(true));
     setPresentableText(presentation.getPresentableText());
     setLocationString(presentation.getLocationString());
-    setAttributesKey(presentation.getTextAttributesKey());
+    if (presentation instanceof ColoredItemPresentation) {
+      setAttributesKey(((ColoredItemPresentation) presentation).getTextAttributesKey());
+    }
     setSeparatorAbove(presentation instanceof ItemPresentationWithSeparator);
   }
   
@@ -183,6 +186,7 @@ public class PresentationData implements ItemPresentation, ComparableObject {
     mySeparatorAbove = b;
   } 
 
+  @Override
   public TextAttributesKey getTextAttributesKey() {
     return myAttributesKey;
   }

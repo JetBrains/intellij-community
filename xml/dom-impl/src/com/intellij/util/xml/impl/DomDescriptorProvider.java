@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.PsiElement;
@@ -32,7 +33,9 @@ public class DomDescriptorProvider implements XmlElementDescriptorProvider {
 
   @Nullable
   public XmlElementDescriptor getDescriptor(final XmlTag tag) {
-    final DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
+    Project project = tag.getProject();
+    if (project.isDefault()) return null;
+    final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
     if (domElement != null) {
       final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
       if (definesXml != null) {

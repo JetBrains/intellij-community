@@ -75,7 +75,7 @@ public abstract class GroovyNamedArgumentProvider {
     GroovyResolveResult[] callVariants = call.getCallVariants(null);
 
     if (callVariants.length == 0) {
-      for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
+      for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
         namedArgumentProvider.getNamedArguments(call, null, argumentName, forCompletion, namedArguments);
       }
     }
@@ -87,14 +87,13 @@ public abstract class GroovyNamedArgumentProvider {
         if (element instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)element;
           PsiParameter[] parameters = method.getParameterList().getParameters();
-          if (!(parameters.length == 0 ? method.isConstructor() : canBeMap(parameters[0]))) {
-            continue;
-          }
 
-          collectVariantsFromSimpleDescriptors(namedArguments, method);
+          if (!method.isConstructor() && !canBeMap(parameters[0])) continue;
+
+          collectVariantsFromSimpleDescriptors(namedArguments, call, method);
         }
 
-        for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
+        for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
           namedArgumentProvider.getNamedArguments(call, element, argumentName, forCompletion, namedArguments);
         }
       }
@@ -103,13 +102,11 @@ public abstract class GroovyNamedArgumentProvider {
     return namedArguments;
   }
 
-  private static void collectVariantsFromSimpleDescriptors(Map<String, ArgumentDescriptor> res, PsiMethod method) {
-    PsiClass containingClass = method.getContainingClass();
-    if (containingClass != null) {
-      Map<String, ArgumentDescriptor> map =
-        SimpleGroovyNamedArgumentProvider.getMethodMap(containingClass.getQualifiedName(), method.getName());
-      if (map != null) {
-        res.putAll(map);
+  private static void collectVariantsFromSimpleDescriptors(Map<String, ArgumentDescriptor> res, @NotNull GrCall call, @NotNull PsiMethod method) {
+    for (GroovyMethodInfo methodInfo : GroovyMethodInfo.getInfos(method)) {
+      if (methodInfo.isProvideNamedArguments() && methodInfo.isApplicable(method)) {
+        methodInfo.addNamedArguments(res, call, method);
+        break;
       }
     }
   }
@@ -255,7 +252,7 @@ public abstract class GroovyNamedArgumentProvider {
     }
   }
 
-  protected static class TypeCondition extends ArgumentDescriptor {
+  public static class TypeCondition extends ArgumentDescriptor {
     private final PsiType myType;
 
     public TypeCondition(PsiType type, PsiElement navigationElement) {

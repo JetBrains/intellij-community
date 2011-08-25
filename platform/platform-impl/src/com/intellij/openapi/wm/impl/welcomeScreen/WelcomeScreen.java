@@ -684,6 +684,7 @@ public class WelcomeScreen {
     }
 
     protected void paintComponent(Graphics g) {
+      UIUtil.applyRenderingHints(g);
       super.paintComponent(g);
       ActionButtonLook look = ActionButtonLook.IDEA_LOOK;
       paintBackground(g);

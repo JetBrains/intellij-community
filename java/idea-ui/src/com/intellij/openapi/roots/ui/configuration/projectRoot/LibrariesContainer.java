@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -58,6 +60,9 @@ public interface LibrariesContainer {
 
   Library createLibrary(@NotNull @NonNls String name, @NotNull LibraryLevel level,
                         @NotNull VirtualFile[] classRoots, @NotNull VirtualFile[] sourceRoots);
+
+  Library createLibrary(@NotNull @NonNls String name, @NotNull LibraryLevel level,
+                        @NotNull Collection<? extends OrderRoot> roots);
 
   Library createLibrary(@NotNull NewLibraryEditor libraryEditor, @NotNull LibraryLevel level);
 

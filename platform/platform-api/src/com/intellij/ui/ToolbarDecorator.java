@@ -80,7 +80,7 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
 
   protected ToolbarDecorator initPositionAndBorder() {
     myToolbarPosition = SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
-    myBorder = SystemInfo.isMac ? new CustomLineBorder(0,1,1,1) : new CustomLineBorder(0, 1, 0, 0);
+    myBorder = new CustomLineBorder(0, SystemInfo.isMac ? 0 : 1, 0, 0);
     final JComponent c = getComponent();
     if (c != null) {
       c.setBorder(IdeBorderFactory.createEmptyBorder(0));

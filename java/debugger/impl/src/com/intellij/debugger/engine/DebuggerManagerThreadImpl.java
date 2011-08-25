@@ -224,10 +224,4 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     }
 
   }
-
-  @TestOnly
-  public void clearQueue() {
-    myEvents.clearQueue();
-  }
-
 }

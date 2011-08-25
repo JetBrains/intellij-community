@@ -23,7 +23,8 @@
 
     <project-components>
         <component>
-            <implementation-class>com.maddyhome.idea.copyright.CopyrightManager</implementation-class>
+          <implementation-class>com.maddyhome.idea.copyright.CopyrightManager</implementation-class>
+          <loadForDefaultProject/>
         </component>
     </project-components>
 

@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="extensions" exported="" />
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="platform-resources-en" exported="" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
 

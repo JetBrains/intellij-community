@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -34,7 +34,7 @@ public class AccessorResolverProcessor extends ResolverProcessor {
 
   public boolean execute(PsiElement element, ResolveState state) {
     final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
-    boolean usedInCategory = ResolveUtil.isInUseScope(resolveContext, element);
+    boolean usedInCategory = GdkMethodUtil.isInUseScope(resolveContext, element);
 
     if (mySearchForGetter) {
       if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, null, usedInCategory)) {

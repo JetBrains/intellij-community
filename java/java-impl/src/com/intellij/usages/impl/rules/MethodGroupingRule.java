@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -120,7 +121,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
     }
 
     public FileStatus getFileStatus() {
-      return isValid() ? getMethod().getFileStatus() : null;
+      return isValid() ? NavigationItemFileStatus.get(getMethod()) : null;
     }
 
     public boolean isValid() {

@@ -94,6 +94,7 @@ public class AllVcses implements AllVcsesI, Disposable {
       final VcsEP ep = myExtensions.get(name);
       if (ep != null) {
         final AbstractVcs vcs1 = ep.getVcs(myProject);
+        LOG.assertTrue(vcs1 != null, name);
         addVcs(vcs1);
         return vcs1;
       }

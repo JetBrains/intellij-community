@@ -34,14 +34,14 @@ public abstract class DownloadableLibraryTypeBase extends DownloadableLibraryTyp
   public LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {
     for (String className : getDetectionClassNames()) {
 
-      final LibraryVersionProperties versionProperties = detectJsfVersion(classesRoots, className);
+      final LibraryVersionProperties versionProperties = detectVersion(classesRoots, className);
       if (versionProperties != null) return versionProperties;
     }
     return null;
   }
 
   @Nullable
-  private static LibraryVersionProperties detectJsfVersion(List<VirtualFile> classesRoots, String detectionClass) {
+  private static LibraryVersionProperties detectVersion(List<VirtualFile> classesRoots, String detectionClass) {
     if (!LibraryUtil.isClassAvailableInLibrary(classesRoots, detectionClass)) {
       return null;
     }

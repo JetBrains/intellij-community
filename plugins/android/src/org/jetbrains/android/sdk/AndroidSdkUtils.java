@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -35,7 +36,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.OrderRoot;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,13 +91,17 @@ public class AndroidSdkUtils {
     VirtualFile androidJar = platformDir.findChild(SdkConstants.FN_FRAMEWORK_LIBRARY);
     if (androidJar == null) return result;
     VirtualFile androidJarRoot = JarFileSystem.getInstance().findFileByPath(androidJar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    result.add(new OrderRoot(OrderRootType.CLASSES, androidJarRoot));
+    if (androidJarRoot != null) {
+      result.add(new OrderRoot(androidJarRoot, OrderRootType.CLASSES));
+    }
 
     IAndroidTarget.IOptionalLibrary[] libs = target.getOptionalLibraries();
     if (libs != null) {
       for (IAndroidTarget.IOptionalLibrary lib : libs) {
         VirtualFile libRoot = JarFileSystem.getInstance().findFileByPath(lib.getJarPath() + JarFileSystem.JAR_SEPARATOR);
-        result.add(new OrderRoot(OrderRootType.CLASSES, libRoot));
+        if (libRoot != null) {
+          result.add(new OrderRoot(libRoot, OrderRootType.CLASSES));
+        }
       }
     }
     VirtualFile targetDir = platformDir;
@@ -130,12 +134,12 @@ public class AndroidSdkUtils {
   private static void addJavaDocAndSources(@NotNull List<OrderRoot> list, @NotNull VirtualFile dir) {
     VirtualFile javadocDir = findJavadocDir(dir);
     if (javadocDir != null) {
-      list.add(new OrderRoot(JavadocOrderRootType.getInstance(), javadocDir));
+      list.add(new OrderRoot(javadocDir, JavadocOrderRootType.getInstance()));
     }
 
     VirtualFile sourcesDir = dir.findChild(SdkConstants.FD_SOURCES);
     if (sourcesDir != null) {
-      list.add(new OrderRoot(OrderRootType.SOURCES, sourcesDir));
+      list.add(new OrderRoot(sourcesDir, OrderRootType.SOURCES));
     }
   }
 

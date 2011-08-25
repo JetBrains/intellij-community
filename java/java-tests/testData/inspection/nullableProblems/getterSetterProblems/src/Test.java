@@ -38,4 +38,13 @@ class C {
   public void setC(@Nullable C c) {
     this.c = c;
   }
+
+  @NotNull C c1;
+  @org.jetbrains.annotations.Nullable
+  public C getC1() {
+    if (c1 != null) {
+      return null;
+    }
+    return c1;
+  }
 }

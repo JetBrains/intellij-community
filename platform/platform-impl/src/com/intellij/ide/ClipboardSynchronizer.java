@@ -16,9 +16,6 @@
 package com.intellij.ide;
 
 import com.intellij.Patches;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,17 +30,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.datatransfer.DataTransferer;
 
-import javax.swing.*;
-import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.datatransfer.*;
-import java.awt.event.ActionEvent;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * <p>This class is used to workaround the problem with getting clipboard contents (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143).
@@ -171,141 +163,6 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   }
 
   private static class MacClipboardHandler extends ClipboardHandler {
-    private final AtomicBoolean mySynchronizationInProgress = new AtomicBoolean(false);
-    private Transferable myCurrentContent;
-    private final Object myContentLock = new Object();
-    private final FrameStateListener myFrameStateListener;
-    private final LafManagerListener myLafListener;
-
-    public MacClipboardHandler() {
-      myFrameStateListener = new FrameStateListener() {
-        @Override
-        public void onFrameDeactivated() {
-        }
-
-        @Override
-        public void onFrameActivated() {
-          scheduleSynchronization();
-        }
-      };
-      myLafListener = new LafManagerListener() {
-        @Override
-        public void lookAndFeelChanged(final LafManager source) {
-          final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
-          replaceDefaultCopyPasteActions(uiDefaults);
-        }
-      };
-    }
-
-    @Override
-    public void init() {
-      if (System.getProperty(DATA_TRANSFER_TIMEOUT_PROPERTY) == null) {
-        System.setProperty(DATA_TRANSFER_TIMEOUT_PROPERTY, LONG_TIMEOUT);
-      }
-
-      FrameStateManager.getInstance().addListener(myFrameStateListener);
-      LafManager.getInstance().addLafManagerListener(myLafListener);
-    }
-
-    @Override
-    public void dispose() {
-      FrameStateManager.getInstance().removeListener(myFrameStateListener);
-      LafManager.getInstance().removeLafManagerListener(myLafListener);
-    }
-
-    private void replaceDefaultCopyPasteActions(UIDefaults defaults) {
-      //ensure that '.actionMap' properties are initialized
-      new JTextField();
-      new JPasswordField();
-      new JTextArea();
-      //noinspection UndesirableClassUsage
-      new JTable();
-
-      String[] textComponents = {"TextField", "PasswordField", "TextArea", "Table"};
-      for (String name : textComponents) {
-        final String key = name + ".actionMap";
-        final ActionMap actionMap = (ActionMap)defaults.get(key);
-        if (actionMap != null) {
-          replaceAction(actionMap, TransferHandler.getCopyAction());
-          replaceAction(actionMap, TransferHandler.getCutAction());
-        }
-        else {
-          LOG.warn(key + " property not initialized");
-        }
-      }
-
-      setupEditorPanes();
-    }
-
-    /**
-     * Performs changes that make copy/cut from editor panes trigger system clipboard content synchronization.
-     */
-    private void setupEditorPanes() {
-      try {
-        Field field = DefaultEditorKit.class.getDeclaredField("defaultActions");
-        field.setAccessible(true);
-        Action[] actions = (Action[])field.get(null);
-        for (int i = 0; i < actions.length; i++) {
-          Action action = actions[i];
-          if (DefaultEditorKit.copyAction.equals(action.getValue(Action.NAME)) ||
-              DefaultEditorKit.cutAction.equals(action.getValue(Action.NAME))) {
-            actions[i] = wrap(action);
-          }
-        }
-      }
-      catch (Exception e) {
-        LOG.warn("Can't setup clipboard actions for editor pane kit", e);
-      }
-    }
-
-    private void replaceAction(ActionMap actionMap, final Action action) {
-      final String actionName = (String)action.getValue(Action.NAME);
-      if (actionName != null) {
-        actionMap.put(actionName, wrap(action));
-      }
-    }
-
-    /**
-     * Wraps given action to the new action that triggers system clipboard content synchronization in addition to the basic
-     * functionality.
-     *
-     * @param action action to wrap
-     * @return wrapped action
-     */
-    private Action wrap(@NotNull final Action action) {
-      return new AbstractAction(action.getValue(Action.NAME).toString()) {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          action.actionPerformed(e);
-          scheduleSynchronization();
-        }
-      };
-    }
-
-    private void scheduleSynchronization() {
-      final boolean inProgress = mySynchronizationInProgress.getAndSet(true);
-      if (inProgress) return;
-
-      final Application app = ApplicationManager.getApplication();
-      app.executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            final Transferable content = doGetContents();
-            synchronized (myContentLock) {
-              myCurrentContent = content;
-            }
-          }
-          catch (Throwable e) {
-            LOG.info(e);
-          }
-          finally {
-            mySynchronizationInProgress.set(false);
-          }
-        }
-      });
-    }
-
     @Nullable
     private Transferable doGetContents() throws IllegalStateException {
       if (Registry.is("ide.mac.useNativeClipboard")) {
@@ -326,17 +183,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
 
     @Override
     public Transferable getContents() {
-      synchronized (myContentLock) {
-        return myCurrentContent;
-      }
-    }
-
-    @Override
-    public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
-      synchronized (myContentLock) {
-        myCurrentContent = content;
-      }
-      super.setContent(content, owner);
+      return doGetContents();
     }
 
     public static Transferable getContentsSafe() {

@@ -20,6 +20,7 @@ import com.sun.jna.Callback;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -90,12 +91,38 @@ public class Foundation {
     return myFoundationLibrary.class_addMethod(cls, selectorName, impl, types);
   }
 
+  public static boolean addMethodByID(ID cls, Pointer selectorName, ID impl, String types) {
+    return myFoundationLibrary.class_addMethod(cls, selectorName, impl, types);
+  }
+  
+  public static boolean isMetaClass(ID cls) {
+    return myFoundationLibrary.class_isMetaClass(cls);
+  }
+  
+  @Nullable
+  public static String stringFromSelector(Pointer selector) {
+    ID id = myFoundationLibrary.NSStringFromSelector(selector);
+    if (id.intValue() > 0) {
+      return toStringViaUTF8(id);
+    }
+    
+    return null;
+  }
+
   public static Pointer getClass(Pointer clazz) {
     return myFoundationLibrary.objc_getClass(clazz);
   }
 
   public static String fullUserName() {
     return toStringViaUTF8(myFoundationLibrary.NSFullUserName());
+  }
+  
+  public static ID class_replaceMethod(ID cls, Pointer selector, Callback impl, String types) {
+    return myFoundationLibrary.class_replaceMethod(cls, selector, impl, types);
+  }
+  
+  public static ID getMetaClass(String className) {
+    return myFoundationLibrary.objc_getMetaClass(className);
   }
 
   public static boolean isPackageAtPath(@NotNull final String path) {

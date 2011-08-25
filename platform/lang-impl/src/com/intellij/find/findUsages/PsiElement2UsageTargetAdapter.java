@@ -19,6 +19,7 @@ package com.intellij.find.findUsages;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.find.FindManager;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -27,7 +28,6 @@ import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -51,7 +51,7 @@ import java.util.Collection;
 /**
  * @author max
  */
-public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, TypeSafeDataProvider {
+public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, TypeSafeDataProvider, PsiElementNavigationItem {
   private final SmartPsiElementPointer myPointer;
   private final MyItemPresentation myPresentation;
 
@@ -90,8 +90,9 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     return (NavigationItem)getElement();
   }
 
-  public FileStatus getFileStatus() {
-    return isValid() ? getNavigationItem().getFileStatus() : FileStatus.NOT_CHANGED;
+  @Override
+  public PsiElement getTargetElement() {
+    return getElement();
   }
 
   public String toString() {
@@ -222,10 +223,6 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     }
 
     public String getLocationString() {
-      return null;
-    }
-
-    public TextAttributesKey getTextAttributesKey() {
       return null;
     }
 

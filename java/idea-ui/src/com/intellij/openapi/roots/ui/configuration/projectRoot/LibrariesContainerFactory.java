@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -120,6 +122,16 @@ public class LibrariesContainerFactory {
       for (VirtualFile sourceRoot : sourceRoots) {
         editor.addRoot(sourceRoot, OrderRootType.SOURCES);
       }
+      return createLibrary(editor, level);
+    }
+
+    @Override
+    public Library createLibrary(@NotNull @NonNls String name,
+                                 @NotNull LibraryLevel level,
+                                 @NotNull Collection<? extends OrderRoot> roots) {
+      final NewLibraryEditor editor = new NewLibraryEditor();
+      editor.setName(name);
+      editor.addRoots(roots);
       return createLibrary(editor, level);
     }
 

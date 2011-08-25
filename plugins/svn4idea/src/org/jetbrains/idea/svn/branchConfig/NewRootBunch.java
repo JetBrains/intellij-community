@@ -32,7 +32,6 @@ import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,7 +94,7 @@ public class NewRootBunch implements SvnBranchConfigManager {
   public void reloadBranches(@NotNull final VirtualFile root, @NotNull final String branchParentUrl,
                              final Consumer<List<SvnBranchItem>> callback) {
     ApplicationManager.getApplication().executeOnPooledThread(new BranchesLoadRunnable(myProject, this, branchParentUrl,
-                                                                                       InfoReliability.setByUser, root, callback));
+                                                                                       InfoReliability.setByUser, root, callback, true));
   }
 
   @Nullable
@@ -125,7 +124,7 @@ public class NewRootBunch implements SvnBranchConfigManager {
                                    public void consume(List<SvnBranchItem> svnBranchItems) {
                                      runnable.run();
                                    }
-                                 }).run();
+                                 }, true).run();
       }
     }
     catch (SVNException e) {
@@ -142,21 +141,28 @@ public class NewRootBunch implements SvnBranchConfigManager {
     private final Consumer<List<SvnBranchItem>> myCallback;
     private final String myUrl;
     private final InfoReliability myInfoReliability;
+    private boolean myPassive;
 
-    public BranchesLoadRunnable(final Project project, final SvnBranchConfigManager bunch, final String url, final InfoReliability infoReliability,
-                                 final VirtualFile root, @Nullable final Consumer<List<SvnBranchItem>> callback) {
+    public BranchesLoadRunnable(final Project project,
+                                final SvnBranchConfigManager bunch,
+                                final String url,
+                                final InfoReliability infoReliability,
+                                final VirtualFile root,
+                                @Nullable final Consumer<List<SvnBranchItem>> callback,
+                                boolean passive) {
       myProject = project;
       myBunch = bunch;
       myUrl = url;
       myInfoReliability = infoReliability;
       myRoot = root;
       myCallback = callback;
+      myPassive = passive;
     }
 
     public void run() {
       boolean callbackCalled = false;
       try {
-        final List<SvnBranchItem> items = BranchesLoader.loadBranches(myProject, myUrl);
+        final List<SvnBranchItem> items = BranchesLoader.loadBranches(myProject, myUrl, myPassive);
         myBunch.updateBranches(myRoot, myUrl, new InfoStorage<List<SvnBranchItem>>(items, myInfoReliability));
         if (myCallback != null) {
           myCallback.consume(items);
@@ -171,7 +177,7 @@ public class NewRootBunch implements SvnBranchConfigManager {
       } finally {
         // callback must be called by contract
         if (myCallback != null && (! callbackCalled)) {
-          myCallback.consume(Collections.<SvnBranchItem>emptyList());
+          myCallback.consume(null);
         }
       }
     }
@@ -193,7 +199,8 @@ public class NewRootBunch implements SvnBranchConfigManager {
       if (result != null) {
         final Application application = ApplicationManager.getApplication();
         for (String url : result.getBranchUrls()) {
-          application.executeOnPooledThread(new BranchesLoadRunnable(myProject, myBunch, url, InfoReliability.defaultValues, myRoot, null));
+          application.executeOnPooledThread(new BranchesLoadRunnable(myProject, myBunch, url, InfoReliability.defaultValues, myRoot, null,
+                                                                     true));
         }
         myBunch.updateForRoot(myRoot, new InfoStorage<SvnBranchConfigurationNew>(result, InfoReliability.defaultValues), null);
       }

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,6 +48,8 @@ public class ChangeListsScopesProvider implements CustomScopesProvider {
   @NotNull
   @Override
   public List<NamedScope> getCustomScopes() {
+
+    if (myProject.isDefault()) return Collections.emptyList();
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
 
     final List<NamedScope> result = new ArrayList<NamedScope>();

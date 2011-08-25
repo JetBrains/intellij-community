@@ -91,13 +91,14 @@ public class FrameworkDetectionUtil {
       final PlatformModifiableModelsProvider provider = new PlatformModifiableModelsProvider();
       final DefaultModulesProvider modulesProvider = new DefaultModulesProvider(project);
       List<DetectedFrameworkDescription> sortedDescriptions = new ArrayList<DetectedFrameworkDescription>();
+      //todo[nik] perform real sorting
       for (DetectedFrameworkDescription description : descriptions) {
-        if (description.getUnderlyingType() == null) {
+        if (description.getDetector().getUnderlyingFrameworkType() == null) {
           sortedDescriptions.add(description);
         }
       }
       for (DetectedFrameworkDescription description : descriptions) {
-        if (description.getUnderlyingType() != null) {
+        if (description.getDetector().getUnderlyingFrameworkType() != null) {
           sortedDescriptions.add(description);
         }
       }

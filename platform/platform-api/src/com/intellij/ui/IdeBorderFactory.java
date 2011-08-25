@@ -58,10 +58,8 @@ public class IdeBorderFactory {
   }
 
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont) {
-    Font font = UIUtil.getBorderFont(hasSmallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, hasBoldFont);
-    int indent = hasIndent ? (hasBoldFont ? 18 : 15) : 0;
     Insets insets = new Insets(5, 0, 10, 0);
-    return new IdeaTitledBorder(title, font, UIUtil.getBorderColor(), indent, 1, insets);
+    return createTitledBorder(title, hasBoldFont, hasIndent, hasSmallFont, insets);
   }
 
     public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont, Insets insets) {
@@ -82,8 +80,8 @@ public class IdeBorderFactory {
   }
 
 
-  public static class SimpleWithIndent {
-    private SimpleWithIndent() {
+  public static class PlainSmallWithIndent {
+    private PlainSmallWithIndent() {
     }
 
     public static TitledBorder createTitledBorder(Border border,
@@ -96,8 +94,8 @@ public class IdeBorderFactory {
     }
   }
 
-  public static class SimpleWithoutIndent {
-    private SimpleWithoutIndent() {
+  public static class PlainSmallWithoutIndent {
+    private PlainSmallWithoutIndent() {
     }
 
     public static TitledBorder createTitledBorder(Border border,
@@ -110,8 +108,8 @@ public class IdeBorderFactory {
     }
   }
 
-  public static class BoldWithIndent {
-    private BoldWithIndent() {
+  public static class BoldSmallWithIndent {
+    private BoldSmallWithIndent() {
     }
 
     public static TitledBorder createTitledBorder(Border border,
@@ -124,8 +122,8 @@ public class IdeBorderFactory {
     }
   }
 
-  public static class BoldWithoutIndent {
-    private BoldWithoutIndent() {
+  public static class BoldSmallWithoutIndent {
+    private BoldSmallWithoutIndent() {
     }
 
     public static TitledBorder createTitledBorder(Border border,
@@ -137,4 +135,61 @@ public class IdeBorderFactory {
       return IdeBorderFactory.createTitledBorder(title, true, false, true);
     }
   }
+
+  public static class PlainLargeWithIndent {
+    private PlainLargeWithIndent() {
+    }
+
+    public static TitledBorder createTitledBorder(Border border,
+                                                  String title,
+                                                  int titleJustification,
+                                                  int titlePosition,
+                                                  Font titleFont,
+                                                  Color titleColor) {
+      return IdeBorderFactory.createTitledBorder(title, false, true, false);
+    }
+  }
+
+  public static class PlainLargeWithoutIndent {
+    private PlainLargeWithoutIndent() {
+    }
+
+    public static TitledBorder createTitledBorder(Border border,
+                                                  String title,
+                                                  int titleJustification,
+                                                  int titlePosition,
+                                                  Font titleFont,
+                                                  Color titleColor) {
+      return IdeBorderFactory.createTitledBorder(title, false, false, false);
+    }
+  }
+
+  public static class BoldLargeWithIndent {
+    private BoldLargeWithIndent() {
+    }
+
+    public static TitledBorder createTitledBorder(Border border,
+                                                  String title,
+                                                  int titleJustification,
+                                                  int titlePosition,
+                                                  Font titleFont,
+                                                  Color titleColor) {
+      return IdeBorderFactory.createTitledBorder(title, true, true, false);
+    }
+  }
+
+  public static class BoldLargeWithoutIndent {
+    private BoldLargeWithoutIndent() {
+    }
+
+    public static TitledBorder createTitledBorder(Border border,
+                                                  String title,
+                                                  int titleJustification,
+                                                  int titlePosition,
+                                                  Font titleFont,
+                                                  Color titleColor) {
+      return IdeBorderFactory.createTitledBorder(title, true, false, false);
+    }
+  }
+
 }

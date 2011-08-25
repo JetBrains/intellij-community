@@ -86,11 +86,6 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return element != null ? element.toString() : "";
   }
 
-  public TextAttributesKey getTextAttributesKey() {
-    return null;
-  }
-
-
   public final StructureViewTreeElement[] getChildren() {
     final T element = getElement();
     if (element == null) return EMPTY_ARRAY;
