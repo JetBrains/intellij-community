@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.introduceVariable;
+package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -24,8 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiExpression;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
@@ -33,14 +32,15 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.text.MessageFormat;
-import java.util.*;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * User: anna
  * Date: 10/14/10
  */
-public class OccurrencesChooser {
+public class OccurrencesChooser<T extends PsiElement> {
   public static enum ReplaceChoice {
     NO("Replace this occurrence only"), NO_WRITE("Replace all occurrences but write"), ALL("Replace all {0} occurrences");
 
@@ -66,7 +66,7 @@ public class OccurrencesChooser {
   }
 
   public void showChooser(final Pass<ReplaceChoice> callback,
-                          final Map<ReplaceChoice, PsiExpression[]> occurrencesMap) {
+                          final Map<ReplaceChoice, T[]> occurrencesMap) {
     if (occurrencesMap.size() == 1) {
       callback.pass(occurrencesMap.keySet().iterator().next());
       return;
@@ -101,8 +101,8 @@ public class OccurrencesChooser {
         if (value == null) return;
         dropHighlighters();
         final MarkupModel markupModel = myEditor.getMarkupModel();
-        final PsiExpression[] psiExpressions = occurrencesMap.get(value);
-        for (PsiExpression psiExpression : psiExpressions) {
+        final T[] psiExpressions = occurrencesMap.get(value);
+        for (T psiExpression : psiExpressions) {
           final TextRange textRange = psiExpression.getTextRange();
           final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
             textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1, myAttributes,
@@ -129,31 +129,6 @@ public class OccurrencesChooser {
         }
       })
       .createPopup().showInBestPositionFor(myEditor);
-  }
-
-  /**
-   * @return true if write usages found
-   */
-  public static boolean fillChoices(final PsiExpression expr,
-                                    final PsiExpression[] occurrences,
-                                    final LinkedHashMap<ReplaceChoice, PsiExpression[]> occurrencesMap) {
-    occurrencesMap.put(ReplaceChoice.NO, new PsiExpression[]{expr});
-
-    final List<PsiExpression> nonWrite = new ArrayList<PsiExpression>();
-    for (PsiExpression occurrence : occurrences) {
-      if (!RefactoringUtil.isAssignmentLHS(occurrence)) {
-        nonWrite.add(occurrence);
-      }
-    }
-    final boolean hasWriteAccess = occurrences.length > nonWrite.size() && occurrences.length > 1;
-    if (hasWriteAccess) {
-      occurrencesMap.put(ReplaceChoice.NO_WRITE, nonWrite.toArray(new PsiExpression[nonWrite.size()]));
-    }
-
-    if (occurrences.length > 1) {
-      occurrencesMap.put(ReplaceChoice.ALL, occurrences);
-    }
-    return hasWriteAccess;
   }
 
   private void dropHighlighters() {
