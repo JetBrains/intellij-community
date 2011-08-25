@@ -135,7 +135,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   public void deleteProfile(String name) {
     super.deleteProfile(name);
     final InspectionProfileWrapper profileWrapper = myName2Profile.remove(name);
-    LOG.assertTrue(profileWrapper != null, "Profile wasn't initialized" + name);
+    LOG.assertTrue(profileWrapper != null, "Profile wasn't initialized: " + name);
     profileWrapper.cleanup(myProject);
   }
 
