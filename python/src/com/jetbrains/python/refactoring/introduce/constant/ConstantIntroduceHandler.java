@@ -7,10 +7,10 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
+import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Alexey.Ivanov
@@ -23,9 +23,7 @@ public class ConstantIntroduceHandler extends IntroduceHandler {
   @Override
   protected PsiElement addDeclaration(@NotNull final PsiElement expression,
                                       @NotNull final PsiElement declaration,
-                                      @NotNull final List<PsiElement> occurrences,
-                                      final boolean replaceAll,
-                                      InitPlace initInConstructor) {
+                                      @NotNull final IntroduceOperation operation) {
     final PsiElement anchor = expression.getContainingFile();
     assert anchor instanceof PyFile;
     return anchor.addBefore(declaration, AddImportHelper.getFileInsertPosition((PyFile)anchor));

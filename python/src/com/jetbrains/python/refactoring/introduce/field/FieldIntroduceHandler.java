@@ -20,6 +20,7 @@ import com.jetbrains.python.actions.AddFieldQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
+import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ public class FieldIntroduceHandler extends IntroduceHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(project, editor, file, null, InitPlace.SAME_METHOD, false, true, isTestClass(file, editor));
+    performAction(new IntroduceOperation(project, editor, file, null, false, true, isTestClass(file, editor)));
   }
 
   private static boolean isTestClass(PsiFile file, Editor editor) {
@@ -76,19 +77,18 @@ public class FieldIntroduceHandler extends IntroduceHandler {
 
   @Nullable
   @Override
-  protected PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull List<PsiElement> occurrences,
-                                      boolean replaceAll, InitPlace initInConstructor) {
+  protected PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull IntroduceOperation operation) {
     final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();    
     PsiElement anchor = PyUtil.getContainingClassOrSelf(expr);
     assert anchor instanceof PyClass;
     final PyClass clazz = (PyClass)anchor;
     final Project project = anchor.getProject();
-    if (initInConstructor == InitPlace.CONSTRUCTOR && !inConstructor(clazz, expression)) {
+    if (operation.getInitPlace() == InitPlace.CONSTRUCTOR && !inConstructor(clazz, expression)) {
       return AddFieldQuickFix.addFieldToInit(project, clazz, "", new AddFieldDeclaration(declaration));
-    } else if (initInConstructor == InitPlace.SET_UP) {
+    } else if (operation.getInitPlace() == InitPlace.SET_UP) {
       return addFieldToSetUp(project, clazz, declaration);
     }
-    return PyIntroduceVariableHandler.doIntroduceVariable(expression, declaration, occurrences, replaceAll);
+    return PyIntroduceVariableHandler.doIntroduceVariable(expression, declaration, operation.getOccurrences(), operation.isReplaceAll());
   }
 
   private boolean inConstructor(@Nullable PyClass clazz, @NotNull PsiElement expression) {

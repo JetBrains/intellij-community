@@ -83,7 +83,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(project, editor, file, null, InitPlace.SAME_METHOD, false, false, false);
+    performAction(new IntroduceOperation(project, editor, file, null, false, false, false));
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
@@ -134,16 +134,18 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll, boolean hasConstructor, boolean isTestClass) {
-    performAction(project, editor, file, name, InitPlace.SAME_METHOD, replaceAll, hasConstructor, isTestClass);
+    performAction(new IntroduceOperation(project, editor, file, name, replaceAll, hasConstructor, isTestClass));
   }
 
-  public void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, InitPlace initInConstructor, boolean replaceAll, boolean hasConstructor, boolean isTestClass) {
+  public void performAction(IntroduceOperation operation) {
+    final PsiFile file = operation.getFile();
     if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) {
       return;
     }
 
     PsiElement element1 = null;
     PsiElement element2 = null;
+    final Editor editor = operation.getEditor();
     final SelectionModel selectionModel = editor.getSelectionModel();
     boolean singleElementSelection = false;
     if (selectionModel.hasSelection()) {
@@ -162,7 +164,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     }
     else {
-      if (smartIntroduce(file, editor, name, initInConstructor, replaceAll, hasConstructor, isTestClass)) {
+      if (smartIntroduce(operation)) {
         return;
       }
       final CaretModel caretModel = editor.getCaretModel();
@@ -173,6 +175,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         element2 = file.findElementAt(document.getLineEndOffset(lineNumber) - 1);
       }
     }
+    final Project project = operation.getProject();
     if (element1 == null || element2 == null) {
       showCannotPerformError(project, editor);
       return;
@@ -194,7 +197,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (!checkIntroduceContext(file, editor, element1)) {
       return;
     }
-    performActionOnElement(editor, element1, name, initInConstructor, replaceAll, hasConstructor, isTestClass);
+    operation.setElement(element1);
+    performActionOnElement(operation);
   }
 
   private void showCannotPerformError(Project project, Editor editor) {
@@ -202,7 +206,9 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                         "refactoring.extractMethod");
   }
 
-  private boolean smartIntroduce(final PsiFile file, final Editor editor, final String name, final InitPlace initInConstructor, final boolean replaceAll, final boolean hasConstructor, final boolean isTestClass) {
+  private boolean smartIntroduce(final IntroduceOperation operation) {
+    final Editor editor = operation.getEditor();
+    final PsiFile file = operation.getFile();
     int offset = editor.getCaretModel().getOffset();
     PsiElement elementAtCaret = file.findElementAt(offset);
     if (!checkIntroduceContext(file, editor, elementAtCaret)) return true;
@@ -217,14 +223,16 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       elementAtCaret = elementAtCaret.getParent();
     }
     if (expressions.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-      performActionOnElement(editor, expressions.get(0), name, initInConstructor, replaceAll, hasConstructor, isTestClass);
+      operation.setElement(expressions.get(0));
+      performActionOnElement(operation);
       return true;
     }
     else if (expressions.size() > 1) {
       IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PyExpression>() {
         @Override
         public void pass(PyExpression pyExpression) {
-          performActionOnElement(editor, pyExpression, name, initInConstructor, replaceAll, hasConstructor, isTestClass);
+          operation.setElement(pyExpression);
+          performActionOnElement(operation);
         }
       }, new Function<PyExpression, String>() {
         public String fun(PyExpression pyExpression) {
@@ -261,54 +269,59 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return true;
   }
 
-  private void performActionOnElement(Editor editor,
-                                      @NotNull PsiElement element,
-                                      String name,
-                                      InitPlace initInConstructor,
-                                      boolean replaceAll,
-                                      boolean hasConstructor,
-                                      boolean isTestClass) {
-    final Project project = element.getProject();
-    if (!checkEnabled(project, editor, element, myDialogTitle)) {
+  private void performActionOnElement(IntroduceOperation operation) {
+    final Project project = operation.getProject();
+    if (!checkEnabled(project, operation.getEditor(), operation.getElement(), myDialogTitle)) {
       return;
     }
+    final PsiElement element = operation.getElement();
 
     final PsiElement parent = element.getParent();
     final PyExpression initializer = parent instanceof PyAssignmentStatement ?
                                     ((PyAssignmentStatement)parent).getAssignedValue() :
                                     (PyExpression)element;
+    operation.setInitializer(initializer);
 
-    final List<PsiElement> occurrences;
     if (initializer.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null) {
-      occurrences = getOccurrences(element, initializer);
+      operation.setOccurrences(getOccurrences(element, initializer));
     }
-    else {
-      occurrences = Collections.emptyList();
+    operation.setSuggestedNames(getSuggestedNames(initializer));
+    if (operation.getOccurrences().size() == 0) {
+      operation.setReplaceAll(false);
     }
-    Collection<String> possibleNames = getSuggestedNames(initializer);
-    replaceAll &= occurrences.size() > 0;
 
-    if (name == null) {
-      PyIntroduceDialog dialog = new PyIntroduceDialog(project, initializer, myDialogTitle, myValidator, occurrences.size(), possibleNames, getHelpId(), hasConstructor, isTestClass);
+    performActionOnElementOccurrences(operation);
+  }
+
+  protected void performActionOnElementOccurrences(IntroduceOperation operation) {
+    final Project project = operation.getProject();
+    if (operation.getName() == null) {
+      PyIntroduceDialog dialog = new PyIntroduceDialog(project, myDialogTitle, myValidator, getHelpId(), operation);
       dialog.show();
       if (!dialog.isOK()) {
         return;
       }
-      name = dialog.getName();
-      replaceAll = dialog.doReplaceAllOccurrences();
-      initInConstructor = dialog.getInitPlace();
+      operation.setName(dialog.getName());
+      operation.setReplaceAll(dialog.doReplaceAllOccurrences());
+      operation.setInitPlace(dialog.getInitPlace());
     }
-    initInConstructor = initInConstructor != null ? initInConstructor : InitPlace.SAME_METHOD;
 
-    String assignmentText = name + " = " + initializer.getText().replace("\n", " ");
-    PsiElement anchor = replaceAll ? findAnchor(occurrences) : PsiTreeUtil.getParentOfType(initializer, PyStatement.class);
-    PyAssignmentStatement declaration = createDeclaration(project, assignmentText, anchor);
-
-    assert name != null;
-    declaration = performReplace(project, element, declaration, initializer, occurrences, name, replaceAll, initInConstructor);
-    declaration = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(declaration);
+    PyAssignmentStatement declaration = performRefactoring(operation);
+    final Editor editor = operation.getEditor();
     editor.getCaretModel().moveToOffset(declaration.getTextRange().getEndOffset());
     editor.getSelectionModel().removeSelection();
+  }
+
+  protected PyAssignmentStatement performRefactoring(IntroduceOperation operation) {
+    final Project project = operation.getProject();
+    final PyExpression initializer = operation.getInitializer();
+    String assignmentText = operation.getName() + " = " + initializer.getText().replace("\n", " ");
+    PsiElement anchor = operation.isReplaceAll() ? findAnchor(operation.getOccurrences()) : PsiTreeUtil.getParentOfType(initializer, PyStatement.class);
+    PyAssignmentStatement declaration = createDeclaration(project, assignmentText, anchor);
+
+    declaration = performReplace(declaration, operation);
+    declaration = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(declaration);
+    return declaration;
   }
 
   protected abstract String getHelpId();
@@ -333,28 +346,24 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return PyRefactoringUtil.getOccurrences(expression, context);
   }
 
-  private PyAssignmentStatement performReplace(@NotNull final Project project,
-                                               final PsiElement element,
-                                               @NotNull final PyAssignmentStatement declaration,
-                                               @NotNull final PsiElement expression,
-                                               @NotNull final List<PsiElement> occurrences,
-                                               @NotNull final String name,
-                                               final boolean replaceAll,
-                                               final InitPlace initInConstructor) {
+  private PyAssignmentStatement performReplace(@NotNull final PyAssignmentStatement declaration,
+                                               final IntroduceOperation operation) {
+    final PyExpression expression = operation.getInitializer();
+    final Project project = operation.getProject();
     return new WriteCommandAction<PyAssignmentStatement>(project, expression.getContainingFile()) {
       protected void run(final Result<PyAssignmentStatement> result) throws Throwable {
         final Pair<PsiElement, TextRange> data = expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
         if (data == null) {
-          result.setResult((PyAssignmentStatement)addDeclaration(expression, declaration, occurrences, replaceAll, initInConstructor));
+          result.setResult((PyAssignmentStatement)addDeclaration(expression, declaration, operation));
         }
         else {
-          result.setResult((PyAssignmentStatement)addDeclaration(data.first, declaration, occurrences, replaceAll, initInConstructor));
+          result.setResult((PyAssignmentStatement)addDeclaration(data.first, declaration, operation));
         }
 
-        PyExpression newExpression = createExpression(project, name, declaration);
+        PyExpression newExpression = createExpression(project, operation.getName(), declaration);
 
-        if (replaceAll) {
-          for (PsiElement occurrence : occurrences) {
+        if (operation.isReplaceAll()) {
+          for (PsiElement occurrence : operation.getOccurrences()) {
             replaceExpression(newExpression, project, occurrence);
           }
         }
@@ -362,7 +371,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           replaceExpression(newExpression, project, expression);
         }
 
-        postRefactoring(element);
+        postRefactoring(operation.getElement());
       }
     }.execute().getResultObject();
   }
@@ -374,9 +383,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   @Nullable
   protected abstract PsiElement addDeclaration(@NotNull final PsiElement expression,
                                                @NotNull final PsiElement declaration,
-                                               @NotNull final List<PsiElement> occurrences,
-                                               final boolean replaceAll,
-                                               final InitPlace initInConstructor);
+                                               @NotNull IntroduceOperation operation);
 
   protected void postRefactoring(PsiElement element) {
   }
