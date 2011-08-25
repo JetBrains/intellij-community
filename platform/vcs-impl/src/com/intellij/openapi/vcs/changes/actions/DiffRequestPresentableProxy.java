@@ -58,7 +58,7 @@ public abstract class DiffRequestPresentableProxy implements DiffRequestPresenta
       myStepResult = request.step(context);
     }
     catch (VcsException e) {
-      myStepResult = new MyResult(null, DiffPresentationReturnValue.quit);
+      myStepResult = new MyResult(null, DiffPresentationReturnValue.quit, e.getMessage());
     }
     return myStepResult;
   }
