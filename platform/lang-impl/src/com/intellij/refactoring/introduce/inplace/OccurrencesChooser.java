@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduce.inplace;
 
+import com.google.common.collect.Maps;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -32,9 +33,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.text.MessageFormat;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -65,8 +65,14 @@ public class OccurrencesChooser<T extends PsiElement> {
     myAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
   }
 
-  public void showChooser(final Pass<ReplaceChoice> callback,
-                          final Map<ReplaceChoice, T[]> occurrencesMap) {
+  public void showChooser(final T selectedOccurrence, final List<T> allOccurrences, final Pass<ReplaceChoice> callback) {
+    Map<ReplaceChoice, List<T>> occurrencesMap = Maps.newLinkedHashMap();
+    occurrencesMap.put(ReplaceChoice.NO, Collections.singletonList(selectedOccurrence));
+    occurrencesMap.put(ReplaceChoice.ALL, allOccurrences);
+    showChooser(callback, occurrencesMap);
+  }
+
+  public void showChooser(final Pass<ReplaceChoice> callback, final Map<ReplaceChoice, List<T>> occurrencesMap) {
     if (occurrencesMap.size() == 1) {
       callback.pass(occurrencesMap.keySet().iterator().next());
       return;
@@ -88,7 +94,7 @@ public class OccurrencesChooser<T extends PsiElement> {
         if (choices != null) {
           String text = choices.getDescription();
           if (choices == ReplaceChoice.ALL) {
-            text = MessageFormat.format(text, occurrencesMap.get(choices).length);
+            text = MessageFormat.format(text, occurrencesMap.get(choices).size());
           }
           setText(text);
         }
@@ -101,7 +107,7 @@ public class OccurrencesChooser<T extends PsiElement> {
         if (value == null) return;
         dropHighlighters();
         final MarkupModel markupModel = myEditor.getMarkupModel();
-        final T[] psiExpressions = occurrencesMap.get(value);
+        final List<T> psiExpressions = occurrencesMap.get(value);
         for (T psiExpression : psiExpressions) {
           final TextRange textRange = psiExpression.getTextRange();
           final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(

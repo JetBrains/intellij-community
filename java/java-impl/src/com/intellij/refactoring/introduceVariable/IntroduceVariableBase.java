@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceVariable;
 
+import com.google.common.collect.Maps;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -512,8 +513,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     final PsiExpression[] occurrences = occurenceManager.getOccurences();
     final PsiElement anchorStatementIfAll = occurenceManager.getAnchorStatementForAll();
 
-    final LinkedHashMap<OccurrencesChooser.ReplaceChoice, PsiExpression[]> occurrencesMap =
-      new LinkedHashMap<OccurrencesChooser.ReplaceChoice, PsiExpression[]>();
+    final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap = Maps.newLinkedHashMap();
 
     final boolean hasWriteAccess = fillChoices(expr, occurrences, occurrencesMap);
 
@@ -589,8 +589,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
    */
   private static boolean fillChoices(final PsiExpression expr,
                                      final PsiExpression[] occurrences,
-                                     final LinkedHashMap<OccurrencesChooser.ReplaceChoice, PsiExpression[]> occurrencesMap) {
-    occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO, new PsiExpression[]{expr});
+                                     final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap) {
+    occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(expr));
 
     final List<PsiExpression> nonWrite = new ArrayList<PsiExpression>();
     for (PsiExpression occurrence : occurrences) {
@@ -600,11 +600,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
     final boolean hasWriteAccess = occurrences.length > nonWrite.size() && occurrences.length > 1;
     if (hasWriteAccess) {
-      occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO_WRITE, nonWrite.toArray(new PsiExpression[nonWrite.size()]));
+      occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO_WRITE, nonWrite);
     }
 
     if (occurrences.length > 1) {
-      occurrencesMap.put(OccurrencesChooser.ReplaceChoice.ALL, occurrences);
+      occurrencesMap.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.asList(occurrences));
     }
     return hasWriteAccess;
   }
