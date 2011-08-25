@@ -239,7 +239,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     return ApplicationManager.getApplication().runReadAction(new Computable<MavenWorkspaceSettings>() {
       @Override
       public MavenWorkspaceSettings compute() {
-        return getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState();
+        return MavenWorkspaceSettingsComponent.getInstance(getProject()).getState();
       }
     });
   }
