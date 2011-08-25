@@ -15,26 +15,20 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.refactoring.introduceParameter.InplaceIntroduceParameterPopup;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
  * Date: 3/16/11
  */
-public class InplaceIntroduceParameterTest extends AbstractInplaceIntroduceTest {
+public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceTest {
 
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceParameter/";
 
@@ -99,7 +93,7 @@ public class InplaceIntroduceParameterTest extends AbstractInplaceIntroduceTest 
     fail("Conflict expected");
   }
 
-  private static class MyIntroduceParameterHandler extends IntroduceParameterHandler implements MyIntroduceHandler {
+  private static class MyIntroduceParameterHandler extends IntroduceParameterHandler implements MyIntroduceHandler<PsiExpression, PsiLocalVariable> {
 
     @Override
     public boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {

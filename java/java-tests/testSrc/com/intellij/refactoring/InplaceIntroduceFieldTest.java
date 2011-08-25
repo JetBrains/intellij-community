@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 3/16/11
  */
-public class InplaceIntroduceFieldTest extends AbstractInplaceIntroduceTest {
+public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest {
 
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceField/";
 
@@ -98,7 +98,7 @@ public class InplaceIntroduceFieldTest extends AbstractInplaceIntroduceTest {
     return new MyIntroduceFieldHandler();
   }
 
-  public static class MyIntroduceFieldHandler extends IntroduceFieldHandler implements MyIntroduceHandler  {
+  public static class MyIntroduceFieldHandler extends IntroduceFieldHandler implements MyIntroduceHandler<PsiExpression, PsiLocalVariable>  {
     @Override
     public boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {
       return super.invokeImpl(project, selectedExpr, editor);

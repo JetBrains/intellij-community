@@ -21,39 +21,41 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
+ * Date: 8/25/11
  */
-public abstract class AbstractInplaceIntroduceTest extends LightCodeInsightTestCase {
+public abstract class AbstractInplaceIntroduceTest<E extends PsiElement, V extends PsiNameIdentifierOwner> extends LightPlatformCodeInsightTestCase {
+  @Nullable protected abstract V getLocalVariableFromEditor();
+  @Nullable protected abstract E getExpressionFromEditor();
+
+  protected abstract String getBasePath();
+  protected abstract MyIntroduceHandler<E, V> createIntroduceHandler();
+
   protected void doTestEscape() throws Exception {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + ".java");
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
-    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(getProject());
+    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(LightPlatformTestCase.getProject());
     try {
       templateManager.setTemplateTesting(true);
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       final MyIntroduceHandler introduceFieldHandler = createIntroduceHandler();
-      final PsiExpression expression =
-        PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
+      final E expression = getExpressionFromEditor();
       if (expression != null) {
-        introduceFieldHandler.invokeImpl(getProject(), expression, getEditor());
+        introduceFieldHandler.invokeImpl(LightPlatformTestCase.getProject(), expression, getEditor());
       } else {
-        final PsiLocalVariable localVariable =
-        PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
-        assertNotNull(localVariable);
-        introduceFieldHandler.invokeImpl(getProject(), localVariable, getEditor());
+        final V localVariable = getLocalVariableFromEditor();
+        introduceFieldHandler.invokeImpl(LightPlatformTestCase.getProject(), localVariable, getEditor());
       }
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
@@ -61,34 +63,27 @@ public abstract class AbstractInplaceIntroduceTest extends LightCodeInsightTestC
       checkResultByFile(getBasePath() + name + "_after.java");
     }
     finally {
-      myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
+      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
       templateManager.setTemplateTesting(false);
     }
   }
-
 
   protected void doTest(final Pass<AbstractInplaceIntroducer> pass) throws Exception {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + ".java");
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
-    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(getProject());
+    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(LightPlatformTestCase.getProject());
     try {
       templateManager.setTemplateTesting(true);
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       final MyIntroduceHandler introduceFieldHandler = createIntroduceHandler();
-      PsiExpression expression =
-        PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
-      if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) {
-        expression = (PsiExpression)expression.getParent();
-      }
+      final E expression = getExpressionFromEditor();
       if (expression != null) {
-        introduceFieldHandler.invokeImpl(getProject(), expression, getEditor());
+        introduceFieldHandler.invokeImpl(LightPlatformTestCase.getProject(), expression, getEditor());
       } else {
-        final PsiLocalVariable localVariable =
-        PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
-        assertNotNull(localVariable);
-        introduceFieldHandler.invokeImpl(getProject(), localVariable, getEditor());
+        final V localVariable = getLocalVariableFromEditor();
+        introduceFieldHandler.invokeImpl(LightPlatformTestCase.getProject(), localVariable, getEditor());
       }
       pass.pass(introduceFieldHandler.getInplaceIntroducer());
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
@@ -97,19 +92,14 @@ public abstract class AbstractInplaceIntroduceTest extends LightCodeInsightTestC
       checkResultByFile(getBasePath() + name + "_after.java");
     }
     finally {
-      myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
+      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
       templateManager.setTemplateTesting(false);
     }
   }
 
-  protected abstract String getBasePath();
-  protected abstract MyIntroduceHandler createIntroduceHandler();
-
-
-
-  public static interface MyIntroduceHandler {
-    boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor);
-    boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor);
+  public interface MyIntroduceHandler<EH extends PsiElement, VH extends PsiNameIdentifierOwner> {
+    boolean invokeImpl(Project project, @NotNull EH selectedExpr, Editor editor);
+    boolean invokeImpl(Project project, VH localVariable, Editor editor);
     AbstractInplaceIntroducer getInplaceIntroducer();
   }
 }

@@ -22,14 +22,13 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
-import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
  * Date: 3/16/11
  */
-public class InplaceIntroduceConstantTest extends AbstractInplaceIntroduceTest {
+public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTest {
 
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceConstant/";
 
@@ -112,7 +111,7 @@ public class InplaceIntroduceConstantTest extends AbstractInplaceIntroduceTest {
     return new MyIntroduceConstantHandler();
   }
 
-  public static class MyIntroduceConstantHandler extends IntroduceConstantHandler implements MyIntroduceHandler {
+  public static class MyIntroduceConstantHandler extends IntroduceConstantHandler implements MyIntroduceHandler<PsiExpression, PsiLocalVariable> {
     @Override
     public boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {
       return super.invokeImpl(project, selectedExpr, editor);
