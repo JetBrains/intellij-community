@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
@@ -62,7 +63,7 @@ public class UiActivityMonitor implements ApplicationComponent {
 
 
   public void addActivity(@NotNull final Project project, final Object activity) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (!hasObjectFor(project)) {
@@ -81,7 +82,7 @@ public class UiActivityMonitor implements ApplicationComponent {
   }
 
   public void removeActivity(@NotNull final Project project, final Object activity) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         _getBusy(project).removeActivity(activity);
@@ -90,7 +91,7 @@ public class UiActivityMonitor implements ApplicationComponent {
   }
 
   public void addActivity(final Object activity) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         _getBusy(null).addActivity(activity);
@@ -99,7 +100,7 @@ public class UiActivityMonitor implements ApplicationComponent {
   }
 
   public void removeActivity(final Object activity) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         _getBusy(null).removeActivity(activity);
@@ -187,5 +188,18 @@ public class UiActivityMonitor implements ApplicationComponent {
 
       return isOwnReady();
     }
+  }
+
+  private void invokeLaterIfNeeded(Runnable runnable) {
+    if (isUnitTestMode()) {
+      runnable.run();
+    } else {
+      UIUtil.invokeLaterIfNeeded(runnable);
+    }
+  }
+  
+  private boolean isUnitTestMode() {
+      Application app = ApplicationManager.getApplication();
+      return app == null || app.isUnitTestMode();
   }
 }
