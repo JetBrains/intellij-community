@@ -24,3 +24,9 @@ public class Main {
         long integerPartL = (long) (long) lnumber;
     }
 }
+
+class Foo<T> {
+  T foo() {
+    return (T)(Object)1;
+  }
+}

@@ -103,7 +103,7 @@ public class TypeConversionUtil {
         // JLS 5.5: A value of a primitive type can be cast to a reference type by boxing conversion(see 5.1.7)
         if (!(toType instanceof PsiClassType)) return false;
         PsiClass toClass = ((PsiClassType)toType).resolve();
-        if (toClass == null) return false;
+        if (toClass == null || toClass instanceof PsiTypeParameter) return false;
         PsiClassType boxedType = ((PsiPrimitiveType)fromType).getBoxedType(toClass.getManager(), toType.getResolveScope());
         return boxedType != null && areTypesConvertible(boxedType, toType);
       }

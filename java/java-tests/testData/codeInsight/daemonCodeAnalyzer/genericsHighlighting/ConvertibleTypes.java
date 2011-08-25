@@ -82,3 +82,9 @@ class Casting {
     return obj.toString().split(",");
  }
 }
+
+class CastPrimitiveToTypeParam<T> {
+  T foo() {
+    return <error descr="Inconvertible types; cannot cast 'int' to 'T'">(T)1</error>;
+  }
+}
