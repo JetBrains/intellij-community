@@ -36,24 +36,24 @@ import java.util.List;
 public class FrameworkSupportNode extends CheckedTreeNode {
   private final FrameworkSupportProvider myProvider;
   private final FrameworkSupportNode myParentNode;
-  private final FrameworkSupportConfigurable myConfigurable;
+  private FrameworkSupportConfigurable myConfigurable;
   private final List<FrameworkSupportNode> myChildren = new ArrayList<FrameworkSupportNode>();
+  private final FrameworkSupportModelBase myModel;
+  private final Disposable myParentDisposable;
 
   public FrameworkSupportNode(final FrameworkSupportProvider provider, final FrameworkSupportNode parentNode, final FrameworkSupportModelBase model,
                               Disposable parentDisposable) {
     super(provider);
+    myParentDisposable = parentDisposable;
     setChecked(false);
     myProvider = provider;
     myParentNode = parentNode;
     model.registerComponent(provider, this);
-    myConfigurable = provider.createConfigurable(model);
-    Disposer.register(parentDisposable, myConfigurable);
+    myModel = model;
     if (parentNode != null) {
       parentNode.add(this);
       parentNode.myChildren.add(this);
     }
-
-    setConfigurableComponentEnabled(false);
   }
 
   public List<FrameworkSupportNode> getChildren() {
@@ -75,7 +75,12 @@ public class FrameworkSupportNode extends CheckedTreeNode {
     return myParentNode;
   }
 
-  public FrameworkSupportConfigurable getConfigurable() {
+  public synchronized FrameworkSupportConfigurable getConfigurable() {
+    if (myConfigurable == null) {
+      myConfigurable = myProvider.createConfigurable(myModel);
+      setConfigurableComponentEnabled(false);
+      Disposer.register(myParentDisposable, myConfigurable);
+    }
     return myConfigurable;
   }
 
