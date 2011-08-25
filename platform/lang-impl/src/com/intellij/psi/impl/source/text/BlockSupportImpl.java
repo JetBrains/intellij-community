@@ -224,7 +224,6 @@ public class BlockSupportImpl extends BlockSupport {
     }
 
     try {
-      newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);
       if (isReplaceWholeNode(fileImpl, newRoot)) {
         DiffLog treeChangeEvent = replaceElementWithEvents((CompositeElement)oldRoot, (CompositeElement)newRoot);
         fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
@@ -235,6 +234,7 @@ public class BlockSupportImpl extends BlockSupport {
 
         return treeChangeEvent;
       }
+      newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);
       newRoot.getFirstChildNode();  // maybe reparsed in PsiBuilderImpl and have thrown exception here
     }
     catch (ReparsedSuccessfullyException e) {
