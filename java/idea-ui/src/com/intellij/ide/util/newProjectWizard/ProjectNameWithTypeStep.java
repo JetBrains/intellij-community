@@ -22,7 +22,6 @@ import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
-import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -60,6 +59,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
   private JTextField myModuleName;
   private TextFieldWithBrowseButton myModuleContentRoot;
   private TextFieldWithBrowseButton myModuleFileLocation;
+  private JPanel myHeader;
 
   private boolean myModuleNameChangedByUser = false;
   private boolean myModuleNameDocListenerEnabled = true;
@@ -73,8 +73,10 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
   public ProjectNameWithTypeStep(final WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     super(wizardContext, sequence, mode);
-    myAdditionalContentPanel.add(myModulePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    myCreateModuleCb.setVisible(myWizardContext.isCreatingNewProject());
+    myAdditionalContentPanel.add(myModulePanel,
+                                 new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST,
+                                                        GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    myHeader.setVisible(myWizardContext.isCreatingNewProject());
     myCreateModuleCb.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         UIUtil.setEnabled(myInternalPanel, myCreateModuleCb.isSelected(), true);
