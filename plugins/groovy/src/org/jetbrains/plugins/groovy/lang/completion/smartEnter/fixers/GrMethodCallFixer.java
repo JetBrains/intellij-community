@@ -25,53 +25,47 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 
 public class GrMethodCallFixer implements GrFixer {
   public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    GrArgumentList args = null;
-    if (psiElement instanceof GrMethodCallExpression) {
-      args = ((GrMethodCallExpression) psiElement).getArgumentList();
-    } else if (psiElement instanceof PsiNewExpression) {
-      args = ((GrNewExpression) psiElement).getArgumentList();
+    final GrArgumentList argList = psiElement instanceof GrCall ? ((GrCall)psiElement).getArgumentList() : null;
+    if (argList == null) return;
+
+    GrCall call = (GrCall)psiElement;
+
+    PsiElement parenth = argList.getLastChild();
+
+    if (parenth != null && ")".equals(parenth.getText()) || call.getClosureArguments().length > 0) return;
+
+    int endOffset = -1;
+
+    for (PsiElement child = argList.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (!(child instanceof PsiErrorElement)) continue;
+
+      final PsiErrorElement errorElement = (PsiErrorElement)child;
+      if (errorElement.getErrorDescription().contains("')'")) {
+        endOffset = errorElement.getTextRange().getStartOffset();
+        break;
+      }
     }
 
-    if (args == null) return;
-
-    PsiElement parenth = args.getLastChild();
-
-    if (parenth == null || !")".equals(parenth.getText())) {
-      int endOffset = -1;
-      PsiElement child = args.getFirstChild();
-      while (child != null) {
-        if (child instanceof PsiErrorElement) {
-          final PsiErrorElement errorElement = (PsiErrorElement) child;
-          if (errorElement.getErrorDescription().indexOf("')'") >= 0) {
-            endOffset = errorElement.getTextRange().getStartOffset();
-            break;
-          }
-        }
-        child = child.getNextSibling();
-      }
-
-      if (endOffset == -1) {
-        endOffset = args.getTextRange().getEndOffset();
-      }
-
-      final GrExpression[] params = args.getExpressionArguments();
-      if (params.length > 0 && startLine(editor, args) != startLine(editor, params[0])) {
-        endOffset = args.getTextRange().getStartOffset() + 1;
-      }
-
-      endOffset = CharArrayUtil.shiftBackward(editor.getDocument().getCharsSequence(), endOffset - 1, " \t\n") + 1;
-      editor.getDocument().insertString(endOffset, ")");
+    if (endOffset == -1) {
+      endOffset = argList.getTextRange().getEndOffset();
     }
+
+    final GrExpression[] params = argList.getExpressionArguments();
+    if (params.length > 0 && startLine(editor, argList) != startLine(editor, params[0])) {
+      endOffset = argList.getTextRange().getStartOffset() + 1;
+    }
+
+    endOffset = CharArrayUtil.shiftBackward(editor.getDocument().getCharsSequence(), endOffset - 1, " \t\n") + 1;
+    editor.getDocument().insertString(endOffset, ")");
   }
 
-  private int startLine(Editor editor, PsiElement psiElement) {
+  private static int startLine(Editor editor, PsiElement psiElement) {
     return editor.getDocument().getLineNumber(psiElement.getTextRange().getStartOffset());
   }
 }
