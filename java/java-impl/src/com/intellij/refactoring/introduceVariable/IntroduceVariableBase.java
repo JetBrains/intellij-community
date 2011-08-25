@@ -540,7 +540,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
           return;
         }
         final boolean allOccurences = choice != OccurrencesChooser.ReplaceChoice.NO;
-        typeSelectorManager.setAllOccurences(allOccurences);
+        typeSelectorManager.setAllOccurrences(allOccurences);
         final TypeExpression expression = new TypeExpression(project, allOccurences ? typeSelectorManager.getTypesForAll() : typeSelectorManager.getTypesForOne());
         final RangeMarker exprMarker = editor.getDocument().createRangeMarker(expr.getTextRange());
         final SuggestedNameInfo suggestedName = getSuggestedName(settings.getSelectedType(), expr);

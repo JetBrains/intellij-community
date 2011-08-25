@@ -43,7 +43,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   @Override
   protected String[] suggestNames(boolean replaceAll, PsiVariable variable) {
-    myTypeSelectorManager.setAllOccurences(replaceAll);
+    myTypeSelectorManager.setAllOccurrences(replaceAll);
     final PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
     final String propertyName = variable != null
                                 ? JavaCodeStyleManager.getInstance(myProject).variableNameToPropertyName(variable.getName(), VariableKind.LOCAL_VARIABLE)
@@ -54,7 +54,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   @Override
   protected PsiVariable createFieldToStartTemplateOn(boolean replaceAll, String[] names) {
-    myTypeSelectorManager.setAllOccurences(replaceAll);
+    myTypeSelectorManager.setAllOccurrences(replaceAll);
     return createFieldToStartTemplateOn(names, getType());
   }
 

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public interface TypeSelectorManager {
   TypeSelector getTypeSelector();
 
-  void setAllOccurences(boolean allOccurences);
+  void setAllOccurrences(boolean allOccurrences);
 
   boolean isSuggestedType(final String fqName);
 
