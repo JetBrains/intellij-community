@@ -1,6 +1,11 @@
-setProperty("basedir", "${ant.project.properties.basedir}/../python/build")
+import org.jetbrains.jps.Jps
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
-includeTargets << new File("${basedir}/python_common.gant")
+includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/python/build/python_common.gant")
+includeTool << Jps
+
+setProperty("basedir", "${ant.project.properties.basedir}/../python/build")
 
 setProperty("projectHome", "${basedir}/../..")
 setProperty("outDir", "${projectHome}/out/python")
@@ -9,7 +14,7 @@ setProperty("ideaHome", "${ideaDir}/jdk16")
 
 setProperty("pluginHelp", "${outDir}/help")
 
-setProperty("buildNumber", "snapshot");
+setProperty("buildNumber", requireProperty("build.number", "108.SNAPSHOT"))
 
 setProperty("pluginHome", "${basedir}/..")
 setProperty("pluginRevision", "${buildNumber}")
@@ -182,7 +187,7 @@ target(name: "zip", description: "Generate zip plugin file") {
   }
 
   ant.mkdir(dir: "${plugindir}/help")
-  ant.copy(file: "${pluginHelp}/pytonpluginhelp.jar", tofile: "${plugindir}/help/pythonpluginhelp.jar")
+  //ant.copy(file: "${pluginHelp}/pytonpluginhelp.jar", tofile: "${plugindir}/help/pythonpluginhelp.jar")
 
   ant.move(file: "${debugEgg}", todir: "${plugindir}")
 
@@ -193,7 +198,7 @@ target(name: "build") {
   depends("clean")
   depends("unzip")
   depends("compile")
-  egg = buildDebuggerEgg(outDir, pluginHome, "Plugin-${buildNumber}")
+  egg = buildDebuggerEgg(outDir, pluginHome, "PythonPlugin-${buildNumber}")
   setProperty("debugEgg", "$egg")
 }
 
@@ -209,5 +214,5 @@ target(name: "artifacts") {
 }
 
 target('default': "Build artifacts") {
-  depends("artifacts")
+  depends("dist")
 }

@@ -6,7 +6,9 @@ binding.setVariable("buildDebuggerEgg", {String sandbox, String pythonHome, Stri
   ant.mkdir(dir: eggDir)
   ant.mkdir(dir:"$eggDir/pydev")
   ant.copy(todir: "$eggDir/pydev") {
-    fileset(dir: "$pythonHome/helpers/pydev")
+    fileset(dir: "$pythonHome/helpers/pydev") {
+      include(name: "**/*.py")
+    }
   }
   ant.mkdir(dir:"$eggDir/EGG-INFO")
 
