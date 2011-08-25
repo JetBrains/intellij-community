@@ -1,5 +1,7 @@
 setProperty("basedir", "${ant.project.properties.basedir}/../python/build")
 
+includeTargets << new File("${basedir}/python_common.gant")
+
 setProperty("projectHome", "${basedir}/../..")
 setProperty("outDir", "${projectHome}/out/python")
 setProperty("ideaDir", "${outDir}/idea")
@@ -71,13 +73,13 @@ target(name: "compile", description: "Compile module python") {
       include(name: "src")
     }
   }
-  //<!-- The task requires the following libraries from IntelliJ IDEA distribution: -->
-  //<!--   javac2.jar; jdom.jar; asm.jar; asm-commons.jar -->
+  //The task requires the following libraries from IntelliJ IDEA distribution:
+  //javac2.jar; jdom.jar; asm.jar; asm-commons.jar
   ant.taskdef(name: "javac2", classname: "com.intellij.ant.Javac2") {
     classpath(refid: "classpath.lib")
   }
 
-  //<!-- Compiler options -->
+  //Compiler options
   setProperty("compilerDebug", "on")
   setProperty("compilerGenerateNoWarnings", "off")
   setProperty("compilerArgs", "")
@@ -86,6 +88,7 @@ target(name: "compile", description: "Compile module python") {
   ant.patternset(id: "sources.pt") {
     exclude(name: "**/.svn/**")
   }
+
   ant.patternset(id: "resources.pt") {
     include(name: "**/?*.properties")
     include(name: "**/?*.template")
@@ -109,7 +112,8 @@ target(name: "compile", description: "Compile module python") {
   }
 
   ant.mkdir(dir: "${classesDir}")
-  //<!-- compile -->
+
+  //compile
   ant.javac2(destdir: "${classesDir}",
              debug: "${compilerDebug}",
              nowarn: "${compilerGenerateNoWarnings}",
@@ -121,7 +125,7 @@ target(name: "compile", description: "Compile module python") {
     patternset(refid: "sources.pt")
   }
 
-  //<!-- copy resources -->
+  //copy resources
   ant.copy(todir: "${classesDir}") {
     fileset(dir: "${resourcesDir}") {
       patternset(refid: "resources.pt")
@@ -138,7 +142,7 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${pluginHome}/../community/colorSchemes/src")
   }
 
-  //<!-- copy plugin.xml -->
+  //copy plugin.xml
   ant.mkdir(dir: "${classesDir}/META-INF")
   ant.copy(todir: "${classesDir}/META-INF") {
     fileset(dir: "${pluginHome}/pluginSrc/META-INF")
@@ -180,6 +184,8 @@ target(name: "zip", description: "Generate zip plugin file") {
   ant.mkdir(dir: "${plugindir}/help")
   ant.copy(file: "${pluginHelp}/pytonpluginhelp.jar", tofile: "${plugindir}/help/pythonpluginhelp.jar")
 
+  ant.move(file: "${debugEgg}", todir: "${plugindir}")
+
   ant.zip(basedir: "${zipdir}", destfile: "${output}/${zipname}")
 }
 
@@ -187,6 +193,8 @@ target(name: "build") {
   depends("clean")
   depends("unzip")
   depends("compile")
+  egg = buildDebuggerEgg(outDir, pluginHome, "Plugin-${buildNumber}")
+  setProperty("debugEgg", "$egg")
 }
 
 target(name: "dist", description: "main target") {
