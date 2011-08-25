@@ -17,10 +17,7 @@ package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,11 +82,24 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
 
             if (dep != null) {
                 if (dep.getValue() != null) {
-                    Matcher matcher = PATTERN.matcher(dep.getValue().getText());
+                  final PsiAnnotationMemberValue value = dep.getValue();
+                  if (value != null) {
+                    String text = value.getText();
+                    if (value instanceof PsiReferenceExpression) {
+                      final PsiElement resolve = ((PsiReferenceExpression)value).resolve();
+                      if (resolve instanceof PsiField && ((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC) && ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL)) {
+                        final PsiExpression initializer = ((PsiField)resolve).getInitializer();
+                        if (initializer != null) {
+                          text = initializer.getText();
+                        }
+                      }
+                    }
+                    Matcher matcher = PATTERN.matcher(text);
                     while (matcher.find()) {
                         String methodName = matcher.group(1);
                         checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors, isOnTheFly);
                     }
+                  }
                 }
             }
         }
