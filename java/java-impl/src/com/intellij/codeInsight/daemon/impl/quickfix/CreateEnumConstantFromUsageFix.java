@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix {
+public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implements HighPriorityAction{
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateEnumConstantFromUsageFix");
   public CreateEnumConstantFromUsageFix(final PsiReferenceExpression referenceElement) {
     super(referenceElement);
