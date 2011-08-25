@@ -5,6 +5,7 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
 includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
+includeTargets << new File("${guessHome(this)}/python/build/python_common.gant")
 includeTool << Jps
 
 requireProperty("buildNumber", requireProperty("build.number", "108.SNAPSHOT"))
@@ -96,37 +97,6 @@ setProperty("paths", new Paths(home))
 def sandbox = "$home/out/pycharm";
 
 setProperty("buildName", "PY-$buildNumber")
-
-def buildDebuggerEgg(paths, buildName) {
-  def eggDir = "$paths.sandbox/pycharm-debug"
-  def egg = "$paths.sandbox/pycharm-debug.egg"
-
-  project.stage("building $egg")
-
-  ant.delete(dir: eggDir)
-  ant.mkdir(dir: eggDir)
-  ant.mkdir(dir:"$eggDir/pydev")
-  ant.copy(todir: "$eggDir/pydev") {
-    fileset(dir: "$home/python/helpers/pydev")
-  }
-  ant.mkdir(dir:"$eggDir/EGG-INFO")
-
-  ant.copy(todir: "$eggDir/EGG-INFO") {
-    fileset(dir: "$home/python/resources/debugger-egg/EGG-INFO")
-  }
-
-  ant.replace(file: "$eggDir/EGG-INFO/PKG-INFO") {
-    replacefilter(token: "@@BUILD_NUMBER@@", value: buildName)
-  }
-
-  ant.replace(file: "$eggDir/pydev/pydevd_comm.py") {
-    replacefilter(token: "@@BUILD_NUMBER@@", value: buildName)
-  }
-  ant.zip(destfile: egg) {
-    fileset(dir: eggDir)
-  }
-  ant.copy(file: egg, todir: paths.distAll)
-}
 
 def forceDelete(String dirPath) {
   // if wasn't deleted - retry several times
@@ -239,7 +209,11 @@ target('default': "Build artifacts") {
   wire_build_date(buildName)
   LayoutInfo layoutInfo = layoutFull(paths.distAll, usedJars)
   generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
-  buildDebuggerEgg(paths, buildName)
+
+  egg = buildDebuggerEgg(paths.sandbox, "$home/python", buildName)
+
+  ant.copy(file: egg, todir: paths.distAll)
+
   scramble()
 
   layoutWin(paths.distWin)

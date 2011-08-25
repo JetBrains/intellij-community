@@ -47,7 +47,6 @@ import sys
 import traceback
 import zipfile
 
-normcase = os.path.normcase
 basename = os.path.basename
 exists = os.path.exists
 join = os.path.join
@@ -82,7 +81,7 @@ def _NormFile(filename):
     try:
         return NORM_FILENAME_CONTAINER[filename]
     except KeyError:
-        r = normcase(rPath(filename))
+        r = rPath(filename)
         #cache it for fast access later
         NORM_FILENAME_CONTAINER[filename] = r
         return r
@@ -187,7 +186,7 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
             return NORM_FILENAME_TO_SERVER_CONTAINER[filename]
         except KeyError:
             #used to translate a path from the client to the debug server
-            translated = normcase(filename)
+            translated = filename
             for eclipse_prefix, server_prefix in PATHS_FROM_ECLIPSE_TO_PYTHON:
                 if translated.startswith(eclipse_prefix):
                     if DEBUG_CLIENT_SERVER_TRANSLATION:

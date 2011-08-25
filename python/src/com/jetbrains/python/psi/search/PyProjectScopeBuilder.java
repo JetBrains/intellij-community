@@ -3,7 +3,7 @@ package com.jetbrains.python.psi.search;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectAndLibrariesScope;
-import com.intellij.psi.search.ProjectScopeBuilder;
+import com.intellij.psi.search.ProjectScopeBuilderImpl;
 
 /**
  * This class is necessary because of the check in IndexCacheManagerImpl.shouldBeFound()
@@ -13,7 +13,7 @@ import com.intellij.psi.search.ProjectScopeBuilder;
  * 
  * @author yole
  */
-public class PyProjectScopeBuilder extends ProjectScopeBuilder {
+public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
   private final Project myProject;
   
   public PyProjectScopeBuilder(Project project) {

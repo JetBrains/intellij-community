@@ -54,6 +54,7 @@
       <archive location="lib/log4j.jar" failOnError="true"/>
       <archive location="lib/jdom.jar" failOnError="true"/>
       <archive location="lib/extensions.jar" failOnError="true"/>
+      <archive location="lib/jna.jar" failOnError="true"/>
     </classPath>
     <nativeLibraryDirectories>
       <directory name="./bin"/>
