@@ -34,7 +34,7 @@ import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.introduce.inplace.AbstractInplaceVariableIntroducer;
+import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -51,7 +51,7 @@ import java.util.List;
  * User: anna
  * Date: 12/8/10
  */
-public class VariableInplaceIntroducer extends AbstractInplaceVariableIntroducer<PsiExpression> {
+public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<PsiExpression> {
   protected final Editor myEditor;
 
   protected final Project myProject;
@@ -65,15 +65,15 @@ public class VariableInplaceIntroducer extends AbstractInplaceVariableIntroducer
   protected final SmartTypePointer myDefaultType;
   protected final TypeExpression myExpression;
 
-  public VariableInplaceIntroducer(final Project project,
-                                   final TypeExpression expression,
-                                   final Editor editor,
-                                   @NotNull final PsiVariable elementToRename,
-                                   final boolean cantChangeFinalModifier,
-                                   final boolean hasTypeSuggestion,
-                                   final RangeMarker exprMarker,
-                                   final List<RangeMarker> occurrenceMarkers,
-                                   final String title) {
+  public JavaVariableInplaceIntroducer(final Project project,
+                                       final TypeExpression expression,
+                                       final Editor editor,
+                                       @NotNull final PsiVariable elementToRename,
+                                       final boolean cantChangeFinalModifier,
+                                       final boolean hasTypeSuggestion,
+                                       final RangeMarker exprMarker,
+                                       final List<RangeMarker> occurrenceMarkers,
+                                       final String title) {
     super(elementToRename, editor, project, title, new PsiExpression[0], null);
     myProject = project;
     myEditor = editor;

@@ -561,8 +561,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 if (elementToRename != null) {
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
                   final boolean cantChangeFinalModifier = (hasWriteAccess || inFinalContext) && choice == OccurrencesChooser.ReplaceChoice.ALL;
-                  final VariableInplaceIntroducer renamer =
-                    new VariableInplaceIntroducer(project, expression, editor, elementToRename, cantChangeFinalModifier,
+                  final JavaVariableInplaceIntroducer renamer =
+                    new JavaVariableInplaceIntroducer(project, expression, editor, elementToRename, cantChangeFinalModifier,
                                                   typeSelectorManager.getTypesForAll().length > 1, exprMarker, occurrenceMarkers,
                                                   IntroduceVariableBase.REFACTORING_NAME);
                   renamer.initInitialText(expressionText);

@@ -53,7 +53,7 @@ import java.util.List;
  * User: anna
  * Date: 3/15/11
  */
-public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> extends VariableInplaceRenamer {
+public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInplaceRenamer {
   public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
 
   protected E myExpr;
@@ -66,10 +66,11 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
   protected String myTitle;
   protected RelativePoint myTarget;
 
-  public AbstractInplaceVariableIntroducer(PsiNamedElement elementToRename,
-                                           Editor editor,
-                                           Project project,
-                                           String title, E[] occurrences, E expr) {
+  public InplaceVariableIntroducer(PsiNamedElement elementToRename,
+                                   Editor editor,
+                                   Project project,
+                                   String title, E[] occurrences, 
+                                   @Nullable E expr) {
     super(elementToRename, editor, project);
     myTitle = title;
     myOccurrences = occurrences;
@@ -79,7 +80,9 @@ public abstract class AbstractInplaceVariableIntroducer<E extends PsiElement> ex
   }
 
   @Nullable
-  protected abstract JComponent getComponent();
+  protected JComponent getComponent() {
+    return null;
+  }
 
   public void setOccurrenceMarkers(List<RangeMarker> occurrenceMarkers) {
     myOccurrenceMarkers = occurrenceMarkers;

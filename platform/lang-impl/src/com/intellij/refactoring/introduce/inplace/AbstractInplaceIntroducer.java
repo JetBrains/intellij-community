@@ -61,7 +61,8 @@ import java.util.List;
  * User: anna
  * Date: 3/15/11
  */
-public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner, E extends PsiElement> extends AbstractInplaceVariableIntroducer<E> {
+public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner, E extends PsiElement> extends
+                                                                                                        InplaceVariableIntroducer<E> {
   protected final V myLocalVariable;
   protected RangeMarker myLocalMarker;
 
