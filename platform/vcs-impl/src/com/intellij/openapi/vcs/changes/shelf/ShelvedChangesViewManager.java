@@ -79,7 +79,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private final ChangesViewContentManager myContentManager;
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
-  private final Tree myTree = new ShelfTree();
+  private final Tree myTree;
   private Content myContent = null;
   private final ShelvedChangeDeleteProvider myDeleteProvider = new ShelvedChangeDeleteProvider();
   private boolean myUpdatePending = false;
@@ -114,6 +114,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     });
     myMoveRenameInfo = new HashMap<Pair<String, String>, String>();
 
+    myTree = new ShelfTree();
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new ShelfTreeCellRenderer(project, myMoveRenameInfo));
@@ -205,8 +206,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myRoot = new DefaultMutableTreeNode(ROOT_NODE_VALUE);   // not null for TreeState matching to work
     DefaultTreeModel model = new DefaultTreeModel(myRoot);
     final List<ShelvedChangeList> changeLists = new ArrayList<ShelvedChangeList>(myShelveChangesManager.getShelvedChangeLists());
+    Collections.sort(changeLists, ChangelistComparator.getInstance());
     if (myShelveChangesManager.isShowRecycled()) {
-      changeLists.addAll(myShelveChangesManager.getRecycledShelvedChangeLists());
+      ArrayList<ShelvedChangeList> recycled =
+              new ArrayList<ShelvedChangeList>(myShelveChangesManager.getRecycledShelvedChangeLists());
+      Collections.sort(recycled, ChangelistComparator.getInstance());
+      changeLists.addAll(recycled);
     }
     myMoveRenameInfo.clear();
 
@@ -233,6 +238,19 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
     }
     return model;
+  }
+
+  private static class ChangelistComparator implements Comparator<ShelvedChangeList> {
+    private final static ChangelistComparator ourInstance = new ChangelistComparator();
+    
+    public static ChangelistComparator getInstance() {
+      return ourInstance;
+    }
+    
+    @Override
+    public int compare(ShelvedChangeList o1, ShelvedChangeList o2) {
+      return o2.DATE.compareTo(o1.DATE);
+    }
   }
 
   private void putMovedMessage(final String beforeName, final String afterName) {
@@ -575,5 +593,4 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       return selectDelegate(dataContext) != null;
     }
   }
-
 }
