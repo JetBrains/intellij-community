@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.util.occurences;
+package com.intellij.refactoring.util.occurrences;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -21,8 +21,8 @@ import com.intellij.psi.PsiExpression;
 /**
  * @author dsl
  */
-public interface OccurenceManager {
-  PsiExpression[] getOccurences();
+public interface OccurrenceManager {
+  PsiExpression[] getOccurrences();
   boolean isInFinalContext();
   PsiElement getAnchorStatementForAll();
 

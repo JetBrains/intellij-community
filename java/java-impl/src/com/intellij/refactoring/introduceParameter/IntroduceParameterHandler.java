@@ -56,7 +56,7 @@ import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
+import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.usageView.UsageInfo;
@@ -372,7 +372,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
       PsiExpression[] occurences;
       if (myExpr != null) {
-        occurences = new ExpressionOccurenceManager(myExpr, method, null).findExpressionOccurrences();
+        occurences = new ExpressionOccurrenceManager(myExpr, method, null).findExpressionOccurrences();
       }
       else { // local variable
         occurences = CodeInsightUtil.findReferenceExpressions(method, myLocalVar);

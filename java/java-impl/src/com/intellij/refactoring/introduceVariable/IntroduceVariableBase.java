@@ -59,8 +59,8 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
-import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
+import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
+import com.intellij.refactoring.util.occurrences.NotInSuperCallOccurrenceFilter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -486,7 +486,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       return false;
     }
 
-    if(!NotInSuperCallOccurenceFilter.INSTANCE.isOK(expr)) {
+    if(!NotInSuperCallOccurrenceFilter.INSTANCE.isOK(expr)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.variable.in.super.constructor.call"));
       showErrorMessage(project, editor, message);
       return false;
@@ -508,9 +508,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       }
     }
 
-    final ExpressionOccurenceManager occurenceManager = new ExpressionOccurenceManager(expr, lastScope,
-                                                                                 NotInSuperCallOccurenceFilter.INSTANCE);
-    final PsiExpression[] occurrences = occurenceManager.getOccurences();
+    final ExpressionOccurrenceManager occurenceManager = new ExpressionOccurrenceManager(expr, lastScope,
+                                                                                 NotInSuperCallOccurrenceFilter.INSTANCE);
+    final PsiExpression[] occurrences = occurenceManager.getOccurrences();
     final PsiElement anchorStatementIfAll = occurenceManager.getAnchorStatementForAll();
 
     final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap = Maps.newLinkedHashMap();

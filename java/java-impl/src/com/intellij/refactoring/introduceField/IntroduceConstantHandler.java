@@ -36,8 +36,8 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
-import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
-import com.intellij.refactoring.util.occurences.OccurenceManager;
+import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
+import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -216,8 +216,8 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return visitor.getElementReference();
   }
 
-  protected OccurenceManager createOccurenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
-    return new ExpressionOccurenceManager(selectedExpr, parentClass, null);
+  protected OccurrenceManager createOccurenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
+    return new ExpressionOccurrenceManager(selectedExpr, parentClass, null);
   }
 
   private static class IsStaticFinalInitializerExpression extends ClassMemberReferencesVisitor {

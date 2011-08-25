@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.util.occurences;
+package com.intellij.refactoring.util.occurrences;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -24,9 +24,9 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author dsl
  */
-public abstract class NotInSuperOrThisCallFilterBase implements OccurenceFilter {
-  public boolean isOK(PsiExpression occurence) {
-    PsiElement parent = occurence.getParent();
+public abstract class NotInSuperOrThisCallFilterBase implements OccurrenceFilter {
+  public boolean isOK(PsiExpression occurrence) {
+    PsiElement parent = occurrence.getParent();
     while(parent instanceof PsiExpression) {
       parent = parent.getParent();
     }

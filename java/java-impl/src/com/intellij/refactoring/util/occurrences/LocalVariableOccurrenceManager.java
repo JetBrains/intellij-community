@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.util.occurences;
+package com.intellij.refactoring.util.occurrences;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.psi.PsiExpression;
@@ -23,19 +23,19 @@ import com.intellij.refactoring.util.RefactoringUtil;
 /**
  * @author dsl
  */
-public class LocalVariableOccurenceManager extends BaseOccurenceManager {
+public class LocalVariableOccurrenceManager extends BaseOccurrenceManager {
   private final PsiLocalVariable myLocalVariable;
 
-  public LocalVariableOccurenceManager(PsiLocalVariable localVariable, OccurenceFilter filter) {
+  public LocalVariableOccurrenceManager(PsiLocalVariable localVariable, OccurrenceFilter filter) {
     super(filter);
     myLocalVariable = localVariable;
   }
 
-  public PsiExpression[] defaultOccurences() {
+  public PsiExpression[] defaultOccurrences() {
     return PsiExpression.EMPTY_ARRAY;
   }
 
-  public PsiExpression[] findOccurences() {
+  public PsiExpression[] findOccurrences() {
     return CodeInsightUtil.findReferenceExpressions(RefactoringUtil.getVariableScope(myLocalVariable), myLocalVariable);
   }
 

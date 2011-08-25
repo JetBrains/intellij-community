@@ -25,16 +25,15 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.occurences.*;
+import com.intellij.refactoring.util.occurrences.*;
 import org.jetbrains.annotations.NotNull;
 
 public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
-  private static final MyOccurenceFilter MY_OCCURENCE_FILTER = new MyOccurenceFilter();
+  private static final MyOccurrenceFilter MY_OCCURENCE_FILTER = new MyOccurrenceFilter();
   private InplaceIntroduceFieldPopup myInplaceIntroduceFieldPopup;
 
   public IntroduceFieldHandler() {
@@ -164,12 +163,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   }
 
   private static boolean isInSuperOrThis(PsiExpression occurence) {
-    return !NotInSuperCallOccurenceFilter.INSTANCE.isOK(occurence) || !NotInThisCallFilter.INSTANCE.isOK(occurence);
+    return !NotInSuperCallOccurrenceFilter.INSTANCE.isOK(occurence) || !NotInThisCallFilter.INSTANCE.isOK(occurence);
   }
 
-  protected OccurenceManager createOccurenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
-    final OccurenceFilter occurenceFilter = isInSuperOrThis(selectedExpr) ? null : MY_OCCURENCE_FILTER;
-    return new ExpressionOccurenceManager(selectedExpr, parentClass, occurenceFilter, true);
+  protected OccurrenceManager createOccurenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
+    final OccurrenceFilter occurrenceFilter = isInSuperOrThis(selectedExpr) ? null : MY_OCCURENCE_FILTER;
+    return new ExpressionOccurrenceManager(selectedExpr, parentClass, occurrenceFilter, true);
   }
 
   protected boolean invokeImpl(final Project project, PsiLocalVariable localVariable, final Editor editor) {
@@ -192,9 +191,9 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     return localToFieldHandler.convertLocalToField(localVariable, editor);
   }
 
-  private static class MyOccurenceFilter implements OccurenceFilter {
-    public boolean isOK(PsiExpression occurence) {
-      return !isInSuperOrThis(occurence);
+  private static class MyOccurrenceFilter implements OccurrenceFilter {
+    public boolean isOK(PsiExpression occurrence) {
+      return !isInSuperOrThis(occurrence);
     }
   }
 }

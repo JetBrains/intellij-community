@@ -22,7 +22,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
+import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 
@@ -30,7 +30,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
   private final Project myProject;
   private final PsiElement myAnchorStatementIfAll;
   private final PsiElement myAnchorStatement;
-  private final ExpressionOccurenceManager myOccurenceManager;
+  private final ExpressionOccurrenceManager myOccurenceManager;
   private final IntroduceVariableBase myIntroduceVariableBase;
 
   public boolean isOK(IntroduceVariableSettings settings) {
@@ -57,7 +57,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
     };
     JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(anchor, name, scope, anchor, visitor);
     if (replaceAllOccurrences) {
-      final PsiExpression[] occurences = myOccurenceManager.getOccurences();
+      final PsiExpression[] occurences = myOccurenceManager.getOccurrences();
       for (PsiExpression occurence : occurences) {
         IntroduceVariableBase.checkInLoopCondition(occurence, conflicts);
       }
@@ -77,7 +77,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
                         Project project,
                         PsiElement anchorStatementIfAll,
                         PsiElement anchorStatement,
-                        ExpressionOccurenceManager occurenceManager) {
+                        ExpressionOccurrenceManager occurenceManager) {
     myIntroduceVariableBase = introduceVariableBase;
     myProject = project;
     myAnchorStatementIfAll = anchorStatementIfAll;
