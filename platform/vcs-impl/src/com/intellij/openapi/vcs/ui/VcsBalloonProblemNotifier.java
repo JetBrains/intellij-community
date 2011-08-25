@@ -71,6 +71,6 @@ public class VcsBalloonProblemNotifier implements Runnable {
   }
 
   public void run() {
-    NOTIFICATION_GROUP.createNotification(myMessage, myMessageType).notify(myProject);
+    NOTIFICATION_GROUP.createNotification(myMessage, myMessageType).notify(myProject.isDefault() ? null : myProject);
   }
 }
