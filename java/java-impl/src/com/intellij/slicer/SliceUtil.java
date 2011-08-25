@@ -316,8 +316,12 @@ public class SliceUtil {
 
           PsiSubstitutor combined = unify(substitutor, parentSubstitutor, project);
           if (combined == null) return true;
-          PsiType substitited = combined.substitute(passExpression.getType());
-          if (substitited == null || !TypeConversionUtil.areTypesConvertible(substitited, actualType)) return true;
+          PsiType substituted = combined.substitute(passExpression.getType());
+          if (substituted instanceof PsiPrimitiveType) {
+            final PsiClassType boxedType = ((PsiPrimitiveType)substituted).getBoxedType(argumentList);
+            substituted = boxedType != null ? boxedType : substituted;
+          }
+          if (substituted == null || !TypeConversionUtil.areTypesConvertible(substituted, actualType)) return true;
 
           return handToProcessor(passExpression, processor, parent, combined);
         }
