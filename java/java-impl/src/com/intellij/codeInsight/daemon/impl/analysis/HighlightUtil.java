@@ -2184,7 +2184,7 @@ public class HighlightUtil {
     } else if (resolved instanceof PsiClass) {
       if (Comparing.strEqual(((PsiClass)resolved).getQualifiedName(), ((PsiClass)resolved).getName())) {
         final PsiElement parent = ref.getParent();
-        if (parent instanceof PsiImportStaticReferenceElement || parent instanceof PsiImportStaticStatement) {
+        if (parent instanceof PsiImportStaticReferenceElement || parent instanceof PsiImportStatementBase) {
           return HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, refName, JavaErrorMessages.message("cannot.resolve.symbol", refName.getText()));
         }
       }

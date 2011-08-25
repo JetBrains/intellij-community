@@ -1,4 +1,5 @@
 import static <error descr="Cannot resolve symbol 'MyConstants'">MyConstants</error>.*;
+import <error descr="Cannot resolve symbol 'MyConstants'">MyConstants</error>;
 
 public class MyClient
 {
