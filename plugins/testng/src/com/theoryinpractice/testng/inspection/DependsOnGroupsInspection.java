@@ -25,9 +25,7 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -117,9 +115,22 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
       }
 
       if (dep != null) {
-        if (dep.getValue() != null) {
-          LOGGER.info("Found " + dep.getName() + " with: " + dep.getValue().getText());
-          Matcher matcher = PATTERN.matcher(dep.getValue().getText());
+        final PsiAnnotationMemberValue value = dep.getValue();
+        if (value != null) {
+          LOGGER.info("Found " + dep.getName() + " with: " + value.getText());
+          String text = value.getText();
+          if (value instanceof PsiReferenceExpression) {
+            final PsiElement resolve = ((PsiReferenceExpression)value).resolve();
+            if (resolve instanceof PsiField &&
+                ((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC) &&
+                ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL)) {
+              final PsiExpression initializer = ((PsiField)resolve).getInitializer();
+              if (initializer != null) {
+                text = initializer.getText();
+              }
+            }
+          }
+          Matcher matcher = PATTERN.matcher(text);
           while (matcher.find()) {
             String methodName = matcher.group(1);
             if (!groups.contains(methodName)) {
