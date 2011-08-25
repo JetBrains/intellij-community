@@ -25,6 +25,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.EdtRunnable;
@@ -83,6 +84,15 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         flushIdleRequests();
       }
       else {
+        if (isFocusTransferReady() && getFocusOwner() == null && (myFocusRevalidator == null || myFocusRevalidator.isExpired())) {
+          requestDefaultFocus(false);
+
+          if (isFocusTransferReady() && getFocusOwner() == null) {
+            flushIdleRequests();
+            return;
+          }
+        }
+
         restartIdleAlarm();
       }
     }
@@ -764,10 +774,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static class FurtherRequestor implements FocusRequestor {
     private final IdeFocusManager myManager;
     private final Expirable myExpirable;
+    private Throwable myAllocation;
 
     private FurtherRequestor(IdeFocusManager manager, Expirable expirable) {
       myManager = manager;
       myExpirable = expirable;
+      if (Registry.is("ide.debugMode")) {
+        myAllocation = new Exception();
+      }
     }
 
     @NotNull
@@ -891,6 +905,37 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public ActionCallback requestDefaultFocus(boolean forced) {
+    Component toFocus = null;
+    if (myLastFocusedFrame != null) {
+      WeakReference<Component> c = myLastFocused.get(myLastFocusedFrame);
+      if (c.get() != null && c.get().isShowing()) {
+        toFocus = c.get();
+      } else {
+        toFocus = getFocusTargetFor(myLastFocusedFrame.getComponent());
+      }
+    } else {
+      Window[] windows = Window.getWindows();
+      for (Window each : windows) {
+        if (each.isActive()) {
+          if (each instanceof JFrame) {
+            toFocus = getFocusTargetFor(((JFrame)each).getRootPane());
+            break;
+          } else if (each instanceof JDialog) {
+            toFocus = getFocusTargetFor(((JDialog)each).getRootPane());
+            break;
+          } else if (each instanceof JWindow) {
+            toFocus = getFocusTargetFor(((JWindow)each).getRootPane());
+            break;
+          }          
+        }
+      }
+    } 
+    
+    if (toFocus != null) {
+      return requestFocus(toFocus, forced);      
+    }
+    
+    
     return new ActionCallback.Done();
   }
 
