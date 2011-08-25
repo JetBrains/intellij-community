@@ -503,6 +503,21 @@
     <lang.substitutor language="TEXT" implementationClass="com.jetbrains.rest.RestLanguageSubstitutor"/>
     <configurationType implementation="com.jetbrains.rest.run.RestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.rest.run.docutils.DocutilsConfigurationProducer"/>
+
+    <!-- Mako files -->
+    <lang.substitutor language="HTML" implementationClass="com.jetbrains.mako.MakoLanguageSubstitutor"/>
+    <lang.substitutor language="XHTML" implementationClass="com.jetbrains.mako.MakoLanguageSubstitutor"/>
+    <lang.substitutor language="XML" implementationClass="com.jetbrains.mako.MakoLanguageSubstitutor"/>
+
+    <colorSettingsPage implementation="com.jetbrains.mako.MakoColorsPage"/>
+    <lang.syntaxHighlighterFactory key="Mako"
+                                   implementationClass="com.jetbrains.mako.MakoHighlighterFactory"/>
+    <lang.parserDefinition language="Mako" implementationClass="com.jetbrains.mako.MakoParserDefinition"/>
+    <lang.fileViewProviderFactory language="Mako"
+                                  implementationClass="com.jetbrains.mako.MakoFileProviderFactory"/>
+
+    <projectService serviceInterface="com.jetbrains.mako.TemplatesService"
+                    serviceImplementation="com.jetbrains.mako.TemplatesService"/>
   </extensions>
 
   <extensionPoints>

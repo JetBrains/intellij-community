@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.jetbrains.mako.TemplatesConfigurationsModel;
+import com.jetbrains.mako.TemplatesService;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
@@ -28,10 +30,12 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
   private JComboBox myTestRunnerComboBox;
   private JComboBox myDocstringFormatComboBox;
   private PythonTestConfigurationsModel myModel;
+  private TemplatesConfigurationsModel myTemplatesModel;
   private Project myProject;
   private final PyDocumentationSettings myDocumentationSettings;
   private TextFieldWithBrowseButton myWorkDir;
   private JCheckBox txtIsRst;
+  private JComboBox myTemplateLanguage;
 
   public PyIntegratedToolsConfigurable(Project project) {
     myProject = project;
@@ -66,17 +70,26 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
     List<String> configurations = TestRunnerService.getInstance(myProject).getConfigurations();
     myModel = new PythonTestConfigurationsModel(configurations, TestRunnerService.getInstance(myProject).getProjectConfiguration(),
                                                 myProject);
+
+    List<String> templateConfigurations = TemplatesService.getInstance(myProject).getConfigurations();
+    myTemplatesModel = new TemplatesConfigurationsModel(templateConfigurations, TemplatesService.getInstance(myProject).getProjectConfiguration(),
+                                                myProject);
     updateConfigurations();
     return myMainPanel;
   }
 
   private void updateConfigurations() {
     myTestRunnerComboBox.setModel(myModel);
+    myTemplateLanguage.setModel(myTemplatesModel);
   }
 
   @Override
   public boolean isModified() {
     if (myTestRunnerComboBox.getSelectedItem() != myModel.getProjectConfiguration()) {
+      return true;
+    }
+    if (myTemplateLanguage.getSelectedItem() != myTemplatesModel.getProjectConfiguration()) {
+      DaemonCodeAnalyzer.getInstance(myProject).restart();
       return true;
     }
     if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
@@ -93,6 +106,7 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
   @Override
   public void apply() throws ConfigurationException {
     myModel.apply();
+    myTemplatesModel.apply();
     myDocumentationSettings.myDocStringFormat = (String) myDocstringFormatComboBox.getSelectedItem();
     ReSTService.getInstance(myProject).setWorkdir(myWorkDir.getText());
     ReSTService.getInstance(myProject).setTxtIsRst(txtIsRst.isSelected());
@@ -101,8 +115,10 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
   @Override
   public void reset() {
     myTestRunnerComboBox.setSelectedItem(myModel.getProjectConfiguration());
+    myTemplateLanguage.setSelectedItem(myTemplatesModel.getProjectConfiguration());
     myTestRunnerComboBox.repaint();
     myModel.reset();
+    myTemplatesModel.reset();
     myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.myDocStringFormat);
     myWorkDir.setText(ReSTService.getInstance(myProject).getWorkdir());
     txtIsRst.setSelected(ReSTService.getInstance(myProject).txtIsRst());
@@ -112,3 +128,4 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
   public void disposeUIResources() {
   }
 }
+
