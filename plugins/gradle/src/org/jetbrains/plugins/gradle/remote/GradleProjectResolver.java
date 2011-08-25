@@ -22,11 +22,13 @@ public interface GradleProjectResolver extends Remote {
    * command-line switch. So, we want to treat the argument as a target project file name when that is supported.
    * 
    * @param projectPath       absolute path to the gradle project file
+   * @param downloadLibraries flag that specifies if third-party libraries that are not available locally should be resolved (downloaded)
    * @return                  object-level representation of the target gradle project
    * @throws RemoteException            in case of unexpected exception during remote communications
    * @throws IllegalArgumentException   if given path doesn't point to directory that contains gradle project
    * @throws IllegalStateException      if it's not possible to resolve target project info
    */
   @NotNull
-  GradleProject resolveProjectInfo(@NotNull String projectPath) throws RemoteException, IllegalArgumentException, IllegalStateException;
+  GradleProject resolveProjectInfo(@NotNull String projectPath, boolean downloadLibraries)
+    throws RemoteException, IllegalArgumentException, IllegalStateException;
 }

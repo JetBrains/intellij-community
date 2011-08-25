@@ -34,11 +34,10 @@ import java.util.List;
 public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWizardStep {
 
   private static final String EMPTY_CARD_NAME = "EMPTY";
-
+  
   private final GradleProjectStructureFactory myFactory            = GradleProjectStructureFactory.INSTANCE;
   private final JPanel                        myComponent          = new JPanel(new GridLayout(1, 2));
-  private final DefaultTreeModel              myTreeModel          =
-    new DefaultTreeModel(new DefaultMutableTreeNode("unnamed"));
+  private final DefaultTreeModel              myTreeModel          = new DefaultTreeModel(new DefaultMutableTreeNode("unnamed"));
   private final Tree                          myTree               = new Tree(myTreeModel);
   private final CardLayout                    mySettingsCardLayout = new CardLayout();
   private final JPanel                        mySettingsPanel      = new JPanel(mySettingsCardLayout);
@@ -151,9 +150,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       return;
     }
 
-    myCards.clear();
-    mySettingsPanel.removeAll();
-    mySettingsPanel.add(new JPanel(), EMPTY_CARD_NAME);
+    clear();
 
     GradleProject project = getBuilder().getGradleProject();
     if (project == null) {
@@ -171,8 +168,11 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     List<GradleModule> modules = new ArrayList<GradleModule>(project.getModules());
     Collections.sort(modules, Named.COMPARATOR);
     List<MutableTreeNode> moduleNodes = new ArrayList<MutableTreeNode>();
+    Map<GradleModule, GradleModule> moduleMappings = new HashMap<GradleModule, GradleModule>();
 
     for (GradleModule module : modules) {
+      GradleModule moduleCopy = module.clone();
+      moduleMappings.put(module, moduleCopy);
       DefaultMutableTreeNode moduleNode = buildNode(module, entity2nodes, counter++);
       moduleNodes.add(moduleNode);
       Collection<GradleDependency> dependencies = module.getDependencies();
@@ -235,6 +235,8 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       myTree.expandPath(new TreePath(modulesNode.getPath()));
       myTree.expandPath(new TreePath(librariesNode.getPath()));
     }
+    
+    getBuilder().setModuleMappings(moduleMappings);
   }
 
   private <T extends GradleEntity> DefaultMutableTreeNode buildNode(
@@ -286,10 +288,17 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
         return false;
       }
     }
+    getBuilder().applyProjectSettings(getContext());
     return true;
   }
 
   @Override
   public void updateDataModel() {
+  }
+
+  private void clear() {
+    myCards.clear();
+    mySettingsPanel.removeAll();
+    mySettingsPanel.add(new JPanel(), EMPTY_CARD_NAME);
   }
 }

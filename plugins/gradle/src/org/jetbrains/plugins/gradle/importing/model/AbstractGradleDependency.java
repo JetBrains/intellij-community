@@ -1,24 +1,21 @@
-package org.jetbrains.plugins.gradle.importing.model.impl;
+package org.jetbrains.plugins.gradle.importing.model;
 
 import com.intellij.openapi.roots.DependencyScope;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.model.GradleDependency;
-
-import java.io.Serializable;
 
 /**
  * @author Denis Zhdanov
  * @since 8/10/11 6:41 PM
  */
-public abstract class AbstractGradleDependency implements GradleDependency, Serializable {
+public abstract class AbstractGradleDependency extends AbstractGradleEntity implements GradleDependency {
 
   private static final long serialVersionUID = 1L;
   
   private DependencyScope myScope = DependencyScope.COMPILE;
   private boolean myExported;
   
-  @NotNull
   @Override
+  @NotNull
   public DependencyScope getScope() {
     return myScope;
   }
@@ -59,5 +56,20 @@ public abstract class AbstractGradleDependency implements GradleDependency, Seri
   @Override
   public String toString() {
     return "scope: " + getScope() + ", exported: " + isExported();
+  }
+
+  @Override
+  public GradleDependency clone() {
+    try {
+      return (GradleDependency)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected void copyTo(@NotNull AbstractGradleDependency that) {
+    that.setExported(isExported());
+    that.setScope(getScope());
   }
 }

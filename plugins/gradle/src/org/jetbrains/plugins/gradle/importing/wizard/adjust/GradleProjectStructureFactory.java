@@ -7,9 +7,8 @@ import org.jetbrains.plugins.gradle.importing.model.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collection;
 
 /**
@@ -92,12 +91,14 @@ public class GradleProjectStructureFactory {
     entity.invite(new GradleEntityVisitor() {
       @Override
       public void visit(@NotNull GradleProject project) {
+        setupController(project, treeModel, treeNodes);
         result.set(new GradleProjectSettings(project));
       }
 
       @Override
       public void visit(@NotNull GradleModule module) {
-        result.set(new GradleModuleSettings(wrap(GradleModule.class, module, treeModel, treeNodes))); 
+        setupController(module, treeModel, treeNodes);
+        result.set(new GradleModuleSettings(module)); 
       }
 
       @Override
@@ -108,7 +109,8 @@ public class GradleProjectStructureFactory {
 
       @Override
       public void visit(@NotNull GradleLibrary library) {
-        result.set(new GradleLibrarySettings(wrap(GradleLibrary.class, library, treeModel, treeNodes))); 
+        setupController(library, treeModel, treeNodes);
+        result.set(new GradleLibrarySettings(library)); 
       }
 
       @Override
@@ -125,42 +127,28 @@ public class GradleProjectStructureFactory {
   }
 
   /**
-   * Wraps target entity into proxy that handles logic of UI update for the corresponding nodes.
+   * Configures controller that delegates entity state change to all corresponding nodes.
    * 
-   * @param interfaceClass  target entity business interface
-   * @param delegate        target entity to wrap
+   * @param entity          target entity to wrap
    * @param model           model of the target tree
    * @param treeNodes       tree nodes that represent the given entity
-   * @param <T>             target entity business interface
-   * @return                UI-aware proxy of the given entity
    */
   @SuppressWarnings("unchecked")
-  private static <T> T wrap(@NotNull Class<T> interfaceClass, @NotNull final T delegate, @NotNull final DefaultTreeModel model,
-                            @NotNull final Collection<GradleProjectStructureNode> treeNodes)
+  private static void setupController(@NotNull final GradleEntity entity, @NotNull final DefaultTreeModel model,
+                                       @NotNull final Collection<GradleProjectStructureNode> treeNodes)
   {
-    final Method triggerMethod;
-    try {
-      triggerMethod = Named.class.getMethod("setName", String.class);
-    }
-    catch (NoSuchMethodException e) {
-      // Never expect to be here.
-      throw new RuntimeException("Unexpected exception occurred", e);
-    }
-    InvocationHandler invocationHandler = new InvocationHandler() {
+    
+    entity.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
-      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        Object result = method.invoke(delegate, args);
-        if (method.equals(triggerMethod)) {
-          for (GradleProjectStructureNode node : treeNodes) {
-            node.getDescriptor().setName(args[0].toString());
-            model.nodeChanged(node);
-          }
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (!Named.NAME_PROPERTY.equals(evt.getPropertyName())) {
+          return;
         }
-        return result;
+        for (GradleProjectStructureNode node : treeNodes) {
+          node.getDescriptor().setName(evt.getNewValue().toString());
+          model.nodeChanged(node);
+        }
       }
-    };
-    ClassLoader classLoader = GradleProjectStructureFactory.class.getClassLoader();
-    Class<?>[] interfaces = {interfaceClass};
-    return (T)Proxy.newProxyInstance(classLoader, interfaces, invocationHandler);
+    });
   }
 }

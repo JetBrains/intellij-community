@@ -2,6 +2,8 @@ package org.jetbrains.plugins.gradle.importing.model;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Comparator;
 
 /**
@@ -10,6 +12,9 @@ import java.util.Comparator;
  */
 public interface Named {
 
+  /** Key of the {@link #getName() name} property to use with {@link PropertyChangeListener#propertyChange(PropertyChangeEvent)}. */
+  String NAME_PROPERTY = "Name";
+  
   Comparator<Named> COMPARATOR = new Comparator<Named>() {
     @Override
     public int compare(Named o1, Named o2) {

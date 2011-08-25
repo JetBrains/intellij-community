@@ -11,11 +11,16 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.importing.model.GradleEntity;
+import org.jetbrains.plugins.gradle.importing.model.GradleModule;
 import org.jetbrains.plugins.gradle.importing.model.GradleProject;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
@@ -26,7 +31,9 @@ import org.jetbrains.plugins.gradle.util.GradleLog;
 import javax.swing.*;
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * GoF builder for gradle-backed projects.
@@ -39,6 +46,8 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
 
   private static final String GRADLE_IMPORT_ROOT_KEY = "gradle.import.root";
   
+  /** @see #setModuleMappings(Map) */
+  private final Map<GradleModule/*origin*/, GradleModule/*adjusted*/> myModuleMappings = new HashMap<GradleModule, GradleModule>();
   private GradleProject myGradleProject;
   private File myProjectFile;
   
@@ -63,13 +72,11 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   }
 
   @Override
-  public void setList(List<GradleProject> gradleProjects) throws ConfigurationException {
-    // TODO den implement
+  public void setList(List<GradleProject> gradleProjects) {
   }
 
   @Override
   public void setOpenProjectSettingsAfter(boolean on) {
-    // TODO den implement
   }
 
   @Override
@@ -143,7 +150,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
           GradleApiFacadeManager manager = ServiceManager.getService(getProject(), GradleApiFacadeManager.class);
           try {
             GradleProjectResolver resolver = manager.getFacade().getResolver();
-            myGradleProject = resolver.resolveProjectInfo(myProjectFile.getAbsolutePath());
+            myGradleProject = resolver.resolveProjectInfo(myProjectFile.getAbsolutePath(), false);
           }
           catch (Exception e) {
             // Ignore here because it will be reported on method exit.
@@ -166,5 +173,62 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   @Nullable
   public GradleProject getGradleProject() {
     return myGradleProject;
+  }
+
+  @Override
+  public boolean isSuitableSdk(Sdk sdk) {
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    if (sdk == null || sdk.getSdkType() != javaSdk) {
+      return false;
+    }
+    if (myGradleProject == null) {
+      return true;
+    }
+    JavaSdkVersion version = javaSdk.getVersion(sdk);
+    if (version == null) {
+      return false;
+    } 
+    return version.getMaxLanguageLevel().isAtLeast(myGradleProject.getLanguageLevel());
+  }
+
+  /**
+   * Applies gradle-plugin-specific settings like project files location etc to the given context.
+   * 
+   * @param context  storage for the project/module settings.
+   */
+  public void applyProjectSettings(@NotNull WizardContext context) {
+    if (myGradleProject == null) {
+      assert false;
+      return;
+    }
+    context.setProjectName(myGradleProject.getName());
+    context.setProjectFileDirectory(myGradleProject.getProjectFileDirectoryPath());
+    context.setCompilerOutputDirectory(myGradleProject.getCompileOutputPath());
+  }
+
+  /**
+   * The whole import sequence looks like below:
+   * <p/>
+   * <pre>
+   * <ol>
+   *   <li>Get project view from the gradle tooling api without resolving dependencies (downloading libraries);</li>
+   *   <li>Allow to adjust project settings before importing;</li>
+   *   <li>Create IJ project and modules;</li>
+   *   <li>Ask gradle tooling api to resolve library dependencies (download the if necessary);</li>
+   *   <li>Configure modules dependencies;</li>
+   * </ol>
+   * </pre>
+   * <p/>
+   * {@link GradleEntity} guarantees correct {@link #equals(Object)}/{@link #hashCode()} implementation, so, we expect
+   * to get {@link GradleModule modules} that are the same in terms of {@link #equals(Object)} on subsequent calls. However,
+   * end-user is allowed to change their settings before the importing (e.g. module name), so, we need to map modules with
+   * resolved libraries to the modules from project 'view'. That's why end-user adjusts settings of the cloned modules.
+   * Given collection holds mappings between them.
+   * 
+   * @param mappings  origin-adjusted modules mappings
+   */
+  public void setModuleMappings(@NotNull Map<GradleModule/*origin module*/, GradleModule/*adjusted module*/> mappings) {
+    myModuleMappings.clear();
+    myModuleMappings.putAll(mappings);
   }
 }

@@ -1,42 +1,159 @@
 package org.jetbrains.plugins.gradle.importing.model;
 
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Defines IntelliJ project view to the application configured via gradle.
- * <p/>
- * Implementations of this interface are not obliged to be thread-safe.
+ * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 8/8/11 12:05 PM
+ * @since 8/1/11 1:30 PM
  */
-public interface GradleProject extends Named, GradleEntity {
+public class GradleProject extends AbstractNamedGradleEntity {
+
+  private static final long serialVersionUID = 1L;
+
+  private static final LanguageLevel  DEFAULT_LANGUAGE_LEVEL = LanguageLevel.JDK_1_6;
+  private static final JavaSdkVersion DEFAULT_JDK_VERSION    = JavaSdkVersion.JDK_1_6;
+
+  private final Set<GradleModule>  myModules   = new HashSet<GradleModule>();
+  private final Set<GradleLibrary> myLibraries = new HashSet<GradleLibrary>();
+
+  private JavaSdkVersion myJdkVersion    = DEFAULT_JDK_VERSION;
+  private LanguageLevel  myLanguageLevel = DEFAULT_LANGUAGE_LEVEL;
+
+  private String myProjectFileDirectoryPath;
+  private String myCompileOutputPath;
+
+  public GradleProject(@NotNull String projectFileDirectoryPath, @NotNull String compileOutputPath) {
+    super("unnamed");
+    myProjectFileDirectoryPath = GradleUtil.toCanonicalPath(projectFileDirectoryPath);
+    myCompileOutputPath = GradleUtil.toCanonicalPath(compileOutputPath);
+  }
 
   @NotNull
-  String getCompileOutputPath();
+  public String getProjectFileDirectoryPath() {
+    return myProjectFileDirectoryPath;
+  }
+
+  public void setProjectFileDirectoryPath(@NotNull String projectFileDirectoryPath) {
+    myProjectFileDirectoryPath = GradleUtil.toCanonicalPath(projectFileDirectoryPath);
+  }
+
+  @NotNull
+  public String getCompileOutputPath() {
+    return myCompileOutputPath;
+  }
+
+  public void setCompileOutputPath(@NotNull String compileOutputPath) {
+    myCompileOutputPath = GradleUtil.toCanonicalPath(compileOutputPath);
+  }
+
+  @NotNull
+  public JavaSdkVersion getJdkVersion() {
+    return myJdkVersion;
+  }
+
+  public void setJdkVersion(@NotNull JavaSdkVersion jdkVersion) {
+    myJdkVersion = jdkVersion;
+  }
+
+  public void setJdkVersion(@Nullable String jdk) {
+    if (jdk == null) {
+      return;
+    }
+    // TODO den implement
+  }
+
+  @NotNull
+  public LanguageLevel getLanguageLevel() {
+    return myLanguageLevel;
+  }
+
+  public void setLanguageLevel(@NotNull LanguageLevel level) {
+    myLanguageLevel = level;
+  }
+
+  public void setLanguageLevel(@Nullable String languageLevel) {
+    LanguageLevel level = LanguageLevel.parse(languageLevel);
+    if (level != null) {
+      myLanguageLevel = level;
+    } 
+  }
+
+  public void addModule(@NotNull GradleModule module) {
+    myModules.add(module);
+  }
   
   @NotNull
-  String getJdkName();
-  
+  public Set<? extends GradleModule> getModules() {
+    return myModules;
+  }
+
   @NotNull
-  LanguageLevel getLanguageLevel();
-  void setLanguageLevel(@NotNull LanguageLevel level);
+  public Set<? extends GradleLibrary> getLibraries() {
+    return myLibraries;
+  }
+
+  public boolean addLibrary(@NotNull GradleLibrary library) {
+    return myLibraries.add(library);
+  }
   
-  @NotNull
-  Set<? extends GradleModule> getModules();
-  
-  @NotNull
-  Set<? extends GradleLibrary> getLibraries();
-  /**
-   * Offers given library to register for the current project.
-   * 
-   * @param library  library to register
-   * @return         <code>true</code> if no such a library is already registered (given library is stored);
-   *                 <code>false</code> if such a library (in terms of {@link Object#equals(Object)}) is already registered
-   *                 within the current project (it's not replaced by the given one then)
-   */
-  boolean addLibrary(@NotNull GradleLibrary library);
+  @Override
+  public void invite(@NotNull GradleEntityVisitor visitor) {
+    visitor.visit(this);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myModules.hashCode();
+    result = 31 * result + myCompileOutputPath.hashCode();
+    result = 31 * result + myJdkVersion.hashCode();
+    result = 31 * result + myLanguageLevel.hashCode();
+    result = 31 * result + super.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GradleProject that = (GradleProject)o;
+
+    if (!super.equals(that)) return false;
+    if (!myCompileOutputPath.equals(that.myCompileOutputPath)) return false;
+    if (!myJdkVersion.equals(that.myJdkVersion)) return false;
+    if (myLanguageLevel != that.myLanguageLevel) return false;
+    if (!myModules.equals(that.myModules)) return false;
+
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("project '%s'. Jdk: '%s', language level: '%s', modules: %s",
+                         getName(), getJdkVersion(), getLanguageLevel(), getModules());
+  }
+
+  @Override
+  public GradleProject clone() {
+    GradleProject result = new GradleProject(getProjectFileDirectoryPath(), getCompileOutputPath());
+    result.setName(getName());
+    result.setJdkVersion(getJdkVersion());
+    result.setLanguageLevel(getLanguageLevel());
+    for (GradleModule module : getModules()) {
+      result.addModule(module.clone());
+    }
+    for (GradleLibrary library : getLibraries()) {
+      result.addLibrary(library.clone());
+    }
+    return result;
+  }
 }
