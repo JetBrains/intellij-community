@@ -46,6 +46,10 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   private boolean isAvailableInContext(final @NotNull PsiJavaCodeReferenceElement element) {
     PsiElement parent = element.getParent();
 
+    if (myKind == CreateClassKind.ANNOTATION) {
+      return parent instanceof PsiAnnotation;
+    }
+
     if (parent instanceof PsiJavaCodeReferenceCodeFragment) return true;
 
     if (parent instanceof PsiTypeElement) {

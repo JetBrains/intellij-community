@@ -136,6 +136,12 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     return createClassInner("enum", name);
   }
 
+  @NotNull
+  @Override
+  public PsiClass createAnnotationType(@NotNull @NonNls String name) throws IncorrectOperationException {
+    return createClassInner("@interface", name);
+  }
+
   private PsiClass createClassInner(final String type, final String name) {
     PsiUtil.checkIsIdentifier(myManager, name);
     final PsiJavaFile aFile = createDummyJavaFile(join("public ", type, " ", name, " { }"));

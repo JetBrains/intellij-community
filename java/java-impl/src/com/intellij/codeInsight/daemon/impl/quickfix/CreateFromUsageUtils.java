@@ -340,6 +340,7 @@ public class CreateFromUsageUtils {
       PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       PsiClass result = classKind == INTERFACE ? elementFactory.createInterface(name) :
                         classKind == CLASS ? elementFactory.createClass(name) :
+                        classKind == ANNOTATION ? elementFactory.createAnnotationType(name) :
                         elementFactory.createEnum(name);
       CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
       result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
@@ -377,6 +378,9 @@ public class CreateFromUsageUtils {
                 else if (classKind == ENUM) {
                   targetClass = JavaDirectoryService.getInstance().createEnum(directory, name);
                 }
+                else if (classKind == ANNOTATION) {
+                  targetClass = JavaDirectoryService.getInstance().createAnnotationType(directory, name);
+                }
                 else {
                   LOG.error("Unknown kind of a class to create");
                   return null;
@@ -400,6 +404,9 @@ public class CreateFromUsageUtils {
               }
               else if (classKind == ENUM) {
                 aClass = factory.createEnum(name);
+              }
+              else if (classKind == ANNOTATION) {
+                aClass = factory.createAnnotationType(name);
               }
               else {
                 LOG.error("Unknown kind of a class to create");
