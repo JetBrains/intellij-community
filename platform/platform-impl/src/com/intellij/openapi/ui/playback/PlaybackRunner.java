@@ -16,12 +16,18 @@
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationActivationListener;
+import com.intellij.openapi.application.ApplicationListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.playback.commands.AssertFocused;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.playback.commands.*;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.text.StringTokenizer;
 
 import javax.swing.*;
@@ -44,18 +50,48 @@ public class PlaybackRunner {
   private boolean myStopRequested;
   private final boolean myUseDirectActionCall;
   private File myScriptDir;
+  private boolean myStopOnAppDeactivation;
+  private final ApplicationActivationListener myAppListener;
 
-  public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall) {
+  private Disposable myOnStop = new Disposable() {
+    @Override
+    public void dispose() {
+    }
+  };
+
+  public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall, boolean stopOnAppDeactivation) {
     myScript = script;
     myCallback = callback;
     myUseDirectActionCall = useDirectActionCall;
+    myStopOnAppDeactivation = stopOnAppDeactivation;
+    myAppListener = new ApplicationActivationListener() {
+      @Override
+      public void applicationActivated(IdeFrame ideFrame) {
+      }
+
+      @Override
+      public void applicationDeactivated(IdeFrame ideFrame) {
+        if (myStopOnAppDeactivation) {
+          myCallback.message("App lost focus, stopping...", 0);
+          stop();
+        }
+      }
+    };
   }
 
   public ActionCallback run() {
     myStopRequested = false;
 
+    ApplicationManager.getApplication().getMessageBus().connect(myOnStop).subscribe(ApplicationActivationListener.TOPIC, myAppListener);
+
     try {
       myActionCallback = new ActionCallback();
+      myActionCallback.doWhenProcessed(new Runnable() {
+        @Override
+        public void run() {
+          stop();
+        }
+      });
 
       myRobot = new Robot();
 
@@ -189,6 +225,7 @@ public class PlaybackRunner {
 
   public void stop() {
     myStopRequested = true;
+    Disposer.dispose(myOnStop);
   }
 
   public File getScriptDir() {

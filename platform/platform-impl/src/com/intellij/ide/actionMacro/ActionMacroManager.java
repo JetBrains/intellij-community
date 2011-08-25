@@ -218,7 +218,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       public void codeEdt(String text, int curentLine) {
 
       }
-    }, Registry.is("actionSystem.playback.useDirectActionCall"));
+    }, Registry.is("actionSystem.playback.useDirectActionCall"), true);
 
     myIsPlaying = true;
 
