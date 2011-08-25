@@ -16,11 +16,11 @@
 
 package com.intellij.application.options;
 
-import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +54,6 @@ public class GeneralCodeStyleSettingsProvider extends CodeStyleSettingsProvider 
 
   @Override
   public DisplayPriority getPriority() {
-    return DisplayPriority.GENERAL_SETTINGS;
+    return DisplayPriority.OTHER_SETTINGS;
   }
 }
