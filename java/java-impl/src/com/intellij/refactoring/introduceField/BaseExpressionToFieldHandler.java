@@ -172,7 +172,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return true;
 
-    final OccurrenceManager occurrenceManager = createOccurenceManager(selectedExpr, myParentClass);
+    final OccurrenceManager occurrenceManager = createOccurrenceManager(selectedExpr, myParentClass);
     final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
     final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
 
@@ -250,7 +250,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
               );
   }
 
-  protected abstract OccurrenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass);
+  protected abstract OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass);
 
   protected final PsiClass getParentClass() {
     return myParentClass;
@@ -281,7 +281,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   protected abstract String getHelpID();
 
   protected abstract Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr,
-                                                    PsiType type, PsiExpression[] occurences, PsiElement anchorElement,
+                                                    PsiType type, PsiExpression[] occurrences, PsiElement anchorElement,
                                                     PsiElement anchorElementIfAll);
 
 

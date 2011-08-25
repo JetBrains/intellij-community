@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
-  private static final MyOccurrenceFilter MY_OCCURENCE_FILTER = new MyOccurrenceFilter();
+  private static final MyOccurrenceFilter MY_OCCURRENCE_FILTER = new MyOccurrenceFilter();
   private InplaceIntroduceFieldPopup myInplaceIntroduceFieldPopup;
 
   public IntroduceFieldHandler() {
@@ -68,7 +68,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr,
                                            PsiType type,
-                                           PsiExpression[] occurences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
+                                           PsiExpression[] occurrences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
     PsiElement element = null;
     if (expr != null) {
@@ -81,9 +81,9 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
     boolean isInSuperOrThis = false;
     if (!declareStatic) {
-      for (int i = 0; !declareStatic && i < occurences.length; i++) {
-        PsiExpression occurence = occurences[i];
-        isInSuperOrThis = isInSuperOrThis(occurence);
+      for (int i = 0; !declareStatic && i < occurrences.length; i++) {
+        PsiExpression occurrence = occurrences[i];
+        isInSuperOrThis = isInSuperOrThis(occurrence);
         declareStatic = isInSuperOrThis;
       }
     }
@@ -98,11 +98,11 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
       localVariable = (PsiLocalVariable)anchorElement;
     }
 
-    int occurencesNumber = occurences.length;
+    int occurrencesNumber = occurrences.length;
     final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
     final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && (anchorElement instanceof PsiLocalVariable || anchorElement instanceof PsiStatement);
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
-    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
+    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences);
 
     String enteredName = null;
     boolean replaceAll = false;
@@ -110,8 +110,9 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
       final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
       if (activeIntroducer == null) {
         myInplaceIntroduceFieldPopup =
-          new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurences, expr, typeSelectorManager, editor,
-                                         allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, expr != null ? createOccurenceManager(expr, parentClass) : null,
+          new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurrences, expr, typeSelectorManager, editor,
+                                         allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, expr != null ? createOccurrenceManager(
+                  expr, parentClass) : null,
                                          project);
         if (myInplaceIntroduceFieldPopup.startInplaceIntroduceTemplate()) {
           return null;
@@ -120,7 +121,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
         AbstractInplaceIntroducer.stopIntroduce(editor);
         expr = (PsiExpression)activeIntroducer.getExpr();
         localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
-        occurences = (PsiExpression[])activeIntroducer.getOccurrences();
+        occurrences = (PsiExpression[])activeIntroducer.getOccurrences();
         enteredName = activeIntroducer.getInputName();
         replaceAll = activeIntroducer.isReplaceAllOccurrences();
         IntroduceFieldDialog.ourLastInitializerPlace = ((InplaceIntroduceFieldPopup)activeIntroducer).getInitializerPlace();
@@ -130,7 +131,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     IntroduceFieldDialog dialog = new IntroduceFieldDialog(
       project, parentClass, expr, localVariable,
       currentMethodConstructor,
-      localVariable != null, declareStatic, occurences,
+      localVariable != null, declareStatic, occurrences,
       allowInitInMethod, allowInitInMethodIfAll,
       typeSelectorManager,
       enteredName
@@ -139,7 +140,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     dialog.show();
 
     if (!dialog.isOK()) {
-      if (occurencesNumber > 1) {
+      if (occurrencesNumber > 1) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
       return null;
@@ -150,7 +151,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
 
 
-    return new Settings(dialog.getEnteredName(), expr, occurences, dialog.isReplaceAllOccurrences(),
+    return new Settings(dialog.getEnteredName(), expr, occurrences, dialog.isReplaceAllOccurrences(),
                                            declareStatic, dialog.isDeclareFinal(),
                                            dialog.getInitializerPlace(), dialog.getFieldVisibility(),
                                            localVariable,
@@ -162,12 +163,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     return myInplaceIntroduceFieldPopup;
   }
 
-  private static boolean isInSuperOrThis(PsiExpression occurence) {
-    return !NotInSuperCallOccurrenceFilter.INSTANCE.isOK(occurence) || !NotInThisCallFilter.INSTANCE.isOK(occurence);
+  private static boolean isInSuperOrThis(PsiExpression occurrence) {
+    return !NotInSuperCallOccurrenceFilter.INSTANCE.isOK(occurrence) || !NotInThisCallFilter.INSTANCE.isOK(occurrence);
   }
 
-  protected OccurrenceManager createOccurenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
-    final OccurrenceFilter occurrenceFilter = isInSuperOrThis(selectedExpr) ? null : MY_OCCURENCE_FILTER;
+  protected OccurrenceManager createOccurrenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
+    final OccurrenceFilter occurrenceFilter = isInSuperOrThis(selectedExpr) ? null : MY_OCCURRENCE_FILTER;
     return new ExpressionOccurrenceManager(selectedExpr, parentClass, occurrenceFilter, true);
   }
 

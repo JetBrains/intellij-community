@@ -313,7 +313,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
           }
           final PsiExpression[] expressionArray = expressions.toArray(new PsiExpression[expressions.size()]);
           final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
-            protected OccurrenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
+            protected OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
               final OccurrenceFilter filter = new OccurrenceFilter() {
                 public boolean isOK(PsiExpression occurrence) {
                   return true;
