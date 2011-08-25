@@ -655,21 +655,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   public void updateState(final boolean show) {
-    myUpdateQueue.queueModelUpdateFromFocus();
-    if (isShowing()) {
+    if (show) {
+      myUpdateQueue.queueModelUpdateFromFocus();
       myUpdateQueue.queueRebuildUi();
-      myUpdateQueue.queueAfterAll(new Runnable() {
-        @Override
-        public void run() {
-          final int selectedIndex = myModel.getSelectedIndex();
-          if (show && selectedIndex > -1 && selectedIndex < myModel.size()) {
-            final NavBarItem item = getItem(selectedIndex);
-            if (item != null) {
-              IdeFocusManager.getInstance(myProject).requestFocus(item, true);
-            }
-          }
-        }
-      }, NavBarUpdateQueue.ID.REQUEST_FOCUS);
     }
   }
 
