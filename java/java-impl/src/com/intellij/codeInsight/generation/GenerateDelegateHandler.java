@@ -116,27 +116,37 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       call.append("return ");
     }
 
+    boolean isMethodStatic = methodCandidate.getElement().hasModifierProperty(PsiModifier.STATIC);
     if (target instanceof PsiField) {
       PsiField field = (PsiField)target;
       modifierList = field.getModifierList();
-      final String name = field.getName();
+      if (isMethodStatic) {
+        call.append(methodCandidate.getContainingClass().getQualifiedName());
+      } else {
+        final String name = field.getName();
 
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      for (PsiParameter parameter : parameters) {
-        if (name.equals(parameter.getName())) {
-          call.append("this.");
-          break;
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        for (PsiParameter parameter : parameters) {
+          if (name.equals(parameter.getName())) {
+            call.append("this.");
+            break;
+          }
         }
-      }
 
-      call.append(name);
+        call.append(name);
+      }
       call.append(".");
     }
     else if (target instanceof PsiMethod) {
       PsiMethod m = (PsiMethod)target;
       modifierList = m.getModifierList();
-      call.append(m.getName());
-      call.append("().");
+      if (isMethodStatic) {
+        call.append(methodCandidate.getContainingClass().getQualifiedName()).append(".");
+      }
+      else {
+        call.append(m.getName());
+        call.append("().");
+      }
     }
 
     call.append(method.getName());
@@ -154,7 +164,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     stmt = (PsiStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(stmt);
     method.getBody().add(stmt);
 
-    if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
+    if (isMethodStatic || modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
       PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
     }
 
