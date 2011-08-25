@@ -450,7 +450,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                                         getParamsToRemove(method, occurences)).run();
       } else {
         if (myEditor != null) {
-          RefactoringUtil.highlightAllOccurences(myProject, occurences, myEditor);
+          RefactoringUtil.highlightAllOccurrences(myProject, occurences, myEditor);
         }
         final IntroduceParameterDialog dialog =
           new IntroduceParameterDialog(myProject, classMemberRefs, occurences, myLocalVar, myExpr,

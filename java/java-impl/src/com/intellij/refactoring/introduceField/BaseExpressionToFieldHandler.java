@@ -178,7 +178,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     List<RangeHighlighter> highlighters = null;
     if (editor != null) {
-      highlighters = RefactoringUtil.highlightAllOccurences(project, occurrences, editor);
+      highlighters = RefactoringUtil.highlightAllOccurrences(project, occurrences, editor);
     }
 
     PsiElement tempAnchorElement = RefactoringUtil.getParentExpressionAnchorElement(selectedExpr);
