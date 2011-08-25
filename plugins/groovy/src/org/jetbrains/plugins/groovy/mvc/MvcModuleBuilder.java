@@ -44,18 +44,14 @@ public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
   }
 
   private class GroovySdkWizardStep extends ModuleWizardStep {
-    private final LibraryOptionsPanel myPanel;
+    private LibraryOptionsPanel myPanel;
     private final LibrariesContainer myLibrariesContainer;
     private boolean myDownloaded;
     private LibraryCompositionSettings myLibraryCompositionSettings;
 
     public GroovySdkWizardStep(WizardContext wizardContext) {
       final Project project = wizardContext.getProject();
-      final GroovyLibraryDescription libraryDescription = myFramework.createLibraryDescription();
-      final String contentEntryPath = getContentEntryPath();
-      final String basePath = contentEntryPath != null ? FileUtil.toSystemIndependentName(contentEntryPath) : "";
       myLibrariesContainer = LibrariesContainerFactory.createContainer(project);
-      myPanel = new LibraryOptionsPanel(libraryDescription, basePath, null, myLibrariesContainer, false);
       addModuleConfigurationUpdater(new ModuleConfigurationUpdater() {
         @Override
         public void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel) {
@@ -69,12 +65,14 @@ public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
 
     @Override
     public void disposeUIResources() {
-      Disposer.dispose(myPanel);
+      if (myPanel != null) {
+        Disposer.dispose(myPanel);
+      }
     }
 
     @Override
     public JComponent getComponent() {
-      final JComponent component = myPanel.getMainPanel();
+      final JComponent component = getPanel().getMainPanel();
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(component, BorderLayout.NORTH);
 
@@ -96,7 +94,7 @@ public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
     @Override
     public void _commit(boolean finishChosen) throws CommitStepException {
       if (finishChosen && !myDownloaded && myLibraryCompositionSettings != null) {
-        if (myLibraryCompositionSettings.downloadFiles(myPanel.getMainPanel())) {
+        if (myLibraryCompositionSettings.downloadFiles(getPanel().getMainPanel())) {
           myDownloaded = true;
         }
       }
@@ -104,7 +102,17 @@ public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
 
     @Override
     public void updateDataModel() {
-      myLibraryCompositionSettings = myPanel.apply();
+      myLibraryCompositionSettings = getPanel().apply();
+    }
+
+    private synchronized LibraryOptionsPanel getPanel() {
+      if (myPanel == null) {
+        final GroovyLibraryDescription libraryDescription = myFramework.createLibraryDescription();
+        final String contentEntryPath = getContentEntryPath();
+        final String basePath = contentEntryPath != null ? FileUtil.toSystemIndependentName(contentEntryPath) : "";
+        myPanel = new LibraryOptionsPanel(libraryDescription, basePath, null, myLibrariesContainer, false);
+      }
+      return myPanel;
     }
   }
 }

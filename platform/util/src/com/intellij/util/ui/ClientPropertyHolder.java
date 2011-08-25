@@ -15,8 +15,10 @@
  */
 package com.intellij.util.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface ClientPropertyHolder {
 
-  void putClientProperty(String key, Object value);
+  void putClientProperty(@NonNls String key, @NonNls Object value);
 
 }

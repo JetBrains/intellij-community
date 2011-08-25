@@ -19,6 +19,7 @@ package com.intellij.execution;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -38,7 +39,8 @@ public class ConfigurationUtil {
   public static boolean findAllTestClasses(final TestClassFilter testClassFilter, final Set<PsiClass> found) {
     final PsiManager manager = testClassFilter.getPsiManager();
 
-    GlobalSearchScope projectScopeWithoutLibraries = GlobalSearchScope.projectScope(manager.getProject());
+    final Project project = manager.getProject();
+    GlobalSearchScope projectScopeWithoutLibraries = GlobalSearchScope.projectScope(project);
     final GlobalSearchScope scope = projectScopeWithoutLibraries.intersectWith(testClassFilter.getScope());
     ClassInheritorsSearch.search(testClassFilter.getBase(), scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(final PsiClass aClass) {
@@ -51,7 +53,7 @@ public class ConfigurationUtil {
     final PsiMethod[] suiteMethods = ApplicationManager.getApplication().runReadAction(
         new Computable<PsiMethod[]>() {
           public PsiMethod[] compute() {
-            return JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache().getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope);
+            return JavaPsiFacade.getInstance(project).getShortNamesCache().getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope);
           }
         }
     );
@@ -67,7 +69,7 @@ public class ConfigurationUtil {
       if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) continue;
       if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         public Boolean compute() {
-          return JUnitUtil.isSuiteMethod(method);
+          return JUnitUtil.isSuiteMethod(method, project);
         }
       }).booleanValue()) {
         found.add(containingClass);
