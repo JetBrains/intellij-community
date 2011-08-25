@@ -105,7 +105,8 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
 
       final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
       final Project finalProject = project;
-      Runnable showContent = new Runnable() {
+
+      final Runnable showContent = new Runnable() {
         @Override
         public void run() {
           ContentManager cm = window.getContentManager();
@@ -142,11 +143,18 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
           cm.setSelectedContent(content);
         }
       };
-      if (! window.isVisible()) {
-        window.activate(showContent, true);
-      } else {
-        showContent.run();
-      }
+
+      ProgressManager.getInstance().run(new MyCheckVersion(project) {
+        @Override
+        public void onSuccess() {
+          if (myVersion == null) return;
+          if (! window.isVisible()) {
+            window.activate(showContent, true);
+          } else {
+            showContent.run();
+          }
+        }
+      });
     }
   }
 
@@ -208,6 +216,7 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
   private static class MyPrepareToShowForDefaultProject extends Task.Backgroundable {
     private Project myProject;
     private final List<VirtualFile> myCorrectRoots;
+    private MyCheckVersion myVersion;
 
     private MyPrepareToShowForDefaultProject(@Nullable Project project, List<VirtualFile> correctRoots) {
       super(project, ourTitle, true, BackgroundFromStartOption.getInstance());
@@ -217,18 +226,34 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       myProject = ProjectManager.getInstance().getDefaultProject();
-      GitVcs vcs = GitVcs.getInstance(myProject);
-      GitVersion version = vcs.getVersion();
-      if (version == null) {
-        vcs.checkVersion();
-      }
-      if (version == null) return;
+      myVersion = new MyCheckVersion(myProject);
+      myVersion.run(indicator);
     }
 
     @Override
     public void onSuccess() {
+      if (myVersion.myVersion == null) return;
       if (myProject.isDisposed()) return;
       new MyDialog(myProject, myCorrectRoots).show();
+    }
+  }
+  
+  private static class MyCheckVersion extends Task.Backgroundable {
+    protected GitVersion myVersion;
+
+    private MyCheckVersion(@Nullable Project project) {
+      super(project, ourTitle, true, BackgroundFromStartOption.getInstance());
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      GitVcs vcs = GitVcs.getInstance(myProject);
+      myVersion = vcs.getVersion();
+      if (myVersion == null) {
+        vcs.checkVersion();
+      }
+      myVersion = vcs.getVersion();
+      if (myVersion == null) return;
     }
   }
 
