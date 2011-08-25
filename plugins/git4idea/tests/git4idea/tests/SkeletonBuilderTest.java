@@ -81,6 +81,7 @@ public class SkeletonBuilderTest extends TestCase {
                         TreeNavigationImpl navigation,
                         SkeletonBuilder builder,
                         ReadonlyList.ArrayListWrapper<CommitI> commits) {
+    int wasSize = commits.getSize();
     for (CommitHashPlusParents commitHashPlusParents : list) {
       final WireNumberCommitDecoration commitI =
         new WireNumberCommitDecoration(new Commit(commitHashPlusParents.getHash(), commitHashPlusParents.getTime(),
@@ -88,7 +89,7 @@ public class SkeletonBuilderTest extends TestCase {
       commits.getDelegate().add(commitI);
       builder.consume(commitI, getParents(commitHashPlusParents), commits);
     }
-    navigation.recountWires(0, commits);
+    navigation.recountWires(wasSize == 0 ? 0 : (wasSize - 1), commits);
     navigation.recalcIndex(commits);
   }
 
@@ -134,6 +135,162 @@ public class SkeletonBuilderTest extends TestCase {
     WireEvent we1 = iterator1.next();
     Assert.assertEquals(true, we1.isEnd());
     Assert.assertEquals(4, we1.getCommitIdx());
+  }
+
+  public void testTwoSteps() throws Exception {
+    final List<CommitHashPlusParents> list = read("1 2 3\n2 4\n3 5\n4 6\n5 6\n6 7\n7 8 9");
+    final List<CommitHashPlusParents> step2 = read("8 10\n9 11\n10 12\n11 13\n12 14\n13 14\n14 15");
+    // 4, 4
+    final TreeNavigationImpl navigation = new TreeNavigationImpl(2, 2);
+    final SkeletonBuilder builder = new SkeletonBuilder(navigation);
+    final ReadonlyList.ArrayListWrapper<CommitI> commits = new ReadonlyList.ArrayListWrapper<CommitI>();
+    fillData(list, navigation, builder, commits);
+
+    testFirstStepResults(navigation, commits);
+    // end of first step
+    fillData(step2, navigation, builder, commits);
+
+    testFirstStepResults(navigation, commits);
+    for (int i = 7; i < 14; i++) {
+      final CommitI commitI = (CommitI)commits.get(i);
+      // just because of the test data order
+      Assert.assertEquals("" + (i + 1), commitI.getHash().getString());
+    }
+    Assert.assertEquals(0, commits.get(7).getWireNumber());
+    Assert.assertEquals(1, commits.get(8).getWireNumber());
+    Assert.assertEquals(0, commits.get(9).getWireNumber());
+    Assert.assertEquals(1, commits.get(10).getWireNumber());
+    Assert.assertEquals(0, commits.get(11).getWireNumber());
+    Assert.assertEquals(1, commits.get(12).getWireNumber());
+    Assert.assertEquals(0, commits.get(13).getWireNumber());
+
+    final Iterator<WireEvent> iterator = navigation.createWireEventsIterator(0);
+    testFirstIteratorPart(iterator);
+    WireEvent we = iterator.next();
+
+    Assert.assertEquals(6, we.getCommitIdx());
+    final int[] commitsStarts = we.getCommitsStarts();
+    Assert.assertEquals(2, commitsStarts.length);
+    Assert.assertEquals(7, commitsStarts[0]);
+    Assert.assertEquals(8, commitsStarts[1]);
+    Assert.assertNull(we.getWireEnds());
+
+    we = iterator.next();
+    Assert.assertEquals(12, we.getWireEnds()[0]);
+    Assert.assertEquals(13, we.getCommitIdx());
+    final int[] commitsEnds = we.getCommitsEnds();
+    Assert.assertEquals(2, commitsEnds.length);
+    Assert.assertEquals(11, commitsEnds[0]);
+    Assert.assertEquals(12, commitsEnds[1]);
+
+    assertWires(navigation.getUsedWires(7, commits).getUsed(),0,1);
+    assertWires(navigation.getUsedWires(8, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(9, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(10, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(11, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(12, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(13, commits).getUsed(), 0,1);
+  }
+
+  public void testTwoStepsMinusLastElement() throws Exception {
+    final List<CommitHashPlusParents> list = read("1 2 3\n2 4\n3 5\n4 6\n5 6\n6 7\n7 8 9");
+    final List<CommitHashPlusParents> step2 = read("8 10\n9 11\n10 12\n11 13\n12 14\n13 14");
+    // 4, 4
+    final TreeNavigationImpl navigation = new TreeNavigationImpl(2, 2);
+    final SkeletonBuilder builder = new SkeletonBuilder(navigation);
+    final ReadonlyList.ArrayListWrapper<CommitI> commits = new ReadonlyList.ArrayListWrapper<CommitI>();
+    fillData(list, navigation, builder, commits);
+
+    testFirstStepResults(navigation, commits);
+    // end of first step
+    fillData(step2, navigation, builder, commits);
+
+    testFirstStepResults(navigation, commits);
+    for (int i = 7; i < 13; i++) {
+      final CommitI commitI = (CommitI)commits.get(i);
+      // just because of the test data order
+      Assert.assertEquals("" + (i + 1), commitI.getHash().getString());
+    }
+    Assert.assertEquals(0, commits.get(7).getWireNumber());
+    Assert.assertEquals(1, commits.get(8).getWireNumber());
+    Assert.assertEquals(0, commits.get(9).getWireNumber());
+    Assert.assertEquals(1, commits.get(10).getWireNumber());
+    Assert.assertEquals(0, commits.get(11).getWireNumber());
+    Assert.assertEquals(1, commits.get(12).getWireNumber());
+
+    final Iterator<WireEvent> iterator = navigation.createWireEventsIterator(0);
+    testFirstIteratorPart(iterator);
+    WireEvent we = iterator.next();
+
+    Assert.assertEquals(6, we.getCommitIdx());
+    final int[] commitsStarts = we.getCommitsStarts();
+    Assert.assertEquals(2, commitsStarts.length);
+    Assert.assertEquals(7, commitsStarts[0]);
+    Assert.assertEquals(8, commitsStarts[1]);
+    Assert.assertNull(we.getWireEnds());
+
+    assertWires(navigation.getUsedWires(7, commits).getUsed(),0,1);
+    assertWires(navigation.getUsedWires(8, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(9, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(10, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(11, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(12, commits).getUsed(), 0,1);
+  }
+
+  private void testFirstStepResults(TreeNavigationImpl navigation, ReadonlyList.ArrayListWrapper<CommitI> commits) {
+    for (int i = 0; i < 7; i++) {
+      final CommitI commitI = (CommitI)commits.get(i);
+      // just because of the test data order
+      Assert.assertEquals("" + (i + 1), commitI.getHash().getString());
+    }
+    Assert.assertEquals(0, commits.get(0).getWireNumber());
+    Assert.assertEquals(0, commits.get(1).getWireNumber());
+    Assert.assertEquals(1, commits.get(2).getWireNumber());
+    Assert.assertEquals(0, commits.get(3).getWireNumber());
+    Assert.assertEquals(1, commits.get(4).getWireNumber());
+    Assert.assertEquals(0, commits.get(5).getWireNumber());
+    Assert.assertEquals(0, commits.get(6).getWireNumber());
+
+    final Iterator<WireEvent> iterator = navigation.createWireEventsIterator(0);
+    testFirstIteratorPart(iterator);
+    WireEvent we;
+
+    assertWires(navigation.getUsedWires(0, commits).getUsed());
+    assertWires(navigation.getUsedWires(1, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(2, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(3, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(4, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(5, commits).getUsed(), 0,1);
+    assertWires(navigation.getUsedWires(6, commits).getUsed(), 0);
+
+    final Iterator<WireEvent> iterator1 = navigation.createWireEventsIterator(4);
+    we = iterator1.next();
+    Assert.assertEquals(4, we.getWireEnds()[0]);
+    Assert.assertEquals(5, we.getCommitIdx());
+    final int[] commitsEnds1 = we.getCommitsEnds();
+    Assert.assertEquals(2, commitsEnds1.length);
+    Assert.assertEquals(3, commitsEnds1[0]);
+    Assert.assertEquals(4, commitsEnds1[1]);
+  }
+
+  private void testFirstIteratorPart(Iterator<WireEvent> iterator) {
+    WireEvent we = iterator.next();
+    Assert.assertEquals(true, we.isStart());
+    Assert.assertEquals(0, we.getCommitIdx());
+    final int[] commitsStarts = we.getCommitsStarts();
+    Assert.assertEquals(2, commitsStarts.length);
+    Assert.assertEquals(1, commitsStarts[0]);
+    Assert.assertEquals(2, commitsStarts[1]);
+    Assert.assertNull(we.getWireEnds());
+    Assert.assertEquals(0, we.getCommitIdx());
+
+    we = iterator.next();
+    Assert.assertEquals(4, we.getWireEnds()[0]);
+    Assert.assertEquals(5, we.getCommitIdx());
+    final int[] commitsEnds = we.getCommitsEnds();
+    Assert.assertEquals(2, commitsEnds.length);
+    Assert.assertEquals(3, commitsEnds[0]);
+    Assert.assertEquals(4, commitsEnds[1]);
   }
 
   public void testBranchAndMerge() throws Exception {

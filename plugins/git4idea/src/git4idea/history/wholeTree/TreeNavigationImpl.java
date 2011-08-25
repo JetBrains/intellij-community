@@ -26,7 +26,9 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
   private final TreeMap<Integer, WireEvent> myWireEvents;
   // created for some of wire events; idx of _commit_
   private final TreeMap<Integer, RingIndex> myRingIndex;
+  // maximum number of commits, after which index entry should be written
   private final int myCommitIndexInterval;
+  // maximum number of wire events, after which index entry should be written
   private final int myNumWiresInGroup;
 
   public TreeNavigationImpl(final int commitIndexInterval, final int numWiresInGroup) {
@@ -100,6 +102,10 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
   @Override
   public Iterator<WireEvent> createWireEventsIterator(int rowInclusive) {
     return myWireEvents.tailMap(rowInclusive).values().iterator();
+  }
+
+  private Iterator<WireEvent> createWireEventsBackIterator(int rowExclusive) {
+    return myWireEvents.headMap(rowExclusive, false).descendingMap().values().iterator();
   }
 
   @Override
@@ -184,21 +190,20 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
   }
 
   public void recountWires(final int fromIdx, final ReadonlyList<CommitI> commits) {
-    final Ring.IntegerRing ring = new Ring.IntegerRing();
-
     final Map<Integer, Integer> recalculateMap = new HashMap<Integer, Integer>();
-    int runningCommitNumber = 0;  // next after previous event
 
+    /*final Iterator<WireEvent> backIterator = createWireEventsBackIterator(fromIdx);
+    int runningCommitNumber = backIterator.hasNext() ? backIterator.next().getCommitIdx() : 0;  // next after previous event
+    // t_odo: group two iterators to optimize!
+    */
+    Ring<Integer> usedWires = getUsedWires(fromIdx, commits);
+    final Ring.IntegerRing ring = new Ring.IntegerRing(usedWires.getUsed());
+
+    int runningCommitNumber = 0;
     final Iterator<WireEvent> iterator = createWireEventsIterator(fromIdx);
     for (; iterator.hasNext(); ) {
       final WireEvent we = iterator.next();
-      for (int i = runningCommitNumber; i <= we.getCommitIdx(); i++) {
-        final CommitI commit = commits.get(i);
-        final Integer newWire = recalculateMap.get(commit.getWireNumber());
-        if (newWire != null) {
-          commit.setWireNumber(newWire);
-        }
-      }
+      recountFragmentZwichem(commits, recalculateMap, runningCommitNumber, we.getCommitIdx());
       runningCommitNumber = we.getCommitIdx() + 1;
 
       final int[] wireEnds = we.getWireEnds();
@@ -223,12 +228,30 @@ public class TreeNavigationImpl implements TreeNavigation, WireEventsListener {
       final int[] commitsStarts = we.getCommitsStarts();
       if (commitsStarts.length > 0 && (! we.isEnd())) {
         for (int commitStart : commitsStarts) {
+          // wire number
           Integer corrected = recalculateMap.get(commitStart);
-          corrected = (corrected == null) ? commitStart : corrected;
+          int wasWireNumber = commits.get(commitStart).getWireNumber();
+          corrected = (corrected == null) ? wasWireNumber : corrected;
           if (! ring.isNumUsed(corrected)) {
             final Integer newNum = ring.getFree();
-            recalculateMap.put(commitStart, newNum);
+            recalculateMap.put(wasWireNumber, newNum);
           }
+        }
+      }
+    }
+    recountFragmentZwichem(commits, recalculateMap, runningCommitNumber, commits.getSize() - 1);
+  }
+
+  private void recountFragmentZwichem(ReadonlyList<CommitI> commits,
+                                      Map<Integer, Integer> recalculateMap,
+                                      int runningCommitNumber,
+                                      int inclusive) {
+    if (! recalculateMap.isEmpty()) {
+      for (int i = runningCommitNumber; i <= inclusive; i++) {
+        final CommitI commit = commits.get(i);
+        final Integer newWire = recalculateMap.get(commit.getWireNumber());
+        if (newWire != null) {
+          commit.setWireNumber(newWire);
         }
       }
     }

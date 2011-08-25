@@ -52,7 +52,9 @@ public class MediatorImpl implements Mediator {
       return StepType.STOP;
     }
 
-    myTableWrapper.appendResult(ticket, result, parents);
+    if (! result.isEmpty()) {
+      myTableWrapper.appendResult(ticket, result, parents);
+    }
     if (myTableWrapper.isSuspend()) {
       return StepType.PAUSE;
     }
