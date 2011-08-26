@@ -352,7 +352,7 @@ public class PyBlock implements ASTBlock {
       if (type2 == PyElementTypes.STATEMENT_LIST) {
         return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
       }
-      if (parentType == PyElementTypes.KEY_VALUE_EXPRESSION) {
+      if (parentType == PyElementTypes.KEY_VALUE_EXPRESSION || parentType == PyElementTypes.LAMBDA_EXPRESSION) {
         return getSpacingForOption(getPySettings().SPACE_AFTER_PY_COLON);
       }
     }
@@ -387,7 +387,7 @@ public class PyBlock implements ASTBlock {
     if (type2 == PyElementTypes.ARGUMENT_LIST) {
       return getSpacingForOption(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
     }
-    if (type2 == PyElementTypes.PARAMETER_LIST) {
+    if (type2 == PyElementTypes.PARAMETER_LIST && type1 != PyTokenTypes.LAMBDA_KEYWORD) {
       return getSpacingForOption(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
     }
 

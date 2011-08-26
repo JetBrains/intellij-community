@@ -135,6 +135,10 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
     CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
+  
+  public void testLambdaColon() {
+    doTest();
+  }
 
   public void testPsiFormatting() { // IDEA-69724
     String initial =
