@@ -255,6 +255,9 @@ public class GeneralCommandLine {
       if (parameter.contains("\"")) {
         parameter = StringUtil.replace(parameter, "\"", "\\\"");
       }
+      else if (parameter.length() == 0) {
+        parameter = "\"\"";
+      }
     }
     return parameter;
   }

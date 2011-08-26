@@ -63,7 +63,7 @@ public class GeneralCommandLineTest extends UsefulTestCase {
       );
     }
 
-    final String[] parameters = { "with space", "\"quoted\"", "\"quoted with spaces\"", "", "param 1", "\"", "param2", "trailing slash\\" };
+    final String[] parameters = { "with space", "\"quoted\"", "\"quoted with spaces\"", "", "  ", "param 1", "\"", "param2", "trailing slash\\" };
     try {
       final GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(tempFile.getCanonicalPath());
