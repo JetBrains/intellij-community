@@ -250,7 +250,6 @@ public class GeneralCommandLine {
   }
 
   private static String prepareCommand(String parameter) {
-    // AFAIK, the only thing needed is escaping double quotes on Windows
     if (SystemInfo.isWindows) {
       if (parameter.contains("\"")) {
         parameter = StringUtil.replace(parameter, "\"", "\\\"");

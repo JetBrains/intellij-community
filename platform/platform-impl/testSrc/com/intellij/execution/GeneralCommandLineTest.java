@@ -58,7 +58,7 @@ public class GeneralCommandLineTest extends UsefulTestCase {
         "path with spaces \"and quotes\" ", ".sh",
         "#!/bin/sh\n\n" +
         "echo \"=====\"\n" +
-        "for f in \"$@\" ; do echo $f; done\n" +
+        "for f in \"$@\" ; do echo \"$f\"; done\n" +
         "echo \"=====\"\n"
       );
     }
