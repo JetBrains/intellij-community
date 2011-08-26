@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
@@ -174,5 +176,62 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
         return null;
       }
     };
+  }
+
+  @Override
+  public boolean isOperationsEnabled() {
+    return true;
+  }
+
+  @Override
+  public boolean copyTo(DiffElement<VirtualFile> container, String relativePath) {
+    try {
+      final File src = new File(myFile.getPath());
+      final File trg = new File(container.getValue().getPath() + relativePath + src.getName());
+      FileUtil.copy(src, trg);
+      //final VirtualFile targetRoot = container.getValue();
+      //if (targetRoot != null && targetRoot.isDirectory()) {
+      //  VirtualFile target = getSeparator().equals(relativePath) ? targetRoot : targetRoot.findFileByRelativePath(relativePath);
+      //  final String path;
+      //  if (target == null) {
+      //    path = (targetRoot.getPath() + relativePath).replace('/', File.separatorChar);
+      //    new File(path).mkdirs();
+      //    target = targetRoot.findFileByRelativePath(removeSeparators(relativePath));          
+      //  }
+      //
+      //    if (target != null && target.isDirectory()) {
+      //      myFile.copy(this, target, myFile.getName());
+      //    }
+      //    else {
+      //      assert false : "Can't find " + container.getPath() + relativePath;
+      //    }
+      //
+      //}
+    }
+    catch (IOException e) {//
+    }
+    return false;
+  }
+
+  private String removeSeparators(String path) {
+    final int start = path.startsWith(getSeparator()) ? getSeparator().length() : 0;
+    final int end = path.endsWith(getSeparator()) ? path.length() - getSeparator().length() : path.length();
+    return path.substring(start, end);
+  }
+
+  @Override
+  public boolean delete() {
+    try {
+      myFile.delete(this);
+    }
+    catch (IOException e) {
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  public void refresh() {
+    myFile.refresh(false, true);
   }
 }

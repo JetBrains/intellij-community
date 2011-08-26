@@ -19,6 +19,7 @@ import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffModel;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -133,6 +134,14 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     getSettings().setFilter(myPanel.getFilter());
   }
 
+  public boolean isOperationsEnabled() {
+    return mySrc.isOperationsEnabled() && myTrg.isOperationsEnabled();
+  }
+
+  public List<DirDiffElement> getElements() {
+    return myElements;
+  }
+
   private static String prepareText(String text) {
     final int LEN = EMPTY_STRING.length();
     String right;
@@ -165,15 +174,19 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void reloadModel() {
+    //System.out.println("Start reloading");
     myUpdating.set(true);
     final JBLoadingPanel loadingPanel = getLoadingPanel();
     loadingPanel.startLoading();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
+        //System.out.println("start updating on pooled thread");
         try {
           updater = new Updater(loadingPanel, 100);
           updater.start();
           myTree = new DTree(null, "", true);
+          mySrc.refresh();
+          myTrg.refresh();
           scan(mySrc, myTree, true);
           scan(myTrg, myTree, false);
 
@@ -184,6 +197,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         }
         catch (Exception e) {//
         }
+        //System.out.println("end updating on pooled thread");
       }
     });
   }
@@ -193,6 +207,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void applySettings() {
+    //System.out.println(StringUtil.getThrowableText(new Throwable()));
     if (! myUpdating.get()) myUpdating.set(true);
     final JBLoadingPanel loadingPanel = getLoadingPanel();
     if (!loadingPanel.isLoading()) {
@@ -205,6 +220,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     final Application app = ApplicationManager.getApplication();
     app.executeOnPooledThread(new Runnable() {
       public void run() {
+        //System.out.println("start updating tree");
         myTree.updateVisibility(mySettings);
         final ArrayList<DirDiffElement> elements = new ArrayList<DirDiffElement>();
         fillElements(myTree, elements);
@@ -227,6 +243,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         } else {
           app.invokeLater(uiThread);
         }
+        //System.out.println("stop updating tree");
       }
     });
   }
@@ -240,24 +257,24 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       if (!child.isContainer()) {
         if (child.isVisible()) {
           if (!separatorAdded) {
-            elements.add(DirDiffElement.createDirElement(tree.getSource(), tree.getTarget(), tree.getPath()));
+            elements.add(DirDiffElement.createDirElement(tree, tree.getSource(), tree.getTarget(), tree.getPath()));
             separatorAdded = true;
           }
           switch (child.getType()) {
             case SOURCE:
-              elements.add(DirDiffElement.createSourceOnly(child.getSource()));
+              elements.add(DirDiffElement.createSourceOnly(tree, child.getSource()));
               break;
             case TARGET:
-              elements.add(DirDiffElement.createTargetOnly(child.getTarget()));
+              elements.add(DirDiffElement.createTargetOnly(tree, child.getTarget()));
               break;
             case CHANGED:
-              elements.add(DirDiffElement.createChange(child.getSource(), child.getTarget()));
+              elements.add(DirDiffElement.createChange(tree, child.getSource(), child.getTarget()));
               break;
             case EQUAL:
-              elements.add(DirDiffElement.createEqual(child.getSource(), child.getTarget()));
+              elements.add(DirDiffElement.createEqual(tree, child.getSource(), child.getTarget()));
               break;
             case ERROR:
-              elements.add(DirDiffElement.createError(child.getSource(), child.getTarget()));
+              elements.add(DirDiffElement.createError(tree, child.getSource(), child.getTarget()));
           }
         }
       } else {
@@ -354,6 +371,17 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
     return "";
   }
+  
+  public List<DirDiffElement> getSelectedElements() {
+    final int[] rows = myTable.getSelectedRows();
+    final ArrayList<DirDiffElement> elements = new ArrayList<DirDiffElement>();
+    for (int row : rows) {
+      final DirDiffElement element = getElementAt(row);
+      if (element == null || element.isSeparator()) continue;
+      elements.add(element);
+    }
+    return elements;
+  }
 
   @Override
   public String getColumnName(int column) {
@@ -425,6 +453,54 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   public DirDiffSettings getSettings() {
     return mySettings;
+  }
+
+  public void performCopyTo(DirDiffElement element) {
+    final DiffElement source = element.getSource();
+    if (source != null) {
+      final String path = element.getParentNode().getPath();
+
+      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+      try {
+        source.copyTo(myTrg, path);
+      } finally {
+        token.finish();
+      }
+    }
+  }
+
+  public void performCopyFrom(DirDiffElement element) {
+    final DiffElement target = element.getTarget();
+    if (target != null) {
+      final String path = element.getParentNode().getPath();
+      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+      try {
+        target.copyTo(mySrc, path);
+      } finally {
+        token.finish();
+      }
+    }
+  }
+
+  public void performDelete(DirDiffElement element) {
+    final DiffElement source = element.getSource();
+    final DiffElement target = element.getTarget();
+    final int index = myElements.indexOf(element);
+    if (index != -1) {
+      myElements.remove(index);
+      fireTableRowsDeleted(index, index);
+    }
+    final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+    try {
+      if (source != null) {
+        source.delete();
+      }
+      if (target != null) {
+        target.delete();
+      }
+    } finally {
+      token.finish();
+    }
   }
 
   class Updater extends Thread {
