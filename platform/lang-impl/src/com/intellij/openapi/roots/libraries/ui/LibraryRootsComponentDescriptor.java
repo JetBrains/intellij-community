@@ -18,7 +18,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,13 +37,12 @@ public abstract class LibraryRootsComponentDescriptor {
 
   /**
    * Provides root detectors for 'Attach Files' button. They will be used to automatically assign {@link OrderRootType}s for selected files.
+   * Also these detectors are used when a new library is created so the list must not be empty.
    *
-   * @return list of {@link RootDetector}'s implementations
+   * @return non-empty list of {@link RootDetector}'s implementations
    */
   @NotNull
-  public List<? extends RootDetector> getRootDetectors() {
-    return Collections.emptyList();
-  }
+  public abstract List<? extends RootDetector> getRootDetectors();
 
   /**
    * @return descriptor for the file chooser which will be shown when 'Attach Files' button is pressed
