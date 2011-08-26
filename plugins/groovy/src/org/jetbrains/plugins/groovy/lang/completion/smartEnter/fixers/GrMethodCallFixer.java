@@ -28,12 +28,13 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 public class GrMethodCallFixer implements GrFixer {
   public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     final GrArgumentList argList = psiElement instanceof GrCall ? ((GrCall)psiElement).getArgumentList() : null;
-    if (argList == null) return;
+    if (argList == null || argList instanceof GrCommandArgumentList) return;
 
     GrCall call = (GrCall)psiElement;
 
