@@ -539,7 +539,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   @NotNull
-  Collection<HighlightInfo> getHighlights() {
+  public List<HighlightInfo> getInfos() {
     return new ArrayList<HighlightInfo>(myHighlights);
   }
 
@@ -743,7 +743,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     VirtualFile file = myFile.getVirtualFile();
     if (file == null) return;
 
-    List<Problem> problems = convertToProblems(getHighlights(), file, myHasErrorElement);
+    List<Problem> problems = convertToProblems(getInfos(), file, myHasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
 
     boolean hasErrors = DaemonCodeAnalyzerImpl.hasErrors(project, getDocument());

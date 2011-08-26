@@ -16,11 +16,9 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeHighlighting.*;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
@@ -33,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author cdr
 */
-public class GeneralHighlightingPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+public class GeneralHighlightingPassFactory extends AbstractProjectComponent implements MainHighlightingPassFactory {
   public GeneralHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this,
@@ -54,5 +52,10 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
     );
     ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
     return new GeneralHighlightingPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange, editor);
+  }
+
+  @Override
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file, @NotNull Document document) {
+    return new GeneralHighlightingPass(myProject, file, document, 0, file.getTextLength(), true);
   }
 }

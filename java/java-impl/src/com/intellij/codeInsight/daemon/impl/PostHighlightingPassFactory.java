@@ -15,11 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeHighlighting.*;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -31,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author cdr
 */
-public class PostHighlightingPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+public class PostHighlightingPassFactory extends AbstractProjectComponent implements MainHighlightingPassFactory {
   public PostHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,}, null, true, Pass.POST_UPDATE_ALL);
@@ -51,5 +49,12 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
     int endOffset = editor.getDocument().getTextLength();
 
     return new PostHighlightingPass(myProject, file, editor, editor.getDocument(), startOffset, endOffset);
+  }
+
+  @Override
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file, @NotNull Document document) {
+    int startOffset = 0;
+    int endOffset = document.getTextLength();
+    return new PostHighlightingPass(myProject, file, null, document, startOffset, endOffset);
   }
 }

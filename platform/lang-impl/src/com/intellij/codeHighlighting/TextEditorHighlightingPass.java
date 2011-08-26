@@ -17,6 +17,7 @@ package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,6 +30,8 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
@@ -107,6 +110,11 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   public final void setId(final int id) {
     myId = id;
+  }
+
+  @Nullable
+  public List<HighlightInfo> getInfos() {
+    return null;
   }
 
   @NotNull

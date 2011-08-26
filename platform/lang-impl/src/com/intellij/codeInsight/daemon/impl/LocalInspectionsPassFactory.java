@@ -16,13 +16,11 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeHighlighting.*;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -39,7 +37,7 @@ import java.util.List;
 /**
  * @author cdr
 */
-public class LocalInspectionsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+public class LocalInspectionsPassFactory extends AbstractProjectComponent implements MainHighlightingPassFactory {
   public LocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
 
@@ -64,19 +62,31 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
       return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument());
     }
     TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
-    return new LocalInspectionsPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true){
-      List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
-        List<LocalInspectionTool> tools = super.getInspectionTools(profile);
-        List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>(tools.size());
-        for (LocalInspectionTool tool : tools) {
-          if (!tool.runForWholeFile()) result.add(tool);
-        }
-        return result;
-      }
-    };
+    return new MyLocalInspectionsPass(file, editor.getDocument(), textRange, visibleRange);
+  }
+
+  @Override
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file, @NotNull Document document) {
+    final TextRange textRange = file.getTextRange();
+    return new MyLocalInspectionsPass(file, document, textRange, LocalInspectionsPass.EMPTY_PRIORITY_RANGE);
   }
 
   private static TextRange calculateRangeToProcess(Editor editor) {
     return FileStatusMap.getDirtyTextRange(editor, Pass.LOCAL_INSPECTIONS);
+  }
+
+  private static class MyLocalInspectionsPass extends LocalInspectionsPass {
+    public MyLocalInspectionsPass(PsiFile file, Document document, TextRange textRange, TextRange visibleRange) {
+      super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true);
+    }
+
+    List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
+      List<LocalInspectionTool> tools = super.getInspectionTools(profile);
+      List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>(tools.size());
+      for (LocalInspectionTool tool : tools) {
+        if (!tool.runForWholeFile()) result.add(tool);
+      }
+      return result;
+    }
   }
 }
