@@ -15,6 +15,7 @@
  */
 package com.intellij.find.findUsages;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.project.Project;
@@ -163,7 +164,13 @@ public abstract class FindUsagesHandler {
   @Nullable
   protected Collection<String> getStringsToSearch(final PsiElement element) {
     if (element instanceof PsiNamedElement) {
-      return ContainerUtil.createMaybeSingletonList(((PsiNamedElement)element).getName());
+      final AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        return ContainerUtil.createMaybeSingletonList(((PsiNamedElement)element).getName());
+      }
+      finally {
+        accessToken.finish();
+      }
     }
 
     return Collections.singleton(element.getText());
