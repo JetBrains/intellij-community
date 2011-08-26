@@ -21,15 +21,14 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -149,7 +148,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
           } else {
             if (qualifierExpression instanceof PsiReferenceExpression) {
               PsiElement aClass = ((PsiReferenceExpression)qualifierExpression).resolve();
-              if (aClass == ((PsiMember)resolved).getContainingClass()) {
+              if (aClass instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)aClass, ((PsiMember)resolved).getContainingClass(), true)) {
                 boolean foundMemberByName = false;
                 if (referent instanceof PsiMember) {
                   final String memberName = ((PsiMember)referent).getName();
