@@ -959,6 +959,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public RootsConvertor getCustomConvertor() {
+    if (myProject.isDefault()) return null;
     return getSvnFileUrlMapping();
   }
 
