@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduceField.InplaceCombosUtil;
+import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
@@ -74,7 +74,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
       }
     });
     myReplaceFieldsCb.setSelectedItem(JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS);
-    InplaceCombosUtil.appendActions(myReplaceFieldsCb, myProject);
+    KeyboardComboSwitcher.setupActions(myReplaceFieldsCb, myProject);
     component.setComponent(myReplaceFieldsCb);
     component.setText(RefactoringBundle.message("replace.fields.used.in.expressions.with.their.getters"));
     component.getLabel().setDisplayedMnemonic('u');
