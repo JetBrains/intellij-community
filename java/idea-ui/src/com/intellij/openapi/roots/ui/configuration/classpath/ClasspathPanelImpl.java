@@ -484,7 +484,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       int actionIndex = 1;
       final List<AddItemPopupAction<?>> actions = new ArrayList<AddItemPopupAction<?>>();
       final StructureConfigurableContext context = getStructureConfigurableContext();
-      actions.add(new AddSingleEntryModuleLibraryAction(this, actionIndex++, context));
+      actions.add(new AddModuleLibraryAction(this, actionIndex++, context));
       actions.add(new AddLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), context));
       actions.add(new AddItemPopupAction<Module>(this, actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
                                                  StdModuleTypes.JAVA.getNodeIcon(false)) {

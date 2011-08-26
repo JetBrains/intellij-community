@@ -27,13 +27,13 @@ import com.intellij.util.PlatformIcons;
 /**
 * @author nik
 */
-class AddSingleEntryModuleLibraryAction extends AddItemPopupAction<Library> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.AddSingleEntryModuleLibraryAction");
-  private StructureConfigurableContext myContext;
+class AddModuleLibraryAction extends AddItemPopupAction<Library> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.AddModuleLibraryAction");
+  private final StructureConfigurableContext myContext;
 
-  public AddSingleEntryModuleLibraryAction(final ClasspathPanel classpathPanel,
-                                           int actionIndex,
-                                           StructureConfigurableContext context) {
+  public AddModuleLibraryAction(final ClasspathPanel classpathPanel,
+                                int actionIndex,
+                                StructureConfigurableContext context) {
     super(classpathPanel, actionIndex, ProjectBundle.message("classpath.add.simple.module.library.action"), PlatformIcons.JAR_ICON);
     myContext = context;
   }
@@ -54,6 +54,6 @@ class AddSingleEntryModuleLibraryAction extends AddItemPopupAction<Library> {
 
   protected ClasspathElementChooser<Library> createChooser() {
     final LibraryTable.ModifiableModel moduleLibraryModel = myClasspathPanel.getRootModel().getModuleLibraryTable().getModifiableModel();
-    return new CreateSingleEntryModuleLibraryChooser(myClasspathPanel, moduleLibraryModel);
+    return new CreateModuleLibraryChooser(myClasspathPanel, moduleLibraryModel);
   }
 }
