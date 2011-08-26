@@ -44,6 +44,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
@@ -101,6 +102,25 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return statement == null ? "" : statement.getPackageName();
   }
 
+  @Override
+  public void setPackageName(final String packageName) throws IncorrectOperationException {
+    final PsiPackageStatement packageStatement = getPackageStatement();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    if (packageStatement != null) {
+      if (packageName.length() > 0) {
+        packageStatement.replace(factory.createPackageStatement(packageName));
+      }
+      else {
+        packageStatement.delete();
+      }
+    }
+    else {
+      if (packageName.length() > 0) {
+        add(factory.createPackageStatement(packageName));
+      }
+    }
+  }
+
   @NotNull
   public PsiImportList getImportList() {
     final StubElement<?> stub = getStub();
@@ -138,7 +158,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
 
-    return PsiUtilBase.toPsiElementArray(array);
+    return PsiUtilCore.toPsiElementArray(array);
   }
 
   @NotNull
@@ -413,7 +433,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     final Project project = getProject();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
-    if (sourceRoot != null) {
+    if (sourceRoot != null && folder != null) {
       String relativePath = VfsUtil.getRelativePath(folder, sourceRoot, '/');
       LOG.assertTrue(relativePath != null);
       List<OrderEntry> orderEntries = index.getOrderEntriesForFile(virtualFile);

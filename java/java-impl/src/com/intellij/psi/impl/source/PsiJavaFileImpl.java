@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,23 +62,5 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   @NotNull
   public FileType getFileType() {
     return StdFileTypes.JAVA;
-  }
-
-  public void setPackageName(final String packageName) throws IncorrectOperationException {
-    PsiPackageStatement packageStatement = getPackageStatement();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-    if (packageStatement != null) {
-      if (packageName.length() > 0) {
-        packageStatement.replace(factory.createPackageStatement(packageName));
-      }
-      else {
-        packageStatement.delete();
-      }
-    }
-    else {
-      if (packageName.length() > 0) {
-        add(factory.createPackageStatement(packageName));
-      }
-    }
   }
 }
