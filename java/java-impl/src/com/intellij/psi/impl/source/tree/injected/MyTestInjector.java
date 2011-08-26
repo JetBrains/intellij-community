@@ -60,14 +60,14 @@ public class MyTestInjector {
     injectVariousStuffEverywhere(parent, myPsiManager);
 
     Project project = myPsiManager.getProject();
-    Language ql = findLanguageByID("JPAQL");
-    Language js = findLanguageByID("JavaScript");
+    Language ql = Language.findLanguageByID("JPAQL");
+    Language js = Language.findLanguageByID("JavaScript");
     registerForStringVarInitializer(parent, project, ql, "ql", null, null);
     registerForStringVarInitializer(parent, project, ql, "qlPrefixed", "xxx", null);
     registerForStringVarInitializer(parent, project, js, "js", null, null);
     registerForStringVarInitializer(parent, project, js, "jsSeparated", " + ", " + 'separator'");
     registerForStringVarInitializer(parent, project, js, "jsBrokenPrefix", "xx ", "");
-    registerForParameterValue(parent, project, findLanguageByID("Groovy"), "groovy");
+    registerForParameterValue(parent, project, Language.findLanguageByID("Groovy"), "groovy");
   }
 
   private static void registerForParameterValue(Disposable parent, final Project project, final Language language, final String paramName) {
@@ -149,19 +149,11 @@ public class MyTestInjector {
     });
   }
 
-  private static Language findLanguageByID(@NonNls String id) {
-    for (Language language : Language.getRegisteredLanguages()) {
-      if (language == Language.ANY) continue;
-      if (language.getID().equals(id)) return language;
-    }
-    return null;
-  }
-
   private static void injectVariousStuffEverywhere(Disposable parent, final PsiManager psiManager) {
-    final Language ql = findLanguageByID("JPAQL");
-    final Language js = findLanguageByID("JavaScript");
+    final Language ql = Language.findLanguageByID("JPAQL");
+    final Language js = Language.findLanguageByID("JavaScript");
     if (ql == null || js == null) return;
-    final Language ecma4 = findLanguageByID("ECMA Script Level 4");
+    final Language ecma4 = Language.findLanguageByID("ECMA Script Level 4");
 
     final MultiHostInjector myMultiHostInjector = new MultiHostInjector() {
       public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
@@ -265,7 +257,7 @@ public class MyTestInjector {
               paramList += parameter.getName();
             }
             @NonNls String header = "function " + method.getName() + "("+paramList+") {";
-            Language gwt = findLanguageByID("GWT JavaScript");
+            Language gwt = Language.findLanguageByID("GWT JavaScript");
             placesToInject.addPlace(gwt, textRange, header, "}");
             return;
           }
@@ -295,7 +287,7 @@ public class MyTestInjector {
             PsiClass aClass = PsiTreeUtil.getParentOfType(variable, PsiClass.class);
             aClass = aClass.findInnerClassByName("Language", false);
             String text = aClass.getInitializers()[0].getBody().getFirstBodyElement().getNextSibling().getText().substring(2);
-            Language language = findLanguageByID(text);
+            Language language = Language.findLanguageByID(text);
 
             if (language != null) {
               placesToInject.addPlace(language, textRangeToInject(host), "", "");
