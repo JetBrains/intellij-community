@@ -34,15 +34,21 @@ public class TestIconProvider extends IconProvider {
     final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
 
     for (TestFramework framework : testFrameworks) {
-      if (framework.isIgnoredMethod(element)) {
-        return TestsUIUtil.loadIcon("ignoredTest");
+      try {
+        if (framework.isIgnoredMethod(element)) {
+          return TestsUIUtil.loadIcon("ignoredTest");
+        }
       }
+      catch (AbstractMethodError ignored) {}
     }
 
     for (TestFramework framework : testFrameworks) {
-      if (framework.isTestMethod(element)) {
-        return new LayeredIcon(PlatformIcons.METHOD_ICON, TestsUIUtil.loadIcon("testMark"));
+      try {
+        if (framework.isTestMethod(element)) {
+          return new LayeredIcon(PlatformIcons.METHOD_ICON, TestsUIUtil.loadIcon("testMark"));
+        }
       }
+      catch (AbstractMethodError ignore) {}
     }
 
     return null;
