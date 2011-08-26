@@ -1,5 +1,5 @@
-import c;
-import c.*;
+import p.c;
+import p.c.*;
 
 class d {
  c c = null;
