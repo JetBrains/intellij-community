@@ -242,7 +242,7 @@ public class GeneralCommandLine {
   private String[] prepareCommands() {
     final List<String> parameters = myProgramParams.getList();
     final String[] result = new String[parameters.size() + 1];
-    result[0] = prepareCommand(myExePath != null ? FileUtil.toSystemDependentName(myExePath) : null);
+    result[0] = myExePath != null ? prepareCommand(FileUtil.toSystemDependentName(myExePath)) : null;
     for (int i = 0; i < parameters.size(); i++) {
       result[i + 1] = prepareCommand(parameters.get(i));
     }
