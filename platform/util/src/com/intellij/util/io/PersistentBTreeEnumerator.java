@@ -185,12 +185,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           p.setCurrentKey(key);
           assert record != null;
           if (record > 0) {
-            if (!p.process(record)) break out;
+            if (!p.process(record)) return false;
           } else {
             int rec = - record;
             while(rec != 0) {
               int id = myStorage.getInt(rec);
-              if (!p.process(id)) break out;
+              if (!p.process(id)) return false;
               rec = myStorage.getInt(rec + COLLISION_OFFSET);
             }
           }
