@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -32,7 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.system.ExecUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
@@ -124,7 +125,7 @@ public class CreateDesktopEntryAction extends AnAction {
     }
   }
 
-  private static void check() throws IOException, InterruptedException {
+  private static void check() throws ExecutionException, InterruptedException {
     final int result = ExecUtil.execAndGetResult("which", "xdg-desktop-menu");
     if (result != 0) throw new RuntimeException(ApplicationBundle.message("desktop.entry.xdg.missing"));
   }
@@ -201,7 +202,7 @@ public class CreateDesktopEntryAction extends AnAction {
     return null;
   }
 
-  private static void install(final File entryFile, final boolean globalEntry) throws IOException, InterruptedException, ScriptException {
+  private static void install(final File entryFile, final boolean globalEntry) throws IOException, ExecutionException, InterruptedException, ScriptException {
     try {
       final int result;
       if (globalEntry) {

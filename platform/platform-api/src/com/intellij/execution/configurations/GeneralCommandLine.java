@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +50,22 @@ public class GeneralCommandLine {
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
+
+  public GeneralCommandLine() { }
+
+  public GeneralCommandLine(final String... command) {
+    this(Arrays.asList(command));
+  }
+
+  public GeneralCommandLine(final List<String> command) {
+    final int size = command.size();
+    if (size > 0) {
+      setExePath(command.get(0));
+      if (size > 1) {
+        addParameters(command.subList(1, size));
+      }
+    }
+  }
 
   public String getExePath() {
     return myExePath;

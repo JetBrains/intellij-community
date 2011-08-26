@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -29,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.system.ExecUtil;
 import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
@@ -117,7 +118,7 @@ public class CreateLauncherScriptAction extends AnAction {
     }
   }
 
-  private static File createLauncherScriptFile() throws IOException {
+  private static File createLauncherScriptFile() throws IOException, ExecutionException {
     String runPath = PathManager.getHomePath();
     if (!SystemInfo.isMac) {
       // for Macs just use "*.app"
