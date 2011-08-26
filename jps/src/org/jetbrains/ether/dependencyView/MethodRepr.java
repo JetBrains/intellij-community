@@ -31,10 +31,25 @@ public class MethodRepr extends ProtoMember {
 
     @Override
     public Difference difference(final Proto past) {
-        final int d = super.difference(past).base();
+        final Difference diff = super.difference(past);
         final Difference.Specifier<TypeRepr.AbstractType> excs = Difference.make(((MethodRepr) past).exceptions, exceptions);
 
         return new Diff() {
+            @Override
+            public int addedModifiers() {
+                return diff.addedModifiers();
+            }
+
+            @Override
+            public int removedModifiers() {
+                return diff.removedModifiers();
+            }
+
+            @Override
+            public boolean no() {
+                return base() == NONE && !defaultAdded() && !defaultRemoved() && excs.unchanged();
+            }
+
             @Override
             public boolean defaultAdded() {
                 return hasValue() && !((MethodRepr) past).hasValue();
@@ -52,7 +67,7 @@ public class MethodRepr extends ProtoMember {
 
             @Override
             public int base() {
-                return d;
+                return diff.base();
             }
         };
     }

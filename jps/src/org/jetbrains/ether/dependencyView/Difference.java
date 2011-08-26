@@ -21,8 +21,11 @@ public abstract class Difference {
 
     public interface Specifier<T> {
         public Collection<T> added();
+
         public Collection<T> removed();
+
         public Collection<Pair<T, Difference>> changed();
+
         public boolean unchanged();
     }
 
@@ -76,8 +79,11 @@ public abstract class Difference {
             if (x instanceof Proto) {
                 final Proto px = (Proto) x;
                 final Proto py = (Proto) y;
+                final Difference diff = py.difference(px);
 
-                changed.add(new Pair<T, Difference>(x, py.difference(px)));
+                if (!diff.no()) {
+                    changed.add(new Pair<T, Difference>(x, diff));
+                }
             }
         }
 
@@ -85,12 +91,15 @@ public abstract class Difference {
             public Collection<T> added() {
                 return added;
             }
+
             public Collection<T> removed() {
                 return removed;
             }
+
             public Collection<Pair<T, Difference>> changed() {
                 return changed;
             }
+
             public boolean unchanged() {
                 return changed.isEmpty() && added.isEmpty() && removed.isEmpty();
             }
@@ -99,11 +108,7 @@ public abstract class Difference {
 
     public abstract int base();
 
-    public static Difference createBase(final int d) {
-        return new Difference() {
-            public int base() {
-                return d;
-            }
-        };
-    }
+    public abstract boolean no();
+    public abstract int addedModifiers ();
+    public abstract int removedModifiers ();
 }

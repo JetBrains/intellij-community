@@ -280,11 +280,18 @@ public class ProjectWrapper {
             myModificationTime = RW.readLong(r);
 
             final Set<ClassRepr> classes = (Set<ClassRepr>) RW.readMany(r, ClassRepr.reader, new HashSet<ClassRepr>());
+            final Set<Pair<ClassRepr, Set<StringCache.S>>> classesWithSubclasses = new HashSet<Pair<ClassRepr, Set<StringCache.S>>>();
+
+            for (ClassRepr c : classes) {
+                final Set<StringCache.S> subClasses = (Set<StringCache.S>) RW.readMany(r, StringCache.reader, new HashSet<StringCache.S>());
+                classesWithSubclasses.add(new Pair<ClassRepr, Set<StringCache.S>>(c, subClasses));
+            }
+
             final Set<UsageRepr.Usage> usages = (Set<UsageRepr.Usage>) RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage>());
             final Set<UsageRepr.Usage> annotationUsages = (Set<UsageRepr.Usage>) RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage>());
             final Set<StringCache.S> formClasses = (Set<StringCache.S>) RW.readMany(r, StringCache.S.reader, new HashSet<StringCache.S>());
 
-            backendCallback.associate(classes, new Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>>(usages, annotationUsages), myName.value);
+            backendCallback.associate(classesWithSubclasses, new Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>>(usages, annotationUsages), myName.value);
 
             for (StringCache.S classFileName : formClasses) {
                 backendCallback.associateForm(myName, classFileName);
@@ -305,7 +312,16 @@ public class ProjectWrapper {
             RW.writeln(w, name.value);
             RW.writeln(w, Long.toString(getStamp()));
 
-            RW.writeln(w, dependencyMapping.getClasses(name));
+            final Set<ClassRepr> classes = dependencyMapping.getClasses(name);
+
+            RW.writeln(w, classes);
+
+            if (classes != null) {
+                for (ClassRepr c : classes) {
+                    RW.writeln(w, dependencyMapping.getSubClasses(c.name));
+                }
+            }
+
             RW.writeln(w, dependencyMapping.getUsages(name));
             RW.writeln(w, dependencyMapping.getAnnotationUsages(name));
             RW.writeln(w, dependencyMapping.getFormClass(name));
@@ -661,8 +677,7 @@ public class ProjectWrapper {
                 if (myTestDependsOn != null) {
                     return myTestDependsOn;
                 }
-            }
-            else if (myDependsOn != null) {
+            } else if (myDependsOn != null) {
                 return myDependsOn;
             }
 
@@ -682,8 +697,7 @@ public class ProjectWrapper {
 
             if (tests) {
                 myTestDependsOn = result;
-            }
-            else {
+            } else {
                 myDependsOn = result;
             }
 

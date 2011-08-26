@@ -12,19 +12,27 @@ public class TestClassModifiers extends IncrementalTestCase {
         super("classModifiers");
     }
 
-    public void testDecAccess () throws Exception {
+    public void testAddStatic() throws Exception {
         doTest();
     }
 
-    public void testSetAbstract () throws Exception {
+    public void testRemoveStatic() throws Exception {
+            doTest();
+        }
+
+    public void testDecAccess() throws Exception {
         doTest();
     }
 
-    public void testSetFinal () throws Exception {
+    public void testSetAbstract() throws Exception {
         doTest();
     }
 
-    public void testSetFinal1 () throws Exception {
+    public void testSetFinal() throws Exception {
+        doTest();
+    }
+
+    public void testSetFinal1() throws Exception {
         doTest();
     }
 }

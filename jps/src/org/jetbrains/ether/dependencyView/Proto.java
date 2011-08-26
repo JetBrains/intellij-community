@@ -46,6 +46,28 @@ public abstract class Proto implements RW.Writable {
             diff |= Difference.SIGNATURE;
         }
 
-        return Difference.createBase(diff);
+        final int base = diff;
+
+        return new Difference() {
+            @Override
+            public int base() {
+                return base;
+            }
+
+            @Override
+            public boolean no() {
+                return base == Difference.NONE;
+            }
+
+            @Override
+            public int addedModifiers() {
+                return ~past.access & access;
+            }
+
+            @Override
+            public int removedModifiers() {
+                return ~access & past.access;
+            }
+        };
     }
 }

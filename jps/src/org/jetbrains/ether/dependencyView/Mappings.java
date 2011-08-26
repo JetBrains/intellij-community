@@ -1,5 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
+import org.codehaus.groovy.transform.DelegateASTTransformation;
 import org.jetbrains.ether.Pair;
 import org.jetbrains.ether.ProjectWrapper;
 import org.objectweb.asm.ClassReader;
@@ -39,6 +40,7 @@ public class Mappings {
         }
     };
 
+    private FoxyMap<StringCache.S, StringCache.S> classToSubclasses = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
     private FoxyMap<StringCache.S, ClassRepr> sourceFileToClasses = new FoxyMap<StringCache.S, ClassRepr>(classSetConstructor);
     private FoxyMap<StringCache.S, UsageRepr.Usage> sourceFileToUsages = new FoxyMap<StringCache.S, UsageRepr.Usage>(usageSetConstructor);
     private FoxyMap<StringCache.S, UsageRepr.Usage> sourceFileToAnnotationUsages = new FoxyMap<StringCache.S, UsageRepr.Usage>(usageSetConstructor);
@@ -84,8 +86,19 @@ public class Mappings {
                     return false;
                 }
 
-                if (diff.base() != Difference.NONE || !diff.interfaces().unchanged() || !diff.nestedClasses().unchanged()) {
+                //if (diff.base() != Difference.NONE || !diff.interfaces().unchanged() || !diff.nestedClasses().unchanged()) {
+                //    affectedUsages.add(it.createUsage());
+                //}
+
+                if ((diff.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
                     affectedUsages.add(it.createUsage());
+                }
+
+                if ((diff.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
+                     (diff.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
+                     (diff.addedModifiers() & Opcodes.ACC_ABSTRACT) > 0
+                   ) {
+                    affectedUsages.add(UsageRepr.createClassNewUsage(it.name));
                 }
 
                 if (it.isAnnotation()) {
@@ -207,6 +220,7 @@ public class Mappings {
             }
         }
 
+        classToSubclasses.putAll(delta.classToSubclasses);
         formToClass.putAll(delta.formToClass);
         classToForm.putAll(delta.classToForm);
         sourceFileToClasses.putAll(delta.sourceFileToClasses);
@@ -280,6 +294,10 @@ public class Mappings {
                 if (repr != null) {
                     updateClassToSource(repr.name, sourceFileNameS);
                     updateSourceToClasses(sourceFileNameS, repr);
+
+                    for (StringCache.S s : repr.getSupers()) {
+                        classToSubclasses.put(s, repr.name);
+                    }
                 }
 
                 if (!localUsages.isEmpty()) {
@@ -291,15 +309,18 @@ public class Mappings {
                 }
             }
 
-            public void associate(final Set<ClassRepr> classes, final Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>> usages, final String sourceFileName) {
+            public void associate(final Set<Pair<ClassRepr,Set<StringCache.S>>> classes, final Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>> usages, final String sourceFileName) {
                 final StringCache.S sourceFileNameS = StringCache.get(sourceFileName);
 
-                sourceFileToClasses.put(sourceFileNameS, classes);
                 sourceFileToUsages.put(sourceFileNameS, usages.fst);
                 sourceFileToAnnotationUsages.put(sourceFileNameS, usages.snd);
 
-                for (ClassRepr r : classes) {
+                for (Pair<ClassRepr, Set<StringCache.S>> c : classes) {
+                    final ClassRepr r = c.fst;
+                    final Set<StringCache.S> s = c.snd;
                     updateClassToSource(r.name, sourceFileNameS);
+                    classToSubclasses.put(r.name, s);
+                    sourceFileToClasses.put(sourceFileNameS, r);
                 }
 
                 for (UsageRepr.Usage u : usages.fst) {
@@ -325,6 +346,10 @@ public class Mappings {
 
     public Set<ClassRepr> getClasses(final StringCache.S sourceFileName) {
         return (Set<ClassRepr>) sourceFileToClasses.foxyGet(sourceFileName);
+    }
+
+    public Set<StringCache.S> getSubClasses(final StringCache.S className) {
+        return (Set<StringCache.S>) classToSubclasses.foxyGet(className);
     }
 
     public Set<UsageRepr.Usage> getUsages(final StringCache.S sourceFileName) {

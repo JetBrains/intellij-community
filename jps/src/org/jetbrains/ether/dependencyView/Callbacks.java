@@ -28,11 +28,8 @@ public class Callbacks {
 
     public interface Backend {
         public Collection<StringCache.S> getClassFiles();
-
         public void associate(String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
-
-        public void associate(Set<ClassRepr> classes, Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>> usages, String sourceFileName);
-
+        public void associate(Set<Pair<ClassRepr,Set<StringCache.S>>> classes, Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>> usages, String sourceFileName);
         public void associateForm(StringCache.S formName, StringCache.S className);
     }
 }

@@ -66,6 +66,16 @@ public class TypeRepr {
     public static class ArrayType extends AbstractType {
         public final AbstractType elementType;
 
+        public AbstractType getDeepElementType() {
+            AbstractType current = this;
+
+            while (current instanceof ArrayType) {
+                current = ((ArrayType) current).elementType;
+            }
+
+            return current;
+        }
+
         @Override
         public String getDescr() {
             return "[" + elementType.getDescr();

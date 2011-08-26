@@ -38,8 +38,9 @@ public class ClassRepr extends Proto {
         public abstract Specifier<ElementType> targets();
         public abstract boolean retentionChanged ();
 
-        public boolean unchanged () {
-            return interfaces().unchanged() &&
+        public boolean no () {
+            return base() == NONE &&
+                   interfaces().unchanged() &&
                    nestedClasses().unchanged() &&
                    fields().unchanged() &&
                    methods().unchanged() &&
@@ -50,16 +51,26 @@ public class ClassRepr extends Proto {
 
     public Diff difference(final Proto past) {
         final ClassRepr pastClass = (ClassRepr) past;
-
-        int diff = super.difference(past).base();
+        final Difference diff = super.difference(past);
+        int base = diff.base();
 
         if (!superClass.equals(pastClass.superClass)) {
-            diff |= Difference.SUPERCLASS;
+            base |= Difference.SUPERCLASS;
         }
 
-        final int d = diff;
+        final int d = base;
 
         return new Diff() {
+            @Override
+            public int addedModifiers() {
+                return diff.addedModifiers();
+            }
+
+            @Override
+            public int removedModifiers() {
+                return diff.removedModifiers();
+            }
+
             @Override
             public Difference.Specifier<TypeRepr.AbstractType> interfaces() {
                 return Difference.make(pastClass.interfaces, interfaces);
@@ -100,11 +111,17 @@ public class ClassRepr extends Proto {
         };
     }
 
-    public boolean differentiate(final ClassRepr past, final Set<StringCache.S> affected) {
-        boolean incremental = true;
-        final Diff diff = difference(past);
+    public StringCache.S[] getSupers () {
+        final StringCache.S[] result = new StringCache.S[interfaces.size() + 1];
 
-        return incremental;
+        result[0] = ((TypeRepr.ClassType)superClass).className;
+
+        int i = 1;
+        for (TypeRepr.AbstractType t : interfaces) {
+            result[i++] = ((TypeRepr.ClassType)t).className;
+        }
+
+        return result;
     }
 
     public void updateClassUsages(final Set<UsageRepr.Usage> s) {

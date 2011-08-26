@@ -175,22 +175,70 @@ public class UsageRepr {
         }
     }
 
+    public static class ClassExtendsUsage extends ClassUsage {
+        public ClassExtendsUsage(String n) {
+            super(n);
+        }
+
+        public ClassExtendsUsage(StringCache.S n) {
+            super(n);
+        }
+
+        public ClassExtendsUsage(BufferedReader r) {
+            super(r);
+        }
+
+        public void write(final BufferedWriter w) {
+            RW.writeln(w, "classExtendsUsage");
+            RW.writeln(w, className.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return className.hashCode() + 1;
+        }
+    }
+
+    public static class ClassNewUsage extends ClassUsage {
+        public ClassNewUsage(String n) {
+            super(n);
+        }
+
+        public ClassNewUsage(StringCache.S n) {
+            super(n);
+        }
+
+        public ClassNewUsage(BufferedReader r) {
+            super(r);
+        }
+
+        public void write(final BufferedWriter w) {
+            RW.writeln(w, "classNewUsage");
+            RW.writeln(w, className.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return className.hashCode() + 2;
+        }
+    }
+
     public static class AnnotationUsage extends Usage {
         public static final RW.Reader<ElementType> elementTypeReader = new RW.Reader<ElementType>() {
-                public ElementType read(final BufferedReader r) {
-                    return ElementType.valueOf(RW.readString(r));
-                }
-            };
+            public ElementType read(final BufferedReader r) {
+                return ElementType.valueOf(RW.readString(r));
+            }
+        };
 
         public static final RW.ToWritable<ElementType> elementTypeToWritable = new RW.ToWritable<ElementType>() {
-                public RW.Writable convert(final ElementType x) {
-                    return new RW.Writable() {
-                        public void write(final BufferedWriter w) {
-                            RW.writeln(w, x.toString());
-                        }
-                    };
-                }
-            };
+            public RW.Writable convert(final ElementType x) {
+                return new RW.Writable() {
+                    public void write(final BufferedWriter w) {
+                        RW.writeln(w, x.toString());
+                    }
+                };
+            }
+        };
 
         final TypeRepr.ClassType type;
         final Collection<StringCache.S> usedArguments;
@@ -294,6 +342,14 @@ public class UsageRepr {
         return getUsage(new ClassUsage(name));
     }
 
+    public static Usage createClassExtendsUsage(final StringCache.S name) {
+        return getUsage(new ClassExtendsUsage(name));
+    }
+
+    public static Usage createClassNewUsage(final StringCache.S name) {
+            return getUsage(new ClassNewUsage(name));
+    }
+
     public static Usage createAnnotationUsage(final TypeRepr.ClassType type, final Collection<StringCache.S> usedArguments, final Collection<ElementType> targets) {
         return getUsage(new AnnotationUsage(type, usedArguments, targets));
     }
@@ -308,6 +364,10 @@ public class UsageRepr {
                 return getUsage(new FieldUsage(r));
             } else if (tag.equals("methodUsage")) {
                 return getUsage(new MethodUsage(r));
+            } else if (tag.equals("classExtendsUsage")) {
+                return getUsage(new ClassExtendsUsage(r));
+            } else if (tag.equals("classNewUsage")) {
+                return getUsage(new ClassNewUsage(r));
             } else return getUsage(new AnnotationUsage(r));
         }
     };

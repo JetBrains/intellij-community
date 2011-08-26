@@ -130,7 +130,7 @@ public abstract class IncrementalTestCase extends TestCase {
         first.rebuild();
         first.save();
 
-        Thread.sleep(500);
+        Thread.sleep(1000);
 
         modify();
 

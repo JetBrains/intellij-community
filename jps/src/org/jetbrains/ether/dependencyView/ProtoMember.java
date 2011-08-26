@@ -84,31 +84,54 @@ public abstract class ProtoMember extends Proto {
 
     public Difference difference(final Proto past) {
         final ProtoMember m = (ProtoMember) past;
-        int diff = super.difference(past).base();
+        final Difference diff = super.difference(past);
+        int base = diff.base();
 
         if (!m.type.equals(type)) {
-            diff |= Difference.TYPE;
+            base |= Difference.TYPE;
         }
 
         switch ((value == null ? 0 : 1) + (m.value == null ? 0 : 2)) {
             case 3:
                 if (!value.equals(m.value)) {
-                    diff |= Difference.VALUE;
+                    base |= Difference.VALUE;
                 }
                 break;
 
             case 2:
-                diff |= Difference.VALUE;
+                base |= Difference.VALUE;
                 break;
 
             case 1:
-                diff |= Difference.VALUE;
+                base |= Difference.VALUE;
                 break;
 
             case 0:
                 break;
         }
 
-        return Difference.createBase(diff);
+        final int newBase = base;
+
+        return new Difference () {
+            @Override
+            public int base() {
+                return newBase;
+            }
+
+            @Override
+            public boolean no() {
+                return newBase == Difference.NONE && diff.no();
+            }
+
+            @Override
+            public int addedModifiers() {
+                return diff.addedModifiers();
+            }
+
+            @Override
+            public int removedModifiers() {
+                return diff.removedModifiers();
+            }
+        };
     }
 }

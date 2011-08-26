@@ -280,6 +280,16 @@ public class ClassfileAnalyzer {
             superClass = s;
             interfaces = i;
 
+            if (superClass != null) {
+                usages.add(UsageRepr.createClassExtendsUsage(StringCache.get(superClass)));
+            }
+
+            if (interfaces != null) {
+                for (String it : interfaces) {
+                    usages.add(UsageRepr.createClassExtendsUsage(StringCache.get(it)));
+                }
+            }
+
             processSignature(sig);
         }
 
@@ -362,7 +372,15 @@ public class ClassfileAnalyzer {
 
                 @Override
                 public void visitMultiANewArrayInsn(String desc, int dims) {
-                    TypeRepr.getType(desc).updateClassUsages(usages);
+                    final TypeRepr.ArrayType typ = (TypeRepr.ArrayType) TypeRepr.getType(desc);
+                    final TypeRepr.AbstractType element = typ.getDeepElementType();
+
+                    if (element instanceof TypeRepr.ClassType) {
+                        usages.add(UsageRepr.createClassNewUsage(((TypeRepr.ClassType) element).className));
+                    }
+
+                    typ.updateClassUsages(usages);
+
                     super.visitMultiANewArrayInsn(desc, dims);
                 }
 
@@ -375,14 +393,27 @@ public class ClassfileAnalyzer {
 
                 @Override
                 public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
-                    if (type != null)
+                    if (type != null) {
                         TypeRepr.createClassType(type).updateClassUsages(usages);
+                    }
+
                     super.visitTryCatchBlock(start, end, handler, type);
                 }
 
                 @Override
                 public void visitTypeInsn(int opcode, String type) {
-                    TypeRepr.createClassType(type).updateClassUsages(usages);
+                    final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(type) : TypeRepr.createClassType(type);
+
+                    if (opcode == Opcodes.NEW) {
+                        usages.add(UsageRepr.createClassNewUsage(((TypeRepr.ClassType) typ).className));
+                    } else if (opcode == Opcodes.ANEWARRAY) {
+                        if (typ instanceof TypeRepr.ClassType) {
+                            usages.add(UsageRepr.createClassNewUsage(((TypeRepr.ClassType) typ).className));
+                        }
+                    }
+
+                    typ.updateClassUsages(usages);
+
                     super.visitTypeInsn(opcode, type);
                 }
 
