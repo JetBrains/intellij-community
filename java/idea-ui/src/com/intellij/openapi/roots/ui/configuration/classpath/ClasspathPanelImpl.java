@@ -16,8 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
@@ -262,7 +260,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
 
   private JComponent createTableWithButtons() {
-    final boolean isAnalyzeShown = ((ApplicationEx)ApplicationManager.getApplication()).isInternal();
+    final boolean isAnalyzeShown = false;
 
     final ClasspathPanelAction removeAction = new ClasspathPanelAction(this) {
       @Override
