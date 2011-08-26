@@ -175,8 +175,7 @@ public class CreateClassDialog extends DialogWrapper {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         try {
-          myTargetDirectory = myModule == null? PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, getBaseDir(packageName), true)
-            : PackageUtil.findOrCreateDirectoryForPackage(myModule, packageName, getBaseDir(packageName), true, true);
+          myTargetDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, getBaseDir(packageName), true, true);
           if (myTargetDirectory == null) {
             errorString[0] = ""; // message already reported by PackageUtil
             return;
