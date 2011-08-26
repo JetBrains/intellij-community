@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
+import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,10 +21,8 @@ public class PyIntroduceVariableHandler extends IntroduceHandler {
   @Override
   protected PsiElement addDeclaration(@NotNull final PsiElement expression,
                                       @NotNull final PsiElement declaration,
-                                      @NotNull final List<PsiElement> occurrences,
-                                      final boolean replaceAll,
-                                      InitPlace initInConstructor) {
-    return doIntroduceVariable(expression, declaration, occurrences, replaceAll);
+                                      @NotNull IntroduceOperation operation) {
+    return doIntroduceVariable(expression, declaration, operation.getOccurrences(), operation.isReplaceAll());
   }
 
   public static PsiElement doIntroduceVariable(PsiElement expression,
