@@ -34,7 +34,6 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -139,11 +138,11 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     return getTreeViewModel().getItems();
   }
 
-  public Collection getSelection() {
-    final int[] rows = getSelectedRows();
-    if (rows == null) return Collections.emptyList();
+  public List getSelection() {
     final TreeTableTree tree = getTree();
-    ArrayList result = new ArrayList();
+    if (tree == null) return Collections.emptyList();
+    final int[] rows = getSelectedRows();
+    final ArrayList result = new ArrayList();
     for (int row : rows) {
       result.add(tree.getPathForRow(row).getLastPathComponent());
     }

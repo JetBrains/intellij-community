@@ -168,7 +168,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   }
 
 
-  public Collection<Item> getSelection() {
+  public List<Item> getSelection() {
     ArrayList<Item> result = new ArrayList<Item>();
     int[] selectedRows = getSelectedRows();
     if (selectedRows == null) return result;
