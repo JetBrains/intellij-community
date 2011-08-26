@@ -19,6 +19,8 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
@@ -57,21 +59,34 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     while (true);
   }
 
+  protected static void ensureName(IntroduceOperation operation) {
+    if (operation.getName() == null) {
+      final Collection<String> suggestedNames = operation.getSuggestedNames();
+      if (suggestedNames.size() > 0) {
+        operation.setName(suggestedNames.iterator().next());
+      }
+      else {
+        operation.setName("x");
+      }
+    }
+  }
+
   public enum InitPlace {
     SAME_METHOD,
     CONSTRUCTOR,
     SET_UP
   }
 
-  private static void replaceExpression(PyExpression newExpression, Project project, PsiElement expression) {
+  @Nullable
+  private static PsiElement replaceExpression(PyExpression newExpression, Project project, PsiElement expression) {
     PyExpressionStatement statement = PsiTreeUtil.getParentOfType(expression, PyExpressionStatement.class);
     if (statement != null) {
       if (statement.getExpression() == expression) {
         statement.delete();
-        return;
+        return null;
       }
     }
-    PyPsiUtils.replaceExpression(project, expression, newExpression);
+    return PyPsiUtils.replaceExpression(project, expression, newExpression);
   }
 
   private final IntroduceValidator myValidator;
@@ -293,7 +308,34 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     performActionOnElementOccurrences(operation);
   }
 
-  protected void performActionOnElementOccurrences(IntroduceOperation operation) {
+  protected void performActionOnElementOccurrences(final IntroduceOperation operation) {
+    final Editor editor = operation.getEditor();
+    if (editor.getSettings().isVariableInplaceRenameEnabled() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      ensureName(operation);
+      new OccurrencesChooser<PsiElement>(editor)
+              .showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
+                @Override
+                public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
+                  operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);
+                  performInplaceIntroduce(operation);
+                }
+              });
+    }
+    else {
+      performIntroduceWithDialog(operation);
+    }
+  }
+  
+  protected void performInplaceIntroduce(IntroduceOperation operation) {
+    final PyAssignmentStatement statement = performRefactoring(operation);
+    PyTargetExpression target = (PyTargetExpression) statement.getTargets() [0];
+    final List<PsiElement> occurrences = operation.getOccurrences();
+    final InplaceVariableIntroducer<PsiElement> introducer =
+            new PyInplaceVariableIntroducer(target, operation, occurrences);
+    introducer.performInplaceRename(false, new LinkedHashSet<String>(operation.getSuggestedNames()));
+  }
+
+  protected void performIntroduceWithDialog(IntroduceOperation operation) {
     final Project project = operation.getProject();
     if (operation.getName() == null) {
       PyIntroduceDialog dialog = new PyIntroduceDialog(project, myDialogTitle, myValidator, getHelpId(), operation);
@@ -313,15 +355,21 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   protected PyAssignmentStatement performRefactoring(IntroduceOperation operation) {
-    final Project project = operation.getProject();
-    final PyExpression initializer = operation.getInitializer();
-    String assignmentText = operation.getName() + " = " + initializer.getText().replace("\n", " ");
-    PsiElement anchor = operation.isReplaceAll() ? findAnchor(operation.getOccurrences()) : PsiTreeUtil.getParentOfType(initializer, PyStatement.class);
-    PyAssignmentStatement declaration = createDeclaration(project, assignmentText, anchor);
+    PyAssignmentStatement declaration = createDeclaration(operation);
 
     declaration = performReplace(declaration, operation);
     declaration = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(declaration);
     return declaration;
+  }
+
+  public PyAssignmentStatement createDeclaration(IntroduceOperation operation) {
+    final Project project = operation.getProject();
+    final PyExpression initializer = operation.getInitializer();
+    String assignmentText = operation.getName() + " = " + initializer.getText().replace("\n", " ");
+    PsiElement anchor = operation.isReplaceAll()
+                        ? findAnchor(operation.getOccurrences())
+                        : PsiTreeUtil.getParentOfType(initializer, PyStatement.class);
+    return createDeclaration(project, assignmentText, anchor);
   }
 
   protected abstract String getHelpId();
@@ -352,20 +400,19 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     final Project project = operation.getProject();
     return new WriteCommandAction<PyAssignmentStatement>(project, expression.getContainingFile()) {
       protected void run(final Result<PyAssignmentStatement> result) throws Throwable {
-        final Pair<PsiElement, TextRange> data = expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
-        if (data == null) {
-          result.setResult((PyAssignmentStatement)addDeclaration(expression, declaration, operation));
-        }
-        else {
-          result.setResult((PyAssignmentStatement)addDeclaration(data.first, declaration, operation));
-        }
+        result.setResult(addDeclaration(operation, declaration));
 
         PyExpression newExpression = createExpression(project, operation.getName(), declaration);
 
         if (operation.isReplaceAll()) {
+          List<PsiElement> newOccurrences = new ArrayList<PsiElement>();
           for (PsiElement occurrence : operation.getOccurrences()) {
-            replaceExpression(newExpression, project, occurrence);
+            final PsiElement replaced = replaceExpression(newExpression, project, occurrence);
+            if (replaced != null) {
+              newOccurrences.add(replaced);
+            }
           }
+          operation.setOccurrences(newOccurrences);
         }
         else {
           replaceExpression(newExpression, project, expression);
@@ -374,6 +421,18 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         postRefactoring(operation.getElement());
       }
     }.execute().getResultObject();
+  }
+
+  @Nullable
+  public PyAssignmentStatement addDeclaration(IntroduceOperation operation, PyAssignmentStatement declaration) {
+    final PsiElement expression = operation.getInitializer();
+    final Pair<PsiElement, TextRange> data = expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
+    if (data == null) {
+      return (PyAssignmentStatement)addDeclaration(expression, declaration, operation);
+    }
+    else {
+      return (PyAssignmentStatement)addDeclaration(data.first, declaration, operation);
+    }
   }
 
   protected PyExpression createExpression(Project project, String name, PyAssignmentStatement declaration) {
@@ -386,5 +445,22 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                                @NotNull IntroduceOperation operation);
 
   protected void postRefactoring(PsiElement element) {
+  }
+
+  private static class PyInplaceVariableIntroducer extends InplaceVariableIntroducer<PsiElement> {
+    private final PyTargetExpression myTarget;
+
+    public PyInplaceVariableIntroducer(PyTargetExpression target,
+                                       IntroduceOperation operation,
+                                       List<PsiElement> occurrences) {
+      super(target, operation.getEditor(), operation.getProject(), "Introduce Variable",
+            occurrences.toArray(new PsiElement[occurrences.size()]), null);
+      myTarget = target;
+    }
+
+    @Override
+    protected PsiElement checkLocalScope() {
+      return myTarget.getContainingFile();
+    }
   }
 }

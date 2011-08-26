@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -47,7 +48,7 @@ public class IntroduceOperation {
     return myName;
   }
 
-  public void setName(String name) {
+  public void setName(@Nullable String name) {
     myName = name;
   }
 

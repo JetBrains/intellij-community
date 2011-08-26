@@ -1,6 +1,9 @@
 package com.jetbrains.python.refactoring.introduce.field;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -13,6 +16,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
@@ -26,10 +30,8 @@ import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import javax.swing.*;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
@@ -83,15 +85,17 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     assert anchor instanceof PyClass;
     final PyClass clazz = (PyClass)anchor;
     final Project project = anchor.getProject();
-    if (operation.getInitPlace() == InitPlace.CONSTRUCTOR && !inConstructor(clazz, expression)) {
+    if (operation.getInitPlace() == InitPlace.CONSTRUCTOR && !inConstructor(expression)) {
       return AddFieldQuickFix.addFieldToInit(project, clazz, "", new AddFieldDeclaration(declaration));
     } else if (operation.getInitPlace() == InitPlace.SET_UP) {
-      return addFieldToSetUp(project, clazz, declaration);
+      return addFieldToSetUp(clazz, new AddFieldDeclaration(declaration));
     }
     return PyIntroduceVariableHandler.doIntroduceVariable(expression, declaration, operation.getOccurrences(), operation.isReplaceAll());
   }
 
-  private boolean inConstructor(@Nullable PyClass clazz, @NotNull PsiElement expression) {
+  private static boolean inConstructor(@NotNull PsiElement expression) {
+    final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();
+    PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
     PsiElement current = PyUtil.getConcealingParent(expression);
     if (clazz != null && current != null && current instanceof PyFunction) {
       PyFunction init = clazz.findMethodByName(PyNames.INIT, false);
@@ -103,18 +107,18 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   }
 
   @Nullable
-  private static PsiElement addFieldToSetUp(Project project, PyClass clazz, PsiElement declaration) {
+  private static PsiElement addFieldToSetUp(PyClass clazz, final Function<String, PyStatement> callback) {
     final PyFunction init = clazz.findMethodByName(PythonUnitTestUtil.TESTCASE_SETUP_NAME, false);
     if (init != null) {
-      return AddFieldQuickFix.appendToInit(init, new AddFieldDeclaration(declaration));
+      return AddFieldQuickFix.appendToMethod(init, callback);
     }
     final PyFunctionBuilder builder = new PyFunctionBuilder(PythonUnitTestUtil.TESTCASE_SETUP_NAME);
     builder.parameter(PyNames.CANONICAL_SELF);
-    PyFunction setUp = builder.buildFunction(project, LanguageLevel.getDefault());
+    PyFunction setUp = builder.buildFunction(clazz.getProject(), LanguageLevel.getDefault());
     final PyStatementList statements = clazz.getStatementList();
     final PsiElement anchor = statements.getFirstChild();
     setUp = (PyFunction)statements.addBefore(setUp, anchor);
-    return AddFieldQuickFix.appendToInit(setUp, new AddFieldDeclaration(declaration));
+    return AddFieldQuickFix.appendToMethod(setUp, callback);
   }
 
   @Override
@@ -215,6 +219,91 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
       final Project project = myDeclaration.getProject();
       return PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyStatement.class,
                                                                     text.replaceFirst(PyNames.CANONICAL_SELF + "\\.", self_name + "."));
+    }
+  }
+
+  @Override
+  protected void performInplaceIntroduce(IntroduceOperation operation) {
+    final PyAssignmentStatement statement = performRefactoring(operation);
+    // put caret on identifier after "self."
+    putCaretOnFieldName(operation.getEditor(), statement);
+    PyTargetExpression target = (PyTargetExpression) statement.getTargets() [0];
+    final List<PsiElement> occurrences = operation.getOccurrences();
+    final InplaceVariableIntroducer<PsiElement> introducer =
+            new PyInplaceFieldIntroducer(target, operation, occurrences);
+    introducer.performInplaceRename(false, new LinkedHashSet<String>(operation.getSuggestedNames()));
+  }
+
+  private static void putCaretOnFieldName(Editor editor, PyAssignmentStatement statement) {
+    final PsiElement elementAtOffset = statement.getContainingFile().findElementAt(editor.getCaretModel().getOffset());
+    PyQualifiedExpression qExpr = PsiTreeUtil.getParentOfType(elementAtOffset, PyQualifiedExpression.class);
+    if (qExpr != null && qExpr.getQualifier() == null) {
+      qExpr = PsiTreeUtil.getParentOfType(qExpr, PyQualifiedExpression.class);
+    }
+    if (qExpr != null) {
+      final ASTNode nameElement = qExpr.getNameElement();
+      if (nameElement != null) {
+        final int offset = nameElement.getTextRange().getStartOffset();
+        editor.getCaretModel().moveToOffset(offset);
+      }
+    }
+  }
+
+  private static class PyInplaceFieldIntroducer extends InplaceVariableIntroducer<PsiElement> {
+    private final PyTargetExpression myTarget;
+    private final PyIntroduceFieldPanel myPanel;
+
+    public PyInplaceFieldIntroducer(PyTargetExpression target,
+                                    IntroduceOperation operation,
+                                    List<PsiElement> occurrences) {
+      super(target, operation.getEditor(), operation.getProject(), "Introduce Field",
+            occurrences.toArray(new PsiElement[occurrences.size()]), null);
+      myTarget = target;
+      if (!inConstructor(target)) {
+        myPanel = new PyIntroduceFieldPanel(myProject, operation.isTestClass());
+      }
+      else {
+        myPanel = null;
+      }
+    }
+
+    @Override
+    protected PsiElement checkLocalScope() {
+      return myTarget.getContainingFile();
+    }
+
+    @Override
+    protected JComponent getComponent() {
+      return myPanel == null ? null : myPanel.getRootPanel();
+    }
+
+    @Override
+    public void finish() {
+      super.finish();
+      if (myPanel != null && myPanel.getInitPlace() != InitPlace.SAME_METHOD) {
+        final AccessToken accessToken = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+        try {
+          final PyAssignmentStatement initializer = PsiTreeUtil.getParentOfType(myTarget, PyAssignmentStatement.class);
+          assert initializer != null;
+          final Function<String, PyStatement> callback = new Function<String, PyStatement>() {
+            @Override
+            public PyStatement fun(String s) {
+              return initializer;
+            }
+          };
+          final PyClass pyClass = PyUtil.getContainingClassOrSelf(initializer);
+          if (myPanel.getInitPlace() == InitPlace.CONSTRUCTOR) {
+            AddFieldQuickFix.addFieldToInit(myProject, pyClass, "", callback);                    
+          }
+          else if (myPanel.getInitPlace() == InitPlace.SET_UP) {
+            addFieldToSetUp(pyClass, callback);
+          }
+          initializer.delete();
+        }
+        finally {
+          accessToken.finish();
+        }
+      }
     }
   }
 }
