@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ public class JUnitStarter {
   public static final String IDE_VERSION = "-ideVersion";
   public static final String JUNIT4_PARAMETER = "-junit4";
   private static final String SOCKET = "-socket";
-  private static String ourCommandLine;
+  private static String ourForkMode;
+  private static String ourCommandFileName;
 
   public static void main(String[] args) throws IOException {
     SegmentedOutputStream out = new SegmentedOutputStream(System.out);
@@ -77,7 +78,9 @@ public class JUnitStarter {
       }
       else {
         if (arg.startsWith("@@@")) {
-          ourCommandLine = arg.substring(3);
+          final int pos = arg.indexOf(',');
+          ourForkMode = arg.substring(3, pos);
+          ourCommandFileName = arg.substring(pos + 1);
           continue;
         } else if (arg.startsWith("@@")) {
           if (new File(arg.substring(2)).exists()) {
@@ -191,8 +194,8 @@ public class JUnitStarter {
     try {
       System.setOut(new PrintStream(out));
       System.setErr(new PrintStream(err));
-      if (ourCommandLine != null) {
-        return JUnitForkedStarter.startForkedVMs(args, isJUnit4, listeners, out, err, ourCommandLine);
+      if (ourCommandFileName != null) {
+        return JUnitForkedStarter.startForkedVMs(args, isJUnit4, listeners, out, err, ourForkMode, ourCommandFileName);
       }
       IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(isJUnit4).newInstance();
       testRunner.setStreams(out, err, 0);

@@ -19,16 +19,14 @@ import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
-* User: anna
-* Date: 4/6/11
-*/
+ * @author anna
+ * @since 6.04.2011
+ */
 public class JUnitForkedStarter {
-  private JUnitForkedStarter() {
-  }
+  private JUnitForkedStarter() { }
 
   public static void main(String[] args) throws Exception {
     final String testOutputPath = args[0];
@@ -45,7 +43,9 @@ public class JUnitForkedStarter {
       if (!file.createNewFile()) return;
     }
     final FileOutputStream stream = new FileOutputStream(testOutputPath);
+    //noinspection UseOfSystemOutOrSystemErr
     PrintStream oldOut = System.out;
+    //noinspection UseOfSystemOutOrSystemErr
     PrintStream oldErr = System.err;
     try {
       final PrintStream out = new PrintStream(new ForkedVMWrapper(stream, false));
@@ -53,9 +53,11 @@ public class JUnitForkedStarter {
       System.setOut(out);
       System.setErr(err);
       IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(isJUnit4).newInstance();
+      //noinspection IOResourceOpenedButNotSafelyClosed
       testRunner.setStreams(new SegmentedOutputStream(out, true), new SegmentedOutputStream(err, true), lastIdx);
       System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, false));
-    } finally {
+    }
+    finally {
       System.setOut(oldOut);
       System.setErr(oldErr);
       stream.close();
@@ -64,69 +66,85 @@ public class JUnitForkedStarter {
 
   static int startForkedVMs(String[] args,
                             boolean isJUnit4,
-                            ArrayList listeners,
+                            List listeners,
                             SegmentedOutputStream out,
-                            SegmentedOutputStream err, String path) throws Exception {
-    final BufferedReader reader = new BufferedReader(new FileReader(path));
-    final String commandline = reader.readLine();
-    final String forkMode = reader.readLine();
-    reader.close();
+                            SegmentedOutputStream err,
+                            String forkMode,
+                            String path) throws Exception {
+    final List parameters = new ArrayList();
+    final BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
+    try {
+      String line;
+      while ((line = bufferedReader.readLine()) != null) {
+        parameters.add(line);
+      }
+    }
+    finally {
+      bufferedReader.close();
+    }
+
     IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(isJUnit4).newInstance();
     testRunner.setStreams(out, err, 0);
     final Object description = testRunner.getTestToStart(args);
 
     TreeSender.sendTree(testRunner, description);
 
-    long startTime = System.currentTimeMillis();
+    long time = System.currentTimeMillis();
 
     final List children = testRunner.getChildTests(description);
     final boolean forkTillMethod = forkMode.equalsIgnoreCase("method");
-    int result = processChildren(isJUnit4, listeners, out, err, commandline, testRunner, children, 0, forkTillMethod);
+    int result = processChildren(isJUnit4, listeners, out, err, parameters, testRunner, children, 0, forkTillMethod);
 
-    long endTime = System.currentTimeMillis();
-    long runTime = endTime - startTime;
-    new TimeSender(testRunner.getRegistry()).printHeader(runTime);
+    time = System.currentTimeMillis() - time;
+    new TimeSender(testRunner.getRegistry()).printHeader(time);
     return result;
   }
 
   private static int processChildren(boolean isJUnit4,
-                                     ArrayList listeners,
+                                     List listeners,
                                      SegmentedOutputStream out,
                                      SegmentedOutputStream err,
-                                     String commandline, IdeaTestRunner testRunner, List children, int result, boolean forkTillMethod)
-    throws IOException, InterruptedException {
+                                     List parameters,
+                                     IdeaTestRunner testRunner,
+                                     List children,
+                                     int result,
+                                     boolean forkTillMethod) throws IOException, InterruptedException {
     for (int i = 0, argsLength = children.size(); i < argsLength; i++) {
       final Object child = children.get(i);
       final List childTests = testRunner.getChildTests(child);
-      if (childTests.isEmpty() || !forkTillMethod) {
-        result = Math.min(runChild(child, isJUnit4, listeners, out, err, commandline, testRunner, forkTillMethod), result);
-      } else {
-        result = Math.min(processChildren(isJUnit4, listeners, out, err, commandline, testRunner, childTests, result, forkTillMethod), result);
-      }
+      final int childResult = childTests.isEmpty() || !forkTillMethod
+                              ? runChild(child, isJUnit4, listeners, out, err, parameters, testRunner, forkTillMethod)
+                              : processChildren(isJUnit4, listeners, out, err, parameters, testRunner, childTests, result, forkTillMethod);
+      result = Math.min(childResult, result);
     }
     return result;
   }
 
   private static int runChild(Object child,
                               boolean isJUnit4,
-                              ArrayList listeners,
+                              List listeners,
                               SegmentedOutputStream out,
                               SegmentedOutputStream err,
-                              String commandline, IdeaTestRunner testRunner,
-                              boolean forkTillMethod)
-    throws IOException, InterruptedException {
+                              List parameters,
+                              IdeaTestRunner testRunner,
+                              boolean forkTillMethod) throws IOException, InterruptedException {
+    //noinspection SSBasedInspection
     final File tempFile = File.createTempFile("fork", "test");
     final String testOutputPath = tempFile.getAbsolutePath();
     final int knownObject = testRunner.getRegistry().getKnownObject(child);
-    String command = commandline + " " + JUnitForkedStarter.class.getName()+ " " + testOutputPath + " " + (knownObject + (forkTillMethod ? 0 : 1)) + " " +
-                      isJUnit4 + " " + testRunner.getStartDescription(child) ;
-    for (Iterator iterator = listeners.iterator(); iterator.hasNext(); ) {
-      command += " " + iterator.next();
-    }
-    final Process exec = Runtime.getRuntime().exec(command);
-    int result = exec.waitFor();
+
+    final ProcessBuilder builder = new ProcessBuilder();
+    builder.add(parameters);
+    builder.add(JUnitForkedStarter.class.getName());
+    builder.add(testOutputPath);
+    builder.add(String.valueOf(knownObject + (forkTillMethod ? 0 : 1)));
+    builder.add(String.valueOf(isJUnit4));
+    builder.add(testRunner.getStartDescription(child));
+    builder.add(listeners);
+
+    final Process exec = builder.createProcess();
+    final int result = exec.waitFor();
     ForkedVMWrapper.readWrapped(testOutputPath, out.getPrintStream(), err.getPrintStream());
-   // tempFile.deleteOnExit();
     return result;
   }
 }

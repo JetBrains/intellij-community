@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,10 @@ import com.intellij.execution.junit2.ui.model.RootTestInfo;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +44,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -68,8 +65,13 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class TestObject implements JavaCommandLine {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestObject");
@@ -147,10 +149,12 @@ public abstract class TestObject implements JavaCommandLine {
       return null;
     }
 
+    @Override
     public String suggestActionName() {
       throw new RuntimeException(String.valueOf(myConfiguration));
     }
 
+    @Override
     public boolean isConfiguredByElement(final JUnitConfiguration configuration,
                                          PsiClass testClass,
                                          PsiMethod testMethod,
@@ -158,30 +162,21 @@ public abstract class TestObject implements JavaCommandLine {
       return false;
     }
 
+    @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
       throw new RuntimeConfigurationError(MESSAGE);
     }
 
-    public ExecutionResult execute() throws ExecutionException {
-      throw createExecutionException();
-    }
-
+    @Override
     public JavaParameters getJavaParameters() throws ExecutionException {
-      throw createExecutionException();
+      throw new ExecutionException(MESSAGE);
     }
 
+    @Override
     protected void initialize() throws ExecutionException {
-      throw createExecutionException();
-    }
-
-    protected ProcessHandler startProcess() throws ExecutionException {
-      throw createExecutionException();
+      throw new ExecutionException(MESSAGE);
     }
   };
-
-  private static ExecutionException createExecutionException() {
-    return new ExecutionException(MESSAGE);
-  }
 
   public void checkConfiguration() throws RuntimeConfigurationException{
     if (myConfiguration.isAlternativeJrePathEnabled()){
@@ -216,7 +211,7 @@ public abstract class TestObject implements JavaCommandLine {
     }
 
     final Object[] listeners = Extensions.getExtensions(IDEAJUnitListener.EP_NAME);
-    final StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     for (final Object listener : listeners) {
       boolean enabled = true;
       for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
@@ -233,7 +228,7 @@ public abstract class TestObject implements JavaCommandLine {
     }
     if (buf.length() > 0) {
       try {
-        myListenersFile = FileUtil.createTempFile("junitlisteners", "");
+        myListenersFile = FileUtil.createTempFile("junit_listeners_", "");
         myListenersFile.deleteOnExit();
         myJavaParameters.getProgramParametersList().add("@@" + myListenersFile.getPath());
         FileUtil.writeToFile(myListenersFile, buf.toString().getBytes());
@@ -360,39 +355,41 @@ public abstract class TestObject implements JavaCommandLine {
 
   private void appendForkInfo() throws ExecutionException {
     final String forkMode = myConfiguration.getForkMode();
-    if (Comparing.strEqual(forkMode, "none")) return;
+    if (Comparing.strEqual(forkMode, "none")) {
+      return;
+    }
+
     if (myRunnerSettings.getData() instanceof DebuggingRunnerData) {
-      throw new CantRunException("Debug is disabled in fork mode. <br> Change fork mode to &lt;none&gt; to debug");
+      throw new CantRunException("Debug is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to debug.");
     }
-    File tempFile = null;
-    try {
-      tempFile = FileUtil.createTempFile("command.line", "");
-      myJavaParameters.getProgramParametersList().add("@@@" + tempFile.getAbsolutePath());
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+
     final JavaParameters javaParameters = getJavaParameters();
+    final Sdk jdk = javaParameters.getJdk();
+    if (jdk == null) {
+      throw new ExecutionException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
+    }
+
     try {
+      final File tempFile = FileUtil.createTempFile("command.line", "", true);
       final PrintWriter writer = new PrintWriter(tempFile, "UTF-8");
       try {
-        writer.print(GeneralCommandLine
-                       .quoteParameter(((JavaSdkType)javaParameters.getJdk().getSdkType()).getVMExecutablePath(javaParameters.getJdk())) + " ");
-        writer.print(javaParameters.getVMParametersList().getParametersString() + " ");
-        writer.print("-classpath ");
-        writer.print(GeneralCommandLine.quoteParameter(javaParameters.getClassPath().getPathsString()));
-        writer.print("\n" + forkMode);
+        writer.println(((JavaSdkType)jdk.getSdkType()).getVMExecutablePath(jdk));
+        for (String vmParameter : javaParameters.getVMParametersList().getList()) {
+          writer.println(vmParameter);
+        }
+        writer.println("-classpath");
+        writer.println(javaParameters.getClassPath().getPathsString());
       }
       finally {
         writer.close();
       }
-      tempFile.deleteOnExit();
+      
+      myJavaParameters.getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
     }
     catch (Exception e) {
       LOG.error(e);
     }
   }
-
 
   protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements, Function<T, String> nameFunction, String packageName,
                                                 boolean createTempFile,
