@@ -45,10 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBuilderMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
@@ -331,6 +328,12 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
       super.visitApplicationStatement(applicationStatement);
       checkMethodCall(applicationStatement);
+    }
+
+    @Override
+    public void visitEnumConstant(GrEnumConstant enumConstant) {
+      super.visitEnumConstant(enumConstant);
+      checkConstructorCall(enumConstant, enumConstant);
     }
 
     private void checkNamedArgumentsType(GrCall call) {

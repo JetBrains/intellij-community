@@ -460,4 +460,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testRecursiveConstructors() {
     doTest();
   }
+
+  public void testEnumConstantConstructors() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }

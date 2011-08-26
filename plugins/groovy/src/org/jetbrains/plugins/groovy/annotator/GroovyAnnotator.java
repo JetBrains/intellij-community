@@ -87,6 +87,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -387,6 +388,22 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     checkRecursiveConstructors(holder, constructors);
+  }
+
+  @Override
+  public void visitEnumConstant(GrEnumConstant enumConstant) {
+    super.visitEnumConstant(enumConstant);
+    final GrArgumentList argumentList = enumConstant.getArgumentList();
+    
+    if (argumentList!=null && argumentList.getNamedArguments().length > 0 && argumentList.getExpressionArguments().length == 0) {
+      final PsiMethod constructor = enumConstant.resolveConstructor();
+      if (constructor != null) {
+        if (!PsiUtil.isConstructorHasRequiredParameters(constructor)) {
+          myHolder.createErrorAnnotation(argumentList, GroovyBundle.message("the.usage.of.a.map.entry.expression.to.initialize.an.enum.is.currently.not.supported"));
+        }
+      }
+
+    }
   }
 
   private static void checkRecursiveConstructors(AnnotationHolder holder, PsiMethod[] constructors) {

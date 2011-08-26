@@ -200,7 +200,8 @@ public class PsiUtil {
   }
   @Nullable
   public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom, @Nullable GrExpression stopAt) {
-    PsiElement parent = place.getParent();
+    PsiElement parent = place instanceof GrEnumConstant ? place : place.getParent();
+
     if (parent instanceof GrCall) {
       GrCall call = (GrCall)parent;
       GrNamedArgument[] namedArgs = call.getNamedArguments();
