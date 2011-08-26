@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,8 +186,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
                                 final VirtualFile file,
                                 final FileAnnotation fileAnnotation,
                                 final AbstractVcs vcs) {
-    final String upToDateContent = fileAnnotation.getAnnotatedContent();
-
     final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
     editor.getGutter().closeAllAnnotations();
 
@@ -202,13 +200,14 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     final HighlightAnnotationsActions highlighting = new HighlightAnnotationsActions(project, file, fileAnnotation, editorGutter);
     final List<AnnotationFieldGutter> gutters = new ArrayList<AnnotationFieldGutter>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
-    final AnnotationPresentation presentation;
     final List<AnAction> additionalActions = new ArrayList<AnAction>();
     if (vcs.getCommittedChangesProvider() != null) {
       additionalActions.add(new ShowDiffFromAnnotation(getUpToDateLineNumber, fileAnnotation, vcs, file));
     }
     additionalActions.add(new CopyRevisionNumberAction(fileAnnotation));
-    presentation = new AnnotationPresentation(highlighting, switcher, editorGutter, gutters, additionalActions.toArray(new AnAction[additionalActions.size()]));
+    final AnnotationPresentation presentation =
+      new AnnotationPresentation(highlighting, switcher, editorGutter, gutters,
+                                 additionalActions.toArray(new AnAction[additionalActions.size()]));
 
     for (AnAction action : additionalActions) {
       if (action instanceof LineNumberListener) {
@@ -272,7 +271,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       @Override
       public int compare(VcsFileRevision o1, VcsFileRevision o2) {
         try {
-          return o1.getRevisionDate().compareTo(o2.getRevisionDate());
+          final int result = o1.getRevisionDate().compareTo(o2.getRevisionDate());
+          return result != 0 ? result : o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
         }
         catch (Exception e) {
           return 0;
@@ -285,7 +285,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       revisions.addAll(fileRevisionList);
       for (VcsFileRevision revision : fileRevisionList) {
         final String revNumber = revision.getRevisionNumber().asString();
-
         if (!numbers.containsKey(revNumber)) {
           final int num = revisions.indexOf(revision);
           if (num != -1) {
