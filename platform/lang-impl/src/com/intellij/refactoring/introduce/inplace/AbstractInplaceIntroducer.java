@@ -81,7 +81,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   public AbstractInplaceIntroducer(Project project,
                                    Editor editor,
                                    E expr,
-                                   V localVariable,
+                                   @Nullable V localVariable,
                                    E[] occurrences,
                                    String title,
                                    final FileType languageFileType) {
@@ -151,11 +151,39 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     return myPreview;
   }
 
+  /**
+   * Returns ID of the action the shortcut of which is used to show the non-in-place refactoring dialog.
+   *
+   * @return action ID
+   */
   protected abstract String getActionName();
+
+  /**
+   * Returns the name of the command performed by the refactoring.
+   *
+   * @return command name
+   */
   protected abstract String getCommandName();
 
+  /**
+   * Creates an initial version of the declaration for the introduced element. Note that this method is not called in a write action
+   * and most likely needs to create one itself.
+   *
+   * @param replaceAll whether all occurrences are going to be replaced
+   * @param names      the suggested names for the declaration
+   * @return the declaration
+   */
+  @Nullable
   protected abstract V createFieldToStartTemplateOn(boolean replaceAll, String[] names);
-  protected abstract String[] suggestNames(boolean replaceAll, V variable);
+
+  /**
+   * Returns the suggested names for the introduced element.
+   *
+   * @param replaceAll whether all occurrences are going to be replaced
+   * @param variable   introduced element declaration, if already created.
+   * @return the suggested names
+   */
+  protected abstract String[] suggestNames(boolean replaceAll, @Nullable V variable);
 
   protected abstract void performIntroduce();
   protected void performPostIntroduceTasks() {}
@@ -169,6 +197,11 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   public abstract E restoreExpression(PsiFile containingFile, V variable, RangeMarker marker, String exprText);
 
+  /**
+   * Begins the in-place refactoring operation.
+   *
+   * @return true if the in-place refactoring was successfully started, false if it failed to start and a dialog should be shown instead.
+   */
   public boolean startInplaceIntroduceTemplate() {
     final boolean replaceAllOccurrences = isReplaceAllOccurrences();
     final Ref<Boolean> result = new Ref<Boolean>();
