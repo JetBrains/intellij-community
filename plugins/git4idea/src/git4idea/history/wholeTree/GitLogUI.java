@@ -908,13 +908,15 @@ public class GitLogUI implements Disposable {
 
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      setBackground(getLogicBackground(selected, row));
+      //setBackground(getLogicBackground(selected, row));
       if (BigTableTableModel.LOADING == value) {
         return;
       }
       final String text = value.toString();
       myUsualAttributesForRun = isCurrentUser(row, text) ?
-                                SimpleTextAttributes.merge(myUsualAttributes, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) : myUsualAttributes;
+                                SimpleTextAttributes.merge(myUsualAttributes, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) :
+                                new SimpleTextAttributes(myUsualAttributes.getBgColor(), myUsualAttributes.getFgColor(),
+                                                         myUsualAttributes.getWaveColor(), myUsualAttributes.getStyle());
       if (myWorker.isEmpty()) {
         append(text, myUsualAttributesForRun);
         return;
@@ -942,7 +944,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      setBackground(getLogicBackground(selected, row));
+      //setBackground(getLogicBackground(selected, row));
       if (BigTableTableModel.LOADING == value) {
         if (myShowLoading) {
           append("Loading...");
@@ -1021,7 +1023,7 @@ public class GitLogUI implements Disposable {
     private void addOneIcon(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column, Icon icon) {
       myCurrentWidth = icon.getIconWidth();
       myPanel.removeAll();
-      myPanel.setBackground(getLogicBackground(isSelected, row));
+      //myPanel.setBackground(getLogicBackground(isSelected, row));
       myPanel.add(new JLabel(icon));
       myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       myPanel.add(myInner);
@@ -1043,7 +1045,7 @@ public class GitLogUI implements Disposable {
       }
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-        setBackground(getLogicBackground(selected, row));
+        //setBackground(getLogicBackground(selected, row));
         if (value instanceof GitCommit) {
           final GitCommit gitCommit = (GitCommit)value;
           myIssueLinkRenderer.appendTextWithLinks(gitCommit.getDescription(), SimpleTextAttributes.REGULAR_ATTRIBUTES, myConsumer);

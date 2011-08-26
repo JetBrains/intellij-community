@@ -707,6 +707,7 @@ public class GitHistoryUtils {
    * @return the name of file in the last commit or argument
    */
   public static FilePath getLastCommitName(final Project project, FilePath path) {
+    if (project.isDefault()) return path;
     final ChangeListManager changeManager = ChangeListManager.getInstance(project);
     final Change change = changeManager.getChange(path);
     if (change != null && change.getType() == Change.Type.MOVED) {

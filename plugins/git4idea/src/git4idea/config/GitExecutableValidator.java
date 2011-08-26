@@ -74,6 +74,7 @@ public class GitExecutableValidator extends ExecutableValidator {
   @Override
   protected void saveCurrentExecutable(String executable) {
     myVcs.getAppSettings().setPathToGit(executable);
+    myVcs.checkVersion();
   }
 
   /**
