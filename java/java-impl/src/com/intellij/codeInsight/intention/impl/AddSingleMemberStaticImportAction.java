@@ -55,9 +55,9 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
   public static String getStaticImportClass(@NotNull PsiElement element) {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
     PsiFile file = element.getContainingFile();
-    if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression &&
-        ((PsiReferenceExpression)element.getParent()).getQualifierExpression() != null) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
+    if (element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement &&
+        ((PsiJavaCodeReferenceElement)element.getParent()).getQualifier() != null) {
+      PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
       PsiReferenceParameterList parameterList = refExpr.getParameterList();
       if (parameterList != null && parameterList.getFirstChild() != null) return null;
       PsiElement resolved = refExpr.resolve();
@@ -101,17 +101,18 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
   public static void invoke(PsiFile file, PsiElement element) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     
-    final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
+    final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiElement resolved = refExpr.resolve();
 
     file.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        super.visitReferenceExpression(expression);
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
         String referenceName = refExpr.getReferenceName();
-        if (referenceName != null && referenceName.equals(expression.getReferenceName())) {
-          PsiElement resolved = expression.resolve();
+        if (referenceName != null && referenceName.equals(reference.getReferenceName())) {
+          PsiElement resolved = reference.resolve();
           if (resolved != null) {
-            expression.putUserData(TEMP_REFERENT_USER_DATA, resolved);
+            reference.putUserData(TEMP_REFERENT_USER_DATA, resolved);
           }
         }
       }
@@ -124,35 +125,37 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     }
 
     file.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        if (expression.getParameterList() != null &&
-            expression.getParameterList().getFirstChild() != null) return;
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
 
-        if (refExpr.getReferenceName().equals(expression.getReferenceName())) {
-          final PsiExpression qualifierExpression = expression.getQualifierExpression();
-          PsiElement referent = expression.getUserData(TEMP_REFERENT_USER_DATA);
-          if (!expression.isQualified()) {
+        if (reference.getParameterList() != null &&
+            reference.getParameterList().getFirstChild() != null) return;
 
-            if (referent instanceof PsiMember && referent != expression.resolve()) {
-              PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+        if (refExpr.getReferenceName().equals(reference.getReferenceName())) {
+          final PsiElement qualifierExpression = reference.getQualifier();
+          PsiElement referent = reference.getUserData(TEMP_REFERENT_USER_DATA);
+          if (!reference.isQualified()) {
+
+            if (referent instanceof PsiMember && referent != reference.resolve()) {
+              PsiElementFactory factory = JavaPsiFacade.getInstance(reference.getProject()).getElementFactory();
               try {
-                PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + expression.getReferenceName(), null);
-                expression = (PsiReferenceExpression)expression.replace(copy);
+                PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + reference.getReferenceName(), null);
+                reference = (PsiReferenceExpression)reference.replace(copy);
                 ((PsiReferenceExpression)qualifierExpression).bindToElement(((PsiMember)referent).getContainingClass());
               }
               catch (IncorrectOperationException e) {
                 LOG.error (e);
               }
             }
-            expression.putUserData(TEMP_REFERENT_USER_DATA, null);
+            reference.putUserData(TEMP_REFERENT_USER_DATA, null);
           } else {
-            if (qualifierExpression instanceof PsiReferenceExpression) {
-              PsiElement aClass = ((PsiReferenceExpression)qualifierExpression).resolve();
+            if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
+              PsiElement aClass = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
               if (aClass instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)aClass, ((PsiMember)resolved).getContainingClass(), true)) {
                 boolean foundMemberByName = false;
                 if (referent instanceof PsiMember) {
                   final String memberName = ((PsiMember)referent).getName();
-                  final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+                  final PsiClass containingClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
                   if (containingClass != null) {
                     foundMemberByName |= containingClass.findFieldByName(memberName, true) != null;
                     foundMemberByName |= containingClass.findMethodsByName(memberName, true).length > 0;
@@ -169,10 +172,9 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
               }
             }
           }
-          expression.putUserData(TEMP_REFERENT_USER_DATA, null);
+          reference.putUserData(TEMP_REFERENT_USER_DATA, null);
         }
-
-        super.visitReferenceExpression(expression);
+        super.visitReferenceElement(reference);
       }
     });
 
