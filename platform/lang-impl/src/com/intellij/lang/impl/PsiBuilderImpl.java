@@ -930,7 +930,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     public void nodeReplaced(@NotNull final ASTNode oldChild, @NotNull final LighterASTNode newChild) {
-      myDelegate.nodeReplaced(oldChild, myConverter.convert((Node)newChild));
+      ASTNode converted = myConverter.convert((Node)newChild);
+      myDelegate.nodeReplaced(oldChild, converted);
     }
   }
 
