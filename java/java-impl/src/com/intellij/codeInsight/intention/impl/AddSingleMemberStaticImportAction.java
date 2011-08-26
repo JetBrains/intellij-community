@@ -62,7 +62,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
       if (parameterList != null && parameterList.getFirstChild() != null) return null;
       PsiElement resolved = refExpr.resolve();
       if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass aClass = ((PsiMember)resolved).getContainingClass();
+        PsiClass aClass = getResolvedClass(element, (PsiMember)resolved);
         if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true)) {
           String qName = aClass.getQualifiedName();
           if (qName != null && !Comparing.strEqual(qName, aClass.getName())) {
@@ -89,7 +89,22 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
 
     return null;
   }
-  
+
+  @Nullable
+  private static PsiClass getResolvedClass(PsiElement element, PsiMember resolved) {
+    PsiClass aClass = resolved.getContainingClass();
+    if (!PsiUtil.isAccessible(aClass, element, null)) {
+      final PsiElement qualifier = ((PsiJavaCodeReferenceElement)element.getParent()).getQualifier();
+      if (qualifier instanceof PsiReferenceExpression) {
+        final PsiElement qResolved = ((PsiReferenceExpression)qualifier).resolve();
+        if (qResolved instanceof PsiVariable) {
+          aClass = PsiUtil.resolveClassInClassTypeOnly(((PsiVariable)qResolved).getType());
+        }
+      }
+    }
+    return aClass;
+  }
+
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     String classQName = getStaticImportClass(element);
     if (classQName != null) {
@@ -98,7 +113,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     return classQName != null;
   }
 
-  public static void invoke(PsiFile file, PsiElement element) {
+  public static void invoke(PsiFile file, final PsiElement element) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
@@ -120,7 +135,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
 
     if (resolved != null) {
       RefactoringUtil.bindToElementViaStaticImport(
-        ((PsiMember)resolved).getContainingClass(), ((PsiNamedElement)resolved).getName(), ((PsiJavaFile)file).getImportList()
+        getResolvedClass(element, (PsiMember)resolved), ((PsiNamedElement)resolved).getName(), ((PsiJavaFile)file).getImportList()
       );
     }
 
@@ -151,7 +166,10 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
           } else {
             if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
               PsiElement aClass = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
-              if (aClass instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)aClass, ((PsiMember)resolved).getContainingClass(), true)) {
+              if (aClass instanceof PsiVariable) {
+                aClass = PsiUtil.resolveClassInClassTypeOnly(((PsiVariable)aClass).getType());
+              }
+              if (aClass instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)aClass, getResolvedClass(element, (PsiMember)resolved), true)) {
                 boolean foundMemberByName = false;
                 if (referent instanceof PsiMember) {
                   final String memberName = ((PsiMember)referent).getName();
