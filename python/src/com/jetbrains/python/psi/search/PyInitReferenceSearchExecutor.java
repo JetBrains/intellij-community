@@ -1,5 +1,7 @@
 package com.jetbrains.python.psi.search;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -23,23 +25,34 @@ public class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReferenc
     if (!(element instanceof PyFunction)) {
       return;
     }
-    final PyFunction function = (PyFunction)element;
-    if (!PyNames.INIT.equals(function.getName())) {
-      return;
+
+    final AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    String className;
+    SearchScope searchScope;
+    PyFunction function;
+    try {
+      function = (PyFunction)element;
+      if (!PyNames.INIT.equals(function.getName())) {
+        return;
+      }
+      final PyClass pyClass = function.getContainingClass();
+      if (pyClass == null) {
+        return;
+      }
+      className = pyClass.getName();
+      if (className == null) {
+        return;
+      }
+
+      searchScope = queryParameters.getEffectiveSearchScope();
+      if (searchScope instanceof GlobalSearchScope) {
+        searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE);
+      }
     }
-    final PyClass pyClass = function.getContainingClass();
-    if (pyClass == null) {
-      return;
-    }
-    final String className = pyClass.getName();
-    if (className == null) {
-      return;
+    finally {
+      accessToken.finish();
     }
 
-    SearchScope searchScope = queryParameters.getEffectiveSearchScope();
-    if (searchScope instanceof GlobalSearchScope) {
-      searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE);
-    }
 
     queryParameters.getOptimizer().searchWord(className, searchScope, UsageSearchContext.IN_CODE, true, function);
   }
