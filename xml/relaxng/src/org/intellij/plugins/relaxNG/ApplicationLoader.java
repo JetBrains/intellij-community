@@ -110,7 +110,7 @@ public class ApplicationLoader implements ApplicationComponent, InspectionToolPr
     };
   }
 
-  public class ResourceProvider implements StandardResourceProvider {
+  public static class ResourceProvider implements StandardResourceProvider {
     public void registerResources(ResourceRegistrar registrar) {
       registrar.addStdResource(RNG_NAMESPACE, "/resources/relaxng.rng", getClass());
       registrar.addIgnoredResource("http://relaxng.org/ns/compatibility/annotations/1.0");
