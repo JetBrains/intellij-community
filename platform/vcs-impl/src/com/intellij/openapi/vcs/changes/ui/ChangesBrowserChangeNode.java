@@ -106,7 +106,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
 
   private void appendSwitched(final ChangesBrowserNodeRenderer renderer) {
     final VirtualFile virtualFile = ChangesUtil.getFilePath(getUserObject()).getVirtualFile();
-    if (virtualFile != null) {
+    if (virtualFile != null && ! myProject.isDefault()) {
       String branch = ChangeListManager.getInstance(myProject).getSwitchedBranch(virtualFile);
       if (branch != null) {
         renderer.append(" [switched to " + branch + "]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
