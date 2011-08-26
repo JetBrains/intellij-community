@@ -39,8 +39,6 @@ import java.util.Map;
  *
  * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
  * as required by the underlying platform.
- *
- * todo: check help
  */
 public class GeneralCommandLine {
   private String myExePath = null;
