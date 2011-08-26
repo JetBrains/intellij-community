@@ -161,6 +161,9 @@ public class PeriodicalTasksCloser extends ProjectManagerAdapter implements Proj
       throwCanceledException(project, e);
     }
     if (component == null) {
+      if (project.isDefault()) {
+        LOG.info("no component in default project: " + componentClass.getName());
+      }
       throwCanceledException(project, new NullPointerException());
     }
     return component;
@@ -168,7 +171,11 @@ public class PeriodicalTasksCloser extends ProjectManagerAdapter implements Proj
 
   public <T> T safeGetService(@NotNull final Project project, final Class<T> componentClass) throws ProcessCanceledException {
     try {
-      return ServiceManager.getService(project, componentClass);
+      T service = ServiceManager.getService(project, componentClass);
+      if (service == null && project.isDefault()) {
+        LOG.info("no service in default project: " + componentClass.getName());
+      }
+      return service;
     }
     catch (NullPointerException e) {
       throwCanceledException(project, e);
