@@ -836,7 +836,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           if (isDisposed) return;
           TreePath usagePath = new TreePath(node.getPath());
           myTree.expandPath(usagePath.getParentPath());
-          myTree.setSelectionPath(usagePath);
+          TreeUtil.selectPath(myTree, usagePath);
         }
       });
     }
