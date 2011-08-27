@@ -31,6 +31,7 @@ import com.android.resources.*;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.android.sdklib.internal.project.ProjectProperties;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -122,7 +123,7 @@ public class RenderServiceFactory {
 
     final SimpleLogger logger = new SimpleLogger(LOG);
 
-    myLibrary = LayoutLibrary.load(layoutLibJar.getPath(), logger);
+    myLibrary = LayoutLibrary.load(layoutLibJar.getPath(), logger, ApplicationNamesInfo.getInstance().getFullProductName());
     if (myLibrary.getStatus() != LoadStatus.LOADED) {
       throw new RenderingException(myLibrary.getLoadMessage());
     }
