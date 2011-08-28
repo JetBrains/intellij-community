@@ -155,7 +155,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
 
   @Override
   public void addJarDirectory(String url, boolean recursive, OrderRootType rootType) {
-    getModel().addJarDirectory(url, recursive, rootType);
+    getModel()  .addJarDirectory(url, recursive, rootType);
   }
 
   @Override
