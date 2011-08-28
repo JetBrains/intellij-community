@@ -20,14 +20,13 @@ import com.intellij.codeInsight.completion.CompletionWeigher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrPropertyForCompletion;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -38,6 +37,7 @@ import java.util.Set;
  */
 public class GrKindWeigher extends CompletionWeigher {
   private static final Set<String> TRASH_CLASSES = new HashSet<String>(10);
+
   static {
     TRASH_CLASSES.add(CommonClassNames.JAVA_LANG_CLASS);
     TRASH_CLASSES.add(CommonClassNames.JAVA_LANG_OBJECT);
@@ -46,65 +46,70 @@ public class GrKindWeigher extends CompletionWeigher {
 
   @Override
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
+    final PsiElement position = location.getCompletionParameters().getPosition();
+    if (!(position.getContainingFile() instanceof GroovyFileBase)) return null;
+    if (!(position.getParent() instanceof GrReferenceElement)) return null;
+
+    final GrReferenceElement parent = (GrReferenceElement)position.getParent();
+
     Object o = element.getObject();
     if (o instanceof ResolveResult) {
       o = ((ResolveResult)o).getElement();
     }
 
-    final PsiElement position = location.getCompletionParameters().getPosition();
-    if (!(position.getContainingFile() instanceof GroovyFileBase)) {
-      return null;
-    }
 
-    if (!(position.getParent() instanceof GrReferenceElement)) {
-      if (o instanceof PsiClass || o instanceof PsiPackage) return 0;
-      return 1;
-    }
-
-    final GrReferenceElement parent = (GrReferenceElement)position.getParent();
-
-    if (parent.getQualifier() == null) {
-      if (o instanceof GrVariable && !(o instanceof GrField)) return NotQualifiedKind.aLocal;
-      if (o instanceof PsiClass) return NotQualifiedKind.aClass;
-      if (o instanceof PsiPackage) return NotQualifiedKind.aPackage;
-      if (isLightElement(o)) return NotQualifiedKind.anImplicitGroovyMethod;
-      if (o instanceof PsiMember) return NotQualifiedKind.aMember;
-      if (o instanceof String) {
-        if ("for".equals(o)) return NotQualifiedKind.aKeyword;
-
-        return NotQualifiedKind.aString;
-      }
-    }
-    else {
-      if (o instanceof PsiClass) return QualifiedKind.aClass;
-      if (o instanceof PsiPackage) return QualifiedKind.aPackage;
-      if (isLightElement(o)) {
-        return QualifiedKind.anImplicitGroovyMethod;
-      }
-      if (o instanceof GrEnumConstant || o instanceof PsiEnumConstant) return QualifiedKind.anEnumConstant;
+    final PsiElement qualifier = parent.getQualifier();
+    if (qualifier == null) {
+      if (o instanceof PsiVariable && !(o instanceof PsiField)) return NotQualifiedKind.local;
+      if (isLightElement(o)) return NotQualifiedKind.unknown;
       if (o instanceof PsiMember) {
         final PsiClass containingClass = ((PsiMember)o).getContainingClass();
-        if (containingClass != null) {
-          if (TRASH_CLASSES.contains(containingClass.getQualifiedName())) {
-            return QualifiedKind.aTrashMethod;
-          }
-        }
-        return QualifiedKind.aMember;
+        if (PsiTreeUtil.isContextAncestor(containingClass, position, false)) return NotQualifiedKind.currentClassMember;
+        if (o instanceof PsiClass && ((PsiClass)o).getContainingClass() == null || o instanceof PsiPackage) return NotQualifiedKind.unknown;
+        return NotQualifiedKind.member;
       }
-      if (o instanceof String) return QualifiedKind.aString;
+      return NotQualifiedKind.unknown;
     }
-    return null;
+    else {
+      if (o instanceof PsiEnumConstant) return QualifiedKind.enumConstant;
+
+      if (isLightElement(o)) return QualifiedKind.unknown;
+      if (o instanceof PsiMember) {
+        if (isTrashMethod((PsiMember)o)) return QualifiedKind.unknown;
+        if (isQualifierClassMember((PsiMember)o, qualifier)) return QualifiedKind.currentClassMember;
+        if (o instanceof PsiClass && ((PsiClass)o).getContainingClass() == null || o instanceof PsiPackage) return QualifiedKind.unknown;
+        return QualifiedKind.member;
+      }
+      return QualifiedKind.unknown;
+    }
   }
 
   private static boolean isLightElement(Object o) {
     return o instanceof LightElement && !(o instanceof GrPropertyForCompletion) && !(o instanceof GrAccessorMethod);
   }
 
-  static enum NotQualifiedKind {
-    aPackage, aClass, anImplicitGroovyMethod, aKeyword, aMember, aLocal, aString
+  private static boolean isTrashMethod(PsiMember o) {
+    final PsiClass containingClass = o.getContainingClass();
+    return containingClass != null && TRASH_CLASSES.contains(containingClass.getQualifiedName());
   }
 
-  static enum QualifiedKind {
-    aPackage, aClass, aTrashMethod, anImplicitGroovyMethod, aMember, anEnumConstant, aString
+  private static boolean isQualifierClassMember(PsiMember member, PsiElement qualifier) {
+    if (!(qualifier instanceof GrExpression)) return false;
+
+    final PsiType type = ((GrExpression)qualifier).getType();
+    if (!(type instanceof PsiClassType)) return false;
+
+    final PsiClass psiClass = ((PsiClassType)type).resolve();
+    if (psiClass == null) return false;
+
+    return PsiManager.getInstance(qualifier.getProject()).areElementsEquivalent(member.getContainingClass(), psiClass);
+  }
+
+  private static enum NotQualifiedKind {
+    local, currentClassMember, member,unknown
+  }
+
+  private static enum QualifiedKind {
+    enumConstant, currentClassMember, member, unknown
   }
 }
