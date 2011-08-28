@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -56,9 +56,9 @@ public abstract class ModuleStructureExtension {
     return false;
   }
 
-  public Collection<AnAction> createAddActions(final Computable<Object> selectedObjectRetriever,
+  public Collection<AnAction> createAddActions(final NullableComputable<MasterDetailsComponent.MyNode> selectedNodeRetriever,
                                                final Runnable treeNodeNameUpdater,
-                                               ModulesConfigurator modulesConfigurator) {
+                                               final ModulesConfigurator modulesConfigurator) {
     return Collections.emptyList();
   }
 

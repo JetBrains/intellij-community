@@ -54,8 +54,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -732,13 +732,18 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           result.addAll(libraryActions);
         }
 
-        final Computable<Object> selectedObjectRetriever = new Computable<Object>() {
-          public Object compute() {
-            return getSelectedObject();
+        final NullableComputable<MyNode> selectedNodeRetriever = new NullableComputable<MyNode>() {
+          public MyNode compute() {
+            final TreePath selectionPath = myTree.getSelectionPath();
+            final Object lastPathComponent = selectionPath == null ? null : selectionPath.getLastPathComponent();
+            if (lastPathComponent instanceof MyNode) {
+              return (MyNode)lastPathComponent;
+            }
+            return null;
           }
         };
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-          result.addAll(extension.createAddActions(selectedObjectRetriever, TREE_UPDATER, myContext.myModulesConfigurator));
+          result.addAll(extension.createAddActions(selectedNodeRetriever, TREE_UPDATER, myContext.myModulesConfigurator));
         }
 
         return result.toArray(new AnAction[result.size()]);
