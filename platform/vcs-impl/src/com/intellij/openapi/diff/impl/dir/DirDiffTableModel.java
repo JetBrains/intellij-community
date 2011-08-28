@@ -24,6 +24,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -56,6 +58,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public volatile AtomicReference<String> text = new AtomicReference<String>(prepareText(""));
   private Updater updater;
   private List<DirDiffModelListener> myListeners = new ArrayList<DirDiffModelListener>();
+  private Stack<TableSelectionConfig> selections = new Stack<TableSelectionConfig>();
 
   public static final String EMPTY_STRING = "                                                  ";
   private DirDiffPanel myPanel;
@@ -76,6 +79,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void applyRemove() {
+    final List<DirDiffElement> selectedElements = getSelectedElements();
     myUpdating.set(true);
     final Iterator<DirDiffElement> i = myElements.iterator();
     while(i.hasNext()) {
@@ -112,16 +116,23 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
     fireTableDataChanged();
     myUpdating.set(false);
-    selectFirstRow();
+    int index = -1;
+    if (!selectedElements.isEmpty() && (index = myElements.indexOf(selectedElements.get(0))) != -1) {
+      myTable.getSelectionModel().setSelectionInterval(index, index);
+      TableUtil.scrollSelectionToVisible(myTable);
+    } else {
+      selectFirstRow();
+    }
     myPanel.focusTable();
     myPanel.update(true);
   }
 
-  private void selectFirstRow() {
+  public void selectFirstRow() {
     if (myElements.size() > 0) {
       int row = myElements.get(0).isSeparator() ? 1 : 0;
       if (row < myTable.getRowCount()) {
         myTable.getSelectionModel().setSelectionInterval(row, row);
+        TableUtil.scrollSelectionToVisible(myTable);
       }
     }
   }
@@ -174,13 +185,11 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void reloadModel() {
-    //System.out.println("Start reloading");
     myUpdating.set(true);
     final JBLoadingPanel loadingPanel = getLoadingPanel();
     loadingPanel.startLoading();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        //System.out.println("start updating on pooled thread");
         try {
           updater = new Updater(loadingPanel, 100);
           updater.start();
@@ -197,7 +206,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         }
         catch (Exception e) {//
         }
-        //System.out.println("end updating on pooled thread");
       }
     });
   }
@@ -207,7 +215,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void applySettings() {
-    //System.out.println(StringUtil.getThrowableText(new Throwable()));
     if (! myUpdating.get()) myUpdating.set(true);
     final JBLoadingPanel loadingPanel = getLoadingPanel();
     if (!loadingPanel.isLoading()) {
@@ -220,7 +227,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     final Application app = ApplicationManager.getApplication();
     app.executeOnPooledThread(new Runnable() {
       public void run() {
-        //System.out.println("start updating tree");
         myTree.updateVisibility(mySettings);
         final ArrayList<DirDiffElement> elements = new ArrayList<DirDiffElement>();
         fillElements(myTree, elements);
@@ -230,10 +236,16 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             myElements.addAll(elements);
             myUpdating.set(false);
             fireTableDataChanged();
-            selectFirstRow();
             DirDiffTableModel.this.text.set("");
             if (loadingPanel.isLoading()) {
               loadingPanel.stopLoading();
+            }
+            if (selections.empty()) {
+              selectFirstRow();
+            } else {
+              while (!selections.empty()) {
+                selections.pop().restore();
+              }
             }
             myPanel.update(true);
           }
@@ -243,7 +255,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         } else {
           app.invokeLater(uiThread);
         }
-        //System.out.println("stop updating tree");
       }
     });
   }
@@ -536,6 +547,38 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         updater = null;
         myPanel.focusTable();
       }
+    }
+  }
+
+  public void createSelectionConfig() {
+    selections.push(new TableSelectionConfig());
+  }
+  
+  public class TableSelectionConfig {
+    private final int selectedRow;
+    private final int rowCount; 
+    TableSelectionConfig() {
+      selectedRow = myTable.getSelectedRow();
+      rowCount = myTable.getRowCount();
+    }
+    
+    void restore() {
+      final int newRowCount = myTable.getRowCount();
+      if (newRowCount == 0) return;
+      
+      int row = Math.min(newRowCount < rowCount ? selectedRow : selectedRow + 1, newRowCount - 1);
+      final DirDiffElement element = getElementAt(row);
+      if (element != null && element.isSeparator()) {
+        if (getElementAt(row +1) != null) {
+          row += 1;
+        } else {
+          row -= 1;
+        }
+      }
+      final DirDiffElement el = getElementAt(row);
+      row = el == null || el.isSeparator() ? 0 : row;
+      myTable.getSelectionModel().setSelectionInterval(row, row);        
+      TableUtil.scrollSelectionToVisible(myTable);
     }
   }
 }

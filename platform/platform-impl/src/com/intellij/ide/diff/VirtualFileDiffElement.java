@@ -189,34 +189,11 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       final File src = new File(myFile.getPath());
       final File trg = new File(container.getValue().getPath() + relativePath + src.getName());
       FileUtil.copy(src, trg);
-      //final VirtualFile targetRoot = container.getValue();
-      //if (targetRoot != null && targetRoot.isDirectory()) {
-      //  VirtualFile target = getSeparator().equals(relativePath) ? targetRoot : targetRoot.findFileByRelativePath(relativePath);
-      //  final String path;
-      //  if (target == null) {
-      //    path = (targetRoot.getPath() + relativePath).replace('/', File.separatorChar);
-      //    new File(path).mkdirs();
-      //    target = targetRoot.findFileByRelativePath(removeSeparators(relativePath));          
-      //  }
-      //
-      //    if (target != null && target.isDirectory()) {
-      //      myFile.copy(this, target, myFile.getName());
-      //    }
-      //    else {
-      //      assert false : "Can't find " + container.getPath() + relativePath;
-      //    }
-      //
-      //}
+      return true;
     }
     catch (IOException e) {//
     }
     return false;
-  }
-
-  private String removeSeparators(String path) {
-    final int start = path.startsWith(getSeparator()) ? getSeparator().length() : 0;
-    final int end = path.endsWith(getSeparator()) ? path.length() - getSeparator().length() : path.length();
-    return path.substring(start, end);
   }
 
   @Override

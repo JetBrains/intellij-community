@@ -41,8 +41,13 @@ public class SynchronizeDiff extends DirDiffAction {
 
   @Override
   protected void updateState(boolean state) {
-    final List<DirDiffElement> elements = mySelectedOnly ? getModel().getSelectedElements() : getModel().getElements();
+    final List<DirDiffElement> elements = mySelectedOnly ? getModel().getSelectedElements() : getModel().getElements();    
+    
     for (DirDiffElement element : elements) {
+      if (mySelectedOnly) {
+        getModel().createSelectionConfig();
+      }
+
       final DirDiffOperation operation = element.getOperation();
       if (operation == null) continue;
       switch (operation) {
@@ -62,6 +67,10 @@ public class SynchronizeDiff extends DirDiffAction {
           getModel().performDelete(element);
           break;
       }
+    }    
+    
+    if (!mySelectedOnly) {
+      getModel().selectFirstRow();
     }
   }
 
