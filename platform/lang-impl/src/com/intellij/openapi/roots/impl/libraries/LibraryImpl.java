@@ -32,10 +32,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -43,7 +40,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
@@ -69,16 +65,20 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private final LibraryTable myLibraryTable;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;
   private final JarDirectories myJarDirectories = new JarDirectories();
-  private final List<LocalFileSystem.WatchRequest> myWatchRequests = new ArrayList<LocalFileSystem.WatchRequest>();
   private final LibraryImpl mySource;
   private LibraryType<?> myType;
   private LibraryProperties myProperties;
 
   private final MyRootProviderImpl myRootProvider = new MyRootProviderImpl();
   private final ModifiableRootModel myRootModel;
-  private MessageBusConnection myBusConnection = null;
   private boolean myDisposed;
   private final Disposable myPointersDisposable = Disposer.newDisposable();
+  private final JarDirectoryWatcher myRootsWatcher = new JarDirectoryWatcher(myJarDirectories) {
+    @Override
+    protected void fireRootSetChanged() {
+      myRootProvider.fireRootSetChanged();
+    }
+  };
 
   LibraryImpl(LibraryTable table, Element element, ModifiableRootModel rootModel) throws InvalidDataException {
     myLibraryTable = table;
@@ -90,7 +90,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     //init roots depends on my hashcode, hashcode depends on jardirectories and name
     myRoots = initRoots();
     readRoots(element);
-    updateWatchedRoots();
+    myRootsWatcher.updateWatchedRoots();
   }
 
   LibraryImpl(String name, final @Nullable LibraryType<?> type, LibraryTable table, ModifiableRootModel rootModel) {
@@ -137,14 +137,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
   public void dispose() {
     assert !isDisposed();
-    if (!myWatchRequests.isEmpty()) {
-      LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
-      myWatchRequests.clear();
-    }
-    if (myBusConnection != null) {
-      myBusConnection.disconnect();
-      myBusConnection = null;
-    }
+    Disposer.dispose(myRootsWatcher);
     myDisposed = true;
   }
 
@@ -208,7 +201,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   public Library cloneLibrary(RootModelImpl rootModel) {
     LOG.assertTrue(myLibraryTable == null);
     final LibraryImpl clone = new LibraryImpl(this, null, rootModel);
-    clone.updateWatchedRoots();
+    clone.myRootsWatcher.updateWatchedRoots();
     return clone;
   }
 
@@ -257,7 +250,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     readProperties(element);
     readRoots(element);
     myJarDirectories.readExternal(element);
-    updateWatchedRoots();
+    myRootsWatcher.updateWatchedRoots();
   }
 
   private void readProperties(Element element) {
@@ -503,7 +496,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       disposeMyPointers();
       copyRootsFrom(fromModel);
       myJarDirectories.copyFrom(fromModel.myJarDirectories);
-      updateWatchedRoots();
+      myRootsWatcher.updateWatchedRoots();
       myRootProvider.fireRootSetChanged();
     }
   }
@@ -524,90 +517,6 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     }
     Disposer.dispose(myPointersDisposable);
     Disposer.register(this, myPointersDisposable);
-  }
-
-  private void updateWatchedRoots() {
-    final LocalFileSystem fs = LocalFileSystem.getInstance();
-    if (!myWatchRequests.isEmpty()) {
-      fs.removeWatchedRoots(myWatchRequests);
-      myWatchRequests.clear();
-    }
-    if (!myJarDirectories.isEmpty()) {
-      final VirtualFileManager fm = VirtualFileManager.getInstance();
-      for (OrderRootType rootType : myJarDirectories.getRootTypes()) {
-        for (String url : myJarDirectories.getDirectories(rootType)) {
-          if (fm.getFileSystem(VirtualFileManager.extractProtocol(url)) instanceof LocalFileSystem) {
-            final boolean watchRecursively = myJarDirectories.isRecursive(rootType, url);
-            final LocalFileSystem.WatchRequest request = fs.addRootToWatch(VirtualFileManager.extractPath(url), watchRecursively);
-            myWatchRequests.add(request);
-          }
-        }
-      }
-      if (myBusConnection == null) {
-        myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
-        myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-          public void before(final List<? extends VFileEvent> events) {
-          }
-
-          public void after(final List<? extends VFileEvent> events) {
-            boolean changesDetected = false;
-            for (VFileEvent event : events) {
-              if (event instanceof VFileCopyEvent) {
-                final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-                if (isUnderJarDirectory(copyEvent.getNewParent() + "/" + copyEvent.getNewChildName()) ||
-                    isUnderJarDirectory(copyEvent.getFile().getUrl())) {
-                  changesDetected = true;
-                  break;
-                }
-              }
-              else if (event instanceof VFileMoveEvent) {
-                final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
-
-                final VirtualFile file = moveEvent.getFile();
-                if (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(moveEvent.getOldParent().getUrl() + "/" + file.getName())) {
-                  changesDetected = true;
-                  break;
-                }
-              }
-              else if (event instanceof VFileDeleteEvent) {
-                final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
-                if (isUnderJarDirectory(deleteEvent.getFile().getUrl())) {
-                  changesDetected = true;
-                  break;
-                }
-              }
-              else if (event instanceof VFileCreateEvent) {
-                final VFileCreateEvent createEvent = (VFileCreateEvent)event;
-                if (isUnderJarDirectory(createEvent.getParent().getUrl() + "/" + createEvent.getChildName())) {
-                  changesDetected = true;
-                  break;
-                }
-              }
-            }
-
-            if (changesDetected) {
-              myRootProvider.fireRootSetChanged();
-            }
-          }
-
-          private boolean isUnderJarDirectory(String url) {
-            for (String rootUrl : myJarDirectories.getAllDirectories()) {
-              if (FileUtil.startsWith(url, rootUrl)) {
-                return true;
-              }
-            }
-            return false;
-          }
-        });
-      }
-    }
-    else {
-      final MessageBusConnection connection = myBusConnection;
-      if (connection != null) {
-        myBusConnection = null;
-        connection.disconnect();
-      }
-    }
   }
 
   private class MyRootProviderImpl extends RootProviderBaseImpl {
