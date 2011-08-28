@@ -74,7 +74,9 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
   public void testDuplicatesInsideIf() throws Throwable { doTest(); }
   public void testFromGString() throws Throwable { doTest(); }
 
-  public void testCharArray() throws Exception {doTest(true);} 
+  public void testCharArray() {doTest(true);}
+  
+  public void testCallableProperty() {doTest();}
 
   protected static final String ALL_MARKER = "<all>";
 
