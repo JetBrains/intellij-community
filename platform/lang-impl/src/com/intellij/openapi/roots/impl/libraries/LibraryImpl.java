@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -62,12 +63,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   @NonNls private static final String LIBRARY_TYPE_ATTR = "type";
   @NonNls private static final String ROOT_PATH_ELEMENT = "root";
   @NonNls public static final String ELEMENT = "library";
-  @NonNls private static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";
-  @NonNls private static final String URL_ATTR = "url";
-  @NonNls private static final String RECURSIVE_ATTR = "recursive";
-  @NonNls private static final String ROOT_TYPE_ATTR = "type";
   @NonNls private static final String PROPERTIES_ELEMENT = "properties";
-  private static final OrderRootType DEFAULT_JAR_DIRECTORY_TYPE = OrderRootType.CLASSES;
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private String myName;
   private final LibraryTable myLibraryTable;
@@ -90,7 +86,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     mySource = null;
     readName(element);
     readProperties(element);
-    readJarDirectories(element);
+    myJarDirectories.readExternal(element);
     //init roots depends on my hashcode, hashcode depends on jardirectories and name
     myRoots = initRoots();
     readRoots(element);
@@ -260,7 +256,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     readName(element);
     readProperties(element);
     readRoots(element);
-    readJarDirectories(element);
+    myJarDirectories.readExternal(element);
     updateWatchedRoots();
   }
 
@@ -295,32 +291,9 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     }
   }
 
-  private void readJarDirectories(Element element) {
-    myJarDirectories.clear();
-    final List jarDirs = element.getChildren(JAR_DIRECTORY_ELEMENT);
-    for (Object item : jarDirs) {
-      final Element jarDir = (Element)item;
-      final String url = jarDir.getAttributeValue(URL_ATTR);
-      final String recursive = jarDir.getAttributeValue(RECURSIVE_ATTR);
-      final OrderRootType rootType = getJarDirectoryRootType(jarDir.getAttributeValue(ROOT_TYPE_ATTR));
-      if (url != null) {
-        myJarDirectories.add(rootType, url, Boolean.valueOf(Boolean.parseBoolean(recursive)));
-      }
-    }
-  }
-
-  private static OrderRootType getJarDirectoryRootType(@Nullable String type) {
-    for (PersistentOrderRootType rootType : OrderRootType.getAllPersistentTypes()) {
-      if (rootType.name().equals(type)) {
-        return rootType;
-      }
-    }
-    return DEFAULT_JAR_DIRECTORY_TYPE;
-  }
-
   //TODO<rv> Remove the next two methods as a temporary solution. Sort in OrderRootType.
   //
-  private static List<OrderRootType> sortRootTypes(Collection<OrderRootType> rootTypes) {
+  public static List<OrderRootType> sortRootTypes(Collection<OrderRootType> rootTypes) {
     List<OrderRootType> allTypes = new ArrayList<OrderRootType>(rootTypes);
     Collections.sort(allTypes, new Comparator<OrderRootType>() {
       public int compare(final OrderRootType o1, final OrderRootType o2) {
@@ -340,7 +313,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return "";
   }
 
-  public void writeExternal(Element rootElement) {
+  public void writeExternal(Element rootElement) throws WriteExternalException {
     LOG.assertTrue(!isDisposed(), "Already disposed!");
 
     Element element = new Element(ELEMENT);
@@ -369,20 +342,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT);
       element.addContent(rootTypeElement);
     }
-    final List<OrderRootType> rootTypes = sortRootTypes(myJarDirectories.getRootTypes());
-    for (OrderRootType rootType : rootTypes) {
-      final List<String> urls = new ArrayList<String>(myJarDirectories.getDirectories(rootType));
-      Collections.sort(urls, String.CASE_INSENSITIVE_ORDER);
-      for (String url : urls) {
-        final Element jarDirElement = new Element(JAR_DIRECTORY_ELEMENT);
-        jarDirElement.setAttribute(URL_ATTR, url);
-        jarDirElement.setAttribute(RECURSIVE_ATTR, Boolean.toString(myJarDirectories.isRecursive(rootType, url)));
-        if (!rootType.equals(DEFAULT_JAR_DIRECTORY_TYPE)) {
-          jarDirElement.setAttribute(ROOT_TYPE_ATTR, rootType.name());
-        }
-        element.addContent(jarDirElement);
-      }
-    }
+    myJarDirectories.writeExternal(element);
     rootElement.addContent(element);
   }
 
@@ -424,11 +384,11 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public void addJarDirectory(@NotNull final String url, final boolean recursive) {
-    addJarDirectory(url, recursive, DEFAULT_JAR_DIRECTORY_TYPE);
+    addJarDirectory(url, recursive, JarDirectories.DEFAULT_JAR_DIRECTORY_TYPE);
   }
 
   public void addJarDirectory(@NotNull final VirtualFile file, final boolean recursive) {
-    addJarDirectory(file, recursive, DEFAULT_JAR_DIRECTORY_TYPE);
+    addJarDirectory(file, recursive, JarDirectories.DEFAULT_JAR_DIRECTORY_TYPE);
   }
 
   public void addJarDirectory(@NotNull final String url, final boolean recursive, @NotNull OrderRootType rootType) {
@@ -448,7 +408,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public boolean isJarDirectory(@NotNull final String url) {
-    return isJarDirectory(url, DEFAULT_JAR_DIRECTORY_TYPE);
+    return isJarDirectory(url, JarDirectories.DEFAULT_JAR_DIRECTORY_TYPE);
   }
 
   public boolean isJarDirectory(@NotNull final String url, @NotNull final OrderRootType rootType) {
