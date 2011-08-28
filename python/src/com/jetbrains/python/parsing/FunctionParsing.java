@@ -173,11 +173,15 @@ public class FunctionParsing extends Parsing {
       }
     }
 
-    if (myBuilder.getTokenType() == endToken) {
+    if (myBuilder.getTokenType() == endToken && endToken == PyTokenTypes.RPAR) {
       myBuilder.advanceLexer();
     }
 
     parameterList.done(PyElementTypes.PARAMETER_LIST);
+
+    if (myBuilder.getTokenType() == endToken && endToken == PyTokenTypes.COLON) {
+      myBuilder.advanceLexer();
+    }
   }
 
   private void parseParameterSubList() {

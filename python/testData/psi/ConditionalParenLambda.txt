@@ -25,7 +25,7 @@ PyFile:ConditionalParenLambda.py
             PyParameterList
               PyNamedParameter('x')
                 PsiElement(Py:IDENTIFIER)('x')
-              PsiElement(Py:COLON)(':')
+            PsiElement(Py:COLON)(':')
             PsiWhiteSpace(' ')
             PyConditionalExpression
               PyReferenceExpression: x

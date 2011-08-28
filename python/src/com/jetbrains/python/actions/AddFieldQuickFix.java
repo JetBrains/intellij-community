@@ -45,7 +45,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
   }
 
   @Nullable
-  public static PsiElement appendToInit(PyFunction init, Function<String, PyStatement> callback) {
+  public static PsiElement appendToMethod(PyFunction init, Function<String, PyStatement> callback) {
     // add this field as the last stmt of the constructor
     final PyStatementList stmt_list = init.getStatementList();
     PyStatement[] stmts = stmt_list.getStatements(); // NOTE: rather wasteful, consider iterable stmt list
@@ -93,7 +93,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (cls != null && item_name != null) {
       PyFunction init = cls.findMethodByName(PyNames.INIT, false);
       if (init != null) {
-        return appendToInit(init, callback);
+        return appendToMethod(init, callback);
       }
       else { // no init! boldly copy ancestor's.
         for (PyClass ancestor : cls.iterateAncestorClasses()) {
@@ -105,7 +105,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
           return null;
         }
 
-        appendToInit(new_init, callback);
+        appendToMethod(new_init, callback);
 
         PsiElement add_anchor = null;
         PyFunction[] meths = cls.getMethods();

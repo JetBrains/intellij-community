@@ -2,7 +2,7 @@ package com.jetbrains.python.refactoring;
 
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.refactoring.introduce.constant.ConstantIntroduceHandler;
+import com.jetbrains.python.refactoring.introduce.constant.PyIntroduceConstantHandler;
 
 /**
  * @author yole
@@ -32,7 +32,7 @@ public class PyIntroduceConstantTest extends PyLightFixtureTestCase {
 
   private void doTest() {
     myFixture.configureByFile("/refactoring/introduceConstant/" + getTestName(true) + ".py");
-    ConstantIntroduceHandler handler = new ConstantIntroduceHandler();
+    PyIntroduceConstantHandler handler = new PyIntroduceConstantHandler();
     handler.performAction(myFixture.getProject(),  myFixture.getEditor(), myFixture.getFile(), "a", true, false, false);
     myFixture.checkResultByFile("/refactoring/introduceConstant/" + getTestName(true) + ".after.py");
   }

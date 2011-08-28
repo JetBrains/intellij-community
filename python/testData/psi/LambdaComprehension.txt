@@ -16,7 +16,8 @@ PyFile:LambdaComprehension.py
         PyLambdaExpression
           PsiElement(Py:LAMBDA_KEYWORD)('lambda')
           PyParameterList
-            PsiElement(Py:COLON)(':')
+            <empty list>
+          PsiElement(Py:COLON)(':')
           PsiWhiteSpace(' ')
           PyReferenceExpression: True
             PsiElement(Py:IDENTIFIER)('True')
@@ -25,7 +26,8 @@ PyFile:LambdaComprehension.py
         PyLambdaExpression
           PsiElement(Py:LAMBDA_KEYWORD)('lambda')
           PyParameterList
-            PsiElement(Py:COLON)(':')
+            <empty list>
+          PsiElement(Py:COLON)(':')
           PsiWhiteSpace(' ')
           PyReferenceExpression: False
             PsiElement(Py:IDENTIFIER)('False')

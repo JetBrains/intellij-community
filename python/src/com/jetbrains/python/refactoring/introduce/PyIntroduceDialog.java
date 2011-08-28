@@ -42,26 +42,22 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
   private final String myHelpId;
 
   public PyIntroduceDialog(@NotNull final Project project,
-                           @NotNull PyExpression expression,
                            @NotNull final String caption,
                            @NotNull final IntroduceValidator validator,
-                           final int occurrencesCount,
-                           final Collection<String> possibleNames,
                            final String helpId,
-                           boolean hasConstructor,
-                           boolean isTestClass) {
+                           final IntroduceOperation operation) {
     super(project, true);
-    myOccurrencesCount = occurrencesCount;
+    myOccurrencesCount = operation.getOccurrences().size();
     myValidator = validator;
     myProject = project;
-    myExpression = expression;
+    myExpression = operation.getInitializer();
     myHelpId = helpId;
-    setUpNameComboBox(possibleNames);
+    setUpNameComboBox(operation.getSuggestedNames());
 
     setModal(true);
     setTitle(caption);
     init();
-    setupDialog(hasConstructor, isTestClass);
+    setupDialog(operation.hasConstructor(), operation.isTestClass());
     updateControls();
   }
 

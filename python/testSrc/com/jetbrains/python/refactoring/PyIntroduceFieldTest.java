@@ -2,7 +2,8 @@ package com.jetbrains.python.refactoring;
 
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
-import com.jetbrains.python.refactoring.introduce.field.FieldIntroduceHandler;
+import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
+import com.jetbrains.python.refactoring.introduce.field.PyIntroduceFieldHandler;
 
 /**
  * @author yole
@@ -22,8 +23,10 @@ public class PyIntroduceFieldTest extends PyLightFixtureTestCase {
 
   private void doTest(IntroduceHandler.InitPlace initPlace) {
     myFixture.configureByFile("/refactoring/introduceField/" + getTestName(true) + ".py");
-    FieldIntroduceHandler handler = new FieldIntroduceHandler();
-    handler.performAction(myFixture.getProject(),  myFixture.getEditor(), myFixture.getFile(), "a", initPlace, true, false, false);
+    PyIntroduceFieldHandler handler = new PyIntroduceFieldHandler();
+    final IntroduceOperation introduceOperation = new IntroduceOperation(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), "a", true, false, false);
+    introduceOperation.setInitPlace(initPlace);
+    handler.performAction(introduceOperation);
     myFixture.checkResultByFile("/refactoring/introduceField/" + getTestName(true) + ".after.py");
   }
 }
