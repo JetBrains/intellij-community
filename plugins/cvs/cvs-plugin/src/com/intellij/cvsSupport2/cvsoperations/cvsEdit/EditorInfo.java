@@ -107,7 +107,7 @@ public class EditorInfo {
 
   public String getFilePath() { return myFilePath; }
 
-  private static Date parse(String s) {
+  public static Date parse(String s) {
     try {
       return DATE_FORMAT.parse(s);
     }
