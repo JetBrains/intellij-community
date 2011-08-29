@@ -30,4 +30,7 @@ public interface PyReferenceExpression extends PyQualifiedExpression, PyReferenc
 
   @NotNull
   PsiPolyVariantReference getReference();
+
+  @NotNull
+  PsiPolyVariantReference getReference(PyResolveContext resolveContext);
 }
