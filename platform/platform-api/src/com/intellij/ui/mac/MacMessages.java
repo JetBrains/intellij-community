@@ -44,8 +44,8 @@ public abstract class MacMessages {
    * delegate. Subsequent buttons are identified as NSAlertThirdButtonReturn +n, where n is an integer
    * 
    * By default, the first button has a key equivalent of Return, 
-   * any button with a title of “Cancel” has a key equivalent of Escape, 
-   * and any button with the title “Don’t Save” has a key equivalent of Command-D (but only if it is not the first button).
+   * any button with a title of "Cancel" has a key equivalent of Escape,
+   * and any button with the title "Don't Save" has a key equivalent of Command-D (but only if it is not the first button).
    * 
    * http://developer.apple.com/library/mac/#documentation/Cocoa/Reference/ApplicationKit/Classes/NSAlert_Class/Reference/Reference.html
    * 
