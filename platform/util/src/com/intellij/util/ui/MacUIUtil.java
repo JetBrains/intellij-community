@@ -33,7 +33,7 @@ public class MacUIUtil {
 
   public static final boolean USE_QUARTZ = "true".equals(System.getProperty("apple.awt.graphics.UseQuartz"));
   public static final String MAC_FILL_BORDER = "MAC_FILL_BORDER";
-  public static final Cursor INVERTED_TEXT_CURSOR = createInvertedTextCursor();
+  public static final Cursor INVERTED_TEXT_CURSOR = null;//createInvertedTextCursor();
 
   private MacUIUtil() {
   }
