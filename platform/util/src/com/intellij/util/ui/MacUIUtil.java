@@ -33,7 +33,7 @@ public class MacUIUtil {
 
   public static final boolean USE_QUARTZ = "true".equals(System.getProperty("apple.awt.graphics.UseQuartz"));
   public static final String MAC_FILL_BORDER = "MAC_FILL_BORDER";
-  public static final Cursor INVERTED_TEXT_CURSOR = null;//createInvertedTextCursor();
+  private static Cursor INVERTED_TEXT_CURSOR;
 
   private MacUIUtil() {
   }
@@ -252,9 +252,12 @@ public class MacUIUtil {
     }
   }
 
-  private static Cursor createInvertedTextCursor() {
-    final Toolkit toolkit = Toolkit.getDefaultToolkit();
-    Image cursorImage = toolkit.createImage(MacUIUtil.class.getClassLoader().getResource("/mac/text.gif"));
-    return toolkit.createCustomCursor(cursorImage, new Point(0, 0), "InvertedTextCursor");
+  public static Cursor getInvertedTextCursor() {
+    if (INVERTED_TEXT_CURSOR == null) {
+      final Toolkit toolkit = Toolkit.getDefaultToolkit();
+      Image cursorImage = toolkit.createImage(MacUIUtil.class.getClassLoader().getResource("/mac/text.gif"));
+      INVERTED_TEXT_CURSOR = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "InvertedTextCursor");
+    }
+    return INVERTED_TEXT_CURSOR;
   }
 }
