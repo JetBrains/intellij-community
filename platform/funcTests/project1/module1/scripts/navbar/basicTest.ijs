@@ -1,11 +1,6 @@
-%include ../include/project1Init.ijs
-
 %action GotoClass
 PsiManager\n
 %%call checkFocus(editorTab=PsiManager.java)
-
-%toggle on ViewNavigationBar
-%call checkFocus(editorTab=PsiManager.java)
 
 %action ShowNavBar
 %call checkFocus(navBar=module1>src>com>intellij>testProject>idea>[PsiManager])

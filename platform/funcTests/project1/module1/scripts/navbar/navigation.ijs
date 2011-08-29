@@ -1,5 +1,9 @@
+%toggle on ViewNavigationBar
 %include ../include/project1Init.ijs
+%include basicTest.ijs
 
-%action ViewNavigationBar
-%action GotoClass
-PsiManager\n
+
+%toggle off ViewNavigationBar
+%include ../include/project1Init.ijs
+%include basicTest.ijs
+

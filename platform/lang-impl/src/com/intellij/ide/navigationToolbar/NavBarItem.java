@@ -124,7 +124,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
     return isPopupElement || (focusOwner == myPanel && !myPanel.isNodePopupShowing());
   }
 
-  private boolean isSelected() {
+  public boolean isSelected() {
     final NavBarModel model = myPanel.getModel();
     return isPopupElement ? myPanel.isSelectedInPopup(myObject) : model.getSelectedIndex() == myIndex;
   }
