@@ -52,6 +52,9 @@ public class PyCallingNonCallableInspection extends PyInspection {
         PyType calleeType = myTypeEvalContext.getType(callee);
         if (calleeType instanceof PyClassType) {
           PyClassType classType = (PyClassType) calleeType;
+          if (classType.isDefinition()) {
+            return;
+          }
           PyClass cls = classType.getPyClass();
           if (isMethodType(node, classType)) {
             return;

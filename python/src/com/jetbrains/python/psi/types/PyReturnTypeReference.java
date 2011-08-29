@@ -28,4 +28,21 @@ public class PyReturnTypeReference extends PyTypeReferenceImpl {
     PyType type = myCallable.getReturnType(context, null);
     return type != null && type.isBuiltin(context);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PyReturnTypeReference that = (PyReturnTypeReference)o;
+
+    if (myCallable != null ? !myCallable.equals(that.myCallable) : that.myCallable != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myCallable != null ? myCallable.hashCode() : 0;
+  }
 }
