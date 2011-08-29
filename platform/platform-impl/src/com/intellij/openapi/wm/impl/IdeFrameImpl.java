@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
@@ -44,10 +45,7 @@ import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.status.EncodingPanel;
-import com.intellij.openapi.wm.impl.status.InsertOverwritePanel;
-import com.intellij.openapi.wm.impl.status.PositionPanel;
-import com.intellij.openapi.wm.impl.status.ToggleReadOnlyAttributePanel;
+import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FocusTrackback;
@@ -334,10 +332,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     final StatusBar statusBar = getStatusBar();
 
     final IdeNotificationArea notificationArea = new IdeNotificationArea();
-    statusBar.addWidget(notificationArea, "before Memory");
+    statusBar.addWidget(notificationArea, "before " + MemoryUsagePanel.WIDGET_ID);
 
     final PositionPanel positionPanel = new PositionPanel(project);
-    statusBar.addWidget(positionPanel, "before FatalError");
+    statusBar.addWidget(positionPanel, "before " + IdeMessagePanel.FATAL_ERROR);
 
     final EncodingPanel encodingPanel = new EncodingPanel(project);
     statusBar.addWidget(encodingPanel, "after Position");

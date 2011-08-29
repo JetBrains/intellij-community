@@ -43,6 +43,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   private static final Color ourColorUsed2 = new Color(166, 181, 230);
 
   private static final int HEIGHT = 16;
+  public static final String WIDGET_ID = "Memory";
 
   private long myLastTotal = -1;
   private long myLastUsed = -1;
@@ -80,7 +81,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
   @NotNull
   public String ID() {
-    return "Memory";
+    return WIDGET_ID;
   }
 
   public void setShowing(final boolean showing) {
