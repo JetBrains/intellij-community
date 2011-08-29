@@ -191,11 +191,13 @@ public class DualView extends JPanel {
     }
   }
 
-  private static void copySelection(SelectionProvider from, SelectionProvider to) {
+  private void copySelection(SelectionProvider from, SelectionProvider to) {
     to.clearSelection();
-    final List selection = from.getSelection();
-    for (Object object : selection) {
-      to.addSelection(object);
+
+    Collection selection = from.getSelection();
+
+    for (Iterator each = selection.iterator(); each.hasNext();) {
+      to.addSelection(each.next());
     }
   }
 
@@ -222,7 +224,8 @@ public class DualView extends JPanel {
 
     ArrayList<ColumnInfo> shownColumns = new ArrayList<ColumnInfo>();
 
-    for (DualViewColumnInfo column : columns) {
+    for (int i = 0; i < columns.length; i++) {
+      DualViewColumnInfo column = columns[i];
       if (column.shouldBeShownIsTheTable()) shownColumns.add(column);
     }
 
@@ -295,7 +298,13 @@ public class DualView extends JPanel {
   }
 
   public List getSelection() {
-    return ((SelectionProvider)getVisibleTable()).getSelection();
+    ArrayList result = new ArrayList();
+    SelectionProvider visibleTable = (SelectionProvider)getVisibleTable();
+    Collection selection = visibleTable.getSelection();
+    for (Iterator each = selection.iterator(); each.hasNext();) {
+      result.add((Object)each.next());
+    }
+    return result;
   }
 
   private JTable getVisibleTable() {
