@@ -54,6 +54,11 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.UsageInfoToUsageConverter;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -137,6 +142,7 @@ public abstract class ChooseByNameBase {
 
   private boolean myClosedByShiftEnter = false;
   protected final int myInitialIndex;
+  private String myFindUsagesTitle;
 
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
@@ -214,6 +220,10 @@ public abstract class ChooseByNameBase {
       throw new IllegalStateException("Tool area is modifiable only before invoke()");
     }
     myToolArea = toolArea;
+  }
+
+  public void setFindUsagesTitle(String findUsagesTitle) {
+    myFindUsagesTitle = findUsagesTitle;
   }
 
   public void invoke(final ChooseByNamePopupComponent.Callback callback,
@@ -375,8 +385,27 @@ public abstract class ChooseByNameBase {
       hBox.add(myCardContainer);
     }
 
+
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new ShowFindUsagesAction(){
+      @Override
+      public PsiElement[] getElements() {
+        if (myListModel == null) return PsiElement.EMPTY_ARRAY;
+        final Object[] objects = myListModel.toArray();
+        final List<PsiElement> psiElements = new ArrayList<PsiElement>();
+        for (Object object : objects) {
+          if (object instanceof PsiElement) {
+            psiElements.add((PsiElement)object);
+          }
+        }
+        return psiElements.toArray(new PsiElement[psiElements.size()]);
+      }
+    });
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    hBox.add(actionToolbar.getComponent());
+
     if (myToolArea != null) {
-      hBox.add(Box.createHorizontalStrut(5));
       hBox.add(myToolArea);
     }
     hBox.add(Box.createHorizontalStrut(5));
@@ -1554,5 +1583,45 @@ public abstract class ChooseByNameBase {
       super(text, RIGHT);
       setForeground(Color.darkGray);
     }
+  }
+
+  private static final String ACTION_NAME = "Show in usage view";
+  private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
+
+  private abstract class ShowFindUsagesAction extends AnAction {
+
+    public ShowFindUsagesAction() {
+      super(ACTION_NAME, ACTION_NAME, FIND_ICON);
+    }
+
+
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      final UsageViewPresentation presentation = new UsageViewPresentation();
+      final String pattern = myFindUsagesTitle + " \'" + myTextField.getText().trim() + "\'";
+      presentation.setCodeUsagesString(pattern);
+      presentation.setTabName(pattern);
+      presentation.setTabText(pattern);
+      PsiElement[] elements = getElements();
+      final UsageInfo[] usages = new UsageInfo[elements.length];
+      for (int i = 0; i < elements.length; i++) {
+        usages[i] = new UsageInfo(elements[i]);
+      }
+      UsageViewManager.getInstance(myProject).showUsages(UsageTarget.EMPTY_ARRAY, UsageInfoToUsageConverter.convert(
+        new UsageInfoToUsageConverter.TargetElementsDescriptor(elements), usages), presentation);
+      hideHint();
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      if (myFindUsagesTitle == null) {
+        e.getPresentation().setVisible(false);
+        return;
+      }
+      final PsiElement[] elements = getElements();
+      e.getPresentation().setEnabled(elements != null && elements.length > 0);
+    }
+
+    public abstract PsiElement[] getElements();
   }
 }

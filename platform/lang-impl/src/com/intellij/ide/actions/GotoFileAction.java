@@ -81,7 +81,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
           }
         }, ModalityState.NON_MODAL);
       }
-    });
+    }, "Files matching pattern");
   }
 
   protected static class GotoFileFilter extends ChooseByNameFilter<FileType> {
