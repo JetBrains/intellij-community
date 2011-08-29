@@ -749,7 +749,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  public void _testSecondInvocationToFillCommonPrefix() throws Throwable {
+  public void testSecondInvocationToFillCommonPrefix() throws Throwable {
     configure()
     type('a');
     complete();
