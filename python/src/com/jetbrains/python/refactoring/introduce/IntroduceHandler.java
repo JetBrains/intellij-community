@@ -26,6 +26,7 @@ import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -130,7 +131,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
     final PyArgumentList argList = PsiTreeUtil.getParentOfType(expression, PyArgumentList.class);
     if (argList != null) {
-      final PyArgumentList.AnalysisResult result = argList.analyzeCall(TypeEvalContext.fast());
+      final PyArgumentList.AnalysisResult result = argList.analyzeCall(PyResolveContext.noImplicits());
       if (result.getMarkedCallee() != null && !result.isImplicitlyResolved()) {
         final PyNamedParameter namedParameter = result.getPlainMappedParams().get(expression);
         if (namedParameter != null) {

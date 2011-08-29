@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,10 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
       }
     }
     myTypeEvalContext = context;
+  }
+
+  protected PyResolveContext resolveWithoutImplicits() {
+    return PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
   }
 
   @Nullable protected ProblemsHolder getHolder() {

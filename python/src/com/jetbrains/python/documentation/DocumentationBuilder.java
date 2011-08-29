@@ -18,6 +18,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.RootVisitor;
@@ -201,7 +202,7 @@ class DocumentationBuilder {
     if (myElement instanceof PyReferenceExpression) {
       //prolog_cat.add(TagSmall.apply($("Assigned to ", element.getText(), BR)));
       prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", myElement.getText())).add(BR));
-      final QualifiedResolveResult resolveResult = ((PyReferenceExpression)myElement).followAssignmentsChain(TypeEvalContext.fast());
+      final QualifiedResolveResult resolveResult = ((PyReferenceExpression)myElement).followAssignmentsChain(PyResolveContext.noImplicits());
       return resolveResult.isImplicit() ? null : resolveResult.getElement();
     }
     // it may be a call to a standard wrapper

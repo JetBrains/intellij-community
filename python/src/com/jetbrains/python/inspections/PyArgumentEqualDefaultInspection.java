@@ -46,14 +46,14 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     @Override
     public void visitPyCallExpression(final PyCallExpression node){
       PyArgumentList list = node.getArgumentList();
-      PyCallExpression.PyMarkedCallee func = node.resolveCallee(myTypeEvalContext);
+      PyCallExpression.PyMarkedCallee func = node.resolveCallee(resolveWithoutImplicits());
       if ((func != null && func.isImplicitlyResolved()) || (list == null)) return;
       if (func != null) {
         // getattr's default attribute is a special case, see PY-3440
         final Callable callable = func.getCallable();
         if ("getattr".equals(callable.getName()) && PyBuiltinCache.getInstance(node).hasInBuiltins(callable)) return;
       }
-      PyArgumentList.AnalysisResult result = list.analyzeCall(myTypeEvalContext);
+      PyArgumentList.AnalysisResult result = list.analyzeCall(resolveWithoutImplicits());
       checkArguments(result, node.getArguments());
     }
 

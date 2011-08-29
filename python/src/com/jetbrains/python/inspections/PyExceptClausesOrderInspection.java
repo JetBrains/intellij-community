@@ -43,7 +43,7 @@ public class PyExceptClausesOrderInspection extends PyInspection {
         for (PyExceptPart exceptPart : exceptParts) {
           PyExpression exceptClass = exceptPart.getExceptClass();
           if (exceptClass instanceof PyReferenceExpression) {
-            PsiElement element = ((PyReferenceExpression) exceptClass).followAssignmentsChain(myTypeEvalContext).getElement();
+            PsiElement element = ((PyReferenceExpression) exceptClass).followAssignmentsChain(resolveWithoutImplicits()).getElement();
             if (element instanceof PyClass) {
               PyClass pyClass = (PyClass)element;
               if (exceptClasses.contains(pyClass)) {
