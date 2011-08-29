@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,6 +26,7 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,6 +61,9 @@ public class StandardVariableNamesInspection extends BaseInspection {
         s_boxingClasses.put("double", CommonClassNames.JAVA_LANG_DOUBLE);
         s_boxingClasses.put("char", CommonClassNames.JAVA_LANG_CHARACTER);
     }
+
+    @SuppressWarnings("PublicField")
+    public boolean ignoreParameterNameSameAsSuper = false;
 
     @Override
     @NotNull
@@ -99,11 +101,19 @@ public class StandardVariableNamesInspection extends BaseInspection {
     }
 
     @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "standard.variable.names.ignore.override.option"),
+                this, "ignoreParameterNameSameAsSuper");
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StandardVariableNamesVisitor();
     }
 
-    private static class StandardVariableNamesVisitor
+    private class StandardVariableNamesVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitVariable(@NotNull PsiVariable variable) {
@@ -129,7 +139,36 @@ public class StandardVariableNamesInspection extends BaseInspection {
                     }
                 }
             }
+            if (ignoreParameterNameSameAsSuper &&
+                    isVariableNamedSameAsSuper(variable)) {
+                return;
+            }
             registerVariableError(variable, variable);
+        }
+
+        private boolean isVariableNamedSameAsSuper(PsiVariable variable) {
+            if (!(variable instanceof PsiParameter)) {
+                return false;
+            }
+            final PsiParameter parameter = (PsiParameter) variable;
+            final PsiElement scope = parameter.getDeclarationScope();
+            if (!(scope instanceof PsiMethod)) {
+                return false;
+            }
+            final String variableName = variable.getName();
+            final PsiMethod method = (PsiMethod) scope;
+            final int index =
+                    method.getParameterList().getParameterIndex(parameter);
+            final PsiMethod[] superMethods = method.findSuperMethods();
+            for (PsiMethod superMethod : superMethods) {
+                final PsiParameter[] parameters =
+                        superMethod.getParameterList().getParameters();
+                final PsiParameter overriddenParameter = parameters[index];
+                if (variableName.equals(overriddenParameter.getName())) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
