@@ -320,12 +320,12 @@ public class VfsUtil {
   }
 
   @Nullable
-  public static VirtualFile findRelativeFile(@NotNull VirtualFile base, String ... path) {
+  public static VirtualFile findRelativeFile(@Nullable VirtualFile base, String ... path) {
     VirtualFile file = base;
 
     for (String pathElement : path) {
-      file = file.findChild(pathElement);
       if (file == null) return null;
+      file = file.findChild(pathElement);
     }
 
     return file;
