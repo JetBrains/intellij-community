@@ -95,14 +95,10 @@ public class PyMissingConstructorInspection extends PyInspection {
           PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
           if (qualifier != null) {
             String tmp = "";
-            PsiElement callingClass = null;
             if (qualifier instanceof PyCallExpression) {
               PyExpression innerCallee = ((PyCallExpression)qualifier).getCallee();
               if (innerCallee != null) {
                 tmp = innerCallee.getName();
-                PsiReference ref = innerCallee.getReference();
-                if (ref != null)
-                  callingClass = ref.resolve();
               }
               if (PyNames.SUPER.equals(tmp) && (PyNames.INIT.equals(callee.getName()))) {
                 PyExpression[] args = ((PyCallExpression)qualifier).getArguments();
@@ -119,18 +115,32 @@ public class PyMissingConstructorInspection extends PyInspection {
                   return true;
               }
             }
-            else {
-              PsiReference ref = qualifier.getReference();
-              if (ref != null)
-                callingClass = ref.resolve();
+            if (PyNames.INIT.equals(callee.getName())) {
+              return isSuperClassCall(cl, qualifier);
             }
-            for (PyClass s : cl.iterateAncestorClasses()) {
-              if (s.equals(callingClass)) {
-                if(PyNames.INIT.equals(callee.getName())){
-                  return true;
-                }
-              }
-            }
+          }
+        }
+        return false;
+      }
+
+      private static boolean isSuperClassCall(PyClass cl, PyExpression qualifier) {
+        PsiElement callingClass = null;
+        if (qualifier instanceof PyCallExpression) {
+          PyExpression innerCallee = ((PyCallExpression)qualifier).getCallee();
+          if (innerCallee != null) {
+            PsiReference ref = innerCallee.getReference();
+            if (ref != null)
+              callingClass = ref.resolve();
+          }
+        }
+        else {
+          PsiReference ref = qualifier.getReference();
+          if (ref != null)
+            callingClass = ref.resolve();
+        }
+        for (PyClass s : cl.iterateAncestorClasses()) {
+          if (s.equals(callingClass)) {
+            return true;
           }
         }
         return false;
