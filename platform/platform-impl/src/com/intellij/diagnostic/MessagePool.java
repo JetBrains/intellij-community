@@ -91,7 +91,6 @@ public class MessagePool {
               if (!message.isRead()) {
                 message.setRead(true);
               }
-              clearFatals();
               notifyListenersRead();
             }
           };
