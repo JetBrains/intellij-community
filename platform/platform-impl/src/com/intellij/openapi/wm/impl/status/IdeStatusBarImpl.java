@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.TaskInfo;
@@ -299,7 +300,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       if (!anchor.equals("__AUTODETECT__")) {
         final List<String> parts = StringUtil.split(anchor, " ");
         if (parts.size() < 2 || !myWidgetMap.keySet().contains(parts.get(1))) {
-          wid = "FatalError";
+          wid = IdeNotificationArea.WIDGET_ID;
           before = true;
         }
         else {
@@ -308,7 +309,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         }
       }
       else {
-        wid = "FatalError";
+        wid = IdeNotificationArea.WIDGET_ID;
         before = true;
       }
 
@@ -369,9 +370,15 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       final boolean prevIcon = p instanceof IconPresentationWrapper || p instanceof IconLikeCustomStatusBarWidget;
       final boolean nextIcon = n instanceof IconPresentationWrapper || n instanceof IconLikeCustomStatusBarWidget;
 
-      self.setBorder(prevIcon ? BorderFactory.createEmptyBorder(2, 2, 2, 2) : StatusBarWidget.WidgetBorder.INSTANCE);
-      if (nextIcon) n.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+      self.setBorder(!prevIcon || isNotificationIcon(self) ? StatusBarWidget.WidgetBorder.INSTANCE : BorderFactory.createEmptyBorder(2, 2, 2, 2));
+      if (nextIcon && !isNotificationIcon(n)) {
+        n.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+      }
     }
+  }
+
+  private static boolean isNotificationIcon(JComponent self) {
+    return self instanceof IconPresentationWrapper && ((IconPresentationWrapper)self).getPresentation() instanceof IdeNotificationArea;
   }
 
   public void setInfo(@Nullable final String s) {
@@ -734,6 +741,10 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
     public void beforeUpdate() {
       myIcon = myPresentation.getIcon();
+    }
+
+    private StatusBarWidget.IconPresentation getPresentation() {
+      return myPresentation;
     }
 
     @Override

@@ -331,11 +331,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
     final StatusBar statusBar = getStatusBar();
 
-    final IdeNotificationArea notificationArea = new IdeNotificationArea();
-    statusBar.addWidget(notificationArea, "before " + MemoryUsagePanel.WIDGET_ID);
-
     final PositionPanel positionPanel = new PositionPanel(project);
     statusBar.addWidget(positionPanel, "before " + IdeMessagePanel.FATAL_ERROR);
+
+    final IdeNotificationArea notificationArea = new IdeNotificationArea();
+    statusBar.addWidget(notificationArea, "before " + IdeMessagePanel.FATAL_ERROR);
 
     final EncodingPanel encodingPanel = new EncodingPanel(project);
     statusBar.addWidget(encodingPanel, "after Position");
