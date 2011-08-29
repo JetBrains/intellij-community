@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +30,20 @@ import java.util.Locale;
 public class Annotation {
   private final String myRevision;
   private String myUser;
-  private final Date myDate;
+  private Date myDate;
 
   @NonNls private static final String DATE_FORMAT_STRING = "dd-MMM-yy";
   private final static SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US));
   public static final String CONTENT_SEPARATOR = ": ";
 
   public static Annotation createOnMessage(String message) throws ParseException {
-    int firstWhiteSpace = message.indexOf(" ");
-    String revision = message.substring(0, firstWhiteSpace);
-    String tail = message.substring(firstWhiteSpace + 1);
-    int endOfDatePosition = tail.indexOf(CONTENT_SEPARATOR);
-    String date = tail.substring(endOfDatePosition - DATE_FORMAT_STRING.length() - 1, endOfDatePosition - 1);
-    String userWithLeftParantheses = tail.substring(0, endOfDatePosition - DATE_FORMAT_STRING.length() - 1 - 1).trim();
-    String user = userWithLeftParantheses.substring(1);
+    final int firstWhiteSpace = message.indexOf(" ");
+    final String revision = message.substring(0, firstWhiteSpace);
+    final String tail = message.substring(firstWhiteSpace + 1);
+    final int endOfDatePosition = tail.indexOf(CONTENT_SEPARATOR);
+    final String date = tail.substring(endOfDatePosition - DATE_FORMAT_STRING.length() - 1, endOfDatePosition - 1);
+    final String userWithLeftParentheses = tail.substring(0, endOfDatePosition - DATE_FORMAT_STRING.length() - 1 - 1).trim();
+    final String user = userWithLeftParentheses.substring(1);
     return new Annotation(revision, user, DATE_FORMAT.parse(date));
   }
 
@@ -66,12 +66,16 @@ public class Annotation {
   }
 
   public static String createMessageOn(String message) {
-    int index = message.indexOf(CONTENT_SEPARATOR);
+    final int index = message.indexOf(CONTENT_SEPARATOR);
     if (index < 0) return "";
     return message.substring(index + CONTENT_SEPARATOR.length(), message.length()).replaceAll("\r", "");
   }
 
   public void setUser(String user) {
     myUser = user;
+  }
+
+  public void setDate(Date date) {
+    myDate = date;
   }
 }
