@@ -35,6 +35,10 @@ public class PyCallingNonCallableTest extends PyLightFixtureTestCase {
     doTest();
   }
   
+  public void testClassMethodFirstParam() {
+    doTest();
+  }
+  
   private void doTest() {
     setLanguageLevel(LanguageLevel.PYTHON27);
     try {
