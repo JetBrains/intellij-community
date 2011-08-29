@@ -3536,7 +3536,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
       myEditorComponent.setCursor(SystemInfo.isMac && ColorUtil.isDark(getBackgroundColor()) ?
-                                  MacUIUtil.INVERTED_TEXT_CURSOR : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+                                  MacUIUtil.getInvertedTextCursor(): Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
     }
   }
 
