@@ -143,6 +143,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   @Override
+  public void entryWasRead() {
+  }
+
+  @Override
   protected Action[] createActions() {
     if (SystemInfo.isMac) {
       return new Action[]{getCancelAction(), myClearAction, myBlameAction};

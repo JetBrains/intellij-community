@@ -17,7 +17,6 @@ package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.LightColors;
@@ -158,6 +157,11 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     updateFatalErrorsIcon();
   }
 
+  @Override
+  public void entryWasRead() {
+    updateFatalErrorsIcon();
+  }
+
   private boolean isOtherModalWindowActive() {
     final Window window = getActiveModalWindow();
     if (window == null) return false;
@@ -193,7 +197,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     }
   }
 
-  private void updateFatalErrorsIcon() {
+  void updateFatalErrorsIcon() {
     final IdeFatalErrorsIcon.State state = computeState();
     myIdeFatal.setState(state);
 
