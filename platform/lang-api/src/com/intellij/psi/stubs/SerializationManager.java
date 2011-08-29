@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public abstract class SerializationManager {
+
   public static SerializationManager getInstance() {
     return ApplicationManager.getApplication().getComponent(SerializationManager.class);
   }
@@ -40,4 +41,6 @@ public abstract class SerializationManager {
   public abstract boolean isNameStorageCorrupted();
 
   public abstract void repairNameStorage();
+
+  public abstract void flushNameStorage();
 }
