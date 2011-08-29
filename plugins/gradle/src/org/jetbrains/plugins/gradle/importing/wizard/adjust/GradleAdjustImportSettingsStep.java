@@ -236,6 +236,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       myTree.expandPath(new TreePath(librariesNode.getPath()));
     }
     
+    myTree.expandPath(new TreePath(root.getPath()));
     getBuilder().setModuleMappings(moduleMappings);
   }
 

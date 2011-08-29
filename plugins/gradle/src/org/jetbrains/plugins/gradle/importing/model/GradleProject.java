@@ -4,10 +4,13 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Not thread-safe.
@@ -21,6 +24,7 @@ public class GradleProject extends AbstractNamedGradleEntity {
 
   private static final LanguageLevel  DEFAULT_LANGUAGE_LEVEL = LanguageLevel.JDK_1_6;
   private static final JavaSdkVersion DEFAULT_JDK_VERSION    = JavaSdkVersion.JDK_1_6;
+  private static final Pattern        JDK_VERSION_PATTERN    = Pattern.compile(".*1\\.(\\d+).*");
 
   private final Set<GradleModule>  myModules   = new HashSet<GradleModule>();
   private final Set<GradleLibrary> myLibraries = new HashSet<GradleLibrary>();
@@ -68,7 +72,44 @@ public class GradleProject extends AbstractNamedGradleEntity {
     if (jdk == null) {
       return;
     }
-    // TODO den implement
+    try {
+      int version = Integer.parseInt(jdk.trim());
+      if (applyJdkVersion(version)) {
+        return;
+      } 
+    }
+    catch (NumberFormatException e) {
+      // Ignore.
+    }
+    
+    Matcher matcher = JDK_VERSION_PATTERN.matcher(jdk);
+    if (!matcher.matches()) {
+      return;
+    }
+    String versionAsString = matcher.group(1);
+    try {
+      applyJdkVersion(Integer.parseInt(versionAsString));
+    }
+    catch (NumberFormatException e) {
+      // Ignore.
+    }
+  }
+  
+  public boolean applyJdkVersion(int version) {
+    if (version < 0 || version >= JavaSdkVersion.values().length) {
+      GradleLog.LOG.warn(String.format(
+        "Unsupported jdk version detected (%d). Expected to get number from range [0; %d]", version, JavaSdkVersion.values().length
+      ));
+      return false;
+    }
+    for (JavaSdkVersion sdkVersion : JavaSdkVersion.values()) {
+      if (sdkVersion.ordinal() == version) {
+        myJdkVersion = sdkVersion;
+        return true;
+      }
+    }
+    assert false : version + ", max value: " + JavaSdkVersion.values().length;
+    return false;
   }
 
   @NotNull

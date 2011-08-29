@@ -94,7 +94,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       if (moduleName == null) {
         throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
       }
-      GradleModule intellijModule = new GradleModule(moduleName);
+      GradleModule intellijModule = new GradleModule(moduleName, intellijProject.getProjectFileDirectoryPath());
       Pair<GradleModule, IdeaModule> previouslyParsedModule = result.get(moduleName);
       if (previouslyParsedModule != null) {
         throw new IllegalStateException(
