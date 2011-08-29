@@ -21,8 +21,10 @@ import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +43,17 @@ public class FileTypeAssocTable<T> {
   private FileTypeAssocTable(Map<String, T> extensionMappings, Map<String, T> exactFileNameMappings, Map<String, T> exactFileNameAnyCaseMappings, List<Pair<FileNameMatcher, T>> matchingMappings) {
     myExtensionMappings = new THashMap<String, T>(extensionMappings);
     myExactFileNameMappings = new THashMap<String, T>(exactFileNameMappings);
-    myExactFileNameAnyCaseMappings = new THashMap<String, T>(exactFileNameAnyCaseMappings);
+    myExactFileNameAnyCaseMappings = new THashMap<String, T>(exactFileNameAnyCaseMappings, new TObjectHashingStrategy<String>() {
+      @Override
+      public int computeHashCode(String object) {
+        return StringUtil.stringHashCodeInsensitive(object);
+      }
+
+      @Override
+      public boolean equals(String o1, String o2) {
+        return o1.equalsIgnoreCase(o2);
+      }
+    });
     myMatchingMappings = new ArrayList<Pair<FileNameMatcher, T>>(matchingMappings);
   }
 
@@ -69,7 +81,7 @@ public class FileTypeAssocTable<T> {
       final ExactFileNameMatcher exactFileNameMatcher = (ExactFileNameMatcher)matcher;
 
       if (exactFileNameMatcher.isIgnoreCase()) {
-        myExactFileNameAnyCaseMappings.put(caseInsensitiveNameKey(exactFileNameMatcher.getFileName()), type);
+        myExactFileNameAnyCaseMappings.put(exactFileNameMatcher.getFileName(), type);
       } else {
         myExactFileNameMappings.put(exactFileNameMatcher.getFileName(), type);
       }
@@ -94,7 +106,6 @@ public class FileTypeAssocTable<T> {
       String fileName = exactFileNameMatcher.getFileName();
 
       if (exactFileNameMatcher.isIgnoreCase()) {
-        fileName = caseInsensitiveNameKey(fileName);
         mapToUse = myExactFileNameAnyCaseMappings;
       } else {
         mapToUse = myExactFileNameMappings;
@@ -115,10 +126,6 @@ public class FileTypeAssocTable<T> {
     }
 
     return false;
-  }
-
-  private static String caseInsensitiveNameKey(String fileName) {
-    return fileName.toLowerCase(Locale.ENGLISH);
   }
 
   public boolean removeAllAssociations(T type) {
@@ -154,8 +161,11 @@ public class FileTypeAssocTable<T> {
   public T findAssociatedFileType(@NotNull @NonNls String fileName) {
     T t = myExactFileNameMappings.get(fileName);
     if (t != null) return t;
-    t = myExactFileNameAnyCaseMappings.get(caseInsensitiveNameKey(fileName));
-    if (t != null) return t;
+
+    if (myExactFileNameAnyCaseMappings.size() != 0) {   // even hash lookup with case insensitive hasher is costly for isIgnored checks during compile
+      t = myExactFileNameAnyCaseMappings.get(fileName);
+      if (t != null) return t;
+    }
 
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myMatchingMappings.size(); i++) {
@@ -176,7 +186,7 @@ public class FileTypeAssocTable<T> {
       final ExactFileNameMatcher exactFileNameMatcher = (ExactFileNameMatcher)matcher;
 
       if (exactFileNameMatcher.isIgnoreCase()) {
-        return myExactFileNameAnyCaseMappings.get(caseInsensitiveNameKey(exactFileNameMatcher.getFileName()));
+        return myExactFileNameAnyCaseMappings.get(exactFileNameMatcher.getFileName());
       } else {
         return myExactFileNameMappings.get(exactFileNameMatcher.getFileName());
       }
