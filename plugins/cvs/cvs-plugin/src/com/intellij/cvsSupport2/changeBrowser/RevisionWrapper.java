@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.changeBrowser;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.log.Revision;
@@ -25,13 +26,14 @@ import java.io.IOException;
 import java.util.Date;
 
 class RevisionWrapper implements Comparable<RevisionWrapper> {
+  @NonNls private static final String ATTIC_SUFFIX = "/Attic";
   private final String myFile;
   private final Revision myRevision;
   private final String myBranch;
   private final long myTime;
 
   public RevisionWrapper(final String file, @NotNull final Revision revision, @Nullable String branch) {
-    myFile = file;
+    myFile = stripAttic(file);
     myRevision = revision;
     myTime = revision.getDate().getTime();
     myBranch = branch;
@@ -77,11 +79,22 @@ class RevisionWrapper implements Comparable<RevisionWrapper> {
   }
 
   public int hashCode() {
-    int result;
-    result = myFile.hashCode();
+    int result = myFile.hashCode();
     result = 31 * result + myRevision.getNumber().hashCode();
     result = 31 * result + (int)(myTime ^ (myTime >>> 32));
     return result;
+  }
+
+  private static String stripAttic(final String file) {
+    final int pos = file.lastIndexOf('/');
+    if (pos < 0) {
+      return file;
+    }
+    final String path = file.substring(0, pos);
+    if (!path.endsWith(ATTIC_SUFFIX)) {
+      return file;
+    }
+    return path.substring(0, path.length()-6) + file.substring(pos);
   }
 
   public void writeToStream(final DataOutput stream) throws IOException {
@@ -98,12 +111,11 @@ class RevisionWrapper implements Comparable<RevisionWrapper> {
     stream.writeUTF(myBranch == null ? "" : myBranch);
   }
 
-
   public static RevisionWrapper readFromStream(final DataInput stream) throws IOException {
-    String file = stream.readUTF();
-    String number = stream.readUTF();
-    Revision revision = new Revision(number);
-    long time = stream.readLong();
+    final String file = stream.readUTF();
+    final String number = stream.readUTF();
+    final Revision revision = new Revision(number);
+    final long time = stream.readLong();
     revision.setDate(new Date(time));
     revision.setAuthor(stream.readUTF());
     revision.setState(stream.readUTF());
@@ -116,7 +128,7 @@ class RevisionWrapper implements Comparable<RevisionWrapper> {
     if (branches.length() > 0) {
       revision.setBranches(branches);
     }
-    String branch = stream.readUTF();
+    final String branch = stream.readUTF();
     return new RevisionWrapper(file, revision, branch.length() > 0 ? branch : null);
   }
 }

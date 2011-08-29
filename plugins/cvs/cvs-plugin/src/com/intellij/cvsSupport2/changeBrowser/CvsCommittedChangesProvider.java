@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -45,9 +46,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
+import org.netbeans.lib.cvsclient.command.log.Revision;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -79,7 +82,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return myZipper;
   }
 
-  private class MyZipper extends VcsCommittedListsZipperAdapter {
+  private static class MyZipper extends VcsCommittedListsZipperAdapter {
     private MyZipper() {
       super(new GroupCreator() {
         public Object createKey(final RepositoryLocation location) {
@@ -134,34 +137,28 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   @Nullable
   @Override
   public Pair<CvsChangeList, FilePath> getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
-    // todo implement in proper way
-    final FilePathImpl filePath = new FilePathImpl(file);
-    CvsRepositoryLocation cvsLocation = getLocationFor(filePath);
+    final File ioFile = new File(file.getPath());
+    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(ioFile);
+    final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(filePath);
+    final CvsRepositoryLocation cvsLocation = getLocationFor(filePath);
     if (cvsLocation == null) return null;
-    final String module = cvsLocation.getModuleName();
+    final String rootModule = CvsUtil.getModuleName(vcsRoot);
     final CvsEnvironment connectionSettings = cvsLocation.getEnvironment();
     if (connectionSettings.isOffline()) {
       return null;
     }
-    final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, cvsLocation.getRootFile());
+    final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(rootModule, connectionSettings, myProject, vcsRoot);
 
-    final Calendar calendar = Calendar.getInstance();
-    calendar.set(1970, 2, 2);
-    Date dateFrom = calendar.getTime();
     final CvsChangeList[] result = new CvsChangeList[1];
-    final CvsResult executionResult = runRLogOperation(connectionSettings, module, dateFrom, null, new Consumer<LogInformationWrapper>() {
+    final LoadHistoryOperation operation = new LoadHistoryOperation(connectionSettings, new Consumer<LogInformationWrapper>() {
       public void consume(LogInformationWrapper wrapper) {
-        if (result[0] != null) return;
-        final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
-        if (wrappers != null) {
-          for (RevisionWrapper revisionWrapper : wrappers) {
-            if (Comparing.equal(revisionWrapper.getRevision().getNumber(), number.asString())) {
-              result[0] = builder.addRevision(revisionWrapper);
-            }
-          }
-        }
+        final List<Revision> revisions = wrapper.getRevisions();
+        if (revisions.isEmpty()) return;
+        final RevisionWrapper revision = new RevisionWrapper(wrapper.getFile(), revisions.get(0), null);
+        result[0] = builder.addRevision(revision);
       }
-    });
+    }, cvsLocation.getModuleName(), number.asString());
+    final CvsResult executionResult = runRLogOperation(operation);
 
     if (executionResult.isCanceled()) {
       throw new ProcessCanceledException();
@@ -169,12 +166,43 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     else if (! executionResult.hasNoErrors()) {
       throw executionResult.composeError();
     }
+    if (result[0] == null) {
+      return null;
+    }
+    final Date commitDate = result[0].getCommitDate();
+    final CvsEnvironment rootConnectionSettings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(vcsRoot);
+    final long t = commitDate.getTime();
+    final Date dateFrom = new Date(t - CvsChangeList.SUITABLE_DIFF);
+    final Date dateTo = new Date(t + CvsChangeList.SUITABLE_DIFF);
+
+    final LoadHistoryOperation operation2 =
+      new LoadHistoryOperation(rootConnectionSettings, rootModule, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
+        @Override
+        public void consume(LogInformationWrapper wrapper) {
+          final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
+          if (wrappers != null) {
+            for (RevisionWrapper revisionWrapper : wrappers) {
+              if (result[0].containsFileRevision(revisionWrapper)) {
+                // otherwise a new change list will be created because the old change list already contains this file.
+                continue;
+              }
+              builder.addRevision(revisionWrapper);
+            }
+          }
+        }
+      });
+    final CvsResult cvsResult = runRLogOperation(operation2);
+    if (!cvsResult.hasNoErrors()) {
+      throw cvsResult.composeError();
+    }
     return new Pair<CvsChangeList, FilePath>(result[0], filePath);
   }
 
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) throws VcsException {
-    CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
-    return loadCommittedChanges(settings, cvsLocation.getModuleName(), cvsLocation.getEnvironment(), cvsLocation.getRootFile());
+    final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+    final String module = cvsLocation.getModuleName();
+    final VirtualFile rootFile = cvsLocation.getRootFile();
+    return loadCommittedChanges(settings, module, cvsLocation.getEnvironment(), rootFile);
   }
 
   public void loadCommittedChanges(ChangeBrowserSettings settings,
@@ -183,14 +211,14 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
                                    final AsynchConsumer<CommittedChangeList> consumer)
     throws VcsException {
     try {
-      CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+      final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
       final String module = cvsLocation.getModuleName();
       final CvsEnvironment connectionSettings = cvsLocation.getEnvironment();
       if (connectionSettings.isOffline()) {
         return;
       }
       final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, cvsLocation.getRootFile());
-      Date dateTo = settings.getDateBeforeFilter();
+      final Date dateTo = settings.getDateBeforeFilter();
       Date dateFrom = settings.getDateAfterFilter();
       if (dateFrom == null) {
         final Calendar calendar = Calendar.getInstance();
@@ -199,21 +227,23 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       }
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
       final Set<CvsChangeList> controlSet = new HashSet<CvsChangeList>();
-      final CvsResult executionResult = runRLogOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
-        public void consume(LogInformationWrapper wrapper) {
-          final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
-          if (wrappers != null) {
-            for (RevisionWrapper revisionWrapper : wrappers) {
-              final CvsChangeList changeList = builder.addRevision(revisionWrapper);
-              if (controlSet.contains(changeList)) continue;
-              controlSet.add(changeList);
-              if (filter.accepts(changeList)) {
-                consumer.consume(changeList);
+      final LoadHistoryOperation operation =
+        new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
+          public void consume(LogInformationWrapper wrapper) {
+            final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
+            if (wrappers != null) {
+              for (RevisionWrapper revisionWrapper : wrappers) {
+                final CvsChangeList changeList = builder.addRevision(revisionWrapper);
+                if (controlSet.contains(changeList)) continue;
+                controlSet.add(changeList);
+                if (filter.accepts(changeList)) {
+                  consumer.consume(changeList);
+                }
               }
             }
           }
-        }
-      });
+        });
+      final CvsResult executionResult = runRLogOperation(operation);
 
       if (executionResult.isCanceled()) {
         throw new ProcessCanceledException();
@@ -243,7 +273,14 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       dateFrom = calendar.getTime();
     }
     final List<LogInformationWrapper> log = new ArrayList<LogInformationWrapper>();
-    final CvsResult executionResult = runRLogOperation(connectionSettings, module, dateFrom, dateTo, log);
+    final LoadHistoryOperation operation =
+      new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
+        @Override
+        public void consume(LogInformationWrapper logInformationWrapper) {
+          log.add(logInformationWrapper);
+        }
+      });
+    final CvsResult executionResult = runRLogOperation(operation);
 
     if (executionResult.isCanceled()) {
       throw new ProcessCanceledException();
@@ -259,69 +296,26 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
   }
 
-  private CvsResult runRLogOperation(final CvsEnvironment settings,
-                                     final String module,
-                                     final Date dateFrom,
-                                     final Date dateTo,
-                                     final Consumer<LogInformationWrapper> consumer) {
-    final CvsResult executionResult = runRLogOperationImpl(settings, module, dateFrom, dateTo, consumer);
+  private CvsResult runRLogOperation(final LoadHistoryOperation operation) {
+    final CvsResult executionResult = runRLogOperationImpl(operation);
 
     for (VcsException error : executionResult.getErrors()) {
       for (String message : error.getMessages()) {
-        if (message.indexOf(INVALID_OPTION_S) >= 0) {
-          LoadHistoryOperation.doesNotSuppressEmptyHeaders(settings);
+        if (message.contains(INVALID_OPTION_S)) {
+          operation.disableSuppressEmptyHeadersForCurrentCvsRoot();
           // try only once
-          return runRLogOperationImpl(settings, module, dateFrom, dateTo, consumer);
+          return runRLogOperationImpl(operation);
         }
       }
     }
     return executionResult;
   }
 
-  private CvsResult runRLogOperationImpl(final CvsEnvironment settings,
-                                     final String module,
-                                     final Date dateFrom,
-                                     final Date dateTo,
-                                     final Consumer<LogInformationWrapper> consumer) {
-    LoadHistoryOperation operation = new LoadHistoryOperation(settings, module, dateFrom, dateTo, null) {
-      @Override
-      protected void wrapperAdded(final LogInformationWrapper wrapper) {
-        consumer.consume(wrapper);
-      }
-    };
-
-    CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
+  private CvsResult runRLogOperationImpl(final LoadHistoryOperation operation) {
+    final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(new CommandCvsHandler(CvsBundle.message("browse.changes.load.history.progress.title"), operation),
                                CvsOperationExecutorCallback.EMPTY);
-
     return executor.getResult();
-  }
-
-  private CvsResult runRLogOperation(final CvsEnvironment settings,
-                                     final String module,
-                                     final Date dateFrom,
-                                     final Date dateTo,
-                                     final List<LogInformationWrapper> log) {
-    LoadHistoryOperation operation = new LoadHistoryOperation(settings, module, dateFrom, dateTo, log);
-
-    CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    //executor.setShowErrors(false);
-    executor.performActionSync(new CommandCvsHandler(CvsBundle.message("browse.changes.load.history.progress.title"), operation),
-                               CvsOperationExecutorCallback.EMPTY);
-
-    final CvsResult executionResult = executor.getResult();
-
-    for (VcsException error : executionResult.getErrors()) {
-      for (String message : error.getMessages()) {
-        if (message.indexOf(INVALID_OPTION_S) >= 0) {
-          LoadHistoryOperation.doesNotSuppressEmptyHeaders(settings);
-          log.clear();
-          return runRLogOperation(settings, module, dateFrom, dateTo, log);
-        }
-      }
-    }
-
-    return executionResult;
   }
 
   public int getFormatVersion() {
@@ -333,7 +327,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public CvsChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
-    CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+    final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
     return new CvsChangeList(myProject, cvsLocation.getEnvironment(), cvsLocation.getRootFile(), stream);
   }
 
@@ -378,11 +372,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   private static boolean isDifferentBranch(final FilePath filePath, final CvsChangeList changeList) {
-    String localTag;
+    final String localTag;
     final CvsEntriesManager cvsEntriesManager = CvsEntriesManager.getInstance();
     final VirtualFile parent = filePath.getVirtualFileParent();
     if (parent != null) {
-      Entry entry = cvsEntriesManager.getEntryFor(parent, filePath.getName());
+      final Entry entry = cvsEntriesManager.getEntryFor(parent, filePath.getName());
       if (entry != null) {
         localTag = entry.getStickyTag();
       }

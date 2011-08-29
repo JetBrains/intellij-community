@@ -44,6 +44,7 @@ public class RlogCommand extends AbstractCommand {
   
   private String myBranchName = null;
   private boolean myLogDefaultBranch = false;
+  private String[] myRevisions = null;
 
   // Implemented ============================================================
 
@@ -57,10 +58,12 @@ public class RlogCommand extends AbstractCommand {
     requests.addArgumentRequest(myNoTags, "-N");
     requests.addArgumentRequest(mySuppressEmptyHeaders, "-S");
     requests.addArgumentRequest(!isRecursive(), "-l");
-
     requests.addArgumentRequest(getDateFilter(), "-d");
 
-    if (myBranchName != null) {
+    final String revisionFilter = getRevisionFilter();
+    if (revisionFilter != null) {
+      requests.addArgumentRequest("-r" + revisionFilter);
+    } else if (myBranchName != null) {
       requests.addArgumentRequest("-r" + myBranchName);          
     }
 
@@ -81,16 +84,16 @@ public class RlogCommand extends AbstractCommand {
 
 
   public void setMyLogDefaultBranch(boolean logDefaultBranch) {
-     myLogDefaultBranch = logDefaultBranch;
+    myLogDefaultBranch = logDefaultBranch;
   }
 
-    @Nullable
+  @Nullable
   private String getDateFilter() {
     if (myDateFrom == null && myDateTo == null) {
       return null;
     }
 
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
 
     if (myDateFrom == null) {
       result.append('<');
@@ -106,6 +109,21 @@ public class RlogCommand extends AbstractCommand {
       result.append(myDateTo);
     }
 
+    return result.toString();
+  }
+
+  @Nullable
+  private String getRevisionFilter() {
+    if (myRevisions == null || myRevisions.length == 0) {
+      return null;
+    }
+    final StringBuilder result = new StringBuilder();
+    boolean comma = false;
+    for (String revision : myRevisions) {
+      if (comma) result.append(',');
+      else comma = true;
+      result.append(revision);
+    }
     return result.toString();
   }
 
@@ -133,7 +151,7 @@ public class RlogCommand extends AbstractCommand {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private String getCVSArguments() {
-    final StringBuffer cvsArguments = new StringBuffer();
+    final StringBuilder cvsArguments = new StringBuilder();
     if (myHeadersOnly) {
       cvsArguments.append("-h ");
     }
@@ -167,8 +185,11 @@ public class RlogCommand extends AbstractCommand {
     mySuppressEmptyHeaders = suppressEmptyHeaders;
   }
 
-
   public void setBranchName(final String branchName) {
     myBranchName = branchName;
+  }
+
+  public void setRevisions(final String... revisions) {
+    myRevisions = revisions;
   }
 }
