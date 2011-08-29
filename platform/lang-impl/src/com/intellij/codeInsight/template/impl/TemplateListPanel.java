@@ -917,8 +917,7 @@ class TemplateListPanel extends JPanel {
           return o1.getKey().compareTo(o2.getKey());
         }
       });
-      for (final Object groupTemplate : templates) {
-        TemplateImpl template = (TemplateImpl)groupTemplate;
+      for (final TemplateImpl template : templates) {
         myTemplateOptions.put(getKey(template), template.createOptions());
         myTemplateContext.put(getKey(template), template.createContext());
         CheckedTreeNode node = new CheckedTreeNode(template);
@@ -985,42 +984,6 @@ class TemplateListPanel extends JPanel {
       int result = myGroupName.compareTo(templateKey.myGroupName);
       return result != 0 ? result : myKey.compareTo(templateKey.myKey);
     }
-  }
-
-  class ActivationStateColumnInfo extends ColumnInfo {
-    public ActivationStateColumnInfo(String name) {
-      super(name);
-    }
-
-    public boolean isCellEditable(Object o) {
-      return o != null;
-    }
-
-    public void setValue(Object obj, Object aValue) {
-      obj = ((DefaultMutableTreeNode)obj).getUserObject();
-      if (obj instanceof TemplateImpl) {
-        TemplateImpl template = (TemplateImpl)obj;
-        boolean state = !((Boolean)aValue).booleanValue();
-        if (state != template.isDeactivated()) {
-          template.setDeactivated(!((Boolean)aValue).booleanValue());
-        }
-      }
-    }
-
-    public Class getColumnClass() {
-      return Boolean.class;
-    }
-
-    public Object valueOf(Object object) {
-      object = ((DefaultMutableTreeNode)object).getUserObject();
-      if (object instanceof TemplateImpl) {
-        return ((TemplateImpl)object).isDeactivated() ? Boolean.FALSE : Boolean.TRUE;
-      }
-      else {
-        return null;
-      }
-    }
-
   }
 
 }
