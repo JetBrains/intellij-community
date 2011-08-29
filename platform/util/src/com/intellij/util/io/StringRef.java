@@ -48,6 +48,7 @@ public class StringRef {
         name = store.valueOf(id);
       }
       catch (IOException e) {
+        store.markCorrupted();
         throw new RuntimeException(e);
       }
     }

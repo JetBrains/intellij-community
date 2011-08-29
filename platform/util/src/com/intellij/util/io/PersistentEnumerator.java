@@ -599,7 +599,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
   }
 
-  private void markCorrupted() {
+  protected synchronized void markCorrupted() {
     if (!myCorrupted) {
       myCorrupted = true;
       try {
