@@ -15,9 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
@@ -54,7 +52,12 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     public Icon getIcon(boolean isOpen) { return null; }
     public FileStatus getFileStatus() { return null; }
     public boolean isValid() { return true; }
-    public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : 1; }
+    public int compareTo(UsageGroup usageGroup) {
+      if (usageGroup instanceof DynamicUsageGroup) {
+        return -1;
+      }
+      return usageGroup == this ? 0 : 1;
+    }
     public void navigate(boolean requestFocus) { }
     public boolean canNavigate() { return false; }
 
@@ -115,7 +118,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     public Icon getIcon(boolean isOpen) { return null; }
     public FileStatus getFileStatus() { return null; }
     public boolean isValid() { return true; }
-    public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : -1; }
+    public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : 1; }
     public void navigate(boolean requestFocus) { }
     public boolean canNavigate() { return false; }
 
