@@ -462,7 +462,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         final TabInfo info = myTabs.findInfo(e);
         if (info != null) {
           IdeEventQueue.getInstance().blockNextEvents(e);
-          myWindow.closeFile((VirtualFile)info.getObject());
+          FileEditorManagerEx.getInstanceEx(myProject).closeFile((VirtualFile)info.getObject(), myWindow);
           return;
         }
       }
