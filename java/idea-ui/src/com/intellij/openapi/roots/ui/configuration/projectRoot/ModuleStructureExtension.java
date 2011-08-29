@@ -34,6 +34,11 @@ public abstract class ModuleStructureExtension {
   public void moduleRemoved(final Module module) {
   }
 
+  /**
+   * TODO remove this
+   * @Deprecated
+   */
+  @Deprecated
   public boolean isModulesConfiguratorModified() {
     return false;
   }
