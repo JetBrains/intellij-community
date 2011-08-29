@@ -8,6 +8,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.RemoveArgumentEqualDefaultQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,7 +87,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       }
     }
 
-    private boolean isEqual(PyExpression key, PyExpression defaultValue) {
+    private static boolean isEqual(PyExpression key, PyExpression defaultValue) {
       if (key instanceof PyNumericLiteralExpression && defaultValue instanceof PyNumericLiteralExpression) {
         if (key.getText().equals(defaultValue.getText()))
           return true;
@@ -96,8 +97,12 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
           return true;
       }
       else {
-        PsiReference keyRef = key.getReference();
-        PsiReference defRef = defaultValue.getReference();
+        PsiReference keyRef = key instanceof PyReferenceExpression 
+                              ? ((PyReferenceExpression) key).getReference(PyResolveContext.noImplicits()) 
+                              : key.getReference();
+        PsiReference defRef = defaultValue instanceof PyReferenceExpression
+                              ? ((PyReferenceExpression) defaultValue).getReference(PyResolveContext.noImplicits())
+                              : defaultValue.getReference();
         if (keyRef != null && defRef != null) {
           PsiElement keyResolve = keyRef.resolve();
           PsiElement defResolve = defRef.resolve();
