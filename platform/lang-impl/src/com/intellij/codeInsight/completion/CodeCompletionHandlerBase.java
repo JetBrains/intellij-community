@@ -138,9 +138,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
     boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(myCompletionType, editor);
+    /*
     if (repeated && isAutocompleteCommonPrefixOnInvocation() && phase.fillInCommonPrefix()) {
       return;
     }
+    */
 
     if (invokedExplicitly) {
       time = phase.newCompletionStarted(time, repeated);
