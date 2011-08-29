@@ -37,7 +37,6 @@ public class PlatformFileTypeFactory extends FileTypeFactory {
                      new ExtensionFileNameMatcher("jad"),
                      new ExtensionFileNameMatcher("jam"),
                      new ExtensionFileNameMatcher("htaccess"),
-                     new ExactFileNameMatcher("readme", true),
                      new ExactFileNameMatcher("README", true),
                      new ExactFileNameMatcher("LICENSE", true));
     consumer.consume(NativeFileType.INSTANCE, "doc;xls;ppt;mdb;vsd;pdf;hlp;chm;odt");
