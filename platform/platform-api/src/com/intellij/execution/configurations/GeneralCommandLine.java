@@ -249,6 +249,7 @@ public class GeneralCommandLine {
     return result;
   }
 
+  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand()
   private static String prepareCommand(String parameter) {
     if (SystemInfo.isWindows) {
       if (parameter.contains("\"")) {

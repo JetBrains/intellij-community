@@ -50,16 +50,22 @@ public class ProcessBuilder {
     return Runtime.getRuntime().exec(command);
   }
 
+  // please keep in sync with GeneralCommandLine.prepareCommand()
   private static String prepareCommand(String parameter) {
-    // AFAIK, the only thing needed is escaping double quotes on Windows
     if (isWindows) {
-      final StringBuffer buffer = new StringBuffer(parameter);
-      int pos = 0;
-      while ((pos = parameter.indexOf('\"', pos)) >= 0) {
-        buffer.insert(pos, '\\');
-        pos += 2;
+      int pos = parameter.indexOf('\"');
+      if (pos >= 0) {
+        final StringBuffer buffer = new StringBuffer(parameter);
+        do {
+          buffer.insert(pos, '\\');
+          pos += 2;
+        }
+        while ((pos = parameter.indexOf('\"', pos)) >= 0);
+        parameter = buffer.toString();
       }
-      parameter = buffer.toString();
+      else if (parameter.length() == 0) {
+        parameter = "\"\"";
+      }
     }
     return parameter;
   }
