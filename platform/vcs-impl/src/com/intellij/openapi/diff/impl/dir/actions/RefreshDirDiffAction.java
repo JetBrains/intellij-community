@@ -43,4 +43,9 @@ public class RefreshDirDiffAction extends DirDiffAction {
   public ShortcutSet getShortcut() {
     return CustomShortcutSet.fromString("F5");
   }
+
+  @Override
+  protected boolean isFullReload() {
+    return true;
+  }
 }

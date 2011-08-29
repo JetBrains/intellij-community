@@ -16,12 +16,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
-import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
+import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import gnu.trove.TIntArrayList;
@@ -360,7 +359,7 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
     }
     else {
       initializer = expr;
-      occurences = new ExpressionOccurenceManager(expr, method, null).findExpressionOccurrences();
+      occurences = new ExpressionOccurrenceManager(expr, method, null).findExpressionOccurrences();
     }
     TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer, occurences) : new TIntArrayList();
     new IntroduceParameterProcessor(

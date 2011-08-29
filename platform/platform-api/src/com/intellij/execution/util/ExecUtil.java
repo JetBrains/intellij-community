@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.util.system;
+package com.intellij.execution.util;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,15 +35,15 @@ import java.util.Map;
 public class ExecUtil {
   private ExecUtil() { }
 
-  public static int execAndGetResult(final String... command) throws IOException, InterruptedException {
+  public static int execAndGetResult(final String... command) throws ExecutionException, InterruptedException {
     assert command != null && command.length > 0;
     return execAndGetResult(Arrays.asList(command));
   }
 
-  public static int execAndGetResult(@NotNull final List<String> command) throws IOException, InterruptedException {
+  public static int execAndGetResult(@NotNull final List<String> command) throws ExecutionException, InterruptedException {
     assert command.size() > 0;
-    final ProcessBuilder processBuilder = new ProcessBuilder(command);
-    final Process process = processBuilder.start();
+    final GeneralCommandLine commandLine = new GeneralCommandLine(command);
+    final Process process = commandLine.createProcess();
     return process.waitFor();
   }
 
@@ -53,36 +55,39 @@ public class ExecUtil {
       throw new IOException("Template '" + templateName + "' not found by " + loader);
     }
 
-    final StringBuilder template = new StringBuilder(FileUtil.loadTextAndClose(stream));
-    if (variables != null) {
-      for (Map.Entry<String, String> var : variables.entrySet()) {
-        final String name = var.getKey();
-        final int pos = template.indexOf(name);
-        if (pos >= 0) {
-          template.replace(pos, pos + name.length(), var.getValue());
-        }
+    final String template = FileUtil.loadTextAndClose(stream);
+    if (variables == null || variables.size() == 0) {
+      return template;
+    }
+
+    final StringBuilder buffer = new StringBuilder(template);
+    for (Map.Entry<String, String> var : variables.entrySet()) {
+      final String name = var.getKey();
+      final int pos = buffer.indexOf(name);
+      if (pos >= 0) {
+        buffer.replace(pos, pos + name.length(), var.getValue());
       }
     }
-    return template.toString();
+    return buffer.toString();
   }
 
   public static File createTempExecutableScript(@NotNull final String prefix,
                                                 @NotNull final String suffix,
-                                                @NotNull final String source) throws IOException {
+                                                @NotNull final String source) throws IOException, ExecutionException {
     final File tempFile = FileUtil.createTempFile(prefix, suffix);
     FileUtil.writeToFile(tempFile, source);
     if (!tempFile.setExecutable(true, true)) {
-      throw new IOException("Failed to make temp file executable: " + tempFile);
+      throw new ExecutionException("Failed to make temp file executable: " + tempFile);
     }
     return tempFile;
   }
 
   public static int sudoAndGetResult(@NotNull final String scriptPath,
-                                     @NotNull final String prompt) throws IOException, ScriptException, InterruptedException {
+                                     @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
     if (SystemInfo.isMac) {
       final ScriptEngine engine = new ScriptEngineManager(null).getEngineByName("AppleScript");
       if (engine == null) {
-        throw new IOException("Could not find AppleScript engine");
+        throw new ExecutionException("Could not find AppleScript engine");
       }
       engine.eval("do shell script \"" + scriptPath + "\" with administrator privileges");
       return 0;

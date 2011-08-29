@@ -119,7 +119,7 @@ class LayoutDeviceHandler extends DefaultHandler {
         ScreenOrientation.getEnum(myStringBuilder.toString())));
     }
     else if (PIXEL_DENSITY_TAG_NAME.equals(localName)) {
-      myCurrentConfiguration.setPixelDensityQualifier(new PixelDensityQualifier(
+      myCurrentConfiguration.setDensityQualifier(new DensityQualifier(
         Density.getEnum(myStringBuilder.toString())));
     }
     else if (TOUCH_TYPE_TAG_NAME.equals(localName)) {

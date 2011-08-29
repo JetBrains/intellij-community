@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.List;
  * different kinds of ruby tests, rails configuration, etc). Coverage support require to reorder args
  * in cmdline, add rcov runner script, etc. Without groups it would be harder to parse abstract list of arguments
  */
-public class ParamsGroup implements Cloneable{
+public class ParamsGroup implements Cloneable {
   private static final Logger LOG = Logger.getInstance(ParamsGroup.class.getName());
 
   private String myGroupId;
@@ -73,6 +73,7 @@ public class ParamsGroup implements Cloneable{
     return myGroupParams;
   }
 
+  @Override
   public ParamsGroup clone() {
      try {
        final ParamsGroup clone = (ParamsGroup)super.clone();

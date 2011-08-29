@@ -80,6 +80,8 @@ public class LengthOneStringsInConcatenationInspection
             final String charLiteral;
             if ("\'".equals(character)) {
                 charLiteral = "'\\''";
+            } else if ("\\\"".equals(character)) {
+                charLiteral = "'\"'";
             } else {
                 charLiteral = '\'' + character + '\'';
             }

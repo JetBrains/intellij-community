@@ -16,16 +16,31 @@
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.PersistentOrderRootType;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.util.containers.MultiMap;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
  */
-public class JarDirectories {
+public class JarDirectories implements JDOMExternalizable {
   private MultiMap<OrderRootType, String> myDirectories = new MultiMap<OrderRootType, String>();
   private MultiMap<OrderRootType, String> myRecursivelyIncluded = new MultiMap<OrderRootType, String>();
+
+  @NonNls private static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";
+  @NonNls private static final String URL_ATTR = "url";
+  @NonNls private static final String RECURSIVE_ATTR = "recursive";
+  @NonNls private static final String ROOT_TYPE_ATTR = "type";
+  public static final OrderRootType DEFAULT_JAR_DIRECTORY_TYPE = OrderRootType.CLASSES;
 
   public void copyFrom(JarDirectories other) {
     myDirectories.clear();
@@ -93,4 +108,48 @@ public class JarDirectories {
   public String toString() {
     return "Jar dirs: " + myDirectories.values();
   }
+
+
+  @Override
+  public void readExternal(Element element) throws InvalidDataException {
+    clear();
+    final List jarDirs = element.getChildren(JAR_DIRECTORY_ELEMENT);
+    for (Object item : jarDirs) {
+      final Element jarDir = (Element)item;
+      final String url = jarDir.getAttributeValue(URL_ATTR);
+      final String recursive = jarDir.getAttributeValue(RECURSIVE_ATTR);
+      final OrderRootType rootType = getJarDirectoryRootType(jarDir.getAttributeValue(ROOT_TYPE_ATTR));
+      if (url != null) {
+        add(rootType, url, Boolean.valueOf(Boolean.parseBoolean(recursive)));
+      }
+    }
+  }
+
+  private static OrderRootType getJarDirectoryRootType(@Nullable String type) {
+    for (PersistentOrderRootType rootType : OrderRootType.getAllPersistentTypes()) {
+      if (rootType.name().equals(type)) {
+        return rootType;
+      }
+    }
+    return DEFAULT_JAR_DIRECTORY_TYPE;
+  }
+
+  @Override
+  public void writeExternal(Element element) {
+    final List<OrderRootType> rootTypes = LibraryImpl.sortRootTypes(getRootTypes());
+    for (OrderRootType rootType : rootTypes) {
+      final List<String> urls = new ArrayList<String>(getDirectories(rootType));
+      Collections.sort(urls, String.CASE_INSENSITIVE_ORDER);
+      for (String url : urls) {
+        final Element jarDirElement = new Element(JAR_DIRECTORY_ELEMENT);
+        jarDirElement.setAttribute(URL_ATTR, url);
+        jarDirElement.setAttribute(RECURSIVE_ATTR, Boolean.toString(isRecursive(rootType, url)));
+        if (!rootType.equals(DEFAULT_JAR_DIRECTORY_TYPE)) {
+          jarDirElement.setAttribute(ROOT_TYPE_ATTR, rootType.name());
+        }
+        element.addContent(jarDirElement);
+      }
+    }
+  }
+
 }

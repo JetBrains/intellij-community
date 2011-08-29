@@ -5,7 +5,7 @@ import com.android.ide.common.resources.ResourceResolver;
 import com.android.ide.common.resources.configuration.LanguageQualifier;
 import com.android.ide.common.resources.configuration.RegionQualifier;
 import com.android.ide.common.resources.configuration.ScreenSizeQualifier;
-import com.android.resources.DockMode;
+import com.android.resources.UiMode;
 import com.android.resources.NightMode;
 import com.android.resources.ResourceType;
 import com.android.resources.ScreenSize;
@@ -276,11 +276,11 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myScrollPane.getHorizontalScrollBar().setUnitIncrement(5);
     myScrollPane.getVerticalScrollBar().setUnitIncrement(5);
 
-    myDockModeCombo.setModel(new DefaultComboBoxModel(DockMode.values()));
+    myDockModeCombo.setModel(new DefaultComboBoxModel(UiMode.values()));
     myDockModeCombo.setRenderer(new ListCellRendererWrapper(myDockModeCombo.getRenderer()) {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        setText(((DockMode)value).getLongDisplayValue());
+        setText(((UiMode)value).getLongDisplayValue());
       }
     });
     final ActionListener defaultComboListener = new ActionListener() {
@@ -416,7 +416,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
         state.setDeviceConfiguration(deviceConfig.getName());
       }
 
-      final DockMode dockMode = getSelectedDockMode();
+      final UiMode dockMode = getSelectedDockMode();
       if (dockMode != null) {
         state.setDockMode(dockMode.getResourceValue());
       }
@@ -516,7 +516,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     }
 
     if (state.getDockMode() != null) {
-      final DockMode savedDockMode = DockMode.getEnum(state.getDockMode());
+      final UiMode savedDockMode = UiMode.getEnum(state.getDockMode());
       if (savedDockMode != null) {
         myDockModeCombo.setSelectedItem(savedDockMode);
       }
@@ -1082,8 +1082,8 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   }
 
   @Nullable
-  public DockMode getSelectedDockMode() {
-    return (DockMode)myDockModeCombo.getSelectedItem();
+  public UiMode getSelectedDockMode() {
+    return (UiMode)myDockModeCombo.getSelectedItem();
   }
 
   @Nullable

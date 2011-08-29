@@ -668,13 +668,13 @@ public class RefactoringUtil {
   /**
    * @return List of highlighters
    */
-  public static List<RangeHighlighter> highlightAllOccurences(Project project, PsiElement[] occurences, Editor editor) {
+  public static List<RangeHighlighter> highlightAllOccurrences(Project project, PsiElement[] occurrences, Editor editor) {
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    if (occurences.length > 1) {
-      for (PsiElement occurrence : occurences) {
+    if (occurrences.length > 1) {
+      for (PsiElement occurrence : occurrences) {
         final RangeMarker rangeMarker = occurrence.getUserData(ElementToWorkOn.TEXT_RANGE);
         if (rangeMarker != null) {
           highlightManager

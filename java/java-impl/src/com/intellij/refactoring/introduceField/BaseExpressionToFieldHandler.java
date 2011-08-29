@@ -64,7 +64,7 @@ import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.occurences.OccurenceManager;
+import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
@@ -172,13 +172,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return true;
 
-    final OccurenceManager occurenceManager = createOccurenceManager(selectedExpr, myParentClass);
-    final PsiExpression[] occurrences = occurenceManager.getOccurences();
-    final PsiElement anchorStatementIfAll = occurenceManager.getAnchorStatementForAll();
+    final OccurrenceManager occurrenceManager = createOccurrenceManager(selectedExpr, myParentClass);
+    final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
+    final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
 
     List<RangeHighlighter> highlighters = null;
     if (editor != null) {
-      highlighters = RefactoringUtil.highlightAllOccurences(project, occurrences, editor);
+      highlighters = RefactoringUtil.highlightAllOccurrences(project, occurrences, editor);
     }
 
     PsiElement tempAnchorElement = RefactoringUtil.getParentExpressionAnchorElement(selectedExpr);
@@ -206,7 +206,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
 
     final Runnable runnable =
-      new ConvertToFieldRunnable(settings.getSelectedExpr(), settings, type, settings.getOccurrences(), occurenceManager,
+      new ConvertToFieldRunnable(settings.getSelectedExpr(), settings, type, settings.getOccurrences(), occurrenceManager,
                                  anchorStatementIfAll, tempAnchorElement, editor,
                                  myParentClass);
 
@@ -250,7 +250,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
               );
   }
 
-  protected abstract OccurenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass);
+  protected abstract OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass);
 
   protected final PsiClass getParentClass() {
     return myParentClass;
@@ -281,7 +281,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   protected abstract String getHelpID();
 
   protected abstract Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr,
-                                                    PsiType type, PsiExpression[] occurences, PsiElement anchorElement,
+                                                    PsiType type, PsiExpression[] occurrences, PsiElement anchorElement,
                                                     PsiElement anchorElementIfAll);
 
 
@@ -316,7 +316,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   private static void addInitializationToSetUp(final PsiExpression initializer,
                                                final PsiField field,
-                                               final OccurenceManager occurenceManager,
+                                               final OccurrenceManager occurrenceManager,
                                                final boolean replaceAll,
                                                final PsiClass parentClass) throws IncorrectOperationException {
     final PsiMethod setupMethod = TestUtil.findOrCreateSetUpMethod(parentClass);
@@ -326,7 +326,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     PsiElement anchor = null;
     if (PsiTreeUtil.isAncestor(setupMethod, initializer, true)) {
       anchor = replaceAll
-               ? occurenceManager.getAnchorStatementForAllInScope(setupMethod)
+               ? occurrenceManager.getAnchorStatementForAllInScope(setupMethod)
                : PsiTreeUtil.getParentOfType(initializer, PsiStatement.class);
     }
 
@@ -640,7 +640,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final PsiType myType;
     private final PsiExpression[] myOccurrences;
     private final boolean myReplaceAll;
-    private final OccurenceManager myOccurenceManager;
+    private final OccurrenceManager myOccurrenceManager;
     private final PsiElement myAnchorStatementIfAll;
     private final PsiElement myAnchorElementIfOne;
     private final Boolean myOutOfCodeBlockExtraction;
@@ -655,7 +655,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                   Settings settings,
                                   PsiType type,
                                   PsiExpression[] occurrences,
-                                  OccurenceManager occurenceManager,
+                                  OccurrenceManager occurrenceManager,
                                   PsiElement anchorStatementIfAll,
                                   PsiElement anchorElementIfOne,
                                   Editor editor,
@@ -668,7 +668,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myType = type;
       myOccurrences = occurrences;
       myReplaceAll = settings.isReplaceAll();
-      myOccurenceManager = occurenceManager;
+      myOccurrenceManager = occurrenceManager;
       myAnchorStatementIfAll = anchorStatementIfAll;
       myAnchorElementIfOne = anchorElementIfOne;
       myOutOfCodeBlockExtraction = selectedExpr.getUserData(ElementToWorkOn.OUT_OF_CODE_BLOCK);
@@ -743,7 +743,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           addInitializationToConstructors(initializer, myField, enclosingConstructor, myParentClass);
         }
         if (initializerPlace == InitializationPlace.IN_SETUP_METHOD && initializer != null) {
-          addInitializationToSetUp(initializer, myField, myOccurenceManager, myReplaceAll, myParentClass);
+          addInitializationToSetUp(initializer, myField, myOccurrenceManager, myReplaceAll, myParentClass);
         }
         if (mySelectedExpr.getParent() instanceof PsiParenthesizedExpression) {
           mySelectedExpr = (PsiExpression)mySelectedExpr.getParent();

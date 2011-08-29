@@ -63,6 +63,12 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     return null;
   }
 
+  @Nullable
+  @Override
+  public ILayoutPullParser getParser(ResourceValue layoutResource) {
+    return null;
+  }
+
   public Integer getResourceId(ResourceType type, String name) {
     Map<String, Integer> typeMap = myResource2Id.get(type);
     if (typeMap == null) {

@@ -391,12 +391,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void addFilteringActions(DefaultActionGroup group) {
     final JComponent component = getComponent();
     final MergeDupLines mergeDupLines = new MergeDupLines();
-    mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component);
-    scheduleDisposeOnClose(new Disposable() {
-      public void dispose() {
-        mergeDupLines.unregisterCustomShortcutSet(component);
-      }
-    });
+    mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component, this);
     group.add(mergeDupLines);
 
     final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);

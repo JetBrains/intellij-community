@@ -20,6 +20,10 @@ public class StandardVariableNames {
         Integer i, j, k, m, n;
         long l;
         String s, str;
+
+        new java.io.OutputStream() {
+            public void write(int b) throws IOException {}
+        }
     }
 
 }

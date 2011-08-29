@@ -1497,6 +1497,10 @@ public class StringUtil {
     return indexOf(s, c, 0, s.length());
   }
 
+  public static int indexOf(@NotNull CharSequence s, char c, int start) {
+    return indexOf(s, c, start, s.length());
+  }
+
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end) {
     for (int i = start; i < end; i++) {
       if (s.charAt(i) == c) return i;
@@ -1568,19 +1572,32 @@ public class StringUtil {
 
   @NotNull
   public static String escapeQuotes(@NotNull final String str) {
-    int idx = str.indexOf('"');
-    if (idx < 0) return str;
-    StringBuilder buf = new StringBuilder(str);
-    while (idx < buf.length()) {
-      if (buf.charAt(idx) == '"') {
-        buf.replace(idx, idx + 1, "\\\"");
-        idx += 2;
-      }
-      else {
-        idx += 1;
-      }
+    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      buf.append(str);
+      escapeQuotes(buf);
+      return buf.toString();
     }
-    return buf.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
+    }
+  }
+
+  public static void escapeQuotes(@NotNull final StringBuilder buf) {
+    int idx = 0;
+    while ((idx = indexOf(buf, '\"', idx)) >= 0) {
+      buf.insert(idx, '\\');
+      idx += 2;
+    }
+  }
+
+  public static void quote(@NotNull final StringBuilder builder) {
+    quote(builder, '\"');
+  }
+  
+  public static void quote(@NotNull final StringBuilder builder, final char quotingChar) {
+    builder.insert(0, quotingChar);
+    builder.append(quotingChar);
   }
 
   @NonNls private static final String[] REPLACES_REFS = {"&lt;", "&gt;", "&amp;", "&apos;", "&quot;"};

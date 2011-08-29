@@ -227,7 +227,7 @@ public class CodeStyleSchemesModel {
 
   public CodeStyleScheme exportProjectScheme(final String name) {
     CodeStyleScheme newScheme = createNewScheme(name, myProjectScheme);
-    ((CodeStyleSchemeImpl)newScheme).setCodeStyleSettings(getEditedSchemeSettings(myProjectScheme));
+    ((CodeStyleSchemeImpl)newScheme).setCodeStyleSettings(getCloneSettings(myProjectScheme));
     addScheme(newScheme, false);
 
     return newScheme;

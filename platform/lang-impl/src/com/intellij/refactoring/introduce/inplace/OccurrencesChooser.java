@@ -66,10 +66,15 @@ public class OccurrencesChooser<T extends PsiElement> {
   }
 
   public void showChooser(final T selectedOccurrence, final List<T> allOccurrences, final Pass<ReplaceChoice> callback) {
-    Map<ReplaceChoice, List<T>> occurrencesMap = Maps.newLinkedHashMap();
-    occurrencesMap.put(ReplaceChoice.NO, Collections.singletonList(selectedOccurrence));
-    occurrencesMap.put(ReplaceChoice.ALL, allOccurrences);
-    showChooser(callback, occurrencesMap);
+    if (allOccurrences.size() == 1) {
+      callback.pass(ReplaceChoice.ALL);
+    }
+    else {
+      Map<ReplaceChoice, List<T>> occurrencesMap = Maps.newLinkedHashMap();
+      occurrencesMap.put(ReplaceChoice.NO, Collections.singletonList(selectedOccurrence));
+      occurrencesMap.put(ReplaceChoice.ALL, allOccurrences);
+      showChooser(callback, occurrencesMap);
+    }
   }
 
   public void showChooser(final Pass<ReplaceChoice> callback, final Map<ReplaceChoice, List<T>> occurrencesMap) {

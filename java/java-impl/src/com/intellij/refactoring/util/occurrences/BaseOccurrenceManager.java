@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.util.occurences;
+package com.intellij.refactoring.util.occurrences;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -27,45 +27,45 @@ import java.util.ArrayList;
 /**
  * @author dsl
  */
-public abstract class BaseOccurenceManager implements OccurenceManager {
-  private PsiExpression[] myOccurences = null;
+public abstract class BaseOccurrenceManager implements OccurrenceManager {
+  private PsiExpression[] myOccurrences = null;
   private PsiElement myAnchorStatement = null;
-  protected final OccurenceFilter myFilter;
+  protected final OccurrenceFilter myFilter;
 
-  public BaseOccurenceManager(OccurenceFilter filter) {
+  public BaseOccurrenceManager(OccurrenceFilter filter) {
     myFilter = filter;
   }
 
-  public PsiExpression[] getOccurences() {
-    if(myOccurences == null) {
-      myOccurences = findOccurences();
+  public PsiExpression[] getOccurrences() {
+    if(myOccurrences == null) {
+      myOccurrences = findOccurrences();
 
       if(myFilter != null) {
         ArrayList<PsiExpression> result = new ArrayList<PsiExpression>();
-        for (PsiExpression occurence : myOccurences) {
-          if (myFilter.isOK(occurence)) result.add(occurence);
+        for (PsiExpression occurrence : myOccurrences) {
+          if (myFilter.isOK(occurrence)) result.add(occurrence);
         }
         if (result.isEmpty()) {
-          myOccurences = defaultOccurences();
+          myOccurrences = defaultOccurrences();
         }
         else {
-          myOccurences = result.toArray(new PsiExpression[result.size()]);
+          myOccurrences = result.toArray(new PsiExpression[result.size()]);
         }
       }
 
       if (getAnchorStatementForAll() == null) {
-        myOccurences = defaultOccurences();
+        myOccurrences = defaultOccurrences();
       }
     }
-    return myOccurences;
+    return myOccurrences;
   }
 
-  protected abstract PsiExpression[] defaultOccurences();
+  protected abstract PsiExpression[] defaultOccurrences();
 
-  protected abstract PsiExpression[] findOccurences();
+  protected abstract PsiExpression[] findOccurrences();
 
   public boolean isInFinalContext() {
-    return needToDeclareFinal(myOccurences);
+    return needToDeclareFinal(myOccurrences);
   }
 
   public PsiElement getAnchorStatementForAll() {
@@ -76,7 +76,7 @@ public abstract class BaseOccurenceManager implements OccurenceManager {
 
   }
   public PsiElement getAnchorStatementForAllInScope(PsiElement scope) {
-    return RefactoringUtil.getAnchorElementForMultipleExpressions(myOccurences, scope);
+    return RefactoringUtil.getAnchorElementForMultipleExpressions(myOccurrences, scope);
   }
 
   private static boolean needToDeclareFinal(PsiExpression[] occurrences) {

@@ -363,7 +363,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     }
     else {
       byte[] content = FileUtil.loadFileBytes(file);
-      for (int i = content.length / 2; i < content.length; i++) {
+      for (int i = 0; i < content.length; i+=2) {
         content[i] = -1;
       }
       FileUtil.writeToFile(file, content);

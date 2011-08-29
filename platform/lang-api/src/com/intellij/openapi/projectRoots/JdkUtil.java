@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -112,7 +111,6 @@ public class JdkUtil {
     return null;
   }
 
-
   public static boolean checkForJdk(File file) {
     file = new File(file.getAbsolutePath() + File.separator + "bin");
     if (!file.exists()) return false;
@@ -141,10 +139,12 @@ public class JdkUtil {
     return children != null && children.length >= 1;
   }
 
-  public static GeneralCommandLine setupJVMCommandLine(final String exePath, final SimpleJavaParameters javaParameters,
-                                                    final boolean forceDynamicClasspath) {
+  public static GeneralCommandLine setupJVMCommandLine(final String exePath,
+                                                       final SimpleJavaParameters javaParameters,
+                                                       final boolean forceDynamicClasspath) {
     final GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(exePath);
+
     ParametersList parametersList = javaParameters.getVMParametersList();
     commandLine.addParameters(parametersList.getList());
 
@@ -166,11 +166,8 @@ public class JdkUtil {
       }
     }
 
-    final Map<String, String> env = javaParameters.getEnv();
-    if (env != null) {
-      commandLine.setEnvParams(env);
-      commandLine.setPassParentEnvs(javaParameters.isPassParentEnvs());
-    }
+    commandLine.setEnvParams(javaParameters.getEnv());
+    commandLine.setPassParentEnvs(javaParameters.isPassParentEnvs());
 
     final Class commandLineWrapper;
     if (forceDynamicClasspath && (commandLineWrapper = getCommandLineWrapperClass()) != null) {
@@ -215,8 +212,8 @@ public class JdkUtil {
     final String mainClass = javaParameters.getMainClass();
     commandLine.addParameter(mainClass);
     commandLine.addParameters(javaParameters.getProgramParametersList().getList());
-    commandLine.setWorkDirectory(javaParameters.getWorkingDirectory());
 
+    commandLine.setWorkDirectory(javaParameters.getWorkingDirectory());
 
     return commandLine;
   }

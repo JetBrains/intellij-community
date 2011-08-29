@@ -274,21 +274,6 @@ public class UIUtil {
     }
   }
 
-  @NotNull
-  public static Font getBorderFont(@NotNull FontSize size, boolean isBold) {
-    Font defFont = getBorderFont();
-    if (size == FontSize.SMALL) {
-      defFont = defFont.deriveFont(defFont.getSize() - 2f);
-    }
-    if (size == FontSize.MINI) {
-      defFont = defFont.deriveFont(defFont.getSize() - 4f);
-    }
-    if (isBold) {
-      defFont = defFont.deriveFont(Font.BOLD);
-    }
-    return defFont;
-  }
-
   public static Color getLabelFontColor(FontColor fontColor) {
     Color defColor = getLabelForeground();
     if (fontColor == FontColor.BRIGHTER) {
@@ -1460,11 +1445,33 @@ public class UIUtil {
   }
 
   public static Color getBorderColor() {
-    return UIManager.getColor("Separator.foreground");
+    return BORDER_COLOR;
+  }
+  
+  public static Color getTitledBorderColor() {
+    return BORDER_COLOR;
   }
 
-  public static Font getBorderFont() {
-    return UIManager.getFont("TitledBorder.font");
+  public static Font getTitledBorderFont() {
+    return getLabelFont();
+  }
+
+  public static Font getBorderFont(@NotNull FontSize size, boolean isBold) {
+    Font defFont = getTitledBorderFont();
+    if (size == FontSize.SMALL) {
+      defFont = defFont.deriveFont(defFont.getSize() - 2f);
+    }
+    if (size == FontSize.MINI) {
+      defFont = defFont.deriveFont(defFont.getSize() - 4f);
+    }
+    if (isBold) {
+      defFont = defFont.deriveFont(Font.BOLD);
+    }
+    return defFont;
+  }
+
+  public static Color getBorderTitleColor() {
+    return Color.BLACK;
   }
 
   /**

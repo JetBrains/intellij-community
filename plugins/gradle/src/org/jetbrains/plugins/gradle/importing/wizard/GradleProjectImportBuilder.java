@@ -19,6 +19,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.importing.GradleModulesImporter;
 import org.jetbrains.plugins.gradle.importing.model.GradleEntity;
 import org.jetbrains.plugins.gradle.importing.model.GradleModule;
 import org.jetbrains.plugins.gradle.importing.model.GradleProject;
@@ -30,10 +31,7 @@ import org.jetbrains.plugins.gradle.util.GradleLog;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * GoF builder for gradle-backed projects.
@@ -85,8 +83,9 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel)
   {
-    // TODO den implement
-    return null;
+    GradleModulesImporter importer = new GradleModulesImporter();
+    Map<GradleModule, Module> mappings = importer.importModules(myModuleMappings.values(), project, model);
+    return new ArrayList<Module>(mappings.values());
   }
 
   /**

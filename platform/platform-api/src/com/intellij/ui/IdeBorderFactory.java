@@ -64,14 +64,14 @@ public class IdeBorderFactory {
 
     public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont, Insets insets) {
       Font font = UIUtil.getBorderFont(hasSmallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, hasBoldFont);
-      int indent = hasIndent ? (hasBoldFont ? 18 : 15) : 0;
-      return new IdeaTitledBorder(title, font, UIUtil.getBorderColor(), indent, 1, insets);
+      int indent = hasIndent ? 20 : 0;
+      return new IdeaTitledBorder(title, hasBoldFont, hasSmallFont, indent, insets);
     }
 
   @Deprecated
   // Don't remove, used in TeamCity plugin.
   public static TitledBorder createTitledHeaderBorder(String title) {
-    return new IdeaTitledBorder(title, UIUtil.getBorderFont().deriveFont(Font.BOLD), UIUtil.getBorderColor(), 10, 1,
+    return new IdeaTitledBorder(title, false, true, 10,
                                 new Insets(5, 0, 10, 0));
   }
 

@@ -109,25 +109,27 @@ public class DirDiffPanel implements Disposable {
         myDiffWindow.setTitle(myModel.getTitle());
       }
     });
-    new AnAction("Change diff operation") {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        changeOperationForSelectedRow();
-      }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("SPACE"), myTable);
-    myTable.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (myTable.getRowCount() > 0 && e.getClickCount() > 1) {
-          final int row = myTable.rowAtPoint(e.getPoint());
-          final int col = myTable.columnAtPoint(e.getPoint());
+    if (model.isOperationsEnabled()) {
+      new AnAction("Change diff operation") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          changeOperationForSelectedRow();
+        }
+      }.registerCustomShortcutSet(CustomShortcutSet.fromString("SPACE"), myTable);
+      myTable.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          if (myTable.getRowCount() > 0 && e.getClickCount() > 1) {
+            final int row = myTable.rowAtPoint(e.getPoint());
+            final int col = myTable.columnAtPoint(e.getPoint());
 
-          if (row != -1 && col == ((myTable.getColumnCount() - 1) / 2)) {
-            changeOperationForSelectedRow();
+            if (row != -1 && col == ((myTable.getColumnCount() - 1) / 2)) {
+              changeOperationForSelectedRow();
+            }
           }
         }
-      }
-    });
+      });
+    }
     myTable.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {

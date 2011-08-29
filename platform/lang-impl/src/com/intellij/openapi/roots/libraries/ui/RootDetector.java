@@ -31,9 +31,9 @@ import java.util.Collection;
  * @author nik
 */
 public abstract class RootDetector {
-  private OrderRootType myRootType;
-  private boolean myJarDirectory;
-  private String myPresentableRootTypeName;
+  private final OrderRootType myRootType;
+  private final boolean myJarDirectory;
+  private final String myPresentableRootTypeName;
 
   protected RootDetector(OrderRootType rootType, boolean jarDirectory, String presentableRootTypeName) {
     myRootType = rootType;

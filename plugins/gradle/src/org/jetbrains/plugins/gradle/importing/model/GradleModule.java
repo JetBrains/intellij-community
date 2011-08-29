@@ -1,13 +1,20 @@
 package org.jetbrains.plugins.gradle.importing.model;
 
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
+import java.io.File;
 import java.util.*;
 
 /**
+ * Module settings holder.
+ * <p/>
+ * <b>Note:</b> doesn't consider {@link GradleLibraryDependency library} {@link #getDependencies() dependencies}
+ * at {@link #equals(Object)}/{@link #hashCode()}.
+ * 
  * @author Denis Zhdanov
  * @since 8/8/11 12:11 PM
  */
@@ -19,10 +26,20 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
   private final Map<SourceType, String> myCompileOutputPaths = new HashMap<SourceType, String>();
   private final Set<GradleDependency>   myDependencies       = new HashSet<GradleDependency>();
   
+  private String myModuleFilePath;
   private boolean myInheritProjectCompileOutputPath = true;
   
-  public GradleModule(@NotNull String name) {
+  public GradleModule(@NotNull String name, @NotNull String moduleFileDirectoryPath) {
     super(name);
+    setModuleFileDirectoryPath(moduleFileDirectoryPath);
+  }
+
+  public String getModuleFilePath() {
+    return myModuleFilePath;
+  }
+
+  public void setModuleFileDirectoryPath(@NotNull String path) {
+    myModuleFilePath = GradleUtil.toCanonicalPath(path + "/" + getName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   @NotNull
@@ -79,12 +96,11 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
 
   @Override
   public int hashCode() {
-    int result = myContentRoots.hashCode();
-    result = 31 * result + myCompileOutputPaths.hashCode();
-    result = 31 * result + myDependencies.hashCode();
-    result = 31 * result + myDependencies.hashCode();
+    int result = super.hashCode();
+    result = 31 * result + myModuleFilePath.hashCode();
     result = 31 * result + (myInheritProjectCompileOutputPath ? 1 : 0);
-    result = 31 * result + super.hashCode();
+    result = 31 * result + myCompileOutputPaths.hashCode();
+    result = 31 * result + myContentRoots.hashCode();
     
     // We intentionally don't use dependencies here in order to allow module mappings before and after external libraries
     // resolving (downloading)
@@ -100,6 +116,7 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
     GradleModule that = (GradleModule)o;
 
     if (!super.equals(that)) return false;
+    if (!myModuleFilePath.equals(that.myModuleFilePath)) return false;
     if (myInheritProjectCompileOutputPath != that.myInheritProjectCompileOutputPath) return false;
     if (!myCompileOutputPaths.equals(that.myCompileOutputPaths)) return false;
     if (!myContentRoots.equals(that.myContentRoots)) return false;
@@ -120,12 +137,15 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
 
   @Override
   public GradleModule clone() {
-    GradleModule result = new GradleModule(getName());
+    GradleModule result = new GradleModule(getName(), new File(getModuleFilePath()).getParent());
     for (GradleContentRoot contentRoot : getContentRoots()) {
       result.addContentRoot(contentRoot.clone());
     }
     for (Map.Entry<SourceType, String> entry : myCompileOutputPaths.entrySet()) {
       result.setCompileOutputPath(entry.getKey(), entry.getValue());
+    }
+    for (GradleDependency dependency : getDependencies()) {
+      result.addDependency(dependency.clone());
     }
     return result;
   }

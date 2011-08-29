@@ -23,6 +23,7 @@ import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.*;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
@@ -277,16 +278,16 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
     if (getCurrentStep() == myTestBoxedStep) {
       finishEnabled = true;
-      nextEnabled = false;
+      nextEnabled = SystemInfo.isMac;
     }
 
     getFinishButton().setEnabled(finishEnabled);
     getNextButton().setEnabled(nextEnabled);
 
-    if (finishEnabled) {
+    if (finishEnabled && getFinishButton().isVisible()) {
       getRootPane().setDefaultButton(getFinishButton());
     }
-    else if (nextEnabled) {
+    else if (getNextButton().isEnabled()) {
       getRootPane().setDefaultButton(getNextButton());
     }
   }

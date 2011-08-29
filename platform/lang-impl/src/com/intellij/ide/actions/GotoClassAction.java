@@ -64,7 +64,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
           EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
         }
       }
-    });
+    }, "Classes matching pattern");
   }
 
   protected boolean hasContributors(DataContext dataContext) {

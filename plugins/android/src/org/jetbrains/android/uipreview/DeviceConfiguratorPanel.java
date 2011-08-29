@@ -62,7 +62,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     myAvailableQualifiersConfig.setLanguageQualifier(null);
     myAvailableQualifiersConfig.setVersionQualifier(null);
     myAvailableQualifiersConfig.setNightModeQualifier(null);
-    myAvailableQualifiersConfig.setDockModeQualifier(null);
+    myAvailableQualifiersConfig.setUiModeQualifier(null);
     myAvailableQualifiersConfig.setRegionQualifier(null);
 
     myChosenQualifiersConfig.reset();
@@ -84,7 +84,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
       else if (qualifier instanceof NavigationStateQualifier) {
         myEditors.put(name, new MyNavigationStateEditor());
       }
-      else if (qualifier instanceof PixelDensityQualifier) {
+      else if (qualifier instanceof DensityQualifier) {
         myEditors.put(name, new MyDensityEditor());
       }
       else if (qualifier instanceof ScreenDimensionQualifier) {
@@ -600,7 +600,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     }
   }
 
-  private class MyDensityEditor extends MyEnumBasedEditor<PixelDensityQualifier, Density> {
+  private class MyDensityEditor extends MyEnumBasedEditor<DensityQualifier, Density> {
     private MyDensityEditor() {
       super(Density.class);
     }
@@ -613,14 +613,14 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
 
     @NotNull
     @Override
-    protected Density getValue(@NotNull PixelDensityQualifier qualifier) {
+    protected Density getValue(@NotNull DensityQualifier qualifier) {
       return qualifier.getValue();
     }
 
     @NotNull
     @Override
-    protected PixelDensityQualifier getQualifier(@NotNull Density value) {
-      return new PixelDensityQualifier(value);
+    protected DensityQualifier getQualifier(@NotNull Density value) {
+      return new DensityQualifier(value);
     }
 
     @NotNull

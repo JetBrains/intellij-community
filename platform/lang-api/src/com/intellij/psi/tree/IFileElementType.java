@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,25 @@
  */
 package com.intellij.psi.tree;
 
-import com.intellij.lang.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class IFileElementType extends ILazyParseableElementType {
-  public IFileElementType(final Language language) {
+  public IFileElementType(@Nullable final Language language) {
     super("FILE", language);
   }
 
-  public IFileElementType(@NonNls String debugName, Language language) {
+  public IFileElementType(@NonNls @NotNull final String debugName, @Nullable final Language language) {
     super(debugName, language);
   }
 
-  public ASTNode parseContents(ASTNode chameleon) {
+  public ASTNode parseContents(final ASTNode chameleon) {
     final PsiElement psi = chameleon.getPsi();
     assert psi != null : "Bad chameleon: " + chameleon;
-    final Project project = psi.getProject();
-    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-
-    final PsiBuilder builder = factory.createBuilder(project, chameleon);
-
-    final PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).createParser(project);
-    return parser.parse(this, builder).getFirstChildNode();
+    return doParseContents(chameleon, psi);
   }
 }

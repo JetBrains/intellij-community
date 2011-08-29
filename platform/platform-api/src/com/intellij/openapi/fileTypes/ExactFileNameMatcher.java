@@ -51,6 +51,10 @@ public class ExactFileNameMatcher implements FileNameMatcher {
     return myFileName;
   }
 
+  public boolean isIgnoreCase() {
+    return myIgnoreCase;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;

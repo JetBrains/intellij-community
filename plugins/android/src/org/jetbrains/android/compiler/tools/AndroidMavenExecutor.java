@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.idea.maven.execution.MavenExternalParameters;
@@ -66,10 +65,6 @@ public class AndroidMavenExecutor {
                                                                                MavenRunner.getInstance(module.getProject()).getSettings());
 
       GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(javaParams);
-
-      String[] commands = commandLine.getCommands();
-      String command = StringUtil.join(commands, " ");
-      LOG.info("Execute: " + command);
       StringBuilder messageBuilder = new StringBuilder();
       boolean success = AndroidUtils.executeCommand(commandLine, messageBuilder);
       String message = messageBuilder.toString();

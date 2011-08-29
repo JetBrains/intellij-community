@@ -15,7 +15,6 @@
  */
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.Extensions;
@@ -54,13 +53,7 @@ public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvi
     if (view.getPresentation().isCodeUsages()) {
       final JComponent component = view.getComponent();
       final ShowImportsAction showImportsAction = new ShowImportsAction(impl);
-      showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK)), component);
-
-      impl.scheduleDisposeOnClose(new Disposable() {
-        public void dispose() {
-          showImportsAction.unregisterCustomShortcutSet(component);
-        }
-      });
+      showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK)), component, view);
       return new AnAction[] { showImportsAction };
     }
     else {

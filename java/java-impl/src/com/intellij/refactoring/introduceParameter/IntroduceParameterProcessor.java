@@ -41,9 +41,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.*;
-import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
-import com.intellij.refactoring.util.occurences.LocalVariableOccurenceManager;
-import com.intellij.refactoring.util.occurences.OccurenceManager;
+import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
+import com.intellij.refactoring.util.occurrences.LocalVariableOccurrenceManager;
+import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -190,14 +190,14 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   protected PsiElement[] getOccurrences() {
-    final OccurenceManager occurenceManager;
+    final OccurrenceManager occurrenceManager;
     if (myLocalVariable == null) {
-      occurenceManager = new ExpressionOccurenceManager(myExpressionToSearch, myMethodToReplaceIn, null);
+      occurrenceManager = new ExpressionOccurrenceManager(myExpressionToSearch, myMethodToReplaceIn, null);
     }
     else {
-      occurenceManager = new LocalVariableOccurenceManager(myLocalVariable, null);
+      occurrenceManager = new LocalVariableOccurrenceManager(myLocalVariable, null);
     }
-    return occurenceManager.getOccurences();
+    return occurrenceManager.getOccurrences();
   }
 
   public boolean hasConflicts() {

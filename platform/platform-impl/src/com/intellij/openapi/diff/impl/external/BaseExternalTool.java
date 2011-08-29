@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,14 +59,14 @@ abstract class BaseExternalTool implements DiffTool {
   }
 
   public void show(DiffRequest request) {
-    //ArrayList<String> commandLine = new ArrayList<String>();
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(getToolPath());
     try {
       commandLine.addParameter(convertToPath(request, 0));
       commandLine.addParameter(convertToPath(request, 1));
-      Runtime.getRuntime().exec(commandLine.getCommands());
-    } catch (IOException e) {
+      commandLine.createProcess();
+    }
+    catch (Exception e) {
       ExecutionErrorDialog.show(new ExecutionException(e.getMessage()),
                                 DiffBundle.message("cant.launch.diff.tool.error.message"), request.getProject());
     }

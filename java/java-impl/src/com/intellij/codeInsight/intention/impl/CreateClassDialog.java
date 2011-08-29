@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -175,8 +176,7 @@ public class CreateClassDialog extends DialogWrapper {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         try {
-          myTargetDirectory = myModule == null? PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, getBaseDir(packageName), true)
-            : PackageUtil.findOrCreateDirectoryForPackage(myModule, packageName, getBaseDir(packageName), true, true);
+          myTargetDirectory = MoveClassesOrPackagesUtil.chooseDestinationPackage(myProject, packageName, getBaseDir(packageName));
           if (myTargetDirectory == null) {
             errorString[0] = ""; // message already reported by PackageUtil
             return;

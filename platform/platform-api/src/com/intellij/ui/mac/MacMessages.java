@@ -36,7 +36,24 @@ public abstract class MacMessages {
   public static MacMessages getInstance() {
     return ServiceManager.getService(MacMessages.class);
   }
-  
+
+  /**
+   * Buttons are placed starting near the right side of the alert and going toward the left side 
+   * (for languages that read left to right). The first three buttons are identified positionally as 
+   * NSAlertFirstButtonReturn, NSAlertSecondButtonReturn, NSAlertThirdButtonReturn in the return-code parameter evaluated by the modal 
+   * delegate. Subsequent buttons are identified as NSAlertThirdButtonReturn +n, where n is an integer
+   * 
+   * By default, the first button has a key equivalent of Return, 
+   * any button with a title of "Cancel" has a key equivalent of Escape,
+   * and any button with the title "Don't Save" has a key equivalent of Command-D (but only if it is not the first button).
+   * 
+   * http://developer.apple.com/library/mac/#documentation/Cocoa/Reference/ApplicationKit/Classes/NSAlert_Class/Reference/Reference.html
+   * 
+   * Please, note that Cancel is supposed to be the last button!
+   */
+  public abstract int showMessageDialog(String title, String message, @Nullable String moreInfo, String[] buttons, boolean errorStyle,
+                                @Nullable Window window, @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
+
   public abstract void showOkMessageDialog(String title, String message, String okText, @Nullable Window window);
 
   public abstract void showOkMessageDialog(String title, String message, String okText);

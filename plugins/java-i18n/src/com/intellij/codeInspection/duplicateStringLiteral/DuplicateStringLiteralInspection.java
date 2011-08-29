@@ -35,9 +35,9 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
-import com.intellij.refactoring.util.occurences.BaseOccurenceManager;
-import com.intellij.refactoring.util.occurences.OccurenceFilter;
-import com.intellij.refactoring.util.occurences.OccurenceManager;
+import com.intellij.refactoring.util.occurrences.BaseOccurrenceManager;
+import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
+import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
@@ -313,18 +313,18 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
           }
           final PsiExpression[] expressionArray = expressions.toArray(new PsiExpression[expressions.size()]);
           final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
-            protected OccurenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
-              final OccurenceFilter filter = new OccurenceFilter() {
-                public boolean isOK(PsiExpression occurence) {
+            protected OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
+              final OccurrenceFilter filter = new OccurrenceFilter() {
+                public boolean isOK(PsiExpression occurrence) {
                   return true;
                 }
               };
-              return new BaseOccurenceManager(filter) {
-                protected PsiExpression[] defaultOccurences() {
+              return new BaseOccurrenceManager(filter) {
+                protected PsiExpression[] defaultOccurrences() {
                   return expressionArray;
                 }
 
-                protected PsiExpression[] findOccurences() {
+                protected PsiExpression[] findOccurrences() {
                   return expressionArray;
                 }
               };

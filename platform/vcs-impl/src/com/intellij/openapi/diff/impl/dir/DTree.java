@@ -64,6 +64,7 @@ public class DTree {
     isContainer = container;
   }
 
+  @NotNull
   public Collection<DTree> getChildren() {
     init();
     if (myChildrenList == null) {

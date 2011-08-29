@@ -15,7 +15,6 @@
  */
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.Extensions;
@@ -78,33 +77,18 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     final JComponent component = impl.getComponent();
 
     final GroupByModuleTypeAction groupByModuleTypeAction = new GroupByModuleTypeAction(impl);
-    groupByModuleTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK)), component);
+    groupByModuleTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK)), component, impl);
 
     final GroupByFileStructureAction groupByFileStructureAction = createGroupByFileStructureAction(impl);
-    impl.scheduleDisposeOnClose(new Disposable() {
-      public void dispose() {
-        groupByModuleTypeAction.unregisterCustomShortcutSet(component);
-      }
-    });
 
     final GroupByScopeAction groupByScopeAction = new GroupByScopeAction(impl);
 
     final GroupByPackageAction groupByPackageAction = new GroupByPackageAction(impl);
-    groupByPackageAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK)), component);
-    impl.scheduleDisposeOnClose(new Disposable() {
-      public void dispose() {
-        groupByPackageAction.unregisterCustomShortcutSet(component);
-      }
-    });
+    groupByPackageAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK)), component, impl);
 
     if(view.getPresentation().isCodeUsages()) {
       final GroupByUsageTypeAction groupByUsageTypeAction = new GroupByUsageTypeAction(impl);
-      groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK)), component);
-      impl.scheduleDisposeOnClose(new Disposable() {
-        public void dispose() {
-          groupByUsageTypeAction.unregisterCustomShortcutSet(component);
-        }
-      });
+      groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK)), component, impl);
       return new AnAction[] {
         groupByUsageTypeAction,
         groupByScopeAction,
@@ -127,13 +111,9 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     final JComponent component = impl.getComponent();
     final GroupByFileStructureAction groupByFileStructureAction = new GroupByFileStructureAction(impl);
     groupByFileStructureAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M,
-                                                                                                      InputEvent.CTRL_DOWN_MASK)), component);
+                                                                                                      InputEvent.CTRL_DOWN_MASK)), component,
+                                                         impl);
 
-    impl.scheduleDisposeOnClose(new Disposable() {
-      public void dispose() {
-        groupByFileStructureAction.unregisterCustomShortcutSet(component);
-      }
-    });
     return groupByFileStructureAction;
   }
 

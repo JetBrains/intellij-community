@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.util.occurences;
+package com.intellij.refactoring.util.occurrences;
 
 
 
 /**
  * @author dsl
  */
-public class NotInSuperCallOccurenceFilter extends NotInSuperOrThisCallFilterBase {
-  public static final OccurenceFilter INSTANCE = new NotInSuperCallOccurenceFilter();
+public class NotInSuperCallOccurrenceFilter extends NotInSuperOrThisCallFilterBase {
+  public static final OccurrenceFilter INSTANCE = new NotInSuperCallOccurrenceFilter();
 
   protected String getKeywordText() {
     return "super";

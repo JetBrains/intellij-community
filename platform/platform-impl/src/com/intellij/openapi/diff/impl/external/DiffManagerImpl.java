@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.diff.impl.external;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
@@ -42,13 +41,15 @@ import java.util.Arrays;
 
 public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.DiffManagerImpl");
+
   private static final Externalizer<String> TOOL_PATH_UPDATE = new Externalizer<String>() {
     @NonNls private static final String NEW_VALUE = "newValue";
+
     public String readValue(Element dataElement) {
       String path = dataElement.getAttributeValue(NEW_VALUE);
       if (path != null) return path;
       String prevValue = dataElement.getAttributeValue(VALUE_ATTRIBUTE);
-      return prevValue != null ? GeneralCommandLine.quote(prevValue.trim()) : null;
+      return prevValue != null ? prevValue.trim() : null;
     }
 
     public void writeValue(Element dataElement, String path) {
@@ -56,6 +57,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
       dataElement.setAttribute(NEW_VALUE, path);
     }
   };
+
   static final StringProperty FOLDERS_TOOL = new StringProperty("foldersTool", "");
   static final StringProperty FILES_TOOL = new StringProperty("filesTool", "");
   static final BooleanProperty ENABLE_FOLDERS = new BooleanProperty(

@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.JavaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 
 public class Normal17CompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -24,6 +25,7 @@ public class Normal17CompletionTest extends LightFixtureCompletionTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
   }
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_LATEST

@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.introduceVariable;
 
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -23,9 +22,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -241,9 +238,9 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     }
 
     if (myCbReplaceAll != null) {
-      myTypeSelectorManager.setAllOccurences(myCbReplaceAll.isSelected());
+      myTypeSelectorManager.setAllOccurrences(myCbReplaceAll.isSelected());
     } else {
-      myTypeSelectorManager.setAllOccurences(false);
+      myTypeSelectorManager.setAllOccurrences(false);
     }
 
     if (myDeclareFinalIfAll && myCbReplaceAll != null && myCbReplaceAll.isSelected()) {

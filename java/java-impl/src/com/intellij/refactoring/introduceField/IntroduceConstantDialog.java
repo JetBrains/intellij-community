@@ -34,7 +34,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
@@ -358,10 +357,10 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   private void updateTypeSelector() {
     if (myCbReplaceAll != null) {
-      myTypeSelectorManager.setAllOccurences(myCbReplaceAll.isSelected());
+      myTypeSelectorManager.setAllOccurrences(myCbReplaceAll.isSelected());
     }
     else {
-      myTypeSelectorManager.setAllOccurences(false);
+      myTypeSelectorManager.setAllOccurrences(false);
     }
   }
 

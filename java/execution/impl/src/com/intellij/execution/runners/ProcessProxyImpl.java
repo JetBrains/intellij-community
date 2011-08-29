@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,37 +30,32 @@ import java.net.Socket;
 /**
  * @author ven
  */
-
 class ProcessProxyImpl implements ProcessProxy {
   public static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
-  private final int myPortNumber;
 
+  @NonNls public static final String PROPERTY_BINPATH = "idea.launcher.bin.path";
+  @NonNls public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
+  @NonNls public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
+
+  @NonNls protected static final String LOCALHOST = "localhost";
+  @NonNls private static final String DONT_USE_LAUNCHER_PROPERTY = "idea.no.launcher";
   private static final int SOCKET_NUMBER_START = 7532;
   private static final int SOCKET_NUMBER = 100;
   private static final boolean[] ourUsedSockets = new boolean[SOCKET_NUMBER];
 
+  private final int myPortNumber;
   private PrintWriter myWriter;
   private Socket mySocket;
-  @NonNls private static final String DONT_USE_LAUNCHER_PROPERTY = "idea.no.launcher";
-  @NonNls public static final String PROPERTY_BINPATH = "idea.launcher.bin.path";
-  @NonNls public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
-  @NonNls public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
-  @NonNls
-  protected static final String LOCALHOST = "localhost";
-
-  public int getPortNumber() {
-    return myPortNumber;
-  }
 
   public static class NoMoreSocketsException extends Exception {
   }
 
-  public ProcessProxyImpl () throws NoMoreSocketsException {
-    myPortNumber = getPortNumer();
+  public ProcessProxyImpl() throws NoMoreSocketsException {
+    myPortNumber = findFreePort();
     if (myPortNumber == -1) throw new NoMoreSocketsException();
   }
 
-  private static int getPortNumer() {
+  private static int findFreePort() {
     synchronized (ourUsedSockets) {
       for (int j = 0; j < SOCKET_NUMBER; j++) {
         if (ourUsedSockets[j]) continue;
@@ -69,15 +64,19 @@ class ProcessProxyImpl implements ProcessProxy {
           s.close();
           ourUsedSockets[j] = true;
           return j + SOCKET_NUMBER_START;
-        } catch (IOException e) {
-          continue;
         }
+        catch (IOException ignore) { }
       }
     }
     return -1;
   }
 
-  public void finalize () throws Throwable {
+  public int getPortNumber() {
+    return myPortNumber;
+  }
+
+  @SuppressWarnings("FinalizeDeclaration")
+  protected synchronized void finalize() throws Throwable {
     if (myWriter != null) {
       myWriter.close();
     }
@@ -89,13 +88,16 @@ class ProcessProxyImpl implements ProcessProxy {
     processHandler.putUserData(KEY, this);
   }
 
-  private synchronized void writeLine (@NonNls final String s) {
+  @SuppressWarnings({"SocketOpenedButNotSafelyClosed", "IOResourceOpenedButNotSafelyClosed"})
+  private synchronized void writeLine(@NonNls final String s) {
     if (myWriter == null) {
       try {
-        if (mySocket == null)
+        if (mySocket == null) {
           mySocket = new Socket(InetAddress.getByName(LOCALHOST), myPortNumber);
+        }
         myWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(mySocket.getOutputStream())));
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         return;
       }
     }
@@ -103,11 +105,11 @@ class ProcessProxyImpl implements ProcessProxy {
     myWriter.flush();
   }
 
-  public void sendBreak () {
+  public void sendBreak() {
     writeLine("BREAK");
   }
 
-  public void sendStop () {
+  public void sendStop() {
     writeLine("STOP");
   }
 

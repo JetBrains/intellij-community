@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,10 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.diagnostic.Log;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,45 +29,80 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * OS-independent way of executing external processes with complex parameters.
+ *
+ * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
+ * as required by the underlying platform.
+ */
 public class GeneralCommandLine {
-  private static final Logger LOG = Logger.getInstance("#" + GeneralCommandLine.class.getName());
-  private Map<String, String> myEnvParams;
-  private boolean myPassParentEnvs;
   private String myExePath = null;
   private File myWorkDirectory = null;
-  private ParametersList myProgramParams = new ParametersList();
+  private Map<String, String> myEnvParams = null;
+  private boolean myPassParentEnvironment = true;
+  private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
+  private boolean myRedirectErrorStream = false;
 
-  public void setExePath(@NonNls final String exePath) {
-    myExePath = exePath.trim();
+  public GeneralCommandLine() { }
+
+  public GeneralCommandLine(final String... command) {
+    this(Arrays.asList(command));
+  }
+
+  public GeneralCommandLine(final List<String> command) {
+    final int size = command.size();
+    if (size > 0) {
+      setExePath(command.get(0));
+      if (size > 1) {
+        addParameters(command.subList(1, size));
+      }
+    }
   }
 
   public String getExePath() {
     return myExePath;
   }
 
-  public void setWorkDirectory(@NonNls final String path) {
-    setWorkingDirectory(path != null? new File(path) : null);
-  }
-
-  public void setWorkingDirectory(final File workingDirectory) {
-    myWorkDirectory = workingDirectory;
+  public void setExePath(@NotNull @NonNls final String exePath) {
+    myExePath = exePath.trim();
   }
 
   public File getWorkDirectory() {
     return myWorkDirectory;
   }
 
-  public void setEnvParams(final Map<String, String> envParams) {
+  public void setWorkDirectory(@Nullable @NonNls final String path) {
+    setWorkDirectory(path != null ? new File(path) : null);
+  }
+
+  public void setWorkDirectory(@Nullable final File workDirectory) {
+    myWorkDirectory = workDirectory;
+  }
+
+  /**
+   * @deprecated use {@link #setWorkDirectory(java.io.File)} (to remove in IDEA 12).
+   */
+  public void setWorkingDirectory(@Nullable final File workDirectory) {
+    setWorkDirectory(workDirectory);
+  }
+
+  @Nullable
+  public Map<String, String> getEnvParams() {
+    return myEnvParams;
+  }
+
+  public void setEnvParams(@Nullable final Map<String, String> envParams) {
     myEnvParams = envParams;
   }
 
-  public void setCharset(@NotNull Charset charset) {
-    myCharset = charset;
+  public void setPassParentEnvs(final boolean passParentEnvironment) {
+    myPassParentEnvironment = passParentEnvironment;
   }
 
   public void addParameters(final String... parameters) {
@@ -78,7 +111,7 @@ public class GeneralCommandLine {
     }
   }
 
-  public void addParameters(final List<String> parameters) {
+  public void addParameters(@NotNull final List<String> parameters) {
     for (final String parameter : parameters) {
       addParameter(parameter);
     }
@@ -88,37 +121,105 @@ public class GeneralCommandLine {
     myProgramParams.add(parameter);
   }
 
-  public String getCommandLineString() {
-    final StringBuffer buffer = new StringBuffer(quoteParameter(FileUtil.toSystemDependentName(myExePath)));
-    appendParams( buffer );
-    return buffer.toString();
+  public ParametersList getParametersList() {
+    return myProgramParams;
   }
 
-  public String getCommandLineParams() {
-    final StringBuffer buffer = new StringBuffer();
-    appendParams( buffer );
-    return buffer.toString();
-  }
-
-  private void appendParams( StringBuffer buffer ) {
-    for( final String param : myProgramParams.getList() ) {
-      buffer.append(" ").append(quoteParameter(param));
-    }
-  }
-
+  @NotNull
   public Charset getCharset() {
     return myCharset;
   }
 
+  public void setCharset(@NotNull final Charset charset) {
+    myCharset = charset;
+  }
+
+  public void setRedirectErrorStream(final boolean redirectErrorStream) {
+    myRedirectErrorStream = redirectErrorStream;
+  }
+
+  /**
+   * @deprecated please use {@link #getCommandLineString()} (to remove in IDEA 12).
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public String getCommandLineParams() {
+    return getCommandLineString();
+  }
+
+  /**
+   * Returns string representation of this command line.<br/>
+   * Warning: resulting string is not OS-dependent - <b>do not</b> use it for executing this command line.
+   *
+   * @return single-string representation of this command line.
+   */
+  public String getCommandLineString() {
+    return getCommandLineString(null);
+  }
+
+  /**
+   * Returns string representation of this command line.<br/>
+   * Warning: resulting string is not OS-dependent - <b>do not</b> use it for executing this command line.
+   *
+   * @param exeName use this executable name instead of given by {@link #setExePath(String)}
+   * @return single-string representation of this command line.
+   */
+  public String getCommandLineString(@Nullable final String exeName) {
+    final List<String> commands = new ArrayList<String>();
+    if (exeName != null) {
+      commands.add(exeName);
+    }
+    else if (myExePath != null) {
+      commands.add(FileUtil.toSystemDependentName(myExePath));
+    }
+    else {
+      commands.add("<null>");
+    }
+    commands.addAll(myProgramParams.getList());
+    return ParametersList.join(commands);
+  }
+
+  /**
+   * Returns a list of command and its parameters prepared in OS-dependent way to be executed by e.g. {@link Runtime#exec(String[])}.
+   *
+   * @deprecated this method is not intended for internal use (to remove in IDEA 12).
+   */
+  public String[] getCommands() {
+    return prepareCommands();
+  }
+
+  /**
+   * @deprecated use {@link #addParameter(String)} and {@link #addParameters(String...)} methods for adding parameters -
+   * any quoting needed will be done on {@link #createProcess()} (to remove in IDEA 12).
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public static String quoteParameter(final String parameter) {
+    return parameter;
+  }
+
+  /**
+   * @deprecated use {@link #addParameter(String)} and {@link #addParameters(String...)} methods for adding parameters -
+   * any quoting needed will be done on {@link #createProcess()} (to remove in IDEA 12).
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public static String quote(final String parameter) {
+    return parameter;
+  }
+
   public Process createProcess() throws ExecutionException {
     checkWorkingDirectory();
-    try {
-      final String[] commands = getCommands();
-      if(commands[0] == null) throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
 
-      return myWorkDirectory != null
-             ? Runtime.getRuntime().exec(commands, getEnvParamsArray(), myWorkDirectory)
-             : Runtime.getRuntime().exec(commands, getEnvParamsArray());
+    final String[] commands = prepareCommands();
+    if (StringUtil.isEmptyOrSpaces(commands[0])) {
+      throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
+    }
+
+    try {
+      final ProcessBuilder builder = new ProcessBuilder(commands);
+      final Map<String, String> environment = builder.environment();
+      setupEnvironment(environment);
+      builder.directory(myWorkDirectory);
+      builder.redirectErrorStream(myRedirectErrorStream);
+      return builder.start();
     }
     catch (IOException e) {
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
@@ -138,98 +239,36 @@ public class GeneralCommandLine {
     }
   }
 
-  @Nullable
-  public Map<String, String> getEnvParams() {
-    return myEnvParams;
-  }
-
-  @Nullable
-  private String[] getEnvParamsArray() {
-    final Map<String, String> envParams = collectEnvParams();
-    if (envParams == null) return null;
-    for (Iterator<String> iterator = envParams.keySet().iterator(); iterator.hasNext(); ) {
-      final String key = iterator.next();
-      if (envParams.get(key) == null) {
-        LOG.info("null value for env variable: " + key);
-        iterator.remove();
-      }
-    }
-    final String[] result = new String[envParams.size()];
-    int i=0;
-    for (final String key : envParams.keySet()) {
-      result[i++] = key + "=" + envParams.get(key).trim();
-    }
-    return result;
-  }
-
-  @Nullable
-  private Map<String, String> collectEnvParams() {
-    if (myEnvParams == null) {
-      return null;
-    }
-    final Map<String, String> envParams = new HashMap<String, String>();
-    if (myPassParentEnvs) {
-      envParams.putAll(System.getenv());
-    }
-    envParams.putAll(myEnvParams);
-    return envParams;
-  }
-
-  public String[] getCommands() {
+  private String[] prepareCommands() {
     final List<String> parameters = myProgramParams.getList();
     final String[] result = new String[parameters.size() + 1];
-    result[0] = myExePath;
-    int index = 1;
-    for (Iterator<String> iterator = parameters.iterator(); iterator.hasNext(); index++) {
-      result[index] = iterator.next();
+    result[0] = myExePath != null ? prepareCommand(FileUtil.toSystemDependentName(myExePath)) : null;
+    for (int i = 0; i < parameters.size(); i++) {
+      result[i + 1] = prepareCommand(parameters.get(i));
     }
     return result;
   }
 
-  public ParametersList getParametersList() {
-    return myProgramParams;
-  }
-
-  public static String quoteParameter(final String param) {
-    if (!SystemInfo.isWindows) {
-      return param;
-    }
-    return quote(param);
-  }
-
-  public static String quote(final String parameter) {
-    if (parameter == null || !hasWhitespace(parameter)) {
-      return parameter; // no need to quote
-    }
-    if (parameter.length() >= 2 && parameter.startsWith("\"") && parameter.endsWith("\"")) {
-      return parameter; // already quoted
-    }
-    // need to escape trailing slash if any, otherwise it will escape the ending quote
-    return "\"" + parameter + (parameter.endsWith("\\")? "\\\"" : "\"");
-  }
-
-  private static boolean hasWhitespace(final String string) {
-    final int length = string.length();
-    for (int i = 0; i < length; i++) {
-      if (Character.isWhitespace(string.charAt(i))) {
-        return true;
+  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand()
+  private static String prepareCommand(String parameter) {
+    if (SystemInfo.isWindows) {
+      if (parameter.contains("\"")) {
+        parameter = StringUtil.replace(parameter, "\"", "\\\"");
+      }
+      else if (parameter.length() == 0) {
+        parameter = "\"\"";
       }
     }
-    return false;
+    return parameter;
   }
 
-  public GeneralCommandLine clone() {
-    final GeneralCommandLine clone = new GeneralCommandLine();
-    clone.myCharset = myCharset;
-    clone.myExePath = myExePath;
-    clone.myWorkDirectory = myWorkDirectory;
-    clone.myProgramParams = myProgramParams.clone();
-    clone.myEnvParams = myEnvParams != null ? new HashMap<String, String>(myEnvParams) : null;
-    return clone;
-  }
-
-  public void setPassParentEnvs(final boolean passParentEnvs) {
-    myPassParentEnvs = passParentEnvs;
+  private void setupEnvironment(final Map<String, String> environment) {
+    if (!myPassParentEnvironment) {
+      environment.clear();
+    }
+    if (myEnvParams != null) {
+      environment.putAll(myEnvParams);
+    }
   }
 
   @Override

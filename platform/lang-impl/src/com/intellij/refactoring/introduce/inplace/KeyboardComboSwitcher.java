@@ -1,51 +1,20 @@
-package com.intellij.refactoring.introduceField;
+package com.intellij.refactoring.introduce.inplace;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiBundle;
-import com.intellij.psi.PsiModifier;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
 
 /**
  * User: anna
  */
-public class InplaceCombosUtil {
-  public static JComboBox createVisibilityCombo(final JPanel left,
-                                                final GridBagConstraints lgc,
-                                                final Project project,
-                                                @NotNull final String initialVisibility) {
+public class KeyboardComboSwitcher {
 
-    final JLabel label = new JLabel("Visibility:");
-    label.setDisplayedMnemonic('V');
-    left.add(label, lgc);
-    final JComboBox visibilityCombo = new JComboBox(new String[]{PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PRIVATE});
-    visibilityCombo.setRenderer(new ListCellRendererWrapper<String>(visibilityCombo.getRenderer()) {
-      @Override
-      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) return;
-        setText(PsiBundle.visibilityPresentation(value));
-      }
-    });
-    label.setLabelFor(visibilityCombo);
-    visibilityCombo.setSelectedItem(initialVisibility);
-
-    appendActions(visibilityCombo, project);
-    lgc.gridx++;
-    lgc.insets.top = 2;
-    lgc.insets.left = 2;
-    left.add(visibilityCombo, lgc);
-    return visibilityCombo;
-  }
-
-  public static void appendActions(final JComboBox comboBox, final Project project) {
+  public static void setupActions(final JComboBox comboBox, final Project project) {
     final boolean toggleStrategy = !UIUtil.isUnderAquaLookAndFeel();
     final boolean[] moveFocusBack = new boolean[] {true};
     comboBox.addFocusListener(new FocusAdapter() {

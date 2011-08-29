@@ -28,7 +28,6 @@ import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -203,9 +202,9 @@ public abstract class IntroduceFieldCentralPanel {
 
   private void updateTypeSelector() {
     if (myCbReplaceAll != null) {
-      myTypeSelectorManager.setAllOccurences(myCbReplaceAll.isSelected());
+      myTypeSelectorManager.setAllOccurrences(myCbReplaceAll.isSelected());
     } else {
-      myTypeSelectorManager.setAllOccurences(false);
+      myTypeSelectorManager.setAllOccurrences(false);
     }
   }
 

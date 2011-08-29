@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,34 +18,14 @@ package com.intellij.openapi.execution;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Assertion;
-import org.jetbrains.annotations.NonNls;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 /**
  * @author dyoma
  */
 public class ParametersListTest extends UsefulTestCase {
-  private final Assertion CHECK = new Assertion();
-
-  public void testAddParametersString() {
-    checkTokenizer("a b c", new String[]{"a", "b", "c"});
-    checkTokenizer("a \"b\"", new String[]{"a", "b"});
-    checkTokenizer("a \"b\\\"", new String[]{"a", "b\\\""});
-    checkTokenizer("a \"\"", new String[]{"a", "\"\""}); // Bug #12169
-    checkTokenizer("a \"x\"", new String[]{"a", "x"});
-    checkTokenizer("a \"\" b", new String[]{"a", "\"\"", "b"});
-  }
-
-  private void checkTokenizer(@NonNls String parmsString, @NonNls String[] expected) {
-    ParametersList params = new ParametersList();
-    params.addParametersString(parmsString);
-    String[] strings = ArrayUtil.toStringArray(params.getList());
-    CHECK.compareAll(expected, strings);
-  }
-
   public void testParamsGroup_Empty() {
     ParametersList params = new ParametersList();
 
@@ -82,7 +62,7 @@ public class ParametersListTest extends UsefulTestCase {
   public void testParamsGroup_Remove() {
     ParametersList params = new ParametersList();
 
-    final ParamsGroup group1 = params.addParamsGroup("id1");
+    params.addParamsGroup("id1");
     final ParamsGroup group2 = params.addParamsGroup("id2");
     final ParamsGroup group3 = params.addParamsGroup("id3");
     final ParamsGroup group4 = params.addParamsGroup("id4");
@@ -169,20 +149,61 @@ public class ParametersListTest extends UsefulTestCase {
     assertEquals("group1_param1 group2_param1 group3_param1", params_clone.getParametersString().trim());
   }
 
-  public void testParamsWithSpaces() {
-    checkTokenizer("a b=\"some text\" c", new String[]{"a", "b=\"some", "text\"", "c"});
-    checkTokenizer("a b=\"some text with spaces\" c", new String[]{"a", "b=\"some", "text", "with", "spaces\"", "c"});
-    checkTokenizer("a b=\"some text with spaces\"more c", new String[]{"a", "b=\"some", "text", "with", "spaces\"more", "c"});
-    checkTokenizer("a b=\"some text with spaces \"more c", new String[]{"a", "b=\"some", "text", "with", "spaces", "\"more", "c"});
+  public void testAddParametersString() {
+    checkTokenizer("a b c",
+                   "a", "b", "c");
+    checkTokenizer("a \"b\"",
+                   "a", "b");
+    checkTokenizer("a \"b\\\"",
+                   "a", "b\"");
+    checkTokenizer("a \"\"",
+                   "a", ""); // Bug #12169
+    checkTokenizer("a \"x\"",
+                   "a", "x");
+    checkTokenizer("a \"\\\"\" b",
+                   "a", "\"", "b");
+  }
 
-    //this test just fixes the way it works;
-    // i don't see any use cases when it definitely should or shouldn't be this way
-    checkTokenizer("a \"some text with spaces\"More c", new String[]{"a", "some text with spacesMore", "c"});
+  public void testParamsWithSpacesAndQuotes() {
+    checkTokenizer("a b=\"some text\" c",
+                   "a", "b=some text", "c");
+    checkTokenizer("a b=\"some text with spaces\" c",
+                   "a", "b=some text with spaces", "c");
+    checkTokenizer("a b=\"some text with spaces\".more c",
+                   "a", "b=some text with spaces.more", "c");
+    checkTokenizer("a b=\"some text with spaces \"more c",
+                   "a", "b=some text with spaces more", "c");
+    checkTokenizer("a \"some text with spaces\"More c",
+                   "a", "some text with spacesMore", "c");
+    checkTokenizer("a \"some text with spaces more c",
+                   "a", "some text with spaces more c");
+    checkTokenizer("a\"Some text with spaces \"more c",
+                   "aSome text with spaces more", "c");
+    checkTokenizer("a\"Some text with spaces \"more",
+                   "aSome text with spaces more");
+    checkTokenizer("a\"Some text with spaces \"more next\"Text moreText\"End c",
+                   "aSome text with spaces more", "nextText moreTextEnd", "c");
+    checkTokenizer("\"\"C:\\phing.bat\"",
+                   "C:\\phing.bat");
+    checkTokenizer("-Dprop.1=\"some text\" -Dprop.2=\\\"value\\\"",
+                   "-Dprop.1=some text", "-Dprop.2=\"value\"");
+  }
 
-    checkTokenizer("a \"some text with spaces \"more c", new String[]{"a", "some text with spaces more", "c"});
-    checkTokenizer("a\"some text with spaces \"more c", new String[]{"a\"some", "text", "with", "spaces", "\"more", "c"});
-    checkTokenizer("a\"some text with spaces \"more", new String[]{"a\"some", "text", "with", "spaces", "\"more"});
-    checkTokenizer("a\"some text with spaces \"more next\"text moreText\"end c", new String[]{"a\"some", "text", "with", "spaces", "\"more",
-      "next\"text", "moreText\"end", "c"});
+  public void testJoiningParams() throws Exception {
+    final String[] parameters = {"simpleParam", "param with spaces", "withQuote=\"", "param=\"complex quoted\""};
+    final ParametersList parametersList = new ParametersList();
+
+    parametersList.addAll(parameters);
+    final String joined = parametersList.getParametersString();
+    assertEquals("simpleParam \"param with spaces\" withQuote=\\\" \"param=\\\"complex quoted\\\"\"",
+                 joined);
+
+    checkTokenizer(joined, parameters);
+  }
+
+  private static void checkTokenizer(final String paramString, final String... expected) {
+    final ParametersList params = new ParametersList();
+    params.addParametersString(paramString);
+    assertEquals(Arrays.asList(expected), params.getList());
   }
 }

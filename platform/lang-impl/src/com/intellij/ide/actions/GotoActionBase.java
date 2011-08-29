@@ -119,6 +119,13 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected static <T> void showNavigationPopup(AnActionEvent e, ChooseByNameModel model, final GotoActionCallback<T> callback) {
+    showNavigationPopup(e, model, callback, null);
+  }
+
+  protected static <T> void showNavigationPopup(AnActionEvent e,
+                                                ChooseByNameModel model,
+                                                final GotoActionCallback<T> callback,
+                                                final String findTitle) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
@@ -126,6 +133,7 @@ public abstract class GotoActionBase extends AnAction {
     LOG.assertTrue(startedAction != null);
     Pair<String, Integer> start = getInitialText(e.getData(PlatformDataKeys.EDITOR));
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), start.first, mayRequestOpenInCurrentWindow, start.second);
+    popup.setFindUsagesTitle(findTitle);
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {

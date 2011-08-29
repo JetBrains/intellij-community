@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,12 +132,15 @@ public class CvsFileAnnotation implements FileAnnotation{
     if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
       return "";
     }
-    final String revision = myAnnotations[lineNumber].getRevision();
+    final Annotation annotation = myAnnotations[lineNumber];
+    final String revision = annotation.getRevision();
+    final Date date = annotation.getDate();
+    final String author = annotation.getUserName();
     final String comment = myRevisionComments.get(revision);
     if (comment == null) {
       return "";
     }
-    return CvsBundle.message("annotation.tooltip", revision, comment);
+    return CvsBundle.message("annotation.tooltip", revision, date, author, comment);
   }
 
   public String getAnnotatedContent() {
@@ -185,7 +188,7 @@ public class CvsFileAnnotation implements FileAnnotation{
     return myAnnotations.length;
   }
 
-  private abstract class CvsAnnotationAspect extends LineAnnotationAspectAdapter {
+  private abstract static class CvsAnnotationAspect extends LineAnnotationAspectAdapter {
     public CvsAnnotationAspect(String id, boolean showByDefault) {
       super(id, showByDefault);
     }

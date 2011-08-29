@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.util.occurences;
+package com.intellij.refactoring.util.occurrences;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.find.FindManager;
@@ -30,22 +30,22 @@ import java.util.*;
 /**
  * @author dsl
  */
-public class ExpressionOccurenceManager extends BaseOccurenceManager {
+public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
   private PsiExpression myMainOccurence;
   private final PsiElement myScope;
   private final boolean myMaintainStaticContext;
 
-  public ExpressionOccurenceManager(PsiExpression mainOccurence, PsiElement scope, OccurenceFilter filter) {
+  public ExpressionOccurrenceManager(PsiExpression mainOccurence, PsiElement scope, OccurrenceFilter filter) {
     this(mainOccurence, scope, filter, false);
   }
 
-  public ExpressionOccurenceManager(PsiExpression mainOccurence, PsiElement scope, OccurenceFilter filter, boolean maintainStaticContext) {
+  public ExpressionOccurrenceManager(PsiExpression mainOccurence, PsiElement scope, OccurrenceFilter filter, boolean maintainStaticContext) {
     super(filter);
     myMainOccurence = mainOccurence;
     myScope = scope;
     myMaintainStaticContext = maintainStaticContext;
   }
-  protected PsiExpression[] defaultOccurences() {
+  protected PsiExpression[] defaultOccurrences() {
     return new PsiExpression[]{myMainOccurence};
   }
 
@@ -53,12 +53,12 @@ public class ExpressionOccurenceManager extends BaseOccurenceManager {
     return myMainOccurence;
   }
 
-  protected PsiExpression[] findOccurences() {
+  protected PsiExpression[] findOccurrences() {
     if("null".equals(myMainOccurence.getText())) {
-      return defaultOccurences();
+      return defaultOccurrences();
     }
     if(myFilter != null && !myFilter.isOK(myMainOccurence)) {
-      return defaultOccurences();
+      return defaultOccurrences();
     }
     final PsiExpression[] expressionOccurrences = findExpressionOccurrences();
     final PsiClass scopeClass = PsiTreeUtil.getNonStrictParentOfType(myScope, PsiClass.class);

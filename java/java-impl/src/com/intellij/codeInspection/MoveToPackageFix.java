@@ -19,14 +19,20 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,9 +70,16 @@ public class MoveToPackageFix implements LocalQuickFix {
 
     if (!CodeInsightUtilBase.prepareFileForWrite(myFile)) return;
 
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        chooseDirectoryAndMove(project, myFile);
+      }
+    });
+  }
+
+  private void chooseDirectoryAndMove(Project project, PsiFile myFile) {
     try {
-      String packageName = myTargetPackage;
-      PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(project, packageName, null, true);
+      PsiDirectory directory = MoveClassesOrPackagesUtil.chooseDestinationPackage(project, myTargetPackage, null);
 
       if (directory == null) {
         return;

@@ -43,7 +43,7 @@ public abstract class DirDiffAction extends ToggleAction implements DirDiffIcons
   @Override
   public final void setSelected(AnActionEvent e, boolean state) {
     updateState(state);
-    if (this.getClass() == RefreshDirDiffAction.class) {
+    if (isFullReload()) {
       getModel().reloadModel();
     } else {
       if (state) {
@@ -52,6 +52,10 @@ public abstract class DirDiffAction extends ToggleAction implements DirDiffIcons
         getModel().applyRemove();
       }
     }
+  }
+
+  protected boolean isFullReload() {
+    return false;
   }
 
   @Override

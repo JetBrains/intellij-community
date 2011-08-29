@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.util.occurences;
+package com.intellij.refactoring.util.occurrences;
 
-import com.intellij.psi.*;
-
-public interface OccurenceFilter {
-  boolean isOK(PsiExpression occurence);
+/**
+ * @author dsl
+ */
+public class NotInThisCallFilter extends NotInSuperOrThisCallFilterBase {
+  public static final NotInThisCallFilter INSTANCE = new NotInThisCallFilter();
+  protected String getKeywordText() {
+    return "this";
+  }
 }
