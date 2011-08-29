@@ -46,7 +46,6 @@ import java.util.*;
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
 
   private final JBReentrantReadWriteLock LOCK = LockFactory.createReadWriteLock();
-  final JBLock READ_LOCK = LOCK.readLock();
   final JBLock WRITE_LOCK = LOCK.writeLock();
 
   private final List<WatchRequest> myRootsToWatch = new ArrayList<WatchRequest>();
@@ -195,7 +194,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private void storeRefreshStatusToFiles() {
     if (FileWatcher.getInstance().isOperational()) {
-      // TODO: different ways to marky dirty for all these cases
+      // TODO: different ways to mark dirty for all these cases
       markPathsDirty(FileWatcher.getInstance().getDirtyPaths());
       markFlatDirsDirty(FileWatcher.getInstance().getDirtyDirs());
       markRecursiveDirsDirty(FileWatcher.getInstance().getDirtyRecursivePaths());
