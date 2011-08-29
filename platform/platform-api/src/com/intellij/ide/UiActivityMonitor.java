@@ -22,16 +22,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.BusyObject;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class UiActivityMonitor implements ApplicationComponent {
 
@@ -126,6 +122,12 @@ public class UiActivityMonitor implements ApplicationComponent {
     return (BusyObjectGlobalImpl)myObjects.get(null);
   }
 
+  public void clear() {
+    for (Object eachObject : myObjects.keySet()) {
+      myObjects.get(eachObject).clear();
+    }
+  }
+
 
   public static UiActivityMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(UiActivityMonitor.class);
@@ -145,6 +147,7 @@ public class UiActivityMonitor implements ApplicationComponent {
   private class BusyImpl extends BusyObject.Impl {
 
     private Set<Object> myActivities = new HashSet<Object>();
+    private Set<Object> myQueuedToRemove = new HashSet<Object>();
 
     @Override
     public boolean isReady() {
@@ -158,19 +161,31 @@ public class UiActivityMonitor implements ApplicationComponent {
 
     public void addActivity(Object activity) {
       myActivities.add(activity);
+      myQueuedToRemove.remove(activity);
     }
 
-    public void removeActivity(Object activity) {
+    public void removeActivity(final Object activity) {
       if (!myActivities.contains(activity)) return;
 
-      myActivities.remove(activity);
+      myQueuedToRemove.add(activity);
 
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
+          if (!myQueuedToRemove.contains(activity)) return;
+
+          myQueuedToRemove.remove(activity);
+          myActivities.remove(activity);
           onReady();
         }
       });
+    }
+
+    public void clear() {
+      Object[] activities = myActivities.toArray(new Object[myActivities.size()]);
+      for (Object each : activities) {
+        removeActivity(each);
+      }
     }
   }
 

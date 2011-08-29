@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationListener;
@@ -82,6 +83,8 @@ public class PlaybackRunner {
   public ActionCallback run() {
     myStopRequested = false;
 
+    UiActivityMonitor.getInstance().clear();
+    
     ApplicationManager.getApplication().getMessageBus().connect(myOnStop).subscribe(ApplicationActivationListener.TOPIC, myAppListener);
 
     try {
