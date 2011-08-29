@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -58,7 +57,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public volatile AtomicReference<String> text = new AtomicReference<String>(prepareText(""));
   private Updater updater;
   private List<DirDiffModelListener> myListeners = new ArrayList<DirDiffModelListener>();
-  private Stack<TableSelectionConfig> selections = new Stack<TableSelectionConfig>();
+  private TableSelectionConfig mySelectionConfig;
 
   public static final String EMPTY_STRING = "                                                  ";
   private DirDiffPanel myPanel;
@@ -240,12 +239,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             if (loadingPanel.isLoading()) {
               loadingPanel.stopLoading();
             }
-            if (selections.empty()) {
+            if (mySelectionConfig == null) {
               selectFirstRow();
             } else {
-              while (!selections.empty()) {
-                selections.pop().restore();
-              }
+              mySelectionConfig.restore();
             }
             myPanel.update(true);
           }
@@ -550,8 +547,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  public void createSelectionConfig() {
-    selections.push(new TableSelectionConfig());
+  public void rememberSelection() {
+    mySelectionConfig = new TableSelectionConfig();
   }
   
   public class TableSelectionConfig {

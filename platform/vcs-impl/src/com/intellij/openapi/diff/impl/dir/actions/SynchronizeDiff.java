@@ -45,7 +45,7 @@ public class SynchronizeDiff extends DirDiffAction {
     
     for (DirDiffElement element : elements) {
       if (mySelectedOnly) {
-        getModel().createSelectionConfig();
+        getModel().rememberSelection();
       }
 
       final DirDiffOperation operation = element.getOperation();
