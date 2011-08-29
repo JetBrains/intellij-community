@@ -17,6 +17,7 @@ package com.intellij.ui.mac;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -24,6 +25,7 @@ import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.PairFunction;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +38,7 @@ import static com.intellij.ui.mac.foundation.Foundation.*;
 /**
  * @author pegov
  */
-public class MacMessagesImpl extends MacMessages{
+public class MacMessagesImpl extends MacMessages {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMessages");
 
   private static final Callback SHEET_DID_END = new Callback() {
@@ -45,7 +47,7 @@ public class MacMessagesImpl extends MacMessages{
       Window[] windows = Window.getWindows();
 
       ID suppressState = invoke(invoke(alert, "suppressionButton"), "state");
-      
+
       for (Window window : windows) {
         if (window instanceof JFrame) {
           JFrame frame = (JFrame)window;
@@ -70,7 +72,49 @@ public class MacMessagesImpl extends MacMessages{
     }
   };
 
-  private static final Callback MAIN_THREAD_RUNNABLE = new Callback() {
+  private static final Callback VARIABLE_BUTTONS_SHEET_PANEL = new Callback() {
+    public void callback(ID self, String selector, ID params) {
+      ID title = invoke(params, "objectAtIndex:", 0);
+      ID message = invoke(params, "objectAtIndex:", 1);
+      ID moreInfo = invoke(params, "objectAtIndex:", 2);
+      ID focusedWindow = invoke(params, "objectAtIndex:", 3);
+      ID fakeId = invoke(params, "objectAtIndex:", 4);
+      ID alertStyle = invoke(params, "objectAtIndex:", 5);
+      ID doNotAskText = invoke(params, "objectAtIndex:", 6);
+      ID buttons = invoke(params, "objectAtIndex:", 7);
+
+      ID alert = invoke(invoke("NSAlert", "alloc"), "init");
+
+      invoke(alert, "setMessageText:", title);
+      invoke(alert, "setInformativeText:", message);
+      
+      if ("error".equals(toStringViaUTF8(alertStyle))) {
+        invoke(alert, "setAlertStyle:", 2); // NSCriticalAlertStyle = 2
+      }
+      
+      final ID buttonEnumerator = invoke(buttons, "objectEnumerator");
+      while (true) {
+        final ID button = invoke(buttonEnumerator, "nextObject");
+        if (0 == button.intValue()) break;
+        invoke(alert, "addButtonWithTitle:", button);
+      }
+
+      if (1 == invoke(buttons, "count").intValue()) {
+        //invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:", 0), "setKeyEquivalent:", "");
+      }
+      
+      String doNotAsk = toStringViaUTF8(doNotAskText);
+      if (!"-1".equals(doNotAsk)) {
+        invoke(alert, "setShowsSuppressionButton:", 1);
+        invoke(invoke(alert, "suppressionButton"), "setTitle:", doNotAskText);
+      }
+
+      invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", focusedWindow, self,
+             createSelector("alertDidEnd:returnCode:contextInfo:"), fakeId);
+    }
+  };
+
+  private static final Callback SIMPLE_SHEET_PANEL = new Callback() {
     public void callback(ID self, String selector, ID params) {
       ID title = invoke(params, "objectAtIndex:", 0);
       ID defaultText = invoke(params, "objectAtIndex:", 1);
@@ -123,59 +167,140 @@ public class MacMessagesImpl extends MacMessages{
       if (!Foundation.addMethod(delegateClass, Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), SHEET_DID_END, "v*")) {
         throw new RuntimeException("Unable to add method to objective-c delegate class!");
       }
-      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showSheet:"), MAIN_THREAD_RUNNABLE, "v*")) {
+      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showSheet:"), SIMPLE_SHEET_PANEL, "v*")) {
         throw new RuntimeException("Unable to add method to objective-c delegate class!");
       }
-
+      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showVariableButtonsSheet:"), VARIABLE_BUTTONS_SHEET_PANEL, "v*")) {
+        throw new RuntimeException("Unable to add method to objective-c delegate class!");
+      }
       Foundation.registerObjcClassPair(delegateClass);
     }
   }
 
   @Override
-  public  void showOkMessageDialog(String title, String message, String okText, @Nullable Window window) {
+  public void showOkMessageDialog(String title, String message, String okText, @Nullable Window window) {
     showMessageDialog(title, okText, null, null, message, window);
   }
 
   @Override
-  public  void showOkMessageDialog(String title, String message, String okText) {
+  public void showOkMessageDialog(String title, String message, String okText) {
     showMessageDialog(title, okText, null, null, message, null);
   }
 
   @Override
-  public  int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window) {
+  public int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window) {
     return showMessageDialog(title, yesButton, null, noButton, message, window);
   }
 
   @Override
-  public  int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window,
-                                    @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+  public int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window,
+                             @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
     return showAlertDialog(title, yesButton, null, noButton, message, window, false, doNotAskDialogOption);
   }
 
   @Override
-  public  void showErrorDialog(String title, String message, String okButton, @Nullable Window window) {
+  public void showErrorDialog(String title, String message, String okButton, @Nullable Window window) {
     showAlertDialog(title, okButton, null, null, message, window, true, null);
   }
 
   @Override
-  public  int showYesNoCancelDialog(String title,
-                                          String message,
-                                          String defaultButton,
-                                          String alternateButton,
-                                          String otherButton,
-                                          Window window,
-                                          @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+  public int showYesNoCancelDialog(String title,
+                                   String message,
+                                   String defaultButton,
+                                   String alternateButton,
+                                   String otherButton,
+                                   Window window,
+                                   @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return showAlertDialog(title, defaultButton, alternateButton, otherButton, message, window, false, doNotAskOption);
   }
 
-  public static int showAlertDialog(String title,
-                                    String defaultText,
-                                    @Nullable String alternateText,
-                                    @Nullable String otherText,
-                                    String message,
-                                    @Nullable Window window,
-                                    boolean errorStyle,
-                                    @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+  public int showMessageDialog(final String title, final String message, final String moreInfo, final String[] buttons, final boolean errorStyle,
+                                @Nullable Window window, @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+    return doForWindowAndTitle(new PairFunction<Pair<Window, String>, JRootPane, Integer>() {
+      @Override
+      public Integer fun(Pair<Window, String> windowAndTitle, JRootPane pane) {
+        String _windowTitle = windowAndTitle.getSecond();
+        Window _window = windowAndTitle.getFirst();
+
+        final ID focusedWindow = MacUtil.findWindowForTitle(_windowTitle);
+        if (focusedWindow != null) {
+          String fakeTitle = null;
+
+          final FocusTrackback[] focusTrackback = {new FocusTrackback(new Object(), _window, true)};
+
+          ID pool = invoke("NSAutoreleasePool", "new");
+          try {
+            final ID delegate = invoke(Foundation.getClass("NSAlertDelegate_"), "new");
+            cfRetain(delegate);
+
+            fakeTitle = String.format("MacSheetDialog-%d", delegate.intValue());
+
+            final ID buttonsArray = invoke("NSMutableArray", "array");
+            for (String s : buttons) {
+              invoke(buttonsArray, "addObject:", cfString(UIUtil.removeMnemonic(s)));
+            }
+
+            ID paramsArray = invoke("NSArray", "arrayWithObjects:", cfString(title),
+                                    // replace % -> %% to avoid formatted parameters (causes SIGTERM)
+                                    cfString(StringUtil.stripHtml(message, true).replace("%", "%%")),
+                                    cfString(StringUtil.stripHtml(moreInfo, true).replace("%", "%%")),
+                                    focusedWindow, cfString(fakeTitle), cfString(errorStyle ? "error" : "-1"),
+                                    cfString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
+                                             // TODO: state=!doNotAsk.shouldBeShown()
+                                             ? "-1"
+                                             : doNotAskDialogOption.getDoNotShowMessage()), buttonsArray, null);
+
+
+            invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
+                   Foundation.createSelector("showVariableButtonsSheet:"), paramsArray, true);
+          }
+          finally {
+            invoke(pool, "release");
+          }
+
+          if (fakeTitle != null) {
+            pane.putClientProperty(MacUtil.MAC_NATIVE_WINDOW_SHOWING, Boolean.TRUE);
+            pane.putClientProperty(MAC_SHEET_ID, fakeTitle);
+
+            MacUtil.startModal(pane);
+            Integer code = (Integer)pane.getClientProperty(MAC_SHEET_RESULT) - 1000; // see NSAlertFirstButtonReturn for more info
+            boolean suppress = Boolean.TRUE == pane.getClientProperty(MAC_SHEET_SUPPRESS);
+
+            final int cancelCode = buttons.length - 1;
+
+            if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
+              if (cancelCode != code || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
+                doNotAskDialogOption.setToBeShown(!suppress, code);
+              }
+            }
+
+            pane.putClientProperty(MAC_SHEET_RESULT, null);
+            pane.putClientProperty(MAC_SHEET_SUPPRESS, null);
+
+            if (focusTrackback[0] != null &&
+                !(focusTrackback[0].isSheduledForRestore() || focusTrackback[0].isWillBeSheduledForRestore())) {
+              focusTrackback[0].setWillBeSheduledForRestore();
+
+              IdeFocusManager mgr = IdeFocusManager.findInstanceByComponent(_window);
+              Runnable r = new Runnable() {
+                public void run() {
+                  if (focusTrackback[0] != null) focusTrackback[0].restoreFocus();
+                  focusTrackback[0] = null;
+                }
+              };
+              mgr.doWhenFocusSettlesDown(r);
+            }
+
+            return code;
+          }
+        }
+
+        return -1;
+      }
+    }, window);
+  }
+
+  private static int doForWindowAndTitle(PairFunction<Pair<Window, String>, JRootPane, Integer> fun, @Nullable Window window) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
 
     JRootPane pane = null;
@@ -185,7 +310,7 @@ public class MacMessagesImpl extends MacMessages{
     if (!_window.isShowing()) {
       Container parent = _window.getParent();
       if (parent != null && parent instanceof Window) {
-        _window = (Window) parent;
+        _window = (Window)parent;
       }
 
       if (!_window.isShowing()) {
@@ -195,7 +320,7 @@ public class MacMessagesImpl extends MacMessages{
         }
       }
     }
-    
+
     LOG.assertTrue(_window.isShowing(), "Window MUST BE showing in screen!");
 
     if (_window instanceof JFrame) {
@@ -211,114 +336,135 @@ public class MacMessagesImpl extends MacMessages{
 
     LOG.assertTrue(_windowTitle != null && _windowTitle.length() > 0 && pane != null, "Window MUST have a title and a root pane!");
 
-    final ID focusedWindow = MacUtil.findWindowForTitle(_windowTitle);
-    if (focusedWindow != null) {
-      String fakeTitle = null;
+    return fun.fun(Pair.create(_window, _windowTitle), pane);
+  }
 
-      final FocusTrackback[] focusTrackback = {new FocusTrackback(new Object(), _window, true)};
+  public static int showAlertDialog(final String title,
+                                    final String defaultText,
+                                    @Nullable final String alternateText,
+                                    @Nullable final String otherText,
+                                    final String message,
+                                    @Nullable Window window,
+                                    final boolean errorStyle,
+                                    @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+    return doForWindowAndTitle(new PairFunction<Pair<Window, String>, JRootPane, Integer>() {
+      @Override
+      public Integer fun(Pair<Window, String> windowAndTitle, JRootPane pane) {
+        String _windowTitle = windowAndTitle.getSecond();
+        Window _window = windowAndTitle.getFirst();
 
-      ID pool = invoke("NSAutoreleasePool", "new");
-      try {
-        final ID delegate = invoke(Foundation.getClass("NSAlertDelegate_"), "new");
-        cfRetain(delegate);
+        final ID focusedWindow = MacUtil.findWindowForTitle(_windowTitle);
+        if (focusedWindow != null) {
+          String fakeTitle = null;
 
-        fakeTitle = String.format("MacSheetDialog-%d", delegate.intValue());
+          final FocusTrackback[] focusTrackback = {new FocusTrackback(new Object(), _window, true)};
 
-        ID paramsArray = invoke("NSArray", "arrayWithObjects:", cfString(title), cfString(UIUtil.removeMnemonic(defaultText)),
-                                cfString(otherText == null ? "-1" : UIUtil.removeMnemonic(otherText)),
-                                cfString(alternateText == null ? "-1" : UIUtil.removeMnemonic(alternateText)),
-                                // replace % -> %% to avoid formatted parameters (causes SIGTERM)
-                                cfString(StringUtil.stripHtml(message, true).replace("%", "%%")),
-                                focusedWindow, cfString(fakeTitle), cfString(errorStyle ? "error" : "-1"),
-                                cfString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
-                                         // TODO: state=!doNotAsk.shouldBeShown()
-                                         ? "-1"
-                                         : doNotAskDialogOption.getDoNotShowMessage()), null);
+          ID pool = invoke("NSAutoreleasePool", "new");
+          try {
+            final ID delegate = invoke(Foundation.getClass("NSAlertDelegate_"), "new");
+            cfRetain(delegate);
 
-        invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
-               Foundation.createSelector("showSheet:"), paramsArray, true);
-      }
-      finally {
-        invoke(pool, "release");
-      }
+            fakeTitle = String.format("MacSheetDialog-%d", delegate.intValue());
 
-      if (fakeTitle != null) {
-        pane.putClientProperty(MacUtil.MAC_NATIVE_WINDOW_SHOWING, Boolean.TRUE);
-        pane.putClientProperty(MAC_SHEET_ID, fakeTitle);
+            ID paramsArray = invoke("NSArray", "arrayWithObjects:", cfString(title), cfString(UIUtil.removeMnemonic(defaultText)),
+                                    cfString(otherText == null ? "-1" : UIUtil.removeMnemonic(otherText)),
+                                    cfString(alternateText == null ? "-1" : UIUtil.removeMnemonic(alternateText)),
+                                    // replace % -> %% to avoid formatted parameters (causes SIGTERM)
+                                    cfString(StringUtil.stripHtml(message, true).replace("%", "%%")),
+                                    focusedWindow, cfString(fakeTitle), cfString(errorStyle ? "error" : "-1"),
+                                    cfString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
+                                             // TODO: state=!doNotAsk.shouldBeShown()
+                                             ? "-1"
+                                             : doNotAskDialogOption.getDoNotShowMessage()), null);
 
-        MacUtil.startModal(pane);
-        Integer result = (Integer)pane.getClientProperty(MAC_SHEET_RESULT);
-        boolean suppress = Boolean.TRUE == pane.getClientProperty(MAC_SHEET_SUPPRESS);
-        
-        // DEFAULT = 1
-        // ALTERNATE = 0
-        // OTHER = -1 (cancel)
-        
-        int cancelCode = 1;
-        int code;
-        if (alternateText != null) {
-          // DEFAULT = 0
-          // ALTERNATE = 1
-          // CANCEL = 2
-          
-          cancelCode = 2;
-          
-          switch (result) {
-            case 1:
-              code = 0;
-              break;
-            case 0:
-              code = 1;
-              break;
-            case -1: // cancel
-            default:
-              code = 2;
-              break;
+            invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
+                   Foundation.createSelector("showSheet:"), paramsArray, true);
           }
-        } else {
-          // DEFAULT = 0
-          // CANCEL = 1
-          
-          cancelCode = 1;
-    
-          switch (result) {
-            case 1:
-              code = 0;
-              break;
-            case -1: // cancel
-            default:
-              code = 1;
-              break;
+          finally {
+            invoke(pool, "release");
           }
-        }
 
-        if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
-          if (cancelCode != code || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
-            doNotAskDialogOption.setToBeShown(!suppress, code);
-          }
-        }
-        
-        pane.putClientProperty(MAC_SHEET_RESULT, null);
-        pane.putClientProperty(MAC_SHEET_SUPPRESS, null);
-        
-        if (focusTrackback[0] != null && !(focusTrackback[0].isSheduledForRestore() || focusTrackback[0].isWillBeSheduledForRestore())) {
-          focusTrackback[0].setWillBeSheduledForRestore();
+          if (fakeTitle != null) {
+            pane.putClientProperty(MacUtil.MAC_NATIVE_WINDOW_SHOWING, Boolean.TRUE);
+            pane.putClientProperty(MAC_SHEET_ID, fakeTitle);
 
-          IdeFocusManager mgr = IdeFocusManager.findInstanceByComponent(_window);
-          Runnable r = new Runnable() {
-            public void run() {
-              if (focusTrackback[0] != null)  focusTrackback[0].restoreFocus();
-              focusTrackback[0] = null;
+            MacUtil.startModal(pane);
+            Integer result = (Integer)pane.getClientProperty(MAC_SHEET_RESULT);
+            boolean suppress = Boolean.TRUE == pane.getClientProperty(MAC_SHEET_SUPPRESS);
+
+            // DEFAULT = 1
+            // ALTERNATE = 0
+            // OTHER = -1 (cancel)
+
+            int cancelCode = 1;
+            int code;
+            if (alternateText != null) {
+              // DEFAULT = 0
+              // ALTERNATE = 1
+              // CANCEL = 2
+
+              cancelCode = 2;
+
+              switch (result) {
+                case 1:
+                  code = 0;
+                  break;
+                case 0:
+                  code = 1;
+                  break;
+                case -1: // cancel
+                default:
+                  code = 2;
+                  break;
+              }
             }
-          };
-          mgr.doWhenFocusSettlesDown(r);
-        }
-        
-        return code;
-      }
-    }
+            else {
+              // DEFAULT = 0
+              // CANCEL = 1
 
-    return -1;
+              cancelCode = 1;
+
+              switch (result) {
+                case 1:
+                  code = 0;
+                  break;
+                case -1: // cancel
+                default:
+                  code = 1;
+                  break;
+              }
+            }
+
+            if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
+              if (cancelCode != code || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
+                doNotAskDialogOption.setToBeShown(!suppress, code);
+              }
+            }
+
+            pane.putClientProperty(MAC_SHEET_RESULT, null);
+            pane.putClientProperty(MAC_SHEET_SUPPRESS, null);
+
+            if (focusTrackback[0] != null &&
+                !(focusTrackback[0].isSheduledForRestore() || focusTrackback[0].isWillBeSheduledForRestore())) {
+              focusTrackback[0].setWillBeSheduledForRestore();
+
+              IdeFocusManager mgr = IdeFocusManager.findInstanceByComponent(_window);
+              Runnable r = new Runnable() {
+                public void run() {
+                  if (focusTrackback[0] != null) focusTrackback[0].restoreFocus();
+                  focusTrackback[0] = null;
+                }
+              };
+              mgr.doWhenFocusSettlesDown(r);
+            }
+
+            return code;
+          }
+        }
+
+        return -1;
+      }
+    }, window);
   }
 
   public static int showMessageDialog(String title,
