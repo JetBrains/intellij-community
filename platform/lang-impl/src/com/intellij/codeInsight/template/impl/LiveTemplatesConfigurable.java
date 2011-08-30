@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class LiveTemplatesConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class LiveTemplatesConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private TemplateListPanel myPanel;
 
   public boolean isModified() {

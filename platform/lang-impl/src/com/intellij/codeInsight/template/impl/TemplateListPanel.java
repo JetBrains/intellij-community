@@ -359,11 +359,7 @@ class TemplateListPanel extends JPanel {
                                      Map<TemplateOptionalProcessor, Boolean> options,
                                      Map<TemplateContextType, Boolean> context) {
     myCurrentTemplateEditor = new LiveTemplateSettingsEditor(this, "", template, myTemplateGroups, shortcut, options, context, true);
-    JPanel comp = new JPanel(new BorderLayout());
-    comp.add(myCurrentTemplateEditor.createCenterPanel(), BorderLayout.CENTER);
-    comp.add(myCurrentTemplateEditor.createNorthPanel(), BorderLayout.NORTH);
-    myDetailsPanel.add(comp, TEMPLATE_SETTINGS);
-
+    myDetailsPanel.add(myCurrentTemplateEditor.createCenterPanel(), TEMPLATE_SETTINGS);
     myCurrentTemplateEditor.reset();
   }
 

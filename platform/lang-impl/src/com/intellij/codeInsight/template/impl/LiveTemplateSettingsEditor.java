@@ -35,6 +35,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,42 +113,24 @@ public class LiveTemplateSettingsEditor {
 
   public JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.weighty = 0;
 
-    gbConstraints.gridwidth = 2;
-    gbConstraints.gridx = 0;
+    GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
+    
+    JPanel editorPanel = new JPanel(new BorderLayout());
+    editorPanel.setPreferredSize(new Dimension(250, 130));
+    editorPanel.setMinimumSize(new Dimension(250, 130));
+    editorPanel.add(myTemplateEditor.getComponent(), BorderLayout.CENTER);
+    panel.add(editorPanel, gb.nextLine().next().weighty(1).weightx(1).coverColumn(2));
 
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(
-      CodeInsightBundle.message("dialog.edit.template.template.text.title"), false, false, true));
-    panel1.setPreferredSize(new Dimension(500, 160));
-    panel1.setMinimumSize(new Dimension(500, 160));
-    panel1.setLayout(new BorderLayout());
-    gbConstraints.weightx = 1;
-    gbConstraints.weighty = 1;
-    gbConstraints.gridy++;
-    panel1.add(myTemplateEditor.getComponent(), BorderLayout.CENTER);
-    panel.add(panel1, gbConstraints);
-
-    gbConstraints.weighty = 0;
-    gbConstraints.gridy++;
     myEditVariablesButton = new JButton(CodeInsightBundle.message("dialog.edit.template.button.edit.variables"));
     myEditVariablesButton.setDefaultCapable(false);
     myEditVariablesButton.setMaximumSize(myEditVariablesButton.getPreferredSize());
-    panel.add(myEditVariablesButton, gbConstraints);
+    panel.add(myEditVariablesButton, gb.next().weighty(0));
 
-    if (myNewTemplate) {
-      gbConstraints.gridy++;
-      panel.add(createShortContextPanel(), gbConstraints);
+    panel.add(createTemplateOptionsPanel(), gb.nextLine().next().next().coverColumn(2).weighty(1));
 
-      gbConstraints.weighty = 0;
-      gbConstraints.gridwidth = 1;
-      gbConstraints.gridy++;
-      panel.add(createTemplateOptionsPanel(), gbConstraints);
-
-    }
+    JPanel contextPanel = createShortContextPanel();
+    panel.add(contextPanel, gb.nextLine().next());
 
     myKeyField.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
       protected void textChanged(javax.swing.event.DocumentEvent e) {
@@ -170,55 +154,39 @@ public class LiveTemplateSettingsEditor {
         }
       }
     );
-    return panel;
+
+    JPanel centerPanel = new JPanel(new BorderLayout());
+    centerPanel.add(createNorthPanel(), BorderLayout.NORTH);
+    centerPanel.add(panel, BorderLayout.CENTER);
+    panel.setBorder(
+      IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.template.text.title"), false, false, true));
+    return centerPanel;
   }
 
   @Nullable
-  public JComponent createNorthPanel() {
-    if (!myNewTemplate) {
-      return null;
-    }
+  private JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.insets = new Insets(4,4,4,4);
-    gbConstraints.weighty = 1;
 
-    gbConstraints.weightx = 0;
-    gbConstraints.gridy = 0;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.fill = GridBagConstraints.BOTH;
+    GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
+
     JLabel keyPrompt = new JLabel(CodeInsightBundle.message("dialog.edit.template.label.abbreviation"));
     keyPrompt.setLabelFor(myKeyField);
-    panel.add(keyPrompt, gbConstraints);
+    panel.add(keyPrompt, gb.nextLine().next());
 
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.gridx = 1;
-    gbConstraints.weightx = 1;
-    panel.add(myKeyField, gbConstraints);
+    panel.add(myKeyField, gb.next().weightx(1));
 
-    gbConstraints.weightx = 0;
-    gbConstraints.gridx = 2;
     JLabel groupPrompt = new JLabel(CodeInsightBundle.message("dialog.edit.template.label.group"));
     groupPrompt.setLabelFor(myGroupCombo);
-    panel.add(groupPrompt, gbConstraints);
+    panel.add(groupPrompt, gb.next());
 
-    gbConstraints.weightx = 1;
-    gbConstraints.gridx = 3;
     myGroupCombo.setEditable(true);
-    panel.add(myGroupCombo, gbConstraints);
+    panel.add(myGroupCombo, gb.next().weightx(1));
 
-    gbConstraints.weightx = 0;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy++;
     JLabel descriptionPrompt = new JLabel(CodeInsightBundle.message("dialog.edit.template.label.description"));
     descriptionPrompt.setLabelFor(myDescription);
-    panel.add(descriptionPrompt, gbConstraints);
+    panel.add(descriptionPrompt, gb.nextLine().next());
 
-    gbConstraints.gridx = 1;
-    gbConstraints.gridwidth = 3;
-    gbConstraints.weightx = 1;
-    panel.add(myDescription, gbConstraints);
-
+    panel.add(myDescription, gb.next().weightx(1).coverLine(3));
     return panel;
   }
 
@@ -262,7 +230,7 @@ public class LiveTemplateSettingsEditor {
 
     gbConstraints.weighty = 1;
     gbConstraints.gridy++;
-    panel.add(new JPanel(), gbConstraints);
+    panel.add(new JPanel(), gbConstraints);          
 
     return panel;
   }
@@ -290,14 +258,15 @@ public class LiveTemplateSettingsEditor {
 
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (myPopup != null && !myPopup.isDisposed()) {
+        if (myPopup != null && myPopup.isVisible()) {
           myPopup.cancel();
           myPopup = null;
           return;
         }
 
-        myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(createPopupContextPanel(updateLabel), null).createPopup();
-        myPopup.showUnderneathOf(change);
+        JPanel content = createPopupContextPanel(updateLabel);
+        myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, null).createPopup();
+        myPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - 10)));
       }
     });
 
@@ -315,8 +284,6 @@ public class LiveTemplateSettingsEditor {
     };
 
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.context.title"),
-                                                        false, true, true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
