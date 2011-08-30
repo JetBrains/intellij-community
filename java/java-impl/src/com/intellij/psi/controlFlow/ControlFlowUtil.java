@@ -427,7 +427,8 @@ public class ControlFlowUtil {
 
       if (refElement != null) {
 
-        PsiElement parent = PsiTreeUtil.findCommonParent(refElement.getParent(), member);
+        PsiElement parent = refElement.getParent();
+        parent = parent != null ? PsiTreeUtil.findCommonParent(parent, member) : null;
         if (parent == null) {
           parent = result.getCurrentFileResolveScope();
         }
