@@ -88,6 +88,8 @@ public class PyNames {
   public static final String NAMEDTUPLE = "namedtuple";
   public static final String COLLECTIONS_PY = "collections.py";
 
+  public static final String SET = "set";
+
   /**
    * Contains all known predefined names of "__foo__" form.
    */

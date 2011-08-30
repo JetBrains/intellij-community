@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
@@ -307,7 +308,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
     PyCallExpression expr = (PyCallExpression) source;
     if (expr.isCalleeText("range", "xrange")) {
-      final PyCallExpression.PyMarkedCallee callee = expr.resolveCallee(myTypeEvalContext);
+      final PyCallExpression.PyMarkedCallee callee = expr.resolveCallee(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
       if (callee != null && !callee.isImplicitlyResolved() && PyBuiltinCache.getInstance(forStatement).hasInBuiltins(callee.getCallable())) {
         return true;
       }

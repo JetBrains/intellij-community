@@ -13,9 +13,11 @@ import java.util.Map;
  */
 public abstract class PythonPathCache {
   private final Map<PyQualifiedName, List<PsiElement>> myCache = new HashMap<PyQualifiedName, List<PsiElement>>();
+  private final Map<VirtualFile, PyQualifiedName> myQNameCache = new HashMap<VirtualFile, PyQualifiedName>();
 
   protected void clearCache() {
     myCache.clear();
+    myQNameCache.clear();
   }
 
   public synchronized List<PsiElement> get(PyQualifiedName qualifiedName) {
@@ -24,6 +26,14 @@ public abstract class PythonPathCache {
 
   public synchronized void put(PyQualifiedName qualifiedName, List<PsiElement> results) {
     myCache.put(qualifiedName, results);
+  }
+
+  public synchronized PyQualifiedName getName(VirtualFile vFile) {
+    return myQNameCache.get(vFile);
+  }
+  
+  public synchronized void putName(VirtualFile vFile, PyQualifiedName qName) {
+    myQNameCache.put(vFile, qName);
   }
 
   protected class MyVirtualFileAdapter extends VirtualFileAdapter {

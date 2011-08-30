@@ -44,7 +44,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
         // All classes are callable, but getType() for a class is special-cased to return the class itself instead of a metaclass, so we
         // cannot rely on types here
         if (callee instanceof PyReferenceExpression) {
-          final QualifiedResolveResult result = ((PyReferenceExpression)callee).followAssignmentsChain(myTypeEvalContext);
+          final QualifiedResolveResult result = ((PyReferenceExpression)callee).followAssignmentsChain(resolveWithoutImplicits());
           if (result.isValidResult() && result.getElement() instanceof PyClass) {
             return;
           }

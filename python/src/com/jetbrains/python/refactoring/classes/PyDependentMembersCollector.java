@@ -2,7 +2,7 @@ package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.refactoring.classMembers.DependentMembersCollectorBase;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 
 /**
  * @author Dennis.Ushakov
@@ -17,7 +17,7 @@ public class PyDependentMembersCollector extends DependentMembersCollectorBase<P
     final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
       @Override
       public void visitPyCallExpression(PyCallExpression node) {
-        final PyCallExpression.PyMarkedCallee markedFunction = node.resolveCallee(TypeEvalContext.fast());
+        final PyCallExpression.PyMarkedCallee markedFunction = node.resolveCallee(PyResolveContext.noImplicits());
         final PyFunction function = markedFunction != null ? markedFunction.getCallable().asMethod() : null;
         if (!existsInSuperClass(function)) {
           myCollection.add(function);

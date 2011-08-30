@@ -37,7 +37,7 @@ public class PyFunctionInsertHandler extends ParenthesesInsertHandler<LookupElem
     final PsiElement element = context.getFile().findElementAt(context.getStartOffset());
     PyReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PyReferenceExpression.class);
     int implicitArgsCount = refExpr != null
-                            ? PyCallExpressionHelper.getImplicitArgumentCount(refExpr, function, null)
+                            ? PyCallExpressionHelper.getImplicitArgumentCount(refExpr, function)
                             : 0;
     return function.getParameterList().getParameters().length > implicitArgsCount;
   }

@@ -11,6 +11,7 @@ import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,7 @@ public class PyStringFormatInspection extends PyInspection {
         };
         final Class[] LIST_LIKE_EXPRESSIONS = {PyListLiteralExpression.class, PyListCompExpression.class};
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(problemTarget);
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
 
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
@@ -100,7 +102,7 @@ public class PyStringFormatInspection extends PyInspection {
           return 1;
         }
         else if (rightExpression instanceof PyReferenceExpression) {
-          final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(myTypeEvalContext).getElement();
+          final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(resolveContext).getElement();
           if (!(pyElement instanceof PyExpression)) {
             return -1;
           }
@@ -109,7 +111,7 @@ public class PyStringFormatInspection extends PyInspection {
           return inspectArguments((PyExpression)pyElement, problemTarget);
         }
         else if (rightExpression instanceof PyCallExpression) {
-          final PyCallExpression.PyMarkedCallee markedFunction = ((PyCallExpression)rightExpression).resolveCallee(myTypeEvalContext);
+          final PyCallExpression.PyMarkedCallee markedFunction = ((PyCallExpression)rightExpression).resolveCallee(resolveContext);
           if (markedFunction != null && !markedFunction.isImplicitlyResolved()) {
             final Callable callable = markedFunction.getCallable();
             // TODO: Switch to Callable.getReturnType()
@@ -227,7 +229,7 @@ public class PyStringFormatInspection extends PyInspection {
         if (addSubscriptions) {
           additionalExpressions = addSubscriptions(rightExpression.getContainingFile(),
                                                                                  rightExpression.getText());
-          pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(myTypeEvalContext).getElement();
+          pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)).getElement();
         }
         else {
           additionalExpressions = new HashMap<PyExpression,PyExpression>();
