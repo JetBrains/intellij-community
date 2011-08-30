@@ -19,7 +19,8 @@ class AbstractPyDBAdditionalThreadInfo:
     def IterFrames(self):
         raise NotImplementedError()
     
-    def CreateDbFrame(self, mainDebugger, filename, base, additionalInfo, t, frame):
+    def CreateDbFrame(self, args):
+        #args = mainDebugger, filename, base, additionalInfo, t, frame
         raise NotImplementedError()
     
     def __str__(self):
@@ -89,14 +90,14 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(AbstractPyDBAdditional
             self._release_lock()
     
         
-    def CreateDbFrame(self, mainDebugger, filename, additionalInfo, t, frame):
+    def CreateDbFrame(self, args):
         #the frame must be cached as a weak-ref (we return the actual db frame -- which will be kept
         #alive until its trace_dispatch method is not referenced anymore).
         #that's a large workaround because:
         #1. we can't have weak-references to python frame object
         #2. only from 2.5 onwards we have _current_frames support from the interpreter
-        db_frame = PyDBFrame(mainDebugger, filename, additionalInfo, t, frame)
-        db_frame.frame = frame
+        db_frame = PyDBFrame(args)
+        db_frame.frame = args[-1]
         self._AddDbFrame(db_frame)
         return db_frame
     

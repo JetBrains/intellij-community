@@ -46,7 +46,7 @@ each command has a format:
     118      CMD_RUN_TO_LINE
     119      CMD_RELOAD_CODE
     120      CMD_GET_COMPLETIONS      JAVA
-    
+
 500 series diagnostics/ok
     501      VERSION                  either      Version string (1.0)        Currently just used at startup
     502      RETURN                   either      Depends on caller    -
@@ -68,7 +68,10 @@ except ImportError:
     import queue as PydevQueue
 from socket import socket
 from socket import AF_INET, SOCK_STREAM
-
+try:
+    from urllib import quote
+except:
+    from urllib.parse import quote #@Reimport @UnresolvedImport
 import pydevd_vars
 import pydevd_tracing
 import pydevd_vm_type
@@ -106,6 +109,7 @@ CMD_REMOVE_EXCEPTION_BREAK = 123
 CMD_LOAD_SOURCE = 124
 CMD_ADD_DJANGO_EXCEPTION_BREAK = 125
 CMD_REMOVE_DJANGO_EXCEPTION_BREAK = 126
+CMD_SET_NEXT_STATEMENT = 127
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901 
@@ -209,7 +213,7 @@ class PyDBDaemonThread(threading.Thread):
     def OnRun(self):
         raise NotImplementedError('Should be reimplemented by: %s' % self.__class__)
 
-    def doKill(self):
+    def doKillPydevThread(self):
         #that was not working very well because jython gave some socket errors
         self.killReceived = True
 
@@ -226,7 +230,7 @@ class ReaderThread(PyDBDaemonThread):
         self.setName("pydevd.Reader")
         
         
-    def doKill(self):
+    def doKillPydevThread(self):
         #We must close the socket so that it doesn't stay halted there.
         self.killReceived = True
         try:
@@ -264,7 +268,7 @@ class ReaderThread(PyDBDaemonThread):
                         GlobalDebuggerHolder.globalDbg.processNetCommand(int(args[0]), int(args[1]), args[2])
                     except:
                         traceback.print_exc()
-                        sys.stderr.write("Can't process net command %" % command)
+                        sys.stderr.write("Can't process net command: %s\n" % command)
                         sys.stderr.flush()
 
         except:
@@ -605,6 +609,54 @@ class InternalTerminateThread(InternalThreadCommand):
 
 
 #=======================================================================================================================
+# InternalRunThread
+#=======================================================================================================================
+class InternalRunThread(InternalThreadCommand):
+    def __init__(self, thread_id):
+        self.thread_id = thread_id
+
+    def doIt(self, dbg):
+        t = PydevdFindThreadById(self.thread_id)
+        if t:
+            t.additionalInfo.pydev_step_cmd = None
+            t.additionalInfo.pydev_step_stop = None
+            t.additionalInfo.pydev_state = STATE_RUN
+
+
+#=======================================================================================================================
+# InternalStepThread
+#=======================================================================================================================
+class InternalStepThread(InternalThreadCommand):
+    def __init__(self, thread_id, cmd_id):
+        self.thread_id = thread_id
+        self.cmd_id = cmd_id
+
+    def doIt(self, dbg):
+        t = PydevdFindThreadById(self.thread_id)
+        if t:
+            t.additionalInfo.pydev_step_cmd = self.cmd_id
+            t.additionalInfo.pydev_state = STATE_RUN
+
+#=======================================================================================================================
+# InternalSetNextStatementThread
+#=======================================================================================================================
+class InternalSetNextStatementThread(InternalThreadCommand):
+    def __init__(self, thread_id, cmd_id, line, func_name):
+        self.thread_id = thread_id
+        self.cmd_id = cmd_id
+        self.line = line
+        self.func_name = func_name
+
+    def doIt(self, dbg):
+        t = PydevdFindThreadById(self.thread_id)
+        if t:
+            t.additionalInfo.pydev_step_cmd = self.cmd_id
+            t.additionalInfo.pydev_next_line = int(self.line)
+            t.additionalInfo.pydev_func_name = self.func_name
+            t.additionalInfo.pydev_state = STATE_RUN
+
+
+#=======================================================================================================================
 # InternalGetVariable
 #=======================================================================================================================
 class InternalGetVariable(InternalThreadCommand):
@@ -684,15 +736,15 @@ class InternalGetFrame(InternalThreadCommand):
     def doIt(self, dbg):
         """ Converts request into python variable """
         try:
-            try:
-                xml = "<xml>"            
-                frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+            frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+            if frame is not None:
+                xml = "<xml>"
                 xml += pydevd_vars.frameVarsToXML(frame)
                 del frame
                 xml += "</xml>"
                 cmd = dbg.cmdFactory.makeGetFrameMessage(self.sequence, xml)
                 dbg.writer.addCommand(cmd)
-            except pydevd_vars.FrameNotFoundError:
+            else:
                 #pydevd_vars.dumpFrames(self.thread_id)
                 #don't print this error: frame not found: means that the client is not synchronized (but that's ok)
                 cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Frame not found: %s from thread: %s" % (self.frame_id, self.thread_id))
@@ -786,7 +838,6 @@ class InternalGetCompletions(InternalThreadCommand):
                     path = os.environ['PYDEV_COMPLETER_PYTHONPATH']
                 except :
                     path = os.path.dirname(__file__)
-                print (path)
                 sys.path.append(path)
                 remove_path = path
                 try:
@@ -797,13 +848,14 @@ class InternalGetCompletions(InternalThreadCommand):
             try:
                 
                 frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+                if frame is not None:
 
-                #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
-                #(Names not resolved in generator expression in method)
-                #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
-                updated_globals = {}
-                updated_globals.update(frame.f_globals)
-                updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
+                    #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
+                    #(Names not resolved in generator expression in method)
+                    #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
+                    updated_globals = {}
+                    updated_globals.update(frame.f_globals)
+                    updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
                 try:
                     completer = console._completer.Completer(updated_globals, None)

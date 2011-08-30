@@ -71,10 +71,10 @@ def get_exception_breakpoint(exctype, exceptions, notify_class):
     exc = None
     if exceptions is not None:
         for k, e in exceptions.items():
+          if e.notify[notify_class]:
             if name == k:
-                exc = e
-                break
-            if e.notify[notify_class] and ((e.type is not None and issubclass(exctype, e.type))):
+                return e
+            if (e.type is not None and issubclass(exctype, e.type)):
                 if exc is None or issubclass(e.type, exc.type):
                     exc = e
     return exc

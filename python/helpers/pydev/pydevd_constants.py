@@ -29,13 +29,16 @@ USE_PSYCO_OPTIMIZATION = True
 
 #Hold a reference to the original _getframe (because psyco will change that as soon as it's imported)
 import sys #Note: the sys import must be here anyways (others depend on it)
-
-GetFrame = sys._getframe
+try:
+    GetFrame = sys._getframe
+except AttributeError:
+    def GetFrame():
+        raise AssertionError('sys._getframe not available (possible causes: enable -X:Frames on IronPython?)')
 
 #Used to determine the maximum size of each variable passed to eclipse -- having a big value here may make
 #the communication slower -- as the variables are being gathered lazily in the latest version of eclipse,
 #this value was raised from 200 to 1000.
-MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 500
+MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
 
 import threading
 import os
@@ -67,8 +70,6 @@ except AttributeError:
     except:
         IS_64_BITS = False
 
-
-
 #=======================================================================================================================
 # Jython?
 #=======================================================================================================================
@@ -82,12 +83,50 @@ except:
         #Py3k does not have has_key anymore, and older versions don't have __contains__
         DictContains = dict.__contains__
     except:
-        DictContains = dict.has_key
+        try:
+            DictContains = dict.has_key
+        except NameError:
+            def DictContains(d, key):
+                return d.has_key(key)
+
+
+try:
+    xrange
+except:
+    #Python 3k does not have it
+    xrange = range
+
+try:
+    object
+except NameError:
+    class object:
+        pass
+
+try:
+    enumerate
+except:
+    def enumerate(lst):
+        ret = []
+        i=0
+        for element in lst:
+            ret.append((i, element))
+            i+=1
+        return ret
+
+#=======================================================================================================================
+# StringIO
+#=======================================================================================================================
+try:
+    from StringIO import StringIO
+except:
+    from io import StringIO
+
 
 #=======================================================================================================================
 # NextId
 #=======================================================================================================================
 class NextId:
+
     def __init__(self):
         self._id = 0
 

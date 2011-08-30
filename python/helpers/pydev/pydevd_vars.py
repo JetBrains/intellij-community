@@ -272,43 +272,17 @@ def dumpFrames(thread_id):
 # AdditionalFramesContainer
 #===============================================================================
 class AdditionalFramesContainer:
-    __instance__ = None
+    lock = threading.Lock()
+    additional_frames = {} #dict of dicts
 
-    @staticmethod
-    def getInstance():
-        if AdditionalFramesContainer.__instance__ is None:
-            AdditionalFramesContainer.__instance__ = AdditionalFramesContainer()
-        return AdditionalFramesContainer.__instance__
 
-    def __init__(self):
-        self.additional_frames = {} #dict of dicts
-        self.lock = threading.Lock()
+def addAdditionalFrameById(thread_id, frames_by_id):
+    AdditionalFramesContainer.additional_frames[thread_id] = frames_by_id
 
-    def addAdditionalFrameById(self, thread_id, frames_by_id):
-        self.lock.acquire()
-        self.additional_frames[thread_id] = frames_by_id
-        self.lock.release()
 
-    def findFrameById(self, thread_id, frame_id):
-        self.lock.acquire()
-        frame = None
-        if self.additional_frames:
-            if DictContains(self.additional_frames, thread_id):
-                frame = self.additional_frames[thread_id].get(frame_id)
+def removeAdditionalFrameById(thread_id):
+    del AdditionalFramesContainer.additional_frames[thread_id]
 
-        self.lock.release()
-        return frame
-
-    def removeAdditionalFrameById(self, thread_id):
-        #del self.additional_frames[thread_id]
-        pass
-
-additional_frames_container = AdditionalFramesContainer()
-
-def getAdditionalFramesContainer():
-    global additional_frames_container
-
-    return additional_frames_container
 
 
 def findFrame(thread_id, frame_id):
@@ -318,10 +292,12 @@ def findFrame(thread_id, frame_id):
 
     lookingFor = int(frame_id)
 
-    frame = getAdditionalFramesContainer().findFrameById(thread_id, lookingFor)
+    if AdditionalFramesContainer.additional_frames:
+        if DictContains(AdditionalFramesContainer.additional_frames, thread_id):
+            frame = AdditionalFramesContainer.additional_frames[thread_id].get(lookingFor)
 
-    if frame is not None:
-        return frame
+            if frame is not None:
+                return frame
 
     curFrame = GetFrame()
     if frame_id == "*":
@@ -363,13 +339,17 @@ Current     thread_id:%s, available frames:
 %s
 ''' % (thread_id, lookingFor, GetThreadId(threading.currentThread()), msgFrames)
 
-        raise FrameNotFoundError(errMsg)
+        sys.stderr.write(errMsg)
+        return None
 
     return frameFound
 
 def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
     """ returns the value of the compound variable as a dictionary"""
     frame = findFrame(thread_id, frame_id)
+    if frame is None:
+        return {}
+
     attrList = attrs.split('\t')
     if scope == "GLOBAL":
         var = frame.f_globals
@@ -390,7 +370,7 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         type, _typeName, resolver = getType(var)
         return resolver.getDictionary(var)
     except:
-        return None
+        traceback.print_exc()
 
 class ExceptionOnEvaluate:
     def __init__(self, result):
@@ -401,6 +381,8 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
     @param doExec: determines if we should do an exec or an eval
     """
     frame = findFrame(thread_id, frame_id)
+    if frame is None:
+        return
 
     expression = str(expression.replace('@LINE@', '\n'))
 
@@ -514,6 +496,8 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
     will probably need some change to the python internals)
     """
     frame = findFrame(thread_id, frame_id)
+    if frame is None:
+        return
 
     if isinstance(frame, DjangoTemplateFrame):
         result = eval(expression, frame.f_globals, frame.f_locals)
