@@ -152,10 +152,12 @@ public class SaveAsTemplateAction extends AnAction {
       template,
       templateSettings.getTemplateGroups(),
       defaultShortcut, options, context, newTemplate);
+    /*
     dialog.show();
     if (!dialog.isOK()) {
       return true;
     }
+    */
     dialog.apply();
     template.applyOptions(options);
     template.applyContext(context);

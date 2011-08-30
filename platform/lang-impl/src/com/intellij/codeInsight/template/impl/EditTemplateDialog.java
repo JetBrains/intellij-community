@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,8 +29,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +41,7 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-public class EditTemplateDialog extends DialogWrapper {
+public class EditTemplateDialog {
   private final List<TemplateGroup> myTemplateGroups;
   private final TemplateImpl myTemplate;
 
@@ -74,12 +71,9 @@ public class EditTemplateDialog extends DialogWrapper {
                             Map<TemplateOptionalProcessor, Boolean> options,
                             Map<TemplateContextType, Boolean> context,
                             boolean newTemplate) {
-    super(parent, true);
     myOptions = options;
     myContext = context;
     myNewTemplate = newTemplate;
-    setOKButtonText(CommonBundle.getOkButtonText());
-    setTitle(title);
 
     myTemplate = template;
     myTemplateGroups = groups;
@@ -89,13 +83,10 @@ public class EditTemplateDialog extends DialogWrapper {
     myDescription=new JTextField();
     myGroupCombo=new ComboBox(-1);
     myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString(), context);
-
-    init();
-    reset();
   }
 
-  protected Action[] createActions(){
-    return new Action[]{getOKAction(),getCancelAction(),getHelpAction()};
+  public TemplateImpl getTemplate() {
+    return myTemplate;
   }
 
   public void doHelpAction() {
@@ -111,11 +102,10 @@ public class EditTemplateDialog extends DialogWrapper {
   }
 
   public void dispose() {
-    super.dispose();
     EditorFactory.getInstance().releaseEditor(myTemplateEditor);
   }
 
-  protected JComponent createCenterPanel() {
+  public JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -181,7 +171,7 @@ public class EditTemplateDialog extends DialogWrapper {
   }
 
   @Nullable
-  protected JComponent createNorthPanel() {
+  public JComponent createNorthPanel() {
     if (!myNewTemplate) {
       return null;
     }
@@ -384,10 +374,9 @@ public class EditTemplateDialog extends DialogWrapper {
     if(myTemplateEditor.getDocument().getTextLength() == 0) {
       isEnabled = false;
     }
-    setOKActionEnabled(isEnabled);
   }
 
-  private void reset() {
+  public void reset() {
     myKeyField.setText(myTemplate.getKey());
     myDescription.setText(myTemplate.getDescription());
 
@@ -580,6 +569,7 @@ public class EditTemplateDialog extends DialogWrapper {
     );
   }
 
+  /* todo
   protected void doOKAction() {
     String key = myKeyField.getText().trim();
 
@@ -639,5 +629,6 @@ public class EditTemplateDialog extends DialogWrapper {
 
     super.doOKAction();
   }
+  */
 }
 

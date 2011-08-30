@@ -22,8 +22,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -33,12 +31,12 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
@@ -49,13 +47,20 @@ import java.util.List;
 
 class TemplateListPanel extends JPanel {
 
+  private static final String NO_SELECTION = "NoSelection";
+  private static final String TEMPLATE_SETTINGS = "TemplateSettings";
+  private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("xxx", "yyy");
+
+  static {
+    MOCK_TEMPLATE.setString("");
+  }
+
   private CheckboxTree myTree;
   private JButton myCopyButton;
   private JButton myEditButton;
   private JButton myRemoveButton;
   private JButton myExportButton;
   private JButton myImportButton;
-  private Editor myEditor;
   private final List<TemplateGroup> myTemplateGroups = new ArrayList<TemplateGroup>();
   private JComboBox myExpandByCombo;
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
@@ -71,14 +76,21 @@ class TemplateListPanel extends JPanel {
 
   private final Map<Integer, Map<TemplateOptionalProcessor, Boolean>> myTemplateOptions = new LinkedHashMap<Integer, Map<TemplateOptionalProcessor, Boolean>>();
   private final Map<Integer, Map<TemplateContextType, Boolean>> myTemplateContext = new LinkedHashMap<Integer, Map<TemplateContextType, Boolean>>();
+  private JPanel myDetailsPanel = new JPanel(new CardLayout());
+  private EditTemplateDialog myCurrentTemplateEditor;
 
   public TemplateListPanel() {
-    setLayout(new BorderLayout());
+    super(new BorderLayout());
+
+    myDetailsPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+    myDetailsPanel.add(new JLabel("No live template is selected"), NO_SELECTION);
+    updateTemplateDetails(MOCK_TEMPLATE, "Tab", MOCK_TEMPLATE.createOptions(), MOCK_TEMPLATE.createContext());
+
     fillPanel(this);
   }
 
   public void dispose() {
-    EditorFactory.getInstance().releaseEditor(myEditor);
+    myCurrentTemplateEditor.dispose();
     myAlarm.cancelAllRequests();
   }
 
@@ -235,9 +247,7 @@ class TemplateListPanel extends JPanel {
   }
 
   private void fillPanel(JPanel optionsPanel) {
-    JPanel tablePanel = new JPanel();
-    tablePanel.setBorder(BorderFactory.createLineBorder(Color.gray));
-    tablePanel.setLayout(new BorderLayout());
+    JPanel tablePanel = new JPanel(new BorderLayout());
     tablePanel.add(createTable(), BorderLayout.CENTER);
 
     JPanel tableButtonsPanel = new JPanel();
@@ -307,14 +317,9 @@ class TemplateListPanel extends JPanel {
     tablePanel.add(tableButtonsPanel, BorderLayout.EAST);
     optionsPanel.add(tablePanel, BorderLayout.CENTER);
 
-    JPanel textPanel = new JPanel(new BorderLayout());
-    textPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-    myEditor = TemplateEditorUtil.createEditor(true, "");
-    textPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
-    textPanel.add(createExpandByPanel(), BorderLayout.SOUTH);
-    textPanel.setPreferredSize(new Dimension(100, myEditor.getLineHeight() * 12));
+    optionsPanel.add(myDetailsPanel, BorderLayout.SOUTH);
 
-    optionsPanel.add(textPanel, BorderLayout.SOUTH);
+    optionsPanel.add(createExpandByPanel(), BorderLayout.NORTH);
 
     addButton.addActionListener(
       new ActionListener() {
@@ -347,6 +352,19 @@ class TemplateListPanel extends JPanel {
         }
       }
     );
+  }
+
+  private void updateTemplateDetails(TemplateImpl template,
+                                     String shortcut,
+                                     Map<TemplateOptionalProcessor, Boolean> options,
+                                     Map<TemplateContextType, Boolean> context) {
+    myCurrentTemplateEditor = new EditTemplateDialog(this, "", template, myTemplateGroups, shortcut, options, context, true);
+    JPanel comp = new JPanel(new BorderLayout());
+    comp.add(myCurrentTemplateEditor.createCenterPanel(), BorderLayout.CENTER);
+    comp.add(myCurrentTemplateEditor.createNorthPanel(), BorderLayout.NORTH);
+    myDetailsPanel.add(comp, TEMPLATE_SETTINGS);
+
+    myCurrentTemplateEditor.reset();
   }
 
   private Iterable<? extends TemplateImpl> collectAllTemplates() {
@@ -397,7 +415,7 @@ class TemplateListPanel extends JPanel {
     gbConstraints.gridx = 2;
     gbConstraints.weightx = 1;
     panel.add(new JPanel(), gbConstraints);
-
+    panel.setBorder(new EmptyBorder(5, 0, 10, 0));
     return panel;
   }
 
@@ -448,19 +466,32 @@ class TemplateListPanel extends JPanel {
     if (selected < 0) return;
 
     TemplateImpl template = getTemplate(selected);
-    DefaultMutableTreeNode oldTemplateNode = getNode(selected);
     if (template == null) return;
 
-    String oldGroupName = template.getGroupName();
 
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.edit.live.template.title"), template, getTemplateGroups(),
                                                        (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
+    /*
     dialog.show();
     if (!dialog.isOK()) return;
+    */
 
-    TemplateGroup group = getTemplateGroup(template.getGroupName());
+    applyChanges(dialog);
+  }
 
-    LOG.assertTrue(group != null, template.getGroupName());
+  private void applyChanges(EditTemplateDialog dialog) {
+    TemplateImpl template = dialog.getTemplate();
+    if (template == MOCK_TEMPLATE) {
+      return;
+    }
+
+    int selected = getSelectedIndex();
+    assert selected >= 0;
+    DefaultMutableTreeNode oldTemplateNode = getNode(selected);
+
+    String oldGroupName = template.getGroupName();
+    TemplateGroup group = getTemplateGroup(oldGroupName);
+    LOG.assertTrue(group != null, oldGroupName);
 
     dialog.apply();
 
@@ -550,8 +581,10 @@ class TemplateListPanel extends JPanel {
     myTemplateContext.put(getKey(template), template.createContext());
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.add.live.template.title"), template, getTemplateGroups(),
                                                        (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
+    /*
     dialog.show();
     if (!dialog.isOK()) return;
+    */
     dialog.apply();
 
     addTemplate(template);
@@ -572,8 +605,10 @@ class TemplateListPanel extends JPanel {
     myTemplateContext.put(getKey(template), getContext(orTemplate));
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.copy.live.template.title"), template, getTemplateGroups(),
                                                        (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
+    /*
     dialog.show();
     if (!dialog.isOK()) return;
+    */
 
     dialog.apply();
     addTemplate(template);
@@ -712,7 +747,9 @@ class TemplateListPanel extends JPanel {
 
         }
         updateTemplateTextArea();
-        myEditor.getComponent().setEnabled(enableEditButton);
+        if (!enableEditButton) {
+          ((CardLayout)myDetailsPanel.getLayout()).show(myDetailsPanel, NO_SELECTION);
+        }
 
         if (myCopyButton != null) {
           myCopyButton.setEnabled(enableCopyButton);
@@ -766,7 +803,6 @@ class TemplateListPanel extends JPanel {
     if (myTemplateGroups.size() > 0) {
       myTree.setSelectionInterval(0, 0);
     }
-    scrollpane.setPreferredSize(new Dimension(600, 400));
     return scrollpane;
   }
 
@@ -785,18 +821,20 @@ class TemplateListPanel extends JPanel {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         int selected = getSelectedIndex();
-        if (selected < 0) {
-          myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
+        CardLayout layout = (CardLayout)myDetailsPanel.getLayout();
+        if (selected < 0 || getTemplate(selected) == null) {
+          layout.show(myDetailsPanel, NO_SELECTION);
         }
         else {
-          TemplateImpl template = getTemplate(selected);
-          if (template != null) {
-            String text = template.getString();
-            myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), text);
-            TemplateEditorUtil.setHighlighter(myEditor, template.getTemplateContext());
-          } else {
-            myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
+          TemplateImpl newTemplate = getTemplate(selected);
+          if (myCurrentTemplateEditor == null || !myCurrentTemplateEditor.getTemplate().equals(newTemplate)) {
+            if (myCurrentTemplateEditor != null) {
+              applyChanges(myCurrentTemplateEditor);
+              myCurrentTemplateEditor.dispose();
+            }
+            updateTemplateDetails(newTemplate, (String)myExpandByCombo.getSelectedItem(), getOptions(newTemplate), getContext(newTemplate));
           }
+          layout.show(myDetailsPanel, TEMPLATE_SETTINGS);
         }
       }
     });
