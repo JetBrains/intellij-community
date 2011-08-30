@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GridBag;
@@ -43,11 +42,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -129,8 +128,7 @@ public class LiveTemplateSettingsEditor {
 
     panel.add(createTemplateOptionsPanel(), gb.nextLine().next().next().coverColumn(2).weighty(1));
 
-    JPanel contextPanel = createShortContextPanel();
-    panel.add(contextPanel, gb.nextLine().next());
+    panel.add(createShortContextPanel(), gb.nextLine().next().fillCellNone().anchor(GridBagConstraints.WEST));
 
     myKeyField.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
       protected void textChanged(javax.swing.event.DocumentEvent e) {
@@ -238,8 +236,12 @@ public class LiveTemplateSettingsEditor {
   private JPanel createShortContextPanel() {
     JPanel panel = new JPanel(new BorderLayout());
 
-    final HyperlinkLabel change = new HyperlinkLabel();
-    panel.add(change, BorderLayout.WEST);
+    final JLabel ctxLabel = new JLabel();
+    final JLabel change = new JLabel();
+    change.setForeground(Color.BLUE);
+    change.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    panel.add(ctxLabel, BorderLayout.CENTER);
+    panel.add(change, BorderLayout.EAST);
 
     final Runnable updateLabel = new Runnable() {
       public void run() {
@@ -249,15 +251,16 @@ public class LiveTemplateSettingsEditor {
             contexts.add(UIUtil.removeMnemonic(type.getPresentableName()));
           }
         }
-        change.setHyperlinkText((contexts.isEmpty() ? "No applicable contexts yet" : "Applicable in " + StringUtil.join(contexts, ", ")) + ".  ", "Change", "");
+        ctxLabel.setText((contexts.isEmpty() ? "No applicable contexts yet" : "Applicable in " + StringUtil.join(contexts, ", ")) + ".  ");
+        ctxLabel.setForeground(contexts.isEmpty() ? Color.RED : UIUtil.getLabelForeground());
+        change.setText(contexts.isEmpty() ? "Define" : "Change");
       }
     };
 
-    change.addHyperlinkListener(new HyperlinkListener() {
+    change.addMouseListener(new MouseAdapter() {
       private JBPopup myPopup;
-
       @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
+      public void mouseClicked(MouseEvent e) {
         if (myPopup != null && myPopup.isVisible()) {
           myPopup.cancel();
           myPopup = null;
