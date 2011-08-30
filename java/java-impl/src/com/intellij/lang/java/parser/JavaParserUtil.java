@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import java.util.List;
 public class JavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
   private static final Key<Boolean> DEEP_PARSE_BLOCKS_IN_STATEMENTS = Key.create("JavaParserUtil.ParserExtender");
-  private static final Key<ParserExtender> PARSER_EXTENDER_KEY = Key.create("JavaParserUtil.ParserExtender");
 
   public interface ParserWrapper {
     void parse(PsiBuilder builder);
@@ -54,10 +53,6 @@ public class JavaParserUtil {
 
   public interface MarkingParserWrapper {
     @Nullable PsiBuilder.Marker parse(PsiBuilder builder);
-  }
-
-  public interface ParserExtender extends MarkingParserWrapper {
-    boolean enroll(PsiBuilder builder);
   }
 
   public static final WhitespacesAndCommentsBinder GREEDY_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsBinder() {
@@ -168,14 +163,16 @@ public class JavaParserUtil {
     return Boolean.TRUE.equals(builder.getUserDataUnprotected(DEEP_PARSE_BLOCKS_IN_STATEMENTS));
   }
 
-  public static void setParserExtender(final PsiBuilder builder, final ParserExtender extender) {
-    builder.putUserDataUnprotected(PARSER_EXTENDER_KEY, extender);
+  public static void setParserExtender(@NotNull final PsiBuilder builder,
+                                       @NotNull final Key<MarkingParserWrapper> key,
+                                       @Nullable final MarkingParserWrapper extender) {
+    builder.putUserDataUnprotected(key, extender);
   }
 
   @Nullable
-  public static ParserExtender getParserExtender(final PsiBuilder builder) {
-    final ParserExtender extender = builder.getUserDataUnprotected(PARSER_EXTENDER_KEY);
-    return extender != null && extender.enroll(builder) ? extender : null;
+  public static PsiBuilder.Marker parseWithExtender(@NotNull final PsiBuilder builder, @NotNull final Key<MarkingParserWrapper> key) {
+    final MarkingParserWrapper extender = builder.getUserDataUnprotected(key);
+    return extender != null ? extender.parse(builder) : null;
   }
 
   @NotNull

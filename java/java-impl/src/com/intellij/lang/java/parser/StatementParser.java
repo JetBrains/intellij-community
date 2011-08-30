@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -34,6 +35,8 @@ import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
 public class StatementParser {
+  public static final Key<MarkingParserWrapper> PARSER_EXTENDER_KEY = Key.create("Java.Statement.Parser.Extender");
+
   private enum BraceMode {
     TILL_FIRST, TILL_LAST
   }
@@ -133,7 +136,7 @@ public class StatementParser {
     parseStatements(builder, null);
   }
 
-  private static void parseStatements(final PsiBuilder builder, final BraceMode braceMode) {
+  private static void parseStatements(final PsiBuilder builder, @Nullable final BraceMode braceMode) {
     while (builder.getTokenType() != null) {
       final PsiBuilder.Marker statement = parseStatement(builder);
       if (statement != null) continue;
@@ -169,8 +172,10 @@ public class StatementParser {
 
   @Nullable
   public static PsiBuilder.Marker parseStatement(final PsiBuilder builder) {
-    final ParserExtender extender = getParserExtender(builder);
-    if (extender != null) return extender.parse(builder);
+    final PsiBuilder.Marker extension = parseWithExtender(builder, PARSER_EXTENDER_KEY);
+    if (extension != null) {
+      return extension;
+    }
 
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.IF_KEYWORD) {
