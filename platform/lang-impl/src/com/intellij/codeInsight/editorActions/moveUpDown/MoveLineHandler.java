@@ -31,6 +31,7 @@ class MoveLineHandler extends BaseMoveHandler {
   @Nullable
   protected MoverWrapper getSuitableMover(final Editor editor, final PsiFile file) {
     final StatementUpDownMover.MoveInfo info = new StatementUpDownMover.MoveInfo();
+    info.indentTarget = false;
     final StatementUpDownMover mover = new LineMover();
     return mover.checkAvailable(editor, file, info, isDown) ? new MoverWrapper(mover, info, isDown) : null;
   }
