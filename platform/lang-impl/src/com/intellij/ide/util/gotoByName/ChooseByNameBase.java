@@ -33,6 +33,9 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -55,11 +58,10 @@ import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.UsageInfoToUsageConverter;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageViewManager;
-import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -1379,7 +1381,7 @@ public abstract class ChooseByNameBase {
       }, delay, myModalityState);
     }
 
-    private void addElementsByPattern(Set<Object> elementsArray, String pattern) {
+    protected void addElementsByPattern(Set<Object> elementsArray, String pattern) {
       String namePattern = getNamePattern(pattern);
       String qualifierPattern = getQualifierPattern(pattern);
 
@@ -1416,7 +1418,7 @@ public abstract class ChooseByNameBase {
           sortByProximity(sameNameElements);
           for (Object element : sameNameElements) {
             elementsArray.add(element);
-            if (elementsArray.size() >= myMaximumListSizeLimit) {
+            if (isOverflow(elementsArray)) {
               overflow = true;
               break All;
             }
@@ -1424,7 +1426,7 @@ public abstract class ChooseByNameBase {
         }
         else if (elements.length == 1 && matchesQualifier(elements[0], qualifierPattern)) {
           elementsArray.add(elements[0]);
-          if (elementsArray.size() >= myMaximumListSizeLimit) {
+          if (isOverflow(elementsArray)) {
             overflow = true;
             break;
           }
@@ -1434,6 +1436,10 @@ public abstract class ChooseByNameBase {
       if (overflow) {
         elementsArray.add(EXTRA_ELEM);
       }
+    }
+
+    protected boolean isOverflow(Set<Object> elementsArray) {
+      return elementsArray.size() >= myMaximumListSizeLimit;
     }
 
     private void cancel() {
@@ -1597,19 +1603,71 @@ public abstract class ChooseByNameBase {
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
+      cancelCalcElementsThread();
+      cancelListUpdater();
+
       final UsageViewPresentation presentation = new UsageViewPresentation();
       final String pattern = myFindUsagesTitle + " \'" + myTextField.getText().trim() + "\'";
       presentation.setCodeUsagesString(pattern);
       presentation.setTabName(pattern);
       presentation.setTabText(pattern);
-      PsiElement[] elements = getElements();
+      final PsiElement[] elements = getElements();
       final UsageInfo[] usages = new UsageInfo[elements.length];
       for (int i = 0; i < elements.length; i++) {
         usages[i] = new UsageInfo(elements[i]);
       }
-      UsageViewManager.getInstance(myProject).showUsages(UsageTarget.EMPTY_ARRAY, UsageInfoToUsageConverter.convert(
-        new UsageInfoToUsageConverter.TargetElementsDescriptor(elements), usages), presentation);
-      hideHint();
+      final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
+        new UsageInfoToUsageConverter.TargetElementsDescriptor(elements);
+      final UsageViewImpl usageView =
+        (UsageViewImpl)UsageViewManager.getInstance(myProject).showUsages(UsageTarget.EMPTY_ARRAY, UsageInfoToUsageConverter.convert(
+          descriptor, usages), presentation);
+      if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
+        final String text = myTextField.getText();
+        final boolean checkboxState = myCheckBox.isSelected();
+        final HashSet<Object> elementsArray = new HashSet<Object>();
+        hideHint();
+        ProgressManager.getInstance().run(new Task.Modal(myProject, pattern, true){
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            ensureNamesLoaded(checkboxState);
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              private ChooseByNameBase.CalcElementsThread myCalcElementsThread;
+
+              public void run() {
+                myCalcElementsThread = new CalcElementsThread(text, checkboxState, null, ModalityState.NON_MODAL, true) {
+                  @Override
+                  protected boolean isOverflow(Set<Object> elementsArray) {
+                    return false;
+                  }
+                };
+                myCalcElementsThread.addElementsByPattern(elementsArray, text);
+              }
+            });
+          }
+
+          @Override
+          public void onSuccess() {
+            for (Object o : elementsArray) {
+              if (o instanceof PsiElement) {
+                if (ArrayUtil.find(elements, (PsiElement)o) > -1) {
+                  continue;
+                }
+                usageView.appendUsage(UsageInfoToUsageConverter.convert(descriptor, new UsageInfo((PsiElement)o)));
+              }
+            }
+          }
+
+          @Override
+          public void onCancel() {
+            if (myCalcElementsThread != null) {
+              myCalcElementsThread.cancel();
+            }
+            usageView.close();
+          }
+        });
+      } else {
+        hideHint();
+      }
     }
 
     @Override
