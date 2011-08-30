@@ -295,18 +295,7 @@ public class PsiDiamondType extends PsiType {
       if (myErrorMessage != null) {
         return PsiType.EMPTY_ARRAY;
       }
-      final PsiType[] result = new PsiType[myInferredTypes.size()];
-      for (int i = 0, myInferredTypesSize = myInferredTypes.size(); i < myInferredTypesSize; i++) {
-        PsiType inferredType = myInferredTypes.get(i);
-        if (inferredType instanceof PsiWildcardType) {
-          final PsiType bound = ((PsiWildcardType)inferredType).getBound();
-          result[i] = bound != null ? bound : PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
-        }
-        else {
-          result[i] = inferredType;
-        }
-      }
-      return result;
+      return myInferredTypes.toArray(new PsiType[myInferredTypes.size()]);
     }
 
     /**
