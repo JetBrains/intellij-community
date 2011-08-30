@@ -27,12 +27,12 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Stack;
 
 public class BraceMatchingUtil {
   public static final int UNDEFINED_TOKEN_GROUP = -1;

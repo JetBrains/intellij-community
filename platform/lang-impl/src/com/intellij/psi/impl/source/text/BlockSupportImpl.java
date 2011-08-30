@@ -224,22 +224,21 @@ public class BlockSupportImpl extends BlockSupport {
     }
 
     try {
+      newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);
       if (isReplaceWholeNode(fileImpl, newRoot)) {
         DiffLog treeChangeEvent = replaceElementWithEvents((CompositeElement)oldRoot, (CompositeElement)newRoot);
         fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
 
-        // may be time consuming - do not perform in AWT during finishCommit
-        TreeUtil.ensureParsed(oldRoot.getFirstChildNode());
-        TreeUtil.ensureParsed(newRoot.getFirstChildNode());
-
         return treeChangeEvent;
       }
-      newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);
       newRoot.getFirstChildNode();  // maybe reparsed in PsiBuilderImpl and have thrown exception here
     }
     catch (ReparsedSuccessfullyException e) {
       // reparsed in PsiBuilderImpl
       return e.getDiffLog();
+    }
+    finally {
+      newRoot.putUserData(TREE_TO_BE_REPARSED, null);
     }
 
     final ASTShallowComparator comparator = new ASTShallowComparator(indicator);

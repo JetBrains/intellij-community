@@ -51,12 +51,14 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
  */
-public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPsiElement, Object> {
+public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GroovyPsiElement, Object, GroovyPsiElement> {
   public boolean couldShowInLookup() {
     return true;
   }
@@ -464,5 +466,38 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
         buffer.append(name);
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public GroovyPsiElement[] getActualParameters(@NotNull GroovyPsiElement o) {
+    if (o instanceof GrArgumentList) return ((GrArgumentList)o).getAllArguments();
+    return GroovyPsiElement.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public IElementType getActualParameterDelimiterType() {
+    return GroovyTokenTypes.mCOMMA;
+  }
+
+  @NotNull
+  @Override
+  public IElementType getActualParametersRBraceType() {
+    return GroovyTokenTypes.mRPAREN;
+  }
+
+  private static final Set<Class> ALLOWED_PARAM_CLASSES = Collections.<Class>singleton(GroovyPsiElement.class);
+
+  @NotNull
+  @Override
+  public Set<Class> getArgumentListAllowedParentClasses() {
+    return ALLOWED_PARAM_CLASSES;
+  }
+
+  @NotNull
+  @Override
+  public Class<GroovyPsiElement> getArgumentListClass() {
+    return GroovyPsiElement.class;
   }
 }

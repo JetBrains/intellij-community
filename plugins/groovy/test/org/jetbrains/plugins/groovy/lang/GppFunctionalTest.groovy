@@ -277,8 +277,8 @@ abstract class Intf {
   abstract void foo()
   void bar() {}
 }
-class <error descr="Method 'foo' is not implemented">Foo</error> implements Intf {}
-class <error descr="Method 'foo' is not implemented">Wrong</error> extends Foo {}
+<error descr="Method 'foo' is not implemented">class Foo implements Intf</error> {}
+<error descr="Method 'foo' is not implemented">class Wrong extends Foo</error> {}
 class Bar implements Intf {
   void foo() {}
 }

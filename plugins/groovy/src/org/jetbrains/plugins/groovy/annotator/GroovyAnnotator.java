@@ -326,6 +326,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+    final PsiElement parent = typeDefinition.getParent();
+    if (!typeDefinition.isAnonymous() && !(parent instanceof GrTypeDefinitionBody || parent instanceof GroovyFile)) {
+      final TextRange range = getClassHeaderTextRange(typeDefinition);
+      final Annotation errorAnnotation =
+        myHolder.createErrorAnnotation(range, GroovyBundle.message("class.definition.is.not.expected.here"));
+      errorAnnotation.registerFix(new GrMoveClassToCorrectPlaceFix(typeDefinition));
+    }
     checkTypeDefinition(myHolder, typeDefinition);
     checkTypeDefinitionModifiers(myHolder, typeDefinition);
 
@@ -366,7 +373,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final String qName = superClass.getQualifiedName();
     if (constructors.length == 0) {
       if (!hasImplicitDefConstructor && (defConstructor == null || !PsiUtil.isAccessible(typeDefinition, defConstructor))) {
-        final TextRange range = getHeaderTextRange(typeDefinition);
+        final TextRange range = getClassHeaderTextRange(typeDefinition);
         holder.createErrorAnnotation(range, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName));
       }
       return;
@@ -1017,15 +1024,30 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     assert element instanceof PsiNamedElement;
     String notImplementedMethodName = ((PsiNamedElement)element).getName();
 
-    final TextRange range = getHeaderTextRange(typeDefinition);
+    final TextRange range = getClassHeaderTextRange(typeDefinition);
     final Annotation annotation = holder.createErrorAnnotation(range,
                                                                GroovyBundle.message("method.is.not.implemented", notImplementedMethodName));
     registerImplementsMethodsFix(typeDefinition, annotation);
   }
 
-  private static TextRange getHeaderTextRange(GrNamedElement namedElement) {
-    final int startOffset = namedElement.getTextOffset();
-    int endOffset = namedElement.getNameIdentifierGroovy().getTextRange().getEndOffset();
+  private static TextRange getClassHeaderTextRange(GrTypeDefinition clazz) {
+    final GrModifierList modifierList = clazz.getModifierList();
+    final int startOffset = modifierList != null ? modifierList.getTextOffset() : clazz.getTextOffset();
+    final GrImplementsClause implementsClause = clazz.getImplementsClause();
+    
+    final int endOffset;
+    if (implementsClause!=null) {
+      endOffset = implementsClause.getTextRange().getEndOffset();
+    }
+    else {
+      final GrExtendsClause extendsClause = clazz.getExtendsClause();
+      if (extendsClause != null) {
+        endOffset = extendsClause.getTextRange().getEndOffset();
+      }
+      else {
+        endOffset = clazz.getNameIdentifierGroovy().getTextRange().getEndOffset();
+      }
+    }
     return new TextRange(startOffset, endOffset);
   }
 
@@ -1317,7 +1339,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
                                              GrTypeDefinition typeDefinition) {
     final PsiClass psiClass = getCircularClass(typeDefinition, new HashSet<PsiClass>());
     if (psiClass != null) {
-      holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
+      holder.createErrorAnnotation(getClassHeaderTextRange(typeDefinition),
                                    GroovyBundle.message("cyclic.inheritance.involving.0", psiClass.getQualifiedName()));
     }
   }

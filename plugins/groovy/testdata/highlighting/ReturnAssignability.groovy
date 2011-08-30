@@ -8,3 +8,8 @@ File foo() {
   }
   <warning descr="Cannot assign 'Integer' to 'File'">67</warning>
 }
+
+File bar() {
+  def x = [1, 2, 3]
+  if (2 in x) {}
+}

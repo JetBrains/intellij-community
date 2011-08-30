@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -77,6 +78,8 @@ public class GroovyOverrideImplementUtil {
     if (OverrideImplementUtil.isInsertOverride(method, aClass)) {
       result.getModifierList().addAnnotation(JAVA_LANG_OVERRIDE);
     }
+
+    GrReferenceAdjuster.shortenReferences(result);
     return result;
   }
 
@@ -145,10 +148,10 @@ public class GroovyOverrideImplementUtil {
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
     if (isConstructor) {
-      return factory.createConstructorFromText(name, buffer.toString(), null);
+      return factory.createConstructorFromText(name, buffer.toString(), aClass);
     }
     else {
-      return (GrMethod)factory.createTopElementFromText(buffer.toString());
+      return factory.createMethodFromText(buffer.toString(), aClass);
     }
   }
 

@@ -130,13 +130,11 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       return true;
     }
 
-    //isApplicable last expression on method body
     @Override
-    public void visitOpenBlock(GrOpenBlock block) {
-      super.visitOpenBlock(block);
-      final PsiElement element = block.getParent();
-      if (!(element instanceof GrMethod)) return;
-      GrMethod method = (GrMethod)element;
+    public void visitMethod(GrMethod method) {
+      super.visitMethod(method);
+      final GrOpenBlock block = method.getBlock();
+      if (block == null) return;
       final PsiType expectedType = method.getReturnType();
       if (expectedType == null || PsiType.VOID.equals(expectedType)) return;
 

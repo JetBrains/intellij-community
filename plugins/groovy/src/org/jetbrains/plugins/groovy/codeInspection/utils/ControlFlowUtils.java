@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruc
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.*;
@@ -600,11 +601,18 @@ public class ControlFlowUtils {
 
     PsiElement element = last.getElement();
     if (element != null) {
+      final GrExpression returnValue;
       if (element instanceof GrReturnStatement) {
-        element = ((GrReturnStatement)element).getReturnValue();
+        returnValue = ((GrReturnStatement)element).getReturnValue();
+      }
+      else if (element instanceof GrExpression && PsiUtil.isExpressionStatement(element)) {
+        returnValue = (GrExpression)element;
+      }
+      else {
+        returnValue = null;
       }
 
-      return visitor.visitExitPoint(last, element instanceof GrExpression ? (GrExpression)element : null);
+      return visitor.visitExitPoint(last, returnValue);
     }
     visited[last.num()] = true;
     for (Instruction pred : last.allPred()) {

@@ -11,6 +11,6 @@ class B implements  I{
   def A a
 }
 
-class <error descr="Method 'foo' is not implemented">C</error> implements I {
+<error descr="Method 'foo' is not implemented">class C implements I</error> {
  //nothing here
 }

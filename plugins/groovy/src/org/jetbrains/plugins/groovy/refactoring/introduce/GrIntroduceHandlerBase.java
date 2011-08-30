@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
@@ -104,8 +105,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     if (expression.getType() == PsiType.VOID) return true;
     if (expression instanceof GrAssignmentExpression) return true;
     if (expression instanceof GrReferenceExpression && expression.getParent() instanceof GrCall) {
-      final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-      return resolved instanceof PsiMethod || resolved instanceof PsiClass;
+      final GroovyResolveResult resolveResult = ((GrReferenceExpression)expression).advancedResolve();
+      final PsiElement resolved = resolveResult.getElement();
+      return resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty() || resolved instanceof PsiClass;
     }
     if (expression instanceof GrApplicationStatement) {
       return !PsiUtil.isExpressionStatement(expression);
