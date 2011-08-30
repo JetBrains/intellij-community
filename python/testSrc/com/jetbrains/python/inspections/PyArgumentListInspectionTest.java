@@ -80,6 +80,10 @@ public class PyArgumentListInspectionTest extends PyLightFixtureTestCase {
     doTest();
   }
   
+  public void _testUnresolvedSuperclass() {  // PY-4419
+    doTest();
+  }
+  
   public void testPy3k() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
     try {
