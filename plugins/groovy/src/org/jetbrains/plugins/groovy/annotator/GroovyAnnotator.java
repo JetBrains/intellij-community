@@ -1339,7 +1339,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
                                              GrTypeDefinition typeDefinition) {
     final PsiClass psiClass = getCircularClass(typeDefinition, new HashSet<PsiClass>());
     if (psiClass != null) {
-      holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
+      holder.createErrorAnnotation(getClassHeaderTextRange(typeDefinition),
                                    GroovyBundle.message("cyclic.inheritance.involving.0", psiClass.getQualifiedName()));
     }
   }
