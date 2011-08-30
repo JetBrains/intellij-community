@@ -73,6 +73,14 @@ public class PyUnresolvedReferencesInspectionTest extends PyLightFixtureTestCase
     myFixture.checkHighlighting(true, false, false);
   }
 
+  public void testFromImportToContainingFile() {  // PY-4371
+    myFixture.copyFileToProject("inspections/PyUnresolvedReferencesInspection/__init__.py", "PyUnresolvedReferencesInspection/__init__.py");
+    myFixture.copyFileToProject("inspections/PyUnresolvedReferencesInspection/fromImportToContainingFile.py", "PyUnresolvedReferencesInspection/fromImportToContainingFile.py");
+    myFixture.configureFromTempProjectFile("PyUnresolvedReferencesInspection/fromImportToContainingFile.py");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.checkHighlighting(true, false, false);
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
