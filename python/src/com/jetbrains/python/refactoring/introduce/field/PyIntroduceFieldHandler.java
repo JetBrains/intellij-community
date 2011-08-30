@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -235,7 +236,12 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   }
 
   private static void putCaretOnFieldName(Editor editor, PyAssignmentStatement statement) {
-    final PsiElement elementAtOffset = statement.getContainingFile().findElementAt(editor.getCaretModel().getOffset());
+    int caretOffset = editor.getCaretModel().getOffset();
+    PsiElement elementAtOffset = statement.getContainingFile().findElementAt(caretOffset);
+    while (elementAtOffset instanceof PsiWhiteSpace && caretOffset > 0) {
+      elementAtOffset = statement.getContainingFile().findElementAt(--caretOffset);
+    }
+    
     PyQualifiedExpression qExpr = PsiTreeUtil.getParentOfType(elementAtOffset, PyQualifiedExpression.class);
     if (qExpr != null && qExpr.getQualifier() == null) {
       qExpr = PsiTreeUtil.getParentOfType(qExpr, PyQualifiedExpression.class);
