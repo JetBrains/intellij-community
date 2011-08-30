@@ -278,9 +278,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
 
     @Override
-    public void finish() {
-      super.finish();
-      if (myPanel != null && myPanel.getInitPlace() != InitPlace.SAME_METHOD) {
+    protected void moveOffsetAfter(boolean success) {
+      if (success && myPanel != null && myPanel.getInitPlace() != InitPlace.SAME_METHOD) {
         final AccessToken accessToken = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
         try {
           final PyAssignmentStatement initializer = PsiTreeUtil.getParentOfType(myTarget, PyAssignmentStatement.class);
@@ -293,7 +292,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
           };
           final PyClass pyClass = PyUtil.getContainingClassOrSelf(initializer);
           if (myPanel.getInitPlace() == InitPlace.CONSTRUCTOR) {
-            AddFieldQuickFix.addFieldToInit(myProject, pyClass, "", callback);                    
+            AddFieldQuickFix.addFieldToInit(myProject, pyClass, "", callback);
           }
           else if (myPanel.getInitPlace() == InitPlace.SET_UP) {
             addFieldToSetUp(pyClass, callback);
