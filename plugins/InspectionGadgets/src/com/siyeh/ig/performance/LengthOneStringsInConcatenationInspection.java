@@ -19,12 +19,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -127,14 +127,22 @@ public class LengthOneStringsInConcatenationInspection
                     polyadicExpression.getOperationTokenType())) {
                 return false;
             }
-            final PsiExpression sibling =
-                    ExpressionUtils.getPrevOrNextSiblingOfType(expression,
-                            PsiExpression.class);
-            if (sibling == null) {
+            final PsiExpression[] operands = polyadicExpression.getOperands();
+            if (operands.length < 2) {
                 return false;
             }
-            final PsiType siblingType = sibling.getType();
-            return TypeUtils.isJavaLangString(siblingType);
+            final int index = ArrayUtil.indexOf(operands, expression);
+            for (int i = 0; i < index; i++) {
+                final PsiType type = operands[i].getType();
+                if (TypeUtils.isJavaLangString(type)) {
+                    return true;
+                }
+            }
+            if (index == 0) {
+                final PsiType type = operands[index + 1].getType();
+                return TypeUtils.isJavaLangString(type);
+            }
+            return false;
         }
 
         static boolean isArgumentOfStringAppend(PsiExpression expression) {

@@ -1,5 +1,4 @@
-
-package com.siyeh.igtest.performance;
+package com.siyeh.igtest.performance.length_one_strings_in_concatenation;
 
 import java.io.IOException;
 
@@ -19,5 +18,9 @@ public class LengthOneStringInConcatenationInspection
         final StringBuilder buffer2 = new StringBuilder();
         buffer2.append("foo");
         buffer2.append("f");
+        System.out.println("asdf" + 1 + "a");
+        System.out.println("asdf" + "b" + 2);
+        System.out.println(1 + "b" + "asdf");
+        System.out.println("a" + );
     }
 }

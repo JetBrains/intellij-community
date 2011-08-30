@@ -388,27 +388,4 @@ public class ExpressionUtils {
         }
         return true;
     }
-
-    @Nullable
-    public static <T extends PsiElement> T getPrevOrNextSiblingOfType(
-            @Nullable PsiElement sibling, @NotNull Class<T> aClass) {
-        if (sibling == null) {
-            return null;
-        }
-        for (PsiElement prevSibling = sibling.getPrevSibling();
-             prevSibling != null;
-             prevSibling = prevSibling.getPrevSibling()) {
-            if (aClass.isInstance(prevSibling)) {
-                return (T)prevSibling;
-            }
-        }
-        for (PsiElement nextSibling = sibling.getNextSibling();
-             nextSibling != null;
-             nextSibling = nextSibling.getNextSibling()) {
-            if (aClass.isInstance(nextSibling)) {
-                return (T)nextSibling;
-            }
-        }
-        return null;
-    }
 }
