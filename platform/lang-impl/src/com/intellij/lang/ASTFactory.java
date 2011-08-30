@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.intellij.lang;
 
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.LexerUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.CodeFragmentElement;
@@ -28,7 +26,7 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/*
+/**
  * @author max
  */
 public abstract class ASTFactory {
@@ -104,30 +102,6 @@ public abstract class ASTFactory {
     final PsiWhiteSpaceImpl w = new PsiWhiteSpaceImpl(WHITESPACES.intern(text));
     CodeEditUtil.setNodeGenerated(w, true);
     return w;
-  }
-
-  /**
-   * @deprecated use {@link #leaf(com.intellij.psi.tree.IElementType, CharSequence)} (to remove in IDEA 11).
-   */
-  @NotNull
-  public static LeafElement leaf(IElementType type, CharSequence fileText, int start, int end, CharTable table) {
-    return leaf(type, table.intern(fileText, start, end));
-  }
-
-  /**
-   * @deprecated use {@link #leaf(com.intellij.psi.tree.IElementType, CharSequence)} (to remove in IDEA 11).
-   */
-  @NotNull
-  public static LeafElement leaf(IElementType type, CharSequence text, CharTable table) {
-    return leaf(type, table.intern(text));
-  }
-
-  /**
-   * @deprecated use {@link #leaf(com.intellij.psi.tree.IElementType, CharSequence)} (to remove in IDEA 11).
-   */
-  @NotNull
-  public static LeafElement leaf(final Lexer lexer, final CharTable charTable) {
-    return leaf(lexer.getTokenType(), LexerUtil.internToken(lexer, charTable));
   }
 
   // default implementation
