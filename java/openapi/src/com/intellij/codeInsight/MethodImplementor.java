@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -36,5 +37,6 @@ public interface MethodImplementor {
 
   boolean isBodyGenerated();
 
+  @Nullable
   GenerationInfo createGenerationInfo(PsiMethod method, boolean mergeIfExists);
 }
