@@ -33,17 +33,21 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
     private final PsiClass myClass;
     private final SearchScope myScope;
     private final boolean myIncludeAnonymous;
+    private final boolean myCheckInheritance;
 
-    public SearchParameters(final PsiClass aClass, SearchScope scope, final boolean includeAnonymous) {
-      myIncludeAnonymous = includeAnonymous;
+    public SearchParameters(PsiClass aClass, SearchScope scope, boolean includeAnonymous, boolean checkInheritance) {
       myClass = aClass;
       myScope = scope;
+      myIncludeAnonymous = includeAnonymous;
+      myCheckInheritance = checkInheritance;
+    }
+
+    public SearchParameters(final PsiClass aClass, SearchScope scope, final boolean includeAnonymous) {
+      this(aClass, scope, includeAnonymous, true);
     }
 
     public SearchParameters(final PsiClass aClass, final SearchScope scope) {
-      myClass = aClass;
-      myScope = scope;
-      myIncludeAnonymous = true;
+      this(aClass, scope, true);
     }
 
     public PsiClass getClassToProcess() {
@@ -52,6 +56,10 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
 
     public SearchScope getScope() {
       return myScope;
+    }
+
+    public boolean isCheckInheritance() {
+      return myCheckInheritance;
     }
 
     public boolean includeAnonymous() {
@@ -70,7 +78,14 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
   }
 
   public static Query<PsiClass> search(final PsiClass aClass, SearchScope scope, boolean includeAnonymous) {
-    final Query<PsiClass> raw = INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope, includeAnonymous));
+    return search(aClass, scope, includeAnonymous, true);
+  }
+
+  public static Query<PsiClass> search(final PsiClass aClass,
+                                       SearchScope scope,
+                                       boolean includeAnonymous,
+                                       final boolean checkInheritance) {
+    final Query<PsiClass> raw = INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope, includeAnonymous, checkInheritance));
 
     if (!includeAnonymous) {
       return new FilteredQuery<PsiClass>(raw, new Condition<PsiClass>() {

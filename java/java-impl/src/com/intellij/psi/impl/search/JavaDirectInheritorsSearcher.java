@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.search;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
@@ -88,6 +90,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     for (PsiReferenceList referenceList : candidates) {
       ProgressManager.checkCanceled();
       final PsiClass candidate = (PsiClass)referenceList.getParent();
+      if (!checkInheritance(p, aClass, candidate)) continue;
+
       String fqn = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         public String compute() {
           return candidate.getQualifiedName();
@@ -114,6 +118,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
       for (PsiAnonymousClass candidate : anonymousCandidates) {
         ProgressManager.checkCanceled();
+        if (!checkInheritance(p, aClass, candidate)) continue;
+
         if (!consumer.process(candidate)) return false;
       }
 
@@ -141,6 +147,16 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     return true;
+  }
+
+  private static boolean checkInheritance(DirectClassInheritorsSearch.SearchParameters p, PsiClass aClass, PsiClass candidate) {
+    final AccessToken token = ReadAction.start();
+    try {
+      return !p.isCheckInheritance() || candidate.isInheritor(aClass, false);
+    }
+    finally {
+      token.finish();
+    }
   }
 
   private static boolean processSameNamedClasses(Processor<PsiClass> consumer, PsiClass aClass, List<PsiClass> sameNamedClasses) {
