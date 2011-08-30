@@ -198,11 +198,11 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
         }
         else {
           PsiType qualifierType = qualifier.getType();
-          LOG.assertTrue(qualifierType != null);
-
-          message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
-                                              PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
-                                              PsiFormatUtil.formatType(argType, 0, PsiSubstitutor.EMPTY));
+          if (qualifierType != null) {
+            message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
+                                                PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
+                                                PsiFormatUtil.formatType(argType, 0, PsiSubstitutor.EMPTY));
+          }
         }
       }
       return message;
