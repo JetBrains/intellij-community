@@ -122,6 +122,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   @SuppressWarnings("unchecked")
   public void showParameterInfo(@NotNull GroovyPsiElement place, CreateParameterInfoContext context) {
     GroovyResolveResult[] variants = ResolveUtil.getCallVariants(place);
+
     final Condition<GroovyResolveResult> condition = new Condition<GroovyResolveResult>() {
       public boolean value(GroovyResolveResult groovyResolveResult) {
         final PsiElement element = groovyResolveResult.getElement();
@@ -129,7 +130,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
                element instanceof GrVariable && ((GrVariable)element).getTypeGroovy() instanceof GrClosureType;
       }
     };
-    final List elementToShow = ContainerUtil.findAll(variants, condition);
+    final List elementToShow = new ArrayList();
     final PsiElement parent = place.getParent();
     if (parent instanceof GrMethodCall) {
       final GrExpression invoked = ((GrMethodCall)parent).getInvokedExpression();
@@ -144,6 +145,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           elementToShow.addAll(
             ContainerUtil.findAll(ResolveUtil.getMethodCandidates(type, "call", place, PsiUtil.getArgumentTypes(place, true)), condition));
         }
+      }
+      else {
+        elementToShow.addAll(ContainerUtil.findAll(variants, condition));
       }
     }
     context.setItemsToShow(ArrayUtil.toObjectArray(elementToShow));
