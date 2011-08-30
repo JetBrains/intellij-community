@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,18 +36,21 @@ public class AssignmentToForLoopParameterInspection
     /** @noinspection PublicField for externalization purposes*/
     public boolean m_checkForeachParameters = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assignment.to.for.loop.parameter.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "assignment.to.for.loop.parameter.problem.descriptor");
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
@@ -65,6 +68,7 @@ public class AssignmentToForLoopParameterInspection
         return new ExtractParameterAsLocalVariableFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new AssignmentToForLoopParameterVisitor();
     }
@@ -116,29 +120,30 @@ public class AssignmentToForLoopParameterInspection
             if (!(expression instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiReferenceExpression ref =
+            final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) expression;
-            final PsiElement element = ref.resolve();
+            final PsiElement element = referenceExpression.resolve();
             if (!(element instanceof PsiLocalVariable)) {
                 return;
             }
             final PsiLocalVariable variable = (PsiLocalVariable) element;
-            final PsiDeclarationStatement decl =
-                    (PsiDeclarationStatement) variable.getParent();
-            if(decl == null) {
+            final PsiElement variableParent = variable.getParent();
+            if (!(variableParent instanceof PsiDeclarationStatement)) {
                 return;
             }
-            if (!(decl.getParent() instanceof PsiForStatement)) {
+            final PsiDeclarationStatement declarationStatement =
+                    (PsiDeclarationStatement)variableParent;
+            final PsiElement parent = declarationStatement.getParent();
+            if (!(parent instanceof PsiForStatement)) {
                 return;
             }
-            final PsiForStatement forStatement =
-                    (PsiForStatement) decl.getParent();
-            assert forStatement != null;
-            final PsiStatement initialization = forStatement.getInitialization();
+            final PsiForStatement forStatement = (PsiForStatement) parent;
+            final PsiStatement initialization =
+                    forStatement.getInitialization();
             if (initialization == null) {
                 return;
             }
-            if (!initialization.equals(decl)) {
+            if (!initialization.equals(declarationStatement)) {
                 return;
             }
             if (!isInForStatementBody(expression, forStatement)) {
@@ -154,9 +159,9 @@ public class AssignmentToForLoopParameterInspection
             if (!(expression instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiReferenceExpression ref =
+            final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) expression;
-            final PsiElement element = ref.resolve();
+            final PsiElement element = referenceExpression.resolve();
             if (!(element instanceof PsiParameter)) {
                 return;
             }
