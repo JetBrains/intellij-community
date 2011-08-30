@@ -202,6 +202,8 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
                 if (!TypeUtils.isJavaLangString(type)) {
                     return;
                 }
+            } else {
+                return;
             }
             registerMethodCallError(call, Boolean.valueOf(useIsEmpty));
         }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>StringEqualsEmptyString.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'String.equals(&quot;&quot;)'</problem_class>
+    <description>&lt;code&gt;equals(&quot;&quot;)&lt;/code&gt; can be replaced with 'length()==0' #loc</description>
+  </problem>
+
+
+  <problem>
+    <file>StringEqualsEmptyString.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'String.equals(&quot;&quot;)'</problem_class>
+    <description>&lt;code&gt;equals(&quot;&quot;)&lt;/code&gt; can be replaced with 'length()==0' #loc</description>
+  </problem>
+
+</problems>
