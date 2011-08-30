@@ -22,16 +22,21 @@ import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -42,10 +47,11 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
   @NonNls public static final String ID = HighlightInfoType.DEPRECATION_ID;
   public static final String DISPLAY_NAME = HighlightInfoType.DEPRECATION_DISPLAY_NAME;
 
+  public boolean IGNORE_INSIDE_DEPRECATED = false;
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new DeprecationElementVisitor(holder);
+    return new DeprecationElementVisitor(holder, IGNORE_INSIDE_DEPRECATED);
   }
 
   @NotNull
@@ -73,17 +79,24 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
     return true;
   }
 
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Ignore inside deprecated", this, "IGNORE_INSIDE_DEPRECATED");
+  }
+
   private static class DeprecationElementVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
+    private final boolean myIgnoreInsideDeprecated;
 
-    public DeprecationElementVisitor(final ProblemsHolder holder) {
+    public DeprecationElementVisitor(final ProblemsHolder holder, boolean ignoreInsideDeprecated) {
       myHolder = holder;
+      myIgnoreInsideDeprecated = ignoreInsideDeprecated;
     }
 
     @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         JavaResolveResult result = reference.advancedResolve(true);
         PsiElement resolved = result.getElement();
-        checkDeprecated(resolved, reference.getReferenceNameElement(), null, myHolder);
+        checkDeprecated(resolved, reference.getReferenceNameElement(), null, myIgnoreInsideDeprecated, myHolder);
       }
 
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -112,7 +125,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
 
         PsiMethod constructor = result == null ? null : result.getElement();
         if (constructor != null && expression.getClassReference() != null) {
-          checkDeprecated(constructor, expression.getClassReference(), null, myHolder);
+          checkDeprecated(constructor, expression.getClassReference(), null, myIgnoreInsideDeprecated, myHolder);
         }
       }
     }
@@ -196,8 +209,23 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
                                      PsiElement elementToHighlight,
                                      @Nullable TextRange rangeInElement,
                                      ProblemsHolder holder) {
+    checkDeprecated(refElement, elementToHighlight, rangeInElement, false, holder);
+  }
+
+  public static void checkDeprecated(PsiElement refElement,
+                                     PsiElement elementToHighlight,
+                                     @Nullable TextRange rangeInElement,
+                                     boolean ignoreInsideDeprecated,
+                                     ProblemsHolder holder) {
     if (!(refElement instanceof PsiDocCommentOwner)) return;
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) return;
+
+    if (ignoreInsideDeprecated) {
+      PsiElement parent = elementToHighlight;
+      while ((parent = PsiTreeUtil.getParentOfType(parent, PsiDocCommentOwner.class, true)) != null) {
+        if (((PsiDocCommentOwner)parent).isDeprecated()) return;
+      }
+    }
 
     String description = JavaErrorMessages.message("deprecated.symbol",
                                                    HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
