@@ -77,7 +77,7 @@ class TemplateListPanel extends JPanel {
   private final Map<Integer, Map<TemplateOptionalProcessor, Boolean>> myTemplateOptions = new LinkedHashMap<Integer, Map<TemplateOptionalProcessor, Boolean>>();
   private final Map<Integer, Map<TemplateContextType, Boolean>> myTemplateContext = new LinkedHashMap<Integer, Map<TemplateContextType, Boolean>>();
   private JPanel myDetailsPanel = new JPanel(new CardLayout());
-  private EditTemplateDialog myCurrentTemplateEditor;
+  private LiveTemplateSettingsEditor myCurrentTemplateEditor;
 
   public TemplateListPanel() {
     super(new BorderLayout());
@@ -358,7 +358,7 @@ class TemplateListPanel extends JPanel {
                                      String shortcut,
                                      Map<TemplateOptionalProcessor, Boolean> options,
                                      Map<TemplateContextType, Boolean> context) {
-    myCurrentTemplateEditor = new EditTemplateDialog(this, "", template, myTemplateGroups, shortcut, options, context, true);
+    myCurrentTemplateEditor = new LiveTemplateSettingsEditor(this, "", template, myTemplateGroups, shortcut, options, context, true);
     JPanel comp = new JPanel(new BorderLayout());
     comp.add(myCurrentTemplateEditor.createCenterPanel(), BorderLayout.CENTER);
     comp.add(myCurrentTemplateEditor.createNorthPanel(), BorderLayout.NORTH);
@@ -469,7 +469,8 @@ class TemplateListPanel extends JPanel {
     if (template == null) return;
 
 
-    EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.edit.live.template.title"), template, getTemplateGroups(),
+    LiveTemplateSettingsEditor
+      dialog = new LiveTemplateSettingsEditor(this, CodeInsightBundle.message("dialog.edit.live.template.title"), template, getTemplateGroups(),
                                                        (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
     /*
     dialog.show();
@@ -479,7 +480,7 @@ class TemplateListPanel extends JPanel {
     applyChanges(dialog);
   }
 
-  private void applyChanges(EditTemplateDialog dialog) {
+  private void applyChanges(LiveTemplateSettingsEditor dialog) {
     TemplateImpl template = dialog.getTemplate();
     if (template == MOCK_TEMPLATE) {
       return;
@@ -579,7 +580,8 @@ class TemplateListPanel extends JPanel {
     TemplateImpl template = new TemplateImpl("", "", defaultGroup);
     myTemplateOptions.put(getKey(template), template.createOptions());
     myTemplateContext.put(getKey(template), template.createContext());
-    EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.add.live.template.title"), template, getTemplateGroups(),
+    LiveTemplateSettingsEditor
+      dialog = new LiveTemplateSettingsEditor(this, CodeInsightBundle.message("dialog.add.live.template.title"), template, getTemplateGroups(),
                                                        (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
     /*
     dialog.show();
@@ -603,7 +605,8 @@ class TemplateListPanel extends JPanel {
     TemplateImpl template = orTemplate.copy();
     myTemplateOptions.put(getKey(template), getOptions(orTemplate));
     myTemplateContext.put(getKey(template), getContext(orTemplate));
-    EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.copy.live.template.title"), template, getTemplateGroups(),
+    LiveTemplateSettingsEditor
+      dialog = new LiveTemplateSettingsEditor(this, CodeInsightBundle.message("dialog.copy.live.template.title"), template, getTemplateGroups(),
                                                        (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
     /*
     dialog.show();

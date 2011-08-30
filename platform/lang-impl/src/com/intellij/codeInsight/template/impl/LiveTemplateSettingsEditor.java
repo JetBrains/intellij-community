@@ -41,7 +41,7 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-public class EditTemplateDialog {
+public class LiveTemplateSettingsEditor {
   private final List<TemplateGroup> myTemplateGroups;
   private final TemplateImpl myTemplate;
 
@@ -67,10 +67,14 @@ public class EditTemplateDialog {
   private final Map<TemplateContextType, Boolean> myContext;
   private final boolean myNewTemplate;
 
-  public EditTemplateDialog(Component parent, String title, TemplateImpl template, List<TemplateGroup> groups, String defaultShortcut,
-                            Map<TemplateOptionalProcessor, Boolean> options,
-                            Map<TemplateContextType, Boolean> context,
-                            boolean newTemplate) {
+  public LiveTemplateSettingsEditor(Component parent,
+                                    String title,
+                                    TemplateImpl template,
+                                    List<TemplateGroup> groups,
+                                    String defaultShortcut,
+                                    Map<TemplateOptionalProcessor, Boolean> options,
+                                    Map<TemplateContextType, Boolean> context,
+                                    boolean newTemplate) {
     myOptions = options;
     myContext = context;
     myNewTemplate = newTemplate;

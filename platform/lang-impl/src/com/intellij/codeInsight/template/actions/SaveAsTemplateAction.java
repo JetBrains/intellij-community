@@ -26,7 +26,7 @@ package com.intellij.codeInsight.template.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.codeInsight.template.impl.EditTemplateDialog;
+import com.intellij.codeInsight.template.impl.LiveTemplateSettingsEditor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateOptionalProcessor;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -146,7 +146,7 @@ public class SaveAsTemplateAction extends AnAction {
     Map<TemplateOptionalProcessor, Boolean> options = template.createOptions();
     Map<TemplateContextType, Boolean> context = template.createContext();
 
-    EditTemplateDialog dialog = new EditTemplateDialog(
+    LiveTemplateSettingsEditor dialog = new LiveTemplateSettingsEditor(
       component,
       CodeInsightBundle.message("dialog.edit.live.template.title"),
       template,
