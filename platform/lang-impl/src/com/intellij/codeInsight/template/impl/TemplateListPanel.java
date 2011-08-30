@@ -83,7 +83,9 @@ class TemplateListPanel extends JPanel {
     super(new BorderLayout());
 
     myDetailsPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-    myDetailsPanel.add(new JLabel("No live template is selected"), NO_SELECTION);
+    JLabel label = new JLabel("No live template is selected");
+    label.setHorizontalAlignment(SwingConstants.CENTER);
+    myDetailsPanel.add(label, NO_SELECTION);
     updateTemplateDetails(MOCK_TEMPLATE, "Tab", MOCK_TEMPLATE.createOptions(), MOCK_TEMPLATE.createContext());
 
     fillPanel(this);

@@ -116,8 +116,8 @@ public class LiveTemplateSettingsEditor {
     GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
     
     JPanel editorPanel = new JPanel(new BorderLayout());
-    editorPanel.setPreferredSize(new Dimension(250, 130));
-    editorPanel.setMinimumSize(new Dimension(250, 130));
+    editorPanel.setPreferredSize(new Dimension(250, 100));
+    editorPanel.setMinimumSize(editorPanel.getPreferredSize());
     editorPanel.add(myTemplateEditor.getComponent(), BorderLayout.CENTER);
     panel.add(editorPanel, gb.nextLine().next().weighty(1).weightx(1).coverColumn(2));
 
