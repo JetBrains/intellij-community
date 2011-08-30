@@ -100,6 +100,7 @@ public abstract class UsefulTestCase extends TestCase {
       myTempDir = ORIGINAL_TEMP_DIR + "/" + testName + "_"+ PRNG.nextInt(1000);
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
+    Timings.getStatistics(); // warm up CPU in setUp
   }
 
   @Override
