@@ -47,11 +47,6 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyArgumentListInspection() {
-    LocalInspectionTool inspection = new PyArgumentListInspection();
-    doTest(getTestName(false), inspection);
-  }
-
   public void testPyMethodParametersInspection() {
     LocalInspectionTool inspection = new PyMethodParametersInspection();
     doTest(getTestName(false), inspection);
@@ -60,11 +55,6 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPyNestedDecoratorsInspection() {
     LocalInspectionTool inspection = new PyNestedDecoratorsInspection();
     doTest(getTestName(false), inspection);
-  }
-
-  public void testPyArgumentListInspection3K() {
-    LocalInspectionTool inspection = new PyArgumentListInspection();
-    doTestWithPy3k(getTestName(false), inspection);
   }
 
   public void testPyRedeclarationInspection() {
