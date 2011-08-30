@@ -22,6 +22,7 @@ import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
@@ -48,10 +49,11 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
   public static final String DISPLAY_NAME = HighlightInfoType.DEPRECATION_DISPLAY_NAME;
 
   public boolean IGNORE_INSIDE_DEPRECATED = false;
+  public boolean IGNORE_ABSTRACT_DEPRECATED_OVERRIDES = true;
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new DeprecationElementVisitor(holder, IGNORE_INSIDE_DEPRECATED);
+    return new DeprecationElementVisitor(holder, IGNORE_INSIDE_DEPRECATED, IGNORE_ABSTRACT_DEPRECATED_OVERRIDES);
   }
 
   @NotNull
@@ -81,16 +83,24 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore inside deprecated", this, "IGNORE_INSIDE_DEPRECATED");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox("Ignore inside deprecated members", "IGNORE_INSIDE_DEPRECATED");
+    panel.addCheckbox("<html>Ignore overrides of deprecated abstract methods from non-deprecated supers</html>", "IGNORE_ABSTRACT_DEPRECATED_OVERRIDES");
+    return panel;
+
   }
 
   private static class DeprecationElementVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
     private final boolean myIgnoreInsideDeprecated;
+    private final boolean myIgnoreAbstractDeprecatedOverrides;
 
-    public DeprecationElementVisitor(final ProblemsHolder holder, boolean ignoreInsideDeprecated) {
+    public DeprecationElementVisitor(final ProblemsHolder holder,
+                                     boolean ignoreInsideDeprecated,
+                                     boolean ignoreAbstractDeprecatedOverrides) {
       myHolder = holder;
       myIgnoreInsideDeprecated = ignoreInsideDeprecated;
+      myIgnoreAbstractDeprecatedOverrides = ignoreAbstractDeprecatedOverrides;
     }
 
     @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -134,7 +144,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
         MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
         if (!method.isConstructor()) {
           List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
-          checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, myHolder);
+          checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, myIgnoreAbstractDeprecatedOverrides, myHolder);
         } else {
           checkImplicitCallToSuper(method);
         }
@@ -187,8 +197,8 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
 
   //@top
   static void checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
-                                                          List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
-                                                          ProblemsHolder holder) {
+                                             List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
+                                             boolean ignoreAbstractDeprecatedOverrides, ProblemsHolder holder) {
     PsiMethod method = methodSignature.getMethod();
     PsiElement methodName = method.getNameIdentifier();
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
@@ -196,7 +206,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
       PsiClass aClass = superMethod.getContainingClass();
       if (aClass == null) continue;
       // do not show deprecated warning for class implementing deprecated methods
-      if (!aClass.isDeprecated() && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
+      if (ignoreAbstractDeprecatedOverrides && !aClass.isDeprecated() && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
       if (superMethod.isDeprecated()) {
         String description = JavaErrorMessages.message("overrides.deprecated.method",
                                                        HighlightMessageUtil.getSymbolName(aClass, PsiSubstitutor.EMPTY));
