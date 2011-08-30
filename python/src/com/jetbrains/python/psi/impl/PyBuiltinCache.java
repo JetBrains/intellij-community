@@ -190,7 +190,8 @@ public class PyBuiltinCache {
   /**
    * Stores the most often used types, returned by getNNNType().
    */
-  private final Map<String,PyClassType> myTypeCache = new HashMap<String, PyClassType>();
+  private final Map<String, PyClassType> myTypeCache = new HashMap<String, PyClassType>();
+  private final Map<String, PyType> myStdlibTypeCache = new HashMap<String, PyType>();
 
   /**
   @return
@@ -307,6 +308,18 @@ public class PyBuiltinCache {
   @Nullable
   public PyClassType getStaticMethodType() {
     return getObjectType("staticmethod");
+  }
+
+  public PyType getStdlibType(String key) {
+    synchronized (myStdlibTypeCache) {
+      return myStdlibTypeCache.get(key);
+    }
+  } 
+
+  public void storeStdlibType(String key, PyType result) {
+    synchronized (myStdlibTypeCache) {
+      myStdlibTypeCache.put(key, result);
+    }
   }
 
   /**

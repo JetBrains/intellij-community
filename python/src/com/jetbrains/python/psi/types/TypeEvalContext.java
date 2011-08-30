@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
@@ -7,7 +8,9 @@ import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,6 +19,8 @@ import java.util.Map;
 public class TypeEvalContext {
   private final boolean myAllowDataFlow;
   private final boolean myAllowStubToAST;
+  private List<String> myTrace;
+  private String myTraceIndent = "";
   private final PsiFile myOrigin;
 
   private final Map<PyExpression, PyType> myEvaluated = new HashMap<PyExpression, PyType>();
@@ -45,7 +50,7 @@ public class TypeEvalContext {
   public static TypeEvalContext fast() {
     return new TypeEvalContext(false, true, null);
   }
-
+  
   /**
    * Creates a TypeEvalContext for performing analysis operations on the specified file which is currently open in the editor.
    * For such a file, additional slow operations are allowed.
@@ -70,6 +75,39 @@ public class TypeEvalContext {
    */
   public static TypeEvalContext fastStubOnly(@Nullable PsiFile origin) {
     return new TypeEvalContext(false, false, origin);
+  }
+  
+  public TypeEvalContext withTracing() {
+    if (myTrace == null) {
+      myTrace = new ArrayList<String>();
+    }
+    return this;
+  }
+  
+  public void trace(String message, Object... args) {
+    if (myTrace != null) {
+      myTrace.add(myTraceIndent + String.format(message, args));
+    }
+  }
+  
+  public void traceIndent() {
+    if (myTrace != null) {
+      myTraceIndent += "  ";
+    }
+  }
+  
+  public void traceUnindent() {
+    if (myTrace != null && myTraceIndent.length() >= 2) {
+      myTraceIndent = myTraceIndent.substring(0, myTraceIndent.length()-2);
+    }
+  }
+  
+  public String printTrace() {
+    return StringUtil.join(myTrace, "\n");
+  }
+  
+  public boolean tracing() {
+    return myTrace != null;
   }
 
   @Nullable

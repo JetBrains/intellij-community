@@ -1,9 +1,7 @@
 package com.jetbrains.python.codeInsight.stdlib;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
@@ -18,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -27,8 +24,6 @@ import java.util.Properties;
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
   private Properties myStdlibTypes2 = new Properties();
   private Properties myStdlibTypes3 = new Properties();
-  private Project myProject = null;
-  private Map<String, PyType> myTypeCache = new HashMap<String, PyType>();
 
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
@@ -45,7 +40,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   public PyType getReturnType(PyFunction function, @Nullable PyReferenceExpression callSite, TypeEvalContext context) {
     final String qname = getQualifiedName(function, callSite);
     final String key = String.format("Python%d/%s.return", LanguageLevel.forElement(function).getVersion(), qname);
-    final PyType cached = getCachedType(function.getProject(), key);
+    final PyBuiltinCache cache = PyBuiltinCache.getInstance(function);
+    final PyType cached = cache.getStdlibType(key);
     if (cached != null) {
       return cached;
     }
@@ -55,7 +51,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
     final String s = docString.getReturnType();
     final PyType result = PyTypeParser.getTypeByName(function, s);
-    myTypeCache.put(key, result);
+    cache.storeStdlibType(key, result);
     return result;
   }
 
@@ -64,7 +60,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final String name = param.getName();
     final String qname = getQualifiedName(func, param);
     final String key = String.format("Python%d/%s.%s", LanguageLevel.forElement(param).getVersion(), qname, name);
-    final PyType cached = getCachedType(param.getProject(), key);
+    final PyBuiltinCache cache = PyBuiltinCache.getInstance(param);
+    final PyType cached = cache.getStdlibType(key);
     if (cached != null) {
       return cached;
     }
@@ -74,7 +71,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
     final String s = docString.getParamType(name);
     final PyType result = PyTypeParser.getTypeByName(func, s);
-    myTypeCache.put(key, result);
+    cache.storeStdlibType(key, result);
     return result;
   }
 
@@ -107,15 +104,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
                              result);
     }
     return result;
-  }
-
-  @Nullable
-  private PyType getCachedType(Project project, String key) {
-    if (project != myProject) {
-      myProject = project;
-      myTypeCache.clear();
-    }
-    return myTypeCache.get(key);
   }
 
   private Properties getStdlibTypes(LanguageLevel level) {
