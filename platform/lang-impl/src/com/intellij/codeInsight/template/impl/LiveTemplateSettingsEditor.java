@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -29,12 +30,19 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -97,14 +105,6 @@ public class LiveTemplateSettingsEditor {
     HelpManager.getInstance().invokeHelp("reference.dialogs.edittemplate");
   }
 
-  protected String getDimensionServiceKey(){
-    return "#com.intellij.codeInsight.template.impl.EditTemplateDialog";
-  }
-
-  public JComponent getPreferredFocusedComponent() {
-    return myKeyField;
-  }
-
   public void dispose() {
     EditorFactory.getInstance().releaseEditor(myTemplateEditor);
   }
@@ -137,16 +137,15 @@ public class LiveTemplateSettingsEditor {
     myEditVariablesButton.setMaximumSize(myEditVariablesButton.getPreferredSize());
     panel.add(myEditVariablesButton, gbConstraints);
 
-    JPanel templateOptionsPanel = createTemplateOptionsPanel();
-    JPanel contextPanel = createContextPanel();
     if (myNewTemplate) {
+      gbConstraints.gridy++;
+      panel.add(createShortContextPanel(), gbConstraints);
+
       gbConstraints.weighty = 0;
       gbConstraints.gridwidth = 1;
       gbConstraints.gridy++;
-      panel.add(templateOptionsPanel, gbConstraints);
+      panel.add(createTemplateOptionsPanel(), gbConstraints);
 
-      gbConstraints.gridx = 1;
-      panel.add(contextPanel, gbConstraints);
     }
 
     myKeyField.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
@@ -268,7 +267,46 @@ public class LiveTemplateSettingsEditor {
     return panel;
   }
 
-  private JPanel createContextPanel() {
+  private JPanel createShortContextPanel() {
+    JPanel panel = new JPanel(new BorderLayout());
+
+    final HyperlinkLabel change = new HyperlinkLabel();
+    panel.add(change, BorderLayout.WEST);
+
+    final Runnable updateLabel = new Runnable() {
+      public void run() {
+        List<String> contexts = new ArrayList<String>();
+        for (TemplateContextType type : myContext.keySet()) {
+          if (myContext.get(type).booleanValue()) {
+            contexts.add(UIUtil.removeMnemonic(type.getPresentableName()));
+          }
+        }
+        change.setHyperlinkText((contexts.isEmpty() ? "No applicable contexts yet" : "Applicable in " + StringUtil.join(contexts, ", ")) + ".  ", "Change", "");
+      }
+    };
+
+    change.addHyperlinkListener(new HyperlinkListener() {
+      private JBPopup myPopup;
+
+      @Override
+      public void hyperlinkUpdate(HyperlinkEvent e) {
+        if (myPopup != null && !myPopup.isDisposed()) {
+          myPopup.cancel();
+          myPopup = null;
+          return;
+        }
+
+        myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(createPopupContextPanel(updateLabel), null).createPopup();
+        myPopup.showUnderneathOf(change);
+      }
+    });
+
+    updateLabel.run();
+
+    return panel;
+  }
+
+  private JPanel createPopupContextPanel(final Runnable onChange) {
     ChangeListener listener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         myExpandByCombo.setEnabled(!isEnabledInStaticContextOnly());
@@ -311,8 +349,23 @@ public class LiveTemplateSettingsEditor {
     }
 
     for(JCheckBox checkBox: myCbContextMap.values()) {
-      addUpdateHighlighterAction(checkBox);
+      checkBox.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            updateHighlighter();
+            onChange.run();
+          }
+        }
+      );
     }
+
+    for(TemplateContextType type: myCbContextMap.keySet()) {
+      JCheckBox cb = myCbContextMap.get(type);
+      cb.setSelected(myContext.get(type).booleanValue());
+    }
+
+    updateContextTypesEnabledState();
+
+    new MnemonicHelper().register(panel);
 
     return panel;
   }
@@ -337,16 +390,6 @@ public class LiveTemplateSettingsEditor {
       }
     }
     return true;
-  }
-
-  private void addUpdateHighlighterAction(JCheckBox checkbox) {
-    checkbox.addActionListener(
-      new ActionListener(){
-        public void actionPerformed(ActionEvent e) {
-          updateHighlighter();
-        }
-      }
-    );
   }
 
   private void updateHighlighter() {
@@ -435,13 +478,6 @@ public class LiveTemplateSettingsEditor {
                                        myTemplate.isAlwaysStopAt(i));
       myVariables.add(variable);
     }
-
-    for(TemplateContextType type: myCbContextMap.keySet()) {
-      JCheckBox cb = myCbContextMap.get(type);
-      cb.setSelected(myContext.get(type).booleanValue());
-    }
-
-    updateContextTypesEnabledState();
 
     myCbReformat.setSelected(myTemplate.isToReformat());
 
