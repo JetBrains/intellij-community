@@ -17,6 +17,7 @@ package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,10 +42,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -307,26 +304,12 @@ public class DumbServiceImpl extends DumbService {
             });
           }
 
-
-          final ProgressIndicator proxy =
-            (ProgressIndicator)Proxy.newProxyInstance(indicator.getClass().getClassLoader(), new Class[]{ProgressIndicator.class}, new InvocationHandler() {
-              public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                if ("setFraction".equals(method.getName())) {
-                  final double fraction = (Double)args[0];
-                  args[0] = new Double((myProcessedItems + fraction * myCurrentBaseTotal) / myTotalItems);
-                }
-                try {
-                  return method.invoke(indicator, args);
-                }
-                catch (InvocationTargetException e) {
-                  final Throwable cause = e.getCause();
-                  if (cause instanceof ProcessCanceledException) {
-                    throw cause;
-                  }
-                  throw e;
-                }
-              }
-            });
+          final ProgressIndicator proxy = new DelegatingProgressIndicator(indicator) {
+            @Override
+            public void setFraction(double fraction) {
+              super.setFraction((myProcessedItems + fraction * myCurrentBaseTotal) / myTotalItems);
+            }
+          };
 
           final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
           final Thread self = Thread.currentThread();
