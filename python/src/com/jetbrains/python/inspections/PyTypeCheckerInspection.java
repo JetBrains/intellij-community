@@ -37,7 +37,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       public void visitPyCallExpression(PyCallExpression node) {
         final PyArgumentList args = node.getArgumentList();
         if (args != null) {
-          final PyArgumentList.AnalysisResult res = args.analyzeCall(myTypeEvalContext);
+          final PyArgumentList.AnalysisResult res = args.analyzeCall(resolveWithoutImplicits());
           final Map<PyExpression, PyNamedParameter> mapped = res.getPlainMappedParams();
           for (Map.Entry<PyExpression, PyNamedParameter> entry : mapped.entrySet()) {
             final PyNamedParameter p = entry.getValue();

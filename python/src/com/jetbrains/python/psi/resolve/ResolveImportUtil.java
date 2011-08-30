@@ -288,7 +288,7 @@ public class ResolveImportUtil {
     PsiFile footholdFile = foothold.getContainingFile();
     if (footholdFile == null || !footholdFile.isValid()) return Collections.emptyList();
 
-    PythonPathCache cache = getPathCache(foothold, footholdFile);
+    PythonPathCache cache = getPathCache(foothold);
     if (cache != null) {
       final List<PsiElement> cachedResults = cache.get(moduleQualifiedName);
       if (cachedResults != null) {
@@ -354,14 +354,14 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PythonPathCache getPathCache(PsiElement foothold, PsiFile footholdFile) {
+  private static PythonPathCache getPathCache(PsiElement foothold) {
     PythonPathCache cache = null;
     final Module module = ModuleUtil.findModuleForPsiElement(foothold);
     if (module != null) {
       cache = PythonModulePathCache.getInstance(module);
     }
     else {
-      final Sdk sdk = PyBuiltinCache.findSdkForFile(footholdFile);
+      final Sdk sdk = PyBuiltinCache.findSdkForFile(foothold.getContainingFile());
       if (sdk != null) {
         cache = PythonSdkPathCache.getInstance(foothold.getProject(), sdk);
       }
@@ -852,16 +852,31 @@ public class ResolveImportUtil {
 
   @Nullable
   public static PyQualifiedName findShortestImportableQName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
+    final PythonPathCache cache = getPathCache(foothold);
+    final PyQualifiedName name = cache != null ? cache.getName(vfile) : null;
+    if (name != null) {
+      return name;     
+    }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
     visitRoots(foothold, visitor);
-    return visitor.getResult();
+    final PyQualifiedName result = visitor.getResult();
+    if (cache != null) {
+      cache.putName(vfile, result);
+    }
+    return result;
   }
 
   @Nullable
   public static String findShortestImportableName(Module module, @NotNull VirtualFile vfile) {
+    final PythonPathCache cache = PythonModulePathCache.getInstance(module);
+    final PyQualifiedName name = cache.getName(vfile);
+    if (name != null) {
+      return name.toString();
+    }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
     visitRoots(module, visitor);
     final PyQualifiedName result = visitor.getResult();
+    cache.putName(vfile, result);
     return result == null ? null : result.toString();
   }
 

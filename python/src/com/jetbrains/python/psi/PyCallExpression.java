@@ -1,7 +1,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,10 +49,10 @@ public interface PyCallExpression extends PyExpression {
    * Return's flag part marks the particulars of the call, esp. the implicit first arg situation.
    * Return is null if callee cannot be resolved.
    *
-   * @param context the context for evaluating types
+   * @param resolveContext the reference resolve context
    */
   @Nullable
-  PyMarkedCallee resolveCallee(TypeEvalContext context);
+  PyMarkedCallee resolveCallee(PyResolveContext resolveContext);
 
   /**
    * Checks if the unqualified name of the callee matches any of the specified names

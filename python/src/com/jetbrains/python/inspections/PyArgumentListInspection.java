@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public class PyArgumentListInspection extends PyInspection {
       for (PyDecorator deco : decos) {
         if (! deco.hasArgumentList()) {
           // empty arglist; deco function must have a non-kwarg first arg
-          PyCallExpression.PyMarkedCallee mkfunc = deco.resolveCallee(myTypeEvalContext);
+          PyCallExpression.PyMarkedCallee mkfunc = deco.resolveCallee(resolveWithoutImplicits());
           if (mkfunc != null && !mkfunc.isImplicitlyResolved()) {
             Callable callable = mkfunc.getCallable();
             int first_param_offset =  mkfunc.getImplicitOffset();
@@ -83,7 +84,7 @@ public class PyArgumentListInspection extends PyInspection {
 
   public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context) {
     if (node.getParent() instanceof PyClass) return; // class Foo(object) is also an arg list
-    PyArgumentList.AnalysisResult result = node.analyzeCall(context);
+    PyArgumentList.AnalysisResult result = node.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context));
     if (!result.isImplicitlyResolved()) {
       for (Map.Entry<PyExpression, EnumSet<PyArgumentList.ArgFlag>> arg_entry : result.getArgumentFlags().entrySet()) {
         EnumSet<PyArgumentList.ArgFlag> flags = arg_entry.getValue();

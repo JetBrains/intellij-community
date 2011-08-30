@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +85,7 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       // dereference
       PyReferenceExpression ref = (PyReferenceExpression)callee;
-      resolveResult = ref.followAssignmentsChain(TypeEvalContext.fast());
+      resolveResult = ref.followAssignmentsChain(PyResolveContext.noImplicits());
       resolved = resolveResult.getElement();
     }
     else {
@@ -103,7 +104,7 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us, TypeEvalContext context) {
+  public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us, PyResolveContext resolveContext) {
     PyFunction.Flag wrappedFlag = null;
     boolean isConstructorCall = false;
 
@@ -113,7 +114,7 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       // dereference
       PyReferenceExpression ref = (PyReferenceExpression)callee;
-      resolveResult = ref.followAssignmentsChain(context);
+      resolveResult = ref.followAssignmentsChain(resolveContext);
       resolved = resolveResult.getElement();
     }
     else {
@@ -141,10 +142,10 @@ public class PyCallExpressionHelper {
       EnumSet<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
       List<PyExpression> qualifiers = resolveResult != null ? resolveResult.getQualifiers() : Collections.<PyExpression>emptyList();
       boolean is_by_instance = isConstructorCall ||
-                               isQualifiedByInstance((Callable)resolved, qualifiers, context)
+                               isQualifiedByInstance((Callable)resolved, qualifiers, resolveContext.getTypeEvalContext())
                                || resolved instanceof PyBoundFunction;
       PyExpression lastQualifier = qualifiers != null && qualifiers.isEmpty() ? null : qualifiers.get(qualifiers.size()-1);
-      boolean isByClass = lastQualifier == null ? false : isQualifiedByClass((Callable)resolved, lastQualifier, context);
+      boolean isByClass = lastQualifier == null ? false : isQualifiedByClass((Callable)resolved, lastQualifier, resolveContext.getTypeEvalContext());
       final Callable callable = (Callable)resolved;
       int implicitOffset = getImplicitArgumentCount(callable, wrappedFlag, flags, is_by_instance, isByClass);
       if (!isConstructorCall && PyNames.NEW.equals(callable.getName())) {
@@ -168,18 +169,16 @@ public class PyCallExpressionHelper {
    */
   public static int getImplicitArgumentCount(
     @NotNull final PyReferenceExpression callReference,
-    @NotNull PyFunction functionBeingCalled,
-    @Nullable TypeEvalContext typeContext
-  ) {
+    @NotNull PyFunction functionBeingCalled) {
     //return getImplicitArgumentCount(functionBeingCalled, null, null, qualifierIsAnInstance(callReference, TypeEvalContext.fast()));
-    if (typeContext == null) typeContext = TypeEvalContext.fast();
     final PyDecorator decorator = PsiTreeUtil.getParentOfType(callReference, PyDecorator.class);
     if (decorator != null && PsiTreeUtil.isAncestor(decorator.getCallee(), callReference, false)) {
       return 1;
     }
-    QualifiedResolveResult followed = callReference.followAssignmentsChain(typeContext);
-    boolean isByInstance = isQualifiedByInstance(functionBeingCalled, followed.getQualifiers(), typeContext);
-    boolean isByClass = isQualifiedByInstance(functionBeingCalled, followed.getQualifiers(), typeContext);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits();
+    QualifiedResolveResult followed = callReference.followAssignmentsChain(resolveContext);
+    boolean isByInstance = isQualifiedByInstance(functionBeingCalled, followed.getQualifiers(), resolveContext.getTypeEvalContext());
+    boolean isByClass = isQualifiedByInstance(functionBeingCalled, followed.getQualifiers(), resolveContext.getTypeEvalContext());
     return getImplicitArgumentCount(functionBeingCalled, null, null, isByInstance, isByClass);
   }
 

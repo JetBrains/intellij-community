@@ -8,6 +8,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public class PythonRegexpInjector implements LanguageInjector {
       if (call != null) {
         final PyExpression callee = call.getCallee();
         if (callee instanceof PyReferenceExpression && canBeRegexpCall(callee)) {
-          final PsiElement element = ((PyReferenceExpression)callee).getReference().resolve();
+          final PsiElement element = ((PyReferenceExpression)callee).getReference(PyResolveContext.noImplicits()).resolve();
           if (element != null && element.getContainingFile().getName().equals("re.py") && isRegexpMethod(element, index)) {
             List<TextRange> ranges = ((PyStringLiteralExpression)host).getStringValueTextRanges();
             if (ranges.size() == 1) {

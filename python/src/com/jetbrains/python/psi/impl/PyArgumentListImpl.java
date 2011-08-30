@@ -2,7 +2,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -10,7 +9,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -231,7 +230,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   @NotNull
-  public AnalysisResult analyzeCall(TypeEvalContext context) {
+  public AnalysisResult analyzeCall(PyResolveContext resolveContext) {
     final PyCallExpressionHelper.AnalysisResultImpl ret = new PyCallExpressionHelper.AnalysisResultImpl(this);
     PyExpression[] arguments = getArguments();
     // declaration-based checks
@@ -240,8 +239,8 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     // following the spec: http://docs.python.org/ref/calls.html
     PyCallExpression call = getCallExpression();
     if (call != null) {
-      PyCallExpression.PyMarkedCallee resolved_callee = call.resolveCallee(context);
-      if (resolved_callee != null) ret.mapArguments(arguments, resolved_callee, context);
+      PyCallExpression.PyMarkedCallee resolved_callee = call.resolveCallee(resolveContext);
+      if (resolved_callee != null) ret.mapArguments(arguments, resolved_callee, resolveContext.getTypeEvalContext());
     }
     return ret;
   }

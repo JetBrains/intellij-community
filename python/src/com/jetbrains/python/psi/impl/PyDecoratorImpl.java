@@ -7,6 +7,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import com.jetbrains.python.psi.types.PyType;
@@ -110,8 +111,8 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     PyCallExpressionHelper.addArgument(this, expression);
   }
 
-  public PyMarkedCallee resolveCallee(TypeEvalContext context) {
-    PyMarkedCallee callee = PyCallExpressionHelper.resolveCallee(this, context);
+  public PyMarkedCallee resolveCallee(PyResolveContext resolveContext) {
+    PyMarkedCallee callee = PyCallExpressionHelper.resolveCallee(this, resolveContext);
     if (callee == null) return null;
     if (!hasArgumentList()) {
       // NOTE: that +1 thing looks fishy

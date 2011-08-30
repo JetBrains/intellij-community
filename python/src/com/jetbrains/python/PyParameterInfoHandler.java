@@ -3,15 +3,13 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.toolbox.FP;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -37,7 +35,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   public PyArgumentList findElementForParameterInfo(final CreateParameterInfoContext context) {
     PyArgumentList arglist = findArgumentList(context);
     if (arglist != null) {
-      PyArgumentList.AnalysisResult result = arglist.analyzeCall(TypeEvalContext.fast());
+      PyArgumentList.AnalysisResult result = arglist.analyzeCall(PyResolveContext.noImplicits());
       if (result.getMarkedCallee() != null && !result.isImplicitlyResolved()) {
         context.setItemsToShow(new Object[] { result });
         return arglist;
@@ -100,7 +98,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     final PyArgumentList arglist = prev_result.getArgumentList();
     if (!arglist.isValid()) return;
     // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
-    PyArgumentList.AnalysisResult result = arglist.analyzeCall(TypeEvalContext.fast());
+    PyArgumentList.AnalysisResult result = arglist.analyzeCall(PyResolveContext.noImplicits());
     PyMarkedCallee marked = result.getMarkedCallee();
     assert marked != null : "findElementForParameterInfo() did it wrong!";
     final Callable callable = marked.getCallable();

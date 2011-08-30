@@ -9,7 +9,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
 
 import java.util.ArrayList;
@@ -87,7 +87,7 @@ public class PyPushDownConflicts {
 
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
-      final PyCallExpression.PyMarkedCallee markedFunction = node.resolveCallee(TypeEvalContext.fast());
+      final PyCallExpression.PyMarkedCallee markedFunction = node.resolveCallee(PyResolveContext.noImplicits());
       final Callable function = markedFunction != null ? markedFunction.getCallable() : null;
       if (myMovedMembers.contains(function)) {
         myCollection.add(function);

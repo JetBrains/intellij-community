@@ -223,6 +223,19 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     assertTrue(PyTypeChecker.isUnknown(t));
     doTest("int", text);
   }
+  
+  public void testReturnTypeReferenceEquality() {
+    final String text = "def foo(x): return x.bar\n" +
+                        "def xyzzy(a, x):\n" +
+                        "    if a:\n" +
+                        "        return foo(x)\n" +
+                        "    else:\n" +
+                        "        return foo(x)\n" +
+                        "expr = xyzzy(a, b)";
+    PyExpression expr = parseExpr(text);
+    PyType t = expr.getType(TypeEvalContext.slow());
+    assertInstanceOf(t, PyTypeReference.class);
+  }
 
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);

@@ -1,6 +1,6 @@
 package com.jetbrains.python.psi;
 
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,10 +30,10 @@ public interface PyArgumentList extends PyElement {
   /**
    * Tries to map the argument list to callee's idea of parameters.
    * @return a result object with mappings and diagnostic flags.
-   * @param context
+   * @param resolveContext the reference resolution context
    */
   @NotNull
-  AnalysisResult analyzeCall(TypeEvalContext context);
+  AnalysisResult analyzeCall(PyResolveContext resolveContext);
 
   /**
    * Flags to mark analysis results for an argument.
