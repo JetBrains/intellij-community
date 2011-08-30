@@ -5,6 +5,7 @@ from pydevd_constants import DJANGO_SUSPEND, GetThreadId
 from pydevd_file_utils import NormFileToServer
 from runfiles import DictContains
 from pydevd_breakpoints import LineBreakpoint
+import pydevd_vars
 import traceback
 
 class DjangoLineBreakpoint(LineBreakpoint):
@@ -64,7 +65,7 @@ def suspend_django(py_db_frame, mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
     #except AttributeError:
     #    pass
 
-    mainDebugger.additional_frames.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
+    pydevd_vars.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
 
 
     py_db_frame.setSuspend(thread, cmd)

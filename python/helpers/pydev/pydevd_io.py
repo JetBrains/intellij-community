@@ -16,7 +16,8 @@ class IORedirector:
         return False #not really a file
 
     def flush(self):
-        pass
+        for r in self._redirectTo:
+            r.flush()
 
     def __getattr__(self, name):
             for r in self._redirectTo:
@@ -46,5 +47,45 @@ class IOBuf:
 
     def flush(self):
         pass
+
+
+class _RedirectionsHolder:
+    _stack_stdout = []
+    _stack_stderr = []
+
+
+def StartRedirect(keep_original_redirection=False, std='stdout'):
+    '''
+    @param std: 'stdout', 'stderr', or 'both'
+    '''
+    import sys
+    buf = IOBuf()
+
+    if std == 'both':
+        config_stds = ['stdout', 'stderr']
+    else:
+        config_stds = [std]
+
+    for std in config_stds:
+        original = getattr(sys, std)
+        stack = getattr(_RedirectionsHolder, '_stack_%s' % std)
+        stack.append(original)
+
+        if keep_original_redirection:
+            setattr(sys, std, IORedirector(buf, getattr(sys, std)))
+        else:
+            setattr(sys, std, buf)
+    return buf
+
+
+def EndRedirect(std='stdout'):
+    import sys
+    if std == 'both':
+        config_stds = ['stdout', 'stderr']
+    else:
+        config_stds = [std]
+    for std in config_stds:
+        stack = getattr(_RedirectionsHolder, '_stack_%s' % std)
+        setattr(sys, std, stack.pop())
 
         
