@@ -448,6 +448,12 @@ public class LiveTemplateSettingsEditor {
     myGroupCombo.setSelectedItem(myTemplate.getGroupName());
 
     myCbReformat.setSelected(myTemplate.isToReformat());
+    myCbReformat.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myTemplate.setToReformat(myCbReformat.isSelected());
+      }
+    });
 
     myExpandByCombo.setEnabled(isExpandableFromEditor());
 
@@ -460,8 +466,6 @@ public class LiveTemplateSettingsEditor {
     myTemplate.setKey(myKeyField.getText().trim());
     myTemplate.setDescription(myDescription.getText().trim());
     myTemplate.setGroupName(((String)myGroupCombo.getSelectedItem()).trim());
-
-    myTemplate.setToReformat(myCbReformat.isSelected());
   }
 
   private void editVariables() {
