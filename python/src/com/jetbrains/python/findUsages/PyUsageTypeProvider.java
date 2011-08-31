@@ -4,18 +4,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.impl.rules.UsageType;
-import com.intellij.usages.impl.rules.UsageTypeProviderEx;
+import com.intellij.usages.impl.rules.UsageTypeProvider;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeReference;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class PyUsageTypeProvider implements UsageTypeProviderEx {
+public class PyUsageTypeProvider implements UsageTypeProvider {
   private static final UsageType IN_IMPORT = new UsageType("Usage in import statement");
   private static final UsageType UNTYPED = new UsageType("Untyped (probable) usage");
   private static final UsageType USAGE_IN_ISINSTANCE = new UsageType("Usage in isinstance()");
