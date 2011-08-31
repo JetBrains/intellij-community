@@ -1,7 +1,7 @@
 package com.jetbrains.python.console;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
@@ -39,7 +39,9 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
+import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +53,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonIOEncoding;
+import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
 
 /**
  * @author oleg
@@ -87,11 +92,14 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                        final PyConsoleType consoleType,
                                        final String projectRoot,
                                        final String... statements2execute) {
-    return run(project, sdk, consoleType, projectRoot, createDefaultEnvironmentVariables(), statements2execute);
+    return run(project, sdk, consoleType, projectRoot, createDefaultEnvironmentVariables(sdk), statements2execute);
   }
 
-  public static ImmutableMap<String, String> createDefaultEnvironmentVariables() {
-    return ImmutableMap.of("PYTHONIOENCODING", "utf-8");
+  public static Map<String, String> createDefaultEnvironmentVariables(Sdk sdk) {
+    Map<String, String> envs = Maps.newHashMap();
+    setPythonIOEncoding(setPythonUnbuffered(envs), "utf-8");
+    PythonSdkFlavor.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
+    return envs;
   }
 
   @Override
