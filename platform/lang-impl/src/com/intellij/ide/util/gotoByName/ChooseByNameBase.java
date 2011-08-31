@@ -405,7 +405,9 @@ public abstract class ChooseByNameBase {
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    hBox.add(actionToolbar.getComponent());
+    final JComponent component = actionToolbar.getComponent();
+    component.setBorder(null);
+    hBox.add(component);
 
     if (myToolArea != null) {
       hBox.add(myToolArea);
