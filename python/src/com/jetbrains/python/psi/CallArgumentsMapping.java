@@ -69,6 +69,8 @@ public interface CallArgumentsMapping {
    */
   Map<PyExpression, EnumSet<ArgFlag>> getArgumentFlags();
 
+  boolean hasProblems();
+  
   /**
    * @return result of a resolveCallee() against the function call to which the parameter list belongs.
    */

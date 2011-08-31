@@ -412,6 +412,15 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     return myArgFlags;
   }
 
+  @Override
+  public boolean hasProblems() {
+    for (Map.Entry<PyExpression, EnumSet<CallArgumentsMapping.ArgFlag>> arg_entry : myArgFlags.entrySet()) {
+      EnumSet<CallArgumentsMapping.ArgFlag> flags = arg_entry.getValue();
+      if (!flags.isEmpty()) return true;
+    }
+    return myUnmappedParams.size() > 0;
+  }
+
   public PyArgumentList getArgumentList() {
     return myArgumentList; // that is, 'outer'
   }
