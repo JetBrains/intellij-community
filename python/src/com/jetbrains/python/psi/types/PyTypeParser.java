@@ -88,7 +88,9 @@ public class PyTypeParser {
       return parseUnionType(anchor, type, types, fullRanges, offset);
     }
 
+    assert anchor.isValid();
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
+    assert builtinCache.isValid();
 
     if (type.equals("unknown")) {
       return null;

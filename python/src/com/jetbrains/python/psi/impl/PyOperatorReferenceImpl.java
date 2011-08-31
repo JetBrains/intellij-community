@@ -1,12 +1,15 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeReference;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +35,24 @@ public class PyOperatorReferenceImpl extends PyReferenceImpl {
         res = resolveMember(expr.getRightExpression(), name);
       }
       else {
-        res = resolveMember(expr.getLeftExpression(), name);
+        final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
+        typeEvalContext.trace("Trying to resolve left operator");
+        typeEvalContext.traceIndent();
+        try {
+          res = resolveMember(expr.getLeftExpression(), name);
+        }
+        finally {
+          typeEvalContext.traceUnindent();
+        }
         if (res.isEmpty()) {
-          res = resolveMember(expr.getRightExpression(), leftToRightOperatorName(name));
+          typeEvalContext.trace("Trying to resolve right operator");
+          typeEvalContext.traceIndent();
+          try {
+            res = resolveMember(expr.getRightExpression(), leftToRightOperatorName(name));
+          }
+          finally {
+             typeEvalContext.traceUnindent();
+          }
         }
       }
     }
@@ -93,11 +111,24 @@ public class PyOperatorReferenceImpl extends PyReferenceImpl {
   private List<RatedResolveResult> resolveMember(@Nullable PyExpression object, @Nullable String name) {
     final ArrayList<RatedResolveResult> results = new ArrayList<RatedResolveResult>();
     if (object != null && name != null) {
-      final PyType type = myContext.getTypeEvalContext().getType(object);
+      final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
+      final PyType type = typeEvalContext.getType(object);
+      typeEvalContext.trace("Side text is %s, type is %s", object.getText(), type);
       if (type != null && !(type instanceof PyTypeReference)) {
         List<? extends RatedResolveResult> res = type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
-        if (res != null) {
+        if (res != null && res.size() > 0) {
           results.addAll(res);
+        }
+        else if (typeEvalContext.tracing()) {
+          VirtualFile vFile = null;
+          if (type instanceof PyClassType) {
+            final PyClass pyClass = ((PyClassType)type).getPyClass();
+            if (pyClass != null) {
+              vFile = pyClass.getContainingFile().getVirtualFile();
+            }
+          }
+          type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
+          typeEvalContext.trace("Could not resolve member %s in type %s from file %s", name, type, vFile);
         }
       }
     }

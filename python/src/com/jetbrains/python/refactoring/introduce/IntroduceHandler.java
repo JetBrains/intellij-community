@@ -106,6 +106,29 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public Collection<String> getSuggestedNames(@NotNull final PyExpression expression) {
+    Collection<String> candidates = generateSuggestedNames(expression);
+    
+    Collection<String> res = new ArrayList<String>();
+    for (String name : candidates) {
+      if (myValidator.checkPossibleName(name, expression)) {
+        res.add(name);
+      }
+    }
+
+    if (res.isEmpty()) {  // no available names found, generate disambiguated suggestions
+      for (String name : candidates) {
+        int index = 1;
+        while (!myValidator.checkPossibleName(name + index, expression)) {
+          index++;
+        }
+        res.add(name + index);
+      }
+    }
+    
+    return res;
+  }
+
+  protected Collection<String> generateSuggestedNames(PyExpression expression) {
     Collection<String> candidates = new LinkedHashSet<String>();
     String text = expression.getText();
     if (expression instanceof PyCallExpression) {
@@ -139,14 +162,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         }
       }
     }
-    
-    Collection<String> res = new ArrayList<String>();
-    for (String name : candidates) {
-      if (myValidator.checkPossibleName(name, expression)) {
-        res.add(name);
-      }
-    }
-    return res;
+    return candidates;
   }
 
   public void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll, boolean hasConstructor, boolean isTestClass) {

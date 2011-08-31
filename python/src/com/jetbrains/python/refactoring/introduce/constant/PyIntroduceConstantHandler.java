@@ -29,9 +29,10 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
     return anchor.addBefore(declaration, AddImportHelper.getFileInsertPosition((PyFile)anchor));
   }
 
-  public Collection<String> getSuggestedNames(@NotNull final PyExpression expression) {
+  @Override
+  protected Collection<String> generateSuggestedNames(@NotNull final PyExpression expression) {
     Collection<String> names = new HashSet<String>();
-    for (String name : super.getSuggestedNames(expression)) {
+    for (String name : super.generateSuggestedNames(expression)) {
       names.add(name.toUpperCase());
     }
     return names;

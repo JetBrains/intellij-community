@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,6 +28,7 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.DocStringParameterReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyImportReferenceImpl;
 import com.jetbrains.python.psi.impl.PyOperatorReferenceImpl;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -128,11 +128,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public void visitPyImportElement(PyImportElement node) {
       super.visitPyImportElement(node);
       final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
-      PsiFile file = node.getContainingFile();
-      String fileName = FileUtil.getNameWithoutExtension(file.getName());
-      if (fromImport == null && fileName.equals(node.getText())) {
-        registerProblem(node, "Import resolves to its containing file.");
-      }
       if (fromImport == null || !fromImport.isFromFuture()) {
         myAllImports.add(node);
       }
@@ -256,19 +251,24 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return;
         }
       }
+      PsiElement target = null;
       boolean unresolved;
       if (reference instanceof PsiPolyVariantReference) {
         final PsiPolyVariantReference poly = (PsiPolyVariantReference)reference;
         final ResolveResult[] resolveResults = poly.multiResolve(false);
         unresolved = (resolveResults.length == 0);
         for (ResolveResult resolveResult : resolveResults) {
+          if (target == null && resolveResult.isValidResult()) {
+            target = resolveResult.getElement();
+          }
           if (resolveResult instanceof ImportedResolveResult) {
             myUsedImports.addAll(((ImportedResolveResult)resolveResult).getNameDefiners());
           }
         }
       }
       else {
-        unresolved = (reference.resolve() == null);
+        target = reference.resolve();
+        unresolved = (target == null);
       }
       if (unresolved) {
         registerUnresolvedReferenceProblem(node, reference, severity);
@@ -276,6 +276,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (node.getParent() instanceof PyImportElement) {
           myAllImports.remove(node.getParent());
         }
+      }
+      else if (reference instanceof PyImportReferenceImpl && target == reference.getElement().getContainingFile()) {
+        registerProblem(node, "Import resolves to its containing file");
       }
     }
 

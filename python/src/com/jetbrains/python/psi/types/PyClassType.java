@@ -374,7 +374,11 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
 
   @Override
   public String toString() {
-    return "PyClassType: " + getClassQName();
+    return (isValid() ? "" : "[INVALID] ") + "PyClassType: " + getClassQName();
+  }
+  
+  public boolean isValid() {
+    return myClass == null || myClass.isValid();
   }
 
   public static PyClassType fromClassName(String typeName, Project project) {

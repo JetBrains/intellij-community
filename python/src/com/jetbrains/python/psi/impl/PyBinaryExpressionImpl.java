@@ -118,10 +118,15 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       if (ref != null) {
         final PsiElement resolved = ref.resolve();
         if (resolved instanceof Callable) {
+          context.trace("Binary operator reference resolved to %s", resolved);
           final PyType res = ((Callable)resolved).getReturnType(context, null);
+          context.trace("Binary operator reference resolve type is %s", res);
           if (!PyTypeChecker.isUnknown(res) && !(res instanceof PyNoneType)) {
             return res;
           }
+        }
+        else {
+          context.trace("Failed to resolve binary operator reference %s", this);
         }
       }
       if (PyNames.COMPARISON_OPERATORS.contains(getReferencedName())) {

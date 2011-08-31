@@ -1,13 +1,16 @@
 package com.jetbrains.python.refactoring;
 
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.constant.PyIntroduceConstantHandler;
 
 /**
  * @author yole
  */
-public class PyIntroduceConstantTest extends PyLightFixtureTestCase {
+@TestDataPath("$CONTENT_ROOT/../testData/refactoring/introduceConstant/")
+public class PyIntroduceConstantTest extends PyIntroduceTestCase {
   public void testPy1840() {
     doTest();
   }
@@ -30,10 +33,17 @@ public class PyIntroduceConstantTest extends PyLightFixtureTestCase {
     doTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile("/refactoring/introduceConstant/" + getTestName(true) + ".py");
-    PyIntroduceConstantHandler handler = new PyIntroduceConstantHandler();
-    handler.performAction(myFixture.getProject(),  myFixture.getEditor(), myFixture.getFile(), "a", true, false, false);
-    myFixture.checkResultByFile("/refactoring/introduceConstant/" + getTestName(true) + ".after.py");
+  public void testSuggestUniqueNames() {  // PY-4409
+    doTestSuggestions(PyExpression.class, "STR1");
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/refactoring/introduceConstant";
+  }
+
+  @Override
+  protected IntroduceHandler createHandler() {
+    return new PyIntroduceConstantHandler();
   }
 }

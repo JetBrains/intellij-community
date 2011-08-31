@@ -244,11 +244,11 @@ public class PyTypeTest extends PyLightFixtureTestCase {
 
   private void doTest(final String expectedType, final String text) {
     PyExpression expr = parseExpr(text);
-    TypeEvalContext context = TypeEvalContext.slow();
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
     PyType actual = expr.getType(context);
     PyType expected = PyTypeParser.getTypeByName(expr, expectedType);
     if (expected != null) {
-      assertNotNull(actual);
+      assertNotNull(context.printTrace(), actual);
       assertTrue(PyTypeChecker.match(expected, actual, context));
     }
   }
