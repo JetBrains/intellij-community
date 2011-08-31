@@ -34,6 +34,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +59,6 @@ public class LiveTemplateSettingsEditor {
   private final JTextField myDescription;
   private final ComboBox myGroupCombo;
   private final Editor myTemplateEditor;
-  private List<Variable> myVariables = new ArrayList<Variable>();
 
   private JComboBox myExpandByCombo;
   private final String myDefaultShortcutItem;
@@ -131,6 +132,9 @@ public class LiveTemplateSettingsEditor {
         public void documentChanged(DocumentEvent e) {
           validateOKButton();
           validateEditVariablesButton();
+
+          applyTemplateText();
+          applyVariables(updateVariablesByTemplateText());
         }
       }
     );
@@ -149,6 +153,19 @@ public class LiveTemplateSettingsEditor {
     panel.setBorder(
       IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.template.text.title"), false, false, true));
     return centerPanel;
+  }
+
+  private void applyTemplateText() {
+    myTemplate.setString(myTemplateEditor.getDocument().getText());
+  }
+
+  private void applyVariables(final List<Variable> variables) {
+    myTemplate.removeAllParsed();
+    for (Variable variable : variables) {
+      myTemplate.addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(),
+                             variable.isAlwaysStopAt());
+    }
+    myTemplate.parseSegments();
   }
 
   @Nullable
@@ -360,16 +377,7 @@ public class LiveTemplateSettingsEditor {
   }
 
   private void validateEditVariablesButton() {
-    List<Variable> variables = parseVariables(myTemplateEditor.getDocument().getCharsSequence());
-
-    boolean enable = false;
-
-    for (final Object variable1 : variables) {
-      Variable variable = (Variable)variable1;
-      if (!TemplateImpl.INTERNAL_VARS_SET.contains(variable.getName())) enable = true;
-    }
-
-    myEditVariablesButton.setEnabled(enable);
+    myEditVariablesButton.setEnabled(!parseVariables(myTemplateEditor.getDocument().getCharsSequence(), false).isEmpty());
   }
 
   private void validateOKButton() {
@@ -429,15 +437,6 @@ public class LiveTemplateSettingsEditor {
 
     myGroupCombo.setSelectedItem(myTemplate.getGroupName());
 
-    myVariables.clear();
-    for(int i = 0; i < myTemplate.getVariableCount(); i++) {
-      Variable variable = new Variable(myTemplate.getVariableNameAt(i),
-                                       myTemplate.getExpressionStringAt(i),
-                                       myTemplate.getDefaultValueStringAt(i),
-                                       myTemplate.isAlwaysStopAt(i));
-      myVariables.add(variable);
-    }
-
     myCbReformat.setSelected(myTemplate.isToReformat());
 
     for(TemplateOptionalProcessor processor: myCbOptionalProcessorMap.keySet()) {
@@ -453,7 +452,6 @@ public class LiveTemplateSettingsEditor {
   }
 
   public void apply() {
-    updateVariablesByTemplateText();
     myTemplate.setKey(myKeyField.getText().trim());
     myTemplate.setDescription(myDescription.getText().trim());
     myTemplate.setGroupName(((String)myGroupCombo.getSelectedItem()).trim());
@@ -472,16 +470,6 @@ public class LiveTemplateSettingsEditor {
       myTemplate.setShortcutChar(TemplateSettings.SPACE_CHAR);
     }
 
-    myTemplate.removeAllParsed();
-
-    for (Object myVariable : myVariables) {
-      Variable variable = (Variable)myVariable;
-      myTemplate.addVariable(variable.getName(),
-                             variable.getExpressionString(),
-                             variable.getDefaultValueString(),
-                             variable.isAlwaysStopAt());
-    }
-
     updateTemplateContext();
 
     myTemplate.setToReformat(myCbReformat.isSelected());
@@ -490,8 +478,6 @@ public class LiveTemplateSettingsEditor {
       myOptions.put(option, cb.isSelected());
     }
 
-    myTemplate.setString(myTemplateEditor.getDocument().getText());
-    myTemplate.parseSegments();
   }
 
   private void updateTemplateContext() {
@@ -502,31 +488,27 @@ public class LiveTemplateSettingsEditor {
   }
 
   private void editVariables() {
-    updateVariablesByTemplateText();
-    ArrayList<Variable> newVariables = new ArrayList<Variable>();
-
-    for (Object myVariable : myVariables) {
-      Variable variable = (Variable)myVariable;
-      if (!TemplateImpl.INTERNAL_VARS_SET.contains(variable.getName())) {
-        newVariables.add((Variable)variable.clone());
-      }
-    }
+    ArrayList<Variable> newVariables = updateVariablesByTemplateText();
 
     EditVariableDialog editVariableDialog = new EditVariableDialog(myTemplateEditor, myEditVariablesButton, newVariables);
     editVariableDialog.show();
-    if(!editVariableDialog.isOK()) return;
-    myVariables = newVariables;
+    if (editVariableDialog.isOK()) {
+      applyVariables(newVariables);
+    }
   }
 
-  private void updateVariablesByTemplateText() {
-    List<Variable> parsedVariables = parseVariables(myTemplateEditor.getDocument().getCharsSequence());
+  private ArrayList<Variable> updateVariablesByTemplateText() {
+    List<Variable> oldVariables = getCurrentVariables();
+    
+    Set<String> oldVariableNames = ContainerUtil.map2Set(oldVariables, new Function<Variable, String>() {
+      @Override
+      public String fun(Variable variable) {
+        return variable.getName();
+      }
+    });
+    
 
-    Map<String,String> oldVariableNames = new HashMap<String, String>();
-    for (Object myVariable : myVariables) {
-      Variable oldVariable = (Variable)myVariable;
-      String name = oldVariable.getName();
-      oldVariableNames.put(name, name);
-    }
+    ArrayList<Variable> parsedVariables = parseVariables(myTemplateEditor.getDocument().getCharsSequence(), false);
 
     Map<String,String> newVariableNames = new HashMap<String, String>();
     for (Object parsedVariable : parsedVariables) {
@@ -538,11 +520,10 @@ public class LiveTemplateSettingsEditor {
     int oldVariableNumber = 0;
     for(int i = 0; i < parsedVariables.size(); i++){
       Variable variable = parsedVariables.get(i);
-      String name = variable.getName();
-      if(oldVariableNames.get(name) != null) {
+      if(oldVariableNames.contains(variable.getName())) {
         Variable oldVariable = null;
-        for(;oldVariableNumber<myVariables.size(); oldVariableNumber++) {
-          oldVariable = myVariables.get(oldVariableNumber);
+        for(;oldVariableNumber<oldVariables.size(); oldVariableNumber++) {
+          oldVariable = oldVariables.get(oldVariableNumber);
           if(newVariableNames.get(oldVariable.getName()) != null) {
             break;
           }
@@ -555,12 +536,31 @@ public class LiveTemplateSettingsEditor {
       }
     }
 
-    myVariables = parsedVariables;
+    return parsedVariables;
   }
 
-  private static List<Variable> parseVariables(CharSequence text) {
+  private List<Variable> getCurrentVariables() {
+    List<Variable> myVariables = new ArrayList<Variable>();
+
+    for(int i = 0; i < myTemplate.getVariableCount(); i++) {
+      myVariables.add(new Variable(myTemplate.getVariableNameAt(i),
+                                   myTemplate.getExpressionStringAt(i),
+                                   myTemplate.getDefaultValueStringAt(i),
+                                   myTemplate.isAlwaysStopAt(i)));
+    }
+    return myVariables;
+  }
+
+  private static ArrayList<Variable> parseVariables(CharSequence text, boolean includeInternal) {
     ArrayList<Variable> variables = new ArrayList<Variable>();
     TemplateImplUtil.parseVariables(text, variables, TemplateImpl.INTERNAL_VARS_SET);
+    if (!includeInternal) {
+      for (Iterator<Variable> iterator = variables.iterator(); iterator.hasNext(); ) {
+        if (TemplateImpl.INTERNAL_VARS_SET.contains(iterator.next().getName())) {
+          iterator.remove();
+        }
+      }
+    }
     return variables;
   }
 
