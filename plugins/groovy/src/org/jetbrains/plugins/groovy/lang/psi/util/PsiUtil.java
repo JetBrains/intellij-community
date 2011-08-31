@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -1053,7 +1054,8 @@ public class PsiUtil {
         parent instanceof GrThrowStatement ||
         parent instanceof GrSwitchStatement ||
         parent instanceof GrTypeDefinitionBody ||
-        parent instanceof GrVariable) {
+        parent instanceof GrVariable ||
+        parent instanceof GrForClause) {
       return false;
     }
     if (parent instanceof GrIfStatement && expr == ((GrIfStatement)parent).getCondition()) {

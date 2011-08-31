@@ -73,7 +73,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
@@ -832,26 +831,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitClosure(GrClosableBlock closure) {
     super.visitClosure(closure);
-    if (!closure.hasParametersSection()) {
-      if (!checkClosureForAmbiguous(closure)) {
-        myHolder.createErrorAnnotation(closure, GroovyBundle.message("ambiguous.code.block"));
-      }
+    if (!closure.hasParametersSection() && PsiUtil.isExpressionStatement(closure)) {
+      myHolder.createErrorAnnotation(closure, GroovyBundle.message("ambiguous.code.block"));
     }
-  }
-
-  private static boolean checkClosureForAmbiguous(GrClosableBlock closure) {
-    PsiElement place;
-    PsiElement parent = closure;
-    do {
-      place = parent;
-      parent = place.getParent();
-    }
-    while (!(parent instanceof GrContinueStatement || parent instanceof GrCodeBlock || parent instanceof GroovyFile));
-    while (place != null) {
-      if (place == closure) return false;
-      place = place.getFirstChild();
-    }
-    return true;
   }
 
   @Override
