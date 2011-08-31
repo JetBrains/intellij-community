@@ -1108,6 +1108,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
 
       @Override
+      public InspectionProfileEntry getInspectionTool(@NotNull String shortName) {
+        return myAvailableTools.get(shortName);
+      }
+
+      @Override
       public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
         final InspectionProfileEntry entry = myAvailableTools.get(key.toString());
         return entry != null ? entry.getDefaultLevel() : HighlightDisplayLevel.WARNING;
