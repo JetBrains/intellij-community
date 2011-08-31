@@ -97,14 +97,14 @@ interface I<T> {
 class FI1 {
   I<? extends String> i1 = new I<<error descr="Cannot use ''<>'' with anonymous inner classes"></error>>() {
     @Override
-    public String m() {
+    public <error descr="'m()' in 'Anonymous class derived from I' clashes with 'm()' in 'I'; attempting to use incompatible return type">String</error> m() {
       return null;
     }
   };
 
   I<?> i2 = new I<<error descr="Cannot use ''<>'' with anonymous inner classes"></error>>() {
     @Override
-    public Object m() {
+    public <error descr="'m()' in 'Anonymous class derived from I' clashes with 'm()' in 'I'; attempting to use incompatible return type">Object</error> m() {
       return null;
     }
   };
@@ -152,4 +152,23 @@ class ParenthTest<T extends TZ> {
         ParenthTest<T> x = (new ParenthTest<>(null)); //red code is here
         return 1;
     }
+}
+
+class TestWildcardInference {
+  interface A<T> {
+  }
+  
+  class B<V> implements A<V> {
+    B(C<V> v) {
+    }
+  }
+  
+  class C<E> {}
+  
+  class U {
+    void foo() {
+      C<? extends Number> x = null;
+      A<? extends Number> y = new B<>(x);
+    }
+  }
 }

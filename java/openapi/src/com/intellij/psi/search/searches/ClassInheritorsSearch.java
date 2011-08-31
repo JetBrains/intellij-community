@@ -248,7 +248,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       }
 
       currentBase.set(psiClass);
-      if (!DirectClassInheritorsSearch.search(psiClass, projectScope, parameters.isIncludeAnonymous()).forEach(processor)) return false;
+      if (!DirectClassInheritorsSearch.search(psiClass, projectScope, parameters.isIncludeAnonymous(), false).forEach(processor)) return false;
     }
     return true;
   }

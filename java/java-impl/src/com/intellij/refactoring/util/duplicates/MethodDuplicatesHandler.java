@@ -224,6 +224,9 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         pattern = new PsiElement[]{returnValue};
       }
     }
+    if (pattern.length == 0) {
+      return Collections.emptyList();
+    }
     final DuplicatesFinder duplicatesFinder =
       new DuplicatesFinder(pattern, 
                            new InputVariables(Arrays.asList(method.getParameterList().getParameters()), method.getProject(), new LocalSearchScope(pattern), false), matchedReturnValue,

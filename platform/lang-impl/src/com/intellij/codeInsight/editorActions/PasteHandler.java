@@ -69,10 +69,22 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         return;
       }
 
+    DataContext context = new DataContext() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        if (TRANSFERABLE_PROVIDER.equals(dataId)) {
+          return transferableProvider;
+        }
+
+        return dataContext.getData(dataId);
+      }
+    };
+
+
     final Project project = editor.getProject();
     if (project == null || editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, context);
       }
       return;
     }
@@ -81,24 +93,13 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     if (file == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, context);
       }
       return;
     }
 
     document.startGuardedBlockChecking();
     try {
-      DataContext context = new DataContext() {
-        @Override
-        public Object getData(@NonNls String dataId) {
-          if (TRANSFERABLE_PROVIDER.equals(dataId)) {
-            return transferableProvider;
-          }
-
-          return dataContext.getData(dataId);
-        }
-      };
-
       for(PasteProvider provider: Extensions.getExtensions(EP_NAME)) {
         if (provider.isPasteEnabled(context)) {
           provider.performPaste(context);

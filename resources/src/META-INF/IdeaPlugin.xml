@@ -348,7 +348,7 @@
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.daemon.impl.quickfix.IterateOverSelectedIterableIntention</className>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.IterateOverIterableIntention</className>
       <category>Control Flow</category>
     </intentionAction>
     <intentionAction>

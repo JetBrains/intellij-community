@@ -18,6 +18,8 @@ package com.intellij.codeInsight.hint;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -50,6 +52,7 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -100,7 +103,20 @@ public class ImplementationViewComponent extends JPanel {
 
     public FileDescriptor(PsiFile file, PsiElement element) {
       myFile = file;
-      myElementPresentation = SymbolPresentationUtil.getSymbolPresentableText(element);
+      myElementPresentation = getPresentation(element);
+    }
+
+    @Nullable
+    private static String getPresentation(PsiElement element) {
+      if (element instanceof NavigationItem) {
+        final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
+        if (presentation != null) {
+          return presentation.getPresentableText();
+        }
+      }
+
+      if (element instanceof PsiNamedElement) return ((PsiNamedElement)element).getName();
+      return null;
     }
 
     public String getPresentableName(VirtualFile vFile) {

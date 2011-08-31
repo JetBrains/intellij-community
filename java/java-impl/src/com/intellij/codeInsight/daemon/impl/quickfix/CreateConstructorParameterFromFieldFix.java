@@ -212,7 +212,12 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
     final SmartPsiElementPointer constructorPointer = manager.createSmartPsiElementPointer(constructor);
 
-    final ChangeMethodSignatureFromUsageFix addParamFix = new ChangeMethodSignatureFromUsageFix(constructor, expressions, PsiSubstitutor.EMPTY, constructor, true, 1);
+    final ChangeMethodSignatureFromUsageFix addParamFix = new ChangeMethodSignatureFromUsageFix(constructor, expressions, PsiSubstitutor.EMPTY, constructor, true, 1){
+      @Override
+      protected boolean allowDelegate() {
+        return true;
+      }
+    };
     if (addParamFix.isAvailable(project, editor, file)) {
       addParamFix.invoke(project, editor, file);
     } else if (addParamFix.isMethodSignatureExists() && !ApplicationManager.getApplication().isUnitTestMode()) {

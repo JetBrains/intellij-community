@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -232,21 +233,24 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           initOccurrencesMarkers();
           setElementToRename(variable);
           started = AbstractInplaceIntroducer.super.performInplaceRename(false, nameSuggestions);
-          myDocumentAdapter = new DocumentAdapter() {
-            @Override
-            public void documentChanged(DocumentEvent e) {
-              final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-              if (templateState != null) {
-                final String variableValue =
-                  templateState.getVariableValue(VariableInplaceRenamer.PRIMARY_VARIABLE_NAME).getText();
-                updateTitle(getVariable(), variableValue);
+          if (started) {
+            myDocumentAdapter = new DocumentAdapter() {
+              @Override
+              public void documentChanged(DocumentEvent e) {
+                final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+                if (templateState != null) {
+                  final TextResult value = templateState.getVariableValue(VariableInplaceRenamer.PRIMARY_VARIABLE_NAME);
+                  if (value != null) {
+                    updateTitle(getVariable(), value.getText());
+                  }
+                }
               }
+            };
+            myEditor.getDocument().addDocumentListener(myDocumentAdapter);
+            updateTitle(getVariable());
+            if (TemplateManagerImpl.getTemplateState(myEditor) != null) {
+              myEditor.putUserData(ACTIVE_INTRODUCE, AbstractInplaceIntroducer.this);
             }
-          };
-          myEditor.getDocument().addDocumentListener(myDocumentAdapter);
-          updateTitle(getVariable());
-          if (TemplateManagerImpl.getTemplateState(myEditor) != null) {
-            myEditor.putUserData(ACTIVE_INTRODUCE, AbstractInplaceIntroducer.this);
           }
         }
         result.set(started);
@@ -320,7 +324,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     if (templateState != null) {
       myEditor.putUserData(ACTIVE_INTRODUCE, null);
     }
-    myEditor.getDocument().removeDocumentListener(myDocumentAdapter);
+    if (myDocumentAdapter != null) {
+      myEditor.getDocument().removeDocumentListener(myDocumentAdapter);
+    }
     if (myBalloon == null) {
       releaseIfNotRestart();
     }
