@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.fileChooser.ex;
 
+import com.intellij.ide.FrameStateListener;
+import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -214,17 +216,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       JLabel.CENTER), BorderLayout.SOUTH);
 
 
-    ApplicationManager.getApplication().getMessageBus().connect(getDisposable())
-      .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
-        @Override
-        public void applicationActivated(IdeFrame ideFrame) {
-          SaveAndSyncHandler.maybeRefresh(ModalityState.current());
-        }
-
-        @Override
-        public void applicationDeactivated(IdeFrame ideFrame) {
-        }
-      });
+    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+      @Override
+      public void applicationActivated(IdeFrame ideFrame) {
+        SaveAndSyncHandler.maybeRefresh(ModalityState.current());
+      }
+    }, getDisposable());
 
     return panel;
   }
