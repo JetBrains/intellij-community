@@ -55,7 +55,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyLightFixtureTestCase
   public void testOperators() {
     doTest();
   }
-  
+
   public void testNamedTuple() {
     doTest();
   }
@@ -64,7 +64,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyLightFixtureTestCase
   public void testTypeAssertions() {
     doTest();
   }
-  
+
   public void testImportToContainingFile() {  // PY-4372
     myFixture.copyFileToProject("inspections/PyUnresolvedReferencesInspection/__init__.py", "PyUnresolvedReferencesInspection/__init__.py");
     myFixture.copyFileToProject("inspections/PyUnresolvedReferencesInspection/importToContainingFile.py", "PyUnresolvedReferencesInspection/importToContainingFile.py");
