@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * Represents an entire call expression, like <tt>foo()</tt> or <tt>foo.bar[1]('x')</tt>.
@@ -67,7 +68,7 @@ public interface PyCallExpression extends PyExpression {
    */
   class PyMarkedCallee {
     Callable myCallable;
-    EnumSet<PyFunction.Flag> myFlags;
+    Set<PyFunction.Flag> myFlags;
     int myImplicitOffset;
     boolean myImplicitlyResolved;
 
@@ -79,7 +80,7 @@ public interface PyCallExpression extends PyExpression {
      * @param offset             implicit argument offset; parameters up to this are implicitly filled in the call.
      * @param implicitlyResolved value for {@link #isImplicitlyResolved()}
      */
-    public PyMarkedCallee(@NotNull Callable function, EnumSet<PyFunction.Flag> flags, int offset, boolean implicitlyResolved) {
+    public PyMarkedCallee(@NotNull Callable function, Set<PyFunction.Flag> flags, int offset, boolean implicitlyResolved) {
       myCallable = function;
       myFlags = flags;
       myImplicitOffset = offset;
@@ -97,7 +98,7 @@ public interface PyCallExpression extends PyExpression {
       return myCallable;
     }
 
-    public EnumSet<PyFunction.Flag> getFlags() {
+    public Set<PyFunction.Flag> getFlags() {
       return myFlags;
     }
 

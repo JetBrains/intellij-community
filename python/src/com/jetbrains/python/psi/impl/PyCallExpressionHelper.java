@@ -139,18 +139,22 @@ public class PyCallExpressionHelper {
       }
     }
     if (resolved instanceof Callable) {
-      EnumSet<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
+      Set<PyFunction.Flag> flags = resolved instanceof PyFunction
+                                   ? PyUtil.detectDecorationsAndWrappersOf((PyFunction) resolved)
+                                   : EnumSet.noneOf(PyFunction.Flag.class);
+      if (wrappedFlag != null) {
+        flags.add(PyFunction.Flag.WRAPPED);
+        flags.add(wrappedFlag);
+      }
       List<PyExpression> qualifiers = resolveResult != null ? resolveResult.getQualifiers() : Collections.<PyExpression>emptyList();
-      boolean is_by_instance = isConstructorCall ||
+      boolean isByInstance = isConstructorCall ||
                                isQualifiedByInstance((Callable)resolved, qualifiers, resolveContext.getTypeEvalContext())
                                || resolved instanceof PyBoundFunction;
       PyExpression lastQualifier = qualifiers != null && qualifiers.isEmpty() ? null : qualifiers.get(qualifiers.size()-1);
       boolean isByClass = lastQualifier == null ? false : isQualifiedByClass((Callable)resolved, lastQualifier, resolveContext.getTypeEvalContext());
       final Callable callable = (Callable)resolved;
-      int implicitOffset = getImplicitArgumentCount(callable, wrappedFlag, flags, is_by_instance, isByClass);
-      if (!isConstructorCall && PyNames.NEW.equals(callable.getName())) {
-        implicitOffset = Math.min(implicitOffset - 1, 0); // case of Class.__new__
-      }
+      
+      int implicitOffset = getImplicitArgumentCount(callable, flags, isConstructorCall, isByInstance, isByClass);
       implicitOffset = implicitOffset < 0? 0: implicitOffset; // wrong source can trigger strange behaviour
       return new PyCallExpression.PyMarkedCallee(callable, flags, implicitOffset,
                                                  resolveResult != null ? resolveResult.isImplicit() : false);
@@ -179,61 +183,42 @@ public class PyCallExpressionHelper {
     QualifiedResolveResult followed = callReference.followAssignmentsChain(resolveContext);
     boolean isByInstance = isQualifiedByInstance(functionBeingCalled, followed.getQualifiers(), resolveContext.getTypeEvalContext());
     boolean isByClass = isQualifiedByInstance(functionBeingCalled, followed.getQualifiers(), resolveContext.getTypeEvalContext());
-    return getImplicitArgumentCount(functionBeingCalled, null, null, isByInstance, isByClass);
+    return getImplicitArgumentCount(functionBeingCalled, PyUtil.detectDecorationsAndWrappersOf(functionBeingCalled), false, isByInstance, isByClass);
   }
 
   /**
    * Finds how many arguments are implicit in a given call.
    *
    * @param callable      resolved method which is being called; non-methods immediately return 0.
-   * @param wrappedFlag   value of {@link com.jetbrains.python.psi.PyFunction.Flag#WRAPPED} if known.
-   * @param flags         set of flags to be <i>updated</i> by this call; wrappedFlag's value ends up here, too.
+   * @param flags         set of flags for the call
    * @param isByInstance  true if the call is known to be by instance (not by class).
    * @return a non-negative number of parameters that are implicit to this call. E.g. for a typical method call 1 is returned
    *         because one parameter ('self') is implicit.
    */
   private static int getImplicitArgumentCount(
     Callable callable,
-    @Nullable PyFunction.Flag wrappedFlag,
-    @Nullable EnumSet<PyFunction.Flag> flags,
+    Set<PyFunction.Flag> flags,
+    boolean isConstructorCall,
     boolean isByInstance,
     boolean isByClass
   ) {
     int implicit_offset = 0;
-    if (isByInstance) implicit_offset += 1;
+    if (isByInstance || isConstructorCall) implicit_offset += 1;
     PyFunction method = callable.asMethod();
     if (method == null) return implicit_offset;
-    //
-    // wrapped flags?
-    if (wrappedFlag != null) {
-      if (flags != null) {
-        flags.add(wrappedFlag);
-        flags.add(PyFunction.Flag.WRAPPED);
-      }
-      if (wrappedFlag == PyFunction.Flag.STATICMETHOD && implicit_offset > 0) {
-        implicit_offset -= 1;
-      } // might have marked it as implicit 'self'
-      if (wrappedFlag == PyFunction.Flag.CLASSMETHOD && !isByInstance) {
-        implicit_offset += 1;
-      } // Both Foo.method() and foo.method() have implicit the first arg
+
+    if (PyNames.NEW.equals(method.getName())) {
+      return isConstructorCall ? 1 : 0;
     }
-    if (!isByInstance && PyNames.NEW.equals(method.getName())) implicit_offset += 1; // __new__ call
     if (!isByInstance && !isByClass && PyNames.INIT.equals(method.getName())) {
-      implicit_offset++;
+      return 1;
     }
 
     // decorators?
-    final String deconame = PyUtil.getClassOrStaticMethodDecorator(method);
-    if (PyNames.STATICMETHOD.equals(deconame)) {
-      if (flags != null) {
-        flags.add(PyFunction.Flag.STATICMETHOD);
-      }
+    if (flags.contains(PyFunction.Flag.STATICMETHOD)) {
       if (isByInstance && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
     }
-    else if (PyNames.CLASSMETHOD.equals(deconame)) {
-      if (flags != null) {
-        flags.add(PyFunction.Flag.CLASSMETHOD);
-      }
+    else if (flags.contains(PyFunction.Flag.CLASSMETHOD)) {
       if (!isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
     }
     return implicit_offset;
