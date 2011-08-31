@@ -61,8 +61,6 @@ public class LiveTemplateSettingsEditor {
   private final String myDefaultShortcutItem;
   private JCheckBox myCbReformat;
 
-  private final Map<TemplateOptionalProcessor, JCheckBox> myCbOptionalProcessorMap = new HashMap<TemplateOptionalProcessor, JCheckBox>();
-
   private JButton myEditVariablesButton;
 
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
@@ -238,12 +236,18 @@ public class LiveTemplateSettingsEditor {
     myCbReformat = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.reformat.according.to.style"));
     panel.add(myCbReformat, gbConstraints);
 
-    for(TemplateOptionalProcessor processor: myOptions.keySet()) {
+    for (final TemplateOptionalProcessor processor: myOptions.keySet()) {
       if (!processor.isVisible(myTemplate)) continue;
       gbConstraints.gridy++;
-      JCheckBox cb = new JCheckBox(processor.getOptionName());
+      final JCheckBox cb = new JCheckBox(processor.getOptionName());
       panel.add(cb, gbConstraints);
-      myCbOptionalProcessorMap.put(processor, cb);
+      cb.setSelected(myOptions.get(processor).booleanValue());
+      cb.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          myOptions.put(processor, cb.isSelected());
+        }
+      });
     }
 
     gbConstraints.weighty = 1;
@@ -445,11 +449,6 @@ public class LiveTemplateSettingsEditor {
 
     myCbReformat.setSelected(myTemplate.isToReformat());
 
-    for(TemplateOptionalProcessor processor: myCbOptionalProcessorMap.keySet()) {
-      JCheckBox cb = myCbOptionalProcessorMap.get(processor);
-      cb.setSelected(myOptions.get(processor).booleanValue());
-
-    }
     myExpandByCombo.setEnabled(isExpandableFromEditor());
 
     updateHighlighter();
@@ -463,11 +462,6 @@ public class LiveTemplateSettingsEditor {
     myTemplate.setGroupName(((String)myGroupCombo.getSelectedItem()).trim());
 
     myTemplate.setToReformat(myCbReformat.isSelected());
-    for(TemplateOptionalProcessor option: myCbOptionalProcessorMap.keySet()) {
-      JCheckBox cb = myCbOptionalProcessorMap.get(option);
-      myOptions.put(option, cb.isSelected());
-    }
-
   }
 
   private void editVariables() {
