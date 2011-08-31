@@ -49,11 +49,11 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
    * @param resolved_callee what to map parameters of
    * @param type_context optional shared type evaluator / cache.
    */
-  void mapArguments(
-    PyExpression[] arguments,
+  public void mapArguments(
     PyCallExpression.PyMarkedCallee resolved_callee,
     @Nullable TypeEvalContext type_context
   ) {
+    PyExpression[] arguments = myArgumentList.getArguments();
     if (type_context == null) type_context = TypeEvalContext.fast();
     myMarkedCallee = resolved_callee;
     List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
@@ -346,10 +346,6 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
 
   private static boolean isPositionalArg(PyExpression arg) {
     return !(arg instanceof PyKeywordArgument) && !(arg instanceof PyStarArgument);
-  }
-
-  public boolean isImplicitlyResolved() {
-    return myMarkedCallee == null ? false : myMarkedCallee.isImplicitlyResolved();
   }
 
   /**

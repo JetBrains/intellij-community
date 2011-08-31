@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -85,43 +86,39 @@ public class PyArgumentListInspection extends PyInspection {
   public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context) {
     if (node.getParent() instanceof PyClass) return; // class Foo(object) is also an arg list
     CallArgumentsMapping result = node.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context));
-    if (!result.isImplicitlyResolved()) {
-      for (Map.Entry<PyExpression, EnumSet<CallArgumentsMapping.ArgFlag>> arg_entry : result.getArgumentFlags().entrySet()) {
-        EnumSet<CallArgumentsMapping.ArgFlag> flags = arg_entry.getValue();
-        if (!flags.isEmpty()) { // something's wrong
-          PyExpression arg = arg_entry.getKey();
-          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP)) {
-            holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"));
-          }
-          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_KWD)) {
-            holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"));
-          }
-          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_TUPLE)) {
-            holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
-          }
-          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_POS_PAST_KWD)) {
-            holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"));
-          }
-          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_UNMAPPED)) {
-            holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
-          }
-          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_TOO_LONG)) {
-            holder.registerProblem(arg, PyBundle.message("INSP.more.args.that.pos.params"));
-          }
-        }
+    highlightIncorrectArguments(holder, result);
+    highlightMissingArguments(node, holder, result);
+    highlightStarArgumentTypeMismatch(node, holder, context);
+  }
+
+  private static void highlightIncorrectArguments(ProblemsHolder holder, CallArgumentsMapping result) {
+    for (Map.Entry<PyExpression, EnumSet<CallArgumentsMapping.ArgFlag>> arg_entry : result.getArgumentFlags().entrySet()) {
+    EnumSet<CallArgumentsMapping.ArgFlag> flags = arg_entry.getValue();
+    if (!flags.isEmpty()) { // something's wrong
+      PyExpression arg = arg_entry.getKey();
+      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP)) {
+        holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"));
       }
-      // show unfilled params
-      ASTNode our_node = node.getNode();
-      if (our_node != null) {
-        ASTNode close_paren = our_node.findChildByType(PyTokenTypes.RPAR);
-        if (close_paren != null) {
-          for (PyNamedParameter param : result.getUnmappedParams()) {
-            holder.registerProblem(close_paren.getPsi(), PyBundle.message("INSP.parameter.$0.unfilled", param.getName()));
-          }
-        }
+      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_KWD)) {
+        holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"));
+      }
+      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_TUPLE)) {
+        holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
+      }
+      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_POS_PAST_KWD)) {
+        holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"));
+      }
+      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_UNMAPPED)) {
+        holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
+      }
+      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_TOO_LONG)) {
+        holder.registerProblem(arg, PyBundle.message("INSP.more.args.that.pos.params"));
       }
     }
-    // syntax of *args
+  }
+  }
+
+  private static void highlightStarArgumentTypeMismatch(PyArgumentList node, ProblemsHolder holder, TypeEvalContext context) {
     for (PyExpression arg : node.getArguments()) {
       if (arg instanceof PyStarArgument) {
         PyExpression content = PyUtil.peelArgument(PsiTreeUtil.findChildOfType(arg, PyExpression.class));
@@ -129,12 +126,12 @@ public class PyArgumentListInspection extends PyInspection {
           PyType inside_type = context.getType(content);
           if (inside_type != null && !(inside_type instanceof PyTypeReference)) {
             if (((PyStarArgument)arg).isKeyword()) {
-              if (! isMappingType(inside_type, context)) {
+              if (!PyABCUtil.isSubtype(inside_type, PyNames.MAPPING)) {
                 holder.registerProblem(arg, PyBundle.message("INSP.expected.dict.got.$0", inside_type.getName()));
               }
             }
             else { // * arg
-              if (! isSequenceType(inside_type, context)) {
+              if (!PyABCUtil.isSubtype(inside_type, PyNames.SEQUENCE)) {
                 holder.registerProblem(arg, PyBundle.message("INSP.expected.seq.got.$0", inside_type.getName()));
               }
             }
@@ -142,34 +139,17 @@ public class PyArgumentListInspection extends PyInspection {
         }
       }
     }
-    /*
-    // did we succeed at all?
-    if (result.getMarkedCallee() == null) {
-      PsiElement marked = node;
-      while (marked != null && marked.getTextRange().isEmpty()) marked = marked.getParent();
-      if (marked != null) holder.registerProblem(node, PyBundle.message("INSP.cannot.analyze"), ProblemHighlightType.INFO);
-    }
-    */
   }
 
-  private static boolean isSequenceType(PyType a_type, TypeEvalContext context) {
-    if (a_type instanceof PyTupleType) return true;
-    if ("list".equals(a_type.getName()) && a_type.isBuiltin(context)) return true;
-    if (a_type instanceof PyClassType) {
-      final PyClass cls = ((PyClassType)a_type).getPyClass();
-      if (cls != null && cls.findMethodByName("__getitem__", true) != null) return true;
+  private static void highlightMissingArguments(PyArgumentList node, ProblemsHolder holder, CallArgumentsMapping result) {
+    ASTNode our_node = node.getNode();
+    if (our_node != null) {
+      ASTNode close_paren = our_node.findChildByType(PyTokenTypes.RPAR);
+      if (close_paren != null) {
+        for (PyNamedParameter param : result.getUnmappedParams()) {
+          holder.registerProblem(close_paren.getPsi(), PyBundle.message("INSP.parameter.$0.unfilled", param.getName()));
+        }
+      }
     }
-    return false;
   }
-
-  private static boolean isMappingType(PyType a_type, TypeEvalContext context) {
-    // TODO: when we have proper support for ABCs, we could use an interface conformance check here
-    if ("dict".equals(a_type.getName()) && a_type.isBuiltin(context)) return true;
-    if (a_type instanceof PyClassType) {
-      final PyClass cls = ((PyClassType)a_type).getPyClass();
-      if (cls != null && cls.findMethodByName("__getitem__", true) != null  && cls.findMethodByName("keys", true) != null) return true;
-    }
-    return false;
-  }
-
 }

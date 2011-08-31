@@ -13,8 +13,6 @@ import java.util.Map;
  * including error diagnostics.
  */
 public interface CallArgumentsMapping {
-  boolean isImplicitlyResolved();
-
   /**
    * @return A mapping argument->parameter for non-starred parameters (but includes starred argument).
    */

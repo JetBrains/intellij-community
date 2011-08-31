@@ -69,6 +69,7 @@ public class PyNames {
   public static final String SIZED = "Sized";
   public static final String CALLABLE = "Callable";
   public static final String SEQUENCE = "Sequence";
+  public static final String MAPPING = "Mapping";
 
   public static final String CONTAINS = "__contains__";
   public static final String HASH = "__hash__";
@@ -89,6 +90,8 @@ public class PyNames {
   public static final String COLLECTIONS_PY = "collections.py";
 
   public static final String SET = "set";
+  
+  public static final String KEYS = "keys";
 
   /**
    * Contains all known predefined names of "__foo__" form.
