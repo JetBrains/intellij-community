@@ -17,6 +17,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.editorActions.PasteHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -32,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Producer;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -45,7 +47,7 @@ public class PasteReferenceProvider implements PasteProvider {
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (project == null || editor == null) return;
 
-    final String fqn = getCopiedFqn();
+    final String fqn = getCopiedFqn(dataContext);
 
     QualifiedNameProvider theProvider = null;
     PsiElement element = null;
@@ -65,12 +67,12 @@ public class PasteReferenceProvider implements PasteProvider {
   public boolean isPastePossible(DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    return project != null && editor != null && getCopiedFqn() != null;
+    return project != null && editor != null && getCopiedFqn(dataContext) != null;
   }
 
   public boolean isPasteEnabled(DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    String fqn = getCopiedFqn();
+    String fqn = getCopiedFqn(dataContext);
     if (project == null || fqn == null) {
       return false;
     }
@@ -105,13 +107,25 @@ public class PasteReferenceProvider implements PasteProvider {
   }
 
   @Nullable
-  private static String getCopiedFqn() {
-    final Transferable contents = CopyPasteManager.getInstance().getContents();
-    if (contents == null) return null;
+  private static String getCopiedFqn(DataContext dataContext) {
+    final DataFlavor flavor = CopyReferenceAction.getFlavor();
+    if (flavor == null) {
+      return null;
+    }
+
+    Transferable transferable = null;
+    Producer<Transferable> transferableProducer = (Producer<Transferable>)dataContext.getData(PasteHandler.TRANSFERABLE_PROVIDER);
+    if (transferableProducer != null) {
+      transferable = transferableProducer.produce();
+      if (transferable == null) {
+        transferable = CopyPasteManager.getInstance().getContents();
+      }
+    }
+
+    if (transferable == null) return null;
     try {
-      final DataFlavor flavor = CopyReferenceAction.getFlavor();
       if (flavor != null) {
-        return (String)contents.getTransferData(flavor);
+        return (String)transferable.getTransferData(flavor);
       }
     }
     catch (UnsupportedFlavorException e) {

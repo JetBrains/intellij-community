@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -38,17 +39,21 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.util.Arrays;
 import java.util.Map;
 
-public class PasteHandler extends EditorActionHandler {
+public class PasteHandler extends EditorActionHandler implements EditorTextInsertHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.PasteHandler");
 
+  public static final String TRANSFERABLE_PROVIDER = "PasteTransferableProvider";
+  
   private final EditorActionHandler myOriginalHandler;
 
   private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.customPasteProvider");
@@ -57,7 +62,7 @@ public class PasteHandler extends EditorActionHandler {
     myOriginalHandler = originalAction;
   }
 
-  public void execute(final Editor editor, final DataContext dataContext) {
+  public void execute(final Editor editor, final DataContext dataContext, final Producer<Transferable> transferableProvider) {
     if (editor.isViewer()) return;
 
       if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), PlatformDataKeys.PROJECT.getData(dataContext))){
@@ -83,13 +88,24 @@ public class PasteHandler extends EditorActionHandler {
 
     document.startGuardedBlockChecking();
     try {
+      DataContext context = new DataContext() {
+        @Override
+        public Object getData(@NonNls String dataId) {
+          if (TRANSFERABLE_PROVIDER.equals(dataId)) {
+            return transferableProvider;
+          }
+
+          return dataContext.getData(dataId);
+        }
+      };
+
       for(PasteProvider provider: Extensions.getExtensions(EP_NAME)) {
-        if (provider.isPasteEnabled(dataContext)) {
-          provider.performPaste(dataContext);
+        if (provider.isPasteEnabled(context)) {
+          provider.performPaste(context);
           return;
         }
       }
-      doPaste(editor, project, file, document);
+      doPaste(editor, project, file, document, transferableProvider);
     }
     catch (ReadOnlyFragmentModificationException e) {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
@@ -99,12 +115,27 @@ public class PasteHandler extends EditorActionHandler {
     }
   }
 
+  public void execute(final Editor editor, final DataContext dataContext) {
+    execute(editor, dataContext, new Producer<Transferable>() {
+      @Override
+      public Transferable produce() {
+        CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
+        Transferable contents = copyPasteManager.getContents();
+        if (contents != null) {
+          copyPasteManager.stopKillRings();
+        }
+        
+        return contents;
+      }
+    });
+  }
+
   private static void doPaste(final Editor editor,
                               final Project project,
                               final PsiFile file,
-                              final Document document) {
-    CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
-    Transferable content = copyPasteManager.getContents();
+                              final Document document,
+                              final Producer<Transferable> transferableFunction) {
+    Transferable content = transferableFunction.produce();
     if (content != null) {
       String text = null;
       try {
@@ -114,7 +145,6 @@ public class PasteHandler extends EditorActionHandler {
         editor.getComponent().getToolkit().beep();
       }
       if (text == null) return;
-      copyPasteManager.stopKillRings();
 
       final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
