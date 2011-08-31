@@ -61,7 +61,6 @@ public class LiveTemplateSettingsEditor {
   private final String myDefaultShortcutItem;
   private JCheckBox myCbReformat;
 
-  private final Map<TemplateContextType, JCheckBox> myCbContextMap = new HashMap<TemplateContextType, JCheckBox>();
   private final Map<TemplateOptionalProcessor, JCheckBox> myCbOptionalProcessorMap = new HashMap<TemplateOptionalProcessor, JCheckBox>();
 
   private JButton myEditVariablesButton;
@@ -300,6 +299,8 @@ public class LiveTemplateSettingsEditor {
   }
 
   private JPanel createPopupContextPanel(final Runnable onChange) {
+    final Map<TemplateContextType, JCheckBox> contextComboBoxes = new HashMap<TemplateContextType, JCheckBox>();
+
     ChangeListener listener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         myExpandByCombo.setEnabled(isExpandableFromEditor());
@@ -307,28 +308,32 @@ public class LiveTemplateSettingsEditor {
 
     };
 
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridBagLayout());
+    JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 1;
 
+    final Runnable updateContextTypesEnabledState = new Runnable() {
+      public void run() {
+        for (Map.Entry<TemplateContextType, JCheckBox> entry : contextComboBoxes.entrySet()) {
+          TemplateContextType contextType = entry.getKey();
+          TemplateContextType baseContextType = contextType.getBaseContextType();
+          boolean enabled = baseContextType == null || !contextComboBoxes.get(baseContextType).isSelected();
+          entry.getValue().setEnabled(enabled);
+        }
+      }
+    };
+
     int row = 0;
     int col = 0;
-    for (TemplateContextType contextType : myContext.keySet()) {
+    for (final TemplateContextType contextType : myContext.keySet()) {
       gbConstraints.gridy = row;
       gbConstraints.gridx = col;
-      JCheckBox cb = new JCheckBox(contextType.getPresentableName());
-      cb.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          updateContextTypesEnabledState();
-        }
-      });
+      final JCheckBox cb = new JCheckBox(contextType.getPresentableName());
       cb.getModel().addChangeListener(listener);
       panel.add(cb, gbConstraints);
-      myCbContextMap.put(contextType, cb);
+      contextComboBoxes.put(contextType, cb);
 
       if (row == (myContext.size() + 1) / 2 - 1) {
         row = 0;
@@ -337,37 +342,24 @@ public class LiveTemplateSettingsEditor {
       else {
         row++;
       }
-    }
+      cb.setSelected(myContext.get(contextType).booleanValue());
 
-    for(JCheckBox checkBox: myCbContextMap.values()) {
-      checkBox.addActionListener(new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            updateHighlighter();
-            onChange.run();
-          }
+      cb.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          myContext.put(contextType, cb.isSelected());
+          updateContextTypesEnabledState.run();
+          updateHighlighter();
+          onChange.run();
         }
+      }
       );
     }
-
-    for(TemplateContextType type: myCbContextMap.keySet()) {
-      JCheckBox cb = myCbContextMap.get(type);
-      cb.setSelected(myContext.get(type).booleanValue());
-    }
-
-    updateContextTypesEnabledState();
+    
+    updateContextTypesEnabledState.run();
 
     new MnemonicHelper().register(panel);
 
     return panel;
-  }
-
-  private void updateContextTypesEnabledState() {
-    for (Map.Entry<TemplateContextType, JCheckBox> entry : myCbContextMap.entrySet()) {
-      TemplateContextType contextType = entry.getKey();
-      TemplateContextType baseContextType = contextType.getBaseContextType();
-      boolean enabled = baseContextType == null || !myCbContextMap.get(baseContextType).isSelected();
-      entry.getValue().setEnabled(enabled);
-    }
   }
 
   private boolean isExpandableFromEditor() {
@@ -386,7 +378,6 @@ public class LiveTemplateSettingsEditor {
 
   private void updateHighlighter() {
     TemplateContext templateContext = new TemplateContext();
-    updateTemplateContext();
     TemplateEditorUtil.setHighlighter(myTemplateEditor, templateContext);
     ((EditorEx) myTemplateEditor).repaint(0, myTemplateEditor.getDocument().getTextLength());
   }
@@ -471,21 +462,12 @@ public class LiveTemplateSettingsEditor {
     myTemplate.setDescription(myDescription.getText().trim());
     myTemplate.setGroupName(((String)myGroupCombo.getSelectedItem()).trim());
 
-    updateTemplateContext();
-
     myTemplate.setToReformat(myCbReformat.isSelected());
     for(TemplateOptionalProcessor option: myCbOptionalProcessorMap.keySet()) {
       JCheckBox cb = myCbOptionalProcessorMap.get(option);
       myOptions.put(option, cb.isSelected());
     }
 
-  }
-
-  private void updateTemplateContext() {
-    for(TemplateContextType type: myCbContextMap.keySet()) {
-      JCheckBox cb = myCbContextMap.get(type);
-      myContext.put(type, cb.isSelected());
-    }
   }
 
   private void editVariables() {
