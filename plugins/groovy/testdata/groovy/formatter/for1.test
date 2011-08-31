@@ -1,7 +1,7 @@
 for (
 i in 1..10)
-do()
+doo()
 -----
 for (
     i in 1..10)
-  do()
+  doo()

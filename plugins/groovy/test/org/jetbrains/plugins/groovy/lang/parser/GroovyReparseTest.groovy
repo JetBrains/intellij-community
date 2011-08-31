@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.groovy.lang.parser
 
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.psi.PsiDocumentManager
 
 /**
  * @author peter
@@ -82,7 +82,7 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
       <caret>return 2
     }
   }
-""", "do "
+""", "doo "
   }
   public void testSwitchCaseSwitch() throws Exception {
     checkReparse """

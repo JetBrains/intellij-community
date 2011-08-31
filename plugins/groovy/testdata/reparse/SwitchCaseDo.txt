@@ -78,7 +78,7 @@ Groovy script
             PsiElement(:)(':')
           PsiElement(new line)('\n      ')
           Reference expression
-            PsiElement(identifier)('do')
+            PsiElement(identifier)('doo')
           PsiErrorElement:';', '}' or new line expected
             <empty list>
           PsiWhiteSpace(' ')
