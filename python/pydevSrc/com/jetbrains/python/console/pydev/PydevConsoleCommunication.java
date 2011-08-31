@@ -24,6 +24,11 @@ import java.util.Vector;
  */
 public class PydevConsoleCommunication extends AbstractConsoleCommunication implements IScriptConsoleCommunication, XmlRpcHandler {
 
+  private static final String EXEC_LINE = "execLine";
+  private static final String GET_COMPLETIONS = "getCompletions";
+  private static final String GET_DESCRIPTION = "getDescription";
+  private static final String HANDSHAKE = "handshake";
+  private static final String CLOSE = "close";
   /**
    * XML-RPC client for sending messages to the server.
    */
@@ -77,7 +82,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   public boolean handshake() throws XmlRpcException {
     if (client != null) {
-      Object ret = client.execute("handshake", new Object[]{});
+      Object ret = client.execute(HANDSHAKE, new Object[]{});
       if (ret instanceof String) {
         String retVal = (String)ret;
         return "PyCharm".equals(retVal);
@@ -95,7 +100,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            PydevConsoleCommunication.this.client.execute("close", new Object[0]);
+            PydevConsoleCommunication.this.client.execute(CLOSE, new Object[0]);
           }
           catch (Exception e) {
             //Ok, we can ignore this one on close.
@@ -178,7 +183,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    */
   protected Pair<String, Boolean> exec(final String command) throws XmlRpcException {
     setExecuting(true);
-    Object execute = client.execute("addExec", new Object[]{command});
+    Object execute = client.execute(EXEC_LINE, new Object[]{command});
 
     Object object;
     if (execute instanceof Vector) {
@@ -206,7 +211,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     if (waitingForInput) {
       return Collections.emptyList();
     }
-    final Object fromServer = client.execute("getCompletions", new Object[]{prefix});
+    final Object fromServer = client.execute(GET_COMPLETIONS, new Object[]{prefix});
 
     return PydevXmlUtils.decodeCompletions(fromServer);
   }
@@ -219,7 +224,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     if (waitingForInput) {
       return "Unable to get description: waiting for input.";
     }
-    return client.execute("getDescription", new Object[]{text}).toString();
+    return client.execute(GET_DESCRIPTION, new Object[]{text}).toString();
   }
 
   /**
