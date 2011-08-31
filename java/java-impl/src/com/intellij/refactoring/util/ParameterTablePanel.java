@@ -398,6 +398,7 @@ public abstract class ParameterTablePanel extends JPanel {
 
       myTableModel.fireTableRowsUpdated(Math.min(targetRow, row), Math.max(targetRow, row));
       myTable.getSelectionModel().setSelectionInterval(targetRow, targetRow);
+      updateSignature();
     }
   }
 

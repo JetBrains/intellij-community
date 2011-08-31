@@ -18,6 +18,7 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
@@ -36,11 +37,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class NavBarPopup extends LightweightHint implements Disposable {
+public class NavBarPopup extends LightweightHint implements Disposable{
   private static final String JBLIST_KEY = "OriginalList";
   private final NavBarPanel myPanel;
   private int myIndex;
@@ -120,12 +122,7 @@ public class NavBarPopup extends LightweightHint implements Disposable {
   }
 
   private static JComponent createPopupContent(final NavBarPanel panel, Object[] siblings) {
-    final JBListWithHintProvider list = new JBListWithHintProvider(siblings) {
-      @Override
-      protected PsiElement getPsiElementForHint(Object selectedValue) {
-        return selectedValue instanceof PsiElement ? (PsiElement) selectedValue : null;
-      }
-    };
+    final JBListWithHintProvider list = new NavbarPopupList(panel, siblings);
     list.setDataProvider(new DataProvider() {
       @Override
       public Object getData(@NonNls String dataId) {
@@ -179,7 +176,7 @@ public class NavBarPopup extends LightweightHint implements Disposable {
     return getList().getSelectedValue();
   }
 
-  private JBList getList() {
+  public JBList getList() {
     return ((JBList)getComponent().getClientProperty(JBLIST_KEY));
   }
 
@@ -193,5 +190,24 @@ public class NavBarPopup extends LightweightHint implements Disposable {
       }
     };
     list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
+  }
+
+  private static class NavbarPopupList extends JBListWithHintProvider implements Queryable {
+    private NavBarPanel myPanel;
+
+    public NavbarPopupList(NavBarPanel panel, Object[] siblings) {
+      super(siblings);
+      myPanel= panel;
+    }
+
+    @Override
+    public void putInfo(Map<String, String> info) {
+      myPanel.putInfo(info);
+    }
+
+    @Override
+    protected PsiElement getPsiElementForHint(Object selectedValue) {
+      return selectedValue instanceof PsiElement ? (PsiElement) selectedValue : null;
+    }
   }
 }

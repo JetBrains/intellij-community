@@ -98,7 +98,7 @@ public class CallCommand extends AbstractCommand {
        @Override
        public void run(String s) {
          context.getCallback().error(s, getLine());
-         cmdResult.setDone();
+         cmdResult.setRejected();
        }
      }); 
       

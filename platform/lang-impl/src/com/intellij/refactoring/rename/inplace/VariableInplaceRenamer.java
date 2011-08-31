@@ -356,6 +356,11 @@ public class VariableInplaceRenamer {
     return true;
   }
 
+  /**
+   * Called after the completion of the refactoring, either a successful or a failed one.
+   *
+   * @param success true if the refactoring was accepted, false if it was cancelled (by undo or Esc)
+   */
   protected void moveOffsetAfter(boolean success) {
   }
 

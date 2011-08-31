@@ -56,7 +56,7 @@ import java.util.Map;
  *
  * @author ilyas
  */
-public class GroovyBlock implements Block, GroovyElementTypes {
+public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
 
   final protected ASTNode myNode;
   final protected Alignment myAlignment;

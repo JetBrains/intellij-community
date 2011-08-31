@@ -135,7 +135,9 @@ class MoverWrapper {
     }
 
     caretModel.moveToOffset(myInfo.range2.getStartOffset() + caretRelativePos);
-    indentLinesIn(editor, file, document, project, myInfo.range2);
+    if (myInfo.indentTarget) {
+      indentLinesIn(editor, file, document, project, myInfo.range2);
+    }
     if (myInfo.indentSource) {
       indentLinesIn(editor, file, document, project, myInfo.range1);
     }

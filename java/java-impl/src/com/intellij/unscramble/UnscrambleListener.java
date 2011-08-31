@@ -18,6 +18,7 @@ package com.intellij.unscramble;
 import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 
@@ -32,6 +33,8 @@ public class UnscrambleListener implements ApplicationActivationListener {
 
   @Override
   public void applicationActivated(final IdeFrame ideFrame) {
+    if (SystemInfo.isMac) return;
+    
     final Runnable processClipboard = new Runnable() {
       @Override
       public void run() {
@@ -59,6 +62,8 @@ public class UnscrambleListener implements ApplicationActivationListener {
 
   @Override
   public void applicationDeactivated(IdeFrame ideFrame) {
+    if (SystemInfo.isMac) return;
+    
     stacktrace = AnalyzeStacktraceUtil.getTextInClipboard();
   }
 

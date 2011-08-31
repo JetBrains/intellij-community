@@ -106,7 +106,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
         paintingParentRec.set(((PaintingParent)pp).getChildRec(c));
       }
 
-      JobUtil.submitToJobThread(new Runnable() {
+      JobUtil.submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
         public void run() {
           int oldWidth = myDelegateIcon.getIconWidth();
           myDelegateIcon = evaluate();
@@ -153,7 +153,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
             }
           });
         }
-      }, Job.DEFAULT_PRIORITY);
+      });
     }
   }
 

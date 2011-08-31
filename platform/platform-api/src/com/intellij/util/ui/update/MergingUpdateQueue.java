@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.update;
 
+import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -54,6 +55,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private UiNotifyConnector myUiNotifyConnector;
   private boolean myRestartOnAdd;
 
+  private boolean myTrackUiActivity;
+  
   public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent modalityStateComponent) {
     this(name, mergingTimeSpan, isActive, modalityStateComponent, null);
   }
@@ -232,6 +235,9 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
         }
         finally {
           myFlushing = false;
+          if (isEmpty()) {
+            finishActivity();
+          }
         }
       }
     };
@@ -295,25 +301,38 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public void queue(final Update update) {
+    if (myDisposed) return;
+
+    if (myTrackUiActivity) {
+      startActivity();
+    }
+    
     if (myPassThrough) {
-      if (myDisposed) return;
       update.run();
+      finishActivity();
       return;
     }
 
     final boolean active = myActive;
     synchronized (myScheduledUpdates) {
-      if (eatThisOrOthers(update)) {
-        return;
-      }
+      try {
+        if (eatThisOrOthers(update)) {
+          return;
+        }
 
-      if (active && myScheduledUpdates.isEmpty()) {
-        restartTimer();
-      }
-      put(update);
+        if (active && myScheduledUpdates.isEmpty()) {
+          restartTimer();
+        }
+        put(update);
 
-      if (myRestartOnAdd) {
-        restartTimer();
+        if (myRestartOnAdd) {
+          restartTimer();
+        }
+      }
+      finally {
+        if (isEmpty()) {
+          finishActivity();
+        }
       }
     }
   }
@@ -408,4 +427,29 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public boolean isFlushing() {
     return myFlushing;
   }
+
+  public void setTrackUiActivity(boolean trackUiActivity) {
+    if (myTrackUiActivity && !trackUiActivity) {
+      finishActivity();
+    }
+    
+    myTrackUiActivity = trackUiActivity;
+  }
+
+  private void startActivity() {
+    if (!myTrackUiActivity) return;
+
+    UiActivityMonitor.getInstance().addActivity(getActivityId());    
+  }
+
+  private void finishActivity() {
+    if (!myTrackUiActivity) return;
+    
+    UiActivityMonitor.getInstance().removeActivity(getActivityId());    
+  }
+
+  protected String getActivityId() {
+    return myName + " " + hashCode();
+  }
+
 }

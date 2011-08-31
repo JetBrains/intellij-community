@@ -185,6 +185,10 @@ public abstract class CompletionPhase implements Disposable {
 
     @Override
     public boolean fillInCommonPrefix() {
+      if (indicator.isAutopopupCompletion()) {
+        return false;
+      }
+
       return indicator.fillInCommonPrefix(true);
     }
   }

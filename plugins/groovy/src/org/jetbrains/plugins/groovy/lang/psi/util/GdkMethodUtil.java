@@ -153,6 +153,9 @@ public class GdkMethodUtil {
     return false;
   }
 
+  /**
+   * @param resolveContext is a qualifier of 'resolveContext.with {}'
+   */
   public static boolean isInWithContext(GroovyPsiElement resolveContext) {
     if (resolveContext instanceof GrExpression) {
       final PsiElement parent = resolveContext.getParent();

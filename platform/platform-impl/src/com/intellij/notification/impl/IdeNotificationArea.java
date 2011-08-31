@@ -43,6 +43,7 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
   private static final Icon ERROR_ICON = IconLoader.getIcon("/ide/error_notifications.png");
   private static final Icon WARNING_ICON = IconLoader.getIcon("/ide/warning_notifications.png");
   private static final Icon INFO_ICON = IconLoader.getIcon("/ide/info_notifications.png");
+  public static final String WIDGET_ID = "Notifications";
 
   private Icon myCurrentIcon = EMPTY_ICON;
   private StatusBar myStatusBar;
@@ -107,7 +108,7 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
 
   @NotNull
   public String ID() {
-    return "Notifications";
+    return WIDGET_ID;
   }
 
   private void updateStatus() {

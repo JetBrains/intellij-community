@@ -30,18 +30,28 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.util.Producer;
+
+import java.awt.datatransfer.Transferable;
 
 public class PasteAction extends EditorAction {
+  public static final String TRANSFERABLE_PROVIDER = "PasteTransferableProvider";
+  
   public PasteAction() {
     super(new Handler());
   }
 
   private static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
+      Producer<Transferable> producer = (Producer<Transferable>)dataContext.getData(TRANSFERABLE_PROVIDER);
+
       if (editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()) {
-        EditorModificationUtil.pasteFromClipboardAsBlock(editor);
-      } else {
-        editor.putUserData(EditorEx.LAST_PASTED_REGION, EditorModificationUtil.pasteFromClipboard(editor));
+        EditorModificationUtil.pasteTransferableAsBlock(editor, producer == null ? null : producer.produce());
+      }
+      else {
+        editor.putUserData(EditorEx.LAST_PASTED_REGION,
+                           producer == null ? EditorModificationUtil.pasteFromClipboard(editor) :
+                           EditorModificationUtil.pasteFromTransferrable(producer.produce(), editor));
       }
     }
   }

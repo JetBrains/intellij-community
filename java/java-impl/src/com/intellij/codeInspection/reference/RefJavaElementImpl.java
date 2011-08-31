@@ -25,8 +25,8 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-import java.util.Stack;
 
 public abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement {
   private Set<RefClass> myOutTypeReferences;

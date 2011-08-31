@@ -15,13 +15,12 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 
 import javax.swing.*;
@@ -37,11 +36,12 @@ public class ActionCommand extends TypeCommand {
     super(text, line);
   }
 
-  protected ActionCallback _execute(PlaybackContext context) {
+  protected ActionCallback _execute(final PlaybackContext context) {
     final String actionName = getText().substring(PREFIX.length()).trim();
 
-    final AnAction action = ActionManager.getInstance().getAction(actionName);
-    if (action == null) {
+    final ActionManager am = ActionManager.getInstance();
+    final AnAction targetAction = am.getAction(actionName);
+    if (targetAction == null) {
       dumpError(context.getCallback(), "Unknown action: " + actionName);
       return new ActionCallback.Rejected();
     }
@@ -63,9 +63,24 @@ public class ActionCommand extends TypeCommand {
       }
 
       if (stroke != null) {
+        final ActionCallback result = new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"), "Timed out calling action id=" + actionName, new Throwable(), true);
         context.getCallback().message("Invoking action via shortcut: " + stroke.toString(), getLine());
+        final Ref<AnActionListener> listener = new Ref<AnActionListener>();
+        listener.set(new AnActionListener.Adapter() {
+          @Override
+          public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+            if (targetAction.equals(action)) {
+              context.getCallback().message("Performed action: " + actionName, context.getCurrentLine());
+              am.removeAnActionListener(listener.get());
+              result.setDone();
+            }
+          }
+        });
+        am.addAnActionListener(listener.get());
+        
         type(context.getRobot(), stroke);
-        return new ActionCallback.Done();
+
+        return result;
       }
     }
 
@@ -76,7 +91,7 @@ public class ActionCommand extends TypeCommand {
     context.getRobot().delay(Registry.intValue("actionSystem.playback.autodelay"));
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        ActionManager.getInstance().tryToExecute(action, input, null, null, false).doWhenProcessed(new Runnable() {
+        am.tryToExecute(targetAction, input, null, null, false).doWhenProcessed(new Runnable() {
           @Override
           public void run() {
             result.setDone();

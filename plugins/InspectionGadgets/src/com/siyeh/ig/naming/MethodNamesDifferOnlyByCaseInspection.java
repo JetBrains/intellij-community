@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
@@ -25,7 +26,12 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
+
 public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
+
+    @SuppressWarnings("PublicField")
+    public boolean ignoreIfMethodIsOverride = true;
 
     @Override
     @NotNull
@@ -49,6 +55,14 @@ public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
     }
 
     @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "method.names.differ.only.by.case.ignore.override.option"),
+                this, "ignoreIfMethodIsOverride");
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new MethodNamesDifferOnlyByCaseVisitor();
     }
@@ -63,7 +77,7 @@ public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
         return new RenameFix();
     }
 
-    private static class MethodNamesDifferOnlyByCaseVisitor
+    private class MethodNamesDifferOnlyByCaseVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitMethod(@NotNull PsiMethod method) {
@@ -75,11 +89,17 @@ public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
                 return;
             }
             final String methodName = method.getName();
+            if (ignoreIfMethodIsOverride) {
+                final PsiMethod[] superMethods = method.findSuperMethods();
+                if (superMethods.length != 0) {
+                    return;
+                }
+            }
             final PsiClass aClass = method.getContainingClass();
             if (aClass == null) {
                 return;
             }
-            final PsiMethod[] methods = aClass.getMethods();
+            final PsiMethod[] methods = aClass.getAllMethods();
             for (PsiMethod testMethod : methods) {
                 final String testMethodName = testMethod.getName();
                 if (!methodName.equals(testMethodName) &&

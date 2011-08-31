@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -44,6 +43,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +52,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -127,20 +126,23 @@ public class DocumentCommitThread implements Runnable, Disposable {
     useIndicator(null);
   }
 
-  public boolean queueCommit(@NonNls @NotNull String reason, @NotNull Document document, @NotNull Project project, @Nullable DocumentEvent event) {
-    log("queueCommit called", document, false, reason, event);
+  public boolean queueCommit(@NotNull Project project, @NotNull Document document, @NonNls @NotNull Object reason) {
+    log("queueCommit called", document, false, reason);
     assert !isDisposed : "already disposed";
 
     if (!project.isInitialized()) return false;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
     if (psiFile == null) return false;
 
-    boolean added = doQueue(document, project, getCommitStage(document), reason, event);
+    boolean added = doQueue(document, project, getCommitStage(document), reason);
     log("doQueue called", document, false, added);
     return added;
   }
 
-  private boolean doQueue(@NotNull Document document, @NotNull Project project, CommitStage start, @NonNls @NotNull String reason, @Nullable DocumentEvent event) {
+  private boolean doQueue(@NotNull Document document,
+                          @NotNull Project project,
+                          CommitStage start,
+                          @NonNls @NotNull Object reason) {
     synchronized (documentsToCommit) {
       if (!changeCommitStage(document, start, CommitStage.QUEUED_TO_COMMIT, false)) return false;
 
@@ -163,7 +165,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
       }
       ProgressIndicator indicator = new ProgressIndicatorBase();
       indicator.start();
-      documentsToCommit.addLast(new CommitTask(document, project, indicator, reason, event));
+      documentsToCommit.addLast(new CommitTask(document, project, indicator, reason));
       log("Queued", document, false, reason);
       return true;
     }
@@ -172,6 +174,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
   private final StringBuilder log = new StringBuilder();
   void log(@NonNls String msg, Document document, boolean synchronously, @NonNls Object... args) {
     if (debug()) {
+      @NonNls
       String s = (SwingUtilities.isEventDispatchThread() ? "    " : "") +
         msg + (synchronously ? " (sync)" : "") +
                  (document == null ? "" : "; Document: " + System.identityHashCode(document) +
@@ -218,19 +221,16 @@ public class DocumentCommitThread implements Runnable, Disposable {
     // running = false means document was removed from the queue, should ignore.
     // canceled = true means commit was canceled, should reschedule for later.
     private final ProgressIndicator indicator; // progress to commit this doc under.
-    private final String reason;
-    @Nullable private final DocumentEvent event;
+    private final Object reason;
 
     private CommitTask(@NotNull Document document,
                        @NotNull Project project,
                        @NotNull ProgressIndicator indicator,
-                       @NotNull String reason,
-                       @Nullable DocumentEvent event) {
+                       @NotNull Object reason) {
       this.document = document;
       this.project = project;
       this.indicator = indicator;
       this.reason = reason;
-      this.event = event;
     }
   }
 
@@ -275,7 +275,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
             CommitStage commitStage = getCommitStage(document);
             Document[] uncommitted = null;
             if (commitStage != CommitStage.QUEUED_TO_COMMIT
-                || project.isDisposed() || !ArrayUtil.contains(document,(uncommitted = PsiDocumentManager.getInstance(project).getUncommittedDocuments()))) {
+                || project.isDisposed() || !ArrayUtil.contains(document, uncommitted = PsiDocumentManager.getInstance(project).getUncommittedDocuments())) {
               List<Document> documents = uncommitted == null ? null : Arrays.asList(uncommitted);
               log("Abandon and proceeding to next",document, false, commitStage, documents);
               continue;
@@ -292,7 +292,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
           Runnable finishRunnable = null;
           if (!success && !indicator.isCanceled()) {
             try {
-              finishRunnable = commit(document, project, null, indicator, false, task.reason, task.event);
+              finishRunnable = commit(document, project, null, indicator, false, task.reason);
               success = finishRunnable != null;
               log("DCT.commit returned", document, false, finishRunnable, indicator);
             }
@@ -312,8 +312,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
           }
         }
         catch (ProcessCanceledException e) {
-          int i = 0; // leave queue unchanged
-          cancel(e);
+          cancel(e); // leave queue unchanged
           log("PCE", document, false, e);
           success = false;
         }
@@ -332,7 +331,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
             // reset status for queue back successfully
             changeCommitStage(document, CommitStage.WAITING_FOR_PSI_APPLY, CommitStage.QUEUED_TO_COMMIT, false);
             changeCommitStage(document, CommitStage.COMMITTED, CommitStage.QUEUED_TO_COMMIT, false);
-            doQueue(document, project, CommitStage.QUEUED_TO_COMMIT, "re-added on failure", null);
+            doQueue(document, project, CommitStage.QUEUED_TO_COMMIT, "re-added on failure");
           }
         }
       }
@@ -371,7 +370,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
     ProgressIndicatorBase indicator = new ProgressIndicatorBase();
     indicator.start();
     log("About to commit sync", document, true, indicator);
-    Runnable finish = commit(document, project, excludeFile, indicator, true, "Sync commit", null);
+    Runnable finish = commit(document, project, excludeFile, indicator, true, "Sync commit");
     log("Committed sync", document, true, finish, indicator);
 
     assert finish != null;
@@ -383,13 +382,12 @@ public class DocumentCommitThread implements Runnable, Disposable {
                           final PsiFile excludeFile,
                           @NotNull final ProgressIndicator indicator,
                           final boolean synchronously,
-                          @NotNull final String reason,
-                          @Nullable final DocumentEvent event) {
+                          @NotNull final Object reason) {
     final Runnable[] success = new Runnable[1];
     ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
       @Override
       public void run() {
-        success[0] = commitUnderProgress(document, project, excludeFile, indicator, synchronously, reason, event);
+        success[0] = commitUnderProgress(document, project, excludeFile, indicator, synchronously, reason);
       }
     }, indicator);
     return success[0];
@@ -411,9 +409,8 @@ public class DocumentCommitThread implements Runnable, Disposable {
                                        final PsiFile excludeFile,
                                        @NotNull final ProgressIndicator indicator,
                                        final boolean synchronously,
-                                       @NotNull final String reason,
-                                       @Nullable final DocumentEvent event) {
-    final List<Processor<Document>> finishRunnables = new ArrayList<Processor<Document>>();
+                                       @NotNull final Object reason) {
+    final List<Processor<Document>> finishRunnables = new SmartList<Processor<Document>>();
     Runnable runnable = new Runnable() {
       public void run() {
         if (project.isDisposed()) return;
@@ -432,7 +429,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
       }
     };
     if (synchronously) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
       runnable.run();
     }
     else {
@@ -458,45 +455,38 @@ public class DocumentCommitThread implements Runnable, Disposable {
       @Override
       public void run() {
         if (project.isDisposed()) return;
-        ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document, project) {
-          public void run() {
-            if (project.isDisposed()) return;
-            PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
 
-            CommitStage stage = getCommitStage(document);
-            log("Finish", document, synchronously, project);
-            if (stage != (synchronously ? CommitStage.ABOUT_TO_BE_SYNC_COMMITTED : CommitStage.WAITING_FOR_PSI_APPLY)) {
-              return; // there must be a synchronous commit sneaked in between queued commit and finish commit, or just document changed meanwhile
-            }
+        PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
 
-            boolean success = false;
-            try {
-              success = documentManager.finishCommit(document, finishRunnables, synchronously, reason, event);
-              log("Finished", document, synchronously, success, Arrays.asList(documentManager.getUncommittedDocuments()));
-              if (synchronously) {
-                assert success;
-              }
-            }
-            finally {
-              if (success) {
-                CommitStage before = getCommitStage(document);
-                boolean changed = synchronously || changeCommitStage(document, CommitStage.WAITING_FOR_PSI_APPLY, CommitStage.COMMITTED, false);
-                assert changed : "Before: " + before + "; after: " + getCommitStage(document);
-              }
-            }
-            List<Document> unc = Arrays.asList(documentManager.getUncommittedDocuments());
-            log("after call finish commit",document, synchronously, unc, success);
-            if (synchronously || success) {
-              assert !unc.contains(document) : unc;
-            }
-            if (!success) {
-              // add document back to the queue
-              log("Re-adding back", document, synchronously, success, documentManager.isCommitted(document), Arrays.asList(documentManager.getUncommittedDocuments()));
-              boolean addedBack = queueCommit("Re-added back", document, project, null);
-              assert addedBack;
-            }
+        CommitStage stage = getCommitStage(document);
+        log("Finish", document, synchronously, project);
+        if (stage != (synchronously ? CommitStage.ABOUT_TO_BE_SYNC_COMMITTED : CommitStage.WAITING_FOR_PSI_APPLY)) {
+          return; // there must be a synchronous commit sneaked in between queued commit and finish commit, or just document changed meanwhile
+        }
+
+        boolean success = false;
+        try {
+          success = documentManager.finishCommit(document, finishRunnables, synchronously, reason);
+          log("Finished", document, synchronously, success, Arrays.asList(documentManager.getUncommittedDocuments()));
+          if (synchronously) {
+            assert success;
           }
-        });
+        }
+        finally {
+          if (success) {
+            success = synchronously || changeCommitStage(document, CommitStage.WAITING_FOR_PSI_APPLY, CommitStage.COMMITTED, false);
+          }
+        }
+        List<Document> unc = Arrays.asList(documentManager.getUncommittedDocuments());
+        log("after call finish commit",document, synchronously, unc, success);
+        if (synchronously || success) {
+          assert !unc.contains(document) : unc;
+        }
+        if (!success) {
+          // add document back to the queue
+          boolean addedBack = queueCommit(project, document, "Re-added back");
+          assert addedBack;
+        }
       }
     };
     return finishRunnable;

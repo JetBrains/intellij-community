@@ -51,6 +51,19 @@ public class AntPropertyExpansionTest extends TestCase{
     assertEquals("dValue", expand(providers, "${d}"));
     assertEquals("${d}cValuedValue", expand(providers, "${c}${d}"));
 
+    PropertiesProvider[] providers2 = new PropertiesProvider[] {
+      new PropertiesProviderImpl("loop.me1", "prefix-${loop.me2}"),
+      new PropertiesProviderImpl("loop.me2", "prefix-${loop.me1}"),
+      new PropertiesProviderImpl("loop.me3", "prefix-${loop.me3}"),
+      new PropertiesProviderImpl("aaa", "aaa_val_${bbb}"),
+      new PropertiesProviderImpl("bbb", "bbb_val"),
+      new PropertiesProviderImpl("ccc", "${aaa}_${bbb}"),
+    };
+
+    assertEquals("prefix-${loop.me2}", expand(providers2, "${loop.me1}"));
+    assertEquals("prefix-prefix-${loop.me2}", expand(providers2, "${loop.me2}"));
+    assertEquals("prefix-${loop.me3}", expand(providers2, "${loop.me3}"));
+    assertEquals("aaa_val_${bbb}_bbb_val", expand(providers2, "${ccc}"));
   }
 
   private static String expand(PropertiesProvider[] providers, String str) {

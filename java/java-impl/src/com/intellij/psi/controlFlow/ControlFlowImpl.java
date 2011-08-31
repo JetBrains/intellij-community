@@ -19,12 +19,12 @@ package com.intellij.psi.controlFlow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiStatement;
+import com.intellij.util.containers.Stack;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
 class ControlFlowImpl implements ControlFlow {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowImpl");
@@ -59,7 +59,8 @@ class ControlFlowImpl implements ControlFlow {
   }
 
   public void finishElement(PsiElement element) {
-    LOG.assertTrue(myElementStack.pop().equals(element));
+    PsiElement popped = myElementStack.pop();
+    LOG.assertTrue(popped.equals(element));
     myElementToEndOffsetMap.put(element, myInstructions.size());
   }
 

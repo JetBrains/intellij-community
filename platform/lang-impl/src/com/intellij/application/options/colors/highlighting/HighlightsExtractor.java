@@ -20,11 +20,11 @@
 package com.intellij.application.options.colors.highlighting;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.util.containers.Stack;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
 public class HighlightsExtractor {
 

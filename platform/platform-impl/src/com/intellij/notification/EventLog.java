@@ -326,6 +326,7 @@ public class EventLog implements Notifications {
           LogModel model = getProjectComponent(project).myProjectModel;
           for (Notification notification : model.getNotifications()) {
             model.removeNotification(notification);
+            notification.expire();
           }
         }
       });

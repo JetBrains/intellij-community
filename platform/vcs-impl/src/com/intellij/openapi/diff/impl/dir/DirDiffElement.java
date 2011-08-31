@@ -28,18 +28,20 @@ import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
  * @author Konstantin Bulenkov
  */
 public class DirDiffElement {
-  private final DTree myParent;
-  private final DType myType;
-  private final DiffElement mySource;
-  private final long mySourceLength;
-  private final DiffElement myTarget;
-  private final long myTargetLength;
-  private final String myName;
+  private DTree myParent;
+  private DType myType;
+  private DiffElement mySource;
+  private long mySourceLength;
+  private DiffElement myTarget;
+  private long myTargetLength;
+  private String myName;
   private DirDiffOperation myOperation;
   private DirDiffOperation myDefaultOperation;
+  private DTree myNode;
 
   private DirDiffElement(DTree parent, @Nullable DiffElement source, @Nullable DiffElement target, DType type, String name) {
-    myParent = parent;
+    myParent = parent.getParent();
+    myNode = parent;
     myType = type;
     mySource = source;
     mySourceLength = source == null || source.isContainer() ? -1 : source.getSize();
@@ -155,6 +157,22 @@ public class DirDiffElement {
     return myOperation == null ? myDefaultOperation : myOperation;
   }
 
+  public void updateSourceFromTarget(DiffElement target) {
+    myTarget = target;
+    myTargetLength = mySourceLength;
+    myDefaultOperation = DirDiffOperation.EQUAL;
+    myOperation = DirDiffOperation.EQUAL;
+    myType = DType.EQUAL;
+  }
+
+  public void updateTargetFromSource(DiffElement source) {
+    mySource = source;
+    mySourceLength = myTargetLength;
+    myDefaultOperation = DirDiffOperation.EQUAL;
+    myOperation = DirDiffOperation.EQUAL;
+    myType = DType.EQUAL;
+  }
+
   public void setNextOperation() {
     final DirDiffOperation op = getOperation();
     if (myType == DType.SOURCE) {
@@ -172,5 +190,9 @@ public class DirDiffElement {
 
   public DTree getParentNode() {
     return myParent;
+  }
+
+  public DTree getNode() {
+    return myNode;
   }
 }

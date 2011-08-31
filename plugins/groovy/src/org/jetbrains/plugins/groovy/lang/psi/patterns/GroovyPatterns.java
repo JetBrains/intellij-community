@@ -31,13 +31,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
 public class GroovyPatterns extends PsiJavaPatterns {
 
@@ -65,6 +63,15 @@ public class GroovyPatterns extends PsiJavaPatterns {
     });
   }
 
+  public static PsiMethodPattern grLightMethod(@NotNull final Object key) {
+    return PsiJavaPatterns.psiMethod().with(new PatternCondition<PsiMethod>("GrLightMethodBuilder") {
+      @Override
+      public boolean accepts(@NotNull PsiMethod method, ProcessingContext context) {
+        return method instanceof GrLightMethodBuilder && key.equals(((GrLightMethodBuilder)method).getMethodKind());
+      }
+    });
+  }
+  
   public static GroovyElementPattern.Capture<GroovyPsiElement> rightOfAssignment(final ElementPattern<? extends GroovyPsiElement> value,
                                                                                  final GroovyAssignmentExpressionPattern assignment) {
     return new GroovyElementPattern.Capture<GroovyPsiElement>(new InitialPatternCondition<GroovyPsiElement>(GroovyPsiElement.class) {

@@ -33,7 +33,10 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -945,8 +948,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     final AnActionListener.Adapter listener = new AnActionListener.Adapter() {
       @Override
       public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (!myPopup.isDisposed() && myPopup.isVisible()) {
-          myPopup.cancel();
+        final JBPopup popup = myPopup;
+        if (popup != null && !popup.isDisposed() && popup.isVisible()) {
+          popup.cancel();
         }
       }
     };

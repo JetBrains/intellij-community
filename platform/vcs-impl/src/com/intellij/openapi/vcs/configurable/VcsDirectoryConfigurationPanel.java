@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nls;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.plaf.multi.MultiLabelUI;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -190,10 +189,9 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
     final JComboBox comboBox = myVcsComboBox.getComboBox();
     comboBox.setModel(buildVcsWrappersModel(myProject));
-    comboBox.setRenderer(new EditorComboBoxRenderer(comboBox.getEditor()));
     comboBox.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
-        if (myDirectoryMappingTable != null && myDirectoryMappingTable.isEditing()) {
+        if (myDirectoryMappingTable.isEditing()) {
           myDirectoryMappingTable.stopEditing();
         }
       }

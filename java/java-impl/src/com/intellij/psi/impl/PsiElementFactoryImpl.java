@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Map;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
@@ -286,12 +285,6 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @Override
   public PsiClassType createType(@NotNull final PsiClass aClass, final PsiType... parameters) {
     return createType(aClass, PsiSubstitutor.EMPTY.putAll(aClass, parameters));
-  }
-
-  @NotNull
-  @Override
-  public PsiType detachType(@NotNull final PsiType type) {
-    return type;
   }
 
   @NotNull
@@ -640,30 +633,6 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   @Override
-  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text,
-                                                    final PsiElement context,
-                                                    final boolean isVoidValid,
-                                                    final boolean isPhysical) {
-    int flags = 0;
-    if (isVoidValid) flags |= ALLOW_VOID;
-    return createTypeCodeFragment(text, context, isPhysical, flags);
-  }
-
-  @NotNull
-  @Override
-  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text,
-                                                    final PsiElement context,
-                                                    final boolean isVoidValid,
-                                                    final boolean isPhysical,
-                                                    final boolean allowEllipsis) {
-    int flags = 0;
-    if (isVoidValid) flags |= ALLOW_VOID;
-    if (allowEllipsis) flags |= ALLOW_ELLIPSIS;
-    return createTypeCodeFragment(text, context, isPhysical, flags);
-  }
-
-  @NotNull
-  @Override
   public PsiAnnotation createAnnotationFromText(@NotNull final String annotationText, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiAnnotation psiAnnotation = super.createAnnotationFromText(annotationText, context);
     markGenerated(psiAnnotation);
@@ -776,13 +745,5 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   private static void replace(final PsiElement original, final PsiElement replacement, final String message) {
     assert original != null : message;
     original.replace(replacement);
-  }
-
-  /**
-   * @deprecated use {@link PsiJavaParserFacadeImpl#getPrimitiveType(String)} (remove in IDEA 11).
-   */
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
-  public static PsiPrimitiveType getPrimitiveType(final String text) {
-    return PsiJavaParserFacadeImpl.getPrimitiveType(text);
   }
 }

@@ -113,11 +113,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   private void registerReferencesFromInjectedFragments(final PsiElement element) {
-    InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    InjectedLanguageUtil.enumerate(element, myFile, false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
         injectedPsi.accept(REGISTER_REFERENCES_VISITOR);
       }
-    }, false);
+    });
   }
 
   public boolean analyze(@NotNull final Runnable action, final boolean updateWholeFile, @NotNull final PsiFile file) {

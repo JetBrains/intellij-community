@@ -15,9 +15,11 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.GenericAttributeValue;
 
 /**
@@ -25,9 +27,10 @@ import com.intellij.util.xml.GenericAttributeValue;
  *         Date: Aug 3, 2010
  */
 public abstract class AntDomAnt extends AntDomElement {
-  
+  public static final String DEFAULT_ANTFILE_NAME = "build.xml";
+
   @Attribute("antfile")
-  @Convert(value = AntPathValidatingConverter.class)
+  @Convert(value = AntFilePathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getAntFilePath();
 
   @Attribute("dir")
@@ -53,4 +56,33 @@ public abstract class AntDomAnt extends AntDomElement {
   @Attribute("usenativebasedir")
   @Convert(value = AntBooleanConverterDefaultFalse.class)
   public abstract GenericAttributeValue<Boolean> isUseNativeBasedir();
+
+  public static class  AntFilePathConverter extends AntPathConverter {
+    public AntFilePathConverter() {
+      super(true);
+    }
+
+    protected String getPathResolveRoot(ConvertContext context, AntDomProject antProject) {
+      final AntDomAnt antElement = context.getInvocationElement().getParentOfType(AntDomAnt.class, false);
+      if (antElement != null) {
+        PsiFileSystemItem dir = antElement.getAntFileDir().getValue();
+        if (dir == null) {
+          if (antElement.isInheritAllProperties().getValue()) {
+            dir = antProject.getProjectBasedir();
+          }
+        }
+        if (dir != null) {
+          final VirtualFile vFile = dir.getVirtualFile();
+          if (vFile != null) {
+            return vFile.getPath();
+          }
+        }
+      }
+      return super.getPathResolveRoot(context, antProject);
+    }
+
+    protected String getAttributeDefaultValue(ConvertContext context, GenericAttributeValue attribValue) {
+      return DEFAULT_ANTFILE_NAME;
+    }
+  }
 }

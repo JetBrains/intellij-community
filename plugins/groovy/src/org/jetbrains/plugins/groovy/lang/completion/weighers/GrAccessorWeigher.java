@@ -30,18 +30,18 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 public class GrAccessorWeigher extends CompletionWeigher {
   @Override
   public Integer weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
+    if (!(location.getCompletionParameters().getPosition().getContainingFile() instanceof GroovyFileBase)) {
+      return null;
+    }
+
     Object o = element.getObject();
     if (o instanceof ResolveResult) {
       o = ((ResolveResult)o).getElement();
     }
 
-    if (!(location.getCompletionParameters().getPosition().getContainingFile() instanceof GroovyFileBase)) {
-      return null;
-    }
-
     if (o instanceof PsiMethod &&
         (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)o) || "setProperty".equals(((PsiMethod)o).getName()))) {
-      return -1;
+      return 1;
     }
     return 0;
   }

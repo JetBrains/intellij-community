@@ -172,6 +172,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
       kSYNCHRONIZED,
       kVOLATILE,
       kDEFAULT,
+      kDO,
       kTHROWS,
       kIMPLEMENTS,
       kTHIS,

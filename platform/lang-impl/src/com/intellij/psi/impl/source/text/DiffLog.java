@@ -143,12 +143,12 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
       final PsiElement psiParent = parent.getPsi();
       final PsiElement psiOldChild = file.isPhysical() ? oldNode.getPsi() : null;
-      final PsiElement psiNewChild = newNode.getPsi();
       if (psiParent != null && psiOldChild != null) {
         final PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(file.getManager());
         event.setParent(psiParent);
         event.setFile(file);
         event.setOldChild(psiOldChild);
+        PsiElement psiNewChild = newNode.getPsi();
         event.setNewChild(psiNewChild);
         ((PsiManagerEx)file.getManager()).beforeChildReplacement(event);
       }

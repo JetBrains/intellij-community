@@ -6,9 +6,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -22,13 +24,15 @@ public class LocalFileSystemTest extends IdeaTestCase{
 
   public static void setContentOnDisk(File file, byte[] bom, String content, Charset charset) throws IOException {
     FileOutputStream stream = new FileOutputStream(file);
-    stream.write(bom);
+    if (bom != null) {
+      stream.write(bom);
+    }
     OutputStreamWriter writer = new OutputStreamWriter(stream, charset);
     writer.write(content);
     writer.close();
   }
 
-  public static VirtualFile createTempFile(@NonNls String ext, byte[] bom, @NonNls String content, Charset charset) throws IOException {
+  public static VirtualFile createTempFile(@NonNls String ext, @Nullable byte[] bom, @NonNls String content, Charset charset) throws IOException {
     File temp = FileUtil.createTempFile("copy", "." + ext);
     setContentOnDisk(temp, bom, content, charset);
 
@@ -256,5 +260,22 @@ public class LocalFileSystemTest extends IdeaTestCase{
 
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath("");
     assertNotNull(root);
+  }
+
+  public void testFileLength() throws Exception {
+
+    File file = FileUtil.createTempFile("test", "txt");
+    FileUtil.writeToFile(file, "hello");
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(virtualFile);
+    String s = VfsUtil.loadText(virtualFile);
+    assertEquals("hello", s);
+    assertEquals(5, virtualFile.getLength());
+
+    FileUtil.writeToFile(file, "new content");
+    ((PersistentFS)ManagingFS.getInstance()).cleanPersistedContents();
+    s = VfsUtil.loadText(virtualFile);
+    assertEquals("new content", s);
+    assertEquals(11, virtualFile.getLength());
   }
 }

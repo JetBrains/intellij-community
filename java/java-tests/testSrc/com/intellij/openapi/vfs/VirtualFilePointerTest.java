@@ -467,7 +467,7 @@ public class VirtualFilePointerTest extends IdeaTestCase {
 
   private static void doit(final VirtualFilePointer pointer) {
     if (((VirtualFilePointerImpl)pointer).isDisposed()) return;
-    boolean b = JobUtil.invokeConcurrentlyUnderProgress(Collections.nCopies(10, null), new Processor<Object>() {
+    boolean b = JobUtil.invokeConcurrentlyUnderProgress(Collections.nCopies(10, null), null, false, new Processor<Object>() {
       @Override
       public boolean process(Object o) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -481,7 +481,7 @@ public class VirtualFilePointerTest extends IdeaTestCase {
 
         return true;
       }
-    }, false, null);
+    });
     assertTrue(b);
   }
 

@@ -23,7 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 /**
  * @author ven
@@ -227,5 +228,9 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
 
   public void testIncMethod() {
     assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy");
+  }
+  
+  public void testDGMFind() {
+    assertTypeEquals("java.io.File", "a.groovy");
   }
 }

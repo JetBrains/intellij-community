@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.editor.actionSystem;
 
-package com.intellij.psi.impl.source.parsing;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.util.Producer;
 
-import com.intellij.lang.ASTNode;
+import java.awt.datatransfer.Transferable;
 
 /**
- * @deprecated obsolete (ro remove in IDEA 11).
+ * @author pegov
  */
-@SuppressWarnings({"ALL"})
-public class ChameleonTransforming {
-  public static void transformChildren(ASTNode element) {
-  }
-
-  public static void transformChildren(ASTNode element, boolean recursive) {
-  }
+public interface EditorTextInsertHandler {
+  
+  void execute(final Editor editor, final DataContext dataContext, final Producer<Transferable> producer);  
 }

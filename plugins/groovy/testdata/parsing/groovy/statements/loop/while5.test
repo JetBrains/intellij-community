@@ -1,4 +1,4 @@
-while (def A a = 2+3){do()}
+while (def A a = 2+3){doo()}
 -----
 Groovy script
   WHILE statement
@@ -29,7 +29,7 @@ Groovy script
         PsiElement({)('{')
         Method call
           Reference expression
-            PsiElement(identifier)('do')
+            PsiElement(identifier)('doo')
           Arguments
             PsiElement(()('(')
             PsiElement())(')')

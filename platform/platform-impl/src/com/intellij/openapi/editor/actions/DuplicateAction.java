@@ -87,7 +87,7 @@ public class DuplicateAction extends EditorAction {
 
     editor.getCaretModel().moveToOffset(newOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    return new Pair<Integer, Integer>(end, end+s.length());
+    return new Pair<Integer, Integer>(end, end+s.length()-1);   // don't include separator of last line in range to select
   }
 
   @Override

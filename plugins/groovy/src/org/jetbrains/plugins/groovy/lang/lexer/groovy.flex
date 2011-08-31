@@ -301,6 +301,7 @@ mGSTRING_LITERAL = \"\"
   "synchronized"                          {  return( kSYNCHRONIZED );  }
   "volatile"                              {  return( kVOLATILE );  }
   "default"                               {  return( kDEFAULT );  }
+  "do"                                    {  return( kDO );  }
   "throws"                                {  return( kTHROWS );  }
   "implements"                            {  return( kIMPLEMENTS );  }
   "this"                                  {  return( kTHIS );  }
@@ -431,6 +432,7 @@ mGSTRING_LITERAL = \"\"
   "synchronized"                          {  return( kSYNCHRONIZED );  }
   "volatile"                              {  return( kVOLATILE );  }
   "default"                               {  return( kDEFAULT );  }
+  "do"                                    {  return( kDO );  }
   "throws"                                {  return( kTHROWS );  }
   "implements"                            {  return( kIMPLEMENTS );  }
   "this"                                  {  return( kTHIS );  }
@@ -729,6 +731,7 @@ mGSTRING_LITERAL = \"\"
 "synchronized"                            {  return( kSYNCHRONIZED );  }
 "volatile"                                {  return( kVOLATILE );  }
 "default"                                 {  return( kDEFAULT );  }
+"do"                                      {  return( kDO );  }
 "throws"                                  {  return( kTHROWS );  }
 "implements"                              {  return( kIMPLEMENTS );  }
 "this"                                    {  return( kTHIS );  }
