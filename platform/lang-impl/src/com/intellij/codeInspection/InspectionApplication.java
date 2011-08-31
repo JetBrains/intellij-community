@@ -142,8 +142,16 @@ public class InspectionApplication {
         }
       });
 
+      PatchProjectUtil.patchProject(myProject);
+
+      logMessageLn(1, InspectionsBundle.message("inspection.done"));
+      logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
+
       //fetch profile by name from project file (project profiles can be disabled)
       Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(myProfileName, false);
+      if (inspectionProfile != null) {
+        logMessageLn(1, "Loaded shared project profile \'" + myProfileName + "\'");
+      }
 
       //check if ide profile is used for project
       if (inspectionProfile == null) {
@@ -151,6 +159,7 @@ public class InspectionApplication {
         for (Profile profile : profiles) {
           if (Comparing.strEqual(profile.getName(), myProfileName)) {
             inspectionProfile = profile;
+            logMessageLn(1, "Loaded local profile \'" + myProfileName + "\'");
             break;
           }
         }
@@ -159,17 +168,15 @@ public class InspectionApplication {
       //otherwise look for profile file or use default
       if (inspectionProfile == null) {
         inspectionProfile = InspectionProfileManager.getInstance().loadProfile(myProfileName);
+        if (inspectionProfile != null) {
+          logMessageLn(1, "Loaded profile \'" + inspectionProfile.getName() + "\' from file \'" + myProfileName + "\'");
+        }
       }
 
       if (inspectionProfile == null) {
         inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+        logMessageLn(1, "Using default project profile");
       }
-
-      PatchProjectUtil.patchProject(myProject);
-
-      logMessageLn(1, InspectionsBundle.message("inspection.done"));
-      logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
-
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
 
       final GlobalInspectionContextImpl inspectionContext = im.createNewGlobalContext(true);
