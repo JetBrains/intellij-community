@@ -57,7 +57,6 @@
     <typedHandler implementation="com.jetbrains.python.codeInsight.KeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.django.lang.template.editor.DjangoBracesInterpolationTypedHandler"
                   id="pyDjangoBraceInterpolation"/>
-    <typedHandler implementation="com.jetbrains.python.editor.ColonTypedHandler" id="pyColonUnindent"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
     <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
 

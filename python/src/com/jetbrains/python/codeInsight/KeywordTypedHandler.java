@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonFileType;
@@ -37,6 +36,7 @@ public class KeywordTypedHandler extends TypedHandlerDelegate {
         editor.getCaretModel().moveToOffset(offset + 1); // overtype, that is, jump over
         return Result.STOP;
       }
+      UnindentingInsertHandler.unindentAsNeeded(project, editor, file);
     }
 
     return Result.CONTINUE; // the default
