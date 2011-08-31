@@ -15,34 +15,28 @@
  */
 package com.intellij.refactoring.extractMethod;
 
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.UIBundle;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
 /**
  * @author oleg
- * It`s a modified copy of com.intellij.refactoring.util.AbstractParameterTablePanel
+ * It`s a modified copy of com.intellij.refactoring.util.ParameterTablePanel
  */
 public abstract class AbstractParameterTablePanel extends JPanel {
   private AbstractVariableData[] myVariableData;
 
-  private Table myTable;
+  private JBTable myTable;
   private MyTableModel myTableModel;
-  private JButton myUpButton;
-  private JButton myDownButton;
   private final ExtractMethodValidator myValidator;
 
   protected abstract void updateSignature();
@@ -62,7 +56,7 @@ public abstract class AbstractParameterTablePanel extends JPanel {
 
   public void init() {
     myTableModel = new MyTableModel();
-    myTable = new Table(myTableModel);
+    myTable = new JBTable(myTableModel);
     DefaultCellEditor defaultEditor = (DefaultCellEditor)myTable.getDefaultEditor(Object.class);
     defaultEditor.setClickCountToStart(1);
 
@@ -118,140 +112,24 @@ public abstract class AbstractParameterTablePanel extends JPanel {
       }
     });
 
-    // make ENTER work when the table has focus
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "invokeImpl");
-    actionMap.put("invokeImpl", new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        TableCellEditor editor = myTable.getCellEditor();
-        if (editor != null) {
-          editor.stopCellEditing();
-        }
-        else {
-          doEnterAction();
-        }
-      }
-    });
-
-    // make ESCAPE work when the table has focus
-    actionMap.put("doCancel", new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        TableCellEditor editor = myTable.getCellEditor();
-        if (editor != null) {
-          editor.stopCellEditing();
-        }
-        else {
-          doCancelAction();
-        }
-      }
-    });
-
-    JPanel listPanel = new JPanel(new BorderLayout());
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
-    listPanel.add(scrollPane, BorderLayout.CENTER);
-    listPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+    JPanel listPanel = ToolbarDecorator.createDecorator(myTable).disableAddAction().disableRemoveAction().createPanel();
     add(listPanel, BorderLayout.CENTER);
 
-    JPanel buttonsPanel = new JPanel();
-    buttonsPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-    add(buttonsPanel, BorderLayout.EAST);
-
-    buttonsPanel.setLayout(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.insets = new Insets(2, 4, 2, 4);
-
-    myUpButton = new JButton();
-    myUpButton.setText(UIBundle.message("row.move.up"));
-    myUpButton.setDefaultCapable(false);
-    buttonsPanel.add(myUpButton, gbConstraints);
-
-    myDownButton = new JButton();
-    myDownButton.setText(UIBundle.message("row.move.down"));
-    myDownButton.setDefaultCapable(false);
-    buttonsPanel.add(myDownButton, gbConstraints);
-
-    gbConstraints.weighty = 1;
-    buttonsPanel.add(new JPanel(), gbConstraints);
-
-    myUpButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myTable.isEditing()) {
-          final boolean isStopped = myTable.getCellEditor().stopCellEditing();
-          if (!isStopped) return;
-        }
-        moveSelectedItem(-1);
-        updateSignature();
-        myTable.requestFocus();
-      }
-    });
-
-    myDownButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myTable.isEditing()) {
-          final boolean isStopped = myTable.getCellEditor().stopCellEditing();
-          if (!isStopped) return;
-        }
-        moveSelectedItem(+1);
-        updateSignature();
-        myTable.requestFocus();
-      }
-    });
-
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        updateMoveButtons();
-      }
-    });
-    if (myVariableData.length <= 1) {
-      myUpButton.setEnabled(false);
-      myDownButton.setEnabled(false);
-    }
-    else {
+    if (myVariableData.length > 1) {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }
-    updateMoveButtons();
-  }
-
-  private void updateMoveButtons() {
-    int row = myTable.getSelectedRow();
-    if (0 <= row && row < myVariableData.length) {
-      myUpButton.setEnabled(row > 0);
-      myDownButton.setEnabled(row < myVariableData.length - 1);
-    }
-    else {
-      myUpButton.setEnabled(false);
-      myDownButton.setEnabled(false);
-    }
-  }
-
-  private void moveSelectedItem(int moveIncrement) {
-    int row = myTable.getSelectedRow();
-    if (row < 0 || row >= myVariableData.length) return;
-    int targetRow = row + moveIncrement;
-    if (targetRow < 0 || targetRow >= myVariableData.length) return;
-
-    AbstractVariableData currentItem = myVariableData[row];
-    myVariableData[row] = myVariableData[targetRow];
-    myVariableData[targetRow] = currentItem;
-
-    myTableModel.fireTableRowsUpdated(Math.min(targetRow, row), Math.max(targetRow, row));
-    myTable.getSelectionModel().setSelectionInterval(targetRow, targetRow);
   }
 
   public void setEnabled(boolean enabled) {
     myTable.setEnabled(enabled);
-    if (!enabled) {
-      myUpButton.setEnabled(false);
-      myDownButton.setEnabled(false);
-    }
-    else {
-      updateMoveButtons();
-    }
     super.setEnabled(enabled);
   }
 
-  private class MyTableModel extends AbstractTableModel {
+  public AbstractVariableData[] getVariableData() {
+    return myVariableData;
+  }
+
+  private class MyTableModel extends AbstractTableModel implements EditableModel {
     public static final int CHECKMARK_COLUMN = 0;
     public static final int PARAMETER_NAME_COLUMN = 1;
 
@@ -313,6 +191,30 @@ public abstract class AbstractParameterTablePanel extends JPanel {
         return Boolean.class;
       }
       return super.getColumnClass(columnIndex);
+    }
+
+    @Override
+    public void addRow() {
+      throw new IllegalAccessError("Not implemented");
+    }
+
+    @Override
+    public void removeRow(int index) {
+      throw new IllegalAccessError("Not implemented");
+    }
+
+    @Override
+    public void exchangeRows(int row, int targetRow) {
+      if (row < 0 || row >= getVariableData().length) return;
+      if (targetRow < 0 || targetRow >= getVariableData().length) return;
+
+      final AbstractVariableData currentItem = getVariableData()[row];
+      getVariableData()[row] = getVariableData()[targetRow];
+      getVariableData()[targetRow] = currentItem;
+
+      myTableModel.fireTableRowsUpdated(Math.min(targetRow, row), Math.max(targetRow, row));
+      myTable.getSelectionModel().setSelectionInterval(targetRow, targetRow);
+      updateSignature();
     }
   }
 }

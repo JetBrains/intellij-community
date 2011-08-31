@@ -63,7 +63,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   private MockPsiManager myPsiManager;
   private PsiFileFactoryImpl myFileFactory;
   protected Language myLanguage;
-  private ParserDefinition[] myDefinitions = new ParserDefinition[0];
+  private final ParserDefinition[] myDefinitions;
 
   public ParsingTestCase(@NonNls String dataPath, String fileExt, ParserDefinition... definitions) {
     myDefinitions = definitions;
@@ -213,7 +213,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     return createFile(name + "." + myFileExt, text);
   }
 
-  protected PsiFile createFile(String name, String text) {
+  protected PsiFile createFile(@NonNls String name, String text) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, myLanguage, text);
     virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
     return myFileFactory.trySetupPsiForFile(virtualFile, myLanguage, true, false);

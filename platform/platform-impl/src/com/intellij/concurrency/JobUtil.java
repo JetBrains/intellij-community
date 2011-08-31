@@ -41,8 +41,8 @@ public class JobUtil {
   }
 
   private static <T> boolean invokeConcurrentlyForAll(@NotNull final List<T> things,
-                                                      @NotNull final Processor<T> thingProcessor,
-                                                      boolean failFastOnAcquireReadAction) throws ProcessCanceledException {
+                                                      boolean failFastOnAcquireReadAction,
+                                                      @NotNull final Processor<T> thingProcessor) throws ProcessCanceledException {
     final Job<String> job = new JobImpl<String>(Job.DEFAULT_PRIORITY, failFastOnAcquireReadAction);
 
     final int chunkSize = Math.max(1, things.size() / JobSchedulerImpl.CORES_COUNT / 20);
@@ -84,10 +84,11 @@ public class JobUtil {
   /**
    * Schedules concurrent execution of #thingProcessor over each element of #things and waits for completion
    * With checkCanceled in each thread delegated to our current progress
+   *
    * @param things to process concurrently
-   * @param thingProcessor to be invoked concurrently on each element from the collection
-   * @param failFastOnAcquireReadAction if true, returns false when failed to acquire read action
    * @param progress
+   * @param failFastOnAcquireReadAction if true, returns false when failed to acquire read action
+   * @param thingProcessor to be invoked concurrently on each element from the collection
    * @return false if tasks have been canceled
    *         or at least one processor returned false
    *         or threw exception
@@ -95,9 +96,9 @@ public class JobUtil {
    * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
    */
   public static <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
-                                                            @NotNull final Processor<T> thingProcessor,
+                                                            ProgressIndicator progress,
                                                             boolean failFastOnAcquireReadAction,
-                                                            ProgressIndicator progress) throws ProcessCanceledException {
+                                                            @NotNull final Processor<T> thingProcessor) throws ProcessCanceledException {
     if (things.isEmpty()) {
       return true;
     }
@@ -108,7 +109,7 @@ public class JobUtil {
 
     // can be already wrapped
     final ProgressWrapper wrapper = progress instanceof ProgressWrapper ? (ProgressWrapper)progress : ProgressWrapper.wrap(progress);
-    return invokeConcurrentlyForAll(things, new Processor<T>() {
+    return invokeConcurrentlyForAll(things, failFastOnAcquireReadAction, new Processor<T>() {
       public boolean process(final T t) {
         final boolean[] result = new boolean[1];
         ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
@@ -118,14 +119,14 @@ public class JobUtil {
         }, wrapper);
         return result[0];
       }
-    }, failFastOnAcquireReadAction);
+    });
   }
 
-  public static Job<Void> submitToJobThread(@NotNull final Runnable action, int priority) {
-    return submitToJobThread(action, priority, null);
+  public static Job<Void> submitToJobThread(int priority, @NotNull final Runnable action) {
+    return submitToJobThread(priority, action, null);
   }
 
-  public static Job<Void> submitToJobThread(@NotNull final Runnable action, int priority, Consumer<Future> onDoneCallback) {
+  public static Job<Void> submitToJobThread(int priority, @NotNull final Runnable action, Consumer<Future> onDoneCallback) {
     final JobImpl<Void> job = new JobImpl<Void>(priority, false);
     Callable<Void> callable = new Callable<Void>() {
       public Void call() throws Exception {
