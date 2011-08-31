@@ -96,7 +96,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   }
 
   public void testaThinlet() throws Exception {
-    List<HighlightInfo> errors = doTest(24000 - JobSchedulerImpl.CORES_COUNT * 1000);
+    List<HighlightInfo> errors = doTest(Math.max(10000, 24000 - JobSchedulerImpl.CORES_COUNT * 1000));
     dump("thinlet", errors);
     assertEquals(1230, errors.size());
   }
@@ -116,7 +116,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   }
 
   public void testaClassLoader() throws Exception {
-    List<HighlightInfo> errors = doTest(10000 - JobSchedulerImpl.CORES_COUNT * 1000);
+    List<HighlightInfo> errors = doTest(Math.max(1000, 10000 - JobSchedulerImpl.CORES_COUNT * 1000));
     dump("classloader", errors);
     assertEquals(178, errors.size());
   }
