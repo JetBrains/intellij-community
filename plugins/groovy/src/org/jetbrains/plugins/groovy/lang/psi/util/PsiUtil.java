@@ -60,14 +60,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -1046,25 +1045,16 @@ public class PsiUtil {
 
   public static boolean isExpressionStatement(@NotNull PsiElement expr) {
     final PsiElement parent = expr.getParent();
-    if (parent instanceof GrControlFlowOwner) return true;
-    if (parent instanceof GrExpression ||
-        parent instanceof GrArgumentList ||
-        parent instanceof GrReturnStatement ||
-        parent instanceof GrAssertStatement ||
-        parent instanceof GrThrowStatement ||
-        parent instanceof GrSwitchStatement ||
-        parent instanceof GrTypeDefinitionBody ||
-        parent instanceof GrVariable ||
-        parent instanceof GrForClause) {
-      return false;
+    if (parent instanceof GrControlFlowOwner || parent instanceof GrCaseSection) return true;
+    if (parent instanceof GrIfStatement &&
+        (expr == ((GrIfStatement)parent).getThenBranch() || expr == ((GrIfStatement)parent).getElseBranch())) {
+      return true;
     }
-    if (parent instanceof GrIfStatement && expr == ((GrIfStatement)parent).getCondition()) {
-      return false;
+
+    if (parent instanceof GrWhileStatement && expr == ((GrWhileStatement)parent).getBody()) {
+      return true;
     }
-    if (parent instanceof GrWhileStatement && expr == ((GrWhileStatement)parent).getCondition()) {
-      return false;
-    }
-    return true;
+    return false;
   }
 
   @Nullable
