@@ -37,10 +37,12 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
         if (qualifier != null) {
           final PyType type = qualifier.getType(TypeEvalContext.fast());
           if (type == null || type instanceof PyTypeReference) {
+            /*
             final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
             if (call != null && element == call.getCallee()) {
               return checkMatchingSignatureGroup(call, targets);
             }
+            */
             return UNTYPED;
           }
         }
@@ -69,6 +71,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
     return null;
   }
 
+  /*
   @Nullable
   private static UsageType checkMatchingSignatureGroup(PyCallExpression call, UsageTarget[] targets) {
     if (targets.length == 1 && targets[0] instanceof PyFunction) {
@@ -78,4 +81,5 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
     }
     return null;
   }
+  */
 }
