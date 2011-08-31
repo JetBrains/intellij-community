@@ -86,7 +86,7 @@ public class AntStringResolver extends PropertyProviderFinder{
     }
   }
 
-  private static class CachedPropertiesProvider implements PropertiesProvider {
+  private static class CachedPropertiesProvider implements PropertiesProvider, PropertiesProvider.SkipPropertyExpansionInValues {
     Set<String> allNames;
     private final Map<String, String> myCached;
 
