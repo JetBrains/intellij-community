@@ -299,6 +299,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     private String myCaption;
     private Editor myEditor;
     private PsiElement myElement;
+    private PsiElement[] myElements;
 
     public ImplementationsUpdaterTask(final PsiElement element, final Editor editor, final String caption) {
       super(element.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
@@ -318,7 +319,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
 
     @Override
-    protected void replaceModel(ArrayList<PsiElement> data) {
+    protected void replaceModel(List<PsiElement> data) {
       final PsiElement[] elements = myComponent.getElements();
       final int includeSelfIdx = myElement instanceof PomTargetPsiElement ? 0 : 1;
       final int startIdx = elements.length - includeSelfIdx;
@@ -331,12 +332,32 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       super.run(indicator);
-      getSelfAndImplementations(myEditor, myElement, new ImplementationSearcher.BackgroundableImplementationSearcher() {
-        @Override
-        protected void processElement(PsiElement element) {
-          updateComponent(element, null);
-        }
-      });
+      myElements =
+        getSelfAndImplementations(myEditor, myElement, new ImplementationSearcher.BackgroundableImplementationSearcher() {
+          @Override
+          protected void processElement(PsiElement element) {
+            updateComponent(element, null);
+          }
+
+          @Override
+          protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, int offset) {
+            return ShowImplementationsAction.filterElements(targetElements);
+          }
+        });
+    }
+
+    @Override
+    public int getCurrentSize() {
+      if (myElements != null) return myElements.length;
+      return super.getCurrentSize();
+    }
+
+    @Override
+    public void onSuccess() {
+      if (!isCanceled()) {
+        myComponent.update(myElements, myComponent.getIndex());
+      }
+      super.onSuccess();
     }
   }
 }

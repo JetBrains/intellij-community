@@ -23,7 +23,7 @@ import com.intellij.ui.speedSearch.NameFilteringListModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
 * User: anna
@@ -51,7 +51,7 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JB
   }
 
   @Override
-  protected void replaceModel(ArrayList<PsiElement> data) {
+  protected void replaceModel(List<PsiElement> data) {
     final Object selectedValue = myComponent.getSelectedValue();
     final int index = myComponent.getSelectedIndex();
     ((NameFilteringListModel)myComponent.getModel()).replaceAll(data);
