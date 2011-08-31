@@ -354,7 +354,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     @Override
     public void onSuccess() {
-      if (!isCanceled()) {
+      if (!setCanceled()) {
         myComponent.update(myElements, myComponent.getIndex());
       }
       super.onSuccess();

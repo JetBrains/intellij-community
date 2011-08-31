@@ -78,12 +78,10 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   protected abstract void replaceModel(List<PsiElement> data);
   protected abstract void paintBusy(boolean paintBusy);
 
-  public void setCanceled() {
+  public boolean setCanceled() {
+    boolean canceled = myCanceled;
     myCanceled = true;
-  }
-
-  public boolean isCanceled() {
-    return myCanceled;
+    return canceled;
   }
 
   public void updateComponent(PsiElement element, @Nullable final Comparator comparator) {
