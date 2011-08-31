@@ -388,7 +388,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     return new File(myFile.getPath() + ".keystream");
   }
 
-  public Data valueOf(int idx) throws IOException {
+  public synchronized Data valueOf(int idx) throws IOException {
     synchronized (ourLock) {
       try {
         int addr = indexToAddr(idx);
