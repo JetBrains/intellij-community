@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -49,7 +50,7 @@ public class TemplateImplUtil {
     return true;
   }
 
-  public static void parseVariables(CharSequence text, ArrayList<Variable> variables, Set<String> predefinedVars) {
+  public static void parseVariables(CharSequence text, ArrayList<Variable> variables, @Nullable Set<String> predefinedVars) {
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(text);
 
