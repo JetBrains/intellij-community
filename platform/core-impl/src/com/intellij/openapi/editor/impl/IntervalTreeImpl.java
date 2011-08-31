@@ -60,7 +60,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     public IntervalNode(IntervalTreeImpl<E> intervalTree, @NotNull E key, int start, int end) {
       // maxEnd == 0 so to not disrupt existing maxes
-      this.myIntervalTree = intervalTree;
+      myIntervalTree = intervalTree;
       myStart = start;
       myEnd = end;
       intervals = new SmartList<Getable<E>>(createGetable(key));
@@ -153,53 +153,67 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
 
     protected int computeDeltaUpToRoot() {
-      if (!isValid()) return 0;
-      int treeModCount = myIntervalTree.modCount;
-      if (modCount == treeModCount) {
-        return deltaUpToRoot;
-      }
-      IntervalNode node = this;
-      int height = 0;
-      long path = 0; // path to this node from the root; 0 bit means we turn left subtree, 1 bit means we turn right subtree
-      IntervalNode treeRoot = myIntervalTree.getRoot();
-      int deltaUp = 0;
-      boolean allDeltasAreNull = true;
-      while (node != treeRoot) {
-        if (node.isValid() && node.modCount == treeModCount) {
-          deltaUp = node.deltaUpToRoot - node.delta;
-          allDeltasAreNull = node.allDeltasUpAreNull;
-          break;
+      restart:
+      while (true) { // have to restart on failure to update cached offsets in case of concurrent modification
+        if (!isValid()) return 0;
+        int treeModCount = myIntervalTree.modCount;
+        if (modCount == treeModCount) {
+          return deltaUpToRoot;
         }
-        IntervalNode parent = node.getParent();
-        if (parent == null) {
-          break;  // can happen when remove node and explicitly set valid to true (e.g. in RangeMarkerTree)
+        IntervalNode node = this;
+        IntervalNode treeRoot = myIntervalTree.getRoot();
+        if (treeRoot == null) return delta; // someone modified the tree in the meantime
+        int deltaUp = 0;
+        boolean allDeltasAreNull = true;
+        int height = 0;
+        long path = 0; // path to this node from the root; 0 bit means we choose left subtree, 1 bit means we choose right subtree
+        while (node != treeRoot) {
+          if (node.isValid() && node.modCount == treeModCount) {
+            deltaUp = node.deltaUpToRoot - node.delta;
+            allDeltasAreNull = node.allDeltasUpAreNull;
+            break;
+          }
+          IntervalNode parent = node.getParent();
+          if (parent == null) {
+            break;  // can happen when remove node and explicitly set valid to true (e.g. in RangeMarkerTree)
+          }
+          path = (path << 1) | (parent.getLeft() == node ? 0 : 1);
+          node = parent;
+          height++;
         }
-        path = (path << 1) | (parent.getLeft() == node ? 0 : 1);
-        node = parent;
-        height++;
-      }
-      // path to this node fits to long
-      assert height < 63 : height;
+        // path to this node fits to long
+        assert height < 63 : height;
 
-      // cache deltas in every node from the root down this
-      while (true) {
-        if (node.isValid()) {
-          int nodeDelta = node.delta;
-          deltaUp += nodeDelta;
-          allDeltasAreNull &= nodeDelta == 0;
-          // store deltaUpToRoot first, modCount last
-          node.deltaUpToRoot = deltaUp;
-          node.allDeltasUpAreNull = allDeltasAreNull;
-          node.modCount = treeModCount;
+        // cache deltas in every node from the root down this
+        while (true) {
+          if (node.isValid()) {
+            int nodeDelta = node.delta;
+            deltaUp += nodeDelta;
+            allDeltasAreNull &= nodeDelta == 0;
+            if (!setCachedOffsetsAtomically(deltaUp, allDeltasAreNull, treeModCount)) {
+              continue restart;
+            }
+          }
+
+          if (node == this) break;
+          node = (path & 1) == 0 ? node.getLeft() : node.getRight();
+          path >>= 1;
+          if (node == null) continue restart; // can only happen in case of concurrently modification
         }
 
-        if (node == this) break;
-        node = (path & 1) == 0 ? node.getLeft() : node.getRight();
-        path >>= 1;
+        assert deltaUp == 0 || !allDeltasAreNull;
+        return deltaUp;
       }
+    }
 
-      assert deltaUp == 0 || !allDeltasAreNull;
-      return deltaUp;
+    private boolean setCachedOffsetsAtomically(int deltaUpToRoot, boolean allDeltasUpAreNull, int treeModCount) {
+      synchronized (intervals) { // synchronize for mutual exclusion
+        if (myIntervalTree.modCount != treeModCount) return false;
+        this.deltaUpToRoot = deltaUpToRoot;
+        this.allDeltasUpAreNull = allDeltasUpAreNull;
+        modCount = treeModCount; //set modCount last
+        return true;
+      }
     }
 
     protected int changeDelta(int change) {
@@ -600,9 +614,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       }
       node.setParent(current);
     }
-    node.allDeltasUpAreNull = true;
-    node.deltaUpToRoot = 0;
-    node.modCount = modCount;
+    node.setCachedOffsetsAtomically(0, true, modCount);
     correctMaxUp(node);
     onInsertNode();
     assertUnderWriteLock();
@@ -842,9 +854,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       incDelta(root.getLeft(), delta) &
       incDelta(root.getRight(), delta);
     }
-    root.deltaUpToRoot = 0;
-    root.allDeltasUpAreNull = true;
-    root.modCount = modCount; // set modCount last
+    root.setCachedOffsetsAtomically(0, true, modCount);
     return true;
   }
 
