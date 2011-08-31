@@ -267,7 +267,7 @@ public abstract class PassExecutorService implements Disposable {
 
   private void submit(final ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
-      Job<Void> job = JobUtil.submitToJobThread(pass, pass.myJobPriority, new Consumer<Future>() {
+      Job<Void> job = JobUtil.submitToJobThread(pass.myJobPriority, pass, new Consumer<Future>() {
         @Override
         public void consume(Future future) {
           try {

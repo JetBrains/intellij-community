@@ -148,11 +148,11 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
 
     final Set<PsiFile> injectedFiles = new THashSet<PsiFile>();
     for (PsiElement element : elements) {
-      InjectedLanguageUtil.enumerate(element, file, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      InjectedLanguageUtil.enumerate(element, file, false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull final PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           injectedFiles.add(injectedPsi);
         }
-      }, false);
+      });
     }
     for (PsiFile injectedPsi : injectedFiles) {
       final Project project = injectedPsi.getProject();

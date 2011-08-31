@@ -131,7 +131,7 @@ public class VfsUtilTest extends IdeaTestCase {
 
   public void testAsyncRefresh() throws Throwable {
     final Throwable[] ex = {null};
-    JobUtil.invokeConcurrentlyUnderProgress(Arrays.asList(new Object[8]), new Processor<Object>() {
+    JobUtil.invokeConcurrentlyUnderProgress(Arrays.asList(new Object[8]), ProgressManager.getInstance().getProgressIndicator(), false, new Processor<Object>() {
       @Override
       public boolean process(Object o) {
         try {
@@ -142,7 +142,7 @@ public class VfsUtilTest extends IdeaTestCase {
         }
         return true;
       }
-    }, false, ProgressManager.getInstance().getProgressIndicator());
+    });
     if (ex[0] != null) throw ex[0];
   }
 

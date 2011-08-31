@@ -54,7 +54,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   public String[] getNames(final boolean checkBoxState) {
     final Set<String> names = new ConcurrentHashSet<String>();
 
-    JobUtil.invokeConcurrentlyUnderProgress(filterDumb(myContributors), new Processor<ChooseByNameContributor>() {
+    JobUtil.invokeConcurrentlyUnderProgress(filterDumb(myContributors), ProgressManager.getInstance().getProgressIndicator(), false, new Processor<ChooseByNameContributor>() {
       @Override
       public boolean process(ChooseByNameContributor contributor) {
         try {
@@ -71,7 +71,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
         }
         return true;
       }
-    }, false, ProgressManager.getInstance().getProgressIndicator());
+    });
 
     return ArrayUtil.toStringArray(names);
   }
@@ -101,7 +101,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
     final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
 
-    JobUtil.invokeConcurrentlyUnderProgress(filterDumb(myContributors), new Processor<ChooseByNameContributor>() {
+    JobUtil.invokeConcurrentlyUnderProgress(filterDumb(myContributors), ProgressManager.getInstance().getProgressIndicator(), false, new Processor<ChooseByNameContributor>() {
       @Override
       public boolean process(ChooseByNameContributor contributor) {
         try {
@@ -124,7 +124,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
         }
         return true;
       }
-    }, false, ProgressManager.getInstance().getProgressIndicator());
+    });
     
     return ArrayUtil.toObjectArray(items);
   }

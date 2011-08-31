@@ -107,7 +107,7 @@ public class BraceHighlightingHandler {
     final Project project = editor.getProject();
     if (project == null) return;
     final int offset = editor.getCaretModel().getOffset();
-    JobUtil.submitToJobThread(new Runnable() {
+    JobUtil.submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
       public void run() {
         final PsiFile injected;
         try {
@@ -145,7 +145,7 @@ public class BraceHighlightingHandler {
           }
         }, ModalityState.stateForComponent(editor.getComponent()));
       }
-    }, Job.DEFAULT_PRIORITY);
+    });
   }
 
   private static boolean isReallyDisposed(Editor editor, Project project) {
