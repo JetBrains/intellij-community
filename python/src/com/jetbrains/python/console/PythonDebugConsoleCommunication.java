@@ -29,8 +29,8 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
 
   @NotNull
   @Override
-  public List<PydevCompletionVariant> getCompletions(String prefix) throws Exception {
-    return myDebugProcess.getCompletions(prefix);
+  public List<PydevCompletionVariant> getCompletions(String text, String actualToken) throws Exception {
+    return myDebugProcess.getCompletions(actualToken);
   }
 
   @Override

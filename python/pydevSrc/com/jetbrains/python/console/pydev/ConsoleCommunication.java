@@ -9,7 +9,7 @@ import java.util.List;
  */
 public interface ConsoleCommunication {
   @NotNull
-  List<PydevCompletionVariant> getCompletions(String prefix) throws Exception;
+  List<PydevCompletionVariant> getCompletions(String text, String actualToken) throws Exception;
 
   String getDescription(String text) throws Exception;
 

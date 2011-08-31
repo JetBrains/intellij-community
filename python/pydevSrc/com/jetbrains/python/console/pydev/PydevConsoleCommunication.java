@@ -207,15 +207,14 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * @return completions from the client
    */
   @NotNull
-  public List<PydevCompletionVariant> getCompletions(final String prefix) throws Exception {
+  public List<PydevCompletionVariant> getCompletions(String text, String actTok) throws Exception {
     if (waitingForInput) {
       return Collections.emptyList();
     }
-    final Object fromServer = client.execute(GET_COMPLETIONS, new Object[]{prefix});
+    final Object fromServer = client.execute(GET_COMPLETIONS, new Object[]{text, actTok});
 
     return PydevXmlUtils.decodeCompletions(fromServer);
   }
-
 
   /**
    * @return the description of the given attribute in the shell
