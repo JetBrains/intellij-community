@@ -84,28 +84,28 @@ public class PyArgumentListInspection extends PyInspection {
 
   public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context) {
     if (node.getParent() instanceof PyClass) return; // class Foo(object) is also an arg list
-    PyArgumentList.AnalysisResult result = node.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context));
+    CallArgumentsMapping result = node.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context));
     if (!result.isImplicitlyResolved()) {
-      for (Map.Entry<PyExpression, EnumSet<PyArgumentList.ArgFlag>> arg_entry : result.getArgumentFlags().entrySet()) {
-        EnumSet<PyArgumentList.ArgFlag> flags = arg_entry.getValue();
+      for (Map.Entry<PyExpression, EnumSet<CallArgumentsMapping.ArgFlag>> arg_entry : result.getArgumentFlags().entrySet()) {
+        EnumSet<CallArgumentsMapping.ArgFlag> flags = arg_entry.getValue();
         if (!flags.isEmpty()) { // something's wrong
           PyExpression arg = arg_entry.getKey();
-          if (flags.contains(PyArgumentList.ArgFlag.IS_DUP)) {
+          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP)) {
             holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"));
           }
-          if (flags.contains(PyArgumentList.ArgFlag.IS_DUP_KWD)) {
+          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_KWD)) {
             holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"));
           }
-          if (flags.contains(PyArgumentList.ArgFlag.IS_DUP_TUPLE)) {
+          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_TUPLE)) {
             holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
           }
-          if (flags.contains(PyArgumentList.ArgFlag.IS_POS_PAST_KWD)) {
+          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_POS_PAST_KWD)) {
             holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"));
           }
-          if (flags.contains(PyArgumentList.ArgFlag.IS_UNMAPPED)) {
+          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_UNMAPPED)) {
             holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
           }
-          if (flags.contains(PyArgumentList.ArgFlag.IS_TOO_LONG)) {
+          if (flags.contains(CallArgumentsMapping.ArgFlag.IS_TOO_LONG)) {
             holder.registerProblem(arg, PyBundle.message("INSP.more.args.that.pos.params"));
           }
         }

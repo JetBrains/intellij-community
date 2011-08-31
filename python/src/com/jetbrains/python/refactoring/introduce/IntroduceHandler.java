@@ -154,7 +154,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
     final PyArgumentList argList = PsiTreeUtil.getParentOfType(expression, PyArgumentList.class);
     if (argList != null) {
-      final PyArgumentList.AnalysisResult result = argList.analyzeCall(PyResolveContext.noImplicits());
+      final CallArgumentsMapping result = argList.analyzeCall(PyResolveContext.noImplicits());
       if (result.getMarkedCallee() != null && !result.isImplicitlyResolved()) {
         final PyNamedParameter namedParameter = result.getPlainMappedParams().get(expression);
         if (namedParameter != null) {

@@ -54,11 +54,11 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
         final Callable callable = func.getCallable();
         if ("getattr".equals(callable.getName()) && PyBuiltinCache.getInstance(node).hasInBuiltins(callable)) return;
       }
-      PyArgumentList.AnalysisResult result = list.analyzeCall(resolveWithoutImplicits());
+      CallArgumentsMapping result = list.analyzeCall(resolveWithoutImplicits());
       checkArguments(result, node.getArguments());
     }
 
-    private void checkArguments(PyArgumentList.AnalysisResult result, PyExpression[] arguments) {
+    private void checkArguments(CallArgumentsMapping result, PyExpression[] arguments) {
       Map<PyExpression, PyNamedParameter> mapping = result.getPlainMappedParams();
       Set<PyExpression> problemElements = new HashSet<PyExpression>();
       for (Map.Entry<PyExpression, PyNamedParameter> e : mapping.entrySet()) {

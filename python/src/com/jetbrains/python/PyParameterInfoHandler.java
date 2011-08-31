@@ -19,7 +19,7 @@ import static com.jetbrains.python.psi.PyCallExpression.PyMarkedCallee;
 /**
  * @author dcheryasov
  */
-public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, PyArgumentList.AnalysisResult> {
+public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, CallArgumentsMapping> {
   
   public boolean couldShowInLookup() {
     return true;
@@ -28,14 +28,14 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return ArrayUtil.EMPTY_OBJECT_ARRAY;  // we don't
   }
 
-  public Object[] getParametersForDocumentation(final PyArgumentList.AnalysisResult p, final ParameterInfoContext context) {
+  public Object[] getParametersForDocumentation(final CallArgumentsMapping p, final ParameterInfoContext context) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;  // we don't
   }
 
   public PyArgumentList findElementForParameterInfo(final CreateParameterInfoContext context) {
     PyArgumentList arglist = findArgumentList(context);
     if (arglist != null) {
-      PyArgumentList.AnalysisResult result = arglist.analyzeCall(PyResolveContext.noImplicits());
+      CallArgumentsMapping result = arglist.analyzeCall(PyResolveContext.noImplicits());
       if (result.getMarkedCallee() != null && !result.isImplicitlyResolved()) {
         context.setItemsToShow(new Object[] { result });
         return arglist;
@@ -93,12 +93,12 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return false;
   }
 
-  public void updateUI(final PyArgumentList.AnalysisResult prev_result, final ParameterInfoUIContext context) {
+  public void updateUI(final CallArgumentsMapping prev_result, final ParameterInfoUIContext context) {
     if (prev_result == null) return;
     final PyArgumentList arglist = prev_result.getArgumentList();
     if (!arglist.isValid()) return;
     // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
-    PyArgumentList.AnalysisResult result = arglist.analyzeCall(PyResolveContext.noImplicits());
+    CallArgumentsMapping result = arglist.analyzeCall(PyResolveContext.noImplicits());
     PyMarkedCallee marked = result.getMarkedCallee();
     assert marked != null : "findElementForParameterInfo() did it wrong!";
     final Callable callable = marked.getCallable();

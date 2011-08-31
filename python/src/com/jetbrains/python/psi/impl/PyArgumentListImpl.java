@@ -230,8 +230,8 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   @NotNull
-  public AnalysisResult analyzeCall(PyResolveContext resolveContext) {
-    final PyCallExpressionHelper.AnalysisResultImpl ret = new PyCallExpressionHelper.AnalysisResultImpl(this);
+  public CallArgumentsMapping analyzeCall(PyResolveContext resolveContext) {
+    final CallArgumentsMappingImpl ret = new CallArgumentsMappingImpl(this);
     PyExpression[] arguments = getArguments();
     // declaration-based checks
     // proper arglist is: [positional,...][name=value,...][*tuple,][**dict]
