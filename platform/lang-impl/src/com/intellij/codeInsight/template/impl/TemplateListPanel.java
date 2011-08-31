@@ -360,7 +360,7 @@ class TemplateListPanel extends JPanel {
                                      String shortcut,
                                      Map<TemplateOptionalProcessor, Boolean> options,
                                      Map<TemplateContextType, Boolean> context) {
-    myCurrentTemplateEditor = new LiveTemplateSettingsEditor(this, "", template, myTemplateGroups, shortcut, options, context, true);
+    myCurrentTemplateEditor = new LiveTemplateSettingsEditor(template, myTemplateGroups, shortcut, options, context);
     myDetailsPanel.add(myCurrentTemplateEditor.createCenterPanel(), TEMPLATE_SETTINGS);
     myCurrentTemplateEditor.reset();
   }
@@ -468,8 +468,8 @@ class TemplateListPanel extends JPanel {
 
 
     LiveTemplateSettingsEditor
-      dialog = new LiveTemplateSettingsEditor(this, CodeInsightBundle.message("dialog.edit.live.template.title"), template, getTemplateGroups(),
-                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
+      dialog = new LiveTemplateSettingsEditor(template, getTemplateGroups(),
+                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
     /*
     dialog.show();
     if (!dialog.isOK()) return;
@@ -579,8 +579,8 @@ class TemplateListPanel extends JPanel {
     myTemplateOptions.put(getKey(template), template.createOptions());
     myTemplateContext.put(getKey(template), template.createContext());
     LiveTemplateSettingsEditor
-      dialog = new LiveTemplateSettingsEditor(this, CodeInsightBundle.message("dialog.add.live.template.title"), template, getTemplateGroups(),
-                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
+      dialog = new LiveTemplateSettingsEditor(template, getTemplateGroups(),
+                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
     /*
     dialog.show();
     if (!dialog.isOK()) return;
@@ -604,8 +604,8 @@ class TemplateListPanel extends JPanel {
     myTemplateOptions.put(getKey(template), getOptions(orTemplate));
     myTemplateContext.put(getKey(template), getContext(orTemplate));
     LiveTemplateSettingsEditor
-      dialog = new LiveTemplateSettingsEditor(this, CodeInsightBundle.message("dialog.copy.live.template.title"), template, getTemplateGroups(),
-                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template), true);
+      dialog = new LiveTemplateSettingsEditor(template, getTemplateGroups(),
+                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
     /*
     dialog.show();
     if (!dialog.isOK()) return;
@@ -1021,9 +1021,21 @@ class TemplateListPanel extends JPanel {
       }
       TemplateKey templateKey = (TemplateKey)obj;
       int result = myGroupName.compareTo(templateKey.myGroupName);
+      new Foo().foo();
       return result != 0 ? result : myKey.compareTo(templateKey.myKey);
     }
+
   }
 
 }
 
+class Foo {
+  void foo() {}
+}
+
+class Bar extends Foo {
+  @Override
+  void foo() {
+    super.foo();
+  }
+}

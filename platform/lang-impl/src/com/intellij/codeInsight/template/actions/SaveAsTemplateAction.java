@@ -147,11 +147,9 @@ public class SaveAsTemplateAction extends AnAction {
     Map<TemplateContextType, Boolean> context = template.createContext();
 
     LiveTemplateSettingsEditor dialog = new LiveTemplateSettingsEditor(
-      component,
-      CodeInsightBundle.message("dialog.edit.live.template.title"),
       template,
       templateSettings.getTemplateGroups(),
-      defaultShortcut, options, context, newTemplate);
+      defaultShortcut, options, context);
     /*
     dialog.show();
     if (!dialog.isOK()) {

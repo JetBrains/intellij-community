@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -58,7 +57,7 @@ public class LiveTemplateSettingsEditor {
   private final JTextField myDescription;
   private final ComboBox myGroupCombo;
   private final Editor myTemplateEditor;
-  private ArrayList<Variable> myVariables = new ArrayList<Variable>();
+  private List<Variable> myVariables = new ArrayList<Variable>();
 
   private JComboBox myExpandByCombo;
   private final String myDefaultShortcutItem;
@@ -74,19 +73,14 @@ public class LiveTemplateSettingsEditor {
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
   private final Map<TemplateOptionalProcessor, Boolean> myOptions;
   private final Map<TemplateContextType, Boolean> myContext;
-  private final boolean myNewTemplate;
 
-  public LiveTemplateSettingsEditor(Component parent,
-                                    String title,
-                                    TemplateImpl template,
+  public LiveTemplateSettingsEditor(TemplateImpl template,
                                     List<TemplateGroup> groups,
                                     String defaultShortcut,
                                     Map<TemplateOptionalProcessor, Boolean> options,
-                                    Map<TemplateContextType, Boolean> context,
-                                    boolean newTemplate) {
+                                    Map<TemplateContextType, Boolean> context) {
     myOptions = options;
     myContext = context;
-    myNewTemplate = newTemplate;
 
     myTemplate = template;
     myTemplateGroups = groups;
@@ -100,10 +94,6 @@ public class LiveTemplateSettingsEditor {
 
   public TemplateImpl getTemplate() {
     return myTemplate;
-  }
-
-  public void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("reference.dialogs.edittemplate");
   }
 
   public void dispose() {
@@ -370,8 +360,7 @@ public class LiveTemplateSettingsEditor {
   }
 
   private void validateEditVariablesButton() {
-    ArrayList variables = new ArrayList();
-    parseVariables(myTemplateEditor.getDocument().getCharsSequence(), variables);
+    List<Variable> variables = parseVariables(myTemplateEditor.getDocument().getCharsSequence());
 
     boolean enable = false;
 
@@ -530,9 +519,7 @@ public class LiveTemplateSettingsEditor {
   }
 
   private void updateVariablesByTemplateText() {
-
-    ArrayList<Variable> parsedVariables = new ArrayList<Variable>();
-    parseVariables(myTemplateEditor.getDocument().getCharsSequence(), parsedVariables);
+    List<Variable> parsedVariables = parseVariables(myTemplateEditor.getDocument().getCharsSequence());
 
     Map<String,String> oldVariableNames = new HashMap<String, String>();
     for (Object myVariable : myVariables) {
@@ -571,12 +558,10 @@ public class LiveTemplateSettingsEditor {
     myVariables = parsedVariables;
   }
 
-  private static void parseVariables(CharSequence text, ArrayList<Variable> variables) {
-    TemplateImplUtil.parseVariables(
-      text,
-      variables,
-      TemplateImpl.INTERNAL_VARS_SET
-    );
+  private static List<Variable> parseVariables(CharSequence text) {
+    ArrayList<Variable> variables = new ArrayList<Variable>();
+    TemplateImplUtil.parseVariables(text, variables, TemplateImpl.INTERNAL_VARS_SET);
+    return variables;
   }
 
   /* todo
