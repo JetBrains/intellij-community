@@ -44,10 +44,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -91,6 +88,7 @@ public class LiveTemplateSettingsEditor {
     myDescription=new JTextField();
     myGroupCombo=new ComboBox(-1);
     myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString(), context);
+    myTemplate.setId(null);
   }
 
   public TemplateImpl getTemplate() {
@@ -209,11 +207,27 @@ public class LiveTemplateSettingsEditor {
     panel.add(new JLabel(CodeInsightBundle.message("dialog.edit.template.label.expand.with")), gbConstraints);
 
     gbConstraints.gridx = 1;
-    myExpandByCombo = new JComboBox();
-    myExpandByCombo.addItem(myDefaultShortcutItem);
-    myExpandByCombo.addItem(SPACE);
-    myExpandByCombo.addItem(TAB);
-    myExpandByCombo.addItem(ENTER);
+    myExpandByCombo = new JComboBox(new Object[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
+    myExpandByCombo.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        Object selectedItem = myExpandByCombo.getSelectedItem();
+        if(myDefaultShortcutItem.equals(selectedItem)) {
+          myTemplate.setShortcutChar(TemplateSettings.DEFAULT_CHAR);
+        }
+        else if(TAB.equals(selectedItem)) {
+          myTemplate.setShortcutChar(TemplateSettings.TAB_CHAR);
+        }
+        else if(ENTER.equals(selectedItem)) {
+          myTemplate.setShortcutChar(TemplateSettings.ENTER_CHAR);
+        }
+        else {
+          myTemplate.setShortcutChar(TemplateSettings.SPACE_CHAR);
+        }
+        
+      }
+    });
+    
     panel.add(myExpandByCombo, gbConstraints);
     gbConstraints.weightx = 1;
     gbConstraints.gridx = 2;
@@ -288,7 +302,7 @@ public class LiveTemplateSettingsEditor {
   private JPanel createPopupContextPanel(final Runnable onChange) {
     ChangeListener listener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        myExpandByCombo.setEnabled(!isEnabledInStaticContextOnly());
+        myExpandByCombo.setEnabled(isExpandableFromEditor());
       }
 
     };
@@ -356,17 +370,18 @@ public class LiveTemplateSettingsEditor {
     }
   }
 
-  private boolean isEnabledInStaticContextOnly() {
-    for(TemplateContextType type: myCbContextMap.keySet()) {
-      final JCheckBox cb = myCbContextMap.get(type);
-      if (!type.isExpandableFromEditor()) {
-        if (!cb.isSelected()) return false;
-      }
-      else {
-        if (cb.isSelected()) return false;
+  private boolean isExpandableFromEditor() {
+    boolean hasNonExpandable = false;
+    for (TemplateContextType type : myContext.keySet()) {
+      if (myContext.get(type)) {
+        if (type.isExpandableFromEditor()) {
+          return true;
+        }
+        hasNonExpandable = true;
       }
     }
-    return true;
+    
+    return !hasNonExpandable;
   }
 
   private void updateHighlighter() {
@@ -444,7 +459,7 @@ public class LiveTemplateSettingsEditor {
       cb.setSelected(myOptions.get(processor).booleanValue());
 
     }
-    myExpandByCombo.setEnabled(!isEnabledInStaticContextOnly());
+    myExpandByCombo.setEnabled(isExpandableFromEditor());
 
     updateHighlighter();
     validateOKButton();
@@ -455,20 +470,6 @@ public class LiveTemplateSettingsEditor {
     myTemplate.setKey(myKeyField.getText().trim());
     myTemplate.setDescription(myDescription.getText().trim());
     myTemplate.setGroupName(((String)myGroupCombo.getSelectedItem()).trim());
-
-    Object selectedItem = myExpandByCombo.getSelectedItem();
-    if(myDefaultShortcutItem.equals(selectedItem)) {
-      myTemplate.setShortcutChar(TemplateSettings.DEFAULT_CHAR);
-    }
-    else if(TAB.equals(selectedItem)) {
-      myTemplate.setShortcutChar(TemplateSettings.TAB_CHAR);
-    }
-    else if(ENTER.equals(selectedItem)) {
-      myTemplate.setShortcutChar(TemplateSettings.ENTER_CHAR);
-    }
-    else {
-      myTemplate.setShortcutChar(TemplateSettings.SPACE_CHAR);
-    }
 
     updateTemplateContext();
 
