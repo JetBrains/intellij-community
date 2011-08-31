@@ -40,5 +40,9 @@ public class Groovy16HighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testThisWithWrongQualifier() throws Throwable {doTest();}
 
   public void testImplicitEnumCoercion1_6() {
-    doTest(new GroovyAssignabilityCheckInspection());}
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
+  
+  public void testSlashyStrings() {doTest();}
+  public void testDiamonds() {doTest();}
 }
