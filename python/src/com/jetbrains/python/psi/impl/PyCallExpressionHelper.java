@@ -168,7 +168,6 @@ public class PyCallExpressionHelper {
    *
    * @param callReference       the call site, where arguments are given.
    * @param functionBeingCalled resolved method which is being called; plain functions are OK but make little sense.
-   * @param typeContext         shared type evaluation context
    * @return a non-negative number of parameters that are implicit to this call.
    */
   public static int getImplicitArgumentCount(
