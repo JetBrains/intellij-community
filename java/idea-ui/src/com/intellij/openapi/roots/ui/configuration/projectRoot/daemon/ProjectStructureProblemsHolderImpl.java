@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.SmartList;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -52,7 +53,7 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
       if (myProblemDescriptions != null) {
         int problems = 0;
         for (ProjectStructureProblemDescription problemDescription : myProblemDescriptions) {
-          buf.append(problemDescription.getMessage()).append("<br>");
+          buf.append(StringUtil.escapeXml(problemDescription.getMessage())).append("<br>");
           problems++;
           if (problems >= 10 && myProblemDescriptions.size() > 12) {
             buf.append(myProblemDescriptions.size() - problems).append(" more problems...<br>");
