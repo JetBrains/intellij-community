@@ -34,7 +34,6 @@ class IntToIntBtree {
   private int count;
   private int movedMembersCount;
 
-  private final byte[] buffer;
   private boolean isLarge = true;
   private final ResizeableMappedFile storage;
   private final boolean offloadToSiblingsBeforeSplit = false;
@@ -48,7 +47,6 @@ class IntToIntBtree {
 
   public IntToIntBtree(int _pageSize, File file, boolean initial) throws IOException {
     pageSize = _pageSize;
-    buffer = new byte[_pageSize];
 
     if (initial) {
       FileUtil.delete(file);
@@ -283,29 +281,19 @@ class IntToIntBtree {
       myBuffer.putInt(myAddressInBuffer + offset, value);
     }
 
-    protected final void getBytes(int address, byte[] dst, int length) {
-      myBuffer.position(address + myAddressInBuffer);
-      myBuffer.get(dst, 0, length);
+    protected final ByteBuffer getBytes(int address, int length) {
+      ByteBuffer duplicate = myBuffer.duplicate();
+
+      int newPosition = address + myAddressInBuffer;
+      duplicate.position(newPosition);
+      duplicate.limit(newPosition + length);
+      return duplicate;
     }
 
-    protected final void putBytes(int address, byte[] src, int length) {
+    protected final void putBytes(int address, ByteBuffer buffer) {
       myBuffer.position(address + myAddressInBuffer);
-      myBuffer.put(src, 0, length);
+      myBuffer.put(buffer);
     }
-
-    //protected final ByteBuffer getBytes(int address, int length) {
-    //  ByteBuffer duplicate = myBuffer.duplicate();
-    //
-    //  int newPosition = address + myAddressInBuffer;
-    //  duplicate.position(newPosition);
-    //  duplicate.limit(newPosition + length);
-    //  return duplicate;
-    //}
-    //
-    //protected final void putBytes(int address, ByteBuffer buffer) {
-    //  myBuffer.position(address + myAddressInBuffer);
-    //  myBuffer.put(buffer);
-    //}
 }
 
   // Leaf index node
@@ -468,12 +456,13 @@ class IntToIntBtree {
       int[] keys = new int[childrenCount];
 
       if (isHashedLeaf()) {
-        getBytes(indexToOffset(0), btree.buffer, btree.pageSize - btree.metaDataLeafPageLength);
+        final int offset = myAddressInBuffer + indexToOffset(0) + KEY_OFFSET;
+
         int keyNumber = 0;
 
         for(int i = 0; i < btree.hashPageCapacity; ++i) {
           if (hashGetState(i) == HASH_FULL) {
-            int key = Bits.getInt(btree.buffer, i * INTERIOR_SIZE + KEY_OFFSET);
+            int key = myBuffer.getInt(offset + i * INTERIOR_SIZE);
             keys[keyNumber++] = key;
           }
         }
@@ -492,27 +481,21 @@ class IntToIntBtree {
       
       HashLeafData(BtreeIndexNodeView _nodeView, int recordCount) {
         nodeView = _nodeView;
+
         final IntToIntBtree btree = _nodeView.btree;
-        nodeView.getBytes(nodeView.indexToOffset(0), btree.buffer, btree.pageSize - btree.metaDataLeafPageLength);
-        // TODO: using bytebuffers should more efficient for copying data too!
-        //int length = btree.pageSize - btree.metaDataLeafPageLength;
-        //final int offset = nodeView.indexToOffset(0);
-        //ByteBuffer buffer = nodeView.getBytes(offset, length);
-        //byte[] buf = new byte[btree.pageSize];
-        //buffer.get(buf, 0, length);
+
+        final int offset = nodeView.myAddressInBuffer + nodeView.indexToOffset(0);
+        final ByteBuffer buffer = nodeView.myBuffer;
+        
         keys = new int[recordCount];
         values = new TIntIntHashMap(recordCount);
         int keyNumber = 0;
         
         for(int i = 0; i < btree.hashPageCapacity; ++i) {
           if (nodeView.hashGetState(i) == HASH_FULL) {
-            int key = Bits.getInt(btree.buffer, i * INTERIOR_SIZE + KEY_OFFSET);
-            //int key2 = buffer.getInt(offset + i * INTERIOR_SIZE + KEY_OFFSET);
-            //myAssert(key == key2);
+            int key = buffer.getInt(offset + i * INTERIOR_SIZE + KEY_OFFSET);
             keys[keyNumber++] = key;
-            int value = Bits.getInt(btree.buffer, i * INTERIOR_SIZE);
-            //int value2 = buffer.getInt(offset + i * INTERIOR_SIZE);
-            //myAssert(value == value2);
+            int value = buffer.getInt(offset + i * INTERIOR_SIZE);
             values.put(key, value);
           }
         }
@@ -632,9 +615,8 @@ class IntToIntBtree {
         newIndexNode.setChildrenCount(recordCountInNewNode);
         
         if (btree.isLarge) {
-          final int bytesToMove = recordCountInNewNode * INTERIOR_SIZE;
-          getBytes(indexToOffset(maxIndex), btree.buffer, bytesToMove);
-          newIndexNode.putBytes(newIndexNode.indexToOffset(0), btree.buffer, bytesToMove);
+          ByteBuffer buffer = getBytes(indexToOffset(maxIndex), recordCountInNewNode * INTERIOR_SIZE);
+          newIndexNode.putBytes(newIndexNode.indexToOffset(0), buffer);
         } else {
           for(int i = 0; i < recordCountInNewNode; ++i) {
             newIndexNode.setAddressAt(i, addressAt(i + maxIndex));
@@ -833,9 +815,8 @@ class IntToIntBtree {
           btree.movedMembersCount += indexOfLastChildToMove;
 
           if (btree.isLarge) {
-            final int bytesToMove = indexOfLastChildToMove * INTERIOR_SIZE;
-            getBytes(indexToOffset(toMove), btree.buffer, bytesToMove);
-            putBytes(indexToOffset(0), btree.buffer, bytesToMove);
+            ByteBuffer buffer = getBytes(indexToOffset(toMove), indexOfLastChildToMove * INTERIOR_SIZE);
+            putBytes(indexToOffset(0), buffer);
           }
           else {
             for (int i = 0; i < indexOfLastChildToMove; ++i) {
@@ -926,7 +907,6 @@ class IntToIntBtree {
         }
 
         int address = i < 0 ? addressAt(-i - 1):addressAt(i + 1);
-        if (doSanityCheck) myAssert(address != 0);
         parentAddress = this.address;
         setAddress(-address);
       }
@@ -971,9 +951,8 @@ class IntToIntBtree {
 
       if (indexLeaf) {
         if (btree.isLarge && itemsToMove > LARGE_MOVE_THRESHOLD) {
-          final int bytesToMove = itemsToMove * INTERIOR_SIZE;
-          getBytes(indexToOffset(index), btree.buffer, bytesToMove);
-          putBytes(indexToOffset(index + 1), btree.buffer, bytesToMove);
+          ByteBuffer buffer = getBytes(indexToOffset(index), itemsToMove * INTERIOR_SIZE);
+          putBytes(indexToOffset(index + 1), buffer);
         } else {
           for(int i = recordCount - 1; i >= index; --i) {
             setKeyAt(i + 1, keyAt(i));
@@ -989,9 +968,8 @@ class IntToIntBtree {
         if (btree.isLarge && itemsToMove > LARGE_MOVE_THRESHOLD) {
           int elementsAfterIndex = recordCount - index - 1;
           if (elementsAfterIndex > 0) {
-            int bytesToMove = elementsAfterIndex * INTERIOR_SIZE;
-            getBytes(indexToOffset(index + 1), btree.buffer, bytesToMove);
-            putBytes(indexToOffset(index + 2), btree.buffer, bytesToMove);
+            ByteBuffer buffer = getBytes(indexToOffset(index + 1), elementsAfterIndex * INTERIOR_SIZE);
+            putBytes(indexToOffset(index + 2), buffer);
           }
         } else {
           for(int i = recordCount - 1; i > index; --i) {
