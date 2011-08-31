@@ -349,15 +349,22 @@ public class ControlFlowUtils {
     while (true) {
       if (elementToCheck == null) return false;
 
-      final GroovyPsiElement container = getContainingStatementOrBlock(elementToCheck);
+      final GroovyPsiElement container =
+        PsiTreeUtil.getParentOfType(elementToCheck, GrStatement.class, GrCodeBlock.class, GrCaseSection.class);
       if (container == null) return false;
 
       if (isLoop(container)) return false;
 
+      if (container instanceof GrCaseSection) {
+        final GrSwitchStatement switchStatement = (GrSwitchStatement)container.getParent();
+        final GrCaseSection[] sections = switchStatement.getCaseSections();
+        if (container == sections[sections.length - 1]) return false;
+      }
+
       if (container instanceof GrCodeBlock) {
         if (elementToCheck instanceof GrStatement) {
-          final GrCodeBlock codeBlock = (GrCodeBlock) container;
-          if (!statementIsLastInCodeBlock(codeBlock, (GrStatement) elementToCheck)) {
+          final GrCodeBlock codeBlock = (GrCodeBlock)container;
+          if (!statementIsLastInCodeBlock(codeBlock, (GrStatement)elementToCheck)) {
             return false;
           }
         }
@@ -366,10 +373,12 @@ public class ControlFlowUtils {
             return true;
           }
           elementToCheck = PsiTreeUtil.getParentOfType(container, GrStatement.class);
-        } else {
+        }
+        else {
           elementToCheck = container;
         }
-      } else {
+      }
+      else {
         elementToCheck = container;
       }
     }
