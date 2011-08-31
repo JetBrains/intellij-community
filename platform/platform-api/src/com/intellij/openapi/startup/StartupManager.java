@@ -62,7 +62,7 @@ public abstract class StartupManager {
 
   /**
    * Executes the specified runnable immediately if the initialization of the current project
-   * is complete, or registers it as a post-startup activity if the project is being initalized.
+   * is complete, or registers it as a post-startup activity if the project is being initialized.
    *
    * @param runnable the activity to execute.
    */
