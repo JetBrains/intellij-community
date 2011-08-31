@@ -19,7 +19,6 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +26,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.bind.annotation.XmlElement;
 import java.util.*;
 
 /**
@@ -60,12 +58,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     if (myString != null ? !myString.equals(template.myString) : template.myString != null) return false;
     if (myTemplateText != null ? !myTemplateText.equals(template.myTemplateText) : template.myTemplateText != null) return false;
 
-    if (myVariables == null && template.myVariables == null) return true;
-    if (myVariables == null || template.myVariables == null) return false;
-    if (myVariables.size() != template.myVariables.size()) return false;
-    for (Variable variable : myVariables) {
-      if (template.myVariables.indexOf(variable) < 0) return false;
-    }
+    if (!new HashSet<Variable>(myVariables).equals(new HashSet<Variable>(template.myVariables))) return false;
     if (isDeactivated != template.isDeactivated) return false;
 
     return true;
