@@ -72,7 +72,10 @@
 
     <bundledColorSchemesProvider implementation="com.jetbrains.python.PythonBundledColorSchemeProvider"/>
 
-    <declarationRangeHandler key="com.jetbrains.python.psi.PyElement"
+    <declarationRangeHandler key="com.jetbrains.python.psi.PyClass"
+                             implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
+
+    <declarationRangeHandler key="com.jetbrains.python.psi.PyFunction"
                              implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
 
     <!-- Run/Debug -->
