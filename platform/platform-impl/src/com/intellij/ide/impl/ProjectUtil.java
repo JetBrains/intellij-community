@@ -182,13 +182,12 @@ public class ProjectUtil {
     if (settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
       return Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
                                             IdeBundle.message("title.open.project"),
+                                            IdeBundle.message("button.existingframe"),
                                             IdeBundle.message("button.newframe"),
-                                            IdeBundle.message("button.existingframe"), 
-                                            CommonBundle.getCancelButtonText(), Messages.getQuestionIcon(), 
+                                            CommonBundle.getCancelButtonText(), Messages.getQuestionIcon(),
                                             new ProjectNewWindowDoNotAskOption());
-    } else {
-      return settings.getConfirmOpenNewProject();
     }
+    return settings.getConfirmOpenNewProject();
   }
 
   private static boolean isSameProject(String path, Project p) {
@@ -203,11 +202,10 @@ public class ProjectUtil {
     final File openFile = new File(toOpen);
     if (openFile.isDirectory()) {
       return FileUtil.pathsEqual(toOpen, existingBaseDir.getPath());
-    } else {
-      if (StorageScheme.DIRECTORY_BASED == projectStore.getStorageScheme()) {
-        // todo: check if IPR is located not under the project base dir
-        return FileUtil.pathsEqual(FileUtil.toSystemIndependentName(openFile.getParentFile().getPath()), existingBaseDir.getPath());
-      }
+    }
+    if (StorageScheme.DIRECTORY_BASED == projectStore.getStorageScheme()) {
+      // todo: check if IPR is located not under the project base dir
+      return FileUtil.pathsEqual(FileUtil.toSystemIndependentName(openFile.getParentFile().getPath()), existingBaseDir.getPath());
     }
 
     return FileUtil.pathsEqual(toOpen, existing);
