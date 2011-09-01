@@ -87,12 +87,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   @Nullable
-  public static PydevConsoleRunner run(@NotNull final Project project,
-                                       @NotNull final Sdk sdk,
-                                       final PyConsoleType consoleType,
-                                       final String projectRoot,
-                                       final String... statements2execute) {
-    return run(project, sdk, consoleType, projectRoot, createDefaultEnvironmentVariables(sdk), statements2execute);
+  public static PydevConsoleRunner createAndRun(@NotNull final Project project,
+                                                @NotNull final Sdk sdk,
+                                                final PyConsoleType consoleType,
+                                                final String projectRoot,
+                                                final String... statements2execute) {
+    return createAndRun(project, sdk, consoleType, projectRoot, createDefaultEnvironmentVariables(sdk), statements2execute);
   }
 
   public static Map<String, String> createDefaultEnvironmentVariables(Sdk sdk) {
@@ -116,12 +116,44 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   @Nullable
-  public static PydevConsoleRunner run(@NotNull final Project project,
-                                       @NotNull final Sdk sdk,
-                                       final PyConsoleType consoleType,
-                                       final String projectRoot,
-                                       final Map<String, String> environmentVariables,
-                                       final String... statements2execute) {
+  public static PydevConsoleRunner createAndRun(@NotNull final Project project,
+                                                @NotNull final Sdk sdk,
+                                                final PyConsoleType consoleType,
+                                                final String projectRoot,
+                                                final Map<String, String> environmentVariables,
+                                                final String... statements2execute) {
+    final PydevConsoleRunner consoleRunner = create(project, sdk, consoleType, projectRoot, environmentVariables);
+    if (consoleRunner == null) return null;
+    consoleRunner.run(statements2execute);
+    return consoleRunner;
+  }
+
+  public void run(final String ... statements2execute) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Connecting to console", false) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        indicator.setText("Connecting to console...");
+        try {
+          initAndRun(statements2execute);
+        }
+        catch (ExecutionException e) {
+          ExecutionHelper.showErrors(getProject(), Arrays.<Exception>asList(e), getTitle(), null);
+        }
+      }
+    });
+  }
+
+  public static PydevConsoleRunner create(Project project,
+                                           Sdk sdk,
+                                           PyConsoleType consoleType,
+                                           String projectRoot) {
+    return create(project, sdk, consoleType, projectRoot, createDefaultEnvironmentVariables(sdk));
+  }
+
+  private static PydevConsoleRunner create(Project project,
+                                           Sdk sdk,
+                                           PyConsoleType consoleType,
+                                           String projectRoot,
+                                           final Map<String, String> environmentVariables) {
     final int[] ports;
     try {
       // File "pydev/console/pydevconsole.py", line 223, in <module>
@@ -157,17 +189,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     };
 
     final PydevConsoleRunner consoleRunner = new PydevConsoleRunner(project, sdk, consoleType, provider, projectRoot, ports);
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Connecting to console", false) {
-      public void run(@NotNull final ProgressIndicator indicator) {
-        indicator.setText("Connecting to console...");
-        try {
-          consoleRunner.initAndRun(statements2execute);
-        }
-        catch (ExecutionException e) {
-          ExecutionHelper.showErrors(project, Arrays.<Exception>asList(e), consoleType.getTitle(), null);
-        }
-      }
-    });
     return consoleRunner;
   }
 
@@ -376,10 +397,14 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return myConsoleExecuteActionHandler;
   }
 
+  public PydevConsoleCommunication getPydevConsoleCommunication() {
+    return myPydevConsoleCommunication;
+  }
 
   public static boolean isInPydevConsole(final PsiElement element) {
     return element instanceof PydevConsoleElement || getConsoleCommunication(element) != null;
   }
+
 
   @Nullable
   public static ConsoleCommunication getConsoleCommunication(final PsiElement element) {
