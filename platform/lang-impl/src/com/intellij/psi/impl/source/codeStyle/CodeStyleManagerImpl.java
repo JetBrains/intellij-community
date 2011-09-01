@@ -16,10 +16,7 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.formatting.FormatTextRanges;
-import com.intellij.formatting.FormatterEx;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,6 +40,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -626,4 +624,50 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       return myCount <= 0 || System.currentTimeMillis() >= myEndTime;
     }
   }
+
+  @Override
+  public void performActionWithFormatterDisabled(final Runnable r) {
+    performActionWithFormatterDisabled(new Computable<Object>() {
+      @Override
+      public Object compute() {
+        r.run();
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public <T extends Throwable> void performActionWithFormatterDisabled(final ThrowableRunnable<T> r) throws T {
+    final Throwable[] throwable = new Throwable[1];
+
+    performActionWithFormatterDisabled(new Computable<Object>() {
+      @Override
+      public Object compute() {
+        try {
+          r.run();
+        }
+        catch (Throwable t) {
+          throwable[0] = t;
+        }
+        return null;
+      }
+    });
+
+    if (throwable[0] != null) {
+      //noinspection unchecked
+      throw (T)throwable[0];
+    }
+  }
+
+  @Override
+  public <T> T performActionWithFormatterDisabled(final Computable<T> r) {
+    return ((FormatterImpl)FormatterEx.getInstance()).runWithFormattingDisabled(new Computable<T>() {
+      @Override
+      public T compute() {
+        final PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(getProject());
+        return component.disablePostprocessFormattingInside(r);
+      }
+    });
+  }
+
 }

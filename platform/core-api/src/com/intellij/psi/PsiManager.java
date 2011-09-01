@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,18 +154,6 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return true if the element belongs to the sources of the project, false otherwise.
    */
   public abstract boolean isInProject(@NotNull PsiElement element);
-
-  /**
-   * Disables automatic formatting of modified PSI elements, runs the specified operation
-   * and re-enables the formatting. Can be used to improve performance of PSI write
-   * operations.
-   *
-   * @param r the operation to run.
-   */
-  public abstract void performActionWithFormatterDisabled(Runnable r);
-  public abstract <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws
-                                                                                                        T;
-  public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
 
   public abstract void dropFileCaches(@NotNull PsiFile file);
 }

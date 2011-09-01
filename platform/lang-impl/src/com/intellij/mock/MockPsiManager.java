@@ -123,10 +123,6 @@ public class MockPsiManager extends PsiManagerEx {
     return false;
   }
 
-  public void performActionWithFormatterDisabled(Runnable r) {
-    r.run();
-  }
-
   public <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws T {
     r.run();
   }

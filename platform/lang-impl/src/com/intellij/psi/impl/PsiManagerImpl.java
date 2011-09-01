@@ -16,8 +16,6 @@
 
 package com.intellij.psi.impl;
 
-import com.intellij.formatting.FormatterEx;
-import com.intellij.formatting.FormatterImpl;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
@@ -32,7 +30,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,13 +38,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -163,48 +158,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       return module != null;
     }
     return false;
-  }
-
-  public void performActionWithFormatterDisabled(final Runnable r) {
-    performActionWithFormatterDisabled(new Computable<Object>() {
-      @Override
-      public Object compute() {
-        r.run();
-        return null;
-      }
-    });
-  }
-
-  public <T extends Throwable> void performActionWithFormatterDisabled(final ThrowableRunnable<T> r) throws T {
-    final Throwable[] throwable = new Throwable[1];
-
-    performActionWithFormatterDisabled(new Computable<Object>() {
-      @Override
-      public Object compute() {
-        try {
-          r.run();
-        }
-        catch (Throwable t) {
-          throwable[0] = t;
-        }
-        return null;
-      }
-    });
-
-    if (throwable[0] != null) {
-      //noinspection unchecked
-      throw (T)throwable[0];
-    }
-  }
-
-  public <T> T performActionWithFormatterDisabled(final Computable<T> r) {
-    return ((FormatterImpl)FormatterEx.getInstance()).runWithFormattingDisabled(new Computable<T>() {
-      @Override
-      public T compute() {
-        final PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(getProject());
-        return component.disablePostprocessFormattingInside(r);
-      }
-    });
   }
 
   public void projectClosed() {

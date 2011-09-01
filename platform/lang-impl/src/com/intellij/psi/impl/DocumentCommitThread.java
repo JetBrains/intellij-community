@@ -36,6 +36,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
@@ -547,7 +548,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
           textBlock.performAtomically(new Runnable() {
             @Override
             public void run() {
-              file.getManager().performActionWithFormatterDisabled(new Runnable() {
+              CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
                 @Override
                 public void run() {
                   synchronized (PsiLock.LOCK) {
@@ -629,7 +630,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
       try {
         BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
         final DiffLog diffLog = blockSupport.reparseRange(file, 0, documentText.length(), 0, documentText, new ProgressIndicatorBase());
-        file.getManager().performActionWithFormatterDisabled(new Runnable() {
+        CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
           @Override
           public void run() {
             synchronized (PsiLock.LOCK) {

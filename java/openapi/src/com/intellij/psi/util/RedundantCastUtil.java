@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -453,7 +454,7 @@ public class RedundantCastUtil {
   private static boolean isCastRedundantInRefExpression (final PsiReferenceExpression refExpression, final PsiExpression castOperand) {
     final PsiElement resolved = refExpression.resolve();
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
-    refExpression.getManager().performActionWithFormatterDisabled(new Runnable() {
+    CodeStyleManager.getInstance(refExpression.getProject()).performActionWithFormatterDisabled(new Runnable() {
       public void run() {
         try {
           final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(refExpression.getProject()).getElementFactory();

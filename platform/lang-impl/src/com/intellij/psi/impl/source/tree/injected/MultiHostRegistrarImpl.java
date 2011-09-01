@@ -39,6 +39,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -417,7 +418,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
           public void run() {
             //todo
             final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator());
-            hostPsiFile.getManager().performActionWithFormatterDisabled(new Runnable() {
+            CodeStyleManager.getInstance(hostPsiFile.getProject()).performActionWithFormatterDisabled(new Runnable() {
               @Override
               public void run() {
                 synchronized (PsiLock.LOCK) {
