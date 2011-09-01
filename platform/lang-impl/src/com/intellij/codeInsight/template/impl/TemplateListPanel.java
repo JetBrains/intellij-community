@@ -483,11 +483,13 @@ class TemplateListPanel extends JPanel implements Disposable {
     myTree.repaint();
   }
 
-  private void moveTemplate(TemplateImpl template, String oldGroupName, DefaultMutableTreeNode oldTemplateNode) {
-    TemplateGroup oldGroup = getTemplateGroup(oldGroupName);
+  private void moveTemplate(TemplateImpl template, String newGroupName, DefaultMutableTreeNode oldTemplateNode) {
+    TemplateGroup oldGroup = getTemplateGroup(template.getGroupName());
     if (oldGroup != null) {
       oldGroup.removeElement(template);
     }
+
+    template.setGroupName(newGroupName);
 
     DefaultMutableTreeNode parent = (DefaultMutableTreeNode)oldTemplateNode.getParent();
     removeNodeFromParent(oldTemplateNode);
@@ -788,10 +790,7 @@ class TemplateListPanel extends JPanel implements Disposable {
         @Override
         public void drop(DnDEvent event) {
           Pair<TemplateImpl, DefaultMutableTreeNode> pair = (Pair<TemplateImpl, DefaultMutableTreeNode>)event.getAttachedObject();
-          TemplateImpl template = pair.first;
-          String oldGroupName = template.getGroupName();
-          template.setGroupName(getDropGroup(event).getName());
-          moveTemplate(template, oldGroupName, pair.second);
+          moveTemplate(pair.first, getDropGroup(event).getName(), pair.second);
         }
       })
       .setImageProvider(new Function<DnDActionInfo, DnDImage>() {
@@ -835,18 +834,7 @@ class TemplateListPanel extends JPanel implements Disposable {
         assert templateGroup != null;
         final String oldName = templateGroup.getName();
         String newName = Messages.showInputDialog(myTree, "Enter the new group name:", "Rename", null, oldName,
-                                                  new InputValidator() {
-                                                    @Override
-                                                    public boolean checkInput(String inputString) {
-                                                      return StringUtil.isNotEmpty(inputString) &&
-                                                             (getTemplateGroup(inputString) == null || inputString.equals(oldName));
-                                                    }
-
-                                                    @Override
-                                                    public boolean canClose(String inputString) {
-                                                      return checkInput(inputString);
-                                                    }
-                                                  });
+                                                  new TemplateGroupInputValidator(oldName));
 
         if (newName != null && !newName.equals(oldName)) {
           templateGroup.setName(newName);
@@ -856,11 +844,49 @@ class TemplateListPanel extends JPanel implements Disposable {
     };
     rename.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME).getShortcutSet(), myTree);
 
+    final DefaultActionGroup move = new DefaultActionGroup("Move", true) {
+      @Override
+      public void update(AnActionEvent e) {
+        final int selected = getSelectedIndex();
+        final TemplateImpl template = getTemplate(selected);
+        boolean enabled = template != null;
+        e.getPresentation().setEnabled(enabled);
+        e.getPresentation().setVisible(enabled);
+
+        if (enabled) {
+          final String oldGroupName = template.getGroupName();
+          removeAll();
+          for (TemplateGroup group : getTemplateGroups()) {
+            final String newGroupName = group.getName();
+            if (!Comparing.equal(newGroupName, oldGroupName)) {
+              add(new DumbAwareAction(newGroupName) {
+                @Override
+                public void actionPerformed(AnActionEvent e) {
+                  moveTemplate(template, newGroupName, getNode(selected));
+                }
+              });
+            }
+          }
+          addSeparator();
+          add(new DumbAwareAction("New group...") {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              String newName = Messages.showInputDialog(myTree, "Enter the new group name:", "Move to a new group", null, "", new TemplateGroupInputValidator(null));
+              if (newName != null) {
+                moveTemplate(template, newName, getNode(selected));
+              }
+            }
+          });
+        }
+      }
+    };
+
     myTree.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
         final DefaultActionGroup group = new DefaultActionGroup();
         group.add(rename);
+        group.add(move);
         ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
       }
     });
@@ -1064,4 +1090,22 @@ class TemplateListPanel extends JPanel implements Disposable {
 
   }
 
+  private class TemplateGroupInputValidator implements InputValidator {
+    private final String myOldName;
+
+    public TemplateGroupInputValidator(String oldName) {
+      myOldName = oldName;
+    }
+
+    @Override
+    public boolean checkInput(String inputString) {
+      return StringUtil.isNotEmpty(inputString) &&
+             (getTemplateGroup(inputString) == null || inputString.equals(myOldName));
+    }
+
+    @Override
+    public boolean canClose(String inputString) {
+      return checkInput(inputString);
+    }
+  }
 }
