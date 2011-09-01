@@ -48,7 +48,7 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
-public class LiveTemplateSettingsEditor {
+public class LiveTemplateSettingsEditor extends JPanel {
   private final TemplateImpl myTemplate;
 
   private final JTextField myKeyField;
@@ -68,9 +68,10 @@ public class LiveTemplateSettingsEditor {
   private final Map<TemplateContextType, Boolean> myContext;
 
   public LiveTemplateSettingsEditor(TemplateImpl template,
-                                    String defaultShortcut,
+                                    final String defaultShortcut,
                                     Map<TemplateOptionalProcessor, Boolean> options,
-                                    Map<TemplateContextType, Boolean> context) {
+                                    Map<TemplateContextType, Boolean> context, final Runnable nodeChanged) {
+    super(new BorderLayout());
     myOptions = options;
     myContext = context;
 
@@ -81,6 +82,21 @@ public class LiveTemplateSettingsEditor {
     myDescription=new JTextField();
     myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString(), context);
     myTemplate.setId(null);
+
+    createComponents();
+    
+    reset();
+
+    com.intellij.ui.DocumentAdapter listener = new com.intellij.ui.DocumentAdapter() {
+      @Override
+      protected void textChanged(javax.swing.event.DocumentEvent e) {
+        myTemplate.setKey(myKeyField.getText().trim());
+        myTemplate.setDescription(myDescription.getText().trim());
+        nodeChanged.run();
+      }
+    };
+    myKeyField.getDocument().addDocumentListener(listener);
+    myDescription.getDocument().addDocumentListener(listener);
   }
 
   public TemplateImpl getTemplate() {
@@ -91,7 +107,7 @@ public class LiveTemplateSettingsEditor {
     EditorFactory.getInstance().releaseEditor(myTemplateEditor);
   }
 
-  public JComponent createCenterPanel() {
+  private void createComponents() {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
@@ -123,7 +139,7 @@ public class LiveTemplateSettingsEditor {
           validateOKButton();
           validateEditVariablesButton();
 
-          applyTemplateText();
+          myTemplate.setString(myTemplateEditor.getDocument().getText());
           applyVariables(updateVariablesByTemplateText());
         }
       }
@@ -137,16 +153,9 @@ public class LiveTemplateSettingsEditor {
       }
     );
 
-    JPanel centerPanel = new JPanel(new BorderLayout());
-    centerPanel.add(createNorthPanel(), BorderLayout.NORTH);
-    centerPanel.add(panel, BorderLayout.CENTER);
-    panel.setBorder(
-      IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.template.text.title"), false, false, true));
-    return centerPanel;
-  }
-
-  private void applyTemplateText() {
-    myTemplate.setString(myTemplateEditor.getDocument().getText());
+    add(createNorthPanel(), BorderLayout.NORTH);
+    add(panel, BorderLayout.CENTER);
+    setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.template.text.title"), false, false, true));
   }
 
   private void applyVariables(final List<Variable> variables) {
@@ -388,7 +397,7 @@ public class LiveTemplateSettingsEditor {
     }
   }
 
-  public void reset() {
+  private void reset() {
     myKeyField.setText(myTemplate.getKey());
     myDescription.setText(myTemplate.getDescription());
 
@@ -433,11 +442,6 @@ public class LiveTemplateSettingsEditor {
     updateHighlighter();
     validateOKButton();
     validateEditVariablesButton();
-  }
-
-  public void apply() {
-    myTemplate.setKey(myKeyField.getText().trim());
-    myTemplate.setDescription(myDescription.getText().trim());
   }
 
   private void editVariables() {

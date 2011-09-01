@@ -24,7 +24,6 @@ import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -40,7 +39,6 @@ import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +58,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   private static final String NO_SELECTION = "NoSelection";
   private static final String TEMPLATE_SETTINGS = "TemplateSettings";
-  private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("xxx", "yyy");
+  private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("mockTemplate-xxx", "mockTemplateGroup-yyy");
   public static final String ABBREVIATION = "<abbreviation>";
 
   static {
@@ -93,7 +91,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     JLabel label = new JLabel("No live template is selected");
     label.setHorizontalAlignment(SwingConstants.CENTER);
     myDetailsPanel.add(label, NO_SELECTION);
-    updateTemplateDetails(MOCK_TEMPLATE, "Tab", MOCK_TEMPLATE.createOptions(), MOCK_TEMPLATE.createContext());
+    createTemplateEditor(MOCK_TEMPLATE, "Tab", MOCK_TEMPLATE.createOptions(), MOCK_TEMPLATE.createContext());
 
     add(createExpandByPanel(), BorderLayout.NORTH);
     add(createTable(), BorderLayout.CENTER);
@@ -134,13 +132,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
       public void run() {
-        updateTemplateDetailsImmediately();
+        updateTemplateDetails(false);
       }
     });
 
     myUpdateNeeded = true;
-
-
   }
 
   public void apply() {
@@ -172,8 +168,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   public void editTemplate(TemplateImpl template) {
     selectTemplate(template.getGroupName(), template.getKey());
-    updateTemplateDetailsImmediately();
-    myCurrentTemplateEditor.focusKey();
+    updateTemplateDetails(true);
   }
 
   @Nullable
@@ -271,13 +266,20 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return myTemplateGroups;
   }
 
-  private void updateTemplateDetails(TemplateImpl template,
-                                     String shortcut,
-                                     Map<TemplateOptionalProcessor, Boolean> options,
-                                     Map<TemplateContextType, Boolean> context) {
-    myCurrentTemplateEditor = new LiveTemplateSettingsEditor(template, shortcut, options, context);
-    myDetailsPanel.add(myCurrentTemplateEditor.createCenterPanel(), TEMPLATE_SETTINGS);
-    myCurrentTemplateEditor.reset();
+  private void createTemplateEditor(TemplateImpl template,
+                                    String shortcut,
+                                    Map<TemplateOptionalProcessor, Boolean> options,
+                                    Map<TemplateContextType, Boolean> context) {
+    myCurrentTemplateEditor = new LiveTemplateSettingsEditor(template, shortcut, options, context, new Runnable() {
+      @Override
+      public void run() {
+        DefaultMutableTreeNode node = getNode(getSelectedIndex());
+        if (node != null) {
+          ((DefaultTreeModel)myTree.getModel()).nodeChanged(node);
+        }
+      }
+    });
+    myDetailsPanel.add(myCurrentTemplateEditor, TEMPLATE_SETTINGS);
   }
 
   private Iterable<? extends TemplateImpl> collectAllTemplates() {
@@ -366,32 +368,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return null;
   }
 
-  private void applyChanges(LiveTemplateSettingsEditor dialog) {
-    TemplateImpl template = dialog.getTemplate();
-    if (template == MOCK_TEMPLATE) {
-      return;
-    }
-
-    String oldGroupName = template.getGroupName();
-    TemplateGroup group = getTemplateGroup(oldGroupName);
-    LOG.assertTrue(group != null, oldGroupName);
-
-    dialog.apply();
-
-    updateTemplateTextArea();
-
-    List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
-    TreePath[] selectedPaths = myTree.getSelectionPaths();
-    fireStructureChange();
-    TreeUtil.restoreExpandedPaths(myTree, expandedPaths);
-    if (selectedPaths != null) {
-      myTree.setSelectionPaths(selectedPaths);
-    }
-
-    myTree.validate();
-    myTree.repaint();
-  }
-
   private void moveTemplate(TemplateImpl template, String newGroupName, DefaultMutableTreeNode oldTemplateNode) {
     TemplateGroup oldGroup = getTemplateGroup(template.getGroupName());
     if (oldGroup != null) {
@@ -452,8 +428,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     myTemplateContext.put(getKey(template), template.createContext());
 
     registerTemplate(template);
-    updateTemplateDetailsImmediately();
-    myCurrentTemplateEditor.focusKey();
+    updateTemplateDetails(true);
   }
 
   private static int getKey(final TemplateImpl template) {
@@ -472,8 +447,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     myTemplateContext.put(getKey(template), getContext(orTemplate));
     registerTemplate(template);
 
-    updateTemplateDetailsImmediately();
-    myCurrentTemplateEditor.focusKey();
+    updateTemplateDetails(true);
   }
 
   private Map<TemplateContextType, Boolean> getContext(final TemplateImpl template) {
@@ -594,7 +568,14 @@ public class TemplateListPanel extends JPanel implements Disposable {
           templateSettings.setLastSelectedTemplate(null, null);
           ((CardLayout) myDetailsPanel.getLayout()).show(myDetailsPanel, NO_SELECTION);
         }
-        updateTemplateTextArea();
+        if (myUpdateNeeded) {
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(new Runnable() {
+            public void run() {
+              updateTemplateDetails(false);
+            }
+          }, 100);
+        }
       }
     });
 
@@ -826,38 +807,25 @@ public class TemplateListPanel extends JPanel implements Disposable {
     });
   }
 
-  private void updateTemplateTextArea() {
-    if (!myUpdateNeeded) return;
-
-    myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-      public void run() {
-        updateTemplateDetailsImmediately();
-      }
-    }, 100);
-  }
-
-  private void updateTemplateDetailsImmediately() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        int selected = getSelectedIndex();
-        CardLayout layout = (CardLayout)myDetailsPanel.getLayout();
-        if (selected < 0 || getTemplate(selected) == null) {
-          layout.show(myDetailsPanel, NO_SELECTION);
+  private void updateTemplateDetails(boolean focusKey) {
+    int selected = getSelectedIndex();
+    CardLayout layout = (CardLayout)myDetailsPanel.getLayout();
+    if (selected < 0 || getTemplate(selected) == null) {
+      layout.show(myDetailsPanel, NO_SELECTION);
+    }
+    else {
+      TemplateImpl newTemplate = getTemplate(selected);
+      if (myCurrentTemplateEditor == null || !myCurrentTemplateEditor.getTemplate().equals(newTemplate)) {
+        if (myCurrentTemplateEditor != null) {
+          myCurrentTemplateEditor.dispose();
         }
-        else {
-          TemplateImpl newTemplate = getTemplate(selected);
-          if (myCurrentTemplateEditor == null || !myCurrentTemplateEditor.getTemplate().equals(newTemplate)) {
-            if (myCurrentTemplateEditor != null) {
-              applyChanges(myCurrentTemplateEditor);
-              myCurrentTemplateEditor.dispose();
-            }
-            updateTemplateDetails(newTemplate, (String)myExpandByCombo.getSelectedItem(), getOptions(newTemplate), getContext(newTemplate));
-          }
-          layout.show(myDetailsPanel, TEMPLATE_SETTINGS);
+        createTemplateEditor(newTemplate, (String)myExpandByCombo.getSelectedItem(), getOptions(newTemplate), getContext(newTemplate));
+        if (focusKey) {
+          myCurrentTemplateEditor.focusKey();
         }
       }
-    });
+      layout.show(myDetailsPanel, TEMPLATE_SETTINGS);
+    }
   }
 
   private void registerTemplate(TemplateImpl template) {
