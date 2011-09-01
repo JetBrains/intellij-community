@@ -35,7 +35,10 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * @author Alexey.Ivanov
@@ -154,8 +157,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
     final PyArgumentList argList = PsiTreeUtil.getParentOfType(expression, PyArgumentList.class);
     if (argList != null) {
-      final PyArgumentList.AnalysisResult result = argList.analyzeCall(PyResolveContext.noImplicits());
-      if (result.getMarkedCallee() != null && !result.isImplicitlyResolved()) {
+      final CallArgumentsMapping result = argList.analyzeCall(PyResolveContext.noImplicits());
+      if (result.getMarkedCallee() != null) {
         final PyNamedParameter namedParameter = result.getPlainMappedParams().get(expression);
         if (namedParameter != null) {
           candidates.add(namedParameter.getName());
@@ -329,14 +332,18 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     final Editor editor = operation.getEditor();
     if (editor.getSettings().isVariableInplaceRenameEnabled() && !ApplicationManager.getApplication().isUnitTestMode()) {
       ensureName(operation);
-      new OccurrencesChooser<PsiElement>(editor)
-              .showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
-                @Override
-                public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
-                  operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);
-                  performInplaceIntroduce(operation);
-                }
-              });
+      new OccurrencesChooser<PsiElement>(editor) {
+        @Override
+        protected TextRange getOccurrenceRange(PsiElement occurrence) {
+          return occurrence.getTextRange();
+        }
+      }.showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
+        @Override
+        public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
+          operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);
+          performInplaceIntroduce(operation);
+        }
+      });
     }
     else {
       performIntroduceWithDialog(operation);

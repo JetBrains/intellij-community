@@ -153,9 +153,10 @@ public class PythonReferenceImporter implements ReferenceImporter {
     PsiFile[] files = FilenameIndex.getFilesByName(project, reftext + ".py", scope);
     for (PsiFile file : files) {
       PsiDirectory parent = file.getParent();
-      if (parent != null && (parent.findFile(PyNames.INIT_DOT_PY) != null ||
-                             ImportFromExistingAction.isRoot(project, parent) ||
-                             parent == targetFile.getParent())) {
+      if (parent != null && file != targetFile &&
+          (parent.findFile(PyNames.INIT_DOT_PY) != null ||
+           ImportFromExistingAction.isRoot(project, parent) ||
+           parent == targetFile.getParent())) {
         result.add(file);
       }
     }

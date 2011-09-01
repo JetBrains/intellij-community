@@ -30,7 +30,6 @@
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterBetweenBracketsHandler"/>
-    <editorTypedHandler implementationClass="com.jetbrains.python.editor.PythonSpaceHandler"/>
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
     <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
@@ -58,8 +57,8 @@
     <typedHandler implementation="com.jetbrains.python.codeInsight.KeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.django.lang.template.editor.DjangoBracesInterpolationTypedHandler"
                   id="pyDjangoBraceInterpolation"/>
-    <typedHandler implementation="com.jetbrains.python.editor.ColonTypedHandler" id="pyColonUnindent"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
+    <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
 
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive"/>
@@ -72,7 +71,10 @@
 
     <bundledColorSchemesProvider implementation="com.jetbrains.python.PythonBundledColorSchemeProvider"/>
 
-    <declarationRangeHandler key="com.jetbrains.python.psi.PyElement"
+    <declarationRangeHandler key="com.jetbrains.python.psi.PyClass"
+                             implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
+
+    <declarationRangeHandler key="com.jetbrains.python.psi.PyFunction"
                              implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
 
     <!-- Run/Debug -->
