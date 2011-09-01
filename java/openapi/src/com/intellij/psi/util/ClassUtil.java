@@ -200,18 +200,30 @@ public class ClassUtil {
   }
 
   @Nullable
-  public static PsiClass findPsiClass(final PsiManager psiManager, String externalName, PsiClass psiClass, boolean jvmCompatible) {
+  public static PsiClass findPsiClass(final PsiManager psiManager,
+                                      String externalName,
+                                      PsiClass psiClass,
+                                      boolean jvmCompatible) {
+    return findPsiClass(psiManager, externalName, psiClass, jvmCompatible, GlobalSearchScope.allScope(psiManager.getProject()));
+  }
+
+  @Nullable
+  public static PsiClass findPsiClass(final PsiManager psiManager,
+                                      String externalName,
+                                      @Nullable PsiClass psiClass,
+                                      boolean jvmCompatible, 
+                                      final GlobalSearchScope scope) {
     final int topIdx = externalName.indexOf('$');
     if (topIdx > -1) {
       if (psiClass == null) {
         psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
-          .findClass(externalName.substring(0, topIdx), GlobalSearchScope.allScope(psiManager.getProject()));
+          .findClass(externalName.substring(0, topIdx), scope);
       }
       if (psiClass == null) return null;
       externalName = externalName.substring(topIdx + 1);
       return findSubclass(psiManager, externalName, psiClass, jvmCompatible);
     } else {
-      return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(externalName, GlobalSearchScope.allScope(psiManager.getProject()));
+      return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(externalName, scope);
     }
   }
 

@@ -24,6 +24,8 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -84,6 +86,12 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     else {
       final PsiAnonymousClass anonymousClass = originalExpression.getAnonymousClass();
       newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + toType.getCanonicalText() + "()" + (anonymousClass != null ? "{}" : ""), originalExpression);
+      if (anonymousClass == null) { //just to prevent useless inference
+        if (PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, originalExpression, false)) {
+          final PsiElement paramList = PsiDiamondTypeUtil.replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
+          newExpression = PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);
+        }
+      }
       PsiExpressionList argumentList = originalExpression.getArgumentList();
       if (argumentList == null) return;
       newExpression.getArgumentList().replace(argumentList);
