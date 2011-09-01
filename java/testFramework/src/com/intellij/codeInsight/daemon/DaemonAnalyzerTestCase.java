@@ -65,6 +65,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
+import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.search.IndexPatternBuilder;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -289,7 +290,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     //to initialize caches
     if (!DumbService.isDumb(getProject())) {
-      myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);
+      CacheManager.SERVICE.getInstance(myProject).getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);
     }
     final JavaPsiFacadeEx facade = getJavaFacade();
     if (facade != null) {

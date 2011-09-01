@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternOccurrence;
@@ -60,7 +59,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       return true;
     }
 
-    final CacheManager cacheManager = ((PsiManagerEx)file.getManager()).getCacheManager();
+    final CacheManager cacheManager = CacheManager.SERVICE.getInstance(file.getProject());
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
     int count = patternProvider != null
                 ? cacheManager.getTodoCount(virtualFile, patternProvider)

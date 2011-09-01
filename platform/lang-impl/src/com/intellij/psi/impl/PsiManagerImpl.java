@@ -38,9 +38,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
-import com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -67,7 +65,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final MessageBus myMessageBus;
 
   private final FileManager myFileManager;
-  private final CacheManager myCacheManager;
   private final PsiModificationTrackerImpl myModificationTracker;
   private final ResolveCache myResolveCache;
 
@@ -101,8 +98,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileTypeManager, fileDocumentManager,
                                                                                                     projectRootManagerEx);
-
-    myCacheManager = isProjectDefault ? new EmptyCacheManager() : new IndexCacheManagerImpl(this);
 
     myModificationTracker = new PsiModificationTrackerImpl(myProject);
     myTreeChangePreprocessors.add(myModificationTracker);
@@ -242,14 +237,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   @NotNull
   public FileManager getFileManager() {
     return myFileManager;
-  }
-
-  @NotNull
-  public CacheManager getCacheManager() {
-    if (myIsDisposed) {
-      LOG.error("Project is already disposed.");
-    }
-    return myCacheManager;
   }
 
   @NotNull

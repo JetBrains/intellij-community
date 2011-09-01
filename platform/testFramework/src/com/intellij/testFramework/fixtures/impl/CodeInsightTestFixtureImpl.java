@@ -91,6 +91,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -1315,7 +1316,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ((PsiFileImpl)myFile).calcTreeElement(); //to load text
 
     //to initialize caches
-    myPsiManager.getCacheManager().getFilesWithWord(XXX, UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
+    CacheManager.SERVICE.getInstance(project).getFilesWithWord(XXX, UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
 
     List<HighlightInfo> infos;
     try {
