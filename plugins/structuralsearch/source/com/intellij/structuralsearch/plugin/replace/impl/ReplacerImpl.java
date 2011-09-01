@@ -237,7 +237,7 @@ public class ReplacerImpl {
 
   private void doReplace(final PsiElement elementToReplace,
                          final ReplacementInfoImpl info) {
-    PsiManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
+    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
         public void run() {
           initContextAndHandler(elementToReplace);
 
