@@ -124,7 +124,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public void disposeComponent() {
     myFileManager.dispose();
-    myCacheManager.dispose();
 
     myIsDisposed = true;
   }
@@ -224,8 +223,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       LOG.debug("PsiManager.runPreStartupActivity()");
     }
     myFileManager.runStartupActivity();
-
-    myCacheManager.initialize();
   }
 
   public void setAssertOnFileLoadingFilter(VirtualFileFilter filter) {

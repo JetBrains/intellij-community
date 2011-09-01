@@ -63,12 +63,6 @@ public class IndexCacheManagerImpl implements CacheManager{
     myProject = psiManager.getProject();
   }
 
-  public void initialize() {
-  }
-
-  public void dispose() {
-  }
-
   @NotNull
   public PsiFile[] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     CommonProcessors.CollectProcessor<PsiFile> processor = new CommonProcessors.CollectProcessor<PsiFile>();

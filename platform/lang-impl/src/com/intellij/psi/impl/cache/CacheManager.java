@@ -25,9 +25,6 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public interface CacheManager {
-  void initialize();
-  void dispose();
-
   @NotNull PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
 
   boolean processFilesWithWord(@NotNull Processor<PsiFile> processor,@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);

@@ -29,12 +29,6 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyCacheManager implements CacheManager {
-  public void initialize() {
-  }
-
-  public void dispose() {
-  }
-
   @NotNull
   public PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitive) {
     return PsiFile.EMPTY_ARRAY;
