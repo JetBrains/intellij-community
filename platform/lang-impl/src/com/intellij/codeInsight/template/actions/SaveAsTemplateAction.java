@@ -27,6 +27,7 @@ package com.intellij.codeInsight.template.actions;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateListPanel;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -112,7 +113,7 @@ public class SaveAsTemplateAction extends AnAction {
       }
     }, null, null);
 
-    final TemplateImpl template = new TemplateImpl("<abbreviation>", document.getText(), TemplateSettings.USER_GROUP_NAME);
+    final TemplateImpl template = new TemplateImpl(TemplateListPanel.ABBREVIATION, document.getText(), TemplateSettings.USER_GROUP_NAME);
 
     for(TemplateContextType contextType: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
       template.getTemplateContext().setEnabled(contextType, contextType.isInContext(file, startOffset));

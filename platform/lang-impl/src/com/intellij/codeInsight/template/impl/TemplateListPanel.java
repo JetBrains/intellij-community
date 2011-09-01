@@ -61,6 +61,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private static final String NO_SELECTION = "NoSelection";
   private static final String TEMPLATE_SETTINGS = "TemplateSettings";
   private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("xxx", "yyy");
+  public static final String ABBREVIATION = "<abbreviation>";
 
   static {
     MOCK_TEMPLATE.setString("");
@@ -432,9 +433,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private void addRow() {
-    int selected = getSelectedIndex();
     String defaultGroup = TemplateSettings.USER_GROUP_NAME;
-    final DefaultMutableTreeNode node = getNode(selected);
+    final DefaultMutableTreeNode node = getNode(getSelectedIndex());
     if (node != null) {
       if (node.getUserObject() instanceof TemplateImpl) {
         defaultGroup = ((TemplateImpl) node.getUserObject()).getGroupName();
@@ -444,7 +444,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
     }
 
-    addTemplate(new TemplateImpl("<abbreviation>", "", defaultGroup));
+    addTemplate(new TemplateImpl(ABBREVIATION, "", defaultGroup));
   }
 
   public void addTemplate(TemplateImpl template) {
@@ -467,7 +467,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     TemplateImpl orTemplate = getTemplate(selected);
     LOG.assertTrue(orTemplate != null);
     TemplateImpl template = orTemplate.copy();
-    template.setKey("<" + orTemplate.getKey() + " copy>");
+    template.setKey(ABBREVIATION);
     myTemplateOptions.put(getKey(template), getOptions(orTemplate));
     myTemplateContext.put(getKey(template), getContext(orTemplate));
     registerTemplate(template);
