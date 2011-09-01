@@ -66,12 +66,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
           }
         }
         if (!indicator.isCanceled()) {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              doExecute(code);
-            }
-          });
+          doExecute(code);
         }
       }
     });
@@ -79,9 +74,18 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
 
 
   private void doExecute(String code) {
-    getPythonLanguageConsole().addTextToCurrentEditor(PyConsoleIndentUtil.normalize(code));
-    myExecuteActionHandler.runExecuteAction(getPythonLanguageConsole());
-    myExecuteActionHandler.finishExecution();
+    executeInConsole(PyConsoleIndentUtil.normalize(code));
+  }
+
+  public void executeInConsole(final String code) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        getPythonLanguageConsole().addTextToCurrentEditor(code);
+        myExecuteActionHandler.runExecuteAction(getPythonLanguageConsole());
+        myExecuteActionHandler.finishExecution();
+      }
+    });
   }
 
   public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {

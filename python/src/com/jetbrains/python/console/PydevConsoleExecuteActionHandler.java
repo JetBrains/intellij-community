@@ -65,6 +65,9 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   private void processOneLine(String line) {
     int indentSize = myIndentHelper.getIndent(line, false);
+    if (StringUtil.isEmptyOrSpaces(line)) {
+      doProcessLine("\n");
+    } else
     if (indentSize == 0 && indentSize < myCurrentIndentSize && !shouldIndent(line)) {
       doProcessLine("\n");
       doProcessLine(line);
@@ -82,7 +85,16 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       myInputBuffer = new StringBuilder();
     }
 
-    myInputBuffer.append(line).append("\n");
+    if (!StringUtil.isEmptyOrSpaces(line)) {
+      myInputBuffer.append(line);
+      if (!line.endsWith("\n")) {
+        myInputBuffer.append("\n");
+      }
+    }
+
+    if (StringUtil.isEmptyOrSpaces(line) && StringUtil.isEmptyOrSpaces(myInputBuffer.toString())) {
+      myInputBuffer.append("");
+    }
 
     // multiline strings handling
     if (myInMultilineStringState != null) {
@@ -124,7 +136,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         indent += getPythonIndent();
         flag = true;
       }
-      if ((myCurrentIndentSize >0 && indent>0) || flag) {
+      if ((myCurrentIndentSize > 0 && indent > 0) || flag) {
         myCurrentIndentSize = indent;
         indentEditor(currentEditor, indent);
         more(console, currentEditor);
