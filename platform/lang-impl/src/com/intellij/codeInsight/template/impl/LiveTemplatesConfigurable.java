@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,7 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
 
   public void disposeUIResources() {
     if (myPanel != null) {
-      myPanel.dispose();
+      Disposer.dispose(myPanel);
     }
     myPanel = null;
   }

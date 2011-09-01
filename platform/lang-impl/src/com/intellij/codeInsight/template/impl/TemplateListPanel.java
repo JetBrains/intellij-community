@@ -20,6 +20,9 @@ import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.ide.dnd.*;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,9 +32,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +54,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
-class TemplateListPanel extends JPanel {
+class TemplateListPanel extends JPanel implements Disposable {
 
   private static final String NO_SELECTION = "NoSelection";
   private static final String TEMPLATE_SETTINGS = "TemplateSettings";
@@ -456,44 +462,11 @@ class TemplateListPanel extends JPanel {
       return;
     }
 
-    int selected = getSelectedIndex();
-    assert selected >= 0;
-    DefaultMutableTreeNode oldTemplateNode = getNode(selected);
-
     String oldGroupName = template.getGroupName();
     TemplateGroup group = getTemplateGroup(oldGroupName);
     LOG.assertTrue(group != null, oldGroupName);
 
     dialog.apply();
-
-    if (!oldGroupName.equals(template.getGroupName())) {
-      TemplateGroup oldGroup = getTemplateGroup(oldGroupName);
-      if (oldGroup != null) {
-        oldGroup.removeElement(template);
-      }
-
-      template.setId(null);//To make it not equal with default template with the same name
-
-      JTree tree = myTree;
-      if (oldTemplateNode != null) {
-        DefaultMutableTreeNode parent = (DefaultMutableTreeNode)oldTemplateNode.getParent();
-        removeNodeFromParent(oldTemplateNode);
-        if (parent.getChildCount() == 0) removeNodeFromParent(parent);
-      }
-
-      DefaultMutableTreeNode templateNode = addTemplate(template);
-
-      if (templateNode != null) {
-        TreePath newTemplatePath = new TreePath(templateNode.getPath());
-        tree.expandPath(newTemplatePath);
-
-        selected = tree.getRowForPath(newTemplatePath);
-      }
-
-      fireStructureChange();
-    }
-
-    myTree.setSelectionInterval(selected, selected);
 
     updateTemplateTextArea();
 
@@ -507,6 +480,19 @@ class TemplateListPanel extends JPanel {
 
     myTree.validate();
     myTree.repaint();
+  }
+
+  private void moveTemplate(TemplateImpl template, String oldGroupName, DefaultMutableTreeNode oldTemplateNode) {
+    TemplateGroup oldGroup = getTemplateGroup(oldGroupName);
+    if (oldGroup != null) {
+      oldGroup.removeElement(template);
+    }
+
+    DefaultMutableTreeNode parent = (DefaultMutableTreeNode)oldTemplateNode.getParent();
+    removeNodeFromParent(oldTemplateNode);
+    if (parent.getChildCount() == 0) removeNodeFromParent(parent);
+
+    addTemplate(template);
   }
 
   private Map<TemplateOptionalProcessor, Boolean> getOptions(final TemplateImpl template) {
@@ -757,11 +743,60 @@ class TemplateListPanel extends JPanel {
 
     installPopup();
 
-    JScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myTree);
+
+    DnDSupport.createBuilder(myTree)
+      .setBeanProvider(new NullableFunction<DnDActionInfo, DnDDragStartBean>() {
+        @Override
+        public DnDDragStartBean fun(DnDActionInfo dnDActionInfo) {
+          int selectedIndex = getSelectedIndex();
+          TemplateImpl template = getTemplate(selectedIndex);
+          return template != null ? new DnDDragStartBean(Pair.create(template, getNode(selectedIndex))) : null;
+        }
+      }).
+      setDisposableParent(this)
+      .setTargetChecker(new DnDTargetChecker() {
+        @Override
+        public boolean update(DnDEvent event) {
+          Pair<TemplateImpl, DefaultMutableTreeNode> pair = (Pair<TemplateImpl, DefaultMutableTreeNode>)event.getAttachedObject();
+          TemplateImpl template = pair.first;
+          String oldGroupName = template.getGroupName();
+          TemplateGroup group = getDropGroup(event);
+          boolean possible = group != null && !oldGroupName.equals(group.getName());
+          event.setDropPossible(possible, "");
+          return true;
+        }
+      })
+      .setDropHandler(new DnDDropHandler() {
+        @Override
+        public void drop(DnDEvent event) {
+          Pair<TemplateImpl, DefaultMutableTreeNode> pair = (Pair<TemplateImpl, DefaultMutableTreeNode>)event.getAttachedObject();
+          TemplateImpl template = pair.first;
+          String oldGroupName = template.getGroupName();
+          template.setGroupName(getDropGroup(event).getName());
+          moveTemplate(template, oldGroupName, pair.second);
+        }
+      })
+      .setImageProvider(new Function<DnDActionInfo, DnDImage>() {
+        @Override
+        public DnDImage fun(DnDActionInfo dnDActionInfo) {
+          Point point = dnDActionInfo.getPoint();
+          return new DnDImage(DnDAwareTree.getDragImage(myTree, myTree.getPathForLocation(point.x, point.y), point).first);
+        }
+      })
+      .install();
+
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     if (myTemplateGroups.size() > 0) {
       myTree.setSelectionInterval(0, 0);
     }
-    return scrollpane;
+    return scrollPane;
+  }
+
+  private TemplateGroup getDropGroup(DnDEvent event) {
+    Point point = event.getPointOn(myTree);
+    int i = myTree.getRowForLocation(point.x, point.y);
+    TemplateGroup group = getGroup(i);
+    return group;
   }
 
   private void installPopup() {
@@ -849,8 +884,7 @@ class TemplateListPanel extends JPanel {
     });
   }
 
-  @Nullable
-  private DefaultMutableTreeNode addTemplate(TemplateImpl template) {
+  private void addTemplate(TemplateImpl template) {
     TemplateGroup newGroup = getTemplateGroup(template.getGroupName());
     if (newGroup == null) {
       newGroup = new TemplateGroup(template.getGroupName());
@@ -862,21 +896,16 @@ class TemplateListPanel extends JPanel {
 
     CheckedTreeNode node = new CheckedTreeNode(template);
     node.setChecked(!template.isDeactivated());
-    if (myTreeRoot.getChildCount() > 0) {
-      for (DefaultMutableTreeNode child = (DefaultMutableTreeNode)myTreeRoot.getFirstChild();
-           child != null;
-           child = (DefaultMutableTreeNode)myTreeRoot.getChildAfter(child)) {
-        if (((TemplateGroup)child.getUserObject()).getName().equals(template.getGroupName())) {
-          int index = getIndexToInsert (child, template.getKey());
-          child.insert(node, index);
-          ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(child, new int[]{index});
-          setSelectedNode(node);
-          return node;
-        }
+    for (DefaultMutableTreeNode child = (DefaultMutableTreeNode)myTreeRoot.getFirstChild();
+         child != null;
+         child = (DefaultMutableTreeNode)myTreeRoot.getChildAfter(child)) {
+      if (((TemplateGroup)child.getUserObject()).getName().equals(template.getGroupName())) {
+        int index = getIndexToInsert (child, template.getKey());
+        child.insert(node, index);
+        ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(child, new int[]{index});
+        setSelectedNode(node);
       }
     }
-
-    return null;
   }
 
   private void insertNewGroup(final TemplateGroup newGroup) {
@@ -904,12 +933,11 @@ class TemplateListPanel extends JPanel {
   }
 
   private void setSelectedNode(DefaultMutableTreeNode node) {
-    JTree tree = myTree;
     TreePath path = new TreePath(node.getPath());
-    tree.expandPath(path.getParentPath());
-    int row = tree.getRowForPath(path);
-    myTree.setSelectionInterval(row, row);
-    //myTree.scrollRectToVisible(myTree.getR(row, 0, true));  TODO
+    myTree.expandPath(path.getParentPath());
+    int row = myTree.getRowForPath(path);
+    myTree.setSelectionRow(row);
+    myTree.scrollRowToVisible(row);
   }
 
   private void removeTemplateAt(int row) {
@@ -967,11 +995,7 @@ class TemplateListPanel extends JPanel {
       TemplateImpl template = getTemplate(i);
       if (template != null && Comparing.equal(lastSelectedKey, template.getKey()) ||
           group != null && Comparing.equal(lastSelectedGroup, group.getName())) {
-        TreePath path = myTree.getPathForRow(i);
-        myTree.expandPath(path);
-        int rowToSelect = myTree.getRowForPath(path);
-        myTree.setSelectionRow(rowToSelect);
-        myTree.scrollRowToVisible(rowToSelect);
+        setSelectedNode(getNode(i));
         return;
       }
     }
