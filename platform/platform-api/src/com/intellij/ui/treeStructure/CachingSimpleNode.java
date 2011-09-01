@@ -23,9 +23,6 @@ public abstract class CachingSimpleNode extends SimpleNode {
 
   SimpleNode[] myChildren;
 
-  protected CachingSimpleNode() {
-  }
-
   protected CachingSimpleNode(SimpleNode aParent) {
     super(aParent);
   }

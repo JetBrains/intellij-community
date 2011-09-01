@@ -33,7 +33,6 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nullable;
@@ -642,7 +641,6 @@ class TemplateListPanel extends JPanel {
         value = ((DefaultMutableTreeNode)value).getUserObject();
 
         if (value instanceof TemplateImpl) {
-          //getTextRenderer().setIcon(TEMPLATE_ICON);
           getTextRenderer().append (((TemplateImpl)value).getKey(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           String description = ((TemplateImpl)value).getDescription();
           if (description != null && description.length() > 0) {
@@ -650,10 +648,8 @@ class TemplateListPanel extends JPanel {
           }
         }
         else if (value instanceof TemplateGroup) {
-          //getTextRenderer().setIcon(TEMPLATE_GROUP_ICON);
           getTextRenderer().append (((TemplateGroup)value).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
-
 
       }
     }, myTreeRoot) {
