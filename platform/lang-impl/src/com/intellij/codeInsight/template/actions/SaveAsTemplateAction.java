@@ -24,11 +24,9 @@
  */
 package com.intellij.codeInsight.template.actions;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.codeInsight.template.impl.LiveTemplateSettingsEditor;
+import com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateOptionalProcessor;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,8 +36,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -47,7 +44,6 @@ import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 
-import javax.swing.*;
 import java.util.Map;
 
 public class SaveAsTemplateAction extends AnAction {
@@ -116,50 +112,19 @@ public class SaveAsTemplateAction extends AnAction {
       }
     }, null, null);
 
-    TemplateSettings templateSettings = TemplateSettings.getInstance();
+    final TemplateImpl template = new TemplateImpl("<abbreviation>", document.getText(), TemplateSettings.USER_GROUP_NAME);
 
-    TemplateImpl template = new TemplateImpl("", document.getText(), TemplateSettings.USER_GROUP_NAME);
-
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file.getVirtualFile());
     for(TemplateContextType contextType: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
-      template.getTemplateContext().setEnabled(contextType, contextType.isInContext(fileType));
+      template.getTemplateContext().setEnabled(contextType, contextType.isInContext(file, startOffset));
     }
 
-    if (editTemplate(template, editor.getComponent(), true)) return;
-    templateSettings.addTemplate(template);
-  }
-
-  public static boolean editTemplate(TemplateImpl template, JComponent component, final boolean newTemplate) {
-
-    TemplateSettings templateSettings = TemplateSettings.getInstance();
-    String defaultShortcut = "";
-    if (templateSettings.getDefaultShortcutChar() == TemplateSettings.ENTER_CHAR) {
-      defaultShortcut = CodeInsightBundle.message("template.shortcut.enter");
-    }
-    if (templateSettings.getDefaultShortcutChar() == TemplateSettings.TAB_CHAR) {
-      defaultShortcut = CodeInsightBundle.message("template.shortcut.tab");
-    }
-    if (templateSettings.getDefaultShortcutChar() == TemplateSettings.SPACE_CHAR) {
-      defaultShortcut = CodeInsightBundle.message("template.shortcut.space");
-    }
-
-    Map<TemplateOptionalProcessor, Boolean> options = template.createOptions();
-    Map<TemplateContextType, Boolean> context = template.createContext();
-
-    LiveTemplateSettingsEditor dialog = new LiveTemplateSettingsEditor(
-      template,
-      defaultShortcut, options, context);
-    /*
-    dialog.show();
-    if (!dialog.isOK()) {
-      return true;
-    }
-    */
-    dialog.apply();
-    template.applyOptions(options);
-    template.applyContext(context);
-    templateSettings.setLastSelectedTemplate(template.getGroupName(), template.getKey());
-    return false;
+    final LiveTemplatesConfigurable configurable = new LiveTemplatesConfigurable();
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
+      @Override
+      public void run() {
+        configurable.getTemplateListPanel().addTemplate(template);
+      }
+    });
   }
 
   public void update(AnActionEvent e) {

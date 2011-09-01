@@ -75,4 +75,9 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
   public Runnable enableSearch(String option) {
     return null;
   }
+
+  public TemplateListPanel getTemplateListPanel() {
+    return myPanel;
+  }
+
 }

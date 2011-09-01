@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -503,9 +504,31 @@ public class LiveTemplateSettingsEditor {
     return myVariables;
   }
 
+  public JTextField getKeyField() {
+    return myKeyField;
+  }
+
   public void focusKey() {
     myKeyField.selectAll();
+    //todo[peter,kirillk] without these invokeLaters this requestFocus conflicts with com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.MyDialog.MyWindowListener.windowOpened()
     IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true);
+    final ModalityState modalityState = ModalityState.stateForComponent(myKeyField);
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true);
+              }
+            }, modalityState);
+          }
+        }, modalityState);
+      }
+    }, modalityState);
   }
 
   private static ArrayList<Variable> parseVariables(CharSequence text, boolean includeInternal) {

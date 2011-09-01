@@ -56,7 +56,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
-class TemplateListPanel extends JPanel implements Disposable {
+public class TemplateListPanel extends JPanel implements Disposable {
 
   private static final String NO_SELECTION = "NoSelection";
   private static final String TEMPLATE_SETTINGS = "TemplateSettings";
@@ -111,7 +111,7 @@ class TemplateListPanel extends JPanel implements Disposable {
     TemplateSettings templateSettings = TemplateSettings.getInstance();
     List<TemplateGroup> groups = new ArrayList<TemplateGroup>(templateSettings.getTemplateGroups());
 
-    Collections.sort(groups, new Comparator<TemplateGroup>(){
+    Collections.sort(groups, new Comparator<TemplateGroup>() {
       public int compare(final TemplateGroup o1, final TemplateGroup o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
@@ -167,6 +167,20 @@ class TemplateListPanel extends JPanel implements Disposable {
     List<TemplateGroup> newGroups = getTemplateGroups();
 
     return !checkAreEqual(collectTemplates(originalGroups), collectTemplates(newGroups));
+  }
+
+  public void editTemplate(TemplateImpl template) {
+    selectTemplate(template.getGroupName(), template.getKey());
+    updateTemplateDetailsImmediately();
+    myCurrentTemplateEditor.focusKey();
+  }
+
+  @Nullable
+  public JComponent getPreferredFocusedComponent() {
+    if (getTemplate(getSelectedIndex()) != null) {
+      return myCurrentTemplateEditor.getKeyField();
+    }
+    return null;
   }
 
   private static List<TemplateImpl> collectTemplates(final List<TemplateGroup> groups) {
@@ -389,7 +403,7 @@ class TemplateListPanel extends JPanel implements Disposable {
     removeNodeFromParent(oldTemplateNode);
     if (parent.getChildCount() == 0) removeNodeFromParent(parent);
 
-    addTemplate(template);
+    registerTemplate(template);
   }
 
   private Map<TemplateOptionalProcessor, Boolean> getOptions(final TemplateImpl template) {
@@ -430,11 +444,14 @@ class TemplateListPanel extends JPanel implements Disposable {
       }
     }
 
-    TemplateImpl template = new TemplateImpl("abbr", "", defaultGroup);
+    addTemplate(new TemplateImpl("<abbreviation>", "", defaultGroup));
+  }
+
+  public void addTemplate(TemplateImpl template) {
     myTemplateOptions.put(getKey(template), template.createOptions());
     myTemplateContext.put(getKey(template), template.createContext());
 
-    addTemplate(template);
+    registerTemplate(template);
     updateTemplateDetailsImmediately();
     myCurrentTemplateEditor.focusKey();
   }
@@ -450,10 +467,10 @@ class TemplateListPanel extends JPanel implements Disposable {
     TemplateImpl orTemplate = getTemplate(selected);
     LOG.assertTrue(orTemplate != null);
     TemplateImpl template = orTemplate.copy();
-    template.setKey(orTemplate.getKey() + "-copy");
+    template.setKey("<" + orTemplate.getKey() + " copy>");
     myTemplateOptions.put(getKey(template), getOptions(orTemplate));
     myTemplateContext.put(getKey(template), getContext(orTemplate));
-    addTemplate(template);
+    registerTemplate(template);
 
     updateTemplateDetailsImmediately();
     myCurrentTemplateEditor.focusKey();
@@ -714,7 +731,7 @@ class TemplateListPanel extends JPanel implements Disposable {
               }
               insertNewGroup(scheme);
               for (TemplateImpl template : scheme.getElements()) {
-                addTemplate(template);
+                registerTemplate(template);
               }
             }
           }.show(getSchemesManager(), myTemplateGroups);
@@ -843,7 +860,7 @@ class TemplateListPanel extends JPanel implements Disposable {
     });
   }
 
-  private void addTemplate(TemplateImpl template) {
+  private void registerTemplate(TemplateImpl template) {
     TemplateGroup newGroup = getTemplateGroup(template.getGroupName());
     if (newGroup == null) {
       newGroup = new TemplateGroup(template.getGroupName());
@@ -949,6 +966,10 @@ class TemplateListPanel extends JPanel implements Disposable {
     }
     fireStructureChange();
 
+    selectTemplate(lastSelectedGroup, lastSelectedKey);
+  }
+
+  private void selectTemplate(String lastSelectedGroup, String lastSelectedKey) {
     for (int i = 0; i < myTree.getRowCount(); i++) {
       TemplateGroup group = getGroup(i);
       TemplateImpl template = getTemplate(i);
