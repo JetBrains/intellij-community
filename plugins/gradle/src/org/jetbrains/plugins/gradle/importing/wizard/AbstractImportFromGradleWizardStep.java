@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.gradle.importing.wizard;
 
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,21 +10,20 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/2/11 3:22 PM
  */
-public abstract class AbstractImportFromGradleWizardStep extends ModuleWizardStep {
+public abstract class AbstractImportFromGradleWizardStep extends ProjectImportWizardStep {
 
-  private final WizardContext myContext;
-  
   protected AbstractImportFromGradleWizardStep(@NotNull WizardContext context) {
-    myContext = context;
+    super(context);
   }
 
-  @NotNull
-  public WizardContext getContext() {
-    return myContext;
+  @Override
+  public WizardContext getWizardContext() {
+    return super.getWizardContext();
   }
 
+  @Override
   @NotNull
   protected GradleProjectImportBuilder getBuilder() {
-    return (GradleProjectImportBuilder)myContext.getProjectBuilder();
+    return (GradleProjectImportBuilder)getWizardContext().getProjectBuilder();
   }
 }

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.importing.wizard;
 
+import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.components.ServiceManager;
@@ -15,6 +16,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +86,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
                              ModifiableArtifactModel artifactModel)
   {
     GradleModulesImporter importer = new GradleModulesImporter();
-    Map<GradleModule, Module> mappings = importer.importModules(myModuleMappings.values(), project, model);
+    Map<GradleModule, Module> mappings = importer.importModules(myModuleMappings.values(), project, model, myProjectFile.getAbsolutePath());
     return new ArrayList<Module>(mappings.values());
   }
 
@@ -139,19 +141,22 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
     if (myProjectFile.isDirectory()) {
       throw new ConfigurationException(GradleBundle.message("gradle.import.text.error.directory.instead.file"));
     }
+    final Ref<String> errorReason = new Ref<String>();
     try {
       // TODO den derive target project for 'import module from gradle' (for 'add module' functionality).
       Project project = ProjectManager.getInstance().getDefaultProject();
       ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), true) {
+        @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
-          GradleApiFacadeManager manager = ServiceManager.getService(getProject(), GradleApiFacadeManager.class);
+          GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
           try {
             GradleProjectResolver resolver = manager.getFacade().getResolver();
             myGradleProject = resolver.resolveProjectInfo(myProjectFile.getAbsolutePath(), false);
           }
           catch (Exception e) {
+            errorReason.set(RemoteUtil.unwrap(e).getLocalizedMessage());
             // Ignore here because it will be reported on method exit.
             GradleLog.LOG.warn("Can't resolve gradle project", e);
           }
@@ -162,10 +167,12 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       throw new ConfigurationException(e.getMessage(), GradleBundle.message("gradle.import.text.error.cannot.parse.project"));
     }
     if (myGradleProject == null) {
-      throw new ConfigurationException(
-        GradleBundle.message("gradle.import.text.error.resolve.generic", myProjectFile.getPath()),
-        GradleBundle.message("gradle.import.title.error.resolve.generic")
-      );
+      String errorMessage = GradleBundle.message("gradle.import.text.error.resolve.generic.without.reason", myProjectFile.getPath());
+      String reason = errorReason.get();
+      if (reason != null) {
+        errorMessage = GradleBundle.message("gradle.import.text.error.resolve.generic.with.reason", myProjectFile.getPath(), reason);
+      } 
+      throw new ConfigurationException(errorMessage, GradleBundle.message("gradle.import.title.error.resolve.generic"));
     } 
   }
 
