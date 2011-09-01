@@ -105,7 +105,7 @@ public class AndroidSafeDeleteProcessorDelegate implements SafeDeleteProcessorDe
 
   @Override
   public UsageInfo[] preprocessUsages(Project project, UsageInfo[] usages) {
-    return getBaseHandler().preprocessUsages(project, usages);
+    return usages;
   }
 
   @Override
