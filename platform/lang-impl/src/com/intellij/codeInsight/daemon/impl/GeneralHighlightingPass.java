@@ -600,7 +600,19 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               }
               catch (Exception e) {
                 if (!failed) {
-                  LOG.error(e);
+                  LOG.error("File: " + myFile + ", element: " + element + ", text: [" + element.getText() + "]", e);
+                }
+                failed = true;
+              }
+              catch (StackOverflowError e) {
+                if (!failed) {
+                  LOG.error("File: " + myFile + ", element: " + element + ", text: [" + element.getText() + "]", e);
+                }
+                failed = true;
+              }
+              catch (AssertionError e) {
+                if (!failed) {
+                  LOG.error("File: " + myFile + ", element: " + element + ", text: [" + element.getText() + "]", e);
                 }
                 failed = true;
               }
