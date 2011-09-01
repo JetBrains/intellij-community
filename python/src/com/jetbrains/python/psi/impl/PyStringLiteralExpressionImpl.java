@@ -1,13 +1,14 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -272,6 +273,11 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return super.toString() + ": " + getStringValue();
   }
 
+  @Override
+  public boolean isValidHost() {
+    return true;
+  }
+
   public PyType getType(@NotNull TypeEvalContext context) {
     final List<ASTNode> nodes = getStringNodes();
     if (nodes.size() > 0) {
@@ -292,14 +298,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
-  }
-
-  public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this);
-  }
-
-  public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(this, visitor);
   }
 
   public PsiLanguageInjectionHost updateText(@NotNull String text) {
