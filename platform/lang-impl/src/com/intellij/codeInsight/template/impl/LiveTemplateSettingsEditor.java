@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
@@ -500,6 +501,11 @@ public class LiveTemplateSettingsEditor {
                                    myTemplate.isAlwaysStopAt(i)));
     }
     return myVariables;
+  }
+
+  public void focusKey() {
+    myKeyField.selectAll();
+    IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true);
   }
 
   private static ArrayList<Variable> parseVariables(CharSequence text, boolean includeInternal) {

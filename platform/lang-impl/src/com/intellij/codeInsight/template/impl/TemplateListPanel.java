@@ -38,6 +38,7 @@ import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -66,10 +67,6 @@ class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private CheckboxTree myTree;
-  private JButton myCopyButton;
-  private JButton myRemoveButton;
-  private JButton myExportButton;
-  private JButton myImportButton;
   private final List<TemplateGroup> myTemplateGroups = new ArrayList<TemplateGroup>();
   private JComboBox myExpandByCombo;
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
@@ -97,7 +94,9 @@ class TemplateListPanel extends JPanel implements Disposable {
     myDetailsPanel.add(label, NO_SELECTION);
     updateTemplateDetails(MOCK_TEMPLATE, "Tab", MOCK_TEMPLATE.createOptions(), MOCK_TEMPLATE.createContext());
 
-    fillPanel(this);
+    add(createExpandByPanel(), BorderLayout.NORTH);
+    add(createTable(), BorderLayout.CENTER);
+    add(myDetailsPanel, BorderLayout.SOUTH);
   }
 
   public void dispose() {
@@ -134,7 +133,7 @@ class TemplateListPanel extends JPanel implements Disposable {
 
     UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
       public void run() {
-        updateTemplateText();
+        updateTemplateDetailsImmediately();
       }
     });
 
@@ -257,103 +256,6 @@ class TemplateListPanel extends JPanel implements Disposable {
     return myTemplateGroups;
   }
 
-  private void fillPanel(JPanel optionsPanel) {
-    JPanel tablePanel = new JPanel(new BorderLayout());
-    tablePanel.add(createTable(), BorderLayout.CENTER);
-
-    JPanel tableButtonsPanel = new JPanel();
-    tableButtonsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-    tableButtonsPanel.setLayout(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.insets = new Insets(0, 0, 4, 0);
-
-    final JButton addButton = createButton(tableButtonsPanel, gbConstraints, CodeInsightBundle.message("templates.dialog.table.action.add"));
-    addButton.setEnabled(true);
-    myCopyButton = createButton(tableButtonsPanel, gbConstraints, CodeInsightBundle.message("templates.dialog.table.action.copy"));
-    myRemoveButton = createButton(tableButtonsPanel, gbConstraints, CodeInsightBundle.message("templates.dialog.table.action.remove"));
-
-    if (getSchemesManager().isExportAvailable()) {
-      myExportButton = createButton(tableButtonsPanel, gbConstraints, "Share...");
-      myExportButton.addActionListener(new ActionListener(){
-        public void actionPerformed(final ActionEvent e) {
-          exportCurrentGroup();
-        }
-      });
-
-
-    }
-
-    if (getSchemesManager().isImportAvailable()) {
-      myImportButton = createButton(tableButtonsPanel, gbConstraints, "Import Shared...");
-      myImportButton.setMnemonic('I');
-      myImportButton.setEnabled(true);
-
-      myImportButton.addActionListener(new ActionListener(){
-        public void actionPerformed(final ActionEvent e) {
-          new SchemesToImportPopup<TemplateGroup, TemplateGroup>(TemplateListPanel.this){
-            protected void onSchemeSelected(final TemplateGroup scheme) {
-              for (TemplateImpl newTemplate : scheme.getElements()) {
-                for (TemplateImpl existingTemplate : collectAllTemplates()) {
-                  if (existingTemplate.getKey().equals(newTemplate.getKey())) {
-                    Messages.showMessageDialog(
-                      TemplateListPanel.this,
-                      CodeInsightBundle.message("dialog.edit.template.error.already.exists", existingTemplate.getKey(), existingTemplate.getGroupName()),
-                      CodeInsightBundle.message("dialog.edit.template.error.title"),
-                      Messages.getErrorIcon()
-                    );
-                    return;
-                  }
-                }
-              }
-              insertNewGroup(scheme);
-              for (TemplateImpl template : scheme.getElements()) {
-                addTemplate(template);
-              }
-            }
-          }.show(getSchemesManager(), myTemplateGroups);
-        }
-      });
-
-    }
-
-    gbConstraints.weighty = 1;
-    tableButtonsPanel.add(new JPanel(), gbConstraints);
-
-    tablePanel.add(tableButtonsPanel, BorderLayout.EAST);
-    optionsPanel.add(tablePanel, BorderLayout.CENTER);
-
-    optionsPanel.add(myDetailsPanel, BorderLayout.SOUTH);
-
-    optionsPanel.add(createExpandByPanel(), BorderLayout.NORTH);
-
-    addButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
-          addRow();
-        }
-      }
-    );
-
-    myCopyButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
-          copyRow();
-        }
-      }
-    );
-
-    myRemoveButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
-          removeRow();
-        }
-      }
-    );
-  }
-
   private void updateTemplateDetails(TemplateImpl template,
                                      String shortcut,
                                      Map<TemplateOptionalProcessor, Boolean> options,
@@ -381,14 +283,6 @@ class TemplateListPanel extends JPanel implements Disposable {
 
   private static SchemesManager<TemplateGroup, TemplateGroup> getSchemesManager() {
     return (TemplateSettings.getInstance()).getSchemesManager();
-  }
-
-  private static JButton createButton(final JPanel tableButtonsPanel, final GridBagConstraints gbConstraints, final String message) {
-    JButton button = new JButton(message);
-    button.setEnabled(false);
-    //button.setMargin(new Insets(2, 4, 2, 4));
-    tableButtonsPanel.add(button, gbConstraints);
-    return button;
   }
 
   private JPanel createExpandByPanel() {
@@ -536,19 +430,13 @@ class TemplateListPanel extends JPanel implements Disposable {
       }
     }
 
-    TemplateImpl template = new TemplateImpl("", "", defaultGroup);
+    TemplateImpl template = new TemplateImpl("abbr", "", defaultGroup);
     myTemplateOptions.put(getKey(template), template.createOptions());
     myTemplateContext.put(getKey(template), template.createContext());
-    LiveTemplateSettingsEditor
-      dialog = new LiveTemplateSettingsEditor(template,
-                                              (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
-    /*
-    dialog.show();
-    if (!dialog.isOK()) return;
-    */
-    dialog.apply();
 
     addTemplate(template);
+    updateTemplateDetailsImmediately();
+    myCurrentTemplateEditor.focusKey();
   }
 
   private static int getKey(final TemplateImpl template) {
@@ -562,18 +450,13 @@ class TemplateListPanel extends JPanel implements Disposable {
     TemplateImpl orTemplate = getTemplate(selected);
     LOG.assertTrue(orTemplate != null);
     TemplateImpl template = orTemplate.copy();
+    template.setKey(orTemplate.getKey() + "-copy");
     myTemplateOptions.put(getKey(template), getOptions(orTemplate));
     myTemplateContext.put(getKey(template), getContext(orTemplate));
-    LiveTemplateSettingsEditor
-      dialog = new LiveTemplateSettingsEditor(template,
-                                              (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
-    /*
-    dialog.show();
-    if (!dialog.isOK()) return;
-    */
-
-    dialog.apply();
     addTemplate(template);
+
+    updateTemplateDetailsImmediately();
+    myCurrentTemplateEditor.focusKey();
   }
 
   private Map<TemplateContextType, Boolean> getContext(final TemplateImpl template) {
@@ -624,7 +507,7 @@ class TemplateListPanel extends JPanel implements Disposable {
 
   }
 
-  private JScrollPane createTable() {
+  private JPanel createTable() {
     myTreeRoot = new CheckedTreeNode(null);
 
     myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(){
@@ -686,57 +569,15 @@ class TemplateListPanel extends JPanel implements Disposable {
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
       public void valueChanged(final TreeSelectionEvent e) {
-        boolean enableRemoveButton = false;
-        boolean enableCopyButton = false;
-        boolean enableExportButton = false;
-
-        int selected = getSelectedIndex();
-        if (selected >= 0 && selected < myTree.getRowCount()) {
-          TemplateSettings templateSettings = TemplateSettings.getInstance();
-          TemplateImpl template = getTemplate(selected);
-          if (template != null) {
-            templateSettings.setLastSelectedTemplate(template.getGroupName(), template.getKey());
-          } else {
-            templateSettings.setLastSelectedTemplate(null, null);
-          }
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getPathForRow(selected).getLastPathComponent();
-          enableExportButton = false;
-          enableCopyButton = false;
-          if (node.getUserObject() instanceof TemplateImpl) {
-            enableCopyButton = true;
-            if (template != null) {
-              TemplateGroup group = getTemplateGroup(template.getGroupName());
-              if (group != null && !getSchemesManager().isShared(group)) {
-                enableRemoveButton = true;
-              }
-            }
-          }
-          if (node.getUserObject() instanceof TemplateGroup) {
-            enableRemoveButton = true;
-            TemplateGroup group = (TemplateGroup)node.getUserObject();
-            enableExportButton = !getSchemesManager().isShared(group);
-
-          }
-
+        TemplateSettings templateSettings = TemplateSettings.getInstance();
+        TemplateImpl template = getTemplate(getSelectedIndex());
+        if (template != null) {
+          templateSettings.setLastSelectedTemplate(template.getGroupName(), template.getKey());
+        } else {
+          templateSettings.setLastSelectedTemplate(null, null);
+          ((CardLayout) myDetailsPanel.getLayout()).show(myDetailsPanel, NO_SELECTION);
         }
         updateTemplateTextArea();
-        if (!enableRemoveButton) {
-          ((CardLayout)myDetailsPanel.getLayout()).show(myDetailsPanel, NO_SELECTION);
-        }
-
-        if (myCopyButton != null) {
-          myCopyButton.setEnabled(enableCopyButton);
-          myRemoveButton.setEnabled(enableRemoveButton);
-        }
-
-        if (myExportButton != null) {
-          myExportButton.setEnabled(enableExportButton);
-        }
-
-        if (myImportButton != null) {
-          myImportButton.setEnabled(true);
-        }
-
       }
     });
 
@@ -802,11 +643,85 @@ class TemplateListPanel extends JPanel implements Disposable {
       })
       .install();
     
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     if (myTemplateGroups.size() > 0) {
       myTree.setSelectionInterval(0, 0);
     }
-    return scrollPane;
+
+    return initToolbar().createPanel();
+
+  }
+
+  private ToolbarDecorator initToolbar() {
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree)
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          addRow();
+        }
+      })
+      .setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton anActionButton) {
+          removeRow();
+        }
+      })
+      .disableDownAction()
+      .disableUpAction()
+      .addExtraAction(new AnActionButton("Copy", PlatformIcons.DUPLICATE_ICON) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          copyRow();
+        }
+
+        @Override
+        public void updateButton(AnActionEvent e) {
+          e.getPresentation().setEnabled(getTemplate(getSelectedIndex()) != null);
+        }
+      });
+    if (getSchemesManager().isExportAvailable()) {
+      decorator.addExtraAction(new AnActionButton("Share...", PlatformIcons.EXPORT_ICON) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          exportCurrentGroup();
+        }
+
+        @Override
+        public void updateButton(AnActionEvent e) {
+          TemplateGroup group = getGroup(getSelectedIndex());
+          e.getPresentation().setEnabled(group != null && !getSchemesManager().isShared(group));
+        }
+      });
+    }
+    if (getSchemesManager().isImportAvailable()) {
+      decorator.addExtraAction(new AnActionButton("Import Shared...", PlatformIcons.IMPORT_ICON) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          new SchemesToImportPopup<TemplateGroup, TemplateGroup>(TemplateListPanel.this){
+            protected void onSchemeSelected(final TemplateGroup scheme) {
+              for (TemplateImpl newTemplate : scheme.getElements()) {
+                for (TemplateImpl existingTemplate : collectAllTemplates()) {
+                  if (existingTemplate.getKey().equals(newTemplate.getKey())) {
+                    Messages.showMessageDialog(
+                      TemplateListPanel.this,
+                      CodeInsightBundle
+                        .message("dialog.edit.template.error.already.exists", existingTemplate.getKey(), existingTemplate.getGroupName()),
+                      CodeInsightBundle.message("dialog.edit.template.error.title"),
+                      Messages.getErrorIcon()
+                    );
+                    return;
+                  }
+                }
+              }
+              insertNewGroup(scheme);
+              for (TemplateImpl template : scheme.getElements()) {
+                addTemplate(template);
+              }
+            }
+          }.show(getSchemesManager(), myTemplateGroups);
+        }
+      });
+    }
+    return decorator.setToolbarPosition(ActionToolbarPosition.RIGHT);
   }
 
   private TemplateGroup getDropGroup(DnDEvent event) {
@@ -900,12 +815,12 @@ class TemplateListPanel extends JPanel implements Disposable {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        updateTemplateText();
+        updateTemplateDetailsImmediately();
       }
     }, 100);
   }
 
-  private void updateTemplateText() {
+  private void updateTemplateDetailsImmediately() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         int selected = getSelectedIndex();
