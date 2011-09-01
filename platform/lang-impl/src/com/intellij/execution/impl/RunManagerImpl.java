@@ -515,6 +515,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   // used by MPS, don't delete
   public void clearAll(){
     clear();
+    myTypesByName.clear();
     initializeConfigurationTypes(new ConfigurationType[0]);
   }
 
