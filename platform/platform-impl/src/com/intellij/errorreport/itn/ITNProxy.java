@@ -59,7 +59,7 @@ public class ITNProxy {
   @NonNls private static final String HTTP_WWW_FORM = "application/x-www-form-urlencoded";
   @NonNls private static final String HTTP_POST = "POST";
 
-  private static HttpURLConnection post (String url, List<Pair<String,String>> params) throws IOException, MalformedURLException {
+  private static HttpURLConnection post (String url, List<Pair<String,String>> params) throws IOException {
     HttpURLConnection connection = (HttpURLConnection) new URL (url).openConnection();
     connection.setReadTimeout(10 * 1000);
     connection.setConnectTimeout(10 * 1000);
@@ -122,7 +122,7 @@ public class ITNProxy {
     String jdkVersion = SystemProperties.getJavaVersion();
     String jdkVendor = SystemProperties.getJavaVmVendor();
 
-    if (jdkVendor.indexOf(SUN) != -1) {
+    if (jdkVendor.contains(SUN)) {
       if (jdkVersion.equals(JDK_1_4_2))
         jdkVersion = "10";
       else if (jdkVersion.equals(JDK_1_4_1))
@@ -152,17 +152,17 @@ public class ITNProxy {
     if (os == null)
       os = "";
 
-    if (os.indexOf(WINDOWS_XP) != -1)
+    if (os.contains(WINDOWS_XP))
       os = "4";
-    else if (os.indexOf(WINDOWS_2000) != -1 || os.indexOf(WINDOWS_NT) != -1)
+    else if (os.contains(WINDOWS_2000) || os.contains(WINDOWS_NT))
       os = "3";
-    else if (os.indexOf(WINDOWS_95) != -1 || os.indexOf(WINDOWS_98) != -1 || os.indexOf(WINDOWS_ME) != -1)
+    else if (os.contains(WINDOWS_95) || os.contains(WINDOWS_98) || os.contains(WINDOWS_ME))
       os = "2";
-    else if (os.indexOf(SOLARIS) != -1)
+    else if (os.contains(SOLARIS))
       os = "7";
-    else if (os.indexOf(MAC_OS_X) != -1)
+    else if (os.contains(MAC_OS_X))
       os = "6";
-    else if (os.indexOf(LINUX) != -1)
+    else if (os.contains(LINUX))
       os = "5";
     else
       os = "1";
@@ -176,8 +176,8 @@ public class ITNProxy {
     }
     
     HttpURLConnection connection = post(NEW_THREAD_URL, params);
-    int responce = connection.getResponseCode();
-    switch (responce) {
+    int response = connection.getResponseCode();
+    switch (response) {
       case HttpURLConnection.HTTP_OK:
         break;
       case HttpURLConnection.HTTP_BAD_REQUEST:
@@ -186,7 +186,7 @@ public class ITNProxy {
         throw new NoSuchEAPUserException(userName);
       default:
         // some problems
-        throw new InternalEAPException(DiagnosticBundle.message("error.http.result.code", responce));
+        throw new InternalEAPException(DiagnosticBundle.message("error.http.result.code", response));
     }
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
