@@ -17,13 +17,11 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.XmlAttributeLiteralEscaper;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -34,9 +32,6 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Mike
@@ -113,13 +108,9 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return getTextRange().getStartOffset() + 1;
   }
 
-  @Nullable
-  public List<Pair<PsiElement,TextRange>> getInjectedPsi() {
-    PsiElement parent = getParent();
-    if (parent instanceof XmlAttributeImpl) {
-      return InjectedLanguageUtil.getInjectedPsiFiles(this);
-    }
-    return null;
+  @Override
+  public boolean isValidHost() {
+    return getParent() instanceof XmlAttributeImpl;
   }
 
   public PsiLanguageInjectionHost updateText(@NotNull String text) {
@@ -142,9 +133,6 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   @NotNull
   public LiteralTextEscaper<XmlAttributeValueImpl> createLiteralTextEscaper() {
     return new XmlAttributeLiteralEscaper(this);
-  }
-  public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(this, visitor);
   }
 
   public PsiMetaData getMetaData() {

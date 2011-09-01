@@ -77,6 +77,9 @@ public class InjectedLanguageUtil {
 
   @Nullable
   public static List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull final PsiElement host) {
+    if (!(host instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost) host).isValidHost()) {
+      return null;
+    }
     final PsiElement inTree = loadTree(host, host.getContainingFile());
     final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
     enumerate(inTree, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
@@ -461,7 +464,7 @@ public class InjectedLanguageUtil {
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);
-    host.processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
         result.set(true);
       }

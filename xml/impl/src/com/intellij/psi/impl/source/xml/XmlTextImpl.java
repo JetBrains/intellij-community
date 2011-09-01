@@ -66,6 +66,11 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return "XmlText";
   }
 
+  @Override
+  public boolean isValidHost() {
+    return true;
+  }
+
   @Nullable
   public XmlText split(int displayIndex) {
     try {

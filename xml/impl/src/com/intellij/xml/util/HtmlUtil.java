@@ -36,6 +36,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
@@ -441,7 +442,7 @@ public class HtmlUtil {
       for (final XmlText text : texts) {
         for (PsiElement _element : text.getChildren()) {
           if (_element instanceof PsiLanguageInjectionHost) {
-            ((PsiLanguageInjectionHost)_element).processInjectedPsi(injectedPsiVisitor);
+            InjectedLanguageUtil.enumerate(_element, injectedPsiVisitor);
           }
         }
       }
@@ -451,7 +452,7 @@ public class HtmlUtil {
     if (comments != null && comments.length > 0) {
       for (final XmlComment comment : comments) {
         if (comment instanceof PsiLanguageInjectionHost) {
-          ((PsiLanguageInjectionHost)comment).processInjectedPsi(injectedPsiVisitor);
+          InjectedLanguageUtil.enumerate(comment, injectedPsiVisitor);
         }
       }
     }

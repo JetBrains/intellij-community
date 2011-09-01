@@ -15,6 +15,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="lang-impl" />
   </component>
 </module>
 

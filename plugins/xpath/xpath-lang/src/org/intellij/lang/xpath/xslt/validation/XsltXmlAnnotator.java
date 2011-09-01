@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.intellij.lang.xpath.XPathFile;
@@ -48,7 +49,7 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
     if (s == null || s.length() == 0) {
       final PsiElement parent = value.getParent();
       if (parent instanceof XmlAttribute && XsltSupport.isXPathAttribute((XmlAttribute)parent)) {
-        ((PsiLanguageInjectionHost)value).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        InjectedLanguageUtil.enumerate(value, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
           @Override
           public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
             if (injectedPsi instanceof XPathFile) {

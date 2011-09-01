@@ -16,17 +16,11 @@
 
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.injected.CommentLiteralEscaper;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiLanguageInjectionHost {
   public PsiCommentImpl(IElementType type, CharSequence text) {
@@ -45,9 +39,9 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiLan
     return "PsiComment(" + getElementType().toString() + ")";
   }
 
-  @Nullable
-  public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this);
+  @Override
+  public boolean isValidHost() {
+    return true;
   }
 
   public PsiLanguageInjectionHost updateText(@NotNull final String text) {
@@ -62,9 +56,5 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiLan
   @NotNull
   public LiteralTextEscaper<PsiCommentImpl> createLiteralTextEscaper() {
     return new CommentLiteralEscaper(this);
-  }
-
-  public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(this, visitor);
   }
 }

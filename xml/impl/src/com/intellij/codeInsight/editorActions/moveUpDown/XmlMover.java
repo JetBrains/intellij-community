@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -55,13 +56,8 @@ class XmlMover extends LineMover {
     final XmlText text2 = PsiTreeUtil.getParentOfType(movedEndElement, XmlText.class);
 
     // Let's do not care about injections for this mover
-    if ( ( text != null &&
-           ((PsiLanguageInjectionHost)text).getInjectedPsi() != null
-         ) ||
-         ( text2 != null &&
-           ((PsiLanguageInjectionHost)text2).getInjectedPsi() != null
-         )
-       ) {
+    if ( ( text != null && InjectedLanguageUtil.getInjectedPsiFiles(text) != null) ||
+         ( text2 != null && InjectedLanguageUtil.getInjectedPsiFiles(text2) != null)) {
       return false;
     }
 
