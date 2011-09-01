@@ -595,6 +595,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
 
     if (!hasLockedBlocks) {
+      PostprocessReformattingAspect.getInstance(myProject).beforeDocumentChanged(viewProvider);
       ((SingleRootFileViewProvider)viewProvider).beforeDocumentChanged();
     }
   }

@@ -254,6 +254,13 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     return myReformatElements.containsKey(fileViewProvider);
   }
 
+  public void beforeDocumentChanged(FileViewProvider viewProvider) {
+    if (isViewProviderLocked(viewProvider)) {
+      throw new RuntimeException("Document is locked by write PSI operations. Use PsiDocumentManager.doPostponedOperationsAndUnblockDocument() to commit PSI changes to the document.");
+    }
+    postponedFormatting(viewProvider);
+  }
+
   public static PostprocessReformattingAspect getInstance(Project project) {
     return project.getComponent(PostprocessReformattingAspect.class);
   }
