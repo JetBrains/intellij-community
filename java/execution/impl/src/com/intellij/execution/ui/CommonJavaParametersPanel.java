@@ -19,12 +19,12 @@ import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.RawCommandLineEditor;
-import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
-  private LabeledComponent<RawCommandLineEditor> myVMParameters;
+  private LabeledComponent<RawCommandLineEditor> myVMParametersComponent;
 
   public CommonJavaParametersPanel() {
     super();
@@ -32,28 +32,28 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
 
   @Override
   protected void addComponents() {
-    myVMParameters = LabeledComponent.create(new RawCommandLineEditor(),
+    myVMParametersComponent = LabeledComponent.create(new RawCommandLineEditor(),
                                              ExecutionBundle.message("run.configuration.java.vm.parameters.label"));
-    copyDialogCaption(myVMParameters);
+    copyDialogCaption(myVMParametersComponent);
 
-    myVMParameters.setLabelLocation(BorderLayout.WEST);
+    myVMParametersComponent.setLabelLocation(BorderLayout.WEST);
 
-    add(myVMParameters);
+    add(myVMParametersComponent);
     super.addComponents();
   }
 
-  @Override
-  public void setLabelsPreferredSize(Dimension d) {
-    super.setLabelsPreferredSize(d);
-    myVMParameters.setLabelPreferredSize(d);
-  }
-
   public void setVMParameters(String text) {
-    myVMParameters.getComponent().setText(text);
+    myVMParametersComponent.getComponent().setText(text);
   }
 
   public String getVMParameters() {
-    return myVMParameters.getComponent().getText();
+    return myVMParametersComponent.getComponent().getText();
+  }
+
+  @Override
+  public void setAnchor(JComponent labelAnchor) {
+    super.setAnchor(labelAnchor);
+    myVMParametersComponent.setAnchor(labelAnchor);
   }
 
   public void applyTo(CommonJavaRunConfigurationParameters configuration) {

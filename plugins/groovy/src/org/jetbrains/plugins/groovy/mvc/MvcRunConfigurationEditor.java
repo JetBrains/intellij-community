@@ -21,8 +21,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.mvc.util.ModuleCellRenderer;
 
@@ -32,17 +34,18 @@ import java.awt.*;
 import java.io.File;
 import java.util.HashMap;
 
-public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends SettingsEditor<T> {
+public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends SettingsEditor<T> implements ComponentWithAnchor {
   private DefaultComboBoxModel myModulesModel;
   protected JComboBox myModulesBox;
   private JPanel myMainPanel;
   private RawCommandLineEditor myVMParameters;
   private JTextField myCommandLine;
-  private JLabel myVMParamsLabel;
+  private JBLabel myVMParamsLabel;
   private JPanel myExtensionPanel;
   protected JCheckBox myDepsClasspath;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
   private MvcFramework myFramework;
+  private JComponent anchor;
 
   public MvcRunConfigurationEditor() {
     myCommandLine.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -51,6 +54,8 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
         commandLineChanged(getCommandLine());
       }
     });
+
+    setAnchor(myEnvVariablesComponent.getLabel());
   }
 
   protected void resetEditorFrom(T configuration) {
@@ -93,6 +98,18 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
     }
     myDepsClasspath.setText(presentable);
     myDepsClasspath.setToolTipText("<html>&nbsp;" + StringUtil.replace(depsClasspath, File.pathSeparator, "<br>&nbsp;") + "</html>");
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    myVMParamsLabel.setAnchor(anchor);
+    myEnvVariablesComponent.setAnchor(anchor);
   }
 
   protected static void setCBEnabled(boolean enabled, final JCheckBox checkBox) {

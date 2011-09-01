@@ -19,13 +19,11 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.SystemInfo;
-
 import javax.swing.*;
 import java.awt.*;
 
 public class FormBuilder {
-  private static final boolean ALIGN_LABELS_TO_RIGHT = SystemInfo.isMac;
+  private static final boolean ALIGN_LABELS_TO_RIGHT = UIUtil.isUnderAquaLookAndFeel();
 
   private int line = 0;
   private int indent;

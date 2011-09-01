@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.android.run.AndroidClassBrowser;
 import org.jetbrains.android.run.ConfigurationSpecificEditor;
 import org.jetbrains.android.util.AndroidBundle;
@@ -61,10 +62,12 @@ class TestRunParameters implements ConfigurationSpecificEditor<AndroidTestRunCon
   private LabeledComponent<TextFieldWithBrowseButton> myMethodComponent;
   private JPanel myPanel;
   private LabeledComponent<TextFieldWithBrowseButton> myRunnerComponent;
+  private JBLabel myLabelTest;
   private final JRadioButton[] myTestingType2RadioButton = new JRadioButton[4];
 
   private final Project myProject;
   private final ConfigurationModuleSelector myModuleSelector;
+  private JComponent anchor;
 
   TestRunParameters(Project project, ConfigurationModuleSelector moduleSelector) {
     myProject = project;
@@ -81,6 +84,8 @@ class TestRunParameters implements ConfigurationSpecificEditor<AndroidTestRunCon
     addTestingType(TEST_ALL_IN_PACKAGE, myAllInPackageButton);
     addTestingType(TEST_CLASS, myClassButton);
     addTestingType(TEST_METHOD, myTestMethodButton);
+
+    setAnchor(myPackageComponent.getLabel());
   }
 
   private void addTestingType(final int type, JRadioButton button) {
@@ -90,6 +95,20 @@ class TestRunParameters implements ConfigurationSpecificEditor<AndroidTestRunCon
         updateLabelComponents(type);
       }
     });
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    myPackageComponent.setAnchor(anchor);
+    myClassComponent.setAnchor(anchor);
+    myMethodComponent.setAnchor(anchor);
+    myLabelTest.setAnchor(anchor);
   }
 
   private static void bind(final LabeledComponent<TextFieldWithBrowseButton> labeledComponent, BrowseModuleValueActionListener browser) {

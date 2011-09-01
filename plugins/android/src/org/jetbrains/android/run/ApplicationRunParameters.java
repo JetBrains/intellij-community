@@ -118,4 +118,13 @@ class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRun
     }
     configuration.DEPLOY = myDeployAndInstallCheckBox.isSelected();
   }
+
+  @Override
+  public JComponent getAnchor() {
+    return null;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+  }
 }
