@@ -62,18 +62,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   static final int ALL_VALID_FLAGS = CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT;
 
-  public static final long FILE_LENGTH_TO_CACHE_THRESHOLD = 20 * 1024 * 1024; // 20 megabytes
-
   private final MessageBus myEventsBus;
 
   private final Map<String, VirtualFileSystemEntry> myRoots = new HashMap<String, VirtualFileSystemEntry>();
   private VirtualFileSystemEntry myFakeRoot;
   private final Object INPUT_LOCK = new Object();
-  /**
-   * always  in range [0, PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD]
-   */
-  public static final int MAX_INTELLISENSE_FILESIZE = maxIntellisenseFileSize();
-  @NonNls private static final String MAX_INTELLISENSE_SIZE_PROPERTY = "idea.max.intellisense.filesize";
 
   public PersistentFS(MessageBus bus) {
     myEventsBus = bus;
@@ -467,7 +460,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       // we should cache every local files content
       // because the local history feature is currently depends on this cache
       if ((!delegate.isReadOnly() || !application.isInternal() && !application.isUnitTestMode()) &&
-          content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
+          content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (INPUT_LOCK) {
           writeContent(file, new ByteSequence(content), delegate.isReadOnly());
           setFlag(file, MUST_RELOAD_CONTENT, false);
@@ -500,7 +493,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         FSRecords.setLength(getFileId(file), len);
         final InputStream nativeStream = delegate.getInputStream(file);
 
-        if (len > FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
+        if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
 
         return createReplicator(file, nativeStream, len, delegate.isReadOnly());
       }
@@ -1032,17 +1025,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
     else {
       setFlag(id, MUST_RELOAD_CONTENT, true);
-    }
-  }
-
-  private static int maxIntellisenseFileSize() {
-    final int maxLimitBytes = (int)FILE_LENGTH_TO_CACHE_THRESHOLD;
-    final String userLimitKb = System.getProperty(MAX_INTELLISENSE_SIZE_PROPERTY);
-    try {
-      return userLimitKb != null ? Math.min(Integer.parseInt(userLimitKb) * 1024, maxLimitBytes) : maxLimitBytes;
-    }
-    catch (NumberFormatException ignored) {
-      return maxLimitBytes;
     }
   }
 

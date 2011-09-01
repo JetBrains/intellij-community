@@ -32,7 +32,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConstants;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -252,7 +252,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public static boolean isTooLarge(@NotNull VirtualFile vFile) {
     if (!checkFileSizeLimit(vFile)) return false;
-    return fileSizeIsGreaterThan(vFile, PersistentFS.MAX_INTELLISENSE_FILESIZE);
+    return fileSizeIsGreaterThan(vFile, PersistentFSConstants.MAX_INTELLISENSE_FILESIZE);
   }
 
   private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {
@@ -264,7 +264,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public static boolean isTooLarge(@NotNull VirtualFile vFile, final long contentSize) {
     if (!checkFileSizeLimit(vFile)) return false;
-    return contentSize > PersistentFS.MAX_INTELLISENSE_FILESIZE;
+    return contentSize > PersistentFSConstants.MAX_INTELLISENSE_FILESIZE;
   }
 
   private static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxInBytes) {
