@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -48,6 +49,11 @@ public class CompareValueWithClipboardAction extends BaseValueAction {
         DiffBundle.message("diff.content.clipboard.content.title"),
         DebuggerBundle.message("diff.content.selected.value")
       };
+    }
+
+    @Override
+    public boolean isSafeToCallFromUpdate() {
+      return !SystemInfo.isMac;
     }
 
     public DiffContent[] getContents() {
