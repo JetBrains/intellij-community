@@ -3,6 +3,6 @@ import java.util.*;
 
 class RRR {
   void f() {
-     List<String> l = new ArrayList<String>(<caret>);
+     List<String> l = new ArrayList<>(<caret>);
   }
 }
