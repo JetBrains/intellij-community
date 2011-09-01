@@ -16,6 +16,7 @@
 package com.intellij.errorreport.itn;
 
 import com.intellij.diagnostic.DiagnosticBundle;
+import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
@@ -23,6 +24,8 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 
@@ -34,8 +37,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -56,7 +59,7 @@ public class ITNProxy {
   @NonNls private static final String HTTP_WWW_FORM = "application/x-www-form-urlencoded";
   @NonNls private static final String HTTP_POST = "POST";
 
-  private static HttpURLConnection post (String url, Map<String,String> params) throws IOException, MalformedURLException {
+  private static HttpURLConnection post (String url, List<Pair<String,String>> params) throws IOException, MalformedURLException {
     HttpURLConnection connection = (HttpURLConnection) new URL (url).openConnection();
     connection.setReadTimeout(10 * 1000);
     connection.setConnectTimeout(10 * 1000);
@@ -65,12 +68,12 @@ public class ITNProxy {
     connection.setDoOutput(true);
     connection.setRequestProperty(HTTP_CONTENT_TYPE, HTTP_WWW_FORM);
 
-    StringBuffer buffer = new StringBuffer();
-    for (String name : params.keySet()) {
-      if (params.containsKey(name) && params.get(name) != null)
-        buffer.append(name + "=" + URLEncoder.encode(params.get(name), ENCODE) + POST_DELIMETER);
+    StringBuilder buffer = new StringBuilder();
+    for (Pair<String, String> param : params) {
+      if (StringUtil.isNotEmpty(param.first) && StringUtil.isNotEmpty(param.second))
+        buffer.append(param.first + "=" + URLEncoder.encode(param.second, ENCODE) + POST_DELIMETER);
       else
-        throw new IllegalArgumentException(name);
+        throw new IllegalArgumentException(param.toString());
     }
     connection.setRequestProperty(HTTP_CONTENT_LENGTH, Integer.toString(buffer.length()));
     connection.getOutputStream().write(buffer.toString().getBytes());
@@ -101,20 +104,20 @@ public class ITNProxy {
   public static int postNewThread (String userName, String password, ErrorBean error,
                                    String compilationTimestamp)
           throws IOException, NoSuchEAPUserException, InternalEAPException {
-    @NonNls Map<String,String> params = new HashMap<String, String>();
-    params.put("username", userName);
-    params.put("pwd", password);
-    params.put("_title", MessageFormat.format(THREAD_SUBJECT,
+    @NonNls List<Pair<String,String>> params = new ArrayList<Pair<String, String>>();
+    params.add(Pair.create("username", userName));
+    params.add(Pair.create("pwd", password));
+    params.add(Pair.create("_title", MessageFormat.format(THREAD_SUBJECT,
                                               error.getLastAction() == null ? error.getExceptionClass() :
-                                              error.getLastAction() + ", " + error.getExceptionClass()));
+                                              error.getLastAction() + ", " + error.getExceptionClass())));
     ApplicationInfoEx appInfo =
       (ApplicationInfoEx) ApplicationManager.getApplication().getComponent(
         ApplicationInfo.class);
 
-    params.put("_build", appInfo.getBuild().asString());
-    params.put("_description",
+    params.add(Pair.create("_build", appInfo.getBuild().asString()));
+    params.add(Pair.create("_description",
                (compilationTimestamp != null ? ("Build time: " + compilationTimestamp + "\n") : "") +
-               error.getDescription() + "\n\n" + error.getStackTrace());
+               error.getDescription() + "\n\n" + error.getStackTrace()));
 
     String jdkVersion = SystemProperties.getJavaVersion();
     String jdkVendor = SystemProperties.getJavaVmVendor();
@@ -143,7 +146,7 @@ public class ITNProxy {
     } else
       jdkVersion = "1";
 
-    params.put("_jdk", jdkVersion);
+    params.add(Pair.create("_jdk", jdkVersion));
 
     String os = error.getOs();
     if (os == null)
@@ -163,10 +166,15 @@ public class ITNProxy {
       os = "5";
     else
       os = "1";
-    params.put("_os", os);
+    params.add(Pair.create("_os", os));
 
-    params.put("_product", ApplicationNamesInfo.getInstance().getProductName());
+    params.add(Pair.create("_product", ApplicationNamesInfo.getInstance().getProductName()));
 
+    for (Attachment attachment : error.getAttachments()) {
+      params.add(Pair.create("_attachment_name", attachment.getName()));
+      params.add(Pair.create("_attachment_value", attachment.getEncodedBytes()));
+    }
+    
     HttpURLConnection connection = post(NEW_THREAD_URL, params);
     int responce = connection.getResponseCode();
     switch (responce) {
