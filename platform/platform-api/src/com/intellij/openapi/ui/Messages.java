@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -33,10 +34,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -638,6 +636,25 @@ public class Messages {
     return dialog.getInputString();
   }
 
+  @NotNull
+  public static Pair<String, Boolean> showInputDialogWithCheckBox(String message,
+                                                   String title,
+                                                   String checkboxText,
+                                                   boolean checked,
+                                                   boolean checkboxEnabled,
+                                                   @Nullable Icon icon,
+                                                   @NonNls String initialValue,
+                                                   @Nullable InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return new Pair<String, Boolean>(ourTestInputImplementation.show(message), checked);
+    }
+    else {
+      InputDialogWithCheckbox dialog = new InputDialogWithCheckbox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
+      dialog.show();
+      return new Pair<String, Boolean>(dialog.getInputString(), dialog.isChecked());
+    }
+  }
+
   @Nullable
   public static String showEditableChooseDialog(String message,
                                                 String title,
@@ -1076,7 +1093,7 @@ public class Messages {
   }
 
   protected static class InputDialog extends MessageDialog {
-    private JTextComponent myField;
+    protected JTextComponent myField;
     private InputValidator myValidator;
 
     public InputDialog(Project project, String message, String title, @Nullable Icon icon, String initialValue,
@@ -1155,26 +1172,37 @@ public class Messages {
         panel.add(container, BorderLayout.WEST);
       }
 
+      JPanel messagePanel = createMessagePanel();
+      panel.add(messagePanel, BorderLayout.CENTER);
+
+      return panel;
+    }
+
+    protected JPanel createMessagePanel() {
       JPanel messagePanel = new JPanel(new BorderLayout());
       if (myMessage != null) {
-        JComponent textComponent;
-        if (BasicHTML.isHTMLString(myMessage)) {
-          textComponent = createMessageComponent(myMessage);
-        }
-        else {
-          JLabel textLabel = new JLabel(myMessage);
-          textLabel.setUI(new MultiLineLabelUI());
-          textComponent = textLabel;
-        }
-        textComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+        JComponent textComponent = createTextComponent();
         messagePanel.add(textComponent, BorderLayout.NORTH);
       }
 
       myField = createTextFieldComponent();
       messagePanel.add(myField, BorderLayout.SOUTH);
-      panel.add(messagePanel, BorderLayout.CENTER);
 
-      return panel;
+      return messagePanel;
+    }
+
+    protected JComponent createTextComponent() {
+      JComponent textComponent;
+      if (BasicHTML.isHTMLString(myMessage)) {
+        textComponent = createMessageComponent(myMessage);
+      }
+      else {
+        JLabel textLabel = new JLabel(myMessage);
+        textLabel.setUI(new MultiLineLabelUI());
+        textComponent = textLabel;
+      }
+      textComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+      return textComponent;
     }
 
     public JTextComponent getTextField() {
@@ -1214,6 +1242,45 @@ public class Messages {
     @Override
     protected JTextComponent createTextFieldComponent() {
       return new JTextArea(7, 50);
+    }
+  }
+  
+  protected static class InputDialogWithCheckbox extends InputDialog {
+    private JCheckBox myCheckBox;
+
+    public InputDialogWithCheckbox(String message,
+                                   String title,
+                                   String checkboxText,
+                                   boolean checked,
+                                   boolean checkboxEnabled,
+                                   @Nullable Icon icon,
+                                   String initialValue,
+                                   @Nullable InputValidator validator) {
+      super(message, title, icon, initialValue, validator);
+      myCheckBox.setText(checkboxText);
+      myCheckBox.setSelected(checked);
+      myCheckBox.setEnabled(checkboxEnabled);
+    }
+
+    @Override
+    protected JPanel createMessagePanel() {
+      JPanel messagePanel = new JPanel(new BorderLayout());
+      if (myMessage != null) {
+        JComponent textComponent = createTextComponent();
+        messagePanel.add(textComponent, BorderLayout.NORTH);
+      }
+
+      myField = createTextFieldComponent();
+      messagePanel.add(myField, BorderLayout.CENTER);
+
+      myCheckBox = new JCheckBox();
+      messagePanel.add(myCheckBox, BorderLayout.SOUTH);
+
+      return messagePanel;
+    }
+
+    public Boolean isChecked() {
+      return myCheckBox.isSelected();
     }
   }
 

@@ -209,6 +209,29 @@ public class VfsUtil {
   }
 
   /**
+   * Makes a copy of the <code>file</code> in the <code>toDir</code> folder and returns it.
+   * Handles both files and directories.
+   *
+   * @param requestor any object to control who called this method. Note that
+   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  See {@link VirtualFileEvent#getRequestor}
+   * @param file      file or directory to make a copy of
+   * @param toDir     directory to make a copy in
+   * @return a copy of the file
+   * @throws IOException if file failed to be copied
+   */
+  public static VirtualFile copy(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
+    if (file.isDirectory()) {
+      VirtualFile newDir = toDir.createChildDirectory(requestor, file.getName());
+      copyDirectory(requestor, file, newDir, null);
+      return newDir;
+    }
+    else {
+      return copyFile(requestor, file, toDir);
+    }
+  }
+
+  /**
    * Gets the array of common ancestors for passed files.
    *
    * @param files array of files

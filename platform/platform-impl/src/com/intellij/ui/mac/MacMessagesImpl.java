@@ -216,7 +216,7 @@ public class MacMessagesImpl extends MacMessages {
     return showAlertDialog(title, defaultButton, alternateButton, otherButton, message, window, false, doNotAskOption);
   }
 
-  public int showMessageDialog(final String title, final String message, final String moreInfo, final String[] buttons, final boolean errorStyle,
+  public int showMessageDialog(final String title, final String message, @Nullable final String moreInfo, final String[] buttons, final boolean errorStyle,
                                 @Nullable Window window, @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
     return doForWindowAndTitle(new PairFunction<Pair<Window, String>, JRootPane, Integer>() {
       @Override
@@ -245,7 +245,7 @@ public class MacMessagesImpl extends MacMessages {
             ID paramsArray = invoke("NSArray", "arrayWithObjects:", cfString(title),
                                     // replace % -> %% to avoid formatted parameters (causes SIGTERM)
                                     cfString(StringUtil.stripHtml(message, true).replace("%", "%%")),
-                                    cfString(StringUtil.stripHtml(moreInfo, true).replace("%", "%%")),
+                                    cfString(StringUtil.stripHtml(moreInfo == null ? "" : moreInfo, true).replace("%", "%%")),
                                     focusedWindow, cfString(fakeTitle), cfString(errorStyle ? "error" : "-1"),
                                     cfString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                              // TODO: state=!doNotAsk.shouldBeShown()
