@@ -313,18 +313,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     return myFileManager.findDirectory(file);
   }
 
-
-  public void invalidateFile(@NotNull PsiFile file) {
-    if (myIsDisposed) {
-      LOG.error("Disposed PsiManager calls invalidateFile!");
-    }
-
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (file.getViewProvider().isPhysical() && myCacheManager != null) {
-      myCacheManager.addOrInvalidateFile(virtualFile);
-    }
-  }
-
   public void reloadFromDisk(@NotNull PsiFile file) {
     myFileManager.reloadFromDisk(file);
   }

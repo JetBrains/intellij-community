@@ -46,10 +46,5 @@ public interface CacheManager {
    * @return -1 if it's not known
    */
   int getTodoCount(@NotNull VirtualFile file, IndexPattern pattern);
-
-  /**
-   * @deprecated
-   */
-  void addOrInvalidateFile(@NotNull VirtualFile file);
 }
 

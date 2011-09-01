@@ -57,7 +57,4 @@ public class EmptyCacheManager implements CacheManager {
   public int getTodoCount(@NotNull VirtualFile file, IndexPattern pattern) {
     return 0;
   }
-
-  public void addOrInvalidateFile(@NotNull VirtualFile file) {
-  }
 }

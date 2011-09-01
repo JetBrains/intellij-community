@@ -49,8 +49,6 @@ public abstract class PsiManagerEx extends PsiManager {
   @NotNull
   public abstract FileManager getFileManager();
 
-  public abstract void invalidateFile(@NotNull PsiFile file);
-
   public abstract void beforeChildAddition(@NotNull PsiTreeChangeEventImpl event);
 
   public abstract void beforeChildRemoval(@NotNull PsiTreeChangeEventImpl event);

@@ -186,8 +186,4 @@ public class IndexCacheManagerImpl implements CacheManager{
       }, GlobalSearchScopes.fileScope(myProject, file));
     return count[0];
   }
-
-  public void addOrInvalidateFile(@NotNull final VirtualFile file) {
-    // empty
-  }
 }
