@@ -17,7 +17,7 @@
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
     <projectService serviceInterface="org.jetbrains.plugins.gradle.config.GradleSettings"
                     serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
-    <projectService serviceInterface="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"
+    <applicationService serviceInterface="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"
                     serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
   </extensions>
   
