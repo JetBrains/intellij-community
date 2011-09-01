@@ -20,8 +20,8 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -219,9 +219,24 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
     Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    
+    ActionManager.getInstance().addAnActionListener(new AnActionListener() {
+      @Override
+      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      }
+
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        queueModificationCheck();
+      }
+
+      @Override
+      public void beforeEditorTyping(char c, DataContext dataContext) {
+      }
+    }, this);
 
     myModificationChecker = new MergingUpdateQueue("OptionsModificationChecker", 1000, false, this, this, this);
-    mySpotlightUpdate = new MergingUpdateQueue("OptionsSplotlight", 500, false, this, this, this);
+    mySpotlightUpdate = new MergingUpdateQueue("OptionsSpotlight", 500, false, this, this, this);
 
     IdeGlassPaneUtil.installPainter(myOwnDetails.getContentGutter(), mySpotlightPainter, this);
 
@@ -962,18 +977,19 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     if (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED || event.getID() == MouseEvent.MOUSE_DRAGGED) {
       final MouseEvent me = (MouseEvent)event;
       if (SwingUtilities.isDescendingFrom(me.getComponent(), myContentWrapper) || isPopupOverEditor(me.getComponent())) {
-        queueModificationCheck(getContext().getCurrentConfigurable());
+        queueModificationCheck();
       }
     }
     else if (event.getID() == KeyEvent.KEY_PRESSED || event.getID() == KeyEvent.KEY_RELEASED) {
       final KeyEvent ke = (KeyEvent)event;
       if (SwingUtilities.isDescendingFrom(ke.getComponent(), myContentWrapper)) {
-        queueModificationCheck(getContext().getCurrentConfigurable());
+        queueModificationCheck();
       }
     }
   }
 
-  private void queueModificationCheck(final Configurable configurable) {
+  private void queueModificationCheck() {
+    final Configurable configurable = getContext().getCurrentConfigurable();
     myModificationChecker.queue(new Update(this) {
       public void run() {
         checkModified(configurable);
@@ -1181,7 +1197,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       if (myComponent != null) {
         final Object clientProperty = myComponent.getClientProperty(NOT_A_NEW_COMPONENT);
-        if (clientProperty != null && ((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+        if (clientProperty != null && ApplicationManager.getApplication().isInternal()) {
           LOG.warn(String.format("Settings component for '%s' MUST be recreated, please dispose it in disposeUIResources() and create a new instance in createComponent()!",
                                  configurable.getClass().getCanonicalName()));
         } else {
