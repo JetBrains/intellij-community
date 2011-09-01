@@ -18,9 +18,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormatterImpl;
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -228,14 +226,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     myFileManager.runStartupActivity();
 
     myCacheManager.initialize();
-
-    StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
-    if (startupManager != null) {
-      CacheUpdater[] updaters = myCacheManager.getCacheUpdaters();
-      for (CacheUpdater updater : updaters) {
-        startupManager.registerCacheUpdater(updater);
-      }
-    }
   }
 
   public void setAssertOnFileLoadingFilter(VirtualFileFilter filter) {

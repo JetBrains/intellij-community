@@ -19,7 +19,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -34,11 +33,6 @@ public class EmptyCacheManager implements CacheManager {
   }
 
   public void dispose() {
-  }
-
-  @NotNull
-  public CacheUpdater[] getCacheUpdaters() {
-    return new CacheUpdater[0];
   }
 
   @NotNull

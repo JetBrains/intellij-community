@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.cache.impl;
 
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -68,11 +67,6 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   public void dispose() {
-  }
-
-  @NotNull
-  public CacheUpdater[] getCacheUpdaters() {
-    return new CacheUpdater[0]; // do not expose own updaters
   }
 
   @NotNull

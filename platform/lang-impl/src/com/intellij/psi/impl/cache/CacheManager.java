@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.cache;
 
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 public interface CacheManager {
   void initialize();
   void dispose();
-  @NotNull CacheUpdater[] getCacheUpdaters();
 
   @NotNull PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
 
