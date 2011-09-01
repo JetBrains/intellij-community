@@ -84,21 +84,5 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
                   " existing modified list: " + existingModifierList);
       }
     }
-
-    if (myMember instanceof PsiMethod) {
-      final Project project = myMember.getProject();
-      SmartPsiElementPointer<T> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(myMember);
-      PostprocessReformattingAspect reformattingAspect = project.getComponent(PostprocessReformattingAspect.class);
-      reformattingAspect.doPostponedFormatting(myMember.getContainingFile().getViewProvider());
-      myMember = pointer.getElement();
-      if (myMember != null) {
-        final PsiParameterList parameterList = ((PsiMethod)myMember).getParameterList();
-        reformattingAspect.disablePostprocessFormattingInside(new Runnable(){
-          public void run() {
-            CodeStyleManager.getInstance(project).reformat(parameterList);
-          }
-        });
-      }
-    }
   }
 }
