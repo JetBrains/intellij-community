@@ -38,6 +38,7 @@ import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nullable;
@@ -656,6 +657,23 @@ class TemplateListPanel extends JPanel implements Disposable {
         }
       }
 
+      @Override
+      protected void installSpeedSearch() {
+        new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
+          @Override
+          public String convert(TreePath o) {
+            Object object = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
+            if (object instanceof TemplateGroup) {
+              return ((TemplateGroup)object).getName();
+            }
+            if (object instanceof TemplateImpl) {
+              return ((TemplateImpl)object).getKey();
+            }
+            return "";
+          }
+        }, true);
+
+      }
     };
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
@@ -784,7 +802,7 @@ class TemplateListPanel extends JPanel implements Disposable {
         }
       })
       .install();
-
+    
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     if (myTemplateGroups.size() > 0) {
       myTree.setSelectionInterval(0, 0);
@@ -794,9 +812,7 @@ class TemplateListPanel extends JPanel implements Disposable {
 
   private TemplateGroup getDropGroup(DnDEvent event) {
     Point point = event.getPointOn(myTree);
-    int i = myTree.getRowForLocation(point.x, point.y);
-    TemplateGroup group = getGroup(i);
-    return group;
+    return getGroup(myTree.getRowForLocation(point.x, point.y));
   }
 
   private void installPopup() {
