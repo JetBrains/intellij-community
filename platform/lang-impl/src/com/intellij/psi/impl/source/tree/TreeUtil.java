@@ -228,9 +228,14 @@ public class TreeUtil {
     return nextLeaf((TreeElement)node, null);
   }
 
-  public static FileElement getFileElement(TreeElement parent) {
+  public static Key<FileElement> CONTAINING_FILE_KEY_AFTER_REPARSE = Key.create("CONTAINING_FILE_KEY_AFTER_REPARSE");
+  public static FileElement getFileElement(TreeElement element) {
+    TreeElement parent = element;
     while (parent != null && !(parent instanceof FileElement)) {
       parent = parent.getTreeParent();
+    }
+    if (parent == null) {
+      parent = element.getUserData(CONTAINING_FILE_KEY_AFTER_REPARSE);
     }
     return (FileElement)parent;
   }

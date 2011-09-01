@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -148,7 +149,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         event.setParent(psiParent);
         event.setFile(file);
         event.setOldChild(psiOldChild);
-        PsiElement psiNewChild = newNode.getPsi();
+        PsiElement psiNewChild = getPsi(newNode, file);
         event.setNewChild(psiNewChild);
         ((PsiManagerEx)file.getManager()).beforeChildReplacement(event);
       }
@@ -224,7 +225,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
       }
 
       PsiElement psiParent = myOldParent.getPsi();
-      PsiElement psiChild = file.isPhysical() ? myNewNode.getPsi() : null;
+      PsiElement psiChild = getPsi(myNewNode, file);
       if (psiParent != null && psiChild != null) {
         PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(file.getManager());
         event.setParent(psiParent);
@@ -253,6 +254,14 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
       DebugUtil.checkTreeStructure(myOldParent);
     }
+
+  }
+
+  private static PsiElement getPsi(ASTNode node, PsiFile file) {
+    node.putUserData(TreeUtil.CONTAINING_FILE_KEY_AFTER_REPARSE, ((PsiFileImpl)file).getTreeElement());
+    PsiElement psiChild = file.isPhysical() ? node.getPsi() : null;
+    node.putUserData(TreeUtil.CONTAINING_FILE_KEY_AFTER_REPARSE, null);
+    return psiChild;
   }
 
   private static class ReplaceFileElement extends LogEntry {
