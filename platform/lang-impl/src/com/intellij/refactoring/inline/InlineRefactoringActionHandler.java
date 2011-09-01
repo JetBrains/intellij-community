@@ -36,6 +36,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +67,9 @@ public class InlineRefactoringActionHandler implements RefactoringActionHandler 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element == null) {
+      element = BaseRefactoringAction.getElementAtCaret(editor, file);
+    }
     if (element != null) {
       for(InlineActionHandler handler: Extensions.getExtensions(InlineActionHandler.EP_NAME)) {
         if (handler.canInlineElementInEditor(element)) {

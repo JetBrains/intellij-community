@@ -901,6 +901,7 @@
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineMethodHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineLocalHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineConstantFieldHandler"/>
+    <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineStaticImportHandler"/>
 
     <previewHintProvider implementation="com.intellij.codeInsight.preview.JavaPreviewHintProvider"/>
     <filePropertyPusher implementation="com.intellij.openapi.roots.impl.JavaLanguageLevelPusher"/>
