@@ -1593,7 +1593,7 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  private static final String ACTION_NAME = "Show in usage view";
+  private static final String ACTION_NAME = "Show All in View";
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
 
   private abstract class ShowFindUsagesAction extends AnAction {
