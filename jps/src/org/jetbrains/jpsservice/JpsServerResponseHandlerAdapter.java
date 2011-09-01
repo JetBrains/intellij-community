@@ -6,12 +6,15 @@ package org.jetbrains.jpsservice;
  */
 public class JpsServerResponseHandlerAdapter implements JpsServerResponseHandler {
 
-  public void handleCompileResponse(JpsRemoteProto.Message.Response.CompileResponse compileResponse) {
+  public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse) {
   }
 
-  public void handleStatusResponse(JpsRemoteProto.Message.Response.StatusResponse response) {
+  public void handleCommandResponse(JpsRemoteProto.Message.Response.CommandResponse response) {
   }
 
   public void handleFailure(JpsRemoteProto.Message.Failure failure) {
+  }
+
+  public void sessionTerminated() {
   }
 }

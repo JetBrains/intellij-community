@@ -1058,7 +1058,9 @@ public class ProjectWrapper {
 
     public void deleteTempFiles() {
         myProject.deleteTempFiles();
+
     }
+
 
     public Project getProject() {
         return myProject;
@@ -1280,7 +1282,7 @@ public class ProjectWrapper {
         }
     }
 
-    private void makeModules(final Collection<Module> initial, final Flags flags) {
+    public void makeModules(final Collection<Module> initial, final Flags flags) {
         if (myHistory == null && !flags.tests()) {
             clean();
         }

@@ -28,7 +28,7 @@ public class Server {
   private final ChannelPipelineFactory myPipelineFactory;
 
   public Server() {
-    myChannelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), Math.max(1, PROC_COUNT - 1));
+    myChannelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 2);
     myPipelineFactory = new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
         return Channels.pipeline(
@@ -64,7 +64,13 @@ public class Server {
 
   public static void main(String[] args) {
     final Server server = new Server();
+    // todo: define and use program arguments, i.e. listenPort etc.
     server.start(DEFAULT_SERVER_PORT);
+    Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
+      public void run() {
+        server.stop();
+      }
+    });
   }
 
   private class ChannelRegistrar extends SimpleChannelUpstreamHandler {

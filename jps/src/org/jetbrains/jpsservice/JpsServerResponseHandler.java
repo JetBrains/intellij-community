@@ -5,9 +5,16 @@ package org.jetbrains.jpsservice;
  *         Date: 8/15/11
  */
 public interface JpsServerResponseHandler {
-  void handleCompileResponse(JpsRemoteProto.Message.Response.CompileResponse compileResponse);
+  void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse);
 
-  void handleStatusResponse(JpsRemoteProto.Message.Response.StatusResponse response);
+  /**
+   *
+   * @param response
+   * @return false
+   */
+  void handleCommandResponse(JpsRemoteProto.Message.Response.CommandResponse response);
 
   void handleFailure(JpsRemoteProto.Message.Failure failure);
+
+  void sessionTerminated();
 }
