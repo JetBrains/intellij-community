@@ -218,7 +218,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       myTree.selectFirst();
     }
 
-    Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
+    Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
     myModificationChecker = new MergingUpdateQueue("OptionsModificationChecker", 1000, false, this, this, this);
     mySpotlightUpdate = new MergingUpdateQueue("OptionsSplotlight", 500, false, this, this, this);
@@ -959,7 +959,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public void eventDispatched(final AWTEvent event) {
-    if (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED) {
+    if (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED || event.getID() == MouseEvent.MOUSE_DRAGGED) {
       final MouseEvent me = (MouseEvent)event;
       if (SwingUtilities.isDescendingFrom(me.getComponent(), myContentWrapper) || isPopupOverEditor(me.getComponent())) {
         queueModificationCheck(getContext().getCurrentConfigurable());
