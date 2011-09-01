@@ -8,7 +8,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,13 +20,17 @@ import java.awt.event.ActionListener;
 /**
  * @author nik
  */
-public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel> {
+public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel> implements ComponentWithAnchor {
   private JPanel myMainPanel;
   private JComboBox myArtifactComboBox;
   private JTextField myPortField;
   private RawCommandLineEditor myServerParametersEditor;
+  private JBLabel myWebArtifactToDeployLabel;
+  private JBLabel myPortLabel;
+  private JBLabel myServerParametersLabel;
   private final Project myProject;
   private Artifact myLastSelectedArtifact;
+  private JComponent anchor;
 
   public AppEngineRunConfigurationEditor(Project project) {
     myProject = project;
@@ -33,6 +39,8 @@ public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel>
         onArtifactChanged();
       }
     });
+
+    setAnchor(myWebArtifactToDeployLabel);
   }
 
   private void onArtifactChanged() {
@@ -83,5 +91,18 @@ public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel>
   }
 
   protected void disposeEditor() {
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    myWebArtifactToDeployLabel.setAnchor(anchor);
+    myPortLabel.setAnchor(anchor);
+    myServerParametersLabel.setAnchor(anchor);
   }
 }
