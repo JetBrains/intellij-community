@@ -148,7 +148,6 @@ public class SaveAsTemplateAction extends AnAction {
 
     LiveTemplateSettingsEditor dialog = new LiveTemplateSettingsEditor(
       template,
-      templateSettings.getTemplateGroups(),
       defaultShortcut, options, context);
     /*
     dialog.show();

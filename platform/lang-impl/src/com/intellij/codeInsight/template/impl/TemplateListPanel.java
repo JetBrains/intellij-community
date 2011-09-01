@@ -358,7 +358,7 @@ class TemplateListPanel extends JPanel implements Disposable {
                                      String shortcut,
                                      Map<TemplateOptionalProcessor, Boolean> options,
                                      Map<TemplateContextType, Boolean> context) {
-    myCurrentTemplateEditor = new LiveTemplateSettingsEditor(template, myTemplateGroups, shortcut, options, context);
+    myCurrentTemplateEditor = new LiveTemplateSettingsEditor(template, shortcut, options, context);
     myDetailsPanel.add(myCurrentTemplateEditor.createCenterPanel(), TEMPLATE_SETTINGS);
     myCurrentTemplateEditor.reset();
   }
@@ -540,8 +540,8 @@ class TemplateListPanel extends JPanel implements Disposable {
     myTemplateOptions.put(getKey(template), template.createOptions());
     myTemplateContext.put(getKey(template), template.createContext());
     LiveTemplateSettingsEditor
-      dialog = new LiveTemplateSettingsEditor(template, getTemplateGroups(),
-                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
+      dialog = new LiveTemplateSettingsEditor(template,
+                                              (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
     /*
     dialog.show();
     if (!dialog.isOK()) return;
@@ -565,8 +565,8 @@ class TemplateListPanel extends JPanel implements Disposable {
     myTemplateOptions.put(getKey(template), getOptions(orTemplate));
     myTemplateContext.put(getKey(template), getContext(orTemplate));
     LiveTemplateSettingsEditor
-      dialog = new LiveTemplateSettingsEditor(template, getTemplateGroups(),
-                                                       (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
+      dialog = new LiveTemplateSettingsEditor(template,
+                                              (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
     /*
     dialog.show();
     if (!dialog.isOK()) return;
@@ -856,9 +856,11 @@ class TemplateListPanel extends JPanel implements Disposable {
         if (enabled) {
           final String oldGroupName = template.getGroupName();
           removeAll();
+          SchemesManager<TemplateGroup, TemplateGroup> schemesManager = TemplateSettings.getInstance().getSchemesManager();
+          
           for (TemplateGroup group : getTemplateGroups()) {
             final String newGroupName = group.getName();
-            if (!Comparing.equal(newGroupName, oldGroupName)) {
+            if (!Comparing.equal(newGroupName, oldGroupName) && !schemesManager.isShared(group)) {
               add(new DumbAwareAction(newGroupName) {
                 @Override
                 public void actionPerformed(AnActionEvent e) {

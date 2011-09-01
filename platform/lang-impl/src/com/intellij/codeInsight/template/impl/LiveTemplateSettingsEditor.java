@@ -27,8 +27,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,12 +47,10 @@ import java.util.*;
 import java.util.List;
 
 public class LiveTemplateSettingsEditor {
-  private final List<TemplateGroup> myTemplateGroups;
   private final TemplateImpl myTemplate;
 
   private final JTextField myKeyField;
   private final JTextField myDescription;
-  private final ComboBox myGroupCombo;
   private final Editor myTemplateEditor;
 
   private JComboBox myExpandByCombo;
@@ -70,7 +66,6 @@ public class LiveTemplateSettingsEditor {
   private final Map<TemplateContextType, Boolean> myContext;
 
   public LiveTemplateSettingsEditor(TemplateImpl template,
-                                    List<TemplateGroup> groups,
                                     String defaultShortcut,
                                     Map<TemplateOptionalProcessor, Boolean> options,
                                     Map<TemplateContextType, Boolean> context) {
@@ -78,12 +73,10 @@ public class LiveTemplateSettingsEditor {
     myContext = context;
 
     myTemplate = template;
-    myTemplateGroups = groups;
     myDefaultShortcutItem = CodeInsightBundle.message("dialog.edit.template.shortcut.default", defaultShortcut);
 
     myKeyField=new JTextField();
     myDescription=new JTextField();
-    myGroupCombo=new ComboBox(-1);
     myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString(), context);
     myTemplate.setId(null);
   }
@@ -175,18 +168,11 @@ public class LiveTemplateSettingsEditor {
 
     panel.add(myKeyField, gb.next().weightx(1));
 
-    JLabel groupPrompt = new JLabel(CodeInsightBundle.message("dialog.edit.template.label.group"));
-    groupPrompt.setLabelFor(myGroupCombo);
-    panel.add(groupPrompt, gb.next());
-
-    myGroupCombo.setEditable(true);
-    panel.add(myGroupCombo, gb.next().weightx(1));
-
     JLabel descriptionPrompt = new JLabel(CodeInsightBundle.message("dialog.edit.template.label.description"));
     descriptionPrompt.setLabelFor(myDescription);
-    panel.add(descriptionPrompt, gb.nextLine().next());
+    panel.add(descriptionPrompt, gb.next());
 
-    panel.add(myDescription, gb.next().weightx(1).coverLine(3));
+    panel.add(myDescription, gb.next().weightx(3));
     return panel;
   }
 
@@ -418,34 +404,19 @@ public class LiveTemplateSettingsEditor {
     }
 
     CommandProcessor.getInstance().executeCommand(
-        null, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              final Document document = myTemplateEditor.getDocument();
-              document.replaceString(0, document.getTextLength(), myTemplate.getString());
-            }
-          });
-        }
-      },
+      null, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            final Document document = myTemplateEditor.getDocument();
+            document.replaceString(0, document.getTextLength(), myTemplate.getString());
+          }
+        });
+      }
+    },
       "",
       null
     );
-
-    Set<String> groups = new TreeSet<String>();
-    SchemesManager<TemplateGroup, TemplateGroup> schemesManager = TemplateSettings.getInstance().getSchemesManager();
-    for (TemplateGroup group : myTemplateGroups) {
-      if (!schemesManager.isShared(group)) {
-        groups.add(group.getName());
-      }
-    }
-
-    for (final Object group : groups) {
-      String groupName = (String)group;
-      myGroupCombo.addItem(groupName);
-    }
-
-    myGroupCombo.setSelectedItem(myTemplate.getGroupName());
 
     myCbReformat.setSelected(myTemplate.isToReformat());
     myCbReformat.addActionListener(new ActionListener() {
