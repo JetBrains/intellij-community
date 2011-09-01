@@ -32,7 +32,7 @@ import java.util.List;
  * In order to do the injection, you have to
  * <ul>
  * <li>Implement {@link com.intellij.psi.LanguageInjector} to describe exact place where injection should occur.</li>  
- * <li>Register injection in {@link com.intellij.psi.PsiManager#registerLanguageInjector(LanguageInjector)} .</li>
+ * <li>Register injection in {@link com.intellij.psi.LanguageInjector#EXTENSION_POINT_NAME} extension point.</li>
  * </ul>
  * Currently, language can be injected into string literals, XML tag contents and XML attributes.
  * You don't have to implement PsiLanguageInjectionHost by yourself, unless you want to inject something into your own custom PSI.
