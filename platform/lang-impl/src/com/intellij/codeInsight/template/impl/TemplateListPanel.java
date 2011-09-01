@@ -279,6 +279,12 @@ public class TemplateListPanel extends JPanel implements Disposable {
         }
       }
     });
+    for (Component component : myDetailsPanel.getComponents()) {
+      if (component instanceof LiveTemplateSettingsEditor) {
+        myDetailsPanel.remove(component);
+      }
+    }
+
     myDetailsPanel.add(myCurrentTemplateEditor, TEMPLATE_SETTINGS);
   }
 
