@@ -115,6 +115,9 @@ public class ITNReporter extends ErrorReportSubmitter {
     }
 
     errorBean.setDescription(buildDescription(event, description));
+    if (event.getData() instanceof LogMessageEx) {
+      errorBean.setAttachments(((LogMessageEx)event.getData()).getAttachments());
+    }
 
     ErrorReportSender.sendError(project, login, password, errorBean, new Consumer<Integer>() {
       @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})

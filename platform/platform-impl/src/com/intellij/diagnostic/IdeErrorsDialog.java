@@ -830,23 +830,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     private IdeaLoggingEvent getEvent(final AbstractMessage logMessage) {
-      StringBuilder msg = new StringBuilder(logMessage.getMessage());
       if (logMessage instanceof LogMessageEx) {
-        final List<Attachment> attachments = ((LogMessageEx)logMessage).getAttachments();
-        for (Attachment attachment : attachments) {
-          if (attachment.isIncluded()) {
-            int i = attachment.getPath().lastIndexOf(File.separator);
-            String name = i >= 0 ? attachment.getPath().substring(i + 1) : attachment.getPath();
-            msg.append("\n+++++++++++++++++++++++++++++ Attachment: ").append(name).append("\n").append(attachment.getContent());
-          }
-        }
-        if (!attachments.isEmpty()) {
-          msg.append("\n-----------------------------\n");
-        }
+        return ((LogMessageEx)logMessage).toEvent();
       }
-      return new IdeaLoggingEvent(msg.toString(), logMessage.getThrowable());
+      return new IdeaLoggingEvent(logMessage.getMessage(), logMessage.getThrowable());
     }
-
   }
 
   protected void updateOnSubmit() {
