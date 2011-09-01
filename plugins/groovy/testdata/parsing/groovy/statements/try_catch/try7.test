@@ -1,0 +1,61 @@
+try {
+    throw new A()
+}
+catch (A |     e) {
+    println e.bar
+}
+-----
+Groovy script
+  Try statement
+    PsiElement(try)('try')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      THROW statement
+        PsiElement(throw)('throw')
+        PsiWhiteSpace(' ')
+        NEW expression
+          PsiElement(new)('new')
+          PsiWhiteSpace(' ')
+          Reference element
+            PsiElement(identifier)('A')
+          Arguments
+            PsiElement(()('(')
+            PsiElement())(')')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
+    PsiElement(new line)('\n')
+    Catch clause
+      PsiElement(catch)('catch')
+      PsiWhiteSpace(' ')
+      PsiElement(()('(')
+      Parameter
+        Modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('A')
+        PsiWhiteSpace(' ')
+        PsiElement(|)('|')
+        PsiErrorElement:type expected
+          <empty list>
+        PsiWhiteSpace('     ')
+        PsiElement(identifier)('e')
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      Open block
+        PsiElement({)('{')
+        PsiWhiteSpace('\n    ')
+        Call expression
+          Reference expression
+            PsiElement(identifier)('println')
+          PsiWhiteSpace(' ')
+          Command arguments
+            Reference expression
+              Reference expression
+                PsiElement(identifier)('e')
+              PsiElement(.)('.')
+              PsiElement(identifier)('bar')
+        PsiElement(new line)('\n')
+        PsiElement(})('}')

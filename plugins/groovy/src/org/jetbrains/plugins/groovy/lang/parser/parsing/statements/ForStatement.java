@@ -41,7 +41,7 @@ public class ForStatement implements GroovyElementTypes {
   private static boolean tradForClauseParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
 
-    if (!ParameterDeclaration.parseForParameter(builder, parser)) {
+    if (!ParameterDeclaration.parseTraditionalForParameter(builder, parser)) {
       marker.rollbackTo();
       marker = builder.mark();
       StrictContextExpression.parse(builder, parser);
