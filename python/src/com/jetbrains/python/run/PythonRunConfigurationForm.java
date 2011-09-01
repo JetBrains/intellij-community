@@ -8,7 +8,9 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBLabel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,12 +18,14 @@ import java.awt.*;
 /**
  * @author yole
  */
-public class PythonRunConfigurationForm implements PythonRunConfigurationParams {
+public class PythonRunConfigurationForm implements PythonRunConfigurationParams, ComponentWithAnchor {
   private JPanel myRootPanel;
   private TextFieldWithBrowseButton myScriptTextField;
   private RawCommandLineEditor myScriptParametersTextField;
   private JPanel myCommonOptionsPlaceholder;
+  private JBLabel myScriptParametersLabel;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
+  private JComponent anchor;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration);
@@ -47,6 +51,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams 
       };
 
     myScriptTextField.addActionListener(listener);
+
+    setAnchor(myCommonOptionsForm.getAnchor());
   }
 
   public JComponent getPanel() {
@@ -71,5 +77,17 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams 
 
   public void setScriptParameters(String scriptParameters) {
     myScriptParametersTextField.setText(scriptParameters);
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    myScriptParametersLabel.setAnchor(anchor);
+    myCommonOptionsForm.setAnchor(anchor);
   }
 }

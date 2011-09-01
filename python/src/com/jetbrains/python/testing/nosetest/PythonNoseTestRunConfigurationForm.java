@@ -53,7 +53,7 @@ public class PythonNoseTestRunConfigurationForm implements PythonNoseTestRunConf
     myComponent.setComponent(myParamTextField);
     myComponent.setText("Param");
     myComponent.setLabelLocation(BorderLayout.WEST);
-    myComponent.setLabelPreferredSize(new Dimension(51, 16));
+    myComponent.setAnchor(myTestRunConfigurationForm.getAnchor());
 
     return myComponent;
   }

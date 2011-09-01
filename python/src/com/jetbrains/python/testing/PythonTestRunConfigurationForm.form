@@ -24,7 +24,7 @@
               <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.all_in_folder_title"/>
             </properties>
           </component>
-          <component id="c394f" class="javax.swing.JLabel">
+          <component id="c394f" class="com.intellij.ui.components.JBLabel" binding="myTypeJBLabel">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -96,7 +96,6 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <labelPreferredSize width="58" height="16"/>
               <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.class_label"/>
             </properties>
           </component>
@@ -106,7 +105,6 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <labelPreferredSize width="51" height="16"/>
               <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.method_label"/>
             </properties>
           </component>
@@ -116,7 +114,6 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <labelPreferredSize width="58" height="16"/>
               <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.folder_path"/>
             </properties>
           </component>
@@ -126,7 +123,6 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <labelPreferredSize width="58" height="16"/>
               <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.test_script_label"/>
             </properties>
           </component>
@@ -136,7 +132,6 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <labelPreferredSize width="58" height="16"/>
               <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.pattern"/>
             </properties>
           </component>
