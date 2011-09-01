@@ -204,10 +204,10 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
         myTrackPerTestCoverageCb.setEnabled(myTracingRb.isSelected() && canHavePerTestCoverage() && runner != null && runner.isCoverageByTestApplicable());
       }
     });
-    myRunnerPanel = new JPanel(new BorderLayout());
+    myRunnerPanel = new JPanel(new GridBagLayout());
     myRunnerPanel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
-    myRunnerPanel.add(new JLabel("Choose coverage runner:"), BorderLayout.WEST);
-    myRunnerPanel.add(myCoverageRunnerCb, BorderLayout.CENTER);
+    myRunnerPanel.add(new JLabel("Choose coverage runner:"), new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,8,0,10), 0, 0));
+    myRunnerPanel.add(myCoverageRunnerCb, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0));
     final JPanel cPanel = new JPanel(new VerticalFlowLayout());
 
     mySamplingRb = new JRadioButton("Sampling");
@@ -234,7 +234,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     tracingPanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 0));
     tracingPanel.add(myTrackPerTestCoverageCb, BorderLayout.CENTER);
     cPanel.add(tracingPanel);
-    myRunnerPanel.add(cPanel, BorderLayout.SOUTH);
+    myRunnerPanel.add(cPanel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0));
 
     result.add(myRunnerPanel);
 
