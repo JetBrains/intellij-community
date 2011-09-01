@@ -88,6 +88,7 @@
     <orderEntry type="module" module-name="hg4idea" />
     <orderEntry type="module" module-name="android" />
     <orderEntry type="module" module-name="relaxng" />
+    <orderEntry type="module" module-name="gradle" />
   </component>
 </module>
 
