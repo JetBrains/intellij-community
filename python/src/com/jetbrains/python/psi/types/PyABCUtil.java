@@ -2,7 +2,6 @@ package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyClassRef;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,11 +41,23 @@ public class PyABCUtil {
     if (PyNames.CONTAINER.equals(superClassName)) {
       return isContainer;
     }
+    final boolean hasGetItem = hasMethod(subClass, PyNames.GETITEM);
     if (PyNames.SEQUENCE.equals(superClassName)) {
-      return isSized && isIterable && isContainer && hasMethod(subClass, PyNames.GETITEM);
+      return isSized && isIterable && isContainer && hasGetItem;
+    }
+    if (PyNames.MAPPING.equals(superClassName)) {
+      return isSized && isIterable && isContainer && hasGetItem && hasMethod(subClass, PyNames.KEYS);
     }
     return false;
 
+  }
+
+  public static boolean isSubtype(@NotNull PyType type, @NotNull String superClassName) {
+    if (type instanceof PyClassType) {
+      final PyClass pyClass = ((PyClassType)type).getPyClass();
+      return pyClass != null && isSubclass(pyClass, superClassName);
+    }
+    return false;
   }
 
   private static boolean hasMethod(PyClass cls, String name) {

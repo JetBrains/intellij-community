@@ -16,36 +16,17 @@ import com.jetbrains.python.psi.PyClass;
  * @author yole
  */
 public class PyClassGroupingRuleProvider implements FileStructureGroupRuleProvider {
-  protected boolean myGroupFiles;
-
-  public PyClassGroupingRuleProvider() {
-    myGroupFiles = true;
-  }
-
-  protected PyClassGroupingRuleProvider(boolean groupFiles) {
-    myGroupFiles = groupFiles;
-  }
-
   public UsageGroupingRule getUsageGroupingRule(Project project) {
-    return new PyClassGroupingRule(myGroupFiles);
+    return new PyClassGroupingRule();
   }
 
   private static class PyClassGroupingRule implements UsageGroupingRule {
-    private final boolean myGroupFiles;
-
-    public PyClassGroupingRule(boolean groupFiles) {
-      myGroupFiles = groupFiles;
-    }
-
     public UsageGroup groupUsage(Usage usage) {
       if (!(usage instanceof PsiElementUsage)) return null;
       final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
       final PyClass pyClass = PsiTreeUtil.getParentOfType(psiElement, PyClass.class);
       if (pyClass != null) {
         return new PsiNamedElementUsageGroupBase<PyClass>(pyClass);
-      }
-      if (myGroupFiles) {
-        return new FileGroupingRule(psiElement.getProject()).groupUsage(usage);
       }
       return null;
     }

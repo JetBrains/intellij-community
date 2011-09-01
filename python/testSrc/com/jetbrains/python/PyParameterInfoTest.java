@@ -13,6 +13,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
+import com.jetbrains.python.psi.CallArgumentsMapping;
 import com.jetbrains.python.psi.PyArgumentList;
 import org.jetbrains.annotations.NotNull;
 
@@ -378,7 +379,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     if (collector.getParameterOwner() != null) {
       assertEquals("Collected one analysis result", 1, collector.myItems.length);
       handler.updateParameterInfo((PyArgumentList)collector.getParameterOwner(), collector); // moves offset to correct parameter
-      handler.updateUI((PyArgumentList.AnalysisResult)collector.getItemsToShow()[0], collector); // sets hint text and flags
+      handler.updateUI((CallArgumentsMapping)collector.getItemsToShow()[0], collector); // sets hint text and flags
     }
     return collector;
   }

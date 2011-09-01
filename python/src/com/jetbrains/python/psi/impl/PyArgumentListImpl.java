@@ -230,9 +230,8 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   @NotNull
-  public AnalysisResult analyzeCall(PyResolveContext resolveContext) {
-    final PyCallExpressionHelper.AnalysisResultImpl ret = new PyCallExpressionHelper.AnalysisResultImpl(this);
-    PyExpression[] arguments = getArguments();
+  public CallArgumentsMapping analyzeCall(PyResolveContext resolveContext) {
+    final CallArgumentsMappingImpl ret = new CallArgumentsMappingImpl(this);
     // declaration-based checks
     // proper arglist is: [positional,...][name=value,...][*tuple,][**dict]
     // where "positional" may be a tuple of nested "positional" parameters, too.
@@ -240,7 +239,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     PyCallExpression call = getCallExpression();
     if (call != null) {
       PyCallExpression.PyMarkedCallee resolved_callee = call.resolveCallee(resolveContext);
-      if (resolved_callee != null) ret.mapArguments(arguments, resolved_callee, resolveContext.getTypeEvalContext());
+      if (resolved_callee != null) ret.mapArguments(resolved_callee, resolveContext.getTypeEvalContext());
     }
     return ret;
   }

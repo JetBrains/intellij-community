@@ -75,7 +75,7 @@ public class PyCallByClassInspection extends PyInspection {
               if (qual_class != null) {
                 final PyArgumentList arglist = call.getArgumentList();
                 if (arglist != null) {
-                  PyArgumentList.AnalysisResult analysis = arglist.analyzeCall(resolveWithoutImplicits());
+                  CallArgumentsMapping analysis = arglist.analyzeCall(resolveWithoutImplicits());
                   final PyCallExpression.PyMarkedCallee markedCallee = analysis.getMarkedCallee();
                   if (markedCallee != null  && !markedCallee.getFlags().contains(STATICMETHOD)) {
                     PyParameter[] params = markedCallee.getCallable().getParameterList().getParameters();
