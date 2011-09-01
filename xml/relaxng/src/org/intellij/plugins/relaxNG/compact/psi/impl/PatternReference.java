@@ -108,6 +108,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     return PsiTreeUtil.getParentOfType(myElement, RncGrammar.class, true, PsiFile.class);
   }
 
+  @NotNull
   public String getCanonicalText() {
     final ASTNode node = findNameNode();
     return node != null ? EscapeUtil.unescapeText(node) : "";

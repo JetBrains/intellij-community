@@ -102,6 +102,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     return resolver.getResult();
   }
 
+  @NotNull
   public String getCanonicalText() {
     return getRangeInElement().substring(getText());
   }
