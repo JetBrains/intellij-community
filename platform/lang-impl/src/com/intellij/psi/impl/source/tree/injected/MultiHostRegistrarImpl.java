@@ -40,12 +40,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -422,7 +426,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
               @Override
               public void run() {
                 synchronized (PsiLock.LOCK) {
-                  diffLog.doActualPsiChange(oldFile);
+                  DocumentCommitThread.doActualPsiChange(oldFile, diffLog);
                 }
               }
             });

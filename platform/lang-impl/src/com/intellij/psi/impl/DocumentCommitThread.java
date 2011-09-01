@@ -32,6 +32,12 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -43,6 +49,7 @@ import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Queue;
@@ -552,7 +559,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
                 @Override
                 public void run() {
                   synchronized (PsiLock.LOCK) {
-                    diffLog.doActualPsiChange(file);
+                    doActualPsiChange(file, diffLog);
                   }
                 }
               });
@@ -634,7 +641,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
           @Override
           public void run() {
             synchronized (PsiLock.LOCK) {
-              diffLog.doActualPsiChange(file);
+              doActualPsiChange(file, diffLog);
             }
           }
         });
@@ -646,6 +653,32 @@ public class DocumentCommitThread implements Runnable, Disposable {
       finally {
         file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
       }
+    }
+  }
+
+  public static void doActualPsiChange(@NotNull final PsiFile file, final DiffLog diffLog){
+    try {
+      final Document document = file.getViewProvider().getDocument();
+      PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(file.getProject());
+      PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
+
+      final PsiFileImpl fileImpl = (PsiFileImpl)file;
+
+      if (transaction == null) {
+        final PomModel model = PomManager.getModel(fileImpl.getProject());
+
+        model.runTransaction(new PomTransactionBase(fileImpl, model.getModelAspect(TreeAspect.class)) {
+          public PomModelEvent runInner() {
+            return new TreeAspectEvent(model, diffLog.performActualPsiChange(file));
+          }
+        });
+      }
+      else {
+        diffLog.performActualPsiChange(file);
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
     }
   }
 
