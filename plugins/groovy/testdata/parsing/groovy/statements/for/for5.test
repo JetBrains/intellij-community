@@ -1,4 +1,4 @@
-for (def MyClass c  [1,2,3]) {do}
+for (def MyClass c  [1,2,3]) {doo}
 -----
 Groovy script
   For statement
@@ -37,5 +37,5 @@ Groovy script
       Open block
         PsiElement({)('{')
         Reference expression
-          PsiElement(identifier)('do')
+          PsiElement(identifier)('doo')
         PsiElement(})('}')

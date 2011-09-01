@@ -142,6 +142,10 @@ public class PathManagerEx {
     return getTestDataPath(strategy);
   }
 
+  public static String getTestDataPath(String path) throws IllegalStateException {
+    return getTestDataPath() + path.replace('/', File.separatorChar);
+  }
+
   /**
    * Shorthand for calling {@link #getTestDataPath(TestDataLookupStrategy)} with strategy obtained via call to
    * {@link #determineLookupStrategy(Class)} with the given class.

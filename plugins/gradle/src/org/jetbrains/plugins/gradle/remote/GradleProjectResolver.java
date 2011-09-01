@@ -25,7 +25,8 @@ public interface GradleProjectResolver extends Remote {
    * @param downloadLibraries flag that specifies if third-party libraries that are not available locally should be resolved (downloaded)
    * @return                  object-level representation of the target gradle project
    * @throws RemoteException            in case of unexpected exception during remote communications
-   * @throws IllegalArgumentException   if given path doesn't point to directory that contains gradle project
+   * @throws IllegalArgumentException   if given path doesn't point to directory that contains gradle project or if gradle api
+   *                                    returns invalid data
    * @throws IllegalStateException      if it's not possible to resolve target project info
    */
   @NotNull

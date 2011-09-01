@@ -18,13 +18,9 @@ package com.intellij.openapi.diff.impl.dir.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.diff.impl.dir.DirDiffElement;
-import com.intellij.openapi.diff.impl.dir.DirDiffOperation;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-
-import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -41,36 +37,10 @@ public class SynchronizeDiff extends DirDiffAction {
 
   @Override
   protected void updateState(boolean state) {
-    final List<DirDiffElement> elements = mySelectedOnly ? getModel().getSelectedElements() : getModel().getElements();    
-    
-    for (DirDiffElement element : elements) {
-      if (mySelectedOnly) {
-        getModel().rememberSelection();
-      }
-
-      final DirDiffOperation operation = element.getOperation();
-      if (operation == null) continue;
-      switch (operation) {
-        case COPY_TO:
-          getModel().performCopyTo(element);
-          break;
-        case COPY_FROM:
-          getModel().performCopyFrom(element);
-          break;
-        case MERGE:
-          break;
-        case EQUAL:
-          break;
-        case NONE:
-          break;
-        case DELETE:
-          getModel().performDelete(element);
-          break;
-      }
-    }    
-    
-    if (!mySelectedOnly) {
-      getModel().selectFirstRow();
+    if (mySelectedOnly) {
+      getModel().synchronizeSelected();
+    } else {
+      getModel().synchronizeAll();
     }
   }
 
@@ -86,6 +56,11 @@ public class SynchronizeDiff extends DirDiffAction {
 
   @Override
   protected boolean isFullReload() {
-    return true;
+    return false;
+  }
+
+  @Override
+  protected boolean isReloadNeeded() {
+    return false;
   }
 }

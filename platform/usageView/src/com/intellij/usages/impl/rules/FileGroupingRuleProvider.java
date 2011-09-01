@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.usages.impl.rules;
 
-package com.intellij.psi.impl.source.parsing;
-
-import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
+import com.intellij.usages.impl.FileStructureGroupRuleProvider;
+import com.intellij.usages.rules.UsageGroupingRule;
 
 /**
- * @deprecated obsolete (ro remove in IDEA 11).
+ * @author yole
  */
-@SuppressWarnings({"ALL"})
-public class ChameleonTransforming {
-  public static void transformChildren(ASTNode element) {
-  }
-
-  public static void transformChildren(ASTNode element, boolean recursive) {
+public class FileGroupingRuleProvider implements FileStructureGroupRuleProvider {
+  @Override
+  public UsageGroupingRule getUsageGroupingRule(Project project) {
+    return new FileGroupingRule(project);
   }
 }

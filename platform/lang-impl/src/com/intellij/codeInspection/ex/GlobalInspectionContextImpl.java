@@ -546,7 +546,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
           }
           pass.doInspectInBatch((InspectionManagerEx)manager, lTools);
 
-          JobUtil.invokeConcurrentlyUnderProgress(globalSimpleTools, new Processor<Tools>() {
+          JobUtil.invokeConcurrentlyUnderProgress(globalSimpleTools, myProgressIndicator, false, new Processor<Tools>() {
               @Override
               public boolean process(Tools tools) {
                 GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
@@ -557,7 +557,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
                                                                  CONVERT, toolWrapper);
                 return true;
               }
-            }, false, myProgressIndicator);
+            });
         }
         catch (ProcessCanceledException e) {
           throw e;

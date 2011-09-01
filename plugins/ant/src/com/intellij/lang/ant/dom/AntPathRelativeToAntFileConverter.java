@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public class AntPathRelativeToAntFileConverter extends AntPathConverter {
   }
 
   @Nullable
-  protected String getPathResolveRoot(AntDomProject antProject) {
+  protected String getPathResolveRoot(ConvertContext context, AntDomProject antProject) {
     return antProject.getContainingFileDir();
   }
 }

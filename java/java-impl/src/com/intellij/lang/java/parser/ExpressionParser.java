@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.lang.java.parser;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -32,6 +33,8 @@ import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
 public class ExpressionParser {
+  public static final Key<MarkingParserWrapper> PARSER_EXTENDER_KEY = Key.create("Java.Expression.Parser.Extender");
+
   private enum ExprType {
     CONDITIONAL_OR, CONDITIONAL_AND, OR, XOR, AND, EQUALITY, RELATIONAL, SHIFT, ADDITIVE, MULTIPLICATIVE, UNARY, TYPE
   }
@@ -65,6 +68,11 @@ public class ExpressionParser {
 
   @Nullable
   public static PsiBuilder.Marker parse(final PsiBuilder builder) {
+    final PsiBuilder.Marker extension = parseWithExtender(builder, PARSER_EXTENDER_KEY);
+    if (extension != null) {
+      return extension;
+    }
+
     return parseAssignment(builder);
   }
 
@@ -312,7 +320,7 @@ public class ExpressionParser {
   private enum BreakPoint {P1, P2, P3, P4}
 
   @Nullable
-  private static PsiBuilder.Marker parsePrimary(final PsiBuilder builder, final BreakPoint breakPoint, final int breakOffset) {
+  private static PsiBuilder.Marker parsePrimary(final PsiBuilder builder, @Nullable final BreakPoint breakPoint, final int breakOffset) {
     PsiBuilder.Marker startMarker = builder.mark();
 
     PsiBuilder.Marker expr = parsePrimaryExpressionStart(builder);
@@ -657,7 +665,7 @@ public class ExpressionParser {
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseNew(final PsiBuilder builder, final PsiBuilder.Marker start) {
+  private static PsiBuilder.Marker parseNew(final PsiBuilder builder, @Nullable final PsiBuilder.Marker start) {
     final PsiBuilder.Marker newExpr = (start != null ? start.precede() : builder.mark());
     builder.advanceLexer();
 

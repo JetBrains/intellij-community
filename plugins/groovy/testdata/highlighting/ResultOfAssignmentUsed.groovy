@@ -16,4 +16,9 @@ public class AssResult {
     def a = 2
     a = 3
   }
+
+  final int value
+  AssResult(int value) {
+    this.value = value;
+  }
 }

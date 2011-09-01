@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 public interface GrArgumentList extends GroovyPsiElement, GrNamedArgumentsOwner, PsiExpressionList {
   @NotNull GrExpression[] getExpressionArguments();
 
-  @NotNull PsiElement[] getAllArguments();
+  @NotNull GroovyPsiElement[] getAllArguments();
 
   GrArgumentList replaceWithArgumentList(GrArgumentList newArgList) throws IncorrectOperationException;
 

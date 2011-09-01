@@ -81,10 +81,14 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       super.run(indicator);
+      for (PsiElement element : myGotoData.targets) {
+        updateComponent(element, createComparator(renderers, myGotoData));
+      }
       new ImplementationSearcher.BackgroundableImplementationSearcher() {
         protected void processElement(PsiElement element) {
-          myGotoData.addTarget(element);
-          updateComponent(element, createComparator(renderers, myGotoData));
+          if (myGotoData.addTarget(element)) {
+            updateComponent(element, createComparator(renderers, myGotoData));
+          }
         }
       }.searchImplementations(myEditor, myGotoData.source, myOffset);
     }

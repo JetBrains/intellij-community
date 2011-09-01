@@ -555,7 +555,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
               target = new TempFileType(fileTypeId);
             }
 
-            final IndentOptions options = new IndentOptions();
+            final IndentOptions options = getDefaultIndentOptions(target);
             options.readExternal(additionalIndentElement);
             registerAdditionalIndentOptions(target, options);
           }
@@ -670,12 +670,25 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     for (FileType fileType : fileTypes) {
       final IndentOptions indentOptions = myAdditionalIndentOptions.get(fileType);
       Element additionalIndentOptions = new Element(ADDITIONAL_INDENT_OPTIONS);
-      indentOptions.writeExternal(additionalIndentOptions);
+      indentOptions.serialize(additionalIndentOptions, getDefaultIndentOptions(fileType)) ;
       additionalIndentOptions.setAttribute(FILETYPE,fileType.getDefaultExtension());
-      element.addContent(additionalIndentOptions);
+      if (additionalIndentOptions.getChildren().size() > 0) {
+        element.addContent(additionalIndentOptions);
+      }
     }
     
     myCommonSettingsManager.writeExternal(element);
+  }
+
+
+  private static IndentOptions getDefaultIndentOptions(FileType fileType) {
+    final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
+    for (final FileTypeIndentOptionsProvider provider : providers) {
+      if (provider.getFileType().equals(fileType)) {
+        return provider.createIndentOptions();
+      }
+    }
+    return new IndentOptions();
   }
 
   @Override
@@ -852,7 +865,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         }
       }
     }
-  }
+  }  
 
   @TestOnly
   public void clearCodeStyleSettings() throws Exception {

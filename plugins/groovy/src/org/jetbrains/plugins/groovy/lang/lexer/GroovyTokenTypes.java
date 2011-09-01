@@ -166,6 +166,7 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
   IElementType kCONTINUE = new GroovyElementType("continue");
   IElementType kDEF = new GroovyElementType("def");
   IElementType kDEFAULT = new GroovyElementType("default");
+  IElementType kDO = new GroovyElementType("do");
   IElementType kDOUBLE = new GroovyElementType("double");
   IElementType kELSE = new GroovyElementType("else");
   IElementType kEXTENDS = new GroovyElementType("extends");

@@ -2515,6 +2515,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       // doesn't make sense in pass-through mode
     }
 
+    @Override
+    public void testNoExtraJTreeModelUpdate() throws Exception {
+      // doesn't make sense in pass-through mode
+    }
 
     @Override
     public void testSelectWhenUpdatesArePending() throws Exception {

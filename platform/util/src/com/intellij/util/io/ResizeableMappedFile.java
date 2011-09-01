@@ -21,6 +21,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
 
@@ -30,9 +31,11 @@ public class ResizeableMappedFile implements Forceable {
   private long myLogicalSize;
   private final PagedFileStorage myStorage;
 
-  public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock, int pageSize) throws IOException {
-    myStorage = new PagedFileStorage(file, lock, pageSize);
-    if (!file.exists() || file.length() == 0) {
+  public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock, int pageSize, boolean valuesAreBufferAligned) throws IOException {
+    myStorage = new PagedFileStorage(file, lock, pageSize, valuesAreBufferAligned);
+    boolean exists = file.exists();
+    if (!exists || file.length() == 0) {
+      if (!exists) FileUtil.createParentDirs(file);
       writeLength(0);
     }
 
@@ -45,7 +48,7 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock) throws IOException {
-    this(file, initialSize, lock, PagedFileStorage.DEFAULT_BUFFER_SIZE);
+    this(file, initialSize, lock, PagedFileStorage.DEFAULT_BUFFER_SIZE, false);
   }
 
   public long length() {
@@ -65,7 +68,7 @@ public class ResizeableMappedFile implements Forceable {
     }
   }
 
-  private void ensureSize(final long pos) {
+  void ensureSize(final long pos) {
     if (pos + 16 > Integer.MAX_VALUE) throw new RuntimeException("FATAL ERROR: Can't get over 2^32 address space");
     myLogicalSize = Math.max(pos, myLogicalSize);
     while (pos >= realSize()) {
@@ -150,6 +153,15 @@ public class ResizeableMappedFile implements Forceable {
     myStorage.putInt(index, value);
   }
 
+  public short getShort(int index) {
+    return myStorage.getShort(index);
+  }
+
+  public void putShort(int index, short value) {
+    ensureSize(index + 2);
+    myStorage.putShort(index, value);
+  }
+
   public long getLong(int index) {
     return myStorage.getLong(index);
   }
@@ -186,4 +198,7 @@ public class ResizeableMappedFile implements Forceable {
     }
   }
 
+  public PagedFileStorage getPagedFileStorage() {
+    return myStorage;
+  }
 }

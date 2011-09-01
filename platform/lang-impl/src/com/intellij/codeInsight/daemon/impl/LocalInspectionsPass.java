@@ -239,7 +239,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                             @NotNull final List<PsiElement> elements,
                                             @NotNull final LocalInspectionToolSession session,
                                             @NotNull final List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
-    boolean result = JobUtil.invokeConcurrentlyUnderProgress(tools, new Processor<LocalInspectionTool>() {
+    boolean result = JobUtil.invokeConcurrentlyUnderProgress(tools, indicator, myFailFastOnAcquireReadAction, new Processor<LocalInspectionTool>() {
       public boolean process(final LocalInspectionTool tool) {
         indicator.checkCanceled();
 
@@ -268,7 +268,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         applyIncrementally[0] = false; // do not apply incrementally outside visible range
         return true;
       }
-    }, myFailFastOnAcquireReadAction, indicator);
+    });
     if (!result) throw new ProcessCanceledException();
     inspectInjectedPsi(elements, tools, isOnTheFly, indicator, iManager, true);
   }
@@ -321,7 +321,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           return true;
         }
       };
-    boolean result = JobUtil.invokeConcurrentlyUnderProgress(init, processor, myFailFastOnAcquireReadAction, indicator);
+    boolean result = JobUtil.invokeConcurrentlyUnderProgress(init, indicator, myFailFastOnAcquireReadAction, processor);
     if (!result) {
       throw new ProcessCanceledException();
     }
@@ -345,19 +345,19 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                   final boolean inVisibleRange) {
     final Set<PsiFile> injected = new THashSet<PsiFile>();
     for (PsiElement element : elements) {
-      InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      InjectedLanguageUtil.enumerate(element, myFile, false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           injected.add(injectedPsi);
         }
-      }, false);
+      });
     }
     if (injected.isEmpty()) return;
-    if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), new Processor<PsiFile>() {
+    if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), indicator, myFailFastOnAcquireReadAction, new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
         doInspectInjectedPsi(injectedPsi, tools, onTheFly, indicator, iManager, inVisibleRange);
         return true;
       }
-    }, myFailFastOnAcquireReadAction, indicator)) throw new ProcessCanceledException();
+    })) throw new ProcessCanceledException();
   }
 
   @Nullable

@@ -88,7 +88,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(new UsageViewPresentation(), new UsageTarget[0]);
     GroupNode rootNode = new GroupNode(null, 0, model);
     model.setRoot(rootNode);
-    UsageNodeTreeBuilder usageNodeTreeBuilder = new UsageNodeTreeBuilder(rules, UsageFilteringRule.EMPTY_ARRAY, rootNode);
+    UsageNodeTreeBuilder usageNodeTreeBuilder = new UsageNodeTreeBuilder(UsageTarget.EMPTY_ARRAY, rules, UsageFilteringRule.EMPTY_ARRAY, rootNode);
     for (Usage usage : usages) {
       usageNodeTreeBuilder.appendUsage(usage);
       UIUtil.dispatchAllInvocationEvents();

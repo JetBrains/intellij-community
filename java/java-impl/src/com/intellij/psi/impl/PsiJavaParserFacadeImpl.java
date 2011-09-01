@@ -189,23 +189,11 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
   @NotNull
   @Override
-  public PsiDocTag createDocTagFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
-    return createDocTagFromText(text);
-  }
-
-  @NotNull
-  @Override
   public PsiDocComment createDocCommentFromText(@NotNull final String text) throws IncorrectOperationException {
     final PsiMethod method = createMethodFromText(StringUtil.join(text, "void m();"), null);
     final PsiDocComment comment = method.getDocComment();
     assert comment != null : text;
     return comment;
-  }
-
-  @NotNull
-  @Override
-  public PsiDocComment createDocCommentFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
-    return createDocCommentFromText(text);
   }
 
   @NotNull

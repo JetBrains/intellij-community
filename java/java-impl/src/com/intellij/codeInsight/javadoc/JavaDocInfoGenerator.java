@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -526,7 +526,7 @@ public class JavaDocInfoGenerator {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(packageHtmlFile.getProject()).getElementFactory();
     final PsiDocComment docComment;
     try {
-      docComment = elementFactory.createDocCommentFromText(fileText, null);
+      docComment = elementFactory.createDocCommentFromText(fileText);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -800,7 +800,7 @@ public class JavaDocInfoGenerator {
     s = StringUtil.replace(s, "<ClassName>", method.getContainingClass().getName());
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     try {
-      return elementFactory.createDocCommentFromText(s, null);
+      return elementFactory.createDocCommentFromText(s);
     }
     catch (IncorrectOperationException e) {
       return null;

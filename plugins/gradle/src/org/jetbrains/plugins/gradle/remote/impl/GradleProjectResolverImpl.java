@@ -43,21 +43,13 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   
   @NotNull
   @Override
-  public GradleProject resolveProjectInfo(@NotNull String projectPath, boolean downloadLibraries) throws RemoteException {
-    try {
-      return doResolve(projectPath, downloadLibraries);
-    }
-    catch (Throwable e) {
-      throw new IllegalStateException(GradleBundle.message("gradle.import.text.error.resolve.generic", projectPath), e);
-    }
-  }
-
-  @NotNull
-  private GradleProject doResolve(@NotNull String projectPath, boolean downloadLibraries) {
+  public GradleProject resolveProjectInfo(@NotNull String projectPath, boolean downloadLibraries)
+    throws RemoteException, IllegalArgumentException, IllegalStateException
+  {
     ProjectConnection connection = getConnection(projectPath);
     IdeaProject project = connection.getModel(downloadLibraries ? IdeaProject.class : OfflineIdeaProject.class);
     GradleProject result = populateProject(project, projectPath);
-    
+
     // We need two different steps ('create' and 'populate') in order to handle module dependencies, i.e. when one module is
     // configured to be dependency for another one, corresponding dependency module object should be available during
     // populating dependent module object.
@@ -107,25 +99,36 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     return result;
   }
 
-  private static void populateModules(@NotNull Iterable<Pair<GradleModule, IdeaModule>> modules, 
+  private static void populateModules(@NotNull Iterable<Pair<GradleModule,IdeaModule>> modules, 
                                       @NotNull GradleProject intellijProject)
-    throws IllegalStateException
+    throws IllegalArgumentException, IllegalStateException
   {
     for (Pair<GradleModule, IdeaModule> pair : modules) {
       populateModule(pair.second, pair.first, intellijProject);
     }
   }
 
-  private static void populateModule(@NotNull IdeaModule gradleModule, @NotNull GradleModule intellijModule,
+  private static void populateModule(@NotNull IdeaModule gradleModule,
+                                     @NotNull GradleModule intellijModule,
                                      @NotNull GradleProject intellijProject)
-    throws IllegalStateException
+    throws IllegalArgumentException, IllegalStateException
   {
     populateContentRoots(gradleModule, intellijModule);
     populateCompileOutputSettings(gradleModule.getCompilerOutput(), intellijModule);
     populateDependencies(gradleModule, intellijModule, intellijProject);
   }
 
-  private static void populateContentRoots(@NotNull IdeaModule gradleModule, @NotNull GradleModule intellijModule) {
+  /**
+   * Populates {@link GradleModule#getContentRoots() content roots} of the given intellij module on the basis of the information
+   * contained at the given gradle module.
+   * 
+   * @param gradleModule    holder of the module information received from the gradle tooling api
+   * @param intellijModule  corresponding module from intellij gradle plugin domain
+   * @throws IllegalArgumentException   if given gradle module contains invalid data
+   */
+  private static void populateContentRoots(@NotNull IdeaModule gradleModule, @NotNull GradleModule intellijModule)
+    throws IllegalArgumentException
+  {
     DomainObjectSet<? extends IdeaContentRoot> contentRoots = gradleModule.getContentRoots();
     if (contentRoots == null) {
       return;
@@ -150,9 +153,19 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       intellijModule.addContentRoot(intellijContentRoot);
     }
   }
-  
-  private static void populateContentRoot(@NotNull GradleContentRoot contentRoot, SourceType type,
+
+  /**
+   * Stores information about given directories at the given content root 
+   * 
+   * @param contentRoot  target paths info holder
+   * @param type         type of data located at the given directories
+   * @param dirs         directories which paths should be stored at the given content root
+   * @throws IllegalArgumentException   if specified by {@link GradleContentRoot#storePath(SourceType, String)} 
+   */
+  private static void populateContentRoot(@NotNull GradleContentRoot contentRoot,
+                                          @NotNull SourceType type,
                                           @Nullable Iterable<? extends IdeaSourceDirectory> dirs)
+    throws IllegalArgumentException
   {
     if (dirs == null) {
       return;

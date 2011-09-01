@@ -514,6 +514,10 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     return new EmptyBorder(getNormalInset(), getNormalInset(), getNormalInset(), getNormalInset());
   }
 
+  public void revalidate() {
+    revalidate(myTracker);
+  }
+
   public void revalidate(PositionTracker<Balloon> tracker) {
     RelativePoint newPosition = tracker.recalculateLocation(this);
 
@@ -1326,8 +1330,13 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
         r.x -= getShadowBorderSize();
 
         myCloseRec.setBounds(r);
+        
       }
-
+      
+      if (isVisible()) {
+        revalidate();
+        repaint();
+      }
     }
 
     public void repaintButton() {

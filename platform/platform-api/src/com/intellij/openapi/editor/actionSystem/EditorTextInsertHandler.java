@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.treeStructure;
+package com.intellij.openapi.editor.actionSystem;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.util.Producer;
 
-public abstract class SimpleRoot extends SimpleNode {
+import java.awt.datatransfer.Transferable;
 
-  public SimpleRoot(Project aProject) {
-    super(aProject, null);
-  }
+/**
+ * @author pegov
+ */
+public interface EditorTextInsertHandler {
+  
+  void execute(final Editor editor, final DataContext dataContext, final Producer<Transferable> producer);  
 }

@@ -26,6 +26,11 @@ import java.util.Iterator;
  *         Date: Apr 21, 2010
  */
 public interface PropertiesProvider {
+
+  // if provider implements this interface, returned property values will be treated
+  // as not requiring further resolution of any property occurrences
+  interface SkipPropertyExpansionInValues {}
+
   @NotNull
   Iterator<String> getNamesIterator();
 

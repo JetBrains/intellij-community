@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
@@ -180,20 +181,23 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   public boolean isOperationsEnabled() {
-    return true;
+    return myFile.getFileSystem() instanceof LocalFileSystem;
   }
 
   @Override
-  public boolean copyTo(DiffElement<VirtualFile> container, String relativePath) {
+  public VirtualFileDiffElement copyTo(DiffElement<VirtualFile> container, String relativePath) {
     try {
       final File src = new File(myFile.getPath());
       final File trg = new File(container.getValue().getPath() + relativePath + src.getName());
       FileUtil.copy(src, trg);
-      return true;
+      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(trg);
+      if (virtualFile != null) {
+        return new VirtualFileDiffElement(virtualFile);
+      }
     }
     catch (IOException e) {//
     }
-    return false;
+    return null;
   }
 
   @Override

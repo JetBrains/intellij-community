@@ -460,6 +460,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     if (reloadFromDelegate) {
       final NewVirtualFileSystem delegate = getDelegate(file);
+      FSRecords.setLength(getFileId(file), delegate.getLength(file));
       final byte[] content = delegate.contentsToByteArray(file);
 
       ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
@@ -469,8 +470,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
           content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (INPUT_LOCK) {
           writeContent(file, new ByteSequence(content), delegate.isReadOnly());
-
-          FSRecords.setLength(getFileId(file), content.length);
           setFlag(file, MUST_RELOAD_CONTENT, false);
         }
       }
@@ -498,6 +497,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       if (mustReloadContent(file) || (contentStream = readContent(file)) == null) {
         final NewVirtualFileSystem delegate = getDelegate(file);
         final long len = delegate.getLength(file);
+        FSRecords.setLength(getFileId(file), len);
         final InputStream nativeStream = delegate.getInputStream(file);
 
         if (len > FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
@@ -519,7 +519,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         synchronized (INPUT_LOCK) {
           if (getBytesRead() == len) {
             writeContent(file, new ByteSequence(cache.getInternalBuffer(), 0, cache.size()), readOnly);
-            FSRecords.setLength(getFileId(file), len);
             setFlag(file, MUST_RELOAD_CONTENT, false);
           }
           else {

@@ -71,8 +71,7 @@ public class GroovyUnnecessaryReturnInspection extends BaseInspection {
       return "Remove unnecessary return";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement returnKeywordElement = descriptor.getPsiElement();
       final GrReturnStatement returnStatement = (GrReturnStatement) returnKeywordElement.getParent();
       assert returnStatement != null;
@@ -84,19 +83,16 @@ public class GroovyUnnecessaryReturnInspection extends BaseInspection {
 
     public void visitReturnStatement(GrReturnStatement returnStatement) {
       super.visitReturnStatement(returnStatement);
+
       final GrExpression returnValue = returnStatement.getReturnValue();
-      if (returnValue != null) {
-        return;
-      }
-      final GrMethod method =
-          PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class);
-      if (method == null) {
-        return;
-      }
+      if (returnValue != null) return;
+
+      final GrMethod method = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class);
+      if (method == null) return;
+
       final GrOpenBlock body = method.getBlock();
-      if (body == null) {
-        return;
-      }
+      if (body == null) return;
+
       if (ControlFlowUtils.openBlockCompletesWithStatement(body, returnStatement)) {
         registerStatementError(returnStatement);
       }

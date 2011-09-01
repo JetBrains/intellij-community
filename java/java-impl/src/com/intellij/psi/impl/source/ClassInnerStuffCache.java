@@ -51,37 +51,92 @@ public class ClassInnerStuffCache {
   public ClassInnerStuffCache(final PsiClass aClass) {
     myClass = aClass;
     myTreeChangeTracker = new MyModificationTracker();
-    buildCaches();
   }
 
   @NotNull
   public PsiMethod[] getConstructors() {
-    final PsiMethod[] constructors = myConstructorsCache.getValue();
+    CachedValue<PsiMethod[]> cache = myConstructorsCache;
+    if (cache == null) {
+      final CachedValuesManager manager = CachedValuesManager.getManager(myClass.getProject());
+      final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
+
+      myConstructorsCache = cache = manager.createCachedValue(new CachedValueProvider<PsiMethod[]>() {
+        public Result<PsiMethod[]> compute() {
+          return Result.create(PsiImplUtil.getConstructors(myClass), dependencies);
+        }
+      }, false);
+    }
+
+    final PsiMethod[] constructors = cache.getValue();
     return constructors != null ? constructors : PsiMethod.EMPTY_ARRAY;
   }
 
   @NotNull
   public PsiField[] getFields() {
-    final PsiField[] fields = myFieldsCache.getValue();
+    CachedValue<PsiField[]> cache = myFieldsCache;
+    if (cache == null) {
+      final CachedValuesManager manager = CachedValuesManager.getManager(myClass.getProject());
+      final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
+
+      myFieldsCache = cache = manager.createCachedValue(new CachedValueProvider<PsiField[]>() {
+        public Result<PsiField[]> compute() {
+          return Result.create(getAllFields(), dependencies);
+        }
+      }, false);
+    }
+    final PsiField[] fields = cache.getValue();
     return fields != null ? fields : PsiField.EMPTY_ARRAY;
   }
 
   @NotNull
   public PsiMethod[] getMethods() {
-    final PsiMethod[] methods = myMethodsCache.getValue();
+    CachedValue<PsiMethod[]> cache = myMethodsCache;
+    if (cache == null) {
+      final CachedValuesManager manager = CachedValuesManager.getManager(myClass.getProject());
+      final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
+
+      myMethodsCache = cache = manager.createCachedValue(new CachedValueProvider<PsiMethod[]>() {
+        public Result<PsiMethod[]> compute() {
+          return Result.create(getAllMethods(), dependencies);
+        }
+      }, false);
+    }
+    final PsiMethod[] methods = cache.getValue();
     return methods != null ? methods : PsiMethod.EMPTY_ARRAY;
   }
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-    final PsiClass[] classes = myInnerClassesCache.getValue();
+    CachedValue<PsiClass[]> cache = myInnerClassesCache;
+    if (cache == null) {
+      final CachedValuesManager manager = CachedValuesManager.getManager(myClass.getProject());
+      final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
+
+      myInnerClassesCache = cache = manager.createCachedValue(new CachedValueProvider<PsiClass[]>() {
+        public Result<PsiClass[]> compute() {
+          return Result.create(getAllInnerClasses(), dependencies);
+        }
+      }, false);
+    }
+    final PsiClass[] classes = cache.getValue();
     return classes != null ? classes : PsiClass.EMPTY_ARRAY;
   }
 
   @Nullable
   public PsiField findFieldByName(final String name, final boolean checkBases) {
     if (!checkBases) {
-      final Map<String, PsiField> cachedFields = myFieldsMapCache.getValue();
+      CachedValue<Map<String, PsiField>> cache = myFieldsMapCache;
+      if (cache == null) {
+        final CachedValuesManager manager = CachedValuesManager.getManager(myClass.getProject());
+        final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
+
+        myFieldsMapCache = cache = manager.createCachedValue(new CachedValueProvider<Map<String, PsiField>>() {
+          public Result<Map<String, PsiField>> compute() {
+            return Result.create(getFieldsMap(), dependencies);
+          }
+        }, false);
+      }
+      final Map<String, PsiField> cachedFields = cache.getValue();
       return cachedFields != null ? cachedFields.get(name) : null;
     }
     return PsiClassImplUtil.findFieldByName(myClass, name, checkBases);
@@ -90,10 +145,21 @@ public class ClassInnerStuffCache {
   @NotNull
   public PsiMethod[] findMethodsByName(final String name, final boolean checkBases) {
     if (!checkBases) {
-      final Map<String, List<PsiMethod>> cachedMethods = myMethodsMapCache.getValue();
+      CachedValue<Map<String, List<PsiMethod>>> cache = myMethodsMapCache;
+      if (cache == null) {
+        final CachedValuesManager manager = CachedValuesManager.getManager(myClass.getProject());
+        final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
+
+        myMethodsMapCache = cache = manager.createCachedValue(new CachedValueProvider<Map<String, List<PsiMethod>>>() {
+          public Result<Map<String, List<PsiMethod>>> compute() {
+            return Result.create(getMethodsMap(), dependencies);
+          }
+        }, false);
+      }
+      final Map<String, List<PsiMethod>> cachedMethods = cache.getValue();
       if (cachedMethods != null) {
         final List<PsiMethod> methods = cachedMethods.get(name);
-        if (methods != null && methods.size() > 0) {
+        if (methods != null && !methods.isEmpty()) {
           return methods.toArray(new PsiMethod[methods.size()]);
         }
       }
@@ -105,57 +171,22 @@ public class ClassInnerStuffCache {
   @Nullable
   public PsiClass findInnerClassByName(final String name, final boolean checkBases) {
     if (!checkBases) {
-      final Map<String, PsiClass> inners = myInnerClassesMapCache.getValue();
+      CachedValue<Map<String, PsiClass>> cache = myInnerClassesMapCache;
+      if (cache == null) {
+        final CachedValuesManager manager = CachedValuesManager.getManager(myClass.getProject());
+        final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
+
+        myInnerClassesMapCache = cache = manager.createCachedValue(new CachedValueProvider<Map<String, PsiClass>>() {
+          public Result<Map<String, PsiClass>> compute() {
+            return Result.create(getInnerClassesMap(), dependencies);
+          }
+        }, false);
+      }
+
+      final Map<String, PsiClass> inners = cache.getValue();
       return inners != null ? inners.get(name) : null;
     }
     return PsiClassImplUtil.findInnerByName(myClass, name, checkBases);
-  }
-
-  private void buildCaches() {
-    final CachedValuesManager manager = CachedValuesManager.getManager(myClass.getProject());
-    final Object[] dependencies = {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTreeChangeTracker};
-
-    myConstructorsCache = manager.createCachedValue(new CachedValueProvider<PsiMethod[]>() {
-      public Result<PsiMethod[]> compute() {
-        return Result.create(PsiImplUtil.getConstructors(myClass), dependencies);
-      }
-    }, false);
-
-    myFieldsCache = manager.createCachedValue(new CachedValueProvider<PsiField[]>() {
-      public Result<PsiField[]> compute() {
-        return Result.create(getAllFields(), dependencies);
-      }
-    }, false);
-
-    myMethodsCache = manager.createCachedValue(new CachedValueProvider<PsiMethod[]>() {
-      public Result<PsiMethod[]> compute() {
-        return Result.create(getAllMethods(), dependencies);
-      }
-    }, false);
-
-    myInnerClassesCache = manager.createCachedValue(new CachedValueProvider<PsiClass[]>() {
-      public Result<PsiClass[]> compute() {
-        return Result.create(getAllInnerClasses(), dependencies);
-      }
-    }, false);
-
-    myFieldsMapCache = manager.createCachedValue(new CachedValueProvider<Map<String, PsiField>>() {
-      public Result<Map<String, PsiField>> compute() {
-        return Result.create(getFieldsMap(), dependencies);
-      }
-    }, false);
-
-    myMethodsMapCache = manager.createCachedValue(new CachedValueProvider<Map<String, List<PsiMethod>>>() {
-      public Result<Map<String, List<PsiMethod>>> compute() {
-        return Result.create(getMethodsMap(), dependencies);
-      }
-    }, false);
-
-    myInnerClassesMapCache = manager.createCachedValue(new CachedValueProvider<Map<String, PsiClass>>() {
-      public Result<Map<String, PsiClass>> compute() {
-        return Result.create(getInnerClassesMap(), dependencies);
-      }
-    }, false);
   }
 
   private PsiField[] getAllFields() {

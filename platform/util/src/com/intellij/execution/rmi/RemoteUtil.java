@@ -4,11 +4,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.lang.reflect.*;
 import java.rmi.Remote;
 import java.util.Map;
 
@@ -136,5 +134,25 @@ public class RemoteUtil {
     finally {
       thread.setContextClassLoader(prev);
     }
+  }
+
+  /**
+   * There is a possible case that remotely called code throws exception during processing. That exception is wrapped at different
+   * levels then - {@link InvocationTargetException}, {@link UndeclaredThrowableException} etc.
+   * <p/>
+   * This method tries to extract the 'real exception' from the given potentially wrapped one.
+   * 
+   * @param e  exception to process
+   * @return   extracted 'real exception' if any; given exception otherwise
+   */
+  @NotNull
+  public static Throwable unwrap(@NotNull Throwable e) {
+    for (Throwable candidate = e; candidate != null; candidate = candidate.getCause()) {
+      Class<? extends Throwable> clazz = candidate.getClass();
+      if (clazz != InvocationTargetException.class && clazz != UndeclaredThrowableException.class) {
+        return candidate;
+      }
+    }
+    return e;
   }
 }

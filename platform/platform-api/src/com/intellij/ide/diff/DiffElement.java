@@ -233,12 +233,13 @@ public abstract class DiffElement<T> implements Disposable {
    * Copies element to the container.
    *
    * @param container file directory or other container
-   * @param relativePath
+   * @param relativePath relative path from root
    * @return <code>true</code> if coping was completed successfully,
    *        <code>false</code> otherwise
    */
-  public boolean copyTo(DiffElement<T> container, String relativePath) {
-    return false;
+  @Nullable
+  public DiffElement<?> copyTo(DiffElement<T> container, String relativePath) {
+    return null;
   }
 
   /**

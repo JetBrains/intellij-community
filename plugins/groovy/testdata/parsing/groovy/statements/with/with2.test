@@ -1,5 +1,5 @@
 with (A) {
-do()
+doo()
 -----
 Groovy script
   Method call
@@ -19,7 +19,7 @@ Groovy script
         <empty list>
       Method call
         Reference expression
-          PsiElement(identifier)('do')
+          PsiElement(identifier)('doo')
         Arguments
           PsiElement(()('(')
           PsiElement())(')')

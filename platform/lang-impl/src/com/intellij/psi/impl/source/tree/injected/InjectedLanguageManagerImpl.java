@@ -16,6 +16,11 @@
 
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobUtil;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
@@ -23,21 +28,24 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,11 +59,12 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author cdr
  */
-public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
+public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
   private final Project myProject;
   private final DumbService myDumbService;
   private final AtomicReference<MultiHostInjector> myPsiManagerRegisteredInjectorsAdapter = new AtomicReference<MultiHostInjector>();
+  private volatile DaemonProgressIndicator myProgress;
 
   public static InjectedLanguageManagerImpl getInstanceImpl(Project project) {
     return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
@@ -74,7 +83,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       public void extensionRemoved(@NotNull MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
         unregisterMultiHostInjector(injector);
       }
-    });
+    },this);
     final ExtensionPointListener<LanguageInjector> myListener = new ExtensionPointListener<LanguageInjector>() {
       public void extensionAdded(@NotNull LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
         psiManagerInjectorsChanged();
@@ -85,12 +94,89 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       }
     };
     final ExtensionPoint<LanguageInjector> psiManagerPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
-    psiManagerPoint.addExtensionPointListener(myListener);
-    Disposer.register(project, new Disposable() {
-      public void dispose() {
-        psiManagerPoint.removeExtensionPointListener(myListener);
+    psiManagerPoint.addExtensionPointListener(myListener,this);
+    myProgress = new DaemonProgressIndicator();
+    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+      @Override
+      public void daemonFinished() {
+      }
+
+      @Override
+      public void daemonCancelEventOccurred() {
+        myProgress.cancel();
       }
     });
+  }
+
+  @Override
+  public void dispose() {
+  }
+
+  public boolean startRunInjectors(@NotNull Document hostDocument, final boolean synchronously) {
+    if (myProject.isDisposed()) return true;
+    assert synchronously || !ApplicationManager.getApplication().isWriteAccessAllowed();
+    // use cached to avoid recreate PSI in alien project
+    final PsiFile hostPsiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(hostDocument);
+    if (hostPsiFile == null) return true;
+
+    final List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
+    if (injected.isEmpty()) return true;
+
+    if (myProgress.isCanceled()) {
+      myProgress = new DaemonProgressIndicator();
+    }
+
+    final Computable<Boolean> commitRunnable = new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return JobUtil.invokeConcurrentlyUnderProgress(injected, myProgress, !synchronously, new Processor<DocumentWindow>() {
+          @Override
+          public boolean process(DocumentWindow documentWindow) {
+            ProgressManager.checkCanceled();
+            RangeMarker rangeMarker = documentWindow.getHostRanges()[0];
+            PsiElement element = rangeMarker.isValid() ? hostPsiFile.findElementAt(rangeMarker.getStartOffset()) : null;
+            if (element == null) {
+              injected.remove(documentWindow);
+              return true;
+            }
+            final DocumentWindow[] stillInjectedDocument = {null};
+            // it is here where the reparse happens and old file contents replaced
+            InjectedLanguageUtil.enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+              public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+                stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
+                PsiDocumentManagerImpl.checkConsistency(injectedPsi, stillInjectedDocument[0]);
+              }
+            });
+            if (stillInjectedDocument[0] == null) {
+              injected.remove(documentWindow);
+            }
+            else if (stillInjectedDocument[0] != documentWindow) {
+              injected.remove(documentWindow);
+              injected.add(stillInjectedDocument[0]);
+            }
+
+            return true;
+          }
+        });
+      }
+    };
+
+    if (synchronously) {
+      return commitRunnable.compute();
+    }
+    else {
+      JobUtil.submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
+            public void run() {
+              commitRunnable.compute();
+            }
+          });
+        }
+      });
+      return true;
+    }
   }
 
   public void psiManagerInjectorsChanged() {
@@ -210,7 +296,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
    *  @param rangeToEdit range in encoded(raw) PSI
    *  @return list of ranges in encoded (raw) PSI
    */
-  @SuppressWarnings({"ConstantConditions"})
+  @SuppressWarnings({"ConstantConditions", "unchecked"})
   @NotNull
   public List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
     Place shreds = InjectedLanguageUtil.getShreds(injectedPsi);

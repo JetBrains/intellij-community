@@ -33,10 +33,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
@@ -1160,5 +1157,9 @@ public class FileUtil {
       return true;
     }
     return false;
+  }
+
+  public static String generateRandomTemporaryPath() {
+    return getTempDirectory() + "/" + UUID.randomUUID().toString();
   }
 }

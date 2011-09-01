@@ -163,7 +163,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     final ProgressIndicator progress = ProgressWrapper.wrap(original);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-        if (!JobUtil.invokeConcurrentlyUnderProgress(properties, new Processor<IProperty>() {
+        if (!JobUtil.invokeConcurrentlyUnderProgress(properties, progress, false, new Processor<IProperty>() {
           public boolean process(final IProperty property) {
             if (original != null) {
               if (original.isCanceled()) return false;
@@ -173,7 +173,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
             processTextUsages(processedKeyToFiles, property.getUnescapedKey(), processedValueToFiles, searchHelper, scope);
             return true;
           }
-        }, false, progress)) throw new ProcessCanceledException();
+        })) throw new ProcessCanceledException();
 
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
         Map<String, Set<String>> keyToDifferentValues = new HashMap<String, Set<String>>();

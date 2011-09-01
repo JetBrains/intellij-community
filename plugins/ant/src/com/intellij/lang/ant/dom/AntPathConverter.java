@@ -51,7 +51,10 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
     if (attribValue == null) {
       return null;
     }
-    final String path = attribValue.getStringValue();
+    String path = attribValue.getStringValue();
+    if (path == null) {
+      path = getAttributeDefaultValue(context, attribValue);
+    }
     if (path == null) {
       return null;
     }
@@ -61,7 +64,7 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
       if (antProject == null) {
         return null;
       }
-      file = new File(getPathResolveRoot(antProject), path);
+      file = new File(getPathResolveRoot(context, antProject), path);
     }
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
     if (vFile == null) {
@@ -81,8 +84,13 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
   }
 
   @Nullable
-  protected String getPathResolveRoot(AntDomProject antProject) {
+  protected String getPathResolveRoot(ConvertContext context, AntDomProject antProject) {
     return antProject.getProjectBasedirPath();
+  }
+
+  @Nullable
+  protected String getAttributeDefaultValue(ConvertContext context, GenericAttributeValue attribValue) {
+    return null;
   }
 
   @Override

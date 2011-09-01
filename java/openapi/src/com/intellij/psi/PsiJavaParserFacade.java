@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,6 @@ public interface PsiJavaParserFacade extends PsiParserFacade {
   PsiDocTag createDocTagFromText(@NotNull String docTagText) throws IncorrectOperationException;
 
   /**
-   * @deprecated use {@link #createDocTagFromText(String)} (to remove in IDEA 11)
-   */
-  @NotNull
-  PsiDocTag createDocTagFromText(@NotNull String docTagText, @Nullable PsiElement context) throws IncorrectOperationException;
-
-  /**
    * Creates a JavaDoc comment from the specified text.
    *
    * @param docCommentText the text of the JavaDoc comment.
@@ -52,12 +46,6 @@ public interface PsiJavaParserFacade extends PsiParserFacade {
    */
   @NotNull
   PsiDocComment createDocCommentFromText(@NotNull String docCommentText) throws IncorrectOperationException;
-
-  /**
-   * @deprecated use {@link #createDocCommentFromText(String)} (to remove in IDEA 11)
-   */
-  @NotNull
-  PsiDocComment createDocCommentFromText(@NotNull String docCommentText, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java class from the specified text.

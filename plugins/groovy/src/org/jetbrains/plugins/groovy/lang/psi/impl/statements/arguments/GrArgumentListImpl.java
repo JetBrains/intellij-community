@@ -22,13 +22,14 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -90,12 +91,12 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
 
   @NotNull
   @Override
-  public PsiElement[] getAllArguments() {
-    List<PsiElement> args = new ArrayList<PsiElement>();
+  public GroovyPsiElement[] getAllArguments() {
+    List<GroovyPsiElement> args = new ArrayList<GroovyPsiElement>();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof GrNamedArgument || child instanceof GrExpression) args.add(child);
+      if (child instanceof GrNamedArgument || child instanceof GrExpression) args.add((GroovyPsiElement)child);
     }
-    return PsiUtilBase.toPsiElementArray(args);
+    return ContainerUtil.toArray(args, new GroovyPsiElement[args.size()]);
   }
 
   public GrArgumentList replaceWithArgumentList(GrArgumentList newArgList) throws IncorrectOperationException {

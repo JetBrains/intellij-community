@@ -138,6 +138,7 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
   @Override
   public GradleModule clone() {
     GradleModule result = new GradleModule(getName(), new File(getModuleFilePath()).getParent());
+    result.setInheritProjectCompileOutputPath(isInheritProjectCompileOutputPath());
     for (GradleContentRoot contentRoot : getContentRoots()) {
       result.addContentRoot(contentRoot.clone());
     }

@@ -21,9 +21,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.hash.HashMap;
 
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
-
 import java.util.Map;
+
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
 /**
  * Utility classdef, tha contains various useful TokenSets
@@ -88,7 +88,7 @@ public abstract class TokenSets {
   public static final TokenSet PROPERTY_NAMES = TokenSet.create(mIDENT, mSTRING_LITERAL, mGSTRING_LITERAL);
 
   public static final TokenSet KEYWORDS = TokenSet.create(kABSTRACT, kAS, kASSERT, kBOOLEAN, kBREAK, kBYTE, kCASE, kCATCH, kCHAR, kCLASS,
-                                                          kCONTINUE, kDEF, kDEFAULT, kDOUBLE, kELSE, kEXTENDS, kENUM, kFALSE, kFINAL,
+                                                          kCONTINUE, kDEF, kDEFAULT, kDO, kDOUBLE, kELSE, kEXTENDS, kENUM, kFALSE, kFINAL,
                                                           kFLOAT, kFOR, kFINALLY, kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT,
                                                           kINTERFACE, kLONG, kNATIVE, kNEW, kNULL, kPACKAGE, kPRIVATE, kPROTECTED, kPUBLIC,
                                                           kRETURN, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH, kSYNCHRONIZED, kTHIS,

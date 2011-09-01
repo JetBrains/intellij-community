@@ -1,12 +1,20 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
@@ -14,6 +22,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.importing.model.*;
+import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
+import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 
 import java.io.File;
@@ -42,27 +53,28 @@ public class GradleModulesImporter {
   /**
    * Entry point for the whole 'import modules' procedure.
    * 
-   * @param modules  module info containers received from the gradle api
-   * @param project  project that should host the modules
-   * @param model    modules model
-   * @return         mappings between the given gradle modules and newly created intellij modules
+   * @param modules            module info containers received from the gradle api
+   * @param project            project that should host the modules
+   * @param model              modules model
+   * @param gradleProjectPath  file system path to the gradle project file being imported
+   * @return                   mappings between the given gradle modules and newly created intellij modules
    */
   @NotNull
   public Map<GradleModule, Module> importModules(@NotNull final Iterable<GradleModule> modules, @Nullable final Project project, 
-                                                 @Nullable final ModifiableModuleModel model)
+                                                 @Nullable final ModifiableModuleModel model, @NotNull String gradleProjectPath)
   {
     if (project == null) {
       return Collections.emptyMap();
     }
     removeExistingModulesSettings(modules);
     if (!project.isInitialized()) {
-      myAlarm.addRequest(new ImportModulesTask(project, modules), PROJECT_INITIALISATION_DELAY_MS);
+      myAlarm.addRequest(new ImportModulesTask(project, modules, gradleProjectPath), PROJECT_INITIALISATION_DELAY_MS);
       return Collections.emptyMap();
     } 
     if (model == null) {
       return Collections.emptyMap();
     }
-    return importModules(modules, model);
+    return importModules(modules, model, project, gradleProjectPath);
   }
 
   private static void removeExistingModulesSettings(@NotNull Iterable<GradleModule> modules) {
@@ -80,7 +92,9 @@ public class GradleModulesImporter {
   }
   
   public Map<GradleModule, Module> importModules(@NotNull final Iterable<GradleModule> modules, 
-                                                 @NotNull final ModifiableModuleModel model)
+                                                 @NotNull final ModifiableModuleModel model,
+                                                 @NotNull final Project intellijProject,
+                                                 @NotNull final String gradleProjectPath)
   {
     final Map<GradleModule, Module> result = new HashMap<GradleModule, Module>();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -90,7 +104,13 @@ public class GradleModulesImporter {
         AccessToken writeLock = application.acquireWriteActionLock(getClass());
         try {
           try {
-            result.putAll(doImportModules(modules, model));
+            Map<GradleModule, Module> moduleMappings = doImportModules(modules, model);
+            result.putAll(moduleMappings);
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(
+              new SetupExternalLibrariesTask(moduleMappings, gradleProjectPath, intellijProject),
+              PROJECT_INITIALISATION_DELAY_MS
+            );
           }
           finally {
             model.commit();
@@ -105,7 +125,7 @@ public class GradleModulesImporter {
   }
 
   /**
-   * Actual implementation of {@link #importModules(Iterable, Project, ModifiableModuleModel)}. Insists on all arguments to
+   * Actual implementation of {@link #importModules(Iterable, Project, ModifiableModuleModel, String)}. Insists on all arguments to
    * be ready to use.
    *  
    * @param modules  modules to import
@@ -216,6 +236,156 @@ public class GradleModulesImporter {
     }
   }
 
+  /**
+   * Resolves (downloads if necessary) external libraries necessary for the gradle project located at the given path and configures
+   * them for the corresponding intellij project.
+   * <p/>
+   * <b>Note:</b> is assumed to be executed under write action.
+   * 
+   * @param moduleMappings     gradle-intellij module mappings
+   * @param intellijProject    intellij project for the target gradle project
+   * @param gradleProjectPath  file system path to the target gradle project
+   */
+  private static void setupLibraries(@NotNull final Map<GradleModule, Module> moduleMappings,
+                                     @NotNull final Project intellijProject,
+                                     @NotNull final String gradleProjectPath)
+  {
+    final GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
+    
+    Runnable edtAction = new Runnable() {
+      @Override
+      public void run() {
+        final Ref<GradleProject> gradleProjectRef = new Ref<GradleProject>();
+        //ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        ProgressManager.getInstance().run(
+          new Task.Backgroundable(intellijProject, GradleBundle.message("gradle.library.resolve.progress.text"), false) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              indicator.setIndeterminate(true);
+              try {
+                GradleProjectResolver resolver = manager.getFacade().getResolver();
+                gradleProjectRef.set(resolver.resolveProjectInfo(gradleProjectPath, true));
+              }
+              catch (Exception e) {
+                GradleLog.LOG.warn("Can't resolve external dependencies of the target gradle project (" + gradleProjectPath + ")", e);
+              } 
+            }
+        });
+
+        final GradleProject gradleProject = gradleProjectRef.get();
+        if (gradleProject == null) {
+          return;
+        }
+        
+        Application application = ApplicationManager.getApplication();
+        AccessToken writeLock = application.acquireWriteActionLock(getClass());
+        try {
+          doSetupLibraries(moduleMappings, gradleProject, intellijProject);
+        }
+        finally {
+          writeLock.finish();
+        }
+      }
+    };
+    UIUtil.invokeLaterIfNeeded(edtAction);
+  }
+
+  private static void doSetupLibraries(@NotNull Map<GradleModule, Module> moduleMappings,
+                                       @NotNull GradleProject gradleProject,
+                                       @NotNull Project intellijProject)
+  {
+    Application application = ApplicationManager.getApplication();
+    application.assertWriteAccessAllowed();
+    
+    Map<GradleLibrary, Library> libraryMappings = registerProjectLibraries(gradleProject, intellijProject);
+    if (libraryMappings == null) {
+      return;
+    }
+
+    configureModulesLibraryDependencies(moduleMappings, libraryMappings, gradleProject);
+  }
+
+  /**
+   * Registers {@link GradleProject#getLibraries() libraries} of the given gradle project at the intellij project.
+   * 
+   * @param gradleProject    target gradle project being imported
+   * @param intellijProject  intellij representation of the given gradle project
+   * @return                 mapping between libraries of the given gradle and intellij projects
+   */
+  @Nullable
+  private static Map<GradleLibrary, Library> registerProjectLibraries(GradleProject gradleProject, Project intellijProject) {
+    LibraryTable projectLibraryTable = ProjectLibraryTable.getInstance(intellijProject);
+    if (projectLibraryTable == null) {
+      GradleLog.LOG.warn(
+        "Can't resolve external dependencies of the target gradle project (" + intellijProject + "). Reason: project "
+        + "library table is undefined"
+      );
+      return null;
+    }
+    Map<GradleLibrary, Library> libraryMappings = new HashMap<GradleLibrary, Library>();
+    for (GradleLibrary gradleLibrary : gradleProject.getLibraries()) {
+      Library intellijLibrary = projectLibraryTable.createLibrary(gradleLibrary.getName());
+      libraryMappings.put(gradleLibrary, intellijLibrary);
+      Library.ModifiableModel model = intellijLibrary.getModifiableModel();
+      try {
+        registerPath(gradleLibrary, model);
+      }
+      finally {
+        model.commit();
+      }
+    }
+    return libraryMappings;
+  }
+
+  private static void configureModulesLibraryDependencies(@NotNull Map<GradleModule, Module> moduleMappings,
+                                                          @NotNull final Map<GradleLibrary, Library> libraryMappings,
+                                                          @NotNull GradleProject gradleProject) {
+    for (GradleModule gradleModule : gradleProject.getModules()) {
+      Module intellijModule = moduleMappings.get(gradleModule);
+      if (intellijModule == null) {
+        GradleLog.LOG.warn(String.format(
+          "Can't find intellij module for the gradle module '%s'. Registered mappings: %s", gradleModule, moduleMappings
+        ));
+        continue;
+      }
+      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(intellijModule);
+      final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+      GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
+        @Override
+        public void visit(@NotNull GradleLibraryDependency dependency) {
+          GradleLibrary gradleLibrary = dependency.getLibrary();
+          Library intellijLibrary = libraryMappings.get(gradleLibrary);
+          if (intellijLibrary == null) {
+            GradleLog.LOG.warn(String.format(
+              "Can't find registered intellij library for gradle library '%s'. Registered mappings: %s", gradleLibrary, libraryMappings
+            ));
+            return;
+          }
+          LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(intellijLibrary);
+          orderEntry.setExported(dependency.isExported());
+          orderEntry.setScope(dependency.getScope());
+        }
+      };
+      try {
+        for (GradleDependency dependency : gradleModule.getDependencies()) {
+          dependency.invite(visitor);
+        }
+      }
+      finally {
+        moduleRootModel.commit();
+      }
+    }
+  }
+
+  private static void registerPath(@NotNull GradleLibrary gradleLibrary, @NotNull Library.ModifiableModel model) {
+    for (LibraryPathType pathType : LibraryPathType.values()) {
+      String path = gradleLibrary.getPath(pathType);
+      if (path != null) {
+        model.addRoot(toVfsUrl(path), pathType.getRootType());
+      }
+    }
+  }
+  
   private static String toVfsUrl(@NotNull String path) {
     return LocalFileSystem.PROTOCOL_PREFIX + path;
   }
@@ -224,17 +394,19 @@ public class GradleModulesImporter {
     
     private final Project myProject;
     private final Iterable<GradleModule> myModules;
+    private final String myGradleProjectPath;
 
-    private ImportModulesTask(@NotNull Project project, @NotNull Iterable<GradleModule> modules) {
+    private ImportModulesTask(@NotNull Project project, @NotNull Iterable<GradleModule> modules, @NotNull String gradleProjectPath) {
       myProject = project;
       myModules = modules;
+      myGradleProjectPath = gradleProjectPath;
     }
 
     @Override
     public void run() {
       myAlarm.cancelAllRequests();
       if (!myProject.isInitialized()) {
-        myAlarm.addRequest(new ImportModulesTask(myProject, myModules), PROJECT_INITIALISATION_DELAY_MS);
+        myAlarm.addRequest(new ImportModulesTask(myProject, myModules, myGradleProjectPath), PROJECT_INITIALISATION_DELAY_MS);
         return;
       } 
       
@@ -243,8 +415,26 @@ public class GradleModulesImporter {
           result.setResult(ModuleManager.getInstance(myProject).getModifiableModel());
         }
       }.execute().getResultObject();
+      
+      importModules(myModules, model, myProject, myGradleProjectPath);
+    }
+  }
+  
+  private static class SetupExternalLibrariesTask implements Runnable {
 
-      importModules(myModules, model);
+    private final Map<GradleModule, Module> myModules;
+    private final String                    myGradleProjectPath;
+    private final Project                   myIntellijProject;
+
+    SetupExternalLibrariesTask(@NotNull Map<GradleModule, Module> modules, @NotNull String gradleProjectPath, Project intellijProject) {
+      myModules = modules;
+      myGradleProjectPath = gradleProjectPath;
+      myIntellijProject = intellijProject;
+    }
+
+    @Override
+    public void run() {
+      setupLibraries(myModules, myIntellijProject, myGradleProjectPath); 
     }
   }
 }

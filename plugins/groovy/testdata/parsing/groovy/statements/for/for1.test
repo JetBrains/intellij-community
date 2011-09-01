@@ -1,4 +1,4 @@
-for (i in 1..10) {do()}
+for (i in 1..10) {doo()}
 -----
 Groovy script
   For statement
@@ -26,7 +26,7 @@ Groovy script
         PsiElement({)('{')
         Method call
           Reference expression
-            PsiElement(identifier)('do')
+            PsiElement(identifier)('doo')
           Arguments
             PsiElement(()('(')
             PsiElement())(')')

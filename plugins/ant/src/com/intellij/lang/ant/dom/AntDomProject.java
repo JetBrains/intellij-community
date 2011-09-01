@@ -32,6 +32,7 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
@@ -66,6 +67,24 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   @Attribute("basedir")
   @Convert(value = AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getBasedir();
+
+  @Nullable
+  public final PsiFileSystemItem getProjectBasedir() {
+    final PsiFileSystemItem basedir = getBasedir().getValue();
+    if (basedir != null) {
+      return basedir;
+    }
+    final XmlTag tag = getXmlTag();
+    final VirtualFile containingFile = tag.getContainingFile().getOriginalFile().getVirtualFile();
+    if (containingFile == null) {
+      return null;
+    }
+    final VirtualFile parent = containingFile.getParent();
+    if (parent == null) {
+      return null;
+    }
+    return PsiManager.getInstance(tag.getProject()).findDirectory(parent);
+  }
 
   @Nullable
   public final String getProjectBasedirPath() {

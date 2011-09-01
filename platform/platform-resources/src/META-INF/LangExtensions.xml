@@ -156,6 +156,9 @@
   <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                   serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
 
+  <projectService serviceInterface="com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager"
+                  serviceImplementation="com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager"/>
+
   <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"
                   serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"/>
 

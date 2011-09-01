@@ -19,12 +19,7 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.ArrayUtil;
-
-import java.util.ArrayList;
 import java.util.EmptyStackException;
-import java.util.List;
-import java.util.RandomAccess;
 
 public class IntStack {
   private int[] data;
@@ -73,5 +68,9 @@ public class IntStack {
     }
 
     return false;
+  }
+
+  public void clear() {
+    size = 0;
   }
 }
