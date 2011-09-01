@@ -28,7 +28,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -36,13 +35,13 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -818,12 +817,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @NotNull
   public GlobalSearchScope getResolveScope() {
-    return ((PsiManagerEx)getManager()).getFileManager().getResolveScope(this);
+    return ResolveScopeManager.getElementResolveScope(this);
   }
 
   @NotNull
   public SearchScope getUseScope() {
-    return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
+    return ResolveScopeManager.getElementUseScope(this);
   }
 
   public ItemPresentation getPresentation() {

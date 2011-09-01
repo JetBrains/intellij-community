@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -348,8 +349,7 @@ public class PsiImplUtil {
 
   @NotNull
   public static SearchScope getMemberUseScope(@NotNull PsiMember member) {
-    final PsiManagerEx psiManager = (PsiManagerEx)member.getManager();
-    final GlobalSearchScope maximalUseScope = psiManager.getFileManager().getUseScope(member);
+    final GlobalSearchScope maximalUseScope = ResolveScopeManager.getElementUseScope(member);
     PsiFile file = member.getContainingFile();
     if (JspPsiUtil.isInJspFile(file)) return maximalUseScope;
 
@@ -372,7 +372,7 @@ public class PsiImplUtil {
     }
     else {
       if (file instanceof PsiJavaFile) {
-        PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(((PsiJavaFile)file).getPackageName());
+        PsiPackage aPackage = JavaPsiFacade.getInstance(member.getProject()).findPackage(((PsiJavaFile)file).getPackageName());
         if (aPackage != null) {
           SearchScope scope = PackageScope.packageScope(aPackage, false);
           scope = scope.intersectWith(maximalUseScope);

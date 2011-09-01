@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -83,7 +84,7 @@ public class PsiLiteralExpressionImpl
     }
     if (type == JavaTokenType.STRING_LITERAL) {
       PsiManagerEx manager = getManager();
-      GlobalSearchScope resolveScope = manager.getFileManager().getResolveScope(this);
+      GlobalSearchScope resolveScope = ResolveScopeManager.getElementResolveScope(this);
       return PsiType.getJavaLangString(manager, resolveScope);
     }
     if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {

@@ -20,8 +20,8 @@ package com.intellij.psi.impl;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -113,12 +113,12 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
 
   @NotNull
   public final GlobalSearchScope getResolveScope() {
-    return ((PsiManagerEx)getManager()).getFileManager().getResolveScope(this);
+    return ResolveScopeManager.getElementResolveScope(this);
   }
 
   @NotNull
   public SearchScope getUseScope() {
-    return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
+    return ResolveScopeManager.getElementUseScope(this);
   }
 
   public void navigate(boolean requestFocus) {

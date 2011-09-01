@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -180,12 +181,12 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
 
   @NotNull
   public GlobalSearchScope getResolveScope() {
-    return ((PsiManagerEx)getManager()).getFileManager().getResolveScope(this);
+    return ResolveScopeManager.getElementResolveScope(this);
   }
 
   @NotNull
   public SearchScope getUseScope() {
-    return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
+    return ResolveScopeManager.getElementUseScope(this);
   }
 
   /**
