@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclaration;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.ShiftExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
@@ -42,7 +41,7 @@ public class ForStatement implements GroovyElementTypes {
   private static boolean tradForClauseParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
 
-    if (!ParameterDeclaration.parse(builder, parser, true)) {
+    if (!ParameterDeclaration.parseForParameter(builder, parser)) {
       marker.rollbackTo();
       marker = builder.mark();
       StrictContextExpression.parse(builder, parser);

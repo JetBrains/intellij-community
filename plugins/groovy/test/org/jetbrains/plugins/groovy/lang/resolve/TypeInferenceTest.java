@@ -233,4 +233,8 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testDGMFind() {
     assertTypeEquals("java.io.File", "a.groovy");
   }
+  
+  public void testMultiTypeParameter() {
+    assertTypeEquals("Base", "a.groovy");
+  }
 }

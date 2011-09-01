@@ -36,23 +36,45 @@ import java.util.Set;
  */
 public class ParameterDeclaration implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
-    return parse(builder, parser, false);
+  public static boolean parseForParameter(PsiBuilder builder, GroovyParser parser) {
+    return parse(builder, parser, true, false);
   }
 
-  public static boolean parse(PsiBuilder builder, GroovyParser parser, boolean forForStatement) {
+  public static boolean parseSimpleParameter(PsiBuilder builder, GroovyParser parser) {
+    return parse(builder, parser, false, false);
+  }
+
+  public static boolean parseCatchParameter(PsiBuilder builder, GroovyParser parser) {
+    return parse(builder, parser, false, true);
+  }
+  
+  private static boolean parse(PsiBuilder builder, GroovyParser parser, boolean forForStatement, boolean forCatch) {
     PsiBuilder.Marker pdMarker = builder.mark();
 
     // Parse optional modifier(s)
     final boolean hasModifiers = parseOptionalModifier(builder, parser);
 
     PsiBuilder.Marker rb = builder.mark();
-    final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder);
 
-    if (forForStatement && result == ReferenceElement.ReferenceElementResult.fail && !hasModifiers) {
-      rb.drop();
-      pdMarker.rollbackTo();
-      return false;
+    int typeElementCount = 0;
+    if (forForStatement) {
+      final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder);
+
+      if (true && result == ReferenceElement.ReferenceElementResult.fail && !hasModifiers) {
+        rb.drop();
+        pdMarker.rollbackTo();
+        return false;
+      }
+    }
+    else {
+      do {
+        typeElementCount++;
+        final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder);
+        if (result == ReferenceElement.ReferenceElementResult.fail && ParserUtils.lookAhead(builder, mBOR)) {
+          builder.error(GroovyBundle.message("type.expected"));
+        }
+      }
+      while (forCatch && ParserUtils.getToken(builder, mBOR));
     }
 
     if (mIDENT.equals(builder.getTokenType()) || (!forForStatement && mTRIPLE_DOT.equals(builder.getTokenType()))) {
@@ -64,6 +86,9 @@ public class ParameterDeclaration implements GroovyElementTypes {
         pdMarker.rollbackTo();
         return false;
       }
+      else {
+        typeElementCount = 0;
+      }
     }
 
     // Possible it is a parameter, not statement
@@ -73,7 +98,12 @@ public class ParameterDeclaration implements GroovyElementTypes {
       if (mASSIGN.equals(builder.getTokenType())) {
         VariableInitializer.parse(builder, parser);
       }
-      pdMarker.done(PARAMETER);
+      if (typeElementCount > 1) {
+        pdMarker.done(MULTI_TYPE_PARAMETER);
+      }
+      else {
+        pdMarker.done(PARAMETER);
+      }
       return true;
     }
     else {

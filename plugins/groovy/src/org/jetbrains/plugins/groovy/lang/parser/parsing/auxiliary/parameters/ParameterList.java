@@ -43,7 +43,7 @@ public class ParameterList implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
 
 
-    if (!ParameterDeclaration.parse(builder, parser)) {
+    if (!ParameterDeclaration.parseSimpleParameter(builder, parser)) {
       marker.rollbackTo();
       marker = builder.mark();
       marker.done(PARAMETERS_LIST);
@@ -54,7 +54,7 @@ public class ParameterList implements GroovyElementTypes {
             mCOMMA.equals(builder.getTokenType())) {
       ParserUtils.getToken(builder, mCOMMA);
       ParserUtils.getToken(builder, mNLS);
-      if (!ParameterDeclaration.parse(builder, parser)) {
+      if (!ParameterDeclaration.parseSimpleParameter(builder, parser)) {
         builder.error(GroovyBundle.message("param.expected"));
       }
     }

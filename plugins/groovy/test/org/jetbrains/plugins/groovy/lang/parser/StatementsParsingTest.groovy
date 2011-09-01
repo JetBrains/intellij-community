@@ -123,6 +123,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testTry_catch$try3() throws Throwable { doTest(); }
   public void testTry_catch$try4() throws Throwable { doTest(); }
   public void testTry_catch$try5() throws Throwable { doTest(); }
+  public void testTry_catch$try6() throws Throwable { doTest(); }
   public void testTuples$doubleParens() throws Throwable { doTest(); }
   public void testTuples$methCallNotTuple() throws Throwable { doTest(); }
   public void testTuples$nestedTupleUnsupp() throws Throwable { doTest(); }
