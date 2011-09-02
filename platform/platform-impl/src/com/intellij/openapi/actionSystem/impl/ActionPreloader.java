@@ -17,20 +17,19 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 
 /**
  * @author yole
  */
-public class ActionPreloader {
-  public ActionPreloader(StartupManager manager) {
+public class ActionPreloader implements StartupActivity, DumbAware {
+
+  @Override
+  public void runActivity(Project project) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      manager.registerPostStartupActivity(new DumbAwareRunnable() {
-        public void run() {
-          ((ActionManagerImpl)ActionManager.getInstance()).preloadActions();
-        }
-      });
+      ((ActionManagerImpl)ActionManager.getInstance()).preloadActions();
     }
   }
 }

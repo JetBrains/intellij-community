@@ -16,11 +16,12 @@
 package com.intellij.ide;
 
 import com.intellij.ide.util.TipDialog;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.wm.ToolWindowManager;
 
-public class TipOfTheDayManager implements StartupActivity {
+public class TipOfTheDayManager implements StartupActivity, DumbAware {
   private boolean myVeryFirstProjectOpening = true;
 
   @Override
