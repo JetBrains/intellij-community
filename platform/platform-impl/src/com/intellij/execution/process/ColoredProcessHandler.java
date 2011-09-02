@@ -90,6 +90,9 @@ public class ColoredProcessHandler extends OSProcessHandler {
   }
 
   private Key getCurrentOutputAttributes(final Key outputType) {
+    if (outputType == ProcessOutputTypes.STDERR) {
+      return outputType;
+    }
     return myCurrentColor != null ? myCurrentColor : outputType;
   }
 

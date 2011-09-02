@@ -93,12 +93,30 @@ public class PullUpHelper extends BaseRefactoringProcessor{
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    return new UsageInfo[0];
+    final List<UsageInfo> result = new ArrayList<UsageInfo>();
+    for (MemberInfo memberInfo : myMembersToMove) {
+      final PsiMember member = memberInfo.getMember();
+      if (member.hasModifierProperty(PsiModifier.STATIC)) {
+        for (PsiReference reference : ReferencesSearch.search(member)) {
+          result.add(new UsageInfo(reference));
+        }
+      }
+    }
+    return result.isEmpty() ? UsageInfo.EMPTY_ARRAY : result.toArray(new UsageInfo[result.size()]);
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
     moveMembersToBase();
     moveFieldInitializations();
+    for (UsageInfo usage : usages) {
+      PsiElement element = usage.getElement();
+      if (element instanceof PsiReferenceExpression) {
+        PsiExpression qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
+        if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == mySourceClass) {
+          ((PsiReferenceExpression)qualifierExpression).bindToElement(myTargetSuperClass);
+        }
+      }
+    }
     processMethodsDuplicates();
   }
 

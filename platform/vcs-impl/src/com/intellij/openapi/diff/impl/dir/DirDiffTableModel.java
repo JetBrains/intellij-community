@@ -478,9 +478,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             element.updateTargetFromSource(source);
             fireTableRowsUpdated(row, row);
           } else {
-            element.getParentNode().remove(node);
-            myElements.remove(row);
-            fireTableRowsDeleted(row, row);
+            removeElement(element);
           }
         }
       } finally {
@@ -505,9 +503,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             element.updateSourceFromTarget(target);
             fireTableRowsUpdated(row, row);
           } else {
-            element.getParentNode().remove(node);
-            myElements.remove(row);
-            fireTableRowsDeleted(row, row);
+            removeElement(element);
           }
         }
       } finally {
@@ -516,13 +512,36 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
+  private void removeElement(DirDiffElement element) {
+    int row = myElements.indexOf(element);
+    if (row != -1) {
+      final DTree node = element.getNode();
+      final DTree parentNode = element.getParentNode();
+      parentNode.remove(node);
+      myElements.remove(row);
+      int start = row;      
+      
+      if (row == myElements.size() && myElements.get(row - 1).isSeparator()) {
+        final DirDiffElement el = myElements.get(row - 1);
+        el.getParentNode().remove(el.getNode());
+        myElements.remove(row - 1);
+        start = row - 1;
+      } else if (myElements.get(row).isSeparator() && row > 0 && myElements.get(row - 1).isSeparator()) {
+        final DirDiffElement el = myElements.get(row - 1);
+        el.getParentNode().remove(el.getNode());
+        myElements.remove(row - 1);
+        start = row - 1;
+      }
+      fireTableRowsDeleted(start, row);
+    }
+  }
+
   public void performDelete(DirDiffElement element) {
     final DiffElement source = element.getSource();
     final DiffElement target = element.getTarget();
     final int index = myElements.indexOf(element);
     if (index != -1) {
-      myElements.remove(index);
-      fireTableRowsDeleted(index, index);
+      removeElement(element);
     }
     final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
     try {
