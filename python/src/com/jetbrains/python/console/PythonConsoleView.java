@@ -2,6 +2,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -41,7 +42,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     getPythonLanguageConsole().setPythonConsoleView(this);
     getPythonLanguageConsole().setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
     setUpdateFoldingsEnabled(false);
-    myPyHighlighter = new PyHighlighter(LanguageLevel.PYTHON32);
+    myPyHighlighter = new PyHighlighter(sdk != null ? LanguageLevel.fromPythonVersion(sdk.getVersionString()) : LanguageLevel.getDefault());
     myScheme = getPythonLanguageConsole().getConsoleEditor().getColorsScheme();
   }
 
@@ -112,9 +113,9 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
       myIsIPythonOutput = true;
     }
     else {
-      if (mySourceHighlighter == null) {
+      if (mySourceHighlighter == null || attributes == ProcessOutputTypes.STDERR) {
         print(text, outputTypeForAttributes(attributes));
-        if (myIsIPythonOutput && PyConsoleUtil.detectSourcePrinting(text)) {
+        if (mySourceHighlighter == null && myIsIPythonOutput && PyConsoleUtil.detectSourcePrinting(text)) {
           mySourceHighlighter = new ConsoleSourceHighlighter(this, myScheme, myPyHighlighter);
         }
       }
@@ -131,11 +132,19 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
 
   public ConsoleViewContentType outputTypeForAttributes(Key attributes) {
     final ConsoleViewContentType outputType;
-    if (myIsIPythonOutput) {
-      outputType = ConsoleViewContentType.getConsoleViewType(attributes);
+    if (attributes == ProcessOutputTypes.STDERR) {
+      outputType = ConsoleViewContentType.ERROR_OUTPUT;
+    }
+    else if (attributes == ProcessOutputTypes.SYSTEM) {
+      outputType = ConsoleViewContentType.SYSTEM_OUTPUT;
     }
     else {
-      outputType = ConsoleViewContentType.NORMAL_OUTPUT;
+      if (myIsIPythonOutput) {
+        outputType = ConsoleViewContentType.getConsoleViewType(attributes);
+      }
+      else {
+        outputType = ConsoleViewContentType.NORMAL_OUTPUT;
+      }
     }
 
     return outputType;

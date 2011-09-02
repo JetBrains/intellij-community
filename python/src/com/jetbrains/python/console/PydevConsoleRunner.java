@@ -128,7 +128,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return consoleRunner;
   }
 
-  public void run(final String ... statements2execute) {
+  public void run(final String... statements2execute) {
     ProgressManager.getInstance().run(new Task.Backgroundable(null, "Connecting to console", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setText("Connecting to console...");
@@ -143,9 +143,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   public static PydevConsoleRunner create(Project project,
-                                           Sdk sdk,
-                                           PyConsoleType consoleType,
-                                           String projectRoot) {
+                                          Sdk sdk,
+                                          PyConsoleType consoleType,
+                                          String projectRoot) {
     return create(project, sdk, consoleType, projectRoot, createDefaultEnvironmentVariables(sdk));
   }
 
@@ -262,7 +262,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     AnAction anAction = new AnAction() {
       @Override
       public void actionPerformed(final AnActionEvent e) {
-
+        if (myPydevConsoleCommunication.isExecuting()) {
+          getConsoleView().printText("^C", ProcessOutputTypes.SYSTEM);
+        }
         myPydevConsoleCommunication.interrupt();
       }
 

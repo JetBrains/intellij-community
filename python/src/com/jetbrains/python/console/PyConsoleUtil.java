@@ -30,6 +30,10 @@ public class PyConsoleUtil {
   private PyConsoleUtil() {
   }
 
+  public static boolean isPagingPrompt(@NotNull String prompt) {
+    return IPYTHON_PAGING_PROMPT.equals(prompt.trim());
+  }
+
   static String processPrompts(final LanguageConsoleImpl languageConsole, String string) {
     // Change prompt
     for (String prompt : PROMPTS) {
