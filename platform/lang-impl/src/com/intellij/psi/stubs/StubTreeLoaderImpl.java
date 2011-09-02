@@ -27,6 +27,7 @@ import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
+import com.intellij.util.indexing.IndexingStamp;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -97,5 +98,15 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     }
 
     return null;
+  }
+
+  @Override
+  public void rebuildStubTree(VirtualFile virtualFile) {
+    FileBasedIndex.getInstance().requestReindex(virtualFile);
+  }
+
+  @Override
+  public long getStubTreeTimestamp(VirtualFile vFile) {
+    return IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID);
   }
 }

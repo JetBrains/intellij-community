@@ -30,4 +30,8 @@ public abstract class StubTreeLoader {
   public abstract StubTree readOrBuild(Project project, final VirtualFile vFile);
 
   public abstract StubTree readFromVFile(Project project, final VirtualFile vFile);
+  
+  public abstract void rebuildStubTree(VirtualFile virtualFile);
+
+  public abstract long getStubTreeTimestamp(VirtualFile vFile);
 }

@@ -58,8 +58,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.IndexingStamp;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -610,7 +608,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (!(contentElementType instanceof IStubFileElementType)) {
       final FileViewProvider viewProvider = getViewProvider();
       throw new AssertionError("A stub in a non-stub file '" + vFile +"'; isValid()=" + vFile.isValid() + 
-                               "; IndexStamp="+ IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID) +
+                               "; IndexStamp="+ StubTreeLoader.getInstance().getStubTreeTimestamp(vFile)  +
                                "; Type: " + contentElementType + "; " +
                                "Psi roots: " + viewProvider.getAllFiles() + "; " +
                                " StubUpdatingIndex.canHaveStub(vFile)=" + StubUpdatingIndex.canHaveStub(vFile) + 
@@ -950,7 +948,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         }
       }, ModalityState.NON_MODAL);
 
-      FileBasedIndex.getInstance().requestReindex(vFile);
+      StubTreeLoader.getInstance().rebuildStubTree(vFile);
     }
   }
 
