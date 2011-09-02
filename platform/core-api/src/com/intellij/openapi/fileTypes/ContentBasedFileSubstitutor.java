@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,30 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.lang.Language;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * Perfroms additional analyses on file with {@link com.intellij.openapi.fileTypes.StdFileTypes#CLASS} filetype (e. g. classfile,
- * compiled from other than Java source language).
- *
- * @author ilyas
- */
-public interface ContentBasedClassFileProcessor extends ContentBasedFileSubstitutor {
+public interface ContentBasedFileSubstitutor {
+  ExtensionPointName<ContentBasedFileSubstitutor> EP_NAME = ExtensionPointName.create("com.intellij.contentBasedClassFileProcessor");
 
   /**
-   * @return syntax highlighter for recognized classfile
+   * Checks whether appropriate specific activity is available on given file
+   */
+  boolean isApplicable(Project project, VirtualFile vFile);
+
+  /**
+   * @return specific text representation of compiled classfile
    */
   @NotNull
-  SyntaxHighlighter createHighlighter(Project project, VirtualFile vFile);
+  String obtainFileText(Project project, VirtualFile file);
+
+  /**
+   * @return language for compiled classfile
+   */
+  @Nullable
+  Language obtainLanguageForFile(VirtualFile file);
 }

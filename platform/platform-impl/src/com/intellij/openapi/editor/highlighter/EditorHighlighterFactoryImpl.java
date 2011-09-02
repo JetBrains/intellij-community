@@ -67,11 +67,11 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
       return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, vFile, settings);
     }
 
-    final ContentBasedClassFileProcessor[] processors = Extensions.getExtensions(ContentBasedClassFileProcessor.EP_NAME);
+    final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
     SyntaxHighlighter highlighter = null;
-    for (ContentBasedClassFileProcessor processor : processors) {
-      if (processor.isApplicable(project, vFile)) {
-        highlighter = processor.createHighlighter(project, vFile);
+    for (ContentBasedFileSubstitutor processor : processors) {
+      if (processor.isApplicable(project, vFile) && processor instanceof ContentBasedClassFileProcessor) {
+        highlighter = ((ContentBasedClassFileProcessor) processor).createHighlighter(project, vFile);
       }
     }
     if (highlighter == null) {
