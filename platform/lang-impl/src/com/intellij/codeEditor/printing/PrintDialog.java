@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.util.ui.MappingListCellRenderer;
+import com.intellij.ide.ui.MappingListCellRenderer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -242,9 +242,8 @@ class PrintDialog extends DialogWrapper {
   }
 
   private JPanel createOrientationPanel() {
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.orientation.group"), false, true, true));
-    JPanel panel = panel1;
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.orientation.group"), false, true, true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.gridy = 0;
@@ -269,9 +268,8 @@ class PrintDialog extends DialogWrapper {
   }
 
   private JPanel createStylePanel() {
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.style.group"), false, true, true));
-    JPanel panel = panel1;
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.style.group"), false, true, true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.gridy = 0;
@@ -296,9 +294,8 @@ class PrintDialog extends DialogWrapper {
   }
 
   private JPanel createWrappingPanel() {
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.wrapping.group"), false, true, true));
-    JPanel panel = panel1;
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.wrapping.group"), false, true, true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.gridy = 0;
@@ -323,9 +320,8 @@ class PrintDialog extends DialogWrapper {
   }
 
   private JPanel createMarginsPanel() {
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.margins.group"), false, true, true));
-    JPanel panel = panel1;
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.margins.group"), false, true, true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.gridy = 0;
@@ -413,10 +409,9 @@ class PrintDialog extends DialogWrapper {
     return panel;
   }
 
-  private JPanel createLinePanel(String name, JTextField lineTextField, JComboBox linePlacementCombo, JComboBox lineAlignmentCombo) {
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(name, false, true, true));
-    JPanel panel = panel1;
+  private static JPanel createLinePanel(String name, JTextField lineTextField, JComboBox linePlacementCombo, JComboBox lineAlignmentCombo) {
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder(name, false, true, true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.gridy = 0;
@@ -440,7 +435,7 @@ class PrintDialog extends DialogWrapper {
     panel.add(new MyLabel(CodeEditorBundle.message("print.header.placement.combobox")), gbConstraints);
     linePlacementCombo.addItem(PrintSettings.HEADER);
     linePlacementCombo.addItem(PrintSettings.FOOTER);
-    linePlacementCombo.setRenderer(new MappingListCellRenderer(PLACEMENT_MAP));
+    linePlacementCombo.setRenderer(new MappingListCellRenderer(linePlacementCombo.getRenderer(), PLACEMENT_MAP));
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 0;
     panel.add(linePlacementCombo, gbConstraints);
@@ -452,7 +447,7 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.gridx = 3;
     gbConstraints.weightx = 0;
     panel.add(new MyLabel(CodeEditorBundle.message("print.header.alignment.combobox")), gbConstraints);
-    linePlacementCombo.setRenderer(new MappingListCellRenderer(ALIGNMENT_MAP));
+    linePlacementCombo.setRenderer(new MappingListCellRenderer(linePlacementCombo.getRenderer(), ALIGNMENT_MAP));
     lineAlignmentCombo.addItem(PrintSettings.LEFT);
     lineAlignmentCombo.addItem(PrintSettings.CENTER);
     lineAlignmentCombo.addItem(PrintSettings.RIGHT);
@@ -463,30 +458,29 @@ class PrintDialog extends DialogWrapper {
     return panel;
   }
 
-  private JComboBox createFontNamesComboBox() {
+  private static JComboBox createFontNamesComboBox() {
     JComboBox comboBox = new JComboBox();
     GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
     Font[] fonts = graphicsEnvironment.getAllFonts();
-    for(int i = 0; i < fonts.length; i++) {
-      Font font = fonts[i];
+    for (Font font : fonts) {
       comboBox.addItem(font.getName());
     }
     return comboBox;
   }
 
-  private JComboBox createFontSizesComboBox() {
+  private static JComboBox createFontSizesComboBox() {
     JComboBox comboBox = new JComboBox();
     for(int i = 6; i < 40; i++) {
-      comboBox.addItem(""+i);
+      comboBox.addItem(String.valueOf(i));
     }
     return comboBox;
   }
 
-  private JComboBox createPageSizesCombo() {
+  private static JComboBox createPageSizesCombo() {
     JComboBox pageSizesCombo = new JComboBox();
     String[] names = PageSizes.getNames();
-    for(int i = 0; i < names.length; i++) {
-      pageSizesCombo.addItem(PageSizes.getItem(names[i]));
+    for (String name : names) {
+      pageSizesCombo.addItem(PageSizes.getItem(name));
     }
     return pageSizesCombo;
   }
@@ -532,7 +526,7 @@ class PrintDialog extends DialogWrapper {
       myRbLandscape.setSelected(true);
     }
     myFontNameCombo.setSelectedItem(printSettings.FONT_NAME);
-    myFontSizeCombo.setSelectedItem(""+printSettings.FONT_SIZE);
+    myFontSizeCombo.setSelectedItem(String.valueOf(printSettings.FONT_SIZE));
 
     myCbLineNumbers.setSelected(printSettings.PRINT_LINE_NUMBERS);
 
@@ -543,10 +537,10 @@ class PrintDialog extends DialogWrapper {
       myRbNoWrap.setSelected(true);
     }
 
-    myTopMarginField.setText(""+printSettings.TOP_MARGIN);
-    myBottomMarginField.setText(""+printSettings.BOTTOM_MARGIN);
-    myLeftMarginField.setText(""+printSettings.LEFT_MARGIN);
-    myRightMarginField.setText(""+printSettings.RIGHT_MARGIN);
+    myTopMarginField.setText(String.valueOf(printSettings.TOP_MARGIN));
+    myBottomMarginField.setText(String.valueOf(printSettings.BOTTOM_MARGIN));
+    myLeftMarginField.setText(String.valueOf(printSettings.LEFT_MARGIN));
+    myRightMarginField.setText(String.valueOf(printSettings.RIGHT_MARGIN));
 
     myCbDrawBorder.setSelected(printSettings.DRAW_BORDER);
 
@@ -559,7 +553,7 @@ class PrintDialog extends DialogWrapper {
     myLinePlacementCombo2.setSelectedItem(printSettings.FOOTER_HEADER_PLACEMENT2);
     myLineAlignmentCombo2.setSelectedItem(printSettings.FOOTER_HEADER_ALIGNMENT2);
 
-    myFooterFontSizeCombo.setSelectedItem(""+printSettings.FOOTER_HEADER_FONT_SIZE);
+    myFooterFontSizeCombo.setSelectedItem(String.valueOf(printSettings.FOOTER_HEADER_FONT_SIZE));
     myFooterFontNameCombo.setSelectedItem(printSettings.FOOTER_HEADER_FONT_NAME);
   }
 
@@ -590,8 +584,7 @@ class PrintDialog extends DialogWrapper {
       String fontSizeStr = (String)myFontSizeCombo.getSelectedItem();
       printSettings.FONT_SIZE = Integer.parseInt(fontSizeStr);
     }
-    catch(NumberFormatException e) {
-    }
+    catch(NumberFormatException ignored) { }
 
     printSettings.PRINT_LINE_NUMBERS = myCbLineNumbers.isSelected();
 
@@ -601,28 +594,24 @@ class PrintDialog extends DialogWrapper {
     try {
       printSettings.TOP_MARGIN = Float.parseFloat(myTopMarginField.getText());
     }
-    catch(NumberFormatException e) {
-    }
+    catch(NumberFormatException ignored) { }
 
     try {
       printSettings.BOTTOM_MARGIN = Float.parseFloat(myBottomMarginField.getText());
     }
-    catch(NumberFormatException e) {
-    }
+    catch(NumberFormatException ignored) { }
 
     try {
       printSettings.LEFT_MARGIN = Float.parseFloat(myLeftMarginField.getText());
     }
-    catch(NumberFormatException e) {
-    }
+    catch(NumberFormatException ignored) { }
 
     try {
       printSettings.RIGHT_MARGIN = Float.parseFloat(myRightMarginField.getText());
     }
-    catch(NumberFormatException e) {
-    }
-    printSettings.DRAW_BORDER = myCbDrawBorder.isSelected();
+    catch(NumberFormatException ignored) { }
 
+    printSettings.DRAW_BORDER = myCbDrawBorder.isSelected();
     printSettings.FOOTER_HEADER_TEXT1 = myLineTextField1.getText();
     printSettings.FOOTER_HEADER_ALIGNMENT1 = (String)myLineAlignmentCombo1.getSelectedItem();
     printSettings.FOOTER_HEADER_PLACEMENT1 = (String)myLinePlacementCombo1.getSelectedItem();
@@ -634,8 +623,7 @@ class PrintDialog extends DialogWrapper {
     try {
       printSettings.FOOTER_HEADER_FONT_SIZE = Integer.parseInt((String)myFooterFontSizeCombo.getSelectedItem());
     }
-    catch(NumberFormatException e) {
-    }
+    catch(NumberFormatException ignored) { }
 
     printSettings.FOOTER_HEADER_FONT_NAME = (String)myFooterFontNameCombo.getSelectedItem();
 

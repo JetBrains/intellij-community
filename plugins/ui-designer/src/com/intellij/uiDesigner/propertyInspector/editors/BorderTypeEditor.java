@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.intellij.uiDesigner.propertyInspector.editors;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.shared.BorderType;
-import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -29,24 +29,17 @@ import java.awt.*;
 public final class BorderTypeEditor extends ComboBoxPropertyEditor<BorderType> {
   public BorderTypeEditor(){
     myCbx.setModel(new DefaultComboBoxModel(BorderType.getAllTypes()));
-    myCbx.setRenderer(new MyListCellRenderer());
+    myCbx.setRenderer(new ListCellRendererWrapper<BorderType>(myCbx.getRenderer()) {
+      @Override
+      public void customize(JList list, BorderType value, int index, boolean selected, boolean hasFocus) {
+        final BorderType type = value != null ? value : BorderType.NONE;
+        setText(type.getName());
+      }
+    });
   }
 
   public JComponent getComponent(final RadComponent ignored, final BorderType value, final InplaceContext inplaceContext){
     myCbx.setSelectedItem(value);
     return myCbx;
-  }
-
-  private static final class MyListCellRenderer extends DefaultListCellRenderer{
-    public Component getListCellRendererComponent(
-      final JList list,
-      final Object value,
-      final int index,
-      final boolean isSelected,
-      final boolean cellHasFocus
-    ){
-      final BorderType type = value != null ? (BorderType)value : BorderType.NONE;
-      return super.getListCellRendererComponent(list,type.getName(),index,isSelected,cellHasFocus);
-    }
   }
 }

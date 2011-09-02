@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,19 @@
  */
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.editors.ComboBoxPropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadLayoutManager;
-import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
-import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,16 +37,18 @@ import javax.swing.*;
  */
 public class LayoutManagerProperty extends Property<RadContainer, String> {
   private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
-    @Override protected void customize(final String value) {
+    @Override
+    protected void customize(@NotNull final String value) {
       setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));
     }
   };
 
   private static class LayoutManagerEditor extends ComboBoxPropertyEditor<String> {
     public LayoutManagerEditor() {
-      myCbx.setRenderer(new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          append(LayoutManagerRegistry.getLayoutManagerDisplayName((String) value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      myCbx.setRenderer(new ListCellRendererWrapper<String>(myCbx.getRenderer()) {
+        @Override
+        public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+          setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));
         }
       });
     }
