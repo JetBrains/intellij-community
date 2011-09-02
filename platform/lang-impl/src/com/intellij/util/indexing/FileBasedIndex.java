@@ -115,6 +115,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private final VirtualFileManagerEx myVfManager;
   private final FileDocumentManager myFileDocumentManager;
+  private final FileTypeManager myFileTypeManager;
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
@@ -137,9 +138,11 @@ public class FileBasedIndex implements ApplicationComponent {
     boolean acceptInput(VirtualFile file);
   }
 
-  public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm, MessageBus bus, SerializationManager sm /*need this parameter to ensure component dependency*/) throws IOException {
+  public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm,
+                        FileTypeManager fileTypeManager, MessageBus bus, SerializationManager sm /*need this parameter to ensure component dependency*/) throws IOException {
     myVfManager = vfManager;
     myFileDocumentManager = fdm;
+    myFileTypeManager = fileTypeManager;
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     myConfigPath = calcConfigPath(PathManager.getConfigPath());
     mySystemPath = calcConfigPath(PathManager.getSystemPath());
@@ -167,9 +170,8 @@ public class FileBasedIndex implements ApplicationComponent {
       public void beforeFileTypesChanged(final FileTypeEvent event) {
         cleanupProcessedFlag();
         myTypeToExtensionMap = new HashMap<FileType, Set<String>>();
-        final FileTypeManager manager = event.getManager();
-        for (FileType type : manager.getRegisteredFileTypes()) {
-          myTypeToExtensionMap.put(type, getExtensions(manager, type));
+        for (FileType type : myFileTypeManager.getRegisteredFileTypes()) {
+          myTypeToExtensionMap.put(type, getExtensions(type));
         }
       }
 
@@ -177,37 +179,36 @@ public class FileBasedIndex implements ApplicationComponent {
         final Map<FileType, Set<String>> oldExtensions = myTypeToExtensionMap;
         myTypeToExtensionMap = null;
         if (oldExtensions != null) {
-          final FileTypeManager manager = event.getManager();
           final Map<FileType, Set<String>> newExtensions = new HashMap<FileType, Set<String>>();
-          for (FileType type : manager.getRegisteredFileTypes()) {
-            newExtensions.put(type, getExtensions(manager, type));
+          for (FileType type : myFileTypeManager.getRegisteredFileTypes()) {
+            newExtensions.put(type, getExtensions(type));
           }
           // we are interested only in extension changes or removals.
           // addition of an extension is handled separately by RootsChanged event
           if (!newExtensions.keySet().containsAll(oldExtensions.keySet())) {
-            rebuildAllndices();
+            rebuildAllIndices();
             return;
           }
           for (Map.Entry<FileType, Set<String>> entry : oldExtensions.entrySet()) {
             FileType fileType = entry.getKey();
             Set<String> strings = entry.getValue();
             if (!newExtensions.get(fileType).containsAll(strings)) {
-              rebuildAllndices();
+              rebuildAllIndices();
               return;
             }
           }
         }
       }
 
-      private Set<String> getExtensions(FileTypeManager manager, FileType type) {
+      private Set<String> getExtensions(FileType type) {
         final Set<String> set = new HashSet<String>();
-        for (FileNameMatcher matcher : manager.getAssociations(type)) {
+        for (FileNameMatcher matcher : myFileTypeManager.getAssociations(type)) {
           set.add(matcher.getPresentableString());
         }
         return set;
       }
 
-      private void rebuildAllndices() {
+      private void rebuildAllIndices() {
         for (ID<?, ?> indexId : myIndices.keySet()) {
           try {
             clearIndex(indexId);
