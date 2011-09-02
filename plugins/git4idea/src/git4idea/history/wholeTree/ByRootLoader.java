@@ -130,7 +130,7 @@ public class ByRootLoader extends TaskDescriptor {
     ProgressManager.checkCanceled();
     // does not work
     //myDetailsCache.acceptAnswer(details, myRootHolder.getRoot());
-    myMediator.appendResult(myTicket, commits, parents);
+    myMediator.appendResult(myTicket, commits, parents, myRootHolder.getRoot(), false);
   }
 
   // if there're filters -> parents shouldn't be loaded
@@ -178,7 +178,7 @@ public class ByRootLoader extends TaskDescriptor {
     }, false, myRootHolder.getRoot());
 
     if (! result.isEmpty()) {
-      final StepType stepType = myMediator.appendResult(myTicket, result, null);
+      final StepType stepType = myMediator.appendResult(myTicket, result, null, myRootHolder.getRoot(), true);
       // here we react only on "stop", not on "pause"
       if (StepType.STOP.equals(stepType)) {
         context.cancelEverything();
@@ -214,5 +214,9 @@ public class ByRootLoader extends TaskDescriptor {
 
   public SymbolicRefs getSymbolicRefs() {
     return mySymbolicRefs;
+  }
+
+  public LoaderAndRefresherImpl.MyRootHolder getRootHolder() {
+    return myRootHolder;
   }
 }

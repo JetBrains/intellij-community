@@ -122,6 +122,8 @@
         serviceImplementation="git4idea.DialogManager"/>
     <projectService serviceInterface="git4idea.history.wholeTree.GitLogSettings"
                     serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
+    <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
+                        serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>
     <applicationService
         serviceInterface="git4idea.config.GitVcsApplicationSettings"
         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>

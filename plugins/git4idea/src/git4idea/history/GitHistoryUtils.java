@@ -46,9 +46,11 @@ import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
+import git4idea.history.wholeTree.GitCommitsSequentialIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -159,6 +161,88 @@ public class GitHistoryUtils {
     boolean exists = ! FileStatus.DELETED.equals(changes.get(0).getFileStatus());
     record.setUsedHandler(h);
     return new ItemLatestState(new GitRevisionNumber(record.getHash(), record.getDate()), exists, false);
+  }
+
+  public static void dumpFullHistory(final Project project, VirtualFile root, final String outFilePath) throws VcsException {
+    if (! GitUtil.isGitRoot(new File(root.getPath()))) throw new VcsException("Path " + root.getPath() + " is not git repository root");
+
+    final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    //GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME);
+    parser.parseStatusBeforeName(true);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("--all", "--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history",
+                    "--sparse");
+    h.endOptions();
+
+    // for file sort
+    final Long[] minTs = new Long[1];
+    minTs[0] = Long.MAX_VALUE;
+    final Long[] maxTs = new Long[1];
+    minTs[0] = 0L;
+
+    final OutputStream[] stream = new OutputStream[1];
+    try {
+      stream[0] = new BufferedOutputStream(new FileOutputStream(outFilePath, false));
+      final Semaphore semaphore = new Semaphore();
+      final VcsException[] ioExceptions = new VcsException[1];
+      h.addLineListener(new GitLineHandlerListener() {
+        @Override
+        public void onLineAvailable(String line, Key outputType) {
+          if (line.length() == 0) return;
+          try {
+            GitCommitsSequentialIndex.parseRecord(line);
+            stream[0].write((line + '\n').getBytes("UTF-8"));
+          }
+          catch (IOException e) {
+            ioExceptions[0] = new VcsException(e);
+            h.cancel();
+            semaphore.up();
+          } catch (ProcessCanceledException e) {
+            h.cancel();
+            semaphore.up();
+          }
+          catch (VcsException e) {
+            ioExceptions[0] = e;
+            h.cancel();
+            semaphore.up();
+          }
+        }
+        @Override
+        public void processTerminated(int exitCode) {
+          semaphore.up();
+        }
+        @Override
+        public void startFailed(Throwable exception) {
+        }
+      });
+      semaphore.down();
+      h.start();
+      semaphore.waitFor();
+      if (ioExceptions[0] != null) {
+        throw ioExceptions[0];
+      }
+    }
+    catch (FileNotFoundException e) {
+      throw new VcsException(e);
+    }
+    finally {
+      try {
+        if (stream[0] != null) {
+          stream[0].close();
+        }
+      }
+      catch (IOException e) {
+        throw new VcsException(e);
+      }
+    }
+    /*String result = h.run();
+    if (result.length() > 0) {
+      throw new VcsException(result);
+    }*/
+    File file = new File(outFilePath);
+    if (! file.exists() || file.length() == 0) throw new VcsException("Short repository history not loaded");
   }
 
   /*
@@ -454,12 +538,13 @@ public class GitHistoryUtils {
     h.addParameters(parameters);
     parser.parseStatusBeforeName(true);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", "--full-history");
-    h.endOptions();
     if (paths != null && ! paths.isEmpty()) {
+      h.endOptions();
       h.addRelativeFiles(paths);
     } else {
-      h.addRelativePaths(path);
       h.addParameters("--sparse");
+      h.endOptions();
+      h.addRelativePaths(path);
     }
 
     final VcsException[] exc = new VcsException[1];
@@ -654,11 +739,12 @@ public class GitHistoryUtils {
     h.addParameters(parameters);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8", "--full-history");
 
-    h.endOptions();
     if (paths != null && ! paths.isEmpty()) {
+      h.endOptions();
       h.addRelativeFiles(paths);
     } else {
       h.addParameters("--sparse");
+      h.endOptions();
       h.addRelativePaths(path);
     }
 

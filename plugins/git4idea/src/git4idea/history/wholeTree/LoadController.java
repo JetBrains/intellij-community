@@ -32,13 +32,15 @@ public class LoadController implements Loader {
   private final Project myProject;
   private final Mediator myMediator;
   private final DetailsCache myDetailsCache;
+  private final GitCommitsSequentially myGitCommitsSequentially;
   private LoadAlgorithm myPreviousAlgorithm;
   private NewGitUsersComponent myUsersComponent;
 
-  public LoadController(final Project project, final Mediator mediator, final DetailsCache detailsCache) {
+  public LoadController(final Project project, final Mediator mediator, final DetailsCache detailsCache, final GitCommitsSequentially gitCommitsSequentially) {
     myProject = project;
     myMediator = mediator;
     myDetailsCache = detailsCache;
+    myGitCommitsSequentially = gitCommitsSequentially;
     myUsersIndex = new UsersIndex();
     myUsersComponent = NewGitUsersComponent.getInstance(myProject);
   }
@@ -91,7 +93,7 @@ public class LoadController implements Loader {
     }
 
     final Continuation continuation = Continuation.createFragmented(myProject, true);
-    myPreviousAlgorithm = new LoadAlgorithm(myProject, list, shortLoaders, continuation);
+    myPreviousAlgorithm = new LoadAlgorithm(myProject, list, shortLoaders, continuation, myGitCommitsSequentially);
     myPreviousAlgorithm.fillContinuation();
     continuation.resume();
   }

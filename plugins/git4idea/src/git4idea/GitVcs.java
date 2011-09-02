@@ -55,6 +55,8 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.branch.GitBranchWidget;
+import git4idea.history.wholeTree.GitCommitsSequentialIndex;
+import git4idea.history.wholeTree.GitCommitsSequentially;
 import git4idea.status.GitChangeProvider;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
@@ -369,6 +371,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         statusBar.addWidget(myBranchWidget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), myProject);
       }
     }
+    ((GitCommitsSequentialIndex) ServiceManager.getService(GitCommitsSequentially.class)).activate();
   }
 
   @Override
@@ -399,6 +402,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       statusBar.removeWidget(myBranchWidget.ID());
       myBranchWidget = null;
     }
+    ((GitCommitsSequentialIndex) ServiceManager.getService(GitCommitsSequentially.class)).deactivate();
   }
 
   @NotNull
