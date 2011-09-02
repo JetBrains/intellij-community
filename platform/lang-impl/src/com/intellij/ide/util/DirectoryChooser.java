@@ -16,11 +16,13 @@
 
 package com.intellij.ide.util;
 
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,13 +72,20 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
   @Override
-  protected JComponent createSouthPanel() {
-    final JComponent southPanel = super.createSouthPanel();
+  protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
-    final JCheckBox checkBox = new JCheckBox(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"), myFilterExisting);
-    checkBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myFilterExisting = checkBox.isSelected();
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(new ToggleAction(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"),
+                                     RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"),
+                                     IconLoader.getIcon("/ant/filter.png")) {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return myFilterExisting;
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        myFilterExisting = state;
         final ItemWrapper selectedItem = myView.getSelectedItem();
         PsiDirectory directory = selectedItem != null ? selectedItem.getDirectory() : null;
         if (directory == null && myDefaultSelection != null) {
@@ -105,15 +114,17 @@ public class DirectoryChooser extends DialogWrapper {
           if (myView.getItemsSize() > 0) {
             myView.selectItemByIndex(0);
           }
-        } else {
+        }
+        else {
           myView.selectItemByIndex(selectionId);
         }
         enableButtons();
         myView.getComponent().repaint();
       }
     });
-    panel.add(checkBox, BorderLayout.EAST);
-    panel.add(southPanel, BorderLayout.SOUTH);
+    final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent();
+    component.setBorder(null);
+    panel.add(component, BorderLayout.EAST);
     return panel;
   }
 
