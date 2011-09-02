@@ -2,9 +2,10 @@ package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,6 +18,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -26,13 +28,21 @@ import org.jetbrains.annotations.Nullable;
  * @author traff
  */
 public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCodeExecutor {
+  private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
+
   private PydevConsoleExecuteActionHandler myExecuteActionHandler;
+  private ConsoleSourceHighlighter mySourceHighlighter;
+  private boolean myIsIPythonOutput = false;
+  private PyHighlighter myPyHighlighter;
+  private EditorColorsScheme myScheme;
 
   public PythonConsoleView(final Project project, final String title, Sdk sdk) {
     super(project, new PythonLanguageConsole(project, title, sdk));
     getPythonLanguageConsole().setPythonConsoleView(this);
     getPythonLanguageConsole().setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
     setUpdateFoldingsEnabled(false);
+    myPyHighlighter = new PyHighlighter(LanguageLevel.PYTHON32);
+    myScheme = getPythonLanguageConsole().getConsoleEditor().getColorsScheme();
   }
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
@@ -94,20 +104,40 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
   }
 
   public void printText(String text, final Key attributes) {
-    print(text, outputTypeForAttributes(attributes));
+    if (PyConsoleUtil.detectIPythonEnd(text)) {
+      myIsIPythonOutput = false;
+      mySourceHighlighter = null;
+    }
+    else if (PyConsoleUtil.detectIPythonStart(text)) {
+      myIsIPythonOutput = true;
+    }
+    else {
+      if (mySourceHighlighter == null) {
+        print(text, outputTypeForAttributes(attributes));
+        if (myIsIPythonOutput && PyConsoleUtil.detectSourcePrinting(text)) {
+          mySourceHighlighter = new ConsoleSourceHighlighter(this, myScheme, myPyHighlighter);
+        }
+      }
+      else {
+        try {
+          mySourceHighlighter.printHighlightedSource(text);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+    }
   }
 
-  public static ConsoleViewContentType outputTypeForAttributes(Key attributes) {
+  public ConsoleViewContentType outputTypeForAttributes(Key attributes) {
     final ConsoleViewContentType outputType;
-    if (attributes == ProcessOutputTypes.STDERR) {
-      outputType = ConsoleViewContentType.ERROR_OUTPUT;
-    }
-    else if (attributes == ProcessOutputTypes.SYSTEM) {
-      outputType = ConsoleViewContentType.SYSTEM_OUTPUT;
+    if (myIsIPythonOutput) {
+      outputType = ConsoleViewContentType.getConsoleViewType(attributes);
     }
     else {
       outputType = ConsoleViewContentType.NORMAL_OUTPUT;
     }
+
     return outputType;
   }
 
