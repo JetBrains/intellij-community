@@ -88,8 +88,9 @@ public class GeneralCommandLineTest extends UsefulTestCase {
     assertNotNull(url);
     final File testClass = new File(url.getFile());
 
+    final String javaHome = System.getenv("JAVA_HOME");
     final GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath("java");
+    commandLine.setExePath(javaHome != null ? javaHome + "/bin/java" : "java");
     commandLine.addParameter("-cp");
     commandLine.addParameter(testClass.getParentFile().getParentFile().getParentFile().getParentFile().getAbsolutePath());
     commandLine.addParameter("com.intellij.execution." + testClass.getName().replace(".class", ""));
@@ -116,6 +117,7 @@ public class GeneralCommandLineTest extends UsefulTestCase {
                  0, result);
 
     final Set<String> lines = new HashSet<String>(Arrays.asList(StringUtil.convertLineSeparators(output).split("\n")));
+    lines.remove("=====");
 
     for (Map.Entry<String, String> entry : testEnv.entrySet()) {
       final String str = EnvPassingTest.formatEntry(entry);
@@ -127,16 +129,14 @@ public class GeneralCommandLineTest extends UsefulTestCase {
     final List<String> missed = new ArrayList<String>();
     for (Map.Entry<String, String> entry : parentEnv.entrySet()) {
       final String str = EnvPassingTest.formatEntry(entry);
-      if (passParentEnv) {
-        assertTrue("\"" + str + "\" should be in " + lines,
-                   lines.contains(str));
-      }
-      else if (lines.contains(str)) {
+      if (!lines.contains(str)) {
         missed.add(str);
       }
     }
-    if (!passParentEnv && missed.size() > 0 && parentEnv.size()/missed.size() < 2) {
-      fail(missed + " shouldn't be in " + lines + " (ratio: " + parentEnv.size() + '/' + missed.size() + ')');
+
+    final long pctMissed = Math.round((100.0 * missed.size()) / parentEnv.size());
+    if (passParentEnv && pctMissed >= 10 || !passParentEnv && pctMissed <= 90) {
+      fail("% missed: " + pctMissed + ", missed: " + missed + ", passed: " + lines);
     }
   }
 }
