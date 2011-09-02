@@ -48,9 +48,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -605,6 +603,15 @@ public class TemplateListPanel extends JPanel implements Disposable {
       KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
       JComponent.WHEN_FOCUSED
     );
+    
+    myTree.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2) {
+          renameGroup();
+        }
+      }
+    });
 
     installPopup();
 
@@ -748,17 +755,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        final int selected = getSelectedIndex();
-        final TemplateGroup templateGroup = getGroup(selected);
-        assert templateGroup != null;
-        final String oldName = templateGroup.getName();
-        String newName = Messages.showInputDialog(myTree, "Enter the new group name:", "Rename", null, oldName,
-                                                  new TemplateGroupInputValidator(oldName));
-
-        if (newName != null && !newName.equals(oldName)) {
-          templateGroup.setName(newName);
-          ((DefaultTreeModel)myTree.getModel()).nodeChanged(getNode(selected));
-        }
+        renameGroup();
       }
     };
     rename.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME).getShortcutSet(), myTree);
@@ -811,6 +808,21 @@ public class TemplateListPanel extends JPanel implements Disposable {
         ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
       }
     });
+  }
+
+  private void renameGroup() {
+    final int selected = getSelectedIndex();
+    final TemplateGroup templateGroup = getGroup(selected);
+    if (templateGroup == null) return;
+
+    final String oldName = templateGroup.getName();
+    String newName = Messages.showInputDialog(myTree, "Enter the new group name:", "Rename", null, oldName,
+                                              new TemplateGroupInputValidator(oldName));
+
+    if (newName != null && !newName.equals(oldName)) {
+      templateGroup.setName(newName);
+      ((DefaultTreeModel)myTree.getModel()).nodeChanged(getNode(selected));
+    }
   }
 
   private void updateTemplateDetails(boolean focusKey) {
