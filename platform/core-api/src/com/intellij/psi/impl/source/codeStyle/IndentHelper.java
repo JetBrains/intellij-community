@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,34 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 
-public class HelperFactory {
-  private static Factory INSTANCE = new Factory() {
-    public IndentHelper create(final FileType fileType, final Project project) {
-      return new IndentHelper(fileType, project);
-    }
-  };
-
-  private HelperFactory() {
+/**
+ * @author yole
+ */
+public abstract class IndentHelper {
+  public static IndentHelper getInstance() {
+    return ServiceManager.getService(IndentHelper.class);
   }
 
-  public static IndentHelper createHelper(FileType fileType, Project project) {
-    return INSTANCE.create(fileType, project);
-  }
+  public abstract int getIndent(Project project, FileType fileType, ASTNode element);
 
-  interface Factory {
-    IndentHelper create(FileType fileType, Project project);
-  }
-
-  public static void setFactory(Factory factory) {
-    INSTANCE = factory;
-  }
+  public abstract int getIndent(Project project, FileType fileType, ASTNode element, boolean includeNonSpace);
 }

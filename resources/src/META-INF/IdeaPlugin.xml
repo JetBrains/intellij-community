@@ -245,6 +245,10 @@
     <applicationService serviceInterface="com.intellij.codeInsight.intention.QuickFixFactory"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl"/>
 
+    <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
+                        serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaIndentHelper"
+                        overrides="true"/>
+
     <projectService serviceInterface="com.intellij.ide.util.TreeClassChooserFactory"
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"

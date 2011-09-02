@@ -153,6 +153,9 @@
   <applicationService serviceInterface="com.intellij.ide.util.PsiNavigationSupport"
                       serviceImplementation="com.intellij.ide.util.PsiNavigationSupportImpl"/>
 
+  <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
+                      serviceImplementation="com.intellij.psi.impl.source.codeStyle.IndentHelperImpl"/>
+
   <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                   serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 

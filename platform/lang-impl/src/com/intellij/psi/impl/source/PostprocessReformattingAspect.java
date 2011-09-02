@@ -44,8 +44,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiTreeDebugBuilder;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
-import com.intellij.psi.impl.source.codeStyle.IndentHelper;
-import com.intellij.psi.impl.source.codeStyle.HelperFactory;
+import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.LocalTimeCounter;
@@ -558,25 +557,24 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
                                                final Document document,
                                                final TextRange[] indents,
                                                final int indentAdjustment) {
-    final IndentHelper formatIndentHelper = HelperFactory.createHelper(file.getFileType(), file.getProject());
     final CharSequence charsSequence = document.getCharsSequence();
     for (final TextRange indent : indents) {
       final String oldIndentStr = charsSequence.subSequence(indent.getStartOffset() + 1, indent.getEndOffset()).toString();
-      final int oldIndent = formatIndentHelper.getIndent(oldIndentStr, true);
-      final String newIndentStr = formatIndentHelper.fillIndent(Math.max(oldIndent + indentAdjustment, 0));
+      final int oldIndent = IndentHelperImpl.getIndent(file.getProject(), file.getFileType(), oldIndentStr, true);
+      final String newIndentStr = IndentHelperImpl
+        .fillIndent(file.getProject(), file.getFileType(), Math.max(oldIndent + indentAdjustment, 0));
       document.replaceString(indent.getStartOffset() + 1, indent.getEndOffset(), newIndentStr);
     }
   }
 
   private static int getNewIndent(final PsiFile psiFile, final int firstWhitespace) {
-    final IndentHelper formatIndentHelper = HelperFactory.createHelper(psiFile.getFileType(), psiFile.getProject());
     final Document document = psiFile.getViewProvider().getDocument();
     final int startOffset = document.getLineStartOffset(document.getLineNumber(firstWhitespace));
     int endOffset = startOffset;
     final CharSequence charsSequence = document.getCharsSequence();
     while (Character.isWhitespace(charsSequence.charAt(endOffset++))) ;
     final String newIndentStr = charsSequence.subSequence(startOffset, endOffset - 1).toString();
-    return formatIndentHelper.getIndent(newIndentStr, true);
+    return IndentHelperImpl.getIndent(psiFile.getProject(), psiFile.getFileType(), newIndentStr, true);
   }
 
   public boolean isDisabled() {

@@ -22,20 +22,18 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 
 public class ShiftIndentInsideHelper {
@@ -44,11 +42,13 @@ public class ShiftIndentInsideHelper {
   private final CodeStyleSettings mySettings;
   private final FileType myFileType;
   private final IndentHelper myIndentIndentHelper;
+  private final Project myProject;
 
   public ShiftIndentInsideHelper(FileType fileType, Project project) {
+    myProject = project;
     mySettings = CodeStyleSettingsManager.getSettings(project);
     myFileType = fileType;
-    myIndentIndentHelper = HelperFactory.createHelper(fileType, project);
+    myIndentIndentHelper = IndentHelper.getInstance();
   }
 
   private static int getStartOffset(ASTNode root, ASTNode child) {
@@ -75,10 +75,10 @@ public class ShiftIndentInsideHelper {
         }
                     if (c == '\n' || c == '\r') continue;
         String space = text.substring(offset + 1, offset1);
-        int indent = myIndentIndentHelper.getIndent(space, true);
+        int indent = IndentHelperImpl.getIndent(myProject, myFileType, space, true);
         int newIndent = indent + indentShift;
         newIndent = Math.max(newIndent, 0);
-        String newSpace = myIndentIndentHelper.fillIndent(newIndent);
+        String newSpace = IndentHelperImpl.fillIndent(myProject, myFileType, newIndent);
 
         ASTNode leaf = element.findLeafElementAt(offset);
         if (!mayShiftIndentInside(leaf)) {
@@ -90,23 +90,23 @@ public class ShiftIndentInsideHelper {
 
         if (offset1 < text.length()) {
           ASTNode next = element.findLeafElementAt(offset1);
-          if ((next.getElementType() == ElementType.END_OF_LINE_COMMENT
-               || next.getElementType() == ElementType.C_STYLE_COMMENT
-               || next.getElementType() == JspElementType.JSP_COMMENT
+          if ((next.getElementType() == JavaTokenType.END_OF_LINE_COMMENT
+               || next.getElementType() == JavaTokenType.C_STYLE_COMMENT
+               || next.getElementType() == JspTokenType.JSP_COMMENT
           ) &&
               next != element) {
             if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
-              int commentIndent = myIndentIndentHelper.getIndent(next, true);
+              int commentIndent = myIndentIndentHelper.getIndent(myProject, myFileType, next, true);
               if (commentIndent == 0) continue;
             }
           }
-          else if (next.getElementType() == XmlElementType.XML_DATA_CHARACTERS) {
+          else if (next.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) {
             continue;
           }
         }
 
         int leafOffset = getStartOffset(element, leaf);
-        if (leaf.getElementType() == ElementType.DOC_COMMENT_DATA && leafOffset + leaf.getTextLength() == offset + 1) {
+        if (leaf.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA && leafOffset + leaf.getTextLength() == offset + 1) {
           ASTNode next = element.findLeafElementAt(offset + 1);
           if (next.getElementType() == TokenType.WHITE_SPACE) {
             leaf = next;
@@ -153,10 +153,10 @@ public class ShiftIndentInsideHelper {
   public static boolean mayShiftIndentInside(final ASTNode leaf) {
     return (isComment(leaf) && !checkJspTexts(leaf))
            || leaf.getElementType() == TokenType.WHITE_SPACE
-           || leaf.getElementType() == XmlElementType.XML_DATA_CHARACTERS
-           || leaf.getElementType() == JspElementType.JAVA_CODE
+           || leaf.getElementType() == XmlTokenType.XML_DATA_CHARACTERS
+           || leaf.getElementType() == JspTokenType.JAVA_CODE
            || leaf.getElementType() == JspElementType.JSP_SCRIPTLET
-           || leaf.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN;
+           || leaf.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
   }
 
   private static boolean checkJspTexts(final ASTNode leaf) {

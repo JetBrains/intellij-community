@@ -39,8 +39,6 @@ import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
-import com.intellij.psi.impl.source.codeStyle.HelperFactory;
-import com.intellij.psi.impl.source.codeStyle.JavaHelperFactory;
 import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -144,7 +142,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     JavaChangeUtilSupport.setup();
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
-    HelperFactory.setFactory(new JavaHelperFactory());
     JavaElementType.ANNOTATION.getIndex(); // Initialize stubs.
     Disposer.register(project, this);
   }
