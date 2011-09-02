@@ -16,7 +16,6 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
@@ -145,8 +144,8 @@ public abstract class DumbService {
   public abstract Project getProject();
 
   public static boolean isDumbAware(Object o) {
-    if (o instanceof AnAction) {
-      return ((AnAction)o).isDumbAware();
+    if (o instanceof PossiblyDumbAware) {
+      return ((PossiblyDumbAware)o).isDumbAware();
     } else {
       return o instanceof DumbAware;
     }
