@@ -105,8 +105,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
 
   public abstract boolean isFileIgnored(@NonNls @NotNull String name);
 
-  public abstract boolean isFileIgnored(@NonNls @NotNull VirtualFile file);
-
   /**
    * Returns the list of extensions associated with the specified file type.
    *
