@@ -35,7 +35,6 @@ public class PullUpTest extends LightCodeInsightTestCase {
     doTest(new RefactoringTestUtil.MemberDescriptor("x", PsiField.class),
            new RefactoringTestUtil.MemberDescriptor("getX", PsiMethod.class),
            new RefactoringTestUtil.MemberDescriptor("setX", PsiMethod.class));
-
   }
 
   public void testPullUpInheritedStaticClasses() throws Exception {
@@ -46,7 +45,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
   public void testPullUpPrivateInnerClassWithPrivateConstructor() throws Exception {
     doTest(new RefactoringTestUtil.MemberDescriptor("C", PsiClass.class));
   }
-  
+
   public void testPullUpAndAbstractize() throws Exception {
     doTest(new RefactoringTestUtil.MemberDescriptor("a", PsiMethod.class),
            new RefactoringTestUtil.MemberDescriptor("b", PsiMethod.class, true));
@@ -102,6 +101,10 @@ public class PullUpTest extends LightCodeInsightTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("I", PsiClass.class));
   }
 
+  public void testUpdateStaticRefs() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+  }
+
   private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {
     doTest(true, membersToFind);
   }
@@ -121,7 +124,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
     }
     MemberInfo[] infos = RefactoringTestUtil.findMembers(sourceClass, membersToFind);
 
-    final int[] countMoved = new int[] {0};
+    final int[] countMoved = new int[]{0};
     final MoveMemberListener listener = new MoveMemberListener() {
       @Override
       public void memberMoved(PsiClass aClass, PsiMember member) {
@@ -143,5 +146,4 @@ public class PullUpTest extends LightCodeInsightTestCase {
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
-
 }
