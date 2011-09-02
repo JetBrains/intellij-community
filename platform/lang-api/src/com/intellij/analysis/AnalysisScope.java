@@ -17,6 +17,7 @@
 package com.intellij.analysis;
 
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -358,7 +359,7 @@ public class AnalysisScope {
   private static void doProcessFile(PsiElementVisitor visitor, PsiManager psiManager, PsiFile file) {
     file.accept(visitor);
     psiManager.dropResolveCaches();
-    psiManager.dropFileCaches(file);
+    InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(file);
   }
 
   protected void accept(@NotNull final PsiDirectory dir, @NotNull final PsiElementVisitor visitor, final boolean needReadAction) {

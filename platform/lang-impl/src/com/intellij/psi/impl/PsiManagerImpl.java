@@ -39,7 +39,6 @@ import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -123,11 +122,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     ((FileManagerImpl)myFileManager).processQueue();
     beforeChange(true);
     beforeChange(false);
-  }
-
-  @Override
-  public void dropFileCaches(@NotNull PsiFile file) {
-    InjectedLanguageUtil.clearCachedInjectedFragmentsForFile(file);
   }
 
   public boolean isInProject(@NotNull PsiElement element) {

@@ -25,6 +25,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestUtil;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -177,7 +178,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     psiManager.dropResolveCaches();
     PsiFile file = psiClass.getContainingFile();
     if (file != null) {
-      psiManager.dropFileCaches(file);
+      InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(file);
     }
   }
 

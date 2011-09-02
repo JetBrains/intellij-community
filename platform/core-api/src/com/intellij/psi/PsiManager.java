@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -154,6 +153,4 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return true if the element belongs to the sources of the project, false otherwise.
    */
   public abstract boolean isInProject(@NotNull PsiElement element);
-
-  public abstract void dropFileCaches(@NotNull PsiFile file);
 }

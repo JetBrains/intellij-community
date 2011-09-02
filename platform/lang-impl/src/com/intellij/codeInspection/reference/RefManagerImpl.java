@@ -31,6 +31,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -372,7 +373,7 @@ public class RefManagerImpl extends RefManager {
         visitElement(viewProvider.getPsi(language));
       }
       myPsiManager.dropResolveCaches();
-      myPsiManager.dropFileCaches(file);
+      InjectedLanguageManager.getInstance(myProject).dropFileCaches(file);
     }
   }
 

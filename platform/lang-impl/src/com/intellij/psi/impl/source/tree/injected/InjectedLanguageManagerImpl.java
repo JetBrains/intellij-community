@@ -349,6 +349,11 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     return InjectedLanguageUtil.findInjectedElementNoCommitWithOffset(hostFile, hostDocumentOffset);
   }
 
+  @Override
+  public void dropFileCaches(@NotNull PsiFile file) {
+    InjectedLanguageUtil.clearCachedInjectedFragmentsForFile(file);
+  }
+
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();
   @TestOnly
   public void pushInjectors() {
