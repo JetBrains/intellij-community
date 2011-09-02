@@ -274,11 +274,13 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         if (itemWrapper != null) {
           setIcon(itemWrapper.getIcon(fileIndex));
           setText(itemWrapper.getPresentableUrl());
+        } else {
+          setText("Leave in same source root");
         }
       }
     });
     final VirtualFile[] sourceRoots = getSourceRoots();
-    final VirtualFile initialSourceRoot = fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile());
+    final VirtualFile initialSourceRoot = initialTargetDirectory != null ? fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile()) : null;
     myDestinationFolderCB.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -328,7 +330,10 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         initial = itemWrapper;
       }
     }
-    comboBox.setModel(new CollectionComboBoxModel(items, initial != null ? initial : items.get(0)));
+    if (initialTargetDirectorySourceRoot == null) {
+      items.add(null);
+    }
+    comboBox.setModel(new CollectionComboBoxModel(items, initial != null || items.contains(null) ? initial : items.get(0)));
   }
 
   protected void doHelpAction() {
@@ -529,7 +534,11 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       if (ret != 0) return null;
     }
 
-    final VirtualFile selectedDestination = ((DirectoryChooser.ItemWrapper)myDestinationFolderCB.getComboBox().getSelectedItem()).getDirectory().getVirtualFile();//todo
+    final DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)myDestinationFolderCB.getComboBox().getSelectedItem();
+    if (selectedItem == null) {
+      return new MultipleRootsMoveDestination(targetPackage);
+    }
+    final VirtualFile selectedDestination = selectedItem.getDirectory().getVirtualFile();
     return new AutocreatingSingleSourceRootMoveDestination(targetPackage, selectedDestination);
   }
 
