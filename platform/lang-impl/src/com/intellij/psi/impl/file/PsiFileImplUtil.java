@@ -16,12 +16,11 @@
 
 package com.intellij.psi.impl.file;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -30,15 +29,16 @@ import com.intellij.util.IncorrectOperationException;
 import java.io.IOException;
 
 public class PsiFileImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiFileImplUtil");
+  private PsiFileImplUtil() {
+  }
 
   public static PsiFile setName(final PsiFile file, String newName) throws IncorrectOperationException {
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
 
     try{
-      final FileType newFileType = FileTypeManager.getInstance().getFileTypeByFileName(newName);
-      if (FileTypes.UNKNOWN.equals(newFileType) || newFileType.isBinary()) {
+      final FileType newFileType = FileTypeRegistry.getInstance().getFileTypeByFileName(newName);
+      if (UnknownFileType.INSTANCE.equals(newFileType) || newFileType.isBinary()) {
         // before the file becomes unknown or a binary (thus, not openable in the editor), save it to prevent data loss
         final FileDocumentManager fdm = FileDocumentManager.getInstance();
         final Document doc = fdm.getCachedDocument(vFile);
