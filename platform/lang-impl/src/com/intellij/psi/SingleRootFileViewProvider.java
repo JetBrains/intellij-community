@@ -82,7 +82,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myPhysical = isEventSystemEnabled() &&
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof DummyFileSystem);
-    myExclusionManager = ProjectFileExclusionManager.getInstance(manager.getProject());
+    myExclusionManager = ProjectFileExclusionManager.SERVICE.getInstance(manager.getProject());
   }
 
   @NotNull

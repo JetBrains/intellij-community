@@ -17,7 +17,7 @@ package com.intellij.openapi.file.exclude.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
+import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -45,7 +45,7 @@ public class ExcludeFromProjectAction extends AnAction {
       });
     }
     else {
-      ProjectFileExclusionManager fileExManager = ProjectFileExclusionManager.getInstance(project);
+      ProjectFileExclusionManagerImpl fileExManager = ProjectFileExclusionManagerImpl.getInstance(project);
       if (fileExManager == null) return;
       fileExManager.addExclusion(file);
     }
@@ -79,7 +79,7 @@ public class ExcludeFromProjectAction extends AnAction {
     }
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
-      ProjectFileExclusionManager fileExManager = ProjectFileExclusionManager.getInstance(project);
+      ProjectFileExclusionManagerImpl fileExManager = ProjectFileExclusionManagerImpl.getInstance(project);
       if (fileExManager == null) {
         presentation.setVisible(false);
         return;
