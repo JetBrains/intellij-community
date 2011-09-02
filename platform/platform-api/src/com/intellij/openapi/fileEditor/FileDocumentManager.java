@@ -38,6 +38,13 @@ public abstract class FileDocumentManager implements SavingRequestor {
 
   public abstract void saveAllDocuments();
   public abstract void saveDocument(@NotNull Document document);
+
+  /**
+   * Saves the document without stripping the trailing spaces or adding a blank line in the end of the file.
+   * @param document the document to save.
+   */
+  public abstract void saveDocumentAsIs(@NotNull Document document);
+  
   @NotNull
   public abstract Document[] getUnsavedDocuments();
   public abstract boolean isDocumentUnsaved(@NotNull Document document);

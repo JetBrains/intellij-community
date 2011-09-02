@@ -18,7 +18,6 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -44,19 +43,7 @@ public class PsiFileImplUtil {
         final FileDocumentManager fdm = FileDocumentManager.getInstance();
         final Document doc = fdm.getCachedDocument(vFile);
         if (doc != null) {
-          EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-          
-          String trailer = editorSettings.getStripTrailingSpaces();
-          boolean ensureEOLonEOF = editorSettings.isEnsureNewLineAtEOF();
-          editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-          editorSettings.setEnsureNewLineAtEOF(false);
-          try {
-            fdm.saveDocument(doc);
-          }
-          finally {
-            editorSettings.setStripTrailingSpaces(trailer);
-            editorSettings.setEnsureNewLineAtEOF(ensureEOLonEOF);
-          }
+          fdm.saveDocumentAsIs(doc);
         }
       }
 
