@@ -30,7 +30,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -297,7 +296,7 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   public PsiFile findFile(@NotNull VirtualFile vFile) {
     if (vFile.isDirectory()) return null;
-    final ProjectEx project = (ProjectEx)myManager.getProject();
+    final Project project = myManager.getProject();
     if (project.isDefault()) return null;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
