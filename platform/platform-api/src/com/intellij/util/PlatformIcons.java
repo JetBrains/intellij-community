@@ -121,4 +121,7 @@ public interface PlatformIcons {
   Icon TABLE_ANALYZE = IconLoader.getIcon("/tables/analyze.png");
 
   Icon COMBOBOX_ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
+  
+  Icon EXPORT_ICON = IconLoader.getIcon("/actions/export.png");
+  Icon IMPORT_ICON = IconLoader.getIcon("/actions/import.png");
 }

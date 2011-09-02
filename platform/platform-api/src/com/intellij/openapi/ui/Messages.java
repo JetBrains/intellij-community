@@ -594,7 +594,7 @@ public class Messages {
   public static String showInputDialog(Component parent,
                                        String message,
                                        String title,
-                                       Icon icon,
+                                       @Nullable Icon icon,
                                        @NonNls String initialValue,
                                        InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
