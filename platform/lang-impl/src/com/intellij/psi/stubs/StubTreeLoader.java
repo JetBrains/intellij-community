@@ -34,4 +34,6 @@ public abstract class StubTreeLoader {
   public abstract void rebuildStubTree(VirtualFile virtualFile);
 
   public abstract long getStubTreeTimestamp(VirtualFile vFile);
+
+  public abstract boolean canHaveStub(VirtualFile file);
 }

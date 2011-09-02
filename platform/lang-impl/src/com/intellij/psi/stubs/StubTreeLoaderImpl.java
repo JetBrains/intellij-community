@@ -46,7 +46,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       return fromIndices;
     }
 
-    if (!StubUpdatingIndex.canHaveStub(vFile)) {
+    if (!canHaveStub(vFile)) {
       return null;
     }
 
@@ -108,5 +108,10 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   @Override
   public long getStubTreeTimestamp(VirtualFile vFile) {
     return IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID);
+  }
+
+  @Override
+  public boolean canHaveStub(VirtualFile file) {
+    return StubUpdatingIndex.canHaveStub(file);
   }
 }

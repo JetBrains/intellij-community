@@ -611,7 +611,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
                                "; IndexStamp="+ StubTreeLoader.getInstance().getStubTreeTimestamp(vFile)  +
                                "; Type: " + contentElementType + "; " +
                                "Psi roots: " + viewProvider.getAllFiles() + "; " +
-                               " StubUpdatingIndex.canHaveStub(vFile)=" + StubUpdatingIndex.canHaveStub(vFile) + 
+                               " StubUpdatingIndex.canHaveStub(vFile)=" + StubTreeLoader.getInstance().canHaveStub(vFile) +
                                " content:<<<\n"+
                                StringUtil.first(viewProvider.getContents(),200,true)+
                                "\n>>>; stubs=" + stubHolder.getPlainList());
@@ -885,7 +885,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           builder.append("\n\t").append("getTreeElementNoLock() = ").append(getTreeElementNoLock());
           final VirtualFile vFile = getVirtualFile();
           builder.append("\n\t").append("vFile instanceof VirtualFileWithId = ").append(vFile instanceof VirtualFileWithId);
-          builder.append("\n\t").append("StubUpdatingIndex.canHaveStub(vFile) = ").append(StubUpdatingIndex.canHaveStub(vFile));
+          builder.append("\n\t").append("StubUpdatingIndex.canHaveStub(vFile) = ").append(StubTreeLoader.getInstance().canHaveStub(vFile));
           LOG.error(builder.toString());
         }
         final StubElement currentStubTree = ((IStubFileElementType)contentElementType).getBuilder().buildStubTree(this);
