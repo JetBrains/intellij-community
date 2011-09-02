@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class VirtualFileImpl extends DeprecatedVirtualFile {
+public class VirtualFileImpl extends VirtualFile {
   @SuppressWarnings({"WeakerAccess"}) public long myTimeStamp = -1; // -1, if file content has not been requested yet
 
   @SuppressWarnings({"WeakerAccess"})

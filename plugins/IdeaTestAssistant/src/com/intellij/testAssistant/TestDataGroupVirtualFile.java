@@ -17,7 +17,6 @@ package com.intellij.testAssistant;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -31,7 +30,7 @@ import java.io.OutputStream;
  * @author yole
  */
 @Presentation(icon = "/nodes/testSourceFolder.png")
-public class TestDataGroupVirtualFile extends DeprecatedVirtualFile {
+public class TestDataGroupVirtualFile extends VirtualFile {
   private final VirtualFile myBeforeFile;
   private final VirtualFile myAfterFile;
 

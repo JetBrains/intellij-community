@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -34,7 +33,7 @@ import java.nio.charset.Charset;
 /**
  * In-memory implementation of {@link VirtualFile}.
  */
-public class LightVirtualFile extends DeprecatedVirtualFile {
+public class LightVirtualFile extends VirtualFile {
   private FileType myFileType;
   private CharSequence myContent = "";
   private String myName = "";

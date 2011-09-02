@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
-import com.intellij.openapi.vfs.DeprecatedVirtualFile;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author nik
  */
-public abstract class HttpVirtualFile extends DeprecatedVirtualFile {
+public abstract class HttpVirtualFile extends VirtualFile {
   public abstract RemoteFileInfo getFileInfo();
 }
