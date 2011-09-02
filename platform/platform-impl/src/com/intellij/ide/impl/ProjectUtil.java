@@ -147,10 +147,10 @@ public class ProjectUtil {
 
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       int exitCode = confirmOpenNewProject();
-      if (exitCode == 1) { // "No" option
+      if (exitCode == 0) { // "Yes" option
         if (!closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
       }
-      else if (exitCode != 0) { // not "Yes"
+      else if (exitCode != 1) { // not "No"
         return null;
       }
     }
