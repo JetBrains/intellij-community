@@ -42,9 +42,9 @@ import java.util.Collections;
  * Although this bug is marked as fixed actually Sun just set 10 seconds timeout for {@link java.awt.datatransfer.Clipboard#getContents(Object)}
  * method which may cause unacceptably long UI freezes. So we worked around this as follows:
  * <ul>
- *   <li>for Macs we perform synchronization with system clipboard on a separate thread and schedule it when IDEA frame is activated
- *   or Copy/Cut action in Swing component is invoked, and use native method calls to access system clipboard lock-free (?);</li>
- *   <li>for Linux we temporary set short timeout and check for available formats (which should be fast if a clipboard owner is alive).</li>
+ * <li>for Macs we perform synchronization with system clipboard on a separate thread and schedule it when IDEA frame is activated
+ * or Copy/Cut action in Swing component is invoked, and use native method calls to access system clipboard lock-free (?);</li>
+ * <li>for Linux we temporary set short timeout and check for available formats (which should be fast if a clipboard owner is alive).</li>
  * </ul>
  * </p>
  *
@@ -115,9 +115,11 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   }
 
   private static class ClipboardHandler {
-    public void init() { }
+    public void init() {
+    }
 
-    public void dispose() { }
+    public void dispose() {
+    }
 
     public boolean isDataFlavorAvailable(@NotNull final DataFlavor dataFlavor) {
       return Toolkit.getDefaultToolkit().getSystemClipboard().isDataFlavorAvailable(dataFlavor);
@@ -135,7 +137,8 @@ public class ClipboardSynchronizer implements ApplicationComponent {
             //noinspection BusyWait
             Thread.sleep(50);
           }
-          catch (InterruptedException ignored) { }
+          catch (InterruptedException ignored) {
+          }
           last = e;
         }
       }
@@ -152,14 +155,16 @@ public class ClipboardSynchronizer implements ApplicationComponent {
             //noinspection BusyWait
             Thread.sleep(50);
           }
-          catch (InterruptedException ignored) { }
+          catch (InterruptedException ignored) {
+          }
           continue;
         }
         break;
       }
     }
 
-    public void resetContent() { }
+    public void resetContent() {
+    }
   }
 
   private static class MacClipboardHandler extends ClipboardHandler {
@@ -208,14 +213,20 @@ public class ClipboardSynchronizer implements ApplicationComponent {
               plainTextType = each;
             }
 
-            if (eachType.contains(jvmObject)) {
+            if (eachType != null && eachType.contains(jvmObject)) {
               vmObjectType = each;
             }
           }
 
           if (vmObjectType != null && plainTextType != null) {
             ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
-            result.set(new StringSelection(Foundation.toStringViaUTF8(text)));
+            String value = Foundation.toStringViaUTF8(text);
+            if (value == null) {
+              LOG.info(String.format("[Clipboard] Strange string value (null?) for type: %s", plainTextType));
+            }
+            else {
+              result.set(new StringSelection(value));
+            }
           }
         }
       }, true, true);
