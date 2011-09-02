@@ -14,8 +14,8 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -31,7 +31,7 @@ public class Client {
   private final ChannelPipelineFactory myPipelineFactory;
   private final ChannelFactory myChannelFactory;
   private ChannelFuture myConnectFuture;
-  private final ConcurrentHashMap<UUID, JpsServerResponseHandler> myHandlers = new ConcurrentHashMap<UUID, JpsServerResponseHandler>();
+  private final ConcurrentHashMap<UUID, RequestFuture> myHandlers = new ConcurrentHashMap<UUID, RequestFuture>();
 
   public Client() {
     myChannelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 1);
@@ -46,17 +46,26 @@ public class Client {
           new JpsClientMessageHandler() {
 
             protected JpsServerResponseHandler getHandler(UUID sessionId) {
-              return myHandlers.get(sessionId);
+              final RequestFuture future = myHandlers.get(sessionId);
+              return future != null? future.myHandler : null;
             }
 
             protected void terminateSession(UUID sessionId) {
-              final JpsServerResponseHandler handler = myHandlers.remove(sessionId);
-              if (handler != null) {
+              final RequestFuture future = myHandlers.remove(sessionId);
+              if (future != null) {
+                final JpsServerResponseHandler handler = future.myHandler;
                 try {
-                  handler.sessionTerminated();
+                  if (handler != null) {
+                    try {
+                      handler.sessionTerminated();
+                    }
+                    catch (Throwable ignored) {
+                      ignored.printStackTrace();
+                    }
+                  }
                 }
-                catch (Throwable ignored) {
-                  ignored.printStackTrace();
+                finally {
+                  future.setDone();
                 }
               }
             }
@@ -77,24 +86,26 @@ public class Client {
     };
   }
 
-  // todo: return future?
-  public boolean sendCompileRequest(String projectId, List<String> modules, boolean rebuild, JpsServerResponseHandler handler) throws Throwable {
+  public Future sendCompileRequest(String projectId, List<String> modules, boolean rebuild, JpsServerResponseHandler handler) throws Throwable {
     if (myState.get() != State.CONNECTED) {
-      return false;
+      return null;
     }
 
     final UUID uuid = UUID.randomUUID();
     final JpsRemoteProto.Message.Request request = rebuild? ProtoUtil.createRebuildRequest(projectId, modules) : ProtoUtil.createMakeRequest(projectId, modules);
-    myHandlers.put(uuid, handler);
+    final RequestFuture requestFuture = new RequestFuture(handler);
+    myHandlers.put(uuid, requestFuture);
     boolean success = false;
+
     try {
       final ChannelFuture future = Channels.write(myConnectFuture.getChannel(), ProtoUtil.toMessage(uuid, request));
       future.awaitUninterruptibly();
       success = future.isSuccess();
-      return success;
+      return success? requestFuture : null;
     }
     finally {
       if (!success) {
+        requestFuture.setDone();
         myHandlers.remove(uuid);
         handler.sessionTerminated();
       }
@@ -153,6 +164,49 @@ public class Client {
         myConnectFuture = null;
         myState.compareAndSet(State.DISCONNECTING, State.DISCONNECTED);
       }
+    }
+  }
+
+  private static class RequestFuture implements Future {
+    private final Semaphore mySemaphore = new Semaphore(1);
+    private final AtomicBoolean myDone = new AtomicBoolean(false);
+    private final JpsServerResponseHandler myHandler;
+
+    public RequestFuture(JpsServerResponseHandler handler) {
+      myHandler = handler;
+      mySemaphore.acquireUninterruptibly();
+    }
+
+    public void setDone() {
+      if (!myDone.getAndSet(true)) {
+        mySemaphore.release();
+      }
+    }
+
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      return false;
+    }
+
+    public boolean isCancelled() {
+      return false;
+    }
+
+    public boolean isDone() {
+      return myDone.get();
+    }
+
+    public Object get() throws InterruptedException, ExecutionException {
+      if (!isDone()) {
+        mySemaphore.acquire();
+      }
+      return null;
+    }
+
+    public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+      if (!isDone()) {
+        mySemaphore.tryAcquire(timeout, unit);
+      }
+      return null;
     }
   }
 }
