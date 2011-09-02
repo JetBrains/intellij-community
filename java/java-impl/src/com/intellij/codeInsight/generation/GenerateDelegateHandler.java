@@ -178,7 +178,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     final PsiClass targetClass = ((PsiMember)target).getContainingClass();
     LOG.assertTrue(targetClass != null);
     PsiMethod overridden = targetClass.findMethodBySignature(method, true);
-    if (overridden != null) {
+    if (overridden != null && overridden.getContainingClass() != targetClass) {
       OverrideImplementUtil.annotateOnOverrideImplement(method, targetClass, overridden);
     }
 
