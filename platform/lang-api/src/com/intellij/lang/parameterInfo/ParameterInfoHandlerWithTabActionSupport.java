@@ -35,5 +35,8 @@ public interface ParameterInfoHandlerWithTabActionSupport<ParameterOwner extends
   @NotNull
   Set<Class> getArgumentListAllowedParentClasses();
 
+  @NotNull
+  Set<? extends Class> getArgListStopSearchClasses();
+
   @NotNull Class<ParameterOwner> getArgumentListClass();
 }
