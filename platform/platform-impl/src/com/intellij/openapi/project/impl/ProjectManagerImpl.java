@@ -434,13 +434,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       return false;
     }
 
+    startupManager.runPostStartupActivitiesNew();
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         startupManager.runPostStartupActivities();
-        startupManager.startCacheUpdate();
       }
     });
 
+    startupManager.startCacheUpdate();
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       // should be invoked last
