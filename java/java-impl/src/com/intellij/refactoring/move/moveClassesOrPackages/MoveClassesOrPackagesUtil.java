@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -317,10 +318,10 @@ public class MoveClassesOrPackagesUtil {
     return sourceRootForFile;
   }
 
-  private static void buildDirectoryList(PackageWrapper aPackage,
-                                         VirtualFile[] contentSourceRoots,
-                                         LinkedHashSet<PsiDirectory> targetDirectories,
-                                         Map<PsiDirectory, String> relativePathsToCreate) {
+  public static void buildDirectoryList(PackageWrapper aPackage,
+                                        VirtualFile[] contentSourceRoots,
+                                        LinkedHashSet<PsiDirectory> targetDirectories,
+                                        Map<PsiDirectory, String> relativePathsToCreate) {
 
     sourceRoots:
     for (VirtualFile root : contentSourceRoots) {

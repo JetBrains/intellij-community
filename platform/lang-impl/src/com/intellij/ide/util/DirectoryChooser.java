@@ -284,7 +284,7 @@ public class DirectoryChooser extends DialogWrapper {
     private PathFragment[] myFragments;
     private final String myPostfix;
 
-    ItemWrapper(PsiDirectory directory, String postfix) {
+    public ItemWrapper(PsiDirectory directory, String postfix) {
       myDirectory = directory;
       myPostfix = postfix != null && postfix.length() > 0 ? postfix : null;
     }
