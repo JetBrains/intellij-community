@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -387,5 +388,34 @@ public class ExpressionUtils {
             }
         }
         return true;
+    }
+
+    public static boolean isStringConcatenationOperand(PsiExpression expression) {
+        final PsiElement parent = expression.getParent();
+        if (!(parent instanceof PsiPolyadicExpression)) {
+            return false;
+        }
+        final PsiPolyadicExpression polyadicExpression =
+                (PsiPolyadicExpression)parent;
+        if (!JavaTokenType.PLUS.equals(
+                polyadicExpression.getOperationTokenType())) {
+            return false;
+        }
+        final PsiExpression[] operands = polyadicExpression.getOperands();
+        if (operands.length < 2) {
+            return false;
+        }
+        final int index = ArrayUtil.indexOf(operands, expression);
+        for (int i = 0; i < index; i++) {
+            final PsiType type = operands[i].getType();
+            if (TypeUtils.isJavaLangString(type)) {
+                return true;
+            }
+        }
+        if (index == 0) {
+            final PsiType type = operands[index + 1].getType();
+            return TypeUtils.isJavaLangString(type);
+        }
+        return false;
     }
 }

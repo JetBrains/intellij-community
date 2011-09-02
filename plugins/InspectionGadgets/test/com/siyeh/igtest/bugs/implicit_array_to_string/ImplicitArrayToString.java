@@ -54,4 +54,8 @@ public class ImplicitArrayToString {
         System.out.println(charArray); // should not warn
         System.out.println(args); // should indeed warn
     }
+
+    void concatenation(int[] is) {
+        String s = "string" + is + "string";
+    }
 }

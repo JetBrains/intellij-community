@@ -18,7 +18,6 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
@@ -26,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -218,28 +218,11 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
             if (!(type instanceof PsiArrayType)) {
                 return false;
             }
+            if (ExpressionUtils.isStringConcatenationOperand(expression)) {
+                return true;
+            }
             final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression binaryExpression =
-                        (PsiBinaryExpression) parent;
-                final IElementType tokenType =
-                        binaryExpression.getOperationTokenType();
-                if (!JavaTokenType.PLUS.equals(tokenType)) {
-                    return false;
-                }
-                final PsiExpression lhs = binaryExpression.getLOperand();
-                if (!lhs.equals(expression)) {
-                    final PsiType lhsType = lhs.getType();
-                    return !(lhsType == null ||
-                            !lhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING));
-                }
-                final PsiExpression rhs = binaryExpression.getROperand();
-                if (rhs != null && !rhs.equals(expression)) {
-                    final PsiType rhsType = rhs.getType();
-                    return !(rhsType == null ||
-                            !rhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING));
-                }
-            } else if (parent instanceof PsiExpressionList) {
+            if (parent instanceof PsiExpressionList) {
                 final PsiExpressionList expressionList =
                         (PsiExpressionList) parent;
                 final PsiArrayType arrayType = (PsiArrayType)type;

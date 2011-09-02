@@ -19,12 +19,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -108,41 +108,11 @@ public class LengthOneStringsInConcatenationInspection
             if (value == null || value.length() != 1) {
                 return;
             }
-            if (!isArgumentOfConcatenation(expression) &&
+            if (!ExpressionUtils.isStringConcatenationOperand(expression) &&
                 !isArgumentOfStringAppend(expression)) {
                 return;
             }
             registerError(expression, value);
-        }
-
-        private static boolean isArgumentOfConcatenation(
-                PsiExpression expression) {
-            final PsiElement parent = expression.getParent();
-            if (!(parent instanceof PsiPolyadicExpression)) {
-                return false;
-            }
-            final PsiPolyadicExpression polyadicExpression =
-                    (PsiPolyadicExpression)parent;
-            if (!JavaTokenType.PLUS.equals(
-                    polyadicExpression.getOperationTokenType())) {
-                return false;
-            }
-            final PsiExpression[] operands = polyadicExpression.getOperands();
-            if (operands.length < 2) {
-                return false;
-            }
-            final int index = ArrayUtil.indexOf(operands, expression);
-            for (int i = 0; i < index; i++) {
-                final PsiType type = operands[i].getType();
-                if (TypeUtils.isJavaLangString(type)) {
-                    return true;
-                }
-            }
-            if (index == 0) {
-                final PsiType type = operands[index + 1].getType();
-                return TypeUtils.isJavaLangString(type);
-            }
-            return false;
         }
 
         static boolean isArgumentOfStringAppend(PsiExpression expression) {
