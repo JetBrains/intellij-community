@@ -26,7 +26,7 @@ import com.intellij.codeInsight.template.zencoding.nodes.*;
 import com.intellij.codeInsight.template.zencoding.tokens.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
@@ -134,7 +134,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       .createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), createPhysicalFile);
     VirtualFile vFile = xmlFile.getVirtualFile();
     if (vFile != null) {
-      vFile.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
+      vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     }
     return xmlFile;
   }
