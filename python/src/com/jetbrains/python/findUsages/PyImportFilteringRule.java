@@ -8,13 +8,14 @@ import com.intellij.usages.rules.ImportFilteringRule;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportStatementBase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyImportFilteringRule extends ImportFilteringRule {
   @Override
-  public boolean isVisible(Usage usage) {
+  public boolean isVisible(@NotNull Usage usage) {
     if (usage instanceof PsiElementUsage) {
       final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
       final PsiFile containingFile = psiElement.getContainingFile();
