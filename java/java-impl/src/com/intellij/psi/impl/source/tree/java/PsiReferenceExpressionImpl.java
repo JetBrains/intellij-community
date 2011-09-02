@@ -229,6 +229,11 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
              ? CandidateInfo.RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE
              : JavaResolveResult.EMPTY_ARRAY;
     }
+    // check that all qualifiers must resolve to package parts, to prevent local vars shadowing corresponding package case
+    PsiExpression qualifier = getQualifierExpression();
+    if (qualifier instanceof PsiReferenceExpression && !(((PsiReferenceExpression)qualifier).resolve() instanceof PsiPackage)) {
+      return JavaResolveResult.EMPTY_ARRAY;
+    }
     return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
   }
 
