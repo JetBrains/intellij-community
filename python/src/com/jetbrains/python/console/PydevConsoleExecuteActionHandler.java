@@ -14,8 +14,7 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.codeStyle.HelperFactory;
-import com.intellij.psi.impl.source.codeStyle.IndentHelper;
+import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -35,7 +34,6 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   private String myInMultilineStringState = null;
   private StringBuilder myInputBuffer;
   private int myCurrentIndentSize = -1;
-  private IndentHelper myIndentHelper;
 
   private final ConsoleCommunication myConsoleCommunication;
   private boolean myEnabled = false;
@@ -47,7 +45,6 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     myConsoleView = consoleView;
     myConsoleCommunication = consoleCommunication;
     myConsoleCommunication.addCommunicationListener(this);
-    myIndentHelper = HelperFactory.createHelper(PythonFileType.INSTANCE, consoleView.getConsole().getProject());
   }
 
   @Override
@@ -65,7 +62,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   }
 
   private void processOneLine(String line) {
-    int indentSize = myIndentHelper.getIndent(line, false);
+    int indentSize = IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false);
     if (StringUtil.isEmptyOrSpaces(line)) {
       doProcessLine("\n");
     }
@@ -131,7 +128,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     }
 
     if (!StringUtil.isEmptyOrSpaces(line)) {
-      int indent = myIndentHelper.getIndent(line, false);
+      int indent = IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false);
       boolean flag = false;
       if (shouldIndent(line)) {
         indent += getPythonIndent();
@@ -172,7 +169,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
             more(console, currentEditor);
             if (myCurrentIndentSize == -1) {
               // compute current indentation
-              myCurrentIndentSize = myIndentHelper.getIndent(line, false) + getPythonIndent();
+              myCurrentIndentSize = IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false) + getPythonIndent();
               // In this case we can insert indent automatically
               indentEditor(currentEditor, myCurrentIndentSize);
             }
@@ -258,7 +255,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     new WriteCommandAction(getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
-        EditorModificationUtil.insertStringAtCaret(editor, myIndentHelper.fillIndent(indentSize));
+        EditorModificationUtil.insertStringAtCaret(editor, IndentHelperImpl.fillIndent(getProject(), PythonFileType.INSTANCE, indentSize));
       }
     }.execute();
   }
