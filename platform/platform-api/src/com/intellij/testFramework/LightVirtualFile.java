@@ -17,7 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
@@ -99,7 +99,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
     myLanguage = language;
     myFileType = language.getAssociatedFileType();
     if (myFileType == null) {
-      myFileType = FileTypeManager.getInstance().getFileTypeByFileName(myName);
+      myFileType = FileTypeRegistry.getInstance().getFileTypeByFileName(myName);
     }
   }
 
