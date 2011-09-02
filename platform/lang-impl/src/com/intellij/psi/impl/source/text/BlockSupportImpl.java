@@ -18,7 +18,7 @@ package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
@@ -124,7 +124,7 @@ public class BlockSupportImpl extends BlockSupport {
               holder.getTreeElement().rawAddChildren((TreeElement)chameleon);
 
               if (holder.getTextLength() != newTextStr.length()) {
-                String details = ApplicationManagerEx.getApplicationEx().isInternal()
+                String details = ApplicationManager.getApplication().isInternal()
                            ? "text=" + newTextStr + "; treeText=" + holder.getText() + ";"
                            : "";
                 LOG.error("Inconsistent reparse: " + details + " type=" + elementType);
@@ -142,7 +142,7 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   private static void assertFileLength(PsiFile file, CharSequence newFileText, ASTNode node, IElementType elementType, int start, int end) {
-    if (end > newFileText.length() && ApplicationManagerEx.getApplicationEx().isInternal()) {
+    if (end > newFileText.length() && ApplicationManager.getApplication().isInternal()) {
       String newTextBefore = newFileText.subSequence(0, start).toString();
       String oldTextBefore = file.getText().subSequence(0, start).toString();
       String message = "IOOBE: type=" + elementType +
