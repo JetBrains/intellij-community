@@ -40,7 +40,7 @@ public abstract class WindowManagerEx extends WindowManager {
   }
 
 
-  public abstract IdeFrameImpl getFrame(Project project);
+  public abstract IdeFrameImpl getFrame(@Nullable Project project);
 
   public abstract IdeFrameImpl allocateFrame(Project project);
 
