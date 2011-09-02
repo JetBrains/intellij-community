@@ -16,9 +16,10 @@
 package com.intellij.usages.rules;
 
 import com.intellij.usages.Usage;
+import org.jetbrains.annotations.NotNull;
 
 public interface UsageFilteringRule {
   UsageFilteringRule[] EMPTY_ARRAY = new UsageFilteringRule[0];
 
-  boolean isVisible(Usage usage);
+  boolean isVisible(@NotNull Usage usage);
 }

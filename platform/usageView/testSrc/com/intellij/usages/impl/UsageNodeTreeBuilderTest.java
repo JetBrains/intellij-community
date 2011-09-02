@@ -99,7 +99,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
   private static class LogGroupingRule implements UsageGroupingRule {
     @Override
-    public UsageGroup groupUsage(Usage usage) {
+    public UsageGroup groupUsage(@NotNull Usage usage) {
       return new LogUsageGroup(usage.toString().length());
     }
   }
@@ -232,7 +232,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     };
 
     @Override
-    public UsageGroup groupUsage(Usage usage) {
+    public UsageGroup groupUsage(@NotNull Usage usage) {
       MockUsage mockUsage = (MockUsage)usage;
 
       if (mockUsage.getId() > 1000) return null;

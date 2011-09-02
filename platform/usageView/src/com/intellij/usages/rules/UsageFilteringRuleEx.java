@@ -17,10 +17,11 @@ package com.intellij.usages.rules;
 
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public interface UsageFilteringRuleEx extends UsageFilteringRule {
-  boolean isVisible(Usage usage, UsageTarget[] targets);
+  boolean isVisible(@NotNull Usage usage, @NotNull UsageTarget[] targets);
 }

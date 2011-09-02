@@ -150,7 +150,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider, InspectionT
 
     private static class TemplateUsageGroupingRule implements UsageGroupingRule {
         @Nullable
-        public UsageGroup groupUsage(Usage usage) {
+        public UsageGroup groupUsage(@NotNull Usage usage) {
             if (usage instanceof UsageInfo2UsageAdapter) {
                 final UsageInfo2UsageAdapter u = (UsageInfo2UsageAdapter)usage;
                 final UsageInfo usageInfo = u.getUsageInfo();

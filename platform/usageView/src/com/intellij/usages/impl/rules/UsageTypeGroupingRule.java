@@ -33,11 +33,11 @@ import javax.swing.*;
  */
 public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
   @Override
-  public UsageGroup groupUsage(Usage usage) {
+  public UsageGroup groupUsage(@NotNull Usage usage) {
     return groupUsage(usage, UsageTarget.EMPTY_ARRAY);
   }
 
-  public UsageGroup groupUsage(Usage usage, UsageTarget[] targets) {
+  public UsageGroup groupUsage(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     if (usage instanceof PsiElementUsage) {
       PsiElementUsage elementUsage = (PsiElementUsage)usage;
 

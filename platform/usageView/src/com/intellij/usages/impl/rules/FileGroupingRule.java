@@ -49,7 +49,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     myProject = project;
   }
 
-  public UsageGroup groupUsage(Usage usage) {
+  public UsageGroup groupUsage(@NotNull Usage usage) {
     VirtualFile virtualFile;
     if (usage instanceof UsageInFile && (virtualFile = ((UsageInFile)usage).getFile()) != null) {
       return new FileUsageGroup(myProject, virtualFile);

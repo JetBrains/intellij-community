@@ -127,7 +127,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     }
   }
 
-  public UsageGroup groupUsage(Usage usage) {
+  public UsageGroup groupUsage(@NotNull Usage usage) {
     if (usage instanceof PsiElementUsage) {
       if (usage instanceof UsageInfo2UsageAdapter) {
         final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();

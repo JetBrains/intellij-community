@@ -18,6 +18,7 @@ package com.intellij.usages.rules;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,5 +26,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface UsageGroupingRuleEx extends UsageGroupingRule {
   @Nullable
-  UsageGroup groupUsage(Usage usage, UsageTarget[] targets);
+  UsageGroup groupUsage(@NotNull Usage usage, @NotNull UsageTarget[] targets);
 }
