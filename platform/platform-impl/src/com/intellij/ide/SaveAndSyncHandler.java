@@ -150,17 +150,21 @@ public class SaveAndSyncHandler implements ApplicationComponent {
           refreshOpenFiles();
         }
 
-        if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("refresh VFS");
-          }
-          VirtualFileManager.getInstance().refresh(true);
-        }
+        maybeRefresh(ModalityState.NON_MODAL);
       }
     }, ModalityState.NON_MODAL);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("exit: synchronize()");
+    }
+  }
+
+  public static void maybeRefresh(ModalityState modalityState) {
+    if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("refresh VFS");
+      }
+      VirtualFileManager.getInstance().refresh(true, null, modalityState);
     }
   }
 

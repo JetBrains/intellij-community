@@ -142,6 +142,8 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
     getReady(this).doWhenDone(new Runnable() {
       public void run() {
+        revalidateTree();
+
         Object toSelect = preferredSelection != null ? preferredSelection : myLastSuccessfulSelect;
 
         if (adjustSelection && toSelect != null) {
@@ -219,4 +221,12 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   public Object getElementFor(Object node) {
     return getUi().getElementFor(node);
   }
+
+  public void revalidateTree() {
+     myTree.invalidate();
+     myTree.setRowHeight(myTree.getRowHeight() == -1 ? -2 : -1);
+     myTree.revalidate();
+     myTree.repaint();
+   }
+
 }

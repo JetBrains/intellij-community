@@ -97,17 +97,17 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     myTree.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(final ComponentEvent e) {
-        revalidateTree();
+        myBuilder.revalidateTree();
       }
 
       @Override
       public void componentMoved(final ComponentEvent e) {
-        revalidateTree();
+        myBuilder.revalidateTree();
       }
 
       @Override
       public void componentShown(final ComponentEvent e) {
-        revalidateTree();
+        myBuilder.revalidateTree();
       }
     });
 
@@ -222,13 +222,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         callback.setDone();
       }
     });
-  }
-
-  void revalidateTree() {
-    myTree.invalidate();
-    myTree.setRowHeight(myTree.getRowHeight() == -1 ? -2 : -1);
-    myTree.revalidate();
-    myTree.repaint();
   }
 
   public JTree getTree() {

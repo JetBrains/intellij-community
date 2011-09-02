@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
@@ -94,7 +95,7 @@ public class RefreshSessionImpl extends RefreshSession {
 
       for (VirtualFile file : workQueue) {
         final NewVirtualFile nvf = (NewVirtualFile)file;
-        if (!myIsAsync && !myIsRecursive) { // We're unable to definitely refresh synchronously by means of file watcher.
+        if (!myIsRecursive && (!myIsAsync || !FileWatcher.getInstance().isWatched(nvf))) { // We're unable to definitely refresh synchronously by means of file watcher.
           nvf.markDirty();
         }
 
