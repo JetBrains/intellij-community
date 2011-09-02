@@ -18,11 +18,13 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -282,14 +284,24 @@ public class MoveClassesOrPackagesUtil {
       directory = directories[0];
     }
     else {
-      VirtualFile[] contentSourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
+      final VirtualFile[] contentSourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
       if (contentSourceRoots.length == 1 && !(filterOutSources && !fileIndex.isInTestSourceContent(contentSourceRoots[0]))) {
-        directory = RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots[0]);
+        directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+          @Override
+          public PsiDirectory compute() {
+            return RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots[0]);
+          }
+        });
       }
       else {
         final VirtualFile sourceRootForFile = chooseSourceRoot(packageWrapper, contentSourceRoots, baseDir);
         if (sourceRootForFile == null) return null;
-        directory = psiManager.findDirectory(sourceRootForFile);
+        directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+          @Override
+          public PsiDirectory compute() {
+            return new AutocreatingSingleSourceRootMoveDestination(packageWrapper, sourceRootForFile).getTargetDirectory((PsiDirectory)null);
+          }
+        });
       }
     }
     return directory;
