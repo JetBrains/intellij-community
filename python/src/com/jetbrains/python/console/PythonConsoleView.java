@@ -121,9 +121,6 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     }
     else {
       if (mySourceHighlighter == null || attributes == ProcessOutputTypes.STDERR) {
-        if (detectHyperlink(text, attributes)) {
-
-        }
         if (myHyperlink) {
           printHyperlink(text, attributes);
         }
@@ -131,7 +128,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
           //Print text normally with converted attributes
           print(text, outputTypeForAttributes(attributes));
         }
-        myHyperlink = myIsIPythonOutput && text.startsWith("File:");
+        myHyperlink = detectHyperlink(text, attributes);
         if (mySourceHighlighter == null && myIsIPythonOutput && PyConsoleUtil.detectSourcePrinting(text)) {
           mySourceHighlighter = new ConsoleSourceHighlighter(this, myScheme, myPyHighlighter);
         }
