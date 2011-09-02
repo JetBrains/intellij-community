@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,11 @@ import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.LazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author peter
@@ -34,6 +33,7 @@ public class TooltipLinkHandlerEP extends AbstractExtensionPointBean {
 
   @Attribute("prefix")
   public String prefix;
+
   @Attribute("handlerClass")
   public String handlerClassName;
 
@@ -43,18 +43,23 @@ public class TooltipLinkHandlerEP extends AbstractExtensionPointBean {
     }
   };
 
-  public final boolean handleLink(@NotNull String description, @NotNull final Editor editor, @NotNull final JEditorPane hintComponent) {
-    if (description.startsWith(prefix)) {
-      myHandler.getValue().handleLink(description.substring(prefix.length()).replaceAll("\\<br\\>", "\n"), editor, hintComponent);
-      return true;
+  public static boolean handleLink(@NotNull final String ref, @NotNull final Editor editor) {
+    for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(EP_NAME)) {
+      if (ref.startsWith(handlerEP.prefix)) {
+        final String refSuffix = ref.substring(handlerEP.prefix.length());
+        return handlerEP.myHandler.getValue().handleLink(refSuffix.replaceAll("<br/>", "\n"), editor);
+      }
     }
     return false;
   }
 
   @Nullable
-  public final String getDescription(@NotNull String description, Editor editor) {
-    if (description.startsWith(prefix)) {
-      return myHandler.getValue().getDescription(description.substring(prefix.length()), editor);
+  public static String getDescription(@NotNull final String ref, @NotNull final Editor editor) {
+    for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(EP_NAME)) {
+      if (ref.startsWith(handlerEP.prefix)) {
+        final String refSuffix = ref.substring(handlerEP.prefix.length());
+        return handlerEP.myHandler.getValue().getDescription(refSuffix, editor);
+      }
     }
     return null;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,40 +23,39 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 
 /**
- * Handles tooltip links in format <code>#navigation/file path:offset</code>.
+ * Handles tooltip links in format <code>#navigation/file_path:offset</code>.
+ * On a click opens specified file in an editor and positions caret to the given offset.
  */
 public class NavigationLinkHandler extends TooltipLinkHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.NavigationLinkHandler");
 
   @Override
-  public void handleLink(@NotNull final String suffix, @NotNull final Editor editor, @NotNull final JEditorPane tooltip) {
-    final int pos = suffix.lastIndexOf(':');
-    if (pos <= 0 || pos == suffix.length()-1) {
-      LOG.error("Malformed suffix: " + suffix);
-      return;
+  public boolean handleLink(@NotNull final String refSuffix, @NotNull final Editor editor) {
+    final int pos = refSuffix.lastIndexOf(':');
+    if (pos <= 0 || pos == refSuffix.length() - 1) {
+      LOG.error("Malformed suffix: " + refSuffix);
+      return true;
     }
 
-    final String path = suffix.substring(0, pos);
+    final String path = refSuffix.substring(0, pos);
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
     if (vFile == null) {
       LOG.error("Unknown file: " + path);
-      return;
+      return true;
     }
 
     final int offset;
     try {
-      offset = Integer.parseInt(suffix.substring(pos+1));
+      offset = Integer.parseInt(refSuffix.substring(pos + 1));
     }
     catch (NumberFormatException e) {
-      LOG.error("Malformed suffix: " + suffix);
-      return;
+      LOG.error("Malformed suffix: " + refSuffix);
+      return true;
     }
 
-    tooltip.setVisible(false);
     new OpenFileDescriptor(editor.getProject(), vFile, offset).navigate(true);
+    return true;
   }
 }
