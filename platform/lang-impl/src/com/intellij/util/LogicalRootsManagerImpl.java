@@ -52,7 +52,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     myProject = project;
 
     final MessageBusConnection connection = bus.connect();
-    connection.subscribe(ProjectTopics.LOGICAL_ROOTS, new LogicalRootListener() {
+    connection.subscribe(LOGICAL_ROOTS, new LogicalRootListener() {
       public void logicalRootsChanged() {
         clear();
         //updateCache(moduleManager);
@@ -63,7 +63,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
       }
 
       public void rootsChanged(ModuleRootEvent event) {
-        bus.asyncPublisher(ProjectTopics.LOGICAL_ROOTS).logicalRootsChanged();
+        bus.asyncPublisher(LOGICAL_ROOTS).logicalRootsChanged();
       }
     });
     registerLogicalRootProvider(LogicalRootType.SOURCE_ROOT, new NotNullFunction<Module, List<VirtualFileLogicalRoot>>() {
