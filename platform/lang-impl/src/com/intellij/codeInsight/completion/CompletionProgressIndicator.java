@@ -650,7 +650,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @Override
   public String toString() {
-    return "CompletionProgressIndicator[count=" + myCount + ",phase=" + CompletionServiceImpl.getCompletionPhase() + "]";
+    return "CompletionProgressIndicator[count=" + myCount + ",phase=" + CompletionServiceImpl.getCompletionPhase() + "]@" + System.identityHashCode(this);
   }
 
   protected void handleEmptyLookup(final boolean awaitSecondInvocation) {
