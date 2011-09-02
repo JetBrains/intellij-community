@@ -26,10 +26,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.hash.HashSet;
 
 import java.util.Set;
@@ -81,8 +83,12 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       }
     }
 
+    OffsetKey refEnd = context.trackOffset(context.getTailOffset(), false);
+
+    boolean fillTypeArgs = false;
     if (shouldInsertParentheses(psiClass, position)) {
       if (ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
+        fillTypeArgs = psiClass.hasTypeParameters() && PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
         AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
       }
     }
@@ -118,6 +124,13 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       }
     }
 
+    if (fillTypeArgs) {
+      int typeArgs = context.getOffset(refEnd);
+      if (typeArgs >= 0) {
+        context.getDocument().insertString(typeArgs, "<>");
+        context.getEditor().getCaretModel().moveToOffset(typeArgs + 1);
+      }
+    }
   }
 
   private static boolean shouldInsertParentheses(PsiClass psiClass, PsiElement position) {

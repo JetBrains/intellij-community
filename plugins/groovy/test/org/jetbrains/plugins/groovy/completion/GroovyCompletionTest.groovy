@@ -830,6 +830,10 @@ class X {
     doBasicTest()
   }
 
+  public void testNewClassGenerics() {
+    checkSingleItemCompletion 'new ArrayLi<caret>', 'new ArrayList<<caret>>()'
+  }
+
   public void testPropertyBeforeAccessor() {
     doVariantableTest 'soSe', 'setSoSe'
   }
