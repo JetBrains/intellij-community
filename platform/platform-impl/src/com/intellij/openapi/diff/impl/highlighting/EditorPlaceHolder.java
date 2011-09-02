@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.highlighting.EditorWrapper");
@@ -41,8 +42,8 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
   private FileEditor myFileEditor;
   private FileEditorProvider myFileEditorProvider;
 
-  public EditorPlaceHolder(FragmentSide side, Project project) {
-    super(project);
+  public EditorPlaceHolder(FragmentSide side, Project project, @NotNull Disposable parentDisposable) {
+    super(project, parentDisposable);
     mySide = side;
     resetHighlighters();
   }
@@ -52,9 +53,9 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
     myListener = listener;
   }
 
-  protected void doDispose() {
+  protected void onDisposed() {
     LOG.assertTrue(!isDisposed());
-    super.doDispose();
+    super.onDisposed();
     fireContentChanged();
   }
 
@@ -63,7 +64,7 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
   }
 
   public void setContent(final DiffContent content) {
-    disposeEditor();
+    runRegisteredDisposables();
     myContent = content;
     if (myContent != null) {
       Document document = myContent.getDocument();
@@ -89,7 +90,8 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
             });
           }
         }
-      } else {
+      }
+      else {
         final EditorFactory editorFactory = EditorFactory.getInstance();
         myEditor = DiffUtil.createEditor(document, getProject(), false);
         addDisposable(new Disposable() {

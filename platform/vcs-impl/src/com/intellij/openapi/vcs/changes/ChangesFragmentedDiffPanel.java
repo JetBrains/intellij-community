@@ -23,8 +23,8 @@ import com.intellij.openapi.diff.ShiftedSimpleContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
-import com.intellij.openapi.diff.impl.ContentChangeListener;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentedDiffPanelState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -66,7 +67,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   private final FragmentedContent myFragmentedContent;
   private final String myFilePath;
   private final DiffPanelHolder myMyDiffPanelHolder;
-  private VcsConfiguration myConfiguration;
+  private final VcsConfiguration myConfiguration;
   private final RefreshablePanel myRefreshablePanel;
 
   private DiffPanel myHorizontal;
@@ -81,9 +82,12 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     myMyDiffPanelHolder = new DiffPanelHolder(cache, myProject) {
       @Override
       protected DiffPanel create() {
-        final DiffPanel diffPanel = new DiffPanelImpl(null, myProject, false, myConfiguration.SHORT_DIFF_HORISONTALLY);
-        ((DiffPanelImpl) diffPanel).setDiffPanelState(new FragmentedDiffPanelState((ContentChangeListener)diffPanel, project,
-                                                                                   ! myConfiguration.SHORT_DIFF_HORISONTALLY));
+        final DiffPanel diffPanel = new DiffPanelImpl(null, myProject, false, myConfiguration.SHORT_DIFF_HORISONTALLY){
+          @Override
+          protected DiffPanelState createDiffPanelState(@NotNull Disposable parentDisposable) {
+            return new FragmentedDiffPanelState(this, project, !myConfiguration.SHORT_DIFF_HORISONTALLY, parentDisposable);
+          }
+        };
         diffPanel.enableToolbar(false);
         diffPanel.removeStatusBar();
         DiffPanelOptions o = ((DiffPanelEx)diffPanel).getOptions();
@@ -183,7 +187,8 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   private void savePanel(DiffPanel diffPanel) {
     if (myConfiguration.SHORT_DIFF_HORISONTALLY) {
       myHorizontal = diffPanel;
-    } else {
+    }
+    else {
       myVertical = diffPanel;
     }
   }
@@ -199,6 +204,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     diffPanel.setContents(new SimpleContent(sbOld.toString()), new SimpleContent(sbNew.toString()));
     ((DiffPanelImpl) diffPanel).setLineNumberConvertors(oldConvertor, newConvertor);
     ((DiffPanelImpl) diffPanel).prefferedSizeByContents(-1);
+    Disposer.register(this, diffPanel);
     return diffPanel;
   }
 

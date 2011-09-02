@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -75,7 +76,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private final CodeStyleSettings mySettings;
   private boolean myShouldUpdatePreview;
   protected static final int[] ourWrappings =
-    {CodeStyleSettings.DO_NOT_WRAP, CodeStyleSettings.WRAP_AS_NEEDED, CodeStyleSettings.WRAP_ON_EVERY_ITEM, CodeStyleSettings.WRAP_ALWAYS};
+    {CommonCodeStyleSettings.DO_NOT_WRAP, CommonCodeStyleSettings.WRAP_AS_NEEDED, CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM, CommonCodeStyleSettings.WRAP_ALWAYS};
   private long myLastDocumentModificationStamp;
   private String myTextToReformat = null;
   private final UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
@@ -96,6 +97,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   protected CodeStyleAbstractPanel(@Nullable Language defaultLanguage, @Nullable CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+    Disposer.register(this, myDiffCalculator);
     myCurrentSettings = currentSettings;
     mySettings = settings;
     myDefaultLanguage = defaultLanguage;
@@ -252,9 +254,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    Document document;
     if (documentManager != null) {
-      document = documentManager.getDocument(psiFile);
+      Document document = documentManager.getDocument(psiFile);
       if (document != null) {
         CodeStyleSettings clone = mySettings.clone();
         clone.RIGHT_MARGIN = getAdjustedRightMargin();
@@ -298,7 +299,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0) project = openProjects[0];
     if (project == null) {
-      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this.getPanel()));
+      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(getPanel()));
     }
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
@@ -515,7 +516,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private void blinkHighlighters() {
     MarkupModel markupModel = myEditor.getMarkupModel();
     if (myShowsPreviewHighlighters) {
-      boolean scrollToChange = true;
       Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
       VisualPosition visualStart = myEditor.xyToVisualPosition(visibleArea.getLocation());
       VisualPosition visualEnd = myEditor.xyToVisualPosition(new Point(visibleArea.x + visibleArea.width, visibleArea.y + visibleArea.height));
@@ -533,6 +533,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       TextAttributes borderAttributes = new TextAttributes(
         null, null, backgroundAttributes.getBackgroundColor(), EffectType.BOXED, Font.PLAIN
       );
+      boolean scrollToChange = true;
       for (TextRange range : myPreviewRangesToHighlight) {
         if (scrollToChange) {
           boolean rangeVisible = isWithinBounds(myEditor.offsetToVisualPosition(range.getStartOffset()), visualStart, visualEnd)

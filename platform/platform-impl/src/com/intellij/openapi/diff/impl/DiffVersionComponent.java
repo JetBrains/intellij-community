@@ -16,8 +16,9 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 
 public interface DiffVersionComponent {
-  void addDisposable(Disposable disposable);
+  void addDisposable(@NotNull Disposable disposable);
   void removeContent();
 }

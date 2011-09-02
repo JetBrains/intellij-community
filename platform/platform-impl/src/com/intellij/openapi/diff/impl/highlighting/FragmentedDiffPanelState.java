@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.highlighting;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.ContentChangeListener;
 import com.intellij.openapi.diff.impl.fragments.FragmentListImpl;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -41,10 +43,10 @@ import java.util.List;
 public class FragmentedDiffPanelState extends DiffPanelState {
   // fragment _start_ lines
   private List<BeforeAfter<Integer>> myRanges;
-  private NumberedFragmentHighlighter myFragmentHighlighter;
+  private final NumberedFragmentHighlighter myFragmentHighlighter;
 
-  public FragmentedDiffPanelState(ContentChangeListener changeListener, Project project, boolean drawNumber) {
-    super(changeListener, project);
+  public FragmentedDiffPanelState(ContentChangeListener changeListener, Project project, boolean drawNumber, @NotNull Disposable parentDisposable) {
+    super(changeListener, project, parentDisposable);
     myFragmentHighlighter = new NumberedFragmentHighlighter(myAppender1, myAppender2, drawNumber);
   }
 
@@ -62,8 +64,7 @@ public class FragmentedDiffPanelState extends DiffPanelState {
       line.highlight(myFragmentHighlighter);
     }
     ArrayList<LineFragment> allLineFragments = new ArrayList<LineFragment>();
-    for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext();) {
-      LineFragment lineFragment = iterator.next();
+    for (LineFragment lineFragment : lines) {
       allLineFragments.add(lineFragment);
       lineFragment.addAllDescendantsTo(allLineFragments);
     }
@@ -88,7 +89,7 @@ public class FragmentedDiffPanelState extends DiffPanelState {
     final List<BeforeAfter<TextRange>> ranges = new ArrayList<BeforeAfter<TextRange>>();
     for (int i = 0; i < myRanges.size(); i++) {
       final BeforeAfter<Integer> start = lineStarts(i);
-      final BeforeAfter<Integer> end = (i == myRanges.size() - 1) ?
+      final BeforeAfter<Integer> end = i == myRanges.size() - 1 ?
         new BeforeAfter<Integer>(myAppender1.getDocument().getTextLength(), myAppender2.getDocument().getTextLength()) :
         lineStarts(i + 1);
 

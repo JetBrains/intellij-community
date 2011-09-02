@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.actions.MergeOperations;
@@ -45,12 +46,11 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 10/14/10 2:44 PM
  */
-public class ChangesDiffCalculator {
-
-  private final BaseMarkup myOldMarkup = new BaseMarkup(FragmentSide.SIDE1);
-  private final ChangesCollector myNewMarkup = new ChangesCollector();
-  private final TextCompareProcessor myCompareProcessor = new TextCompareProcessor(ComparisonPolicy.DEFAULT);
+public class ChangesDiffCalculator implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.ChangesDiffCalculator");
+  private final BaseMarkup myOldMarkup = new BaseMarkup(FragmentSide.SIDE1, this);
+  private final ChangesCollector myNewMarkup = new ChangesCollector(this);
+  private final TextCompareProcessor myCompareProcessor = new TextCompareProcessor(ComparisonPolicy.DEFAULT);
 
   public Collection<TextRange> calculateDiff(@NotNull final Document beforeDocument, @NotNull final Document currentDocument) {
     myNewMarkup.ranges.clear();
@@ -76,6 +76,10 @@ public class ChangesDiffCalculator {
     return new ArrayList<TextRange>(myNewMarkup.ranges);
   }
 
+  @Override
+  public void dispose() {
+  }
+
   /**
    * Base {@link DiffMarkup} implementation that does nothing.
    */
@@ -85,8 +89,8 @@ public class ChangesDiffCalculator {
     public Document document;
     private final FragmentSide mySide;
 
-    BaseMarkup(FragmentSide side) {
-      super(null);
+    BaseMarkup(@NotNull FragmentSide side, @NotNull Disposable parentDisposable) {
+      super(null, parentDisposable);
       mySide = side;
     }
 
@@ -130,14 +134,12 @@ public class ChangesDiffCalculator {
   }
 
   private static class ChangesCollector extends BaseMarkup {
-
-    private static final Set<TextDiffTypeEnum> INTERESTED_DIFF_TYPES
-      = EnumSet.of(TextDiffTypeEnum.INSERT, TextDiffTypeEnum.DELETED, TextDiffTypeEnum.CHANGED);
+    private static final Set<TextDiffTypeEnum> INTERESTED_DIFF_TYPES = EnumSet.of(TextDiffTypeEnum.INSERT, TextDiffTypeEnum.DELETED, TextDiffTypeEnum.CHANGED);
 
     public final List<TextRange> ranges = new ArrayList<TextRange>();
 
-    ChangesCollector() {
-      super(FragmentSide.SIDE2);
+    ChangesCollector(@NotNull Disposable parentDisposable) {
+      super(FragmentSide.SIDE2, parentDisposable);
     }
 
     @Override

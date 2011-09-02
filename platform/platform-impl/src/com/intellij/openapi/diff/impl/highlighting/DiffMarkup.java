@@ -36,10 +36,10 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
+import java.util.List;
 
-public abstract class DiffMarkup implements EditorSource {
+public abstract class DiffMarkup implements EditorSource, Disposable {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.openapi.diff.impl.highlighting.EditorTextAppender");
   private static final int LAYER = HighlighterLayer.SELECTION - 1;
@@ -48,11 +48,12 @@ public abstract class DiffMarkup implements EditorSource {
   private final ArrayList<RangeHighlighter> myHighLighters = new ArrayList<RangeHighlighter>();
   private final HashSet<RangeHighlighter> myActionHighlighters = new HashSet<RangeHighlighter>();
   private final Project myProject;
-  private final ArrayList<Disposable> myDisposables = new ArrayList<Disposable>();
+  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
   private boolean myDisposed = false;
 
-  protected DiffMarkup(Project project) {
+  protected DiffMarkup(Project project, @NotNull Disposable parentDisposable) {
     myProject = project;
+    Disposer.register(parentDisposable, this);
   }
 
   private MarkupModel getMarkupModel() {
@@ -199,15 +200,16 @@ public abstract class DiffMarkup implements EditorSource {
     return myProject;
   }
 
-  protected void disposeEditor() {
+  protected void runRegisteredDisposables() {
     resetHighlighters();
-    for (Disposable disposable : myDisposables) {
-      Disposer.dispose(disposable);
+    for (Disposable runnable : myDisposables) {
+      Disposer.dispose(runnable);
     }
     myDisposables.clear();
   }
 
   public void addDisposable(@NotNull Disposable disposable) {
+    Disposer.register(this, disposable);
     myDisposables.add(disposable);
   }
 
@@ -219,12 +221,11 @@ public abstract class DiffMarkup implements EditorSource {
 
   public final void dispose() {
     if (isDisposed()) return;
-    doDispose();
+    onDisposed();
     myDisposed = true;
   }
 
-  protected void doDispose() {
-    disposeEditor();
+  protected void onDisposed() {
   }
 
   public void removeActions() {
