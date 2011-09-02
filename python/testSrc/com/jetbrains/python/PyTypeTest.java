@@ -267,12 +267,6 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     return myFixture.findElementByText("expr", PyExpression.class);
   }
 
-  private static String msg(PyType expected, PyType actual, TypeEvalContext context) {
-    return String.format("Expected: %s, actual: %s",
-                         PythonDocumentationProvider.getTypeName(expected, context),
-                         PythonDocumentationProvider.getTypeName(actual, context));
-  }
-
   private void doTest(final String expectedType, final String text) {
     PyExpression expr = parseExpr(text);
     TypeEvalContext context = TypeEvalContext.slow().withTracing();
