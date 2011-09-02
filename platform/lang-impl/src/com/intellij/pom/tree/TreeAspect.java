@@ -22,19 +22,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class TreeAspect implements PomModelAspect{
+public class TreeAspect implements PomModelAspect {
   public TreeAspect(@NotNull PomModel model) {
     model.registerAspect(TreeAspect.class, this, Collections.<PomModelAspect>emptySet());
   }
 
-  public void projectOpened() {}
-  public void projectClosed() {}
-  public void initComponent() {}
-  public void disposeComponent() {}
   public void update(PomModelEvent event) {}
-
-  @NotNull
-  public String getComponentName() {
-    return "Tree POM aspect";
-  }
 }

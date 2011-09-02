@@ -49,8 +49,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -686,24 +684,6 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
         if (indentAdjustment != 0) adjustIndentationInRange(psiFile, document, whitespaces, indentAdjustment);
       }
     }
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "Postponed reformatting model";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   @TestOnly
