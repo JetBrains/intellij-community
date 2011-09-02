@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author peter
@@ -32,9 +33,10 @@ public abstract class AbstractClosureParameterEnhancer extends GrVariableEnhance
 
     assert closure.isValid();
 
+    List<GrParameter> parameters = Arrays.asList(closure.getAllParameters());
     @SuppressWarnings({"SuspiciousMethodCalls"})
-    int index = Arrays.asList(closure.getAllParameters()).indexOf(variable);
-    assert index >= 0;
+    int index = parameters.indexOf(variable);
+    assert index >= 0 : parameters + "; " + variable;
     return TypesUtil.boxPrimitiveType(getClosureParameterType(closure, index), closure.getManager(), closure.getResolveScope());
   }
 
