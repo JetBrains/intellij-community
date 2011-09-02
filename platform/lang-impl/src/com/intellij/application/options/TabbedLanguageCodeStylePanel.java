@@ -71,8 +71,8 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     addIndentOptionsTab(settings);
     if (provider != null && !provider.usesSharedPreview()) {
       addSpacesTab(settings);
-      addBlankLinesTab(settings);
       addWrappingAndBracesTab(settings);
+      addBlankLinesTab(settings);
     }
   }
 
