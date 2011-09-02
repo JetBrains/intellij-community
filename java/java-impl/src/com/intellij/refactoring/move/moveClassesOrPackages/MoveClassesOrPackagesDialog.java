@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -23,8 +25,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,11 +45,10 @@ import com.intellij.refactoring.ui.ClassNameReferenceEditor;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.RecentsManager;
-import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.*;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +57,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.*;
 
 public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   @NonNls private static final String RECENTS_KEY = "MoveClassesOrPackagesDialog.RECENTS_KEY";
@@ -66,7 +71,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private ReferenceEditorComboWithBrowseButton myWithBrowseButtonReference;
   private JCheckBox myCbSearchInComments;
   private JCheckBox myCbSearchTextOccurences;
-  private JCheckBox myCbMoveToAnotherSourceFolder;
   private String myHelpID;
   private final boolean mySearchTextOccurencesEnabled;
   private PsiDirectory myInitialTargetDirectory;
@@ -79,6 +83,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private ReferenceEditorWithBrowseButton myInnerClassChooser;
   private JPanel myMoveClassPanel;
   private JPanel myMovePackagePanel;
+  private ComboboxWithBrowseButton myDestinationFolderCB;
+  private JPanel myTargetPanel;
   private boolean myHavePackages;
   private boolean myTargetDirectoryFixed;
 
@@ -131,7 +137,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private void updateControlsEnabled() {
     myClassPackageChooser.setEnabled(myToPackageRadioButton.isSelected());
     myInnerClassChooser.setEnabled(myMakeInnerClassOfRadioButton.isSelected());
-    myCbMoveToAnotherSourceFolder.setEnabled(isMoveToPackage() && getSourceRoots().length > 1 && !myTargetDirectoryFixed);
+    UIUtil.setEnabled(myTargetPanel, isMoveToPackage() && getSourceRoots().length > 1 && !myTargetDirectoryFixed, true);
     validateButtons();
   }
 
@@ -211,7 +217,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
   public void setData(PsiElement[] psiElements,
                       String targetPackageName,
-                      PsiDirectory initialTargetDirectory,
+                      final PsiDirectory initialTargetDirectory,
                       boolean isTargetDirectoryFixed,
                       boolean searchInComments,
                       boolean searchForTextOccurences,
@@ -231,7 +237,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     }
     else if (psiElements.length == 1) {
       PsiElement firstElement = psiElements[0];
-      LOG.assertTrue(firstElement.getContext() != null);
+      PsiElement parent = firstElement.getParent();
+      LOG.assertTrue(parent != null);
       myNameLabel.setText(RefactoringBundle.message("move.single.class.or.package.name.label", UsageViewUtil.getType(firstElement),
                                                     UsageViewUtil.getLongName(firstElement)));
     }
@@ -245,16 +252,88 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myCbSearchInComments.setSelected(searchInComments);
     myCbSearchTextOccurences.setSelected(searchForTextOccurences);
 
-    if (getSourceRoots().length == 1) {
-      myCbMoveToAnotherSourceFolder.setSelected(false);
-      myCbMoveToAnotherSourceFolder.setEnabled(false);
-    }
-    else {
-      myCbMoveToAnotherSourceFolder.setSelected(!isTargetDirectoryFixed);
-    }
+    UIUtil.setEnabled(myTargetPanel, getSourceRoots().length > 0 && isMoveToPackage() && !isTargetDirectoryFixed, true);
+    final JComboBox comboBox = myDestinationFolderCB.getComboBox();
+    new ComboboxSpeedSearch(comboBox){
+      @Override
+      protected String getElementText(Object element) {
+        if (element instanceof DirectoryChooser.ItemWrapper) {
+          final VirtualFile virtualFile = ((DirectoryChooser.ItemWrapper)element).getDirectory().getVirtualFile();
+          final Module module = ModuleUtil.findModuleForFile(virtualFile, myProject);
+          if (module != null) {
+            return module.getName();
+          }
+        }
+        return super.getElementText(element);
+      }
+    };
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    comboBox.setRenderer(new ListCellRendererWrapper<DirectoryChooser.ItemWrapper>(comboBox) {
+      @Override
+      public void customize(JList list, DirectoryChooser.ItemWrapper itemWrapper, int index, boolean selected, boolean hasFocus) {
+        if (itemWrapper != null) {
+          setIcon(itemWrapper.getIcon(fileIndex));
+          setText(itemWrapper.getPresentableUrl());
+        } else {
+          setText("Leave in same source root");
+        }
+      }
+    });
+    final VirtualFile[] sourceRoots = getSourceRoots();
+    final VirtualFile initialSourceRoot = initialTargetDirectory != null ? fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile()) : null;
+    myDestinationFolderCB.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        VirtualFile root = MoveClassesOrPackagesUtil
+          .chooseSourceRoot(new PackageWrapper(myManager, getTargetPackage()), sourceRoots, initialTargetDirectory);
+        if (root == null) return;
+        final ComboBoxModel model = comboBox.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+          DirectoryChooser.ItemWrapper item = (DirectoryChooser.ItemWrapper)model.getElementAt(i);
+          if (fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()) == root) {
+            comboBox.setSelectedItem(item);
+            return;
+          }
+        }
+        setComboboxModel(comboBox, root, fileIndex, sourceRoots, true);
+      }
+    });
+
+    myClassPackageChooser.getChildComponent().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        setComboboxModel(comboBox, initialSourceRoot, fileIndex, sourceRoots, false);
+      }
+    });
+    setComboboxModel(comboBox, initialSourceRoot, fileIndex, sourceRoots, false);
 
     validateButtons();
     myHelpID = helpID;
+  }
+
+  private void setComboboxModel(JComboBox comboBox, VirtualFile initialTargetDirectorySourceRoot,
+                                ProjectFileIndex fileIndex,
+                                VirtualFile[] sourceRoots,
+                                boolean forceIncludeAll) {
+    final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<PsiDirectory>();
+    final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<PsiDirectory, String>();
+    MoveClassesOrPackagesUtil.buildDirectoryList(new PackageWrapper(myManager, getTargetPackage()), sourceRoots, targetDirectories, pathsToCreate);
+    if (!forceIncludeAll && (targetDirectories.size() != pathsToCreate.size() || !targetDirectories.containsAll(pathsToCreate.keySet()))) {
+      targetDirectories.removeAll(pathsToCreate.keySet());
+    }
+    final ArrayList<DirectoryChooser.ItemWrapper> items = new ArrayList<DirectoryChooser.ItemWrapper>();
+    DirectoryChooser.ItemWrapper initial = null;
+    for (PsiDirectory targetDirectory : targetDirectories) {
+      DirectoryChooser.ItemWrapper itemWrapper = new DirectoryChooser.ItemWrapper(targetDirectory, pathsToCreate.get(targetDirectory));
+      items.add(itemWrapper);
+      if (fileIndex.getSourceRootForFile(targetDirectory.getVirtualFile()) == initialTargetDirectorySourceRoot) {
+        initial = itemWrapper;
+      }
+    }
+    if (initialTargetDirectorySourceRoot == null) {
+      items.add(null);
+    }
+    comboBox.setModel(new CollectionComboBoxModel(items, initial != null || items.contains(null) ? initial : items.get(0)));
   }
 
   protected void doHelpAction() {
@@ -336,7 +415,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     if (destination == null) return;
 
     saveRefactoringSettings();
-    PsiManager manager = PsiManager.getInstance(getProject());
     for (final PsiElement element : myElementsToMove) {
       String message = verifyDestinationForElement(element, destination);
       if (message != null) {
@@ -441,7 +519,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     return myCbSearchTextOccurences.isSelected();
   }
 
-  @Nullable
   private MoveDestination selectDestination() {
     final String packageName = getTargetPackage().trim();
     if (packageName.length() > 0 && !JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(packageName)) {
@@ -457,18 +534,12 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       if (ret != 0) return null;
     }
 
-    if (!myCbMoveToAnotherSourceFolder.isSelected()) {
+    final DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)myDestinationFolderCB.getComboBox().getSelectedItem();
+    if (selectedItem == null) {
       return new MultipleRootsMoveDestination(targetPackage);
     }
-
-    final VirtualFile[] contentSourceRoots = getSourceRoots();
-    if (contentSourceRoots.length == 1) {
-      return new AutocreatingSingleSourceRootMoveDestination(targetPackage, contentSourceRoots[0]);
-    }
-    final VirtualFile sourceRootForFile =
-      MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, contentSourceRoots, myInitialTargetDirectory);
-    if (sourceRootForFile == null) return null;
-    return new AutocreatingSingleSourceRootMoveDestination(targetPackage, sourceRootForFile);
+    final VirtualFile selectedDestination = selectedItem.getDirectory().getVirtualFile();
+    return new AutocreatingSingleSourceRootMoveDestination(targetPackage, selectedDestination);
   }
 
   private VirtualFile[] getSourceRoots() {

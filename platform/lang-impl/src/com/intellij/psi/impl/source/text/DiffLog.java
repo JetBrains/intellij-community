@@ -16,19 +16,14 @@
 package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.pom.PomManager;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.impl.PomTransactionBase;
-import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.TreeAspectEvent;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -45,8 +40,6 @@ import java.util.List;
  * User: cdr
  */
 public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.text.DiffLog");
-
   public DiffLog() {
   }
 
@@ -59,42 +52,14 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
   private final List<LogEntry> myEntries = new ArrayList<LogEntry>();
 
-  public void doActualPsiChange(@NotNull final PsiFile file){
-    try {
-      final Document document = file.getViewProvider().getDocument();
-      PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(file.getProject());
-      PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
-
-      final PsiFileImpl fileImpl = (PsiFileImpl)file;
-
-      final ASTDiffBuilder astDiffBuilder = new ASTDiffBuilder(fileImpl);
-
-      if (transaction == null) {
-        final PomModel model = PomManager.getModel(fileImpl.getProject());
-
-        model.runTransaction(new PomTransactionBase(fileImpl, model.getModelAspect(TreeAspect.class)) {
-          public PomModelEvent runInner() {
-            for (LogEntry entry : myEntries) {
-              entry.doActualPsiChange(file, astDiffBuilder);
-            }
-            fileImpl.subtreeChanged();
-
-            return new TreeAspectEvent(model, astDiffBuilder.getEvent());
-          }
-        });
-      }
-      else {
-        for (LogEntry entry : myEntries) {
-          entry.doActualPsiChange(file, astDiffBuilder);
-        }
-        fileImpl.subtreeChanged();
-      }
+  public TreeChangeEventImpl performActualPsiChange(PsiFile file) {
+    final ASTDiffBuilder astDiffBuilder = new ASTDiffBuilder((PsiFileImpl) file);
+    for (LogEntry entry : myEntries) {
+      entry.doActualPsiChange(file, astDiffBuilder);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    file.subtreeChanged();
 
-
+    return astDiffBuilder.getEvent();
   }
 
   @Override
@@ -283,7 +248,6 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
       final ASTNode firstChildNode = myNewNode.getFirstChildNode();
       if (firstChildNode != null) myOldNode.rawAddChildren((TreeElement)firstChildNode);
       fileImpl.getTreeElement().setCharTable(myNewNode.getCharTable());
-      ((PsiManagerEx)file.getManager()).invalidateFile(fileImpl);
       myOldNode.subtreeChanged();
       BlockSupportImpl.sendAfterChildrenChangedEvent(manager,fileImpl, oldLength);
     }

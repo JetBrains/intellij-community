@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.patterns.compiler.PatternClassBean;
 import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -156,10 +156,11 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
         }
       };
       final StringSearcher searcher = new StringSearcher("patternClass", true, true);
-      ((PsiManagerEx)beanClass.getManager()).getCacheManager().processFilesWithWord(new Processor<PsiFile>() {
+      CacheManager.SERVICE.getInstance(beanClass.getProject()).processFilesWithWord(new Processor<PsiFile>() {
         @Override
         public boolean process(PsiFile psiFile) {
-          LowLevelSearchUtil.processElementsContainingWordInElement(occurenceProcessor, psiFile, searcher, true, new EmptyProgressIndicator());
+          LowLevelSearchUtil
+            .processElementsContainingWordInElement(occurenceProcessor, psiFile, searcher, true, new EmptyProgressIndicator());
           return true;
         }
       }, searcher.getPattern(), UsageSearchContext.IN_FOREIGN_LANGUAGES, scope, searcher.isCaseSensitive());

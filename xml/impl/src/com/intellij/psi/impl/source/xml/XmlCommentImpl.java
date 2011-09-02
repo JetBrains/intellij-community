@@ -15,22 +15,17 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.XmlCommentLiteralEscaper;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Mike
@@ -51,6 +46,11 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
     else {
       visitor.visitComment(this);
     }
+  }
+
+  @Override
+  public boolean isValidHost() {
+    return true;
   }
 
   public XmlTag getParentTag() {
@@ -76,14 +76,6 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
   @Nullable
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
-  }
-
-  public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this);
-  }
-
-  public void processInjectedPsi(@NotNull final InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(this, visitor);
   }
 
   public PsiLanguageInjectionHost updateText(@NotNull final String text) {

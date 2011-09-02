@@ -27,7 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +75,7 @@ public abstract class InjectedLanguageBlockBuilder {
         }
       }
     };
-    ((PsiLanguageInjectionHost)injectionHost.getPsi()).processInjectedPsi(injectedPsiVisitor);
+    InjectedLanguageUtil.enumerate(injectionHost.getPsi(), injectedPsiVisitor);
 
     if  (injectedFile[0] != null) {
       final Language childLanguage = injectedFile[0].getLanguage();

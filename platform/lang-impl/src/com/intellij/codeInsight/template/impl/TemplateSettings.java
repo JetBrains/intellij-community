@@ -303,7 +303,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return myLastSelectedTemplate != null ? myLastSelectedTemplate.groupName : null;
   }
 
-  public void setLastSelectedTemplate(String group, String key) {
+  public void setLastSelectedTemplate(@Nullable String group, @Nullable String key) {
     myLastSelectedTemplate = group == null ? null : new TemplateKey(group, key);
   }
 

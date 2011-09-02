@@ -417,8 +417,7 @@ public class FileUtil {
       try {
         //noinspection SSBasedInspection
         final File temp = File.createTempFile(prefix, suffix, dir);
-        final File canonical = temp.getCanonicalFile();
-        return SystemInfo.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
+        return normalizeFile(temp);
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
         if (++exceptionsCount >= 100) {
@@ -426,6 +425,11 @@ public class FileUtil {
         }
       }
     }
+  }
+
+  private static File normalizeFile(File temp) throws IOException {
+    final File canonical = temp.getCanonicalFile();
+    return SystemInfo.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
   }
 
   public static String getTempDirectory() {
@@ -1158,8 +1162,18 @@ public class FileUtil {
     }
     return false;
   }
-
-  public static String generateRandomTemporaryPath() {
-    return getTempDirectory() + "/" + UUID.randomUUID().toString();
+  
+  @NotNull
+  public static File generateRandomTemporaryPath() throws IOException {
+    File file = new File(getTempDirectory(), UUID.randomUUID().toString());
+    int i = 0;
+    while (file.exists() && i < 5) {
+      file = new File(getTempDirectory(), UUID.randomUUID().toString());
+      ++i;
+    }
+    if (file.exists()) {
+      throw new IOException("Couldn't generate unique random path.");
+    }
+    return normalizeFile(file);
   }
 }

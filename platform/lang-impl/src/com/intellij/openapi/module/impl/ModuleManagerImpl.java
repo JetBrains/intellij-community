@@ -24,7 +24,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
@@ -234,6 +233,11 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   private void loadModules(final ModuleModelImpl moduleModel) {
     if (myModulePaths != null && myModulePaths.size() > 0) {
       final Application app = ApplicationManager.getApplication();
+      final ProgressIndicator progressIndicator = myProject.isDefault() ? null : myProgressManager.getProgressIndicator();
+      if (progressIndicator != null) {
+        progressIndicator.setText("Loading modules...");
+        progressIndicator.setText2("");
+      }
       final Runnable swingRunnable = new Runnable() {
         public void run() {
           myFailedModulePaths.clear();
@@ -243,7 +247,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
           for (final ModulePath modulePath : myModulePaths) {
             try {
-              final Module module = moduleModel.loadModuleInternal(modulePath.getPath());
+              final Module module = moduleModel.loadModuleInternal(modulePath.getPath(), progressIndicator);
               if (ModuleType.get(module) instanceof UnknownModuleType) {
                 modulesWithUnknownTypes.add(module);
               }
@@ -295,12 +299,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
           }
         }
       };
-      if (app.isDispatchThread() || app.isHeadlessEnvironment()) {
+//      if (app.isDispatchThread() || app.isHeadlessEnvironment()) {
         swingRunnable.run();
-      }
-      else {
-        app.invokeAndWait(swingRunnable, ModalityState.defaultModalityState());
-      }
+      //}
+      //else {
+      //  app.invokeAndWait(swingRunnable, ModalityState.defaultModalityState());
+      //}
     }
   }
 
@@ -570,14 +574,19 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
           }
           else {
             ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-            pi.setText("Loading " + module.getName());
             app.invokeAndWait(swingRunnable, pi.getModalityState());
           }
         }
       }
     };
 
-    myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Loading modules", false, myProject);
+    ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
+    if (progressIndicator == null) {
+      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Loading modules", false, myProject);
+    }
+    else {
+      runnableWithProgress.run();
+    }
 
     myModuleModel.projectOpened();
   }
@@ -721,19 +730,23 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
                                                      ModuleWithNameAlreadyExists {
       assertWritable();
       try {
-        return loadModuleInternal(filePath);
+        return loadModuleInternal(filePath, null);
       }
       catch (StateStorageException e) {
         throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()));
       }
     }
 
-    private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists,
+    private Module loadModuleInternal(String filePath, @Nullable ProgressIndicator progressIndicator) throws ModuleWithNameAlreadyExists,
                                                               IOException, StateStorageException {
       final File moduleFile = new File(filePath);
       filePath = resolveShortWindowsName(filePath);
 
       final String name = moduleFile.getName();
+      if (progressIndicator != null) {
+        progressIndicator.setText2(FileUtil.getNameWithoutExtension(name));
+      }
+
       if (name.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
         final String moduleName = name.substring(0, name.length() - 4);
         for (Module module : myPathToModule.values()) {

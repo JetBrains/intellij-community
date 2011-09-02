@@ -510,7 +510,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
-    return viewProvider != null && viewProvider.isLockedByPsiOperations();
+    return viewProvider != null && PostprocessReformattingAspect.getInstance(myProject).isViewProviderLocked(viewProvider);
   }
 
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
@@ -595,6 +595,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
 
     if (!hasLockedBlocks) {
+      PostprocessReformattingAspect.getInstance(myProject).beforeDocumentChanged(viewProvider);
       ((SingleRootFileViewProvider)viewProvider).beforeDocumentChanged();
     }
   }

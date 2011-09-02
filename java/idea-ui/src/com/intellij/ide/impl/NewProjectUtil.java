@@ -200,9 +200,12 @@ public class NewProjectUtil {
       final GeneralSettings settings = GeneralSettings.getInstance();
       int exitCode = settings.getConfirmOpenNewProject();
       if (exitCode == GeneralSettings.OPEN_PROJECT_ASK) {
-        exitCode = Messages.showOkCancelDialog(projectToClose, IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.new.project"),
-                                               IdeBundle.message("button.existingframe"), IdeBundle.message("button.newframe"), 
-                                           Messages.getQuestionIcon(), new ProjectNewWindowDoNotAskOption());
+        exitCode = Messages.showOkCancelDialog(projectToClose,
+                                               IdeBundle.message("prompt.open.project.in.new.frame"),
+                                               IdeBundle.message("title.new.project"),
+                                               IdeBundle.message("button.existingframe"),
+                                               IdeBundle.message("button.newframe"),
+                                               Messages.getQuestionIcon(), new ProjectNewWindowDoNotAskOption());
       }
       if (exitCode == DialogWrapper.OK_EXIT_CODE) { // "No" option
         ProjectUtil.closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);

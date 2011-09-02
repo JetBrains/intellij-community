@@ -26,13 +26,12 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbServiceImpl;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -129,9 +128,27 @@ public class StartupManagerImpl extends StartupManagerEx {
     });
   }
 
+  public void runPostStartupActivitiesNew() {
+    final StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
+    for (StartupActivity extension : extensions) {
+      if (extension instanceof DumbAware) {
+        extension.runActivity(myProject);
+      }
+    }
+    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+      public void run() {
+        if (myProject.isDisposed()) return;
+        for (StartupActivity extension : extensions) {
+          if (!(extension instanceof DumbAware)) {
+            extension.runActivity(myProject);
+          }
+        }
+      }
+    });
+  }
+
   public synchronized void runPostStartupActivities() {
     final Application app = ApplicationManager.getApplication();
-    app.assertIsDispatchThread();
 
     if (myPostStartupActivitiesPassed) return;
 
@@ -211,14 +228,14 @@ public class StartupManagerImpl extends StartupManagerEx {
     if (DumbService.isDumbAware(action)) {
       runnable = new DumbAwareRunnable() {
         public void run() {
-          application.runWriteAction(action);
+          action.run();
         }
       };
     }
     else {
       runnable = new Runnable() {
         public void run() {
-          application.runWriteAction(action);
+          action.run();
         }
       };
     }

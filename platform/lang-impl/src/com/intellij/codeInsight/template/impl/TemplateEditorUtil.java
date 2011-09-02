@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
@@ -51,7 +52,8 @@ public class TemplateEditorUtil {
   }
 
   public static Editor createEditor(boolean isReadOnly, CharSequence text, @Nullable Map<TemplateContextType, Boolean> context) {
-    Document doc = EditorFactory.getInstance().createDocument(text);
+    Document doc = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(true);
+    doc.setText(text);
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     if (context != null) {
       for (Map.Entry<TemplateContextType, Boolean> entry : context.entrySet()) {

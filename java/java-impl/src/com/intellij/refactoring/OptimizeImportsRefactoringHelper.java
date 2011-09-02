@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -49,7 +50,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
   }
 
   public void performOperation(final Project project, final Set<PsiJavaFile> javaFiles) {
-    PsiManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
+    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
       public void run() {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
       }

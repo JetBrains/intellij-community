@@ -223,7 +223,7 @@ public class AbstractPopup implements JBPopup {
 
     if (caption != null) {
       if (caption.length() > 0) {
-        myCaption = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive(), myComponent);
+        myCaption = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive());
         ((TitlePanel)myCaption).setText(caption);
       }
       else {

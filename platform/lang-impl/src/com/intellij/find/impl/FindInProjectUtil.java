@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -49,7 +48,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,7 +55,6 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.*;
 import com.intellij.usageView.UsageInfo;
@@ -444,7 +441,7 @@ public class FindInProjectUtil {
     }
 
     PsiManager pm = PsiManager.getInstance(project);
-    CacheManager cacheManager = ((PsiManagerEx)pm).getCacheManager();
+    CacheManager cacheManager = CacheManager.SERVICE.getInstance(project);
     SearchScope customScope = findModel.getCustomScope();
     @NotNull GlobalSearchScope scope = psiDirectory != null
                                        ? GlobalSearchScopes.directoryScope(psiDirectory, true)

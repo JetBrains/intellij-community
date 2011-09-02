@@ -149,10 +149,11 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
     return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 
-  public void processInjectedPsi(@NotNull final InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(this, visitor);
+  @Override
+  public boolean isValidHost() {
+    return getValue() instanceof String;
   }
-
+  
   public PsiLanguageInjectionHost updateText(@NotNull final String text) {
     final ASTNode valueNode = getNode().getFirstChildNode();
     assert valueNode instanceof LeafElement;

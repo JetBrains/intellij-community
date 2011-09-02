@@ -16,42 +16,32 @@
 
 package com.intellij.psi.impl;
 
-import com.intellij.formatting.FormatterEx;
-import com.intellij.formatting.FormatterImpl;
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
-import com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -69,7 +59,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final MessageBus myMessageBus;
 
   private final FileManager myFileManager;
-  private final CacheManager myCacheManager;
   private final PsiModificationTrackerImpl myModificationTracker;
   private final ResolveCache myResolveCache;
 
@@ -89,7 +78,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   public PsiManagerImpl(Project project,
                         final ProjectRootManagerEx projectRootManagerEx,
                         StartupManager startupManager,
-                        FileTypeManager fileTypeManager,
                         FileDocumentManager fileDocumentManager,
                         PsiBuilderFactory psiBuilderFactory,
                         MessageBus messageBus) {
@@ -101,10 +89,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     boolean isProjectDefault = project.isDefault();
 
-    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileTypeManager, fileDocumentManager,
-                                                                                                    projectRootManagerEx);
-
-    myCacheManager = isProjectDefault ? new EmptyCacheManager() : new IndexCacheManagerImpl(this);
+    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, projectRootManagerEx);
 
     myModificationTracker = new PsiModificationTrackerImpl(myProject);
     myTreeChangePreprocessors.add(myModificationTracker);
@@ -126,7 +111,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public void disposeComponent() {
     myFileManager.dispose();
-    myCacheManager.dispose();
 
     myIsDisposed = true;
   }
@@ -173,48 +157,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     return false;
   }
 
-  public void performActionWithFormatterDisabled(final Runnable r) {
-    performActionWithFormatterDisabled(new Computable<Object>() {
-      @Override
-      public Object compute() {
-        r.run();
-        return null;
-      }
-    });
-  }
-
-  public <T extends Throwable> void performActionWithFormatterDisabled(final ThrowableRunnable<T> r) throws T {
-    final Throwable[] throwable = new Throwable[1];
-
-    performActionWithFormatterDisabled(new Computable<Object>() {
-      @Override
-      public Object compute() {
-        try {
-          r.run();
-        }
-        catch (Throwable t) {
-          throwable[0] = t;
-        }
-        return null;
-      }
-    });
-
-    if (throwable[0] != null) {
-      //noinspection unchecked
-      throw (T)throwable[0];
-    }
-  }
-
-  public <T> T performActionWithFormatterDisabled(final Computable<T> r) {
-    return ((FormatterImpl)FormatterEx.getInstance()).runWithFormattingDisabled(new Computable<T>() {
-      @Override
-      public T compute() {
-        final PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(getProject());
-        return component.disablePostprocessFormattingInside(r);
-      }
-    });
-  }
-
   public void projectClosed() {
   }
 
@@ -226,16 +168,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       LOG.debug("PsiManager.runPreStartupActivity()");
     }
     myFileManager.runStartupActivity();
-
-    myCacheManager.initialize();
-
-    StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
-    if (startupManager != null) {
-      CacheUpdater[] updaters = myCacheManager.getCacheUpdaters();
-      for (CacheUpdater updater : updaters) {
-        startupManager.registerCacheUpdater(updater);
-      }
-    }
   }
 
   public void setAssertOnFileLoadingFilter(VirtualFileFilter filter) {
@@ -255,14 +187,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   @NotNull
   public FileManager getFileManager() {
     return myFileManager;
-  }
-
-  @NotNull
-  public CacheManager getCacheManager() {
-    if (myIsDisposed) {
-      LOG.error("Project is already disposed.");
-    }
-    return myCacheManager;
   }
 
   @NotNull
@@ -321,18 +245,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     ProgressManager.checkCanceled();
 
     return myFileManager.findDirectory(file);
-  }
-
-
-  public void invalidateFile(@NotNull PsiFile file) {
-    if (myIsDisposed) {
-      LOG.error("Disposed PsiManager calls invalidateFile!");
-    }
-
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (file.getViewProvider().isPhysical() && myCacheManager != null) {
-      myCacheManager.addOrInvalidateFile(virtualFile);
-    }
   }
 
   public void reloadFromDisk(@NotNull PsiFile file) {

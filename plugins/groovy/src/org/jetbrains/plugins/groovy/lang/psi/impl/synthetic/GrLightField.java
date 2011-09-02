@@ -15,8 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -80,7 +83,7 @@ public class GrLightField extends GrLightVariable implements GrField {
   @NotNull
   @Override
   public SearchScope getUseScope() {
-    return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
+    return ResolveScopeManager.getElementUseScope(this);
   }
 
   @Override

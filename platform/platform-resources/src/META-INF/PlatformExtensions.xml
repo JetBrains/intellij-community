@@ -236,4 +236,8 @@
 
   <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                       serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
+
+  <postStartupActivity implementation="com.intellij.ide.TipOfTheDayManager"/>
+  <postStartupActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
+
 </extensions>

@@ -43,7 +43,7 @@ final class FileSystemScanner {
 
   // Actions ================================================================
 
-  public void scan(List abstractFileObjects, CvsFiles cvsFiles) throws IOException {
+  public void scan(List<AbstractFileObject> abstractFileObjects, CvsFiles cvsFiles) throws IOException {
     cvsFiles.clear();
 
     if (abstractFileObjects.size() == 0) {
@@ -52,8 +52,7 @@ final class FileSystemScanner {
       scanDirectories(DirectoryObject.getRoot(), cvsFiles);
     }
     else {
-      for (Iterator it = abstractFileObjects.iterator(); it.hasNext();) {
-        final AbstractFileObject fileOrDirectory = (AbstractFileObject)it.next();
+      for (final AbstractFileObject fileOrDirectory : abstractFileObjects) {
         if (fileOrDirectory instanceof DirectoryObject) {
           final DirectoryObject directoryObject = (DirectoryObject)fileOrDirectory;
           scanDirectories(directoryObject, cvsFiles);
@@ -118,20 +117,15 @@ final class FileSystemScanner {
     return subDirectories;
   }
 
-  private void addRequestsForFile(FileObject fileObject, CvsFiles cvsFiles) {
+  private void addRequestsForFile(FileObject fileObject, CvsFiles cvsFiles) throws IOException {
     cvsFiles.add(CvsFile.createCvsDirectory(fileObject.getParent()));
 
-    try {
-      final Entry entry = clientEnvironment.getAdminReader().getEntry(fileObject, clientEnvironment.getCvsFileSystem());
-      // a non-null entry means the file does exist in the
-      // Entries file for this directory
-      if (entry != null) {
-        final boolean exists = clientEnvironment.getLocalFileReader().exists(fileObject, clientEnvironment.getCvsFileSystem());
-        cvsFiles.add(CvsFile.createCvsFileForEntry(fileObject, entry, exists));
-      }
-    }
-    catch (IOException ex) {
-      ex.printStackTrace();
+    final Entry entry = clientEnvironment.getAdminReader().getEntry(fileObject, clientEnvironment.getCvsFileSystem());
+    // a non-null entry means the file does exist in the
+    // Entries file for this directory
+    if (entry != null) {
+      final boolean exists = clientEnvironment.getLocalFileReader().exists(fileObject, clientEnvironment.getCvsFileSystem());
+      cvsFiles.add(CvsFile.createCvsFileForEntry(fileObject, entry, exists));
     }
   }
 }

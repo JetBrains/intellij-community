@@ -33,15 +33,10 @@ import java.util.*;
 
 public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
-  @NonNls private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US));
-  static {
-    DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
-  }
-
+  @NonNls private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US));
   private static final Collection<String> ourDoNotSupportingSOptionServers = new HashSet<String>();
 
   private final String myModule;
-
   private final Date myDateFrom;
   private final Date myDateTo;
   private final Consumer<LogInformationWrapper> myConsumer;

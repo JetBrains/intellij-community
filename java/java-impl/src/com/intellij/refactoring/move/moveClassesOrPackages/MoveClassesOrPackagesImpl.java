@@ -115,7 +115,7 @@ public class MoveClassesOrPackagesImpl {
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
-        if (!(aClass.getContext() instanceof PsiFile)) {
+        if (!(aClass.getParent() instanceof PsiFile)) {
           String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("moving.local.classes.is.not.supported"));
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;

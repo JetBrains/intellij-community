@@ -58,7 +58,10 @@ import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
+import com.intellij.usages.UsageInfoToUsageConverter;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -69,6 +72,7 @@ import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -359,28 +363,22 @@ public abstract class ChooseByNameBase {
     myCard = new CardLayout();
     myCardContainer = new JPanel(myCard);
 
-    final JPanel checkBoxPanel = new JPanel();
-    myCheckBox = new JCheckBox(myModel.getCheckBoxName());
+    final String checkBoxName = myModel.getCheckBoxName();
+    myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName : "");
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
+    myCheckBox.setBorder(null);
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
 
-    if (myModel.getPromptText() != null) {
-      checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.X_AXIS));
-      checkBoxPanel.add(myCheckBox);
-    }
-    else {
-      checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.LINE_AXIS));
-      checkBoxPanel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-      checkBoxPanel.add(myCheckBox);
-    }
-    checkBoxPanel.setVisible(myModel.getCheckBoxName() != null);
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(checkBoxPanel, BorderLayout.CENTER);
-    myCardContainer.add(panel, CHECK_BOX_CARD);
+    if (checkBoxName == null) myCheckBox.setVisible(false);
 
-    myCardContainer.add(new HintLabel(myModel.getNotInMessage()), NOT_FOUND_IN_PROJECT_CARD);
-    myCardContainer.add(new HintLabel(IdeBundle.message("label.choosebyname.no.matches.found")), NOT_FOUND_CARD);
-    myCardContainer.add(new HintLabel(IdeBundle.message("label.choosebyname.searching")), SEARCHING_CARD);
+    addCard(myCheckBox, CHECK_BOX_CARD);
+
+    addCard(new HintLabel(myModel.getNotInMessage()), NOT_FOUND_IN_PROJECT_CARD);
+    addCard(new HintLabel(IdeBundle.message("label.choosebyname.no.matches.found")), NOT_FOUND_CARD);
+    JPanel searching = new JPanel(new BorderLayout(5, 0));
+    searching.add(new AsyncProcessIcon("searching"), BorderLayout.WEST);
+    searching.add(new HintLabel(IdeBundle.message("label.choosebyname.searching")), BorderLayout.CENTER);
+    addCard(searching, SEARCHING_CARD);
     myCard.show(myCardContainer, CHECK_BOX_CARD);
 
     if (isCheckboxVisible()) {
@@ -399,20 +397,28 @@ public abstract class ChooseByNameBase {
           if (object instanceof PsiElement) {
             psiElements.add((PsiElement)object);
           }
+          else if (object instanceof DataProvider) {
+            final PsiElement psi = LangDataKeys.PSI_ELEMENT.getData((DataProvider)object);
+            if (psi != null) {
+              psiElements.add(psi);
+            }
+          }
+          
         }
         return psiElements.toArray(new PsiElement[psiElements.size()]);
       }
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    final JComponent component = actionToolbar.getComponent();
-    component.setBorder(null);
-    hBox.add(component);
+    final JComponent toolbarComponent = actionToolbar.getComponent();
+    toolbarComponent.setBorder(null);
+
+    hBox.add(Box.createHorizontalStrut(10));
+    hBox.add(toolbarComponent);
 
     if (myToolArea != null) {
       hBox.add(myToolArea);
     }
-    hBox.add(Box.createHorizontalStrut(5));
     myTextFieldPanel.add(caption2Tools);
 
     myHistory = new ArrayList<Pair<String, Integer>>();
@@ -589,6 +595,12 @@ public abstract class ChooseByNameBase {
     if (modalityState != null) {
       rebuildList(myInitialIndex, 0, null, modalityState, null);
     }
+  }
+
+  private void addCard(JComponent comp, String cardId) {
+    JPanel wrapper = new JPanel(new BorderLayout());
+    wrapper.add(comp, BorderLayout.EAST);
+    myCardContainer.add(wrapper, cardId);
   }
 
   private static Set<KeyStroke> getShortcuts(@NotNull String actionId) {
@@ -1593,7 +1605,7 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  private static final String ACTION_NAME = "Show in usage view";
+  private static final String ACTION_NAME = "Show All in View";
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
 
   private abstract class ShowFindUsagesAction extends AnAction {

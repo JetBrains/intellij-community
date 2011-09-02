@@ -20,6 +20,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -321,7 +322,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       return new LocalSearchScope(parentElement.getParent());
     }
     else {
-      return getManager().getFileManager().getUseScope(this);
+      return ResolveScopeManager.getElementUseScope(this);
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,11 @@ import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
-import org.netbeans.lib.cvsclient.file.FileObject;
+import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.DummyRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-
-import java.util.Iterator;
 
 public class RtagCommand extends AbstractCommand{
   private final String myTagName;
@@ -48,15 +46,13 @@ public class RtagCommand extends AbstractCommand{
     final Requests requests = new Requests(CommandRequest.RTAG, clientEnvironment);
     requests.addArgumentRequest(myOverrideExistings, "-F");
     requests.addArgumentRequest(true, myTagName);
-    for (Iterator iterator = getFileObjects().getFileObjects().iterator(); iterator.hasNext();) {
-      FileObject fileObject = (FileObject)iterator.next();
+    for (AbstractFileObject fileObject : getFileObjects()) {
       String path = fileObject.getPath();
       if (StringUtil.startsWithChar(path, '/')) path = path.substring(1);
       requests.addArgumentRequest(path);
     }
     return requestProcessor.processRequests(requests, new DummyRequestsProgressHandler());
   }
-
 
   public final String getCvsCommandLine() {
     @NonNls final StringBuffer cvsCommandLine = new StringBuffer("rtag ");
@@ -66,8 +62,8 @@ public class RtagCommand extends AbstractCommand{
   }
 
   private String getCVSArguments() {
-    @NonNls final StringBuffer cvsArguments = new StringBuffer();
-    cvsArguments.append("-F " + myTagName);
+    @NonNls final StringBuilder cvsArguments = new StringBuilder();
+    cvsArguments.append("-F ").append(myTagName);
     return cvsArguments.toString();
   }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -396,7 +397,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
     }
     final Change result = new Change();
-    element.getManager().performActionWithFormatterDisabled(result);
+    CodeStyleManager.getInstance(element.getProject()).performActionWithFormatterDisabled(result);
     return result.result;
   }
 }

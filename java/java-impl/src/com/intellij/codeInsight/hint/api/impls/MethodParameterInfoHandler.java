@@ -32,10 +32,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
@@ -44,6 +41,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
                                                    DumbAware {
   private static final Set<Class> ourArgumentListAllowedParentClassesSet = new HashSet<Class>(
     Arrays.asList(PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class));
+
+  private static final Set<? extends Class> ourStopSearch = Collections.singleton(PsiMethod.class);
 
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     final List<? extends PsiElement> allElements = JavaCompletionUtil.getAllPsiElements(item);
@@ -83,7 +82,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private PsiExpressionList findArgumentList(final PsiFile file, int offset, int parameterStart) {
     PsiExpressionList argumentList = ParameterInfoUtils.findArgumentList(file, offset, parameterStart, this);
     if (argumentList == null) {
-      final PsiMethodCallExpression methodCall = ParameterInfoUtils.findParentOfType(file, offset, PsiMethodCallExpression.class);
+      final PsiMethodCallExpression methodCall = ParameterInfoUtils.findParentOfTypeWithStopElements(file, offset, PsiMethodCallExpression.class, PsiMethod.class);
 
       if (methodCall != null) {
         argumentList = methodCall.getArgumentList();
@@ -234,6 +233,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   @NotNull
   public Set<Class> getArgumentListAllowedParentClasses() {
     return ourArgumentListAllowedParentClassesSet;
+  }
+
+  @NotNull
+  @Override
+  public Set<? extends Class> getArgListStopSearchClasses() {
+    return ourStopSearch;
   }
 
   @NotNull

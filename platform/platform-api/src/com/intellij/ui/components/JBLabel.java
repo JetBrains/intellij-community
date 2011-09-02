@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,9 +23,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class JBLabel extends JLabel {
+public class JBLabel extends JLabel implements ComponentWithAnchor {
   private UIUtil.ComponentStyle myComponentStyle = UIUtil.ComponentStyle.REGULAR;
   private UIUtil.FontColor myFontColor = UIUtil.FontColor.NORMAL;
+  private JComponent anchor;
 
   public JBLabel() {
   }
@@ -58,6 +60,14 @@ public class JBLabel extends JLabel {
     super(text, icon, horizontalAlignment);
   }
 
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (myComponentStyle != null) {
+      UIUtil.applyStyle(myComponentStyle, this);
+    }
+  }
+
   public void setComponentStyle(@NotNull UIUtil.ComponentStyle componentStyle) {
     myComponentStyle = componentStyle;
     UIUtil.applyStyle(componentStyle, this);
@@ -79,5 +89,22 @@ public class JBLabel extends JLabel {
   @Override
   public void setForeground(Color fg) {
     super.setForeground(UIUtil.getLabelFontColor(myFontColor));
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    if (anchor != this) {
+      this.anchor = anchor;
+    }
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    return anchor == null ? super.getPreferredSize() : anchor.getPreferredSize();
   }
 }

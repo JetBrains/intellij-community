@@ -16,7 +16,8 @@
 
 package com.intellij.psi.impl.cache;
 
-import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,9 +27,14 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public interface CacheManager {
-  void initialize();
-  void dispose();
-  @NotNull CacheUpdater[] getCacheUpdaters();
+  class SERVICE {
+    private SERVICE() {
+    }
+
+    public static CacheManager getInstance(Project project) {
+      return ServiceManager.getService(project, CacheManager.class);
+    }
+  }
 
   @NotNull PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
 
@@ -48,10 +54,5 @@ public interface CacheManager {
    * @return -1 if it's not known
    */
   int getTodoCount(@NotNull VirtualFile file, IndexPattern pattern);
-
-  /**
-   * @deprecated
-   */
-  void addOrInvalidateFile(@NotNull VirtualFile file);
 }
 

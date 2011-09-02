@@ -16,9 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import org.jetbrains.annotations.NotNull;
@@ -49,16 +47,11 @@ public abstract class PsiManagerEx extends PsiManager {
   @NotNull
   public abstract FileManager getFileManager();
 
-  public abstract void invalidateFile(@NotNull PsiFile file);
-
   public abstract void beforeChildAddition(@NotNull PsiTreeChangeEventImpl event);
 
   public abstract void beforeChildRemoval(@NotNull PsiTreeChangeEventImpl event);
 
   public abstract void beforeChildReplacement(@NotNull PsiTreeChangeEventImpl event);
-
-  @NotNull
-  public abstract CacheManager getCacheManager();
 
   public abstract void beforeChange(boolean isPhysical);
 

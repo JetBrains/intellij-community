@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,69 +19,46 @@ import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 /**
+ * Handles tooltip links in format <code>#inspection/inspection_short_name</code>.
+ * On a click or expend acton returns more detailed description for given inspection.
+ * 
  * @author peter
  */
 public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
-  public void handleLink(@NotNull final String descriptionSuffix, @NotNull final Editor editor, @NotNull final JEditorPane hintComponent) {
-    showDescription(descriptionSuffix, editor, hintComponent);
-  }
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.InspectionDescriptionLinkHandler");
 
-  @Nullable
-  public String getDescription(final String shortName, Editor editor) {
+  @Override
+  public String getDescription(@NotNull final String refSuffix, @NotNull final Editor editor) {
     final Project project = editor.getProject();
-    assert project != null;
+    if (project == null) {
+      LOG.error(editor);
+      return null;
+    }
+
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    assert file != null;
-    final InspectionProfileEntry tool =
-      ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getInspectionTool(shortName, file);
+    if (file == null) {
+      LOG.error(editor);
+      return null;
+    }
+
+    final InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
+    final InspectionProfileEntry tool = profile.getInspectionTool(refSuffix, file);
     if (tool == null) return null;
 
-    String description;
-    description = tool.loadDescription();
+    String description = tool.loadDescription();
     if (description == null) {
+      LOG.warn("No description for inspection '" + refSuffix + "'");
       description = InspectionsBundle.message("inspection.tool.description.under.construction.text");
     }
     return description;
   }
-
-  private void showDescription(final String shortName, final Editor editor, final JEditorPane tooltip) {
-    final String description = getDescription(shortName, editor);
-    if (description == null) return;
-    final JEditorPane pane = IdeTooltipManager.initPane(description, new HintHint(tooltip, new Point(0, 0)), editor.getComponent().getRootPane().getLayeredPane());
-    pane.select(0, 0);
-    pane.setPreferredSize(new Dimension(3 * tooltip.getPreferredSize().width /2, 200));
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
-    scrollPane.setBorder(null);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, scrollPane).createPopup();
-    pane.addMouseListener(new MouseAdapter(){
-      public void mousePressed(final MouseEvent e) {
-        final Component contentComponent = editor.getContentComponent();
-        MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
-        popup.cancel();
-        contentComponent.dispatchEvent(newMouseEvent);
-      }
-    });
-    popup.showUnderneathOf(tooltip);
-  }
-
 }

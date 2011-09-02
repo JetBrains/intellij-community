@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
@@ -85,7 +86,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   public PsiFile[] findFilesWithTodoItems() {
-    return myManager.getCacheManager().getFilesWithTodoItems();
+    return CacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithTodoItems();
   }
 
   @NotNull
@@ -114,13 +115,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public int getTodoItemsCount(@NotNull PsiFile file) {
-    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile(), TodoIndexPatternProvider.getInstance());
+    int count = CacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), TodoIndexPatternProvider.getInstance());
     if (count != -1) return count;
     return findTodoItems(file).length;
   }
 
   public int getTodoItemsCount(@NotNull PsiFile file, @NotNull TodoPattern pattern) {
-    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile(), pattern.getIndexPattern());
+    int count = CacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), pattern.getIndexPattern());
     if (count != -1) return count;
     TodoItem[] items = findTodoItems(file);
     count = 0;
@@ -349,7 +350,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           ProgressManager.checkCanceled();
         }
         final String word = words.get(i);
-        myManager.getCacheManager().processFilesWithWord(new CommonProcessors.CollectProcessor<PsiFile>(copy), word, searchContext, scope, caseSensitively);
+        CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(new CommonProcessors.CollectProcessor<PsiFile>(copy), word, searchContext, scope, caseSensitively);
         if (i == 0) {
           fileSet.addAll(copy);
         }
@@ -364,21 +365,22 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     else {
       fileSet = null;
     }
-    return myManager.getCacheManager().processFilesWithWord(new Processor<PsiFile>() {
+    return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(new Processor<PsiFile>() {
       public boolean process(PsiFile psiFile) {
         if (fileSet != null && !fileSet.contains(psiFile)) {
           return true;
         }
         return processor.process(psiFile);
       }
-    }, words.get(words.size()-1), searchContext, scope, caseSensitively);
+    }, words.get(words.size() - 1), searchContext, scope, caseSensitively);
   }
 
   @NotNull
   public PsiFile[] findFilesWithPlainTextWords(@NotNull String word) {
-    return myManager.getCacheManager().getFilesWithWord(word,
-                                                        UsageSearchContext.IN_PLAIN_TEXT,
-                                                        GlobalSearchScope.projectScope(myManager.getProject()), true);
+    return CacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithWord(word,
+                                                                                     UsageSearchContext.IN_PLAIN_TEXT,
+                                                                                     GlobalSearchScope.projectScope(myManager.getProject()),
+                                                                                     true);
   }
 
 
@@ -407,7 +409,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final GlobalSearchScope theSearchScope = searchScope;
     PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
       public PsiFile[] compute() {
-        return myManager.getCacheManager().getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, theSearchScope, true);
+        return CacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, theSearchScope, true);
       }
     });
 
@@ -462,20 +464,20 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public void processAllFilesWithWord(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor, final boolean caseSensitively) {
-    myManager.getCacheManager().processFilesWithWord(processor,word, UsageSearchContext.IN_CODE, scope, caseSensitively);
+    CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_CODE, scope, caseSensitively);
   }
 
   public void processAllFilesWithWordInText(@NotNull final String word, @NotNull final GlobalSearchScope scope, @NotNull final Processor<PsiFile> processor,
                                             final boolean caseSensitively) {
-    myManager.getCacheManager().processFilesWithWord(processor,word, UsageSearchContext.IN_PLAIN_TEXT, scope, caseSensitively);
+    CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_PLAIN_TEXT, scope, caseSensitively);
   }
 
   public void processAllFilesWithWordInComments(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor) {
-    myManager.getCacheManager().processFilesWithWord(processor, word, UsageSearchContext.IN_COMMENTS, scope, true);
+    CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_COMMENTS, scope, true);
   }
 
   public void processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor) {
-    myManager.getCacheManager().processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
+    CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
 
   private static class RequestWithProcessor {

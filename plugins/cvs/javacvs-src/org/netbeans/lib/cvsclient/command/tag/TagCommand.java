@@ -75,7 +75,7 @@ public final class TagCommand extends AbstractCommand {
                                                                                                                                                                                                                   AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
-			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+			cvsFiles = scanFileSystem(clientEnvironment);
 		}
 		catch (IOException ex) {
 			throw new IOCommandException(ex);
@@ -189,7 +189,7 @@ public final class TagCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCvsArguments() {
-		@NonNls final StringBuffer arguments = new StringBuffer();
+		@NonNls final StringBuilder arguments = new StringBuilder();
 		if (!isRecursive()) {
 			arguments.append("-l ");
 		}

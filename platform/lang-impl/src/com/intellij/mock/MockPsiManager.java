@@ -23,23 +23,17 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.EmptyCacheManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.CachedValuesManagerImpl;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 public class MockPsiManager extends PsiManagerEx {
@@ -47,7 +41,6 @@ public class MockPsiManager extends PsiManagerEx {
   private final Map<VirtualFile,PsiDirectory> myDirectories = new THashMap<VirtualFile, PsiDirectory>();
   private MockFileManager myMockFileManager;
   private PsiModificationTrackerImpl myPsiModificationTracker;
-  private final CacheManager myCacheManager = new EmptyCacheManager();
   private ResolveCache myResolveCache;
 
   public MockPsiManager() {
@@ -105,15 +98,6 @@ public class MockPsiManager extends PsiManagerEx {
     return myPsiModificationTracker;
   }
 
-  public void moveFile(@NotNull PsiFile file, @NotNull PsiDirectory newParentDir) throws IncorrectOperationException {
-  }
-
-  public void moveDirectory(@NotNull PsiDirectory dir, @NotNull PsiDirectory newParentDir) throws IncorrectOperationException {
-  }
-
-  public void checkMove(@NotNull PsiElement element, @NotNull PsiElement newContainer) throws IncorrectOperationException {
-  }
-
   public void startBatchFilesProcessingMode() {
   }
 
@@ -139,10 +123,6 @@ public class MockPsiManager extends PsiManagerEx {
     return false;
   }
 
-  public void performActionWithFormatterDisabled(Runnable r) {
-    r.run();
-  }
-
   public <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws T {
     r.run();
   }
@@ -151,23 +131,8 @@ public class MockPsiManager extends PsiManagerEx {
     return r.compute();
   }
 
-  public void registerLanguageInjector(@NotNull LanguageInjector injector) {
-  }
-
-  public void registerLanguageInjector(@NotNull LanguageInjector injector, Disposable parentDisposable) {
-  }
-
-  public void unregisterLanguageInjector(@NotNull LanguageInjector injector) {
-
-  }
-
   @Override
   public void dropFileCaches(@NotNull PsiFile file) {
-  }
-
-  @NotNull
-  public List<LanguageInjector> getLanguageInjectors() {
-    return Collections.emptyList();
   }
 
   public boolean isBatchFilesProcessingMode() {
@@ -214,9 +179,6 @@ public class MockPsiManager extends PsiManagerEx {
     return myMockFileManager;
   }
 
-  public void invalidateFile(@NotNull final PsiFile file) {
-  }
-
   public void beforeChildRemoval(@NotNull final PsiTreeChangeEventImpl event) {
   }
 
@@ -226,10 +188,5 @@ public class MockPsiManager extends PsiManagerEx {
 
   @Override
   public void beforeChildAddition(@NotNull PsiTreeChangeEventImpl event) {
-  }
-
-  @NotNull
-  public CacheManager getCacheManager() {
-    return myCacheManager;
   }
 }

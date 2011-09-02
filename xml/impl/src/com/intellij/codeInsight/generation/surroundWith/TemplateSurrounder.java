@@ -31,7 +31,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
@@ -101,9 +101,7 @@ public class TemplateSurrounder implements Surrounder {
     };
 
     if (languageWithWSSignificant) {
-      PsiManager.getInstance(project).performActionWithFormatterDisabled(
-        action
-      );
+      CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(action);
     } else {
       action.run();
     }

@@ -273,6 +273,11 @@
   <projectService serviceInterface="com.intellij.ide.util.TreeFileChooserFactory"
                   serviceImplementation="com.intellij.ide.util.TreeFileChooserFactoryImpl"/>
 
+  <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
+                  serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
+  <projectService serviceInterface="com.intellij.psi.impl.file.impl.ResolveScopeManager"
+                  serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManager"/>
+
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage" id="custom"/>

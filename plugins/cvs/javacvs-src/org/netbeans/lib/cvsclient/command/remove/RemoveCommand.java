@@ -59,7 +59,7 @@ public final class RemoveCommand extends AbstractCommand {
                          IProgressViewer progressViewer) throws CommandException, AuthenticationException {
     final ICvsFiles cvsFiles;
     try {
-      cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+      cvsFiles = scanFileSystem(clientEnvironment);
     }
     catch (IOException ex) {
       throw new IOCommandException(ex);
@@ -152,7 +152,7 @@ public final class RemoveCommand extends AbstractCommand {
   // Utils ==================================================================
 
   private String getCvsArguments() {
-    @NonNls final StringBuffer toReturn = new StringBuffer("");
+    @NonNls final StringBuilder toReturn = new StringBuilder();
     if (!isRecursive()) {
       toReturn.append("-l ");
     }

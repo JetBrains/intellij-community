@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -230,7 +232,8 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
                                                    final GlobalSearchScope globalSearchScope,
                                                    final LocalSearchScope filterScope) {
 
-    final GlobalSearchScope scope = GlobalSearchScope.projectScope(property.getProject()).intersectWith(globalSearchScope);
+    final Project project = property.getProject();
+    final GlobalSearchScope scope = GlobalSearchScope.projectScope(project).intersectWith(globalSearchScope);
     final PsiManagerImpl manager = (PsiManagerImpl)property.getManager();
     String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
@@ -249,12 +252,14 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       final Set<PsiFile> fileSet = new HashSet<PsiFile>();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          PsiFile[] filesWithWord = manager.getCacheManager().getFilesWithWord(words.get(0), UsageSearchContext.IN_PLAIN_TEXT, scope, true);
+          PsiFile[] filesWithWord = CacheManager.SERVICE.getInstance(project).getFilesWithWord(words.get(0),
+                                                                                               UsageSearchContext.IN_PLAIN_TEXT, scope,
+                                                                                               true);
           ContainerUtil.addAll(fileSet, filesWithWord);
           for (int i = 1; i < words.size(); i++) {
             ProgressManager.checkCanceled();
             String word = words.get(i);
-            PsiFile[] filesWithThisWord = manager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_PLAIN_TEXT, scope, true);
+            PsiFile[] filesWithThisWord = CacheManager.SERVICE.getInstance(project).getFilesWithWord(word, UsageSearchContext.IN_PLAIN_TEXT, scope, true);
             fileSet.retainAll(Arrays.asList(filesWithThisWord));
             if (fileSet.isEmpty()) break;
           }
@@ -278,13 +283,14 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
 
   private static boolean processReferencesInUIForms(final Processor<PsiReference> processor, final PropertiesFile propFile, final GlobalSearchScope globalSearchScope,
                                                    final LocalSearchScope filterScope) {
-    GlobalSearchScope scope = GlobalSearchScope.projectScope(propFile.getProject()).intersectWith(globalSearchScope);
+    final Project project = propFile.getProject();
+    GlobalSearchScope scope = GlobalSearchScope.projectScope(project).intersectWith(globalSearchScope);
     PsiManagerImpl manager = (PsiManagerImpl)propFile.getContainingFile().getManager();
     final String baseName = propFile.getResourceBundle().getBaseName();
     manager.startBatchFilesProcessingMode();
 
     try {
-      PsiFile[] files = manager.getCacheManager().getFilesWithWord(baseName, UsageSearchContext.IN_PLAIN_TEXT, scope, true);
+      PsiFile[] files = CacheManager.SERVICE.getInstance(project).getFilesWithWord(baseName, UsageSearchContext.IN_PLAIN_TEXT, scope, true);
 
       for (PsiFile file : files) {
         ProgressManager.checkCanceled();

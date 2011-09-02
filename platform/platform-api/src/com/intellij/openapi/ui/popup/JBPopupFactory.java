@@ -225,7 +225,7 @@ public abstract class JBPopupFactory {
   public abstract TreePopup createTree(JBPopup parent, TreePopupStep step, Object parentValue);
   public abstract TreePopup createTree(TreePopupStep step);
 
-  public abstract ComponentPopupBuilder createComponentPopupBuilder(JComponent content, JComponent preferableFocusComponent);
+  public abstract ComponentPopupBuilder createComponentPopupBuilder(JComponent content, @Nullable JComponent preferableFocusComponent);
 
   /**
    * Returns the location where a popup with the specified data context is displayed.

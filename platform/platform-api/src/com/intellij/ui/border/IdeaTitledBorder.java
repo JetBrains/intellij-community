@@ -1,12 +1,11 @@
 package com.intellij.ui.border;
 
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xmlb.annotations.Text;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.*;
 import java.awt.*;
 
 /**
@@ -42,14 +41,16 @@ public class IdeaTitledBorder extends TitledBorder {
     this.titlePosition = TOP;
 
     calculateInsets();
+    updateUI();
+  }
 
+  private void updateUI() {
+    this.titleFont = UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont);
+    this.titleColor = UIUtil.getBorderTitleColor();
     this.border = BorderFactory.createCompoundBorder(new EmptyBorder(outsideInsets),
                                                      BorderFactory.createCompoundBorder(
                                                        BorderFactory.createMatteBorder(1, 0, 0, 0, UIUtil.getTitledBorderColor()),
                                                        new EmptyBorder(insideInsets)));
-
-    this.titleFont = UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont);
-    this.titleColor = UIUtil.getBorderTitleColor();
   }
 
   private void calculateInsets() {
@@ -79,6 +80,9 @@ public class IdeaTitledBorder extends TitledBorder {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+
+    updateUI();
+
     g.setPaintMode();
 
     Point textLoc = new Point();

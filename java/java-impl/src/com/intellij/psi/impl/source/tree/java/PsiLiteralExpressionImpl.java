@@ -19,16 +19,14 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.IntentionProvider;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -43,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 public class PsiLiteralExpressionImpl
        extends ExpressionPsiElement
@@ -87,7 +84,7 @@ public class PsiLiteralExpressionImpl
     }
     if (type == JavaTokenType.STRING_LITERAL) {
       PsiManagerEx manager = getManager();
-      GlobalSearchScope resolveScope = manager.getFileManager().getResolveScope(this);
+      GlobalSearchScope resolveScope = ResolveScopeManager.getElementResolveScope(this);
       return PsiType.getJavaLangString(manager, resolveScope);
     }
     if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {
@@ -533,16 +530,14 @@ public class PsiLiteralExpressionImpl
     return "PsiLiteralExpression:" + getText();
   }
 
+  @Override
+  public boolean isValidHost() {
+    return getValue() instanceof String;
+  }
+
   @NotNull
   public PsiReference[] getReferences() {
     return PsiReferenceService.getService().getContributedReferences(this);
-  }
-
-  @Nullable
-  public List<Pair<PsiElement,TextRange>> getInjectedPsi() {
-    if (!(getValue() instanceof String)) return null;
-
-    return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 
   public PsiLanguageInjectionHost updateText(@NotNull final String text) {
@@ -555,9 +550,5 @@ public class PsiLiteralExpressionImpl
   @NotNull
   public LiteralTextEscaper<PsiLiteralExpressionImpl> createLiteralTextEscaper() {
     return new StringLiteralEscaper<PsiLiteralExpressionImpl>(this);
-  }
-
-  public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(this, visitor);
   }
 }

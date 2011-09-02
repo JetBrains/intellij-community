@@ -20,7 +20,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -349,9 +351,12 @@ public class RedundantCastUtil {
       else {
         PsiElement parent = typeCast.getParent();
         if (parent instanceof PsiConditionalExpression) {
-          if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) {
-            //branches need to be of the same type
-            if (!Comparing.equal(operand.getType(), ((PsiConditionalExpression)parent).getType())) return;
+          //branches need to be of the same type
+          if (!Comparing.equal(operand.getType(), ((PsiConditionalExpression)parent).getType())) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) {
+              return;
+            }
+            if (!checkResolveAfterRemoveCast(parent)) return;
           }
         } else if (parent instanceof PsiSynchronizedStatement && (expr instanceof PsiExpression && ((PsiExpression)expr).getType() instanceof PsiPrimitiveType)) {
           return;
@@ -359,6 +364,43 @@ public class RedundantCastUtil {
         processAlreadyHasTypeCast(typeCast);
       }
       super.visitTypeCastExpression(typeCast);
+    }
+
+    private static boolean checkResolveAfterRemoveCast(PsiElement parent) {
+      PsiElement grandPa = parent.getParent();
+      if (grandPa instanceof PsiExpressionList) {
+        PsiExpression[] expressions = ((PsiExpressionList)grandPa).getExpressions();
+        int idx = ArrayUtil.find(expressions, parent);
+        PsiElement grandGrandPa = grandPa.getParent();
+        if (grandGrandPa instanceof PsiCall) {
+          PsiElement resolve = ((PsiCall)grandGrandPa).resolveMethod();
+          if (resolve instanceof PsiMethod) {
+            PsiCall expression = (PsiCall)grandGrandPa.copy();
+            PsiExpressionList argumentList = expression.getArgumentList();
+            LOG.assertTrue(argumentList != null);
+            PsiExpression toReplace = argumentList.getExpressions()[idx];
+            if (toReplace instanceof PsiConditionalExpression) {
+              PsiExpression thenExpression = ((PsiConditionalExpression)toReplace).getThenExpression();
+              PsiExpression elseExpression = ((PsiConditionalExpression)toReplace).getElseExpression();
+              if (thenExpression instanceof PsiTypeCastExpression) {
+                final PsiExpression thenOperand = ((PsiTypeCastExpression)thenExpression).getOperand();
+                if (thenOperand != null) {
+                  thenExpression.replace(thenOperand);
+                }
+              } else if (elseExpression instanceof PsiTypeCastExpression) {
+                final PsiExpression elseOperand = ((PsiTypeCastExpression)elseExpression).getOperand();
+                if (elseOperand != null) {
+                  elseExpression.replace(elseOperand);
+                }
+              }
+            }
+            if (expression.resolveMethod() != resolve) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
     }
 
     private void processAlreadyHasTypeCast(PsiTypeCastExpression typeCast){
@@ -412,7 +454,7 @@ public class RedundantCastUtil {
   private static boolean isCastRedundantInRefExpression (final PsiReferenceExpression refExpression, final PsiExpression castOperand) {
     final PsiElement resolved = refExpression.resolve();
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
-    refExpression.getManager().performActionWithFormatterDisabled(new Runnable() {
+    CodeStyleManager.getInstance(refExpression.getProject()).performActionWithFormatterDisabled(new Runnable() {
       public void run() {
         try {
           final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(refExpression.getProject()).getElementFactory();

@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -62,6 +63,15 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   public boolean couldShowInLookup() {
     return true;
   }
+
+  private static final Set<? extends Class> ourStopSearch = Collections.singleton(GrMethod.class);
+
+  @NotNull
+  @Override
+  public Set<? extends Class> getArgListStopSearchClasses() {
+    return ourStopSearch;
+  }
+
 
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);

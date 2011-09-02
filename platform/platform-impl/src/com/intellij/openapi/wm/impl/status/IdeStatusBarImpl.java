@@ -370,15 +370,11 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       final boolean prevIcon = p instanceof IconPresentationWrapper || p instanceof IconLikeCustomStatusBarWidget;
       final boolean nextIcon = n instanceof IconPresentationWrapper || n instanceof IconLikeCustomStatusBarWidget;
 
-      self.setBorder(!prevIcon || isNotificationIcon(self) ? StatusBarWidget.WidgetBorder.INSTANCE : BorderFactory.createEmptyBorder(2, 2, 2, 2));
-      if (nextIcon && !isNotificationIcon(n)) {
+      self.setBorder(prevIcon ? BorderFactory.createEmptyBorder(2, 2, 2, 2) : StatusBarWidget.WidgetBorder.INSTANCE);
+      if (nextIcon) {
         n.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
       }
     }
-  }
-
-  private static boolean isNotificationIcon(JComponent self) {
-    return self instanceof IconPresentationWrapper && ((IconPresentationWrapper)self).getPresentation() instanceof IdeNotificationArea;
   }
 
   public void setInfo(@Nullable final String s) {

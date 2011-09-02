@@ -55,7 +55,7 @@ public final class AnnotateCommand extends AbstractCommand {
                                                                                                                                                                                                             AuthenticationException {
     final ICvsFiles cvsFiles;
     try {
-      cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+      cvsFiles = scanFileSystem(clientEnvironment);
     }
     catch (IOException ex) {
       throw new IOCommandException(ex);

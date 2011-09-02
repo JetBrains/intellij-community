@@ -74,4 +74,10 @@
     <description>Implicit call to 'toString()' on array &lt;code&gt;args&lt;/code&gt; #loc</description>
   </problem>
 
+  <problem>
+    <file>ImplicitArrayToString.java</file>
+    <line>59</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Call to 'toString()' on array</problem_class>
+    <description>Implicit call to 'toString()' on array &lt;code&gt;is&lt;/code&gt; #loc</description>
+  </problem>
 </problems>

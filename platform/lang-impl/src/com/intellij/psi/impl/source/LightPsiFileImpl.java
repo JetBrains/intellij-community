@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
@@ -210,7 +211,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @NotNull
   public SearchScope getUseScope() {
-    return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
+    return ResolveScopeManager.getElementUseScope(this);
   }
 
   public void navigate(boolean requestFocus) {

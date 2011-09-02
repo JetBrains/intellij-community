@@ -168,8 +168,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
 
       @Override
       public int hashCode() {
-        PsiJavaCodeReferenceElement ref = getClassOrAnonymousClassReference();
-        return ref == null ? 0 : ref.hashCode();
+        return getElement().hashCode();
       }
 
       @Override

@@ -236,9 +236,9 @@ new Fxoo()<caret>\n"""
   }
 
   public void testNewImportedClassName() {
-    myFixture.configureByText("a.groovy", "new ArrayLi<caret>\n")
+    myFixture.configureByText("a.groovy", "new ArrayIndexOut<caret>\n")
     myFixture.completeBasic()
-    myFixture.checkResult "new ArrayList(<caret>)\n"
+    myFixture.checkResult "new ArrayIndexOutOfBoundsException(<caret>)\n"
   }
 
   public void testOnlyAnnotationsAfterAt() {

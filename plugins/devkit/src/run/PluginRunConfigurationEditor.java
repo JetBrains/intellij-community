@@ -136,15 +136,12 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     myVMParameters.setComponent(new RawCommandLineEditor());
     myVMParameters.getComponent().setDialogCaption(myVMParameters.getRawText());
     myVMParameters.setLabelLocation(BorderLayout.WEST);
+    myVMParameters.setAnchor(myProgramParameters.getLabel());
 
     myProgramParameters.setText(DevKitBundle.message("program.parameters"));
     myProgramParameters.setComponent(new RawCommandLineEditor());
     myProgramParameters.getComponent().setDialogCaption(myProgramParameters.getRawText());
     myProgramParameters.setLabelLocation(BorderLayout.WEST);
-
-    myProgramParameters.setLabelPreferredSize(myProgramParameters.getLabelPreferredSize());
-    myVMParameters.setLabelPreferredSize(myProgramParameters.getLabelPreferredSize());
-
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0);
     wholePanel.add(myVMParameters, gc);
@@ -157,6 +154,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     gc.weighty = 1;
     gc.gridx = 1;
     gc.weightx = 1;
+    gc.insets.left = 10;
     wholePanel.add(myModules, gc);
     return wholePanel;
   }

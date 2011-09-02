@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -212,12 +213,12 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   @NotNull
   public GlobalSearchScope getResolveScope() {
-    return getManager().getFileManager().getResolveScope(this);
+    return ResolveScopeManager.getElementResolveScope(this);
   }
 
   @NotNull
   public SearchScope getUseScope() {
-    return getManager().getFileManager().getUseScope(this);
+    return ResolveScopeManager.getElementUseScope(this);
   }
 
   public ItemPresentation getPresentation() {

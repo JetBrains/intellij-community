@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.util.ui.Html;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -28,9 +27,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.Html;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -38,16 +39,18 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.net.URL;
 
 /**
  * @author cdr
  */
 public class LineTooltipRenderer extends ComparableObject.Impl implements TooltipRenderer {
+  @NonNls protected static final String BORDER_LINE = "<hr size=1 noshade>";
+
   @NonNls protected String myText;
 
   private boolean myActiveLink = false;
   private int myCurrentWidth;
-  @NonNls protected static final String BORDER_LINE = "<hr size=1 noshade>";
 
   public LineTooltipRenderer(String text, Object[] comparable) {
     super(comparable);
@@ -96,30 +99,29 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     scrollPane.setViewportBorder(null);
 
-    final Ref<AnAction> anAction = new Ref<AnAction>();
+    final Ref<AnAction> actionRef = new Ref<AnAction>();
     final LightweightHint hint = new LightweightHint(scrollPane) {
       public void hide() {
         onHide(pane);
         super.hide();
-        final AnAction action = anAction.get();
+        final AnAction action = actionRef.get();
         if (action != null) {
           action.unregisterCustomShortcutSet(contentComponent);
         }
       }
     };
-    anAction
-      .set(new AnAction() { //action to expand description when tooltip was shown after mouse move; need to unregister from editor component
+    actionRef.set(new AnAction() {
+      // an action to expand description when tooltip was shown after mouse move; need to unregister from editor component
+      {
+        registerCustomShortcutSet(
+          new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)),
+          contentComponent);
+      }
 
-        {
-          registerCustomShortcutSet(
-            new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)),
-            contentComponent);
-        }
-
-        public void actionPerformed(final AnActionEvent e) {
-          expand(hint, editor, p, pane, alignToRight, group, hintHint);
-        }
-      });
+      public void actionPerformed(final AnActionEvent e) {
+        expand(hint, editor, p, pane, alignToRight, group, hintHint);
+      }
+    });
 
     pane.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
@@ -129,17 +131,24 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
           return;
         }
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          if (!expanded) { // more -> less
-            expand(hint, editor, p, pane, alignToRight, group, hintHint);
-            if (e.getURL() != null) {
-              BrowserUtil.launchBrowser(e.getURL().toString());
-            }
+          final URL url = e.getURL();
+          if (url != null) {
+            BrowserUtil.launchBrowser(url.toString());
+            hint.hide();
+            return;
           }
-          else { //less -> more
-            if (e.getURL() != null) {
-              BrowserUtil.launchBrowser(e.getURL().toString());
-              return;
-            }
+
+          final String description = e.getDescription();
+          if (description != null &&
+              handle(description, editor)) {
+            hint.hide();
+            return;
+          }
+
+          if (!expanded) {
+            expand(hint, editor, p, pane, alignToRight, group, hintHint);
+          }
+          else {
             stripDescription();
             hint.hide();
             TooltipController.getInstance().showTooltip(editor, new Point(p.x - 3, p.y - 3), createRenderer(myText, 0), false, group, hintHint);
@@ -173,6 +182,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     return hint;
   }
 
+  private static boolean handle(@NotNull final String ref, @NotNull final Editor editor) {
+    // @kirillk please don't remove this call anymore
+    return TooltipLinkHandlerEP.handleLink(ref, editor);
+  }
+
   private void expand(LightweightHint hint,
                       Editor editor,
                       Point p,
@@ -184,8 +198,9 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     if (myCurrentWidth > 0) {
       stripDescription();
     }
-
-    TooltipController.getInstance().showTooltip(editor, new Point(p.x - 3, p.y - 3), createRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()), alignToRight, group, hintHint);
+    TooltipController.getInstance().showTooltip(editor, new Point(p.x - 3, p.y - 3),
+                                                createRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()), alignToRight, group,
+                                                hintHint);
   }
 
   public static void correctLocation(Editor editor,
@@ -273,10 +288,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     }
   }
 
-  protected String convertTextOnLinkHandled(String text) {
-    return text;
-  }
-
   protected void onHide(JComponent contentComponent) {
   }
 
@@ -284,7 +295,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     return new LineTooltipRenderer(text, width, getEqualityObjects());
   }
 
-  protected boolean dressDescription(Editor editor) {
+  protected boolean dressDescription(@NotNull final Editor editor) {
     return false;
   }
 
@@ -292,9 +303,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   static boolean isActiveHtml(String html) {
-    return html.indexOf("</a>") >= 0;
+    return html.contains("</a>");
   }
-
 
   public void addBelow(String text) {
     @NonNls String newBody;

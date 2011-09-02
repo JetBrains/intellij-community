@@ -46,9 +46,11 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.TextFieldCompletionProvider;
 import gnu.trove.TIntArrayList;
@@ -66,7 +68,7 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 
-public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
+public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implements ComponentWithAnchor {
   private static final List<TIntArrayList> ourEnabledFields = Arrays.asList(
     new TIntArrayList(new int[]{0}),
     new TIntArrayList(new int[]{1}),
@@ -105,12 +107,14 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private final BrowseModuleValueActionListener[] myBrowsers;
   private AlternativeJREPanel myAlternativeJREPanel;
   private JComboBox myForkCb;
+  private JBLabel myTestLabel;
   @NonNls private static final String NONE = "none";
   @NonNls private static final String METHOD = "method";
   @NonNls private static final String KLASS = "class";
   private static final String[] FORK_MODE_ALL = {NONE, METHOD, KLASS};
   private static final String[] FORK_MODE = {NONE, METHOD};
   private Project myProject;
+  private JComponent anchor;
 
   public JUnitConfigurable(final Project project) {
     myProject = project;
@@ -197,6 +201,9 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     });
 
     myCommonJavaParameters.getProgramParametersComponent().setVisible(false);
+
+    setAnchor(myDir.getLabel());
+    myAlternativeJREPanel.setAnchor(myModule.getLabel());
   }
 
   public void applyEditorTo(final JUnitConfiguration configuration) {
@@ -370,6 +377,22 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       }
     }.apply(textFieldWithBrowseButton.getChildComponent());
     myMethod.setComponent(textFieldWithBrowseButton);
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    myTestLabel.setAnchor(anchor);
+    myClass.setAnchor(anchor);
+    myDir.setAnchor(anchor);
+    myMethod.setAnchor(anchor);
+    myPattern.setAnchor(anchor);
+    myPackage.setAnchor(anchor);
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {

@@ -17,11 +17,9 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -32,23 +30,14 @@ import java.util.List;
  * In order to do the injection, you have to
  * <ul>
  * <li>Implement {@link com.intellij.psi.LanguageInjector} to describe exact place where injection should occur.</li>  
- * <li>Register injection in {@link com.intellij.psi.PsiManager#registerLanguageInjector(LanguageInjector)} .</li>
+ * <li>Register injection in {@link com.intellij.psi.LanguageInjector#EXTENSION_POINT_NAME} extension point.</li>
  * </ul>
  * Currently, language can be injected into string literals, XML tag contents and XML attributes.
  * You don't have to implement PsiLanguageInjectionHost by yourself, unless you want to inject something into your own custom PSI.
  * For all returned injected PSI elements, {@link PsiElement#getContext()} method returns PsiLanguageInjectionHost they were injected into.
  */
 public interface PsiLanguageInjectionHost extends PsiElement {
-  /**
-   * @return injected PSI element and text range inside host element where injection occurs.
-   * For example, in string literals we might want to inject something inside double quotes.
-   * To express this, use <code>return Pair.create(injectedPsi, new TextRange(1, textLength+1))</code>.
-   * @see #processInjectedPsi(InjectedPsiVisitor) instead
-   */
-  @Nullable @Deprecated
-  List<Pair<PsiElement,TextRange>> getInjectedPsi();
-
-  void processInjectedPsi(@NotNull InjectedPsiVisitor visitor);
+  boolean isValidHost();
 
   PsiLanguageInjectionHost updateText(@NotNull String text);
   

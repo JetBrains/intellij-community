@@ -48,7 +48,7 @@ public final class UneditCommand extends AbstractCommand {
                                                                                                                                                                                                                   AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
-			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+			cvsFiles = scanFileSystem(clientEnvironment);
 		}
 		catch (IOException ex) {
 			throw new IOCommandException(ex);
@@ -101,7 +101,7 @@ public final class UneditCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCVSArguments() {
-		@NonNls final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuilder cvsArguments = new StringBuilder();
 		if (!isRecursive()) {
 			cvsArguments.append("-l ");
 		}

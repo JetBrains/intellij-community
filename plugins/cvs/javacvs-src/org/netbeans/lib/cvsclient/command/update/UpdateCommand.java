@@ -74,7 +74,7 @@ public final class UpdateCommand extends AbstractCommand
           throws CommandException, AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
-			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+			cvsFiles = scanFileSystem(clientEnvironment);
 		}
 		catch (IOException ex) {
 			throw new IOCommandException(ex);
@@ -264,7 +264,7 @@ public final class UpdateCommand extends AbstractCommand
 	 * Similar to getCVSCommand() however without the files and command's name
 	 */
 	private String getCvsArguments() {
-		@NonNls final StringBuffer cvsArguments = new StringBuffer("");
+		@NonNls final StringBuilder cvsArguments = new StringBuilder();
 		if (isCleanCopy()) {
 			cvsArguments.append("-C ");
 		}

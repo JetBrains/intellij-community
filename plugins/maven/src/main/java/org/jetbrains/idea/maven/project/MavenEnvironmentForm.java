@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
@@ -35,7 +36,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-public class MavenEnvironmentForm {
+public class MavenEnvironmentForm implements ComponentWithAnchor {
   private JPanel panel;
   private LabeledComponent<TextFieldWithBrowseButton> mavenHomeComponent;
   private LabeledComponent<TextFieldWithBrowseButton> settingsFileComponent;
@@ -43,6 +44,7 @@ public class MavenEnvironmentForm {
   private JCheckBox mavenHomeOverrideCheckBox;
   private JCheckBox settingsOverrideCheckBox;
   private JCheckBox localRepositoryOverrideCheckBox;
+  private JComponent anchor;
 
   private final PathOverrider mavenHomeOverrider;
   private final PathOverrider userSettingsFileOverrider;
@@ -95,6 +97,8 @@ public class MavenEnvironmentForm {
                                                   settingsFileComponent.getComponent().getText());
         }
       });
+
+    setAnchor(mavenHomeComponent.getLabel());
   }
 
   public boolean isModified(MavenGeneralSettings data) {
@@ -124,6 +128,19 @@ public class MavenEnvironmentForm {
     localRepositoryComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.local.repository"), "", null,
                                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor());
     return panel;
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    mavenHomeComponent.setAnchor(anchor);
+    settingsFileComponent.setAnchor(anchor);
+    localRepositoryComponent.setAnchor(anchor);
   }
 
   private static abstract class PathProvider {
