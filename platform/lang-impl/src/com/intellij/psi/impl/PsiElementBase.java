@@ -17,7 +17,7 @@
 
 package com.intellij.psi.impl;
 
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -122,11 +122,11 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
   }
 
   public void navigate(boolean requestFocus) {
-    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+    PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
 
   public boolean canNavigate() {
-    return EditSourceUtil.canNavigate(this);
+    return PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
   public boolean canNavigateToSource() {

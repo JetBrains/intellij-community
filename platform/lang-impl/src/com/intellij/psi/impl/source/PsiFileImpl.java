@@ -18,7 +18,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.ide.caches.FileContent;
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
@@ -843,11 +843,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public void navigate(boolean requestFocus) {
-    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+    PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
 
   public boolean canNavigate() {
-    return EditSourceUtil.canNavigate(this);
+    return PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
   public boolean canNavigateToSource() {

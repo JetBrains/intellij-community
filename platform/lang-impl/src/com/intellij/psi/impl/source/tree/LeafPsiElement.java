@@ -16,7 +16,7 @@
 
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
@@ -254,14 +254,14 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   }
 
   public void navigate(boolean requestFocus) {
-    final Navigatable descriptor = EditSourceUtil.getDescriptor(this);
+    final Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
     if (descriptor != null) {
       descriptor.navigate(requestFocus);
     }
   }
 
   public boolean canNavigate() {
-    return EditSourceUtil.canNavigate(this);
+    return PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
   public boolean canNavigateToSource() {

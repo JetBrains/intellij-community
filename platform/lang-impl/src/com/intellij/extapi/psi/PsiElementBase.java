@@ -16,7 +16,7 @@
 
 package com.intellij.extapi.psi;
 
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -200,7 +200,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   public void navigate(boolean requestFocus) {
-    final Navigatable descriptor = EditSourceUtil.getDescriptor(this);
+    final Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
     if (descriptor != null) descriptor.navigate(requestFocus);
   }
 
@@ -209,7 +209,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   public boolean canNavigateToSource() {
-    final Navigatable descriptor = EditSourceUtil.getDescriptor(this);
+    final Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
     return descriptor != null && descriptor.canNavigateToSource();
   }
 

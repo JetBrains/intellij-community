@@ -17,7 +17,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.caches.FileContent;
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -215,7 +215,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   public void navigate(boolean requestFocus) {
-    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+    PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
 
   public synchronized PsiElement findElementAt(int offset) {
