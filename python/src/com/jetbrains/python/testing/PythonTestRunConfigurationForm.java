@@ -5,6 +5,8 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
@@ -22,7 +24,7 @@ import static com.jetbrains.python.testing.unittest.PythonUnitTestRunConfigurati
 /**
  * @author Leonid Shalupov
  */
-public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConfigurationParams {
+public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConfigurationParams, ComponentWithAnchor {
   private JPanel myRootPanel;
   private LabeledComponent myTestClassComponent;
   private LabeledComponent myTestMethodComponent;
@@ -38,6 +40,7 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   private JPanel myCommonOptionsPlaceholder;
   private JPanel myTestsPanel;
   private JLabel myConfigurationName;
+  private JBLabel myTypeJBLabel;
 
   private TextFieldWithBrowseButton myTestFolderTextField;
   private TextFieldWithBrowseButton myTestScriptTextField;
@@ -47,6 +50,7 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
 
   private final Project myProject;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
+  private JComponent anchor;
 
   public PythonTestRunConfigurationForm(final Project project,
                                         final AbstractPythonTestRunConfiguration configuration) {
@@ -54,6 +58,8 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration);
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
     initComponents();
+
+    setAnchor(myTestMethodComponent.getLabel());
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -136,6 +142,22 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
     else {
       return TestType.TEST_FUNCTION;
     }
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    myTypeJBLabel.setAnchor(anchor);
+    myPatternComponent.setAnchor(anchor);
+    myTestClassComponent.setAnchor(anchor);
+    myTestFolderComponent.setAnchor(anchor);
+    myTestMethodComponent.setAnchor(anchor);
+    myTestScriptComponent.setAnchor(anchor);
   }
 
   private static void setSelectedIfNeeded(boolean condition, JRadioButton rb) {

@@ -89,6 +89,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   private StructuredDocString getStructuredDocString(String qualifiedName, LanguageLevel level) {
     final Properties db = getStdlibTypes(level);
     final String docString = db.getProperty(qualifiedName);
+    if (docString == null && level.isPy3K()) {
+      return getStructuredDocString(qualifiedName, LanguageLevel.PYTHON27);
+    }
     return StructuredDocString.parse(docString);
   }
 
@@ -97,7 +100,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final PyClass c = f.getContainingClass();
     final VirtualFile vfile = f.getContainingFile().getVirtualFile();
     if (vfile != null) {
-      final String module = ResolveImportUtil.findShortestImportableName(callSite != null ? callSite : f, vfile);
+      String module = ResolveImportUtil.findShortestImportableName(callSite != null ? callSite : f, vfile);
+      if ("builtins".equals(module)) {
+        module = "__builtin__";
+      }
       result = String.format("%s.%s%s",
                              module,
                              c != null ? c.getName() + "." : "",

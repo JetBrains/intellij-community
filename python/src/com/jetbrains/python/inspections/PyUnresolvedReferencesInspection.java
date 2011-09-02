@@ -392,7 +392,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                     if (element.getParent() instanceof PyCallExpression) {
                       actions.add(new AddMethodQuickFix(ref_text, (PyClassType)qtype));
                     }
-                    else actions.add(new AddFieldQuickFix(ref_text, cls, "None"));
+                    else if (!(reference instanceof PyOperatorReferenceImpl)) {
+                      actions.add(new AddFieldQuickFix(ref_text, cls, "None"));
+                    }
                   }
                 }
                 if (reference instanceof PyOperatorReferenceImpl) {

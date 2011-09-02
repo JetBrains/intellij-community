@@ -8,12 +8,12 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="c3528" class="javax.swing.JLabel">
+      <component id="c3528" class="com.intellij.ui.components.JBLabel" binding="myWorkingDirectoryJBLabel">
         <constraints>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <labelFor value="2e008"/>
+          <labelFor value=""/>
           <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.labels.working_directory"/>
         </properties>
       </component>
@@ -31,11 +31,10 @@
         </constraints>
         <properties>
           <labelLocation value="West"/>
-          <labelPreferredSize width="145" height="16"/>
           <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.labels.environment_variables"/>
         </properties>
       </component>
-      <component id="cdd29" class="javax.swing.JLabel">
+      <component id="cdd29" class="com.intellij.ui.components.JBLabel" binding="myInterpreterOptionsJBLabel">
         <constraints>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -54,11 +53,9 @@
           <text value=""/>
         </properties>
       </component>
-      <component id="a4f87" class="javax.swing.JLabel">
+      <component id="a4f87" class="com.intellij.ui.components.JBLabel" binding="myPythonInterpreterJBLabel">
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="145" height="-1"/>
-          </grid>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="Python Interpreter:"/>

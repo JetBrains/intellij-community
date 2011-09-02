@@ -342,3 +342,40 @@ def test_isinstance_implicit_self_types():
     x = 1
     if isinstance(x, unicode):
         x.encode('UTF-8') #pass
+
+def test_not_none():
+    def test(x):
+        """
+        :type x: int or str or list
+        """
+    def f1():
+        """
+        :rtype: int or None
+        """
+    def f2():
+        """
+        :rtype: int or str or None
+        """
+    x1 = f1()
+    x2 = f2()
+    x3 = 1
+    test(<warning descr="Expected type 'one of (int, str, list)', got 'one of (int, None)' instead">x1</warning>)
+    test(<warning descr="Expected type 'one of (int, str, list)', got 'one of (int, str, None)' instead">x2</warning>)
+    test(x3)
+    if x1:
+        test(x1)
+    if x2:
+        test(x2)
+    if x3:
+        test(x3)
+    if x1 is not None:
+        test(x1)
+    elif x2 is not None:
+        test(x2)
+    elif x3 is not None:
+        test(x3)
+
+def test_builtin_functions():
+    print(map(str, [1, 2, 3]) + ['foo']) #pass
+    print(map(lambda x: x.upper(), 'foo')) #pass
+    print(filter(lambda x: x % 2 == 0, [1, 2, 3]) + [4, 5, 6]) #pass

@@ -135,6 +135,16 @@ public class PyUnionType implements PyType {
     return myMembers;
   }
 
+  public PyType exclude(PyType t, TypeEvalContext context) {
+    final List<PyType> members = new ArrayList<PyType>();
+    for (PyType m : getMembers()) {
+      if (!PyTypeChecker.match(t, m, context)) {
+        members.add(m);
+      }
+    }
+    return union(members);
+  }
+
   private static PyType unit(@Nullable PyType type) {
     if (type instanceof PyUnionType) {
       Set<PyType> members = new LinkedHashSet<PyType>();

@@ -273,7 +273,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @Nullable
   public static PyType getTypeFromTarget(@NotNull final PsiElement target,
                                          final TypeEvalContext context,
-                                         @Nullable PyReferenceExpression anchor) {
+                                         PyReferenceExpression anchor) {
     final PyType pyType = getReferenceTypeFromProviders(target, context, anchor);
     if (pyType != null) {
       return pyType;
