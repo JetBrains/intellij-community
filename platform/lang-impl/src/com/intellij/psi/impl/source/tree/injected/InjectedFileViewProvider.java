@@ -28,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ import java.util.List;
 /**
  * @author cdr
 */
-public class InjectedFileViewProvider extends SingleRootFileViewProvider {
+public class InjectedFileViewProvider extends SingleRootFileViewProvider implements FreeThreadedFileViewProvider {
   private Place myShreds;
   private Project myProject;
   private final Object myLock = new Object();
