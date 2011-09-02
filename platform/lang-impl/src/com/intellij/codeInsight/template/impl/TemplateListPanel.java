@@ -38,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,10 +153,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
         if (!names.add(template.getKey())) {
           throw new ConfigurationException("Duplicate " + template.getKey() + " live templates in " + templateGroup.getName() + " group");
-        }
-
-        if (!TemplateImplUtil.validateTemplateText(template.getString())) {
-          throw new ConfigurationException("Malformed " + template.getKey() + " live template in " + templateGroup.getName() + " group");
         }
       }
     }
@@ -979,16 +976,20 @@ public class TemplateListPanel extends JPanel implements Disposable {
     selectTemplate(lastSelectedGroup, lastSelectedKey);
   }
 
-  private void selectTemplate(String lastSelectedGroup, String lastSelectedKey) {
-    for (int i = 0; i < myTree.getRowCount(); i++) {
-      TemplateGroup group = getGroup(i);
-      TemplateImpl template = getTemplate(i);
-      if (template != null && Comparing.equal(lastSelectedKey, template.getKey()) ||
-          group != null && Comparing.equal(lastSelectedGroup, group.getName())) {
-        setSelectedNode(getNode(i));
-        return;
+  private void selectTemplate(final String lastSelectedGroup, final String lastSelectedKey) {
+    TreeUtil.traverseDepth(myTreeRoot, new TreeUtil.Traverse() {
+      @Override
+      public boolean accept(Object node) {
+        Object o = ((DefaultMutableTreeNode)node).getUserObject();
+        if (lastSelectedKey == null && o instanceof TemplateGroup && Comparing.equal(lastSelectedGroup, ((TemplateGroup)o).getName()) ||
+            o instanceof TemplateImpl && Comparing.equal(lastSelectedKey, ((TemplateImpl)o).getKey()) && Comparing.equal(lastSelectedGroup, ((TemplateImpl)o).getGroupName())) {
+          setSelectedNode((DefaultMutableTreeNode)node);
+          return false;
+        }
+
+        return true;
       }
-    }
+    });
   }
 
   private void fireStructureChange() {

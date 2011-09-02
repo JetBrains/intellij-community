@@ -31,25 +31,6 @@ public class TemplateImplUtil {
   private TemplateImplUtil() {
   }
 
-  public static boolean validateTemplateText(String s) {
-    TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(s);
-    int end = -1;
-    while(true){
-      IElementType tokenType = lexer.getTokenType();
-      if (tokenType == null) break;
-      int start = lexer.getTokenStart();
-      if (tokenType == TemplateTokenType.VARIABLE){
-        if (start == end) return false;
-        end = lexer.getTokenEnd();
-      } else {
-        end = -1;
-      }
-      lexer.advance();
-    }
-    return true;
-  }
-
   public static void parseVariables(CharSequence text, ArrayList<Variable> variables, @Nullable Set<String> predefinedVars) {
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(text);
