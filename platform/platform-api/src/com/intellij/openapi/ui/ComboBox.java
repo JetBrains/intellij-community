@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.MacUIUtil;
@@ -62,13 +63,26 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
    */
   public ComboBox(final int width) {
     this(new DefaultComboBoxModel(), width);
-    UIUtil.installComboBoxCopyAction(this);
   }
+
 
   public ComboBox(final ComboBoxModel model, final int width) {
     super(model);
     myMinimumAndPreferredWidth = width;
     registerCancelOnEscape();
+    UIUtil.installComboBoxCopyAction(this);
+    final JButton arrowButton = UIUtil.findComponentOfType(this, JButton.class);
+    if (arrowButton != null) {
+      arrowButton.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          if (!mySwingPopup) {
+            e.consume();
+            setPopupVisible(true);
+          }
+        }
+      });
+    }
   }
 
   @Override
@@ -84,6 +98,7 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
               final Object value = list.getSelectedValue();
               if (value != null) {
                 configureEditor(getEditor(), value);
+                IdeFocusManager.getGlobalInstance().requestFocus(ComboBox.this, true);
               }
             }
           })
@@ -127,9 +142,11 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
     if (event.getID() == WindowEvent.WINDOW_OPENED) {
       final WindowEvent we = (WindowEvent)event;
       final List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
-      for (JBPopup each : popups) {
-        if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
-          super.setPopupVisible(false);
+      if (popups != null) {
+        for (JBPopup each : popups) {
+          if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
+            super.setPopupVisible(false);
+          }
         }
       }
     }
