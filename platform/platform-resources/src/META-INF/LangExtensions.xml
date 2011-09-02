@@ -150,6 +150,9 @@
   <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitThread"
       serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
 
+  <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
+                      serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
+
   <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                   serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 
