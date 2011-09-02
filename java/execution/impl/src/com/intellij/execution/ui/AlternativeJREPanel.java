@@ -24,7 +24,9 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.ui.components.JBCheckBox;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,15 +38,15 @@ import java.util.ArrayList;
  * User: anna
  * Date: Jun 21, 2005
  */
-public class AlternativeJREPanel extends JPanel {
+public class AlternativeJREPanel extends JPanel implements ComponentWithAnchor {
   private final ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
-  private final JCheckBox myCbEnabled;
+  private final JBCheckBox myCbEnabled;
   final TextFieldWithHistory myFieldWithHistory;
 
   public AlternativeJREPanel() {
     super(new GridBagLayout());
 
-    myCbEnabled = new JCheckBox(ExecutionBundle.message("run.configuration.use.alternate.jre.checkbox"));
+    myCbEnabled = new JBCheckBox(ExecutionBundle.message("run.configuration.use.alternate.jre.checkbox"));
     final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
                                                          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     add(myCbEnabled, gc);
@@ -77,6 +79,7 @@ public class AlternativeJREPanel extends JPanel {
       }
     });
     enabledChanged();
+    updateUI();
   }
 
   private void enabledChanged() {
@@ -106,12 +109,18 @@ public class AlternativeJREPanel extends JPanel {
     setPathEnabled(isEnabled);
     setPath(path);
   }
-  
-  public void setCheckBoxPreferredSize(Dimension d) {
-    myCbEnabled.setPreferredSize(d);
+
+  @Override
+  public JComponent getAnchor() {
+    return myCbEnabled.getAnchor();
   }
-  
-  public Dimension getCheckBoxPreferredSize() {
-    return myCbEnabled.getPreferredSize();
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    myCbEnabled.setAnchor(anchor);
+  }
+
+  public JBCheckBox getCbEnabled() {
+    return myCbEnabled;
   }
 }

@@ -48,6 +48,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.TextFieldCompletionProvider;
@@ -68,8 +69,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration>
-{
+public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration> implements ComponentWithAnchor {
   //private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private final Project project;
 
@@ -89,6 +89,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private LabeledComponent<EditorTextFieldWithBrowseButton> packageField;
   private LabeledComponent<TextFieldWithBrowseButton.NoPathCompletion> groupField;
   private LabeledComponent<TextFieldWithBrowseButton> suiteField;
+  private JComponent anchor;
   private JRadioButton packagesInProject;
   private JRadioButton packagesInModule;
   private JRadioButton packagesAcrossModules;
@@ -119,7 +120,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     createView();
     moduleSelector = new ConfigurationModuleSelector(project, getModulesComponent());
     commonJavaParameters.setModuleContext(moduleSelector.getModule());
-    commonJavaParameters.setLabelsPreferredSize(moduleClasspath.getLabelPreferredSize());
     moduleClasspath.getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         commonJavaParameters.setModuleContext(moduleSelector.getModule());
@@ -181,6 +181,9 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     outputDirectory.getComponent().getTextField().setDocument(model.getOutputDirectoryDocument());
 
     commonJavaParameters.setProgramParametersLabel(ExecutionBundle.message("junit.configuration.test.runner.parameters.label"));
+
+    setAnchor(outputDirectory.getLabel());
+    alternateJDK.setAnchor(moduleClasspath.getLabel());
   }
 
   private void evaluateModuleClassPath() {
@@ -291,6 +294,22 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   @Override
   protected JComponent createEditor() {
     return panel;
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    methodField.setAnchor(anchor);
+    packageField.setAnchor(anchor);
+    groupField.setAnchor(anchor);
+    suiteField.setAnchor(anchor);
+    outputDirectory.setAnchor(anchor);
+    classField.setAnchor(anchor);
   }
 
   private static void registerListener(JRadioButton[] buttons, ChangeListener changelistener) {

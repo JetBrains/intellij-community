@@ -66,6 +66,7 @@ public class PagedFileStorage implements Forceable {
   private final int myStorageIndex;
 
   private static final int MAX_PAGES_COUNT = 0xFFFF;
+  private static final int MAX_LIVE_STORAGES_COUNT = 0xFFFF;
 
   public static class StorageLock {
     private static final int FILE_INDEX_MASK = 0xFFFF0000;
@@ -84,8 +85,14 @@ public class PagedFileStorage implements Forceable {
     private final ConcurrentHashMap<Integer, PagedFileStorage> myIndex2Storage = new ConcurrentHashMap<Integer, PagedFileStorage>();
     
     private int registerPagedFileStorage(PagedFileStorage storage) {
-      int value;
-      while(myIndex2Storage.putIfAbsent(value = (myIndex2Storage.size()  << FILE_INDEX_SHIFT), storage) != null) ;
+      int registered = myIndex2Storage.size();
+      assert registered <= MAX_LIVE_STORAGES_COUNT;
+      int value = registered << FILE_INDEX_SHIFT;
+      while(myIndex2Storage.putIfAbsent(value, storage) != null) {
+        ++registered;
+        assert registered <= MAX_LIVE_STORAGES_COUNT;
+        value = registered << FILE_INDEX_SHIFT;
+      }
       return value;
     }
     
@@ -431,6 +438,7 @@ public class PagedFileStorage implements Forceable {
     }
     finally {
       unmapAll();
+      myLock.myIndex2Storage.remove(myStorageIndex);
     }
   }
 

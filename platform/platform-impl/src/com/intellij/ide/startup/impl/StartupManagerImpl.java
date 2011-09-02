@@ -131,7 +131,6 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   public synchronized void runPostStartupActivities() {
     final Application app = ApplicationManager.getApplication();
-    app.assertIsDispatchThread();
 
     if (myPostStartupActivitiesPassed) return;
 
@@ -211,14 +210,14 @@ public class StartupManagerImpl extends StartupManagerEx {
     if (DumbService.isDumbAware(action)) {
       runnable = new DumbAwareRunnable() {
         public void run() {
-          application.runWriteAction(action);
+          action.run();
         }
       };
     }
     else {
       runnable = new Runnable() {
         public void run() {
-          application.runWriteAction(action);
+          action.run();
         }
       };
     }

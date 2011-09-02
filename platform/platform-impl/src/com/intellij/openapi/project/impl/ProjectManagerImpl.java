@@ -303,6 +303,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     filePath = canonicalize(filePath);
     ProjectImpl project = null;
     try {
+      final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+      if (indicator != null) {
+        indicator.setText(ProjectBundle.message("loading.components.for", FileUtil.toSystemDependentName(filePath)));
+        indicator.setIndeterminate(true);
+      }
       project = createAndInitProject(null, filePath, false, false, null);
     }
     catch (ProcessCanceledException e) {
@@ -389,25 +394,53 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myOpenProjects.add(project);
     cacheOpenProjects();
 
-    fireProjectOpened(project);
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      fireProjectOpened(project);
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          fireProjectOpened(project);
+        }
+      }, ModalityState.defaultModalityState());
+    }
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
 
-    boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
+    boolean ok;
+    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+
+    if (indicator == null) {
+        ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          startupManager.runStartupActivities();
+        }
+      }, ProjectBundle.message("project.load.progress"), true, project);
+    }
+    else {
+      try {
         startupManager.runStartupActivities();
+        ok = true;
       }
-    }, ProjectBundle.message("project.load.progress"), true, project);
+      catch (Throwable e) {
+        ok = false;
+      }
+    }
 
     if (!ok) {
       closeProject(project, false, false);
       notifyProjectOpenFailed();
       return false;
     }
-    
-    startupManager.startCacheUpdate();
-    
-    startupManager.runPostStartupActivities();
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        startupManager.runPostStartupActivities();
+        startupManager.startCacheUpdate();
+      }
+    });
+
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       // should be invoked last
@@ -440,82 +473,90 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Nullable
   public Project loadAndOpenProject(final String filePath, final boolean convert) throws IOException, JDOMException, InvalidDataException {
-    try {
-
-      final Project project = convertAndLoadProject(filePath, convert);
-      if (project == null) {
-        return null;
-      }
-
-      if (!openProject(project)) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            Disposer.dispose(project);
+    final Ref<Project> projectRef = new Ref<Project>();
+    final Ref<IOException> exceptionRef = new Ref<IOException>();
+    myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final Project project = convertAndLoadProject(filePath, convert);
+          if (project == null) {
+            return;
           }
-        });
-
-        return null;
+    
+          if (!openProject(project)) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                Disposer.dispose(project);
+              }
+            });
+    
+            return;
+          }
+    
+          projectRef.set(project);
+        }
+        catch (StateStorageException e) {
+          exceptionRef.set(new IOException(e.getMessage()));
+        }
+        catch (IOException e) {
+          exceptionRef.set(e);
+        }
       }
-
-      return project;
+    }, ProjectBundle.message("project.load.progress"), true, null);
+    
+    if (!exceptionRef.isNull()) {
+      throw exceptionRef.get();
     }
-    catch (StateStorageException e) {
-      throw new IOException(e.getMessage());
-    }
+    return projectRef.get();
   }
 
   @Nullable
   public Project loadProjectWithProgress(final String filePath) throws IOException {
-    return loadProjectWithProgress(filePath, null);
+    return loadProjectWithProgress(filePath, new Ref<Boolean>());
   }
 
   @Nullable
-  public Project loadProjectWithProgress(final String filePath, Ref<Boolean> canceled) throws IOException {
+  public Project loadProjectWithProgress(final String filePath, final Ref<Boolean> canceled) throws IOException {
     final IOException[] io = {null};
     final StateStorageException[] stateStorage = {null};
 
     if (filePath != null) {
       refreshProjectFiles(filePath);
     }
-
     final Project[] project = new Project[1];
-    boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
+    canceled.set(false);
+    Runnable runnable = new Runnable() {
       public void run() {
-        final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
         try {
-          if (indicator != null) {
-            indicator.setText(ProjectBundle.message("loading.components.for", FileUtil.toSystemDependentName(filePath)));
-            indicator.setIndeterminate(true);
-          }
           project[0] = doLoadProject(filePath);
         }
         catch (IOException e) {
           io[0] = e;
-          return;
         }
         catch (StateStorageException e) {
           stateStorage[0] = e;
-          return;
         }
-
-        if (indicator != null) {
-          indicator.setText(ProjectBundle.message("initializing.components"));
+        catch (ProcessCanceledException e) {
+          canceled.set(true);
+          throw e;
         }
       }
-    }, ProjectBundle.message("project.load.progress"), true, null);
+    };
+    if (ProgressManager.getInstance().getProgressIndicator() == null) {
+      myProgressManager.runProcessWithProgressSynchronously(runnable, ProjectBundle.message("project.load.progress"), true, null);
+    }
+    else {
+      runnable.run();
+    }
 
-    if (!ok) {
+    if (canceled.get() || project[0] == null) {
       if (project[0] != null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             Disposer.dispose(project[0]);
           }
         });
-
-        project[0] = null;
-      }
-      if (canceled != null) {
-        canceled.set(true);
       }
       notifyProjectOpenFailed();
     }
@@ -523,7 +564,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (io[0] != null) throw io[0];
     if (stateStorage[0] != null) throw stateStorage[0];
 
-    if (project[0] == null || !ok) {
+    if (project[0] == null || canceled.get()) {
       return null;
     }
     return project [0];

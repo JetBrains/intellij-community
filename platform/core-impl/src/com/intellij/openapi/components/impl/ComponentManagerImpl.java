@@ -201,15 +201,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   private void initComponent(Object component) {
-    final ProgressIndicatorProvider progressManager = ProgressIndicatorProvider.getInstance();
-
-    final ProgressIndicator indicator = progressManager != null ? progressManager.getProgressIndicator() : null;
+    final ProgressIndicator indicator = getProgressIndicator();
     if (indicator != null) {
-      String name = getComponentName(component);
       indicator.checkCanceled();
-      indicator.setText2(name);
-      indicator.setIndeterminate(false);
-      indicator.setFraction(myComponentsRegistry.getPercentageOfComponentsLoaded());
     }
 
     try {
@@ -227,6 +221,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     catch (Throwable ex) {
       handleInitComponentError(ex, false, component.getClass().getName());
     }
+  }
+
+  @Nullable
+  protected static ProgressIndicator getProgressIndicator() {
+    final ProgressIndicatorProvider progressManager = ProgressIndicatorProvider.getInstance();
+    return progressManager != null ? progressManager.getProgressIndicator() : null;
   }
 
   public void initializeComponent(Object component, boolean service) {

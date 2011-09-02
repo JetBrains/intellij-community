@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -42,6 +43,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
@@ -50,10 +52,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * created at Sep 24, 2001
@@ -356,8 +355,13 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       containerSet.add(container);
       String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",
                                                  RefactoringUIUtil.getDescription(resolved, true),
-                                                 RefactoringUIUtil.getDescription(container, true));
-      conflicts.putValue(resolved, message);
+                                                 StringUtil.join(containerSet, new Function<PsiElement, String>() {
+                                                   @Override
+                                                   public String fun(PsiElement element) {
+                                                     return RefactoringUIUtil.getDescription(element, true);
+                                                   }
+                                                 }, ", "));
+      conflicts.put(resolved, Collections.singletonList(message));
     }
   }
 

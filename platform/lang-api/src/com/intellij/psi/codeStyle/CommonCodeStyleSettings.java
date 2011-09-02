@@ -43,6 +43,11 @@ public class CommonCodeStyleSettings {
   
   private final static String INDENT_OPTIONS_TAG = "indentOptions";
 
+  public CommonCodeStyleSettings(Language language, FileType fileType) {
+    myLanguage = language;
+    myFileType = fileType;
+  }
+
   public CommonCodeStyleSettings(Language language) {
     myLanguage = language;
     if (language != null) {
@@ -85,6 +90,7 @@ public class CommonCodeStyleSettings {
     }
     return null;
   }
+
   
   @Nullable
   public FileType getFileType() {
@@ -103,7 +109,7 @@ public class CommonCodeStyleSettings {
 
   public CommonCodeStyleSettings clone(CodeStyleSettings rootSettings) {
     assert rootSettings != null;
-    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage);
+    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
     copyPublicFields(this, commonSettings);
     commonSettings.setRootSettings(rootSettings);
     if (myIndentOptions != null) {

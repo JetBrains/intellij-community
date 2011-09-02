@@ -29,7 +29,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
 import org.jetbrains.android.util.AndroidBundle;
@@ -43,7 +45,7 @@ import java.awt.event.ActionListener;
 /**
  * @author yole
  */
-public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase> extends SettingsEditor<T> {
+public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase> extends SettingsEditor<T> implements ComponentWithAnchor {
   private JPanel myPanel;
   private JComboBox myModulesComboBox;
   private JCheckBox myChooseDeviceManually;
@@ -56,9 +58,11 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
   private JCheckBox myDisableBootAnimationCombo;
   private JCheckBox myClearLogCheckBox;
   private JTabbedPane myTabbedPane;
+  private JBLabel myModuleJBLabel;
   private ComboboxWithBrowseButton myAvdBox;
   private RawCommandLineEditor myCommandLineField;
   private String incorrectPreferredAvd;
+  private JComponent anchor;
 
   @NonNls private final static String[] NETWORK_SPEEDS = new String[]{"Full", "GSM", "HSCSD", "GPRS", "EDGE", "UMTS", "HSPDA"};
   @NonNls private final static String[] NETWORK_LATENCIES = new String[]{"None", "GPRS", "EDGE", "UMTS"};
@@ -69,6 +73,7 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
   public void setConfigurationSpecificEditor(ConfigurationSpecificEditor<T> configurationSpecificEditor) {
     myConfigurationSpecificEditor = configurationSpecificEditor;
     myConfigurationSpecificPanel.add(configurationSpecificEditor.getComponent());
+    setAnchor(myConfigurationSpecificEditor.getAnchor());
   }
 
   public AndroidRunConfigurationEditor(final Project project) {
@@ -142,6 +147,17 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
       }
     }
     myAvdBox.getComboBox().setSelectedItem(selected);
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    myModuleJBLabel.setAnchor(anchor);
   }
 
   private static boolean containsItem(JComboBox combo, @NotNull Object item) {

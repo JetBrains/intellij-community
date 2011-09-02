@@ -457,7 +457,7 @@ public class ScopeEditorPanel {
     myHolder = holder;
   }
 
-  private static void initTree(Tree tree) {
+  private void initTree(Tree tree) {
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
@@ -476,6 +476,39 @@ public class ScopeEditorPanel {
       public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
       }
     });
+
+    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(), ActionManager.getInstance());
+  }
+
+  private ActionGroup createTreePopupActions() {
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(new AnAction(IdeBundle.message("button.include")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        includeSelected(false);
+      }
+    });
+    actionGroup.add(new AnAction(IdeBundle.message("button.include.recursively")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        includeSelected(true);
+      }
+    });
+
+    actionGroup.add(new AnAction(IdeBundle.message("button.exclude")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        excludeSelected(false);
+      }
+    });
+    actionGroup.add(new AnAction(IdeBundle.message("button.exclude.recursively")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        excludeSelected(true);
+      }
+    });
+
+    return actionGroup;
   }
 
   private void updateTreeModel(final boolean requestFocus) throws ProcessCanceledException {

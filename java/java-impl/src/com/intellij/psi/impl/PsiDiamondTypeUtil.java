@@ -35,6 +35,12 @@ public class PsiDiamondTypeUtil {
   }
 
   public static boolean canCollapseToDiamond(PsiNewExpression expression, PsiExpression context) {
+    return canCollapseToDiamond(expression, context, true);
+  }
+
+  public static boolean canCollapseToDiamond(PsiNewExpression expression,
+                                             PsiExpression context,
+                                             boolean checkAssignable) {
     if (PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_1_7)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null) {
@@ -45,6 +51,7 @@ public class PsiDiamondTypeUtil {
             if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) return false;
             final PsiDiamondType.DiamondInferenceResult inferenceResult = PsiDiamondType.resolveInferredTypes(expression);
             if (inferenceResult.getErrorMessage() == null) {
+              if (!checkAssignable) return true;
               final List<PsiType> types = inferenceResult.getInferredTypes();
               final PsiType[] typeArguments = parameterList.getTypeArguments();
               if (types.size() == typeArguments.length) {

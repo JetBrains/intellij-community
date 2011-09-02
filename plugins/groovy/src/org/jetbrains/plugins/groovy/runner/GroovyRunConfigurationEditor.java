@@ -27,8 +27,10 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxSpeedSearch;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
@@ -37,7 +39,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> {
+public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> implements ComponentWithAnchor {
   private DefaultComboBoxModel myModulesModel;
   private JComboBox myModulesBox;
   private JPanel myMainPanel;
@@ -47,8 +49,10 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   private JPanel workDirPanel;
   private JCheckBox myDebugCB;
   private EnvironmentVariablesComponent myEnvVariables;
+  private JBLabel myScriptParametersLabel;
   private final JTextField scriptPathField;
   private final JTextField workDirField;
+  private JComponent anchor;
 
   public GroovyRunConfigurationEditor() {
 
@@ -73,6 +77,8 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     final FieldPanel workDirFieldPanel = new FieldPanel(workDirField, null, null, workDirBrowseFilesListener, null);
     workDirPanel.setLayout(new BorderLayout());
     workDirPanel.add(workDirFieldPanel, BorderLayout.CENTER);
+
+    setAnchor(myEnvVariables.getLabel());
   }
 
   public void resetEditorFrom(GroovyScriptRunConfiguration configuration) {
@@ -136,5 +142,17 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   }
 
   public void disposeEditor() {
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    myScriptParametersLabel.setAnchor(anchor);
+    myEnvVariables.setAnchor(anchor);
   }
 }

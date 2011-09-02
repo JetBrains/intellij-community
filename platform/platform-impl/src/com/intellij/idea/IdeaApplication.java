@@ -210,13 +210,13 @@ public class IdeaApplication {
 
       app.invokeLater(new Runnable() {
         public void run() {
+          if (myPerformProjectLoad) {
+            loadProject();
+          }
+
           if (UpdateChecker.isMyVeryFirstOpening() && UpdateChecker.checkNeeded()) {
             UpdateChecker.setMyVeryFirstOpening(false);
             updatePlugins(true);
-          }
-
-          if (myPerformProjectLoad) {
-            loadProject();
           }
 
           SwingUtilities.invokeLater(new Runnable() {

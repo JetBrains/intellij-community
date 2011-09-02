@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,10 @@ public class ReplaceAllDotInspection extends BaseInspection {
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new SystemSetSecurityManagerVisitor();
+        return new ReplaceAllDotVisitor();
     }
 
-    private static class SystemSetSecurityManagerVisitor
+    private static class ReplaceAllDotVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitMethodCallExpression(

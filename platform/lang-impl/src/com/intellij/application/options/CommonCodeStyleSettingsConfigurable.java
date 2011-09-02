@@ -45,8 +45,8 @@ public class CommonCodeStyleSettingsConfigurable extends CodeStyleAbstractConfig
 
   private static class MyCodeStylePanel extends TabbedLanguageCodeStylePanel {
     private CodeStyleSpacesPanel mySpacesPanel;
-    private CodeStyleBlankLinesPanel myBlankLinesPanel;
     private WrappingAndBracesPanel myWrappingAndBracesPanel;
+    private CodeStyleBlankLinesPanel myBlankLinesPanel;
 
     protected MyCodeStylePanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
       super(null, currentSettings, settings);
@@ -55,25 +55,25 @@ public class CommonCodeStyleSettingsConfigurable extends CodeStyleAbstractConfig
     @Override
     protected void initTabs(CodeStyleSettings settings) {
       mySpacesPanel = new CodeStyleSpacesPanel(settings);
-      myBlankLinesPanel = new CodeStyleBlankLinesPanel(settings);
       myWrappingAndBracesPanel = new WrappingAndBracesPanel(settings);
+      myBlankLinesPanel = new CodeStyleBlankLinesPanel(settings);
       addTab(mySpacesPanel);
-      addTab(myBlankLinesPanel);
       addTab(myWrappingAndBracesPanel);
+      addTab(myBlankLinesPanel);
     }
 
     @Override
     public void setLanguageSelector(LanguageSelector langSelector) {
       mySpacesPanel.setLanguageSelector(langSelector);
-      myBlankLinesPanel.setLanguageSelector(langSelector);
       myWrappingAndBracesPanel.setLanguageSelector(langSelector);
+      myBlankLinesPanel.setLanguageSelector(langSelector);
     }
 
     @Override
     public boolean setPanelLanguage(Language language) {
       mySpacesPanel.setPanelLanguage(language);
-      myBlankLinesPanel.setPanelLanguage(language);
       myWrappingAndBracesPanel.setPanelLanguage(language);
+      myBlankLinesPanel.setPanelLanguage(language);
       return true;
     }
   }

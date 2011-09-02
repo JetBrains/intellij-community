@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,10 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
 
   public void addModifier(int modifier) {
     myModifiers |= modifier;
+  }
+
+  public void removeModifier(int modifier) {
+    myModifiers &= ~modifier;
   }
 
   public void setModifiers(int modifiers) {
@@ -131,4 +136,21 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   public void acceptChildren(GroovyElementVisitor visitor) {
 
   }
+  
+  public void copyModifiers(@NotNull PsiModifierListOwner modifierOwner) {
+    int mod = 0;
+
+    PsiModifierList modifierList = modifierOwner.getModifierList();
+    if (modifierList != null) {
+      for (Object o : PsiModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.keys()) {
+        String modifier = (String)o;
+        if (modifierList.hasExplicitModifier(modifier)) {
+          mod |= GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
+        }
+      }
+    }
+
+    setModifiers(mod);
+  }
+  
 }

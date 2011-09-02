@@ -21,6 +21,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
@@ -214,7 +216,7 @@ public class MacMessagesImpl extends MacMessages {
     return showAlertDialog(title, defaultButton, alternateButton, otherButton, message, window, false, doNotAskOption);
   }
 
-  public int showMessageDialog(final String title, final String message, final String moreInfo, final String[] buttons, final boolean errorStyle,
+  public int showMessageDialog(final String title, final String message, @Nullable final String moreInfo, final String[] buttons, final boolean errorStyle,
                                 @Nullable Window window, @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
     return doForWindowAndTitle(new PairFunction<Pair<Window, String>, JRootPane, Integer>() {
       @Override
@@ -243,7 +245,7 @@ public class MacMessagesImpl extends MacMessages {
             ID paramsArray = invoke("NSArray", "arrayWithObjects:", cfString(title),
                                     // replace % -> %% to avoid formatted parameters (causes SIGTERM)
                                     cfString(StringUtil.stripHtml(message, true).replace("%", "%%")),
-                                    cfString(StringUtil.stripHtml(moreInfo, true).replace("%", "%%")),
+                                    cfString(StringUtil.stripHtml(moreInfo == null ? "" : moreInfo, true).replace("%", "%%")),
                                     focusedWindow, cfString(fakeTitle), cfString(errorStyle ? "error" : "-1"),
                                     cfString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                              // TODO: state=!doNotAsk.shouldBeShown()
@@ -307,6 +309,22 @@ public class MacMessagesImpl extends MacMessages {
     String _windowTitle = null;
 
     Window _window = window == null ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() : window;
+    if (_window == null) {
+      Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+      if (focusOwner != null) {
+        _window = SwingUtilities.getWindowAncestor(focusOwner);
+      }
+      
+      if (_window == null) {
+        IdeFrame[] allFrames = WindowManager.getInstance().getAllFrames();
+        if (allFrames.length > 0) {
+          _window = SwingUtilities.getWindowAncestor(allFrames[0].getComponent());
+        }
+      }
+    }
+    
+    LOG.assertTrue(_window != null);
+    
     if (!_window.isShowing()) {
       Container parent = _window.getParent();
       if (parent != null && parent instanceof Window) {

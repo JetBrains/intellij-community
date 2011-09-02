@@ -51,6 +51,10 @@ public abstract class DiffRequest {
   public void setGroupKey(@NonNls String groupKey) { myGroupKey = groupKey; }
   public Project getProject() { return myProject; }
 
+  public boolean isSafeToCallFromUpdate() {
+    return true;
+  }
+  
   /**
    * @return contents to compare
    */

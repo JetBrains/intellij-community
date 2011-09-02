@@ -15,36 +15,26 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.ImportsUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.StringStack;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+
+import static com.intellij.psi.util.ImportsUtil.*;
 
 public class ExpandStaticImportAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + ExpandStaticImportAction.class.getName());
@@ -81,19 +71,7 @@ public class ExpandStaticImportAction extends PsiElementBaseIntentionAction {
     final PsiImportStaticStatement staticImport = (PsiImportStaticStatement)refExpr.advancedResolve(true).getCurrentFileResolveScope();
 
 
-    final List<PsiJavaCodeReferenceElement> expressionToExpand = new ArrayList<PsiJavaCodeReferenceElement>();
-    file.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
-        if (refExpr != expression) {
-          final PsiElement resolveScope = expression.advancedResolve(true).getCurrentFileResolveScope();
-          if (resolveScope == staticImport) {
-            expressionToExpand.add(expression);
-          }
-        }
-        super.visitElement(expression);
-      }
-    });
+    final List<PsiJavaCodeReferenceElement> expressionToExpand = collectReferencesThrough(file, refExpr, staticImport);
 
 
     if (expressionToExpand.isEmpty()) {
@@ -126,33 +104,6 @@ public class ExpandStaticImportAction extends PsiElementBaseIntentionAction {
           };
         JBPopupFactory.getInstance().createListPopup(step).showInBestPositionFor(editor);
       }
-    }
-  }
-
-  private static void replaceAllAndDeleteImport(List<PsiJavaCodeReferenceElement> expressionToExpand,
-                                                PsiJavaCodeReferenceElement refExpr,
-                                                PsiImportStaticStatement staticImport) {
-    expressionToExpand.add(refExpr);
-    Collections.sort(expressionToExpand, new Comparator<PsiJavaCodeReferenceElement>() {
-      @Override
-      public int compare(PsiJavaCodeReferenceElement o1, PsiJavaCodeReferenceElement o2) {
-        return o2.getTextOffset() - o1.getTextOffset();
-      }
-    });
-    for (PsiJavaCodeReferenceElement expression : expressionToExpand) {
-      expand(expression, staticImport);
-    }
-    staticImport.delete();
-  }
-
-  private static void expand(PsiJavaCodeReferenceElement refExpr, PsiImportStaticStatement staticImport) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(refExpr.getProject());
-    final PsiReferenceExpression referenceExpression = elementFactory.createReferenceExpression(staticImport.resolveTargetClass());
-    if (refExpr instanceof PsiReferenceExpression) {
-      ((PsiReferenceExpression)refExpr).setQualifierExpression(referenceExpression);
-    }
-    else {
-      refExpr.replace(elementFactory.createReferenceFromText(referenceExpression.getText() + "." + refExpr.getText(), refExpr));
     }
   }
 

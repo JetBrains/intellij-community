@@ -21,6 +21,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ComponentWithAnchor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -31,11 +32,12 @@ import javax.swing.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public abstract class MavenRunnerParametersConfigurable implements Configurable {
+public abstract class MavenRunnerParametersConfigurable implements Configurable, ComponentWithAnchor {
   private JPanel panel;
   protected LabeledComponent<TextFieldWithBrowseButton> workingDirComponent;
   protected LabeledComponent<JTextField> goalsComponent;
   private LabeledComponent<JTextField> profilesComponent;
+  private JComponent anchor;
 
   public MavenRunnerParametersConfigurable() {
     workingDirComponent.getComponent().addBrowseFolderListener(
@@ -47,6 +49,8 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable 
           return file.findChild(MavenConstants.POM_XML) != null;
         }
       });
+
+    setAnchor(profilesComponent.getLabel());
   }
 
   public JComponent createComponent() {
@@ -98,4 +102,17 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable 
   }
 
   protected abstract MavenRunnerParameters getParameters();
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    workingDirComponent.setAnchor(anchor);
+    goalsComponent.setAnchor(anchor);
+    profilesComponent.setAnchor(anchor);
+  }
 }

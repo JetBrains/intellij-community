@@ -15,13 +15,18 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
@@ -41,11 +46,97 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new SystemSetSecurityManagerVisitor();
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression) infos[0];
+        final String methodName =
+                methodCallExpression.getMethodExpression().getReferenceName();
+        final boolean put = HardcodedMethodConstants.PUT.equals(methodName);
+        if (!(put || HardcodedMethodConstants.GET.equals(methodName))) {
+            return null;
+        }
+        final PsiExpressionList argumentList =
+                methodCallExpression.getArgumentList();
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        for (PsiExpression argument : arguments) {
+            final PsiType type = argument.getType();
+            if (type == null ||
+                    !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+                return null;
+            }
+        }
+        return new UseOfPropertiesAsHashtableFix(put);
     }
 
-    private static class SystemSetSecurityManagerVisitor
+    private static class UseOfPropertiesAsHashtableFix
+            extends InspectionGadgetsFix {
+
+        private final boolean put;
+
+        public UseOfPropertiesAsHashtableFix(boolean put) {
+            this.put = put;
+        }
+
+        @NotNull
+        @Override
+        public String getName() {
+            if (put) {
+                return InspectionGadgetsBundle.message(
+                        "properties.object.as.hashtable.set.quickfix");
+            } else {
+                return InspectionGadgetsBundle.message(
+                        "properties.object.as.hashtable.get.quickfix");
+            }
+        }
+
+        @Override
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiElement parent = element.getParent();
+            final PsiElement grandParent = parent.getParent();
+            if (!(grandParent instanceof PsiMethodCallExpression)) {
+                return;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) grandParent;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            @NonNls final StringBuilder newExpression = new StringBuilder();
+            final PsiExpression qualifierExpression =
+                    methodExpression.getQualifierExpression();
+            if (qualifierExpression != null) {
+                newExpression.append(qualifierExpression.getText());
+                newExpression.append('.');
+            }
+            if (put) {
+                newExpression.append("setProperty(");
+            } else {
+                newExpression.append("getProperty(");
+            }
+            final PsiExpressionList argumentList =
+                    methodCallExpression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            boolean first = true;
+            for (PsiExpression argument : arguments) {
+                if (!first) {
+                    newExpression.append(',');
+                } else {
+                    first = false;
+                }
+                newExpression.append(argument.getText());
+            }
+            newExpression.append(')');
+            replaceExpression(methodCallExpression, newExpression.toString());
+        }
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor(){
+        return new UseOfPropertiesAsHashtableVisitor();
+    }
+
+    private static class UseOfPropertiesAsHashtableVisitor
             extends BaseInspectionVisitor{
 
         @Override public void visitMethodCallExpression(
@@ -54,7 +145,9 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            if(!isHashtableMethod(methodName)){
+            if(!(HardcodedMethodConstants.PUT.equals(methodName) ||
+                    HardcodedMethodConstants.PUTALL.equals(methodName) ||
+                    HardcodedMethodConstants.GET.equals(methodName))){
                 return;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -78,13 +171,7 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
                     CommonClassNames.JAVA_UTIL_PROPERTIES)){
                 return;
             }
-            registerMethodCallError(expression);
-        }
-
-        private static boolean isHashtableMethod(String name){
-            return HardcodedMethodConstants.PUT.equals(name) ||
-                    HardcodedMethodConstants.PUTALL.equals(name) ||
-                    HardcodedMethodConstants.GET.equals(name);
+            registerMethodCallError(expression, expression);
         }
     }
 }

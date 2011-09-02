@@ -40,6 +40,7 @@ import com.intellij.refactoring.ui.ClassNameReferenceEditor;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
@@ -231,7 +232,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     }
     else if (psiElements.length == 1) {
       PsiElement firstElement = psiElements[0];
-      LOG.assertTrue(firstElement.getContext() != null);
+      PsiElement parent = firstElement.getParent();
+      LOG.assertTrue(parent != null);
       myNameLabel.setText(RefactoringBundle.message("move.single.class.or.package.name.label", UsageViewUtil.getType(firstElement),
                                                     UsageViewUtil.getLongName(firstElement)));
     }
@@ -441,7 +443,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     return myCbSearchTextOccurences.isSelected();
   }
 
-  @Nullable
   private MoveDestination selectDestination() {
     final String packageName = getTargetPackage().trim();
     if (packageName.length() > 0 && !JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(packageName)) {

@@ -15,12 +15,15 @@
  */
 package com.intellij.errorreport.bean;
 
+import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,6 +42,7 @@ public class ErrorBean {
   private String stackTrace;
 
   private String exceptionClass = "";
+  private List<Attachment> attachments = Collections.emptyList();
 
   public ErrorBean(Throwable throwable, String lastAction) {
     if (throwable != null) {
@@ -85,5 +89,13 @@ public class ErrorBean {
 
   public String getMessage() {
     return message;
+  }
+
+  public void setAttachments(List<Attachment> attachments) {
+    this.attachments = attachments;
+  }
+
+  public List<Attachment> getAttachments() {
+    return attachments;
   }
 }

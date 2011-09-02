@@ -71,7 +71,7 @@ public class AttachmentsTabForm {
         }
         final Attachment selection = myTable.getSelectedObject();
         if (selection != null) {
-          LabeledTextComponent.setText(myFileTextArea.getTextComponent(), selection.getContent(), true);
+          LabeledTextComponent.setText(myFileTextArea.getTextComponent(), selection.getDisplayText(), true);
         }
         else {
           LabeledTextComponent.setText(myFileTextArea.getTextComponent(), null, true);
