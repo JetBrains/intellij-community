@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.file.impl.ResolveScopeManager;
+import com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -349,7 +349,7 @@ public class PsiImplUtil {
 
   @NotNull
   public static SearchScope getMemberUseScope(@NotNull PsiMember member) {
-    final GlobalSearchScope maximalUseScope = ResolveScopeManager.getElementUseScope(member);
+    final GlobalSearchScope maximalUseScope = ResolveScopeManagerImpl.getElementUseScope(member);
     PsiFile file = member.getContainingFile();
     if (JspPsiUtil.isInJspFile(file)) return maximalUseScope;
 
