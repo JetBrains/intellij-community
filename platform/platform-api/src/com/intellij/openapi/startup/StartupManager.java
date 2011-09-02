@@ -17,6 +17,7 @@ package com.intellij.openapi.startup;
 
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
  * called from {@link com.intellij.openapi.components.ProjectComponent#projectOpened()}.
  */
 public abstract class StartupManager {
+
+  public final static ExtensionPointName<Runnable> POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.postStartupActivity");
+
   /**
    * Returns the startup manager instance for the specified project.
    *

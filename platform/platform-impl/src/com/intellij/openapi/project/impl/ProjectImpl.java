@@ -37,6 +37,7 @@ import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -185,6 +186,15 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @Override
   public void initializeComponent(Object component, boolean service) {
+    if (!service) {
+      ProgressIndicator indicator = getProgressIndicator();
+      if (indicator != null) {
+        indicator.setText2(getComponentName(component));
+        indicator.setIndeterminate(false);
+  //      indicator.setFraction(myComponentsRegistry.getPercentageOfComponentsLoaded());
+      }
+    }
+
     getStateStore().initComponent(component, service);
   }
 
