@@ -20,7 +20,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathMacros;
@@ -33,7 +32,10 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
-import com.intellij.openapi.components.impl.stores.*;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
+import com.intellij.openapi.components.impl.stores.UnknownMacroNotification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -190,7 +192,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       ProgressIndicator indicator = getProgressIndicator();
       if (indicator != null) {
         indicator.setText2(getComponentName(component));
-        indicator.setIndeterminate(false);
+  //      indicator.setIndeterminate(false);
   //      indicator.setFraction(myComponentsRegistry.getPercentageOfComponentsLoaded());
       }
     }
@@ -207,7 +209,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   public void loadProjectComponents() {
-    final Application app = ApplicationManager.getApplication();
     final IdeaPluginDescriptor[] plugins = PluginsFacade.INSTANCE.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
       if (PluginManager.shouldSkipPlugin(plugin)) continue;
@@ -542,7 +543,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
 
     private static String buildMessage() {
-      final StringBuffer sb = new StringBuffer(
+      final StringBuilder sb = new StringBuilder(
         "<p>Unable to save project files. Please ensure project files are writable and you have permissions to modify them.");
       return sb.append(" <a href=\"\">Try to save project again</a>.</p>").toString();
     }

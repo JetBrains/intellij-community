@@ -767,8 +767,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
                          libSourceRootEntries);
       }
       fillMapWithOrderEntries(depEntries, libClassRootEntries, libSourceRootEntries);
-
-      progress.popState();
     }
 
     private void initExcludedDirMap(Module[] modules, ProgressIndicator progress) {

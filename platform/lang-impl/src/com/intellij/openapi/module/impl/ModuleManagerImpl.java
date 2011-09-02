@@ -235,7 +235,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       final Application app = ApplicationManager.getApplication();
       final ProgressIndicator progressIndicator = myProject.isDefault() ? null : myProgressManager.getProgressIndicator();
       if (progressIndicator != null) {
-        progressIndicator.setText("Loading modules");
+        progressIndicator.setText("Loading modules...");
         progressIndicator.setText2("");
       }
       final Runnable swingRunnable = new Runnable() {
