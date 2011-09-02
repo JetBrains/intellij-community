@@ -27,6 +27,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -79,6 +80,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
                         StartupManager startupManager,
                         FileDocumentManager fileDocumentManager,
                         PsiBuilderFactory psiBuilderFactory,
+                        ProjectFileIndex projectFileIndex,
                         MessageBus messageBus) {
     myProject = project;
     myMessageBus = messageBus;
@@ -88,7 +90,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     boolean isProjectDefault = project.isDefault();
 
-    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, projectRootManagerEx);
+    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, projectRootManagerEx, projectFileIndex);
 
     myModificationTracker = new PsiModificationTrackerImpl(myProject);
     myTreeChangePreprocessors.add(myModificationTracker);

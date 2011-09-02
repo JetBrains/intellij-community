@@ -32,6 +32,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -58,6 +59,7 @@ public class FileManagerImpl implements FileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
 
   private final PsiManagerImpl myManager;
+  private final ProjectFileIndex myFileIndex;
 
   private final ProjectRootManager myProjectRootManager;
 
@@ -72,8 +74,10 @@ public class FileManagerImpl implements FileManager {
 
   public FileManagerImpl(PsiManagerImpl manager,
                          FileDocumentManager fileDocumentManager,
-                         ProjectRootManager projectRootManager) {
+                         ProjectRootManager projectRootManager,
+                         ProjectFileIndex fileIndex) {
     myManager = manager;
+    myFileIndex = fileIndex;
     myConnection = manager.getProject().getMessageBus().connect();
 
     myFileDocumentManager = fileDocumentManager;
@@ -151,6 +155,7 @@ public class FileManagerImpl implements FileManager {
     return myVFileToViewProviderMap.get(file);
   }
 
+  @Nullable
   private FileViewProvider getFromInjected(VirtualFile file) {
     if (file instanceof VirtualFileWindow) {
       DocumentWindow document = ((VirtualFileWindow)file).getDocumentWindow();
@@ -338,11 +343,12 @@ public class FileManagerImpl implements FileManager {
     return findDirectoryImpl(vFile);
   }
 
+  @Nullable
   private PsiDirectory findDirectoryImpl(final VirtualFile vFile) {
     PsiDirectory psiDir = myVFileToPsiDirMap.get(vFile);
     if (psiDir != null) return psiDir;
 
-    if (myProjectRootManager.getFileIndex().isIgnored(vFile)) return null;
+    if (myFileIndex.isIgnored(vFile)) return null;
 
     VirtualFile parent = vFile.getParent();
     if (parent != null) { //?
