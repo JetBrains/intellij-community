@@ -127,16 +127,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     panel.add(createShortContextPanel(), gb.nextLine().next().fillCellNone().anchor(GridBagConstraints.WEST));
 
-    myKeyField.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
-      protected void textChanged(javax.swing.event.DocumentEvent e) {
-        validateOKButton();
-      }
-    });
-
     myTemplateEditor.getDocument().addDocumentListener(
       new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
-          validateOKButton();
           validateEditVariablesButton();
 
           myTemplate.setString(myTemplateEditor.getDocument().getText());
@@ -387,16 +380,6 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myEditVariablesButton.setEnabled(!parseVariables(myTemplateEditor.getDocument().getCharsSequence(), false).isEmpty());
   }
 
-  private void validateOKButton() {
-    boolean isEnabled = true;
-    if(myKeyField.getText().trim().length() == 0) {
-      isEnabled = false;
-    }
-    if(myTemplateEditor.getDocument().getTextLength() == 0) {
-      isEnabled = false;
-    }
-  }
-
   private void reset() {
     myKeyField.setText(myTemplate.getKey());
     myDescription.setText(myTemplate.getDescription());
@@ -440,7 +423,6 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myExpandByCombo.setEnabled(isExpandableFromEditor());
 
     updateHighlighter();
-    validateOKButton();
     validateEditVariablesButton();
   }
 
@@ -548,66 +530,5 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return variables;
   }
 
-  /* todo
-  protected void doOKAction() {
-    String key = myKeyField.getText().trim();
-
-    final String newGroup = (String)myGroupCombo.getSelectedItem();
-
-    for (TemplateGroup templateGroup : myTemplateGroups) {
-      if (templateGroup.getName().equals(newGroup)) {
-        for (TemplateImpl template : templateGroup.getElements()) {
-          if (template.getKey().equals(key) && myTemplate != template) {
-            Messages.showMessageDialog(getContentPane(),
-                                       CodeInsightBundle.message("dialog.edit.template.error.already.exists", key, template.getGroupName()),
-                                       CodeInsightBundle.message("dialog.edit.template.error.title"), Messages.getErrorIcon());
-            return;
-          }
-        }
-      }
-    }
-
-    if (!TemplateImplUtil.validateTemplateText(myTemplateEditor.getDocument().getText())) {
-      Messages.showMessageDialog (
-          getContentPane(),
-          CodeInsightBundle.message("dialog.edit.template.error.malformed.template"),
-          CodeInsightBundle.message("dialog.edit.template.error.title"),
-          Messages.getErrorIcon()
-      );
-      return;
-    }
-
-    SchemesManager<TemplateGroup, TemplateGroup> schemesManager = TemplateSettings.getInstance().getSchemesManager();
-    TemplateGroup group = schemesManager.findSchemeByName(newGroup);
-    if (group != null && schemesManager.isShared(group)) {
-      Messages.showMessageDialog (
-          getContentPane(),
-          "Group " + group.getName() + " is shared, cannot be modified",
-          CodeInsightBundle.message("dialog.edit.template.error.title"),
-          Messages.getErrorIcon()
-      );
-      return;
-
-    }
-
-    boolean anyChecked = false;
-    for (JCheckBox contextCheckBox : myCbContextMap.values()) {
-      if (contextCheckBox.isSelected()) {
-        anyChecked = true;
-        break;
-      }
-    }
-    if (!anyChecked) {
-      Messages.showMessageDialog(getContentPane(),
-                                 "Please enable at least one context checkbox. Otherwise the live template will never ber active.",
-                                 CodeInsightBundle.message("dialog.edit.template.error.title"),
-                                 Messages.getErrorIcon()
-                                 );
-      return;
-    }
-
-    super.doOKAction();
-  }
-  */
 }
 

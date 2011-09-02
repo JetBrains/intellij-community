@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -51,7 +52,7 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
     myPanel.reset();
   }
 
-  public void apply() {
+  public void apply() throws ConfigurationException {
     myPanel.apply();
   }
 
@@ -62,6 +63,7 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
     myPanel = null;
   }
 
+  @NotNull
   public String getHelpTopic() {
     return "editing.templates";
   }

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.template.impl;
 
+import com.google.common.collect.Sets;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -25,6 +26,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -34,10 +36,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.util.Alarm;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nullable;
@@ -137,15 +136,38 @@ public class TemplateListPanel extends JPanel implements Disposable {
     myUpdateNeeded = true;
   }
 
-  public void apply() {
-    TemplateSettings templateSettings = TemplateSettings.getInstance();
+  public void apply() throws ConfigurationException {
     List<TemplateGroup> templateGroups = getTemplateGroups();
+    for (TemplateGroup templateGroup : templateGroups) {
+      Set<String> names = Sets.newHashSet();
+
+      for (TemplateImpl template : templateGroup.getElements()) {
+        if (StringUtil.isEmptyOrSpaces(template.getKey())) {
+          throw new ConfigurationException("A live template with an empty key has been found in " + templateGroup.getName() + " group, such live templates cannot be invoked");
+        }
+
+        if (StringUtil.isEmptyOrSpaces(template.getString())) {
+          throw new ConfigurationException("A live template with an empty text has been found in " + templateGroup.getName() + " group, such live templates cannot be invoked");
+        }
+
+        if (!names.add(template.getKey())) {
+          throw new ConfigurationException("Duplicate " + template.getKey() + " live templates in " + templateGroup.getName() + " group");
+        }
+
+        if (!TemplateImplUtil.validateTemplateText(template.getString())) {
+          throw new ConfigurationException("Malformed " + template.getKey() + " live template in " + templateGroup.getName() + " group");
+        }
+      }
+    }
+
+
     for (TemplateGroup templateGroup : templateGroups) {
       for (TemplateImpl template : templateGroup.getElements()) {
         template.applyOptions(getOptions(template));
         template.applyContext(getContext(template));
       }
     }
+    TemplateSettings templateSettings = TemplateSettings.getInstance();
     templateSettings.setTemplates(templateGroups);
     templateSettings.setDefaultShortcutChar(getDefaultShortcutChar());
 
@@ -629,20 +651,21 @@ public class TemplateListPanel extends JPanel implements Disposable {
       .setTargetChecker(new DnDTargetChecker() {
         @Override
         public boolean update(DnDEvent event) {
-          Pair<TemplateImpl, DefaultMutableTreeNode> pair = (Pair<TemplateImpl, DefaultMutableTreeNode>)event.getAttachedObject();
+          @SuppressWarnings("unchecked") Pair<TemplateImpl, DefaultMutableTreeNode> pair = (Pair<TemplateImpl, DefaultMutableTreeNode>)event.getAttachedObject();
           TemplateImpl template = pair.first;
           String oldGroupName = template.getGroupName();
           TemplateGroup group = getDropGroup(event);
-          boolean possible = group != null && !oldGroupName.equals(group.getName());
-          event.setDropPossible(possible, "");
+          boolean differentGroup = group != null && !oldGroupName.equals(group.getName());
+          boolean possible = differentGroup && !getSchemesManager().isShared(group);
+          event.setDropPossible(possible, differentGroup && !possible ? "Cannot modify a shared group" : "");
           return true;
         }
       })
       .setDropHandler(new DnDDropHandler() {
         @Override
         public void drop(DnDEvent event) {
-          Pair<TemplateImpl, DefaultMutableTreeNode> pair = (Pair<TemplateImpl, DefaultMutableTreeNode>)event.getAttachedObject();
-          moveTemplate(pair.first, getDropGroup(event).getName(), pair.second);
+          @SuppressWarnings("unchecked") Pair<TemplateImpl, DefaultMutableTreeNode> pair = (Pair<TemplateImpl, DefaultMutableTreeNode>)event.getAttachedObject();
+          moveTemplate(pair.first, ObjectUtils.assertNotNull(getDropGroup(event)).getName(), pair.second);
         }
       })
       .setImageProvider(new Function<DnDActionInfo, DnDImage>() {
@@ -735,6 +758,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return decorator.setToolbarPosition(ActionToolbarPosition.RIGHT);
   }
 
+  @Nullable
   private TemplateGroup getDropGroup(DnDEvent event) {
     Point point = event.getPointOn(myTree);
     return getGroup(myTree.getRowForLocation(point.x, point.y));
@@ -922,7 +946,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     removeNodeFromParent(node);
     if (parent.getChildCount() == 0) {
-      myTemplateGroups.remove(parent.getUserObject());
+      myTemplateGroups.remove((TemplateGroup)parent.getUserObject());
       removeNodeFromParent(parent);
     }
     if (toSelect != null) {

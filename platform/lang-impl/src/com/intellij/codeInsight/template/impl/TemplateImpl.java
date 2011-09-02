@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -404,7 +405,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     return false;
   }
 
-  public void setId(final String id) {
+  public void setId(@Nullable final String id) {
     myId = id;
   }
 
