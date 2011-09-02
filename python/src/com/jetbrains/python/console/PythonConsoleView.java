@@ -114,6 +114,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     }
     else {
       if (mySourceHighlighter == null || attributes == ProcessOutputTypes.STDERR) {
+        //Print text with converted attributes
         print(text, outputTypeForAttributes(attributes));
         if (mySourceHighlighter == null && myIsIPythonOutput && PyConsoleUtil.detectSourcePrinting(text)) {
           mySourceHighlighter = new ConsoleSourceHighlighter(this, myScheme, myPyHighlighter);
@@ -139,12 +140,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
       outputType = ConsoleViewContentType.SYSTEM_OUTPUT;
     }
     else {
-      if (myIsIPythonOutput) {
-        outputType = ConsoleViewContentType.getConsoleViewType(attributes);
-      }
-      else {
-        outputType = ConsoleViewContentType.NORMAL_OUTPUT;
-      }
+      outputType = ConsoleViewContentType.getConsoleViewType(attributes);
     }
 
     return outputType;
