@@ -49,7 +49,7 @@ public final class ExportCommand extends AbstractCommand {
 
 	// Fields =================================================================
 
-	private final List modules = new ArrayList();
+	private final List<String> modules = new ArrayList();
 	private String updateByDate;
 	private String updateByRevisionOrTag;
 	private String alternativeCheckoutDirectory;
@@ -99,8 +99,7 @@ public final class ExportCommand extends AbstractCommand {
 	public String getCvsCommandLine() {
 		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("export ");
 		cvsCommandLine.append(getCvsArguments());
-		for (Iterator it = modules.iterator(); it.hasNext();) {
-			final String module = (String)it.next();
+		for (final String module : modules) {
 			cvsCommandLine.append(module);
 			cvsCommandLine.append(' ');
 		}
@@ -194,8 +193,7 @@ public final class ExportCommand extends AbstractCommand {
 	}
 
 	private void addModuleArguments(Requests requests) {
-		for (Iterator it = modules.iterator(); it.hasNext();) {
-			final String module = (String)it.next();
+		for (final String module : modules) {
 			requests.addArgumentRequest(module);
 		}
 	}
@@ -206,7 +204,7 @@ public final class ExportCommand extends AbstractCommand {
 		for (Iterator it = expandedModules.getModules().iterator(); it.hasNext();) {
 			final String moduleName = (String)it.next();
 			if (moduleName.equals(".")) {
-				getFileObjects().addFileObject(DirectoryObject.getRoot());
+				addFileObject(DirectoryObject.getRoot());
 				break;
 			}
 
@@ -223,7 +221,7 @@ public final class ExportCommand extends AbstractCommand {
 			}
 
 			if (clientEnvironment.getAdminReader().hasCvsDirectory(directoryObject, cvsFileSystem)) {
-				getFileObjects().addFileObject(abstractFileObject);
+				addFileObject(abstractFileObject);
 			}
 		}
 	}

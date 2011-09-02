@@ -65,7 +65,7 @@ public final class StatusCommand extends AbstractCommand {
                                                                                                                                                                                                                  AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
-			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+			cvsFiles = scanFileSystem(clientEnvironment);
 		}
 		catch (IOException ex) {
 			throw new IOCommandException(ex);
@@ -80,7 +80,7 @@ public final class StatusCommand extends AbstractCommand {
 		final IRequestsProgressHandler requestsProgressHandler = new FileStateRequestsProgressHandler(new RangeProgressViewer(progressViewer, 0.0, 0.5), cvsFiles);
 		final ICvsListener responseProgressHandler = new FileInfoAndMessageResponseProgressHandler(new RangeProgressViewer(progressViewer, 0.5, 1.0), cvsFiles, EXAM_DIR);
 
-		final ICvsListener statusMessageParser = new StatusMessageParser(eventSender, getFileObjects().getFileObjects(), clientEnvironment.getCvsFileSystem());
+		final ICvsListener statusMessageParser = new StatusMessageParser(eventSender, getFileObjects(), clientEnvironment.getCvsFileSystem());
 		final ICvsListener listener = new DualListener(statusMessageParser, responseProgressHandler);
 		listener.registerListeners(listenerRegistry);
 		try {
@@ -125,7 +125,7 @@ public final class StatusCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCVSArguments() {
-		@NonNls final StringBuffer toReturn = new StringBuffer("");
+		@NonNls final StringBuilder toReturn = new StringBuilder();
 		if (isIncludeTags()) {
 			toReturn.append("-v ");
 		}

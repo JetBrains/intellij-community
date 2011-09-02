@@ -14,14 +14,15 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.command.add;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListener;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
@@ -34,11 +35,9 @@ import org.netbeans.lib.cvsclient.progress.sending.DummyRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -103,7 +102,7 @@ public final class AddCommand extends AbstractCommand {
 
 	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer)
           throws CommandException, AuthenticationException {
-		BugLog.getInstance().assertTrue(getFileObjects().getFileObjects().size() > 0, "No file specified.");
+		BugLog.getInstance().assertTrue(getFileObjects().size() > 0, "No file specified.");
 
 		repositoryPathToDirectoryObject.clear();
 
@@ -113,8 +112,7 @@ public final class AddCommand extends AbstractCommand {
 
 			requests.addArgumentRequest(getKeywordSubst(), "-k");
 
-			for (Iterator it = getFileObjects().getFileObjects().iterator(); it.hasNext();) {
-				final AbstractFileObject abstractFileObject = (AbstractFileObject)it.next();
+			for (AbstractFileObject abstractFileObject : getFileObjects()) {
 				addRequests(abstractFileObject, requests, requestProcessor, clientEnvironment);
 			}
 
@@ -168,8 +166,7 @@ public final class AddCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private void createCvsDirectories(IClientEnvironment clientEnvironment) throws IOException {
-		for (Iterator it = getFileObjects().getFileObjects().iterator(); it.hasNext();) {
-			final AbstractFileObject abstractFileObject = (AbstractFileObject)it.next();
+		for (AbstractFileObject abstractFileObject : getFileObjects()) {
 			if (!abstractFileObject.isDirectory()) {
 				continue;
 			}
@@ -179,7 +176,7 @@ public final class AddCommand extends AbstractCommand {
 	}
 
 	private String getCvsArguments() {
-		@NonNls final StringBuffer toReturn = new StringBuffer();
+		@NonNls final StringBuilder toReturn = new StringBuilder();
 		if (getKeywordSubst() != null) {
 			toReturn.append("-k");
 			toReturn.append(getKeywordSubst().toString());

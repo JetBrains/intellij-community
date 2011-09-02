@@ -223,8 +223,8 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
 
     final ICvsFiles cvsFiles;
     try {
-      if (getFileObjects().getFileObjects().size() > 0) {
-        cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+      if (getFileObjects().size() > 0) {
+        cvsFiles = scanFileSystem(clientEnvironment);
       }
       else {
         cvsFiles = null;
@@ -234,8 +234,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
       throw new IOCommandException(ex);
     }
 
-    final Requests requests;
-    requests = new Requests(CommandRequest.CHECKOUT, clientEnvironment);
+    final Requests requests = new Requests(CommandRequest.CHECKOUT, clientEnvironment);
     if (getAlternativeCheckoutDirectory() != null) {
       requests.addArgumentRequest("-d");
       requests.addArgumentRequest(getAlternativeCheckoutDirectory());
@@ -297,7 +296,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
 
     for (final String moduleName : expandedModules.getModules()) {
       if (moduleName.equals(".")) {
-        getFileObjects().addFileObject(DirectoryObject.getRoot());
+        addFileObject(DirectoryObject.getRoot());
         break;
       }
 
@@ -314,7 +313,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
       }
 
       if (clientEnvironment.getAdminReader().hasCvsDirectory(directoryObject, cvsFileSystem)) {
-        getFileObjects().addFileObject(abstractFileObject);
+        addFileObject(abstractFileObject);
       }
     }
   }

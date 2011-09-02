@@ -59,7 +59,7 @@ public final class WatchCommand extends AbstractCommand {
 
 		final ICvsFiles cvsFiles;
 		try {
-			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+			cvsFiles = scanFileSystem(clientEnvironment);
 		}
 		catch (IOException ex) {
 			throw new IOCommandException(ex);
@@ -140,7 +140,7 @@ public final class WatchCommand extends AbstractCommand {
 	private String getCVSArguments() {
 		checkState();
 
-		@NonNls final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuilder cvsArguments = new StringBuilder();
 		cvsArguments.append(getWatchMode().toString());
 		cvsArguments.append(' ');
 

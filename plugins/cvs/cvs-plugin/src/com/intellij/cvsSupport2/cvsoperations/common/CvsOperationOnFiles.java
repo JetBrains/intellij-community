@@ -142,7 +142,7 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
     CreateFileObjects createFileObjects = new CreateFileObjects(getLocalRootFor(root), getFilesAsArray(root));
     Collection<AbstractFileObject> fileObjects = createFileObjects.execute();
     for (final AbstractFileObject fileObject : fileObjects) {
-      command.getFileObjects().addFileObject(fileObject);
+      command.addFileObject(fileObject);
     }
   }
 }

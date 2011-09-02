@@ -54,7 +54,7 @@ public class ChangeKeywordSubstCommand extends AbstractCommand {
 
 		final ICvsFiles cvsFiles;
 		try {
-			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+			cvsFiles = scanFileSystem(clientEnvironment);
 		}
 		catch (IOException ex) {
 			throw new IOCommandException(ex);
@@ -85,7 +85,7 @@ public class ChangeKeywordSubstCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCvsArguments() {
-		@NonNls final StringBuffer arguments = new StringBuffer();
+		@NonNls final StringBuilder arguments = new StringBuilder();
 		arguments.append("-k" + keywordSubstitution + " ");
 		return arguments.toString();
 	}

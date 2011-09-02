@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminReaderForLightFiles;
+import com.intellij.util.containers.HashMap;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
@@ -33,7 +34,7 @@ import java.util.*;
  */
 public class LocalPathIndifferentOperationHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper");
-  private final Map<File, Entry> myFileToEntryMap = new com.intellij.util.containers.HashMap<File, Entry>();
+  private final Map<File, Entry> myFileToEntryMap = new HashMap<File, Entry>();
   private final IAdminReader myAdminReader = new AdminReaderForLightFiles(myFileToEntryMap);
   private final String myRevision;
 
@@ -58,14 +59,14 @@ public class LocalPathIndifferentOperationHelper {
   public void addFilesTo(AbstractCommand command){
     AbstractFileObject[] fileObjects = createFileObjects();
     for (AbstractFileObject fileObject : fileObjects) {
-      command.getFileObjects().addFileObject(fileObject);
+      command.addFileObject(fileObject);
     }
   }
 
   private AbstractFileObject[] createFileObjects() {
     ArrayList<AbstractFileObject> result = new ArrayList<AbstractFileObject>();
     Collection<File> parents = collectAllParents();
-    Map<File, DirectoryObject> parentsMap = new com.intellij.util.containers.HashMap<File, DirectoryObject>();
+    Map<File, DirectoryObject> parentsMap = new HashMap<File, DirectoryObject>();
 
     for (final File file : parents) {
       String relativeFileName = file.getPath().replace(File.separatorChar, '/');
@@ -89,7 +90,4 @@ public class LocalPathIndifferentOperationHelper {
     }
     return result;
   }
-
-
-
 }
