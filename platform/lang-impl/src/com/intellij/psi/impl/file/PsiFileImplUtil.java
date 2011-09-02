@@ -25,14 +25,10 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PsiFileImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiFileImplUtil");
@@ -93,28 +89,5 @@ public class PsiFileImplUtil {
     catch(IOException e){
       throw new IncorrectOperationException(e.toString(),e);
     }
-  }
-
-  public static PsiFile[] getPsiFilesByVirtualFiles(VirtualFile[] files, PsiManager manager) {
-    List<PsiFile> psiFiles = new ArrayList<PsiFile>();
-    for (VirtualFile file : files) {
-      PsiFile psiFile = manager.findFile(file);
-      if (psiFile != null) {
-        psiFiles.add(psiFile);
-      }
-    }
-    return PsiUtilBase.toPsiFileArray(psiFiles);
-  }
-
-  public static PsiFile[] getPsiFilesByVirtualFiles(List<VirtualFile> files, PsiManager manager) {
-    List<PsiFile> psiFiles = new ArrayList<PsiFile>();
-
-    for (VirtualFile file : files) {
-      PsiFile psiFile = manager.findFile(file);
-      if (psiFile != null) {
-        psiFiles.add(psiFile);
-      }
-    }
-    return PsiUtilBase.toPsiFileArray(psiFiles);
   }
 }
