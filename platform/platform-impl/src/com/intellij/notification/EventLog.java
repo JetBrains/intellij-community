@@ -247,7 +247,7 @@ public class EventLog implements Notifications {
 
     @Override
     public void projectOpened() {
-      myConsole = new EventLogConsole(myProject, myProjectModel);
+      myConsole = new EventLogConsole(myProjectModel);
 
       for (Notification notification : myInitial) {
         printNotification(notification);

@@ -116,4 +116,8 @@ public class LogModel {
       }
     }));
   }
+
+  public Project getProject() {
+    return myProject;
+  }
 }

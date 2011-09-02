@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.awt.RelativePoint;
@@ -49,18 +50,34 @@ import java.text.DateFormat;
  * @author peter
  */
 class EventLogConsole {
-  private final Editor myLogEditor;
-  private final EditorHyperlinkSupport myHyperlinkSupport;
+  private final NotNullLazyValue<Editor> myLogEditor = new NotNullLazyValue<Editor>() {
+    @NotNull
+    @Override
+    protected Editor compute() {
+      return createLogEditor(myProjectModel.getProject());
+    }
+  };
+
+  private final NotNullLazyValue<EditorHyperlinkSupport> myHyperlinkSupport = new NotNullLazyValue<EditorHyperlinkSupport>() {
+    @NotNull
+    @Override
+    protected EditorHyperlinkSupport compute() {
+      return new EditorHyperlinkSupport(myLogEditor.getValue(), myProjectModel.getProject());
+    }
+  };
   private final LogModel myProjectModel;
 
-  EventLogConsole(@NotNull Project project, LogModel model) {
+  EventLogConsole(LogModel model) {
     myProjectModel = model;
-    myLogEditor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
+  }
 
-    ((EditorMarkupModel) myLogEditor.getMarkupModel()).setErrorStripeVisible(true);
+  private Editor createLogEditor(Project project) {
+    Editor editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
+
+    ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
 
 
-    myLogEditor.addEditorMouseListener(new EditorPopupHandler() {
+    editor.addEditorMouseListener(new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {
         final ActionManager actionManager = ActionManager.getInstance();
         final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, createPopupActions(actionManager));
@@ -68,11 +85,11 @@ class EventLogConsole {
         menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
       }
     });
-    myHyperlinkSupport = new EditorHyperlinkSupport(myLogEditor, project);
+    return editor;
   }
 
   void releaseEditor() {
-    EditorFactory.getInstance().releaseEditor(myLogEditor);
+    EditorFactory.getInstance().releaseEditor(myLogEditor.getValue());
   }
 
   private DefaultActionGroup createPopupActions(ActionManager actionManager) {
@@ -103,12 +120,13 @@ class EventLogConsole {
   }
 
   void doPrintNotification(final Notification notification) {
-    if (myLogEditor.isDisposed()) {
+    Editor editor = myLogEditor.getValue();
+    if (editor.isDisposed()) {
       return;
     }
 
-    Document document = myLogEditor.getDocument();
-    boolean scroll = document.getTextLength() == myLogEditor.getCaretModel().getOffset();
+    Document document = editor.getDocument();
+    boolean scroll = document.getTextLength() == editor.getCaretModel().getOffset();
 
     append(document, DateFormat.getTimeInstance(DateFormat.MEDIUM).format(notification.getCreationTime()) + ". ");
 
@@ -127,17 +145,18 @@ class EventLogConsole {
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
     int layer = HighlighterLayer.CARET_ROW + 1;
-    myLogEditor.getMarkupModel().addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.EXACT_RANGE);
+    editor.getMarkupModel().addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.EXACT_RANGE);
 
     for (Pair<TextRange, HyperlinkInfo> link : pair.links) {
-      myHyperlinkSupport.addHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null, link.second);
+      myHyperlinkSupport.getValue().addHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null,
+                                                 link.second);
     }
 
     append(document, "\n");
 
     if (scroll) {
-      myLogEditor.getCaretModel().moveToOffset(document.getTextLength());
-      myLogEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      editor.getCaretModel().moveToOffset(document.getTextLength());
+      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
 
     if (notification.isImportant()) {
@@ -148,7 +167,7 @@ class EventLogConsole {
   private void highlightNotification(final Notification notification,
                                      String message, final int line) {
 
-    final MarkupModel markupModel = myLogEditor.getMarkupModel();
+    final MarkupModel markupModel = myLogEditor.getValue().getMarkupModel();
     TextAttributes bold = new TextAttributes(null, null, null, null, Font.BOLD);
     final RangeHighlighter lineHighlighter = markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, bold);
     Color color = notification.getType() == NotificationType.ERROR
@@ -166,26 +185,27 @@ class EventLogConsole {
         markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, attributes);
 
         TextAttributes italic = new TextAttributes(null, null, null, null, Font.ITALIC);
-        for (RangeHighlighter highlighter : myHyperlinkSupport.findAllHyperlinksOnLine(line)) {
+        for (RangeHighlighter highlighter : myHyperlinkSupport.getValue().findAllHyperlinksOnLine(line)) {
           markupModel.addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic, HighlighterTargetArea.EXACT_RANGE);
-          myHyperlinkSupport.removeHyperlink(highlighter);
+          myHyperlinkSupport.getValue().removeHyperlink(highlighter);
         }
       }
     });
   }
 
   public Editor getConsoleEditor() {
-    return myLogEditor;
+    return myLogEditor.getValue();
   }
 
   @Nullable
   public RelativePoint getHyperlinkLocation(HyperlinkInfo info) {
-    Project project = myLogEditor.getProject();
-    RangeHighlighter range = myHyperlinkSupport.findHyperlinkRange(info);
+    Editor editor = myLogEditor.getValue();
+    Project project = editor.getProject();
+    RangeHighlighter range = myHyperlinkSupport.getValue().findHyperlinkRange(info);
     Window window = NotificationsManagerImpl.findWindowForBalloon(project);
     if (range != null && window != null) {
-      Point point = this.myLogEditor.visualPositionToXY(this.myLogEditor.offsetToVisualPosition(range.getStartOffset()));
-      return new RelativePoint(window, SwingUtilities.convertPoint(this.myLogEditor.getContentComponent(), point, window));
+      Point point = editor.visualPositionToXY(editor.offsetToVisualPosition(range.getStartOffset()));
+      return new RelativePoint(window, SwingUtilities.convertPoint(editor.getContentComponent(), point, window));
     }
     return null;
   }
