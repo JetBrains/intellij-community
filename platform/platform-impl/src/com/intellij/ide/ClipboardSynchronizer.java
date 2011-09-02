@@ -19,6 +19,7 @@ import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -32,6 +33,7 @@ import sun.awt.datatransfer.DataTransferer;
 
 import java.awt.*;
 import java.awt.datatransfer.*;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -168,9 +170,12 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   }
 
   private static class MacClipboardHandler extends ClipboardHandler {
+
+    private Pair<String,Transferable> myFullTransferable;
+
     @Nullable
     private Transferable doGetContents() throws IllegalStateException {
-      if (Registry.is("ide.mac.useNativeClipboard")) {
+      if (Registry.is("ide.mac.useNativeClipboard") && "true".equals(System.getProperty("ide.mac.useNativeClipboard", "true"))) {
         final Transferable safe = getContentsSafe();
         if (safe != null) {
           return safe;
@@ -188,7 +193,50 @@ public class ClipboardSynchronizer implements ApplicationComponent {
 
     @Override
     public Transferable getContents() {
-      return doGetContents();
+      Transferable transferable = doGetContents();
+      if (transferable != null && myFullTransferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+        try {
+          String stringData = (String) transferable.getTransferData(DataFlavor.stringFlavor);
+          if (stringData != null && stringData.equals(myFullTransferable.getFirst())) {
+            return myFullTransferable.getSecond();
+          }
+        }
+        catch (UnsupportedFlavorException e) {
+          LOG.info(e);
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      }
+      
+      myFullTransferable = null;
+      return transferable;
+    }
+
+    @Override
+    public void resetContent() {
+      //myFullTransferable = null;
+      super.resetContent();
+    }
+
+    @Override
+    public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
+      if (content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+        try {
+          String stringData = (String) content.getTransferData(DataFlavor.stringFlavor);
+          myFullTransferable = Pair.create(stringData, content);
+          super.setContent(new StringSelection(stringData), owner);
+        }
+        catch (UnsupportedFlavorException e) {
+          LOG.info(e);
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      } else {
+        myFullTransferable = null;
+        super.setContent(content, owner);
+      }
     }
 
     public static Transferable getContentsSafe() {
