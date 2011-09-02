@@ -17,7 +17,6 @@
 package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +44,7 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
   }
 
   public VirtualFile[] getChildren() {
-    return VfsUtil.toVirtualFileArray(myChildren);
+    return myChildren.size() == 0 ? EMPTY_ARRAY : myChildren.toArray(new VirtualFile[myChildren.size()]);
   }
 
   public InputStream getInputStream() throws IOException {
