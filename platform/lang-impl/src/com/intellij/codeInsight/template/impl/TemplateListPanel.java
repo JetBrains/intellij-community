@@ -489,15 +489,9 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private void removeRow() {
-    int selected = getSelectedIndex(); // TODO
-    if (selected < 0) return;
+    int selected = getSelectedIndex();
     TemplateKey templateKey = getTemplateKey(selected);
     if (templateKey != null) {
-      int result = Messages.showOkCancelDialog(this, CodeInsightBundle.message("template.delete.confirmation.text"),
-                                               CodeInsightBundle.message("template.delete.confirmation.title"),
-                                               Messages.getQuestionIcon());
-      if (result != DialogWrapper.OK_EXIT_CODE) return;
-
       removeTemplateAt(selected);
     }
     else {
@@ -508,13 +502,9 @@ public class TemplateListPanel extends JPanel implements Disposable {
                                                  Messages.getQuestionIcon());
         if (result != DialogWrapper.OK_EXIT_CODE) return;
 
-        JTree tree = myTree;
-        TreePath path = tree.getPathForRow(selected);
-
         myTemplateGroups.remove(group);
 
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-        removeNodeFromParent(node);
+        removeNodeFromParent((DefaultMutableTreeNode)myTree.getPathForRow(selected).getLastPathComponent());
       }
 
     }
@@ -602,27 +592,12 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
     });
 
+    myTree.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent event) {
+        myCurrentTemplateEditor.focusKey();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
 
-    myTree.registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
-          addRow();
-        }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0),
-      JComponent.WHEN_FOCUSED
-    );
-
-    myTree.registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
-          removeRow();
-        }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
-      JComponent.WHEN_FOCUSED
-    );
-    
     myTree.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
