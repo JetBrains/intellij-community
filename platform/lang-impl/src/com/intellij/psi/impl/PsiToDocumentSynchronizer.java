@@ -79,7 +79,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       return;
     }
 
-    TextBlock textBlock = PsiDocumentManagerImpl.getTextBlock(psiFile);
+    TextBlock textBlock = TextBlock.get(psiFile);
 
     if (!textBlock.isEmpty()) {
       LOG.error("Attempt to modify PSI for non-committed Document!");

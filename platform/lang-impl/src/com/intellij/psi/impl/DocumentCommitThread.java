@@ -507,7 +507,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
                                        final boolean synchronously,
                                        @NotNull PsiDocumentManager documentManager) {
     ((PsiDocumentManagerImpl)documentManager).clearTreeHardRef(document);
-    final TextBlock textBlock = PsiDocumentManagerImpl.getTextBlock(file);
+    final TextBlock textBlock = TextBlock.get(file);
     if (textBlock.isEmpty()) return null;
     final long startPsiModificationTimeStamp = file.getModificationStamp();
     final long startDocModificationTimeStamp = document.getModificationStamp();
