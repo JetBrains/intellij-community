@@ -301,24 +301,6 @@ public class PsiUtilBase extends PsiUtilCore {
     throw new RuntimeException("invalid element");
   }
 
-  @Nullable
-  public static VirtualFile getVirtualFile(@Nullable PsiElement element) {
-    if (element == null || !element.isValid()) {
-      return null;
-    }
-
-    if (element instanceof PsiFileSystemItem) {
-      return ((PsiFileSystemItem)element).getVirtualFile();
-    }
-
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) {
-      return null;
-    }
-
-    return containingFile.getVirtualFile();
-  }
-
   public static int compareElementsByPosition(final PsiElement element1, final PsiElement element2) {
     if (element1 != null && element2 != null) {
       final PsiFile psiFile1 = element1.getContainingFile();

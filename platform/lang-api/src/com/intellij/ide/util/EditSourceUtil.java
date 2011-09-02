@@ -25,7 +25,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nullable;
 
 public class EditSourceUtil {
@@ -45,7 +45,7 @@ public class EditSourceUtil {
       return ((PomTargetPsiElement)navigationElement).getTarget();
     }
     final int offset = navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
-    final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(navigationElement);
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(navigationElement);
     if (virtualFile == null || !virtualFile.isValid()) {
       return null;
     }
@@ -59,7 +59,7 @@ public class EditSourceUtil {
       return false;
     }
     final PsiElement navigationElement = element.getNavigationElement();
-    final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(navigationElement);
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(navigationElement);
     return virtualFile != null && virtualFile.isValid();
   }
 
