@@ -373,7 +373,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
-    return PsiClassImplUtil.isMethodEquivalentTo(this, another);
+    return PsiClassImplUtil.isMethodEquivalentTo(this, another) || getNavigationElement() == another;
   }
 
   @NotNull
