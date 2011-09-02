@@ -374,3 +374,8 @@ def test_not_none():
         test(x2)
     elif x3 is not None:
         test(x3)
+
+def test_builtin_functions():
+    print(map(str, [1, 2, 3]) + ['foo']) #pass
+    print(map(lambda x: x.upper(), 'foo')) #pass
+    print(filter(lambda x: x % 2 == 0, [1, 2, 3]) + [4, 5, 6]) #pass
