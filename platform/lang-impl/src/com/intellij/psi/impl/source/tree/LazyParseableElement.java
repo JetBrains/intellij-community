@@ -21,7 +21,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
@@ -164,7 +163,7 @@ public class LazyParseableElement extends CompositeElement {
       parsedNode = type.parseContents(this);
 
       if (parsedNode == null && myText.length() > 0) {
-        if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+        if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
           LOG.error("No parse for a non-empty string: " + myText + "; type=" + LogUtil.objectAndClass(type));
         } else {
           LOG.error("No parse for a non-empty string: type=" + LogUtil.objectAndClass(type));
