@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
@@ -262,9 +263,27 @@ public class PyTypeTest extends PyLightFixtureTestCase {
            "        expr = x");
   }
 
+  // PY-4383
+  public void testAssertIsInstance() {
+    doTest("int",
+           "from unittest import TestCase\n" +
+           "\n" +
+           "class Test1(TestCase):\n" +
+           "    def test_1(self, c):\n" +
+           "        x = 1 if c else 'foo'\n" +
+           "        self.assertIsInstance(x, int)\n" +
+           "        expr = x\n");
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
+  }
+
+  private static String msg(PyType expected, PyType actual, TypeEvalContext context) {
+    return String.format("Expected: %s, actual: %s",
+                         PythonDocumentationProvider.getTypeName(expected, context),
+                         PythonDocumentationProvider.getTypeName(actual, context));
   }
 
   private void doTest(final String expectedType, final String text) {
@@ -274,7 +293,7 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     PyType expected = PyTypeParser.getTypeByName(expr, expectedType);
     if (expected != null) {
       assertNotNull(context.printTrace(), actual);
-      assertTrue(PyTypeChecker.match(expected, actual, context));
+      assertTrue(msg(expected, actual, context), PyTypeChecker.match(expected, actual, context));
     }
   }
 }

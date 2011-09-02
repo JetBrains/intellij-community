@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
@@ -75,6 +76,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     else {
       super.visitPyCallExpression(node);
+    }
+    if (node.isCalleeText(PyNames.ASSERT_IS_INSTANCE)) {
+      final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
+      node.accept(assertionEvaluator);
+      InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
     }
   }
 

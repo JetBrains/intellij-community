@@ -49,6 +49,7 @@ public class PyNames {
   public static final String DEBUG = "__debug__";
 
   public static final String ISINSTANCE = "isinstance";
+  public static final String ASSERT_IS_INSTANCE = "assertIsInstance";
 
   public static final String DOCFORMAT = "__docformat__";
 
