@@ -18,7 +18,6 @@ package com.intellij.lang;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 
 /**
