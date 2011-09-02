@@ -24,7 +24,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -55,6 +54,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
   private final Project myProject;
+  private final ProjectFileIndex myProjectFileIndex;
   private final MessageBus myMessageBus;
 
   private final FileManager myFileManager;
@@ -81,6 +81,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
                         ProjectFileIndex projectFileIndex,
                         MessageBus messageBus) {
     myProject = project;
+    myProjectFileIndex = projectFileIndex;
     myMessageBus = messageBus;
 
     //We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
@@ -145,7 +146,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     }
 
     if (virtualFile != null) {
-      Module module = ModuleUtil.findModuleForFile(virtualFile, element.getProject());
+      Module module = myProjectFileIndex.getModuleForFile(virtualFile);
       return module != null;
     }
     return false;
