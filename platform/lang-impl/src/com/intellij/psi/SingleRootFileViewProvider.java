@@ -233,7 +233,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     final VirtualFile file = getVirtualFile();
     if (file instanceof LightVirtualFile) return false;
     if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return true;
-    return FileTypeManager.getInstance().isFileIgnored(file);
+    return FileTypeRegistry.getInstance().isFileIgnored(file);
   }
 
   @Nullable
