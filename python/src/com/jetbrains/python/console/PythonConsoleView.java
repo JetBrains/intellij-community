@@ -2,6 +2,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
+import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +15,9 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonLanguage;
@@ -31,17 +35,20 @@ import org.jetbrains.annotations.Nullable;
 public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCodeExecutor {
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
 
+  private Project myProject;
   private PydevConsoleExecuteActionHandler myExecuteActionHandler;
   private ConsoleSourceHighlighter mySourceHighlighter;
   private boolean myIsIPythonOutput = false;
   private PyHighlighter myPyHighlighter;
   private EditorColorsScheme myScheme;
+  private boolean myHyperlink;
 
   public PythonConsoleView(final Project project, final String title, Sdk sdk) {
     super(project, new PythonLanguageConsole(project, title, sdk));
     getPythonLanguageConsole().setPythonConsoleView(this);
     getPythonLanguageConsole().setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
     setUpdateFoldingsEnabled(false);
+    myProject = project;
     myPyHighlighter = new PyHighlighter(sdk != null ? LanguageLevel.fromPythonVersion(sdk.getVersionString()) : LanguageLevel.getDefault());
     myScheme = getPythonLanguageConsole().getConsoleEditor().getColorsScheme();
   }
@@ -114,8 +121,17 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     }
     else {
       if (mySourceHighlighter == null || attributes == ProcessOutputTypes.STDERR) {
-        //Print text with converted attributes
-        print(text, outputTypeForAttributes(attributes));
+        if (detectHyperlink(text, attributes)) {
+
+        }
+        if (myHyperlink) {
+          printHyperlink(text, attributes);
+        }
+        else {
+          //Print text normally with converted attributes
+          print(text, outputTypeForAttributes(attributes));
+        }
+        myHyperlink = myIsIPythonOutput && text.startsWith("File:");
         if (mySourceHighlighter == null && myIsIPythonOutput && PyConsoleUtil.detectSourcePrinting(text)) {
           mySourceHighlighter = new ConsoleSourceHighlighter(this, myScheme, myPyHighlighter);
         }
@@ -127,6 +143,25 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
         catch (Exception e) {
           LOG.error(e);
         }
+      }
+    }
+  }
+
+  private boolean detectHyperlink(@NotNull String text, @NotNull Key attributes) {
+    return myIsIPythonOutput && text.startsWith("File:");
+  }
+
+  private void printHyperlink(@NotNull String text, @NotNull Key attributes) {
+    if (!StringUtil.isEmpty(text)) {
+      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(text.trim());
+
+      if (vFile != null) {
+        OpenFileHyperlinkInfo hyperlink = new OpenFileHyperlinkInfo(myProject, vFile, -1);
+
+        printHyperlink(text, hyperlink);
+      }
+      else {
+        print(text, outputTypeForAttributes(attributes));
       }
     }
   }
