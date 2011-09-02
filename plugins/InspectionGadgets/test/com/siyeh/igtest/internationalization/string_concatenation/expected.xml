@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>StringConcatenation.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation</problem_class>
+    <description>String concatenation &lt;code&gt;+&lt;/code&gt; in an internationalized context #loc</description>
+  </problem>
+
+  <problem>
+    <file>StringConcatenation.java</file>
+    <line>14</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation</problem_class>
+    <description>String concatenation &lt;code&gt;+&lt;/code&gt; in an internationalized context #loc</description>
+  </problem>
+
+  <problem>
+    <file>StringConcatenation.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation</problem_class>
+    <description>String concatenation &lt;code&gt;+&lt;/code&gt; in an internationalized context #loc</description>
+  </problem>
+
+  <problem>
+    <file>StringConcatenation.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation</problem_class>
+    <description>String concatenation &lt;code&gt;+&lt;/code&gt; in an internationalized context #loc</description>
+  </problem>
+</problems>

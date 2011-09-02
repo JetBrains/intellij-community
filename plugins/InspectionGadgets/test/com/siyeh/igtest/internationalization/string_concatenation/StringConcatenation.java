@@ -1,10 +1,10 @@
-package com.siyeh.igtest.internationalization;
+package com.siyeh.igtest.internationalization.string_concatenation;
 
 import org.jetbrains.annotations.NonNls;
 
-public class StringConcatenationInspection
+public class StringConcatenation
 {
-    public StringConcatenationInspection()
+    public StringConcatenation()
     {
     }
 
@@ -12,6 +12,7 @@ public class StringConcatenationInspection
     {
         final String concat = "foo" + "bar";
         System.out.println("concat = " + concat);
+        System.out.println("a" + "b" + "c");
     }
 
     public void boom() {
