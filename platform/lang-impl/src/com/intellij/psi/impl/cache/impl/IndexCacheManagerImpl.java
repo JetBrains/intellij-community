@@ -142,7 +142,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     final Set<PsiFile> allFiles = new HashSet<PsiFile>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    for (IndexPattern indexPattern : CacheUtil.getIndexPatterns()) {
+    for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
       final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
         TodoIndex.NAME,
         new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(myProject));

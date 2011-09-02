@@ -71,7 +71,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
 
   public static TodoScanningData[] advanceTodoItemsCount(final CharSequence input, final OccurrenceConsumer consumer, TodoScanningData[] todoScanningData) {
     if (todoScanningData == null) {
-      IndexPattern[] patterns = CacheUtil.getIndexPatterns();
+      IndexPattern[] patterns = IndexPatternUtil.getIndexPatterns();
       todoScanningData = new TodoScanningData[patterns.length];
 
       for (int i = 0; i < patterns.length; ++i) {

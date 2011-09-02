@@ -17,7 +17,7 @@
 package com.intellij.psi.impl.cache.impl.todo;
 
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
-import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
 import com.intellij.psi.search.IndexPattern;
 import gnu.trove.TObjectIntHashMap;
 
@@ -30,7 +30,7 @@ public class TodoOccurrenceConsumer implements BaseFilterLexer.OccurrenceConsume
   
   public TodoOccurrenceConsumer() {
     myTodoOccurrences = new TObjectIntHashMap<IndexPattern>();
-    for (IndexPattern pattern : CacheUtil.getIndexPatterns()) {
+    for (IndexPattern pattern : IndexPatternUtil.getIndexPatterns()) {
       myTodoOccurrences.put(pattern, 0);
     }
   }

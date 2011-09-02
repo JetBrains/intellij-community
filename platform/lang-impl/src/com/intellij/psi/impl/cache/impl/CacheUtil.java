@@ -21,15 +21,12 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.search.IndexPattern;
-import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
@@ -39,10 +36,6 @@ public class CacheUtil {
   public static final Key<Boolean> CACHE_COPY_KEY = new Key<Boolean>("CACHE_COPY_KEY");
 
   private CacheUtil() {
-  }
-
-  public static PsiFile createFileCopy(PsiFile psiFile) {
-    return createFileCopy(null, psiFile);
   }
 
   public static boolean isCopy(PsiFile psiFile) {
@@ -76,29 +69,6 @@ public class CacheUtil {
     catch (IOException e) {
       return "";
     }
-  }
-
-  public static IndexPatternProvider[] getIndexPatternProviders() {
-    return Extensions.getExtensions(IndexPatternProvider.EP_NAME);
-  }
-
-  public static int getIndexPatternCount() {
-    int patternsCount = 0;
-    for(IndexPatternProvider provider: getIndexPatternProviders()) {
-      patternsCount += provider.getIndexPatterns().length;
-    }
-    return patternsCount;
-  }
-
-  public static IndexPattern[] getIndexPatterns() {
-    IndexPattern[] result = new IndexPattern[getIndexPatternCount()];
-    int destIndex = 0;
-    for(IndexPatternProvider provider: getIndexPatternProviders()) {
-      for(IndexPattern pattern: provider.getIndexPatterns()) {
-        result [destIndex++] = pattern;        
-      }
-    }
-    return result;
   }
 
   public static boolean isInComments(final IElementType tokenType) {

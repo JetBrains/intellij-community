@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.impl.cache.impl.todo.TodoOccurrenceConsumer;
@@ -86,7 +87,7 @@ public class IdTableBuilding {
       final CharSequence chars = inputData.getContentAsText();
 
 
-      final IndexPattern[] indexPatterns = CacheUtil.getIndexPatterns();
+      final IndexPattern[] indexPatterns = IndexPatternUtil.getIndexPatterns();
       if (indexPatterns.length > 0) {
         final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
         for (IndexPattern indexPattern : indexPatterns) {
@@ -306,7 +307,7 @@ public class IdTableBuilding {
 
     @NotNull
     public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
-      if (CacheUtil.getIndexPatternCount() > 0) {
+      if (IndexPatternUtil.getIndexPatternCount() > 0) {
         final CharSequence chars = inputData.getContentAsText();
         final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
         EditorHighlighter highlighter;
@@ -342,7 +343,7 @@ public class IdTableBuilding {
           iterator.advance();
         }
         final Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
-        for (IndexPattern pattern : CacheUtil.getIndexPatterns()) {
+        for (IndexPattern pattern : IndexPatternUtil.getIndexPatterns()) {
           final int count = occurrenceConsumer.getOccurrenceCount(pattern);
           if (count > 0) {
             map.put(new TodoIndexEntry(pattern.getPatternString(), pattern.isCaseSensitive()), count);
