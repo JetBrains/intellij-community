@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
@@ -252,7 +253,12 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     myUseUTFGuessing = useUTFGuessing;
   }
 
-  public boolean isNative2AsciiForPropertiesFiles(final VirtualFile virtualFile) {
+  public boolean isNative2Ascii(@NotNull final VirtualFile virtualFile) {
+    return virtualFile.getFileType() == StdFileTypes.PROPERTIES && myNative2AsciiForPropertiesFiles;
+  }
+
+  @Override
+  public boolean isNative2AsciiForPropertiesFiles() {
     return myNative2AsciiForPropertiesFiles;
   }
 

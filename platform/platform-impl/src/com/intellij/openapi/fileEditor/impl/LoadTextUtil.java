@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.Patches;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
@@ -97,7 +96,7 @@ public final class LoadTextUtil {
   private static Charset detectCharset(final VirtualFile virtualFile, final byte[] content) {
     Charset charset = dodetectCharset(virtualFile, content);
     charset = charset == null ? EncodingManager.getInstance().getDefaultCharset() : charset;
-    if (virtualFile.getFileType() == StdFileTypes.PROPERTIES && EncodingManager.getInstance().isNative2AsciiForPropertiesFiles(virtualFile)) {
+    if (EncodingManager.getInstance().isNative2Ascii(virtualFile)) {
       charset = Native2AsciiCharset.wrap(charset);
     }
     virtualFile.setCharset(charset);
