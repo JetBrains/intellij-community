@@ -50,6 +50,8 @@ public class IterableComponentTypeMacro implements Macro {
     PsiExpression expr = MacroUtil.resultToPsiExpression(result, context);
     if (expr == null) return null;
     PsiType type = expr.getType();
+
+
     if (type instanceof PsiArrayType) {
       return new PsiTypeResult(((PsiArrayType)type).getComponentType(), project);
     }

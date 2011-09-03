@@ -193,6 +193,7 @@
 
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType"/>
     <liveTemplateOptionalProcessor implementation="org.jetbrains.plugins.groovy.template.GroovyShortenFQNamesProcessor"/>
+    <variableTypeCalculator implementation="org.jetbrains.plugins.groovy.template.GroovyVariableTypeCalculator"/>
 
     <gotoSymbolContributor implementation="org.jetbrains.plugins.groovy.gotoclass.GroovyGoToSymbolContributor"/>
     <lang.refactoringSupport language="Groovy"

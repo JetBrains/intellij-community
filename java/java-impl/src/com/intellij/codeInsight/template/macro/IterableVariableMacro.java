@@ -68,7 +68,7 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
       final PsiElement parent = var.getParent();
       if (parent instanceof PsiForeachStatement && parent == PsiTreeUtil.getParentOfType(place, PsiForeachStatement.class)) continue;
 
-      PsiType type = var.getType();
+      PsiType type = VariableTypeCalculator.getVarTypeAt(var, place);
       if (type instanceof PsiArrayType || iterableType.isAssignableFrom(type)) {
         result.add(var);
       }

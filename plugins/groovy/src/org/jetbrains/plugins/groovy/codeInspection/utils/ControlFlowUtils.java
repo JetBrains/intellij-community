@@ -634,13 +634,14 @@ public class ControlFlowUtils {
 
   @Nullable
   public static GrControlFlowOwner findControlFlowOwner(PsiElement place) {
-    while (place.getParent() != null) {
+    while (true) {
       place = place.getParent();
+      if (place == null) return null;
       if (place instanceof GrClosableBlock) return (GrClosableBlock)place;
       if (place instanceof GrMethod) return ((GrMethod)place).getBlock();
       if (place instanceof GroovyFile) return (GroovyFile)place;
+      if (place instanceof GrClassInitializer) return ((GrClassInitializer)place).getBlock();
     }
-    return null;
   }
 
   /**

@@ -43,7 +43,7 @@ public class ArrayVariableMacro extends VariableTypeMacroBase {
     PsiElement place = file.findElementAt(offset);
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(place, "");
     for (PsiVariable variable : variables) {
-      PsiType type = variable.getType();
+      PsiType type = VariableTypeCalculator.getVarTypeAt(variable, place);
       if (type instanceof PsiArrayType) {
         array.add(variable);
       }
