@@ -6,6 +6,20 @@
 1L
 1G
 1.0G
+0x0
+00
+0x1_7_______8
+0x1_7_______8i
+0x1_7___9____8i
+
+0x1_7___9.3___9_8e+5_6
+1_7___9.3___9_8e+5_6
+01_7___4.3___2_5
+
+0x1_7___9.3___9_8
+078
+567
+
 -----
 Groovy script
   Literal
@@ -31,3 +45,51 @@ Groovy script
   PsiElement(new line)('\n')
   Literal
     PsiElement(BigDecimal)('1.0G')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('0x0')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('00')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('0x1_7_______8')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('0x1_7_______8i')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('0x1_7___9____8i')
+  PsiElement(new line)('\n\n')
+  Call expression
+    Literal
+      PsiElement(Integer)('0x1_7___9')
+    PsiElement(.)('.')
+    PsiErrorElement:Property selector expected
+      <empty list>
+    Command arguments
+      Literal
+        PsiElement(BigDecimal)('3___9_8e+5_6')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(BigDecimal)('1_7___9.3___9_8e+5_6')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(BigDecimal)('01_7___4.3___2_5')
+  PsiElement(new line)('\n\n')
+  Call expression
+    Literal
+      PsiElement(Integer)('0x1_7___9')
+    PsiElement(.)('.')
+    PsiErrorElement:Property selector expected
+      <empty list>
+    Command arguments
+      Literal
+        PsiElement(Integer)('3___9_8')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('078')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('567')
+  PsiElement(new line)('\n')

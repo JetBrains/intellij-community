@@ -85,14 +85,13 @@ mFLOAT_SUFFIX = f | F
 mLONG_SUFFIX = l | L
 mINT_SUFFIX = i | I
 mDOUBLE_SUFFIX = d | D
-mEXPONENT = (e | E)("+" | "-")?([0-9])+
+mEXPONENT = (e | E)("+" | "-")? [0-9] ("_"? [0-9])*
 
-mNUM_INT_PART =  0
- ( (x | X){mHEX_DIGIT}+
-   | {mDIGIT}+
-   | ([0-7])+
- )?
- | {mDIGIT}+
+mNUM_HEX= 0(x | X) {mHEX_DIGIT} ("_"* {mHEX_DIGIT})*
+mNUM_OCT = 0[0-7] ("_"* [0-7])*
+mNUM_DEC = {mDIGIT} ("_"* {mDIGIT})*
+
+mNUM_INT_PART = {mNUM_HEX} | {mNUM_OCT} | {mNUM_DEC}
 
 // Integer
 mNUM_INT = {mNUM_INT_PART} {mINT_SUFFIX}?
@@ -103,19 +102,20 @@ mNUM_LONG = {mNUM_INT_PART} {mLONG_SUFFIX}
 // BigInteger
 mNUM_BIG_INT = {mNUM_INT_PART} {mBIG_SUFFIX}
 
+mMANTISSA = {mNUM_DEC} "." {mNUM_DEC}
+
 //Float
-mNUM_FLOAT = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mFLOAT_SUFFIX})
- | {mFLOAT_SUFFIX}
- | {mEXPONENT} {mFLOAT_SUFFIX} )
+mNUM_FLOAT = {mNUM_INT_PART} {mEXPONENT}? {mFLOAT_SUFFIX}
+    | {mMANTISSA} {mEXPONENT}? {mFLOAT_SUFFIX}
 
 // Double
-mNUM_DOUBLE = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mDOUBLE_SUFFIX})
- | {mDOUBLE_SUFFIX}
- | {mEXPONENT} {mDOUBLE_SUFFIX})
+mNUM_DOUBLE = {mNUM_INT_PART} {mEXPONENT}? {mDOUBLE_SUFFIX} |
+    {mMANTISSA} {mEXPONENT}? {mDOUBLE_SUFFIX}
+
 
 // BigDecimal
-mNUM_BIG_DECIMAL = {mNUM_INT_PART} ( ("." {mDIGIT}+ {mEXPONENT}? {mBIG_SUFFIX}?)
- | {mEXPONENT} {mBIG_SUFFIX}? )
+mNUM_BIG_DECIMAL = {mNUM_INT_PART} {mEXPONENT} {mBIG_SUFFIX}? |
+    {mMANTISSA} {mEXPONENT}? {mBIG_SUFFIX}?
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////      identifiers      ////////////////////////////////////////////////////////////////////////////
