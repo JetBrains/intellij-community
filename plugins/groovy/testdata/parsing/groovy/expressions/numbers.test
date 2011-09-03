@@ -20,6 +20,10 @@
 078
 567
 
+0b010__1_0
+0B1000_10011_______1
+0b010__1_0i
+0B1000_10011_______1l
 -----
 Groovy script
   Literal
@@ -92,4 +96,15 @@ Groovy script
   PsiElement(new line)('\n')
   Literal
     PsiElement(Integer)('567')
+  PsiElement(new line)('\n\n')
+  Literal
+    PsiElement(Integer)('0b010__1_0')
   PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('0B1000_10011_______1')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Integer)('0b010__1_0i')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Long)('0B1000_10011_______1l')
