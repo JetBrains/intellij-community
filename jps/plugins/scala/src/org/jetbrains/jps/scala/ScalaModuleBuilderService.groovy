@@ -6,6 +6,6 @@ import org.jetbrains.jps.ProjectBuilder
 class ScalaModuleBuilderService extends ModuleBuilderService {
   @Override
   registerBuilders(ProjectBuilder builder) {
-    builder.translatingBuilders << new ScalaModuleBuilder();
+    builder.sourceModifyingBuilders << new ScalaModuleBuilder();
   }
 }
