@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -75,25 +76,45 @@ public class StringConcatenationInspection extends BaseInspection {
     @Override
     @NotNull
     protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-        final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression) infos[0];
-        final PsiExpression lhs = binaryExpression.getLOperand();
+        final PsiPolyadicExpression polyadicExpression =
+                (PsiPolyadicExpression) infos[0];
         final Collection<InspectionGadgetsFix> result = new ArrayList();
-        final PsiModifierListOwner element1 = getAnnotatableElement(lhs);
-        if (element1 != null) {
+        final PsiElement parent = polyadicExpression.getParent();
+        if (parent instanceof PsiVariable) {
+            final PsiVariable variable = (PsiVariable) parent;
             final InspectionGadgetsFix fix = new DelegatingFix(
-                    new AddAnnotationFix(AnnotationUtil.NON_NLS, element1));
+                    new AddAnnotationFix(AnnotationUtil.NON_NLS, variable));
             result.add(fix);
+        } else if (parent instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignmentExpression =
+                    (PsiAssignmentExpression) parent;
+            final PsiExpression lhs = assignmentExpression.getLExpression();
+            if (lhs instanceof PsiReferenceExpression) {
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression) lhs;
+                final PsiElement target = referenceExpression.resolve();
+                if (target instanceof PsiModifierListOwner) {
+                    final PsiModifierListOwner modifierListOwner =
+                            (PsiModifierListOwner) target;
+                    final InspectionGadgetsFix fix = new DelegatingFix(
+                            new AddAnnotationFix(AnnotationUtil.NON_NLS,
+                                    modifierListOwner));
+                    result.add(fix);
+                }
+            }
         }
-        final PsiExpression rhs = binaryExpression.getROperand();
-        final PsiModifierListOwner element2 = getAnnotatableElement(rhs);
-        if (element2 != null) {
-            final InspectionGadgetsFix fix = new DelegatingFix(
-                    new AddAnnotationFix(AnnotationUtil.NON_NLS, element2));
-            result.add(fix);
+        final PsiExpression[] operands = polyadicExpression.getOperands();
+        for (PsiExpression operand : operands) {
+            final PsiModifierListOwner element1 =
+                    getAnnotatableElement(operand);
+            if (element1 != null) {
+                final InspectionGadgetsFix fix = new DelegatingFix(
+                        new AddAnnotationFix(AnnotationUtil.NON_NLS, element1));
+                result.add(fix);
+            }
         }
         final PsiElement expressionParent = PsiTreeUtil.getParentOfType(
-                binaryExpression, PsiReturnStatement.class,
+                polyadicExpression, PsiReturnStatement.class,
                 PsiExpressionList.class);
         if (!(expressionParent instanceof PsiExpressionList) &&
                 expressionParent != null) {
@@ -158,27 +179,22 @@ public class StringConcatenationInspection extends BaseInspection {
     private class StringConcatenationVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            final PsiExpression rhs = expression.getROperand();
-            if(rhs == null) {
-                return;
-            }
-          final IElementType tokenType = expression.getOperationTokenType();
+        @Override public void visitPolyadicExpression(
+                @NotNull PsiPolyadicExpression expression) {
+            super.visitPolyadicExpression(expression);
+            final IElementType tokenType = expression.getOperationTokenType();
             if (!JavaTokenType.PLUS.equals(tokenType)) {
                 return;
             }
-            final PsiExpression lhs = expression.getLOperand();
-            final PsiType lhsType = lhs.getType();
-            final PsiType rhsType = rhs.getType();
-            if(!TypeUtils.isJavaLangString(lhsType) &&
-               !TypeUtils.isJavaLangString(rhsType)){
+            final PsiType type = expression.getType();
+            if (!TypeUtils.isJavaLangString(type)) {
                 return;
             }
-            if (NonNlsUtils.isNonNlsAnnotated(lhs) ||
-                    NonNlsUtils.isNonNlsAnnotated(rhs)) {
-                return;
+            final PsiExpression[] operands = expression.getOperands();
+            for (PsiExpression operand : operands) {
+                if (NonNlsUtils.isNonNlsAnnotated(operand)) {
+                    return;
+                }
             }
             if (isInsideAnnotation(expression)) {
                 return;
@@ -232,9 +248,10 @@ public class StringConcatenationInspection extends BaseInspection {
                                 PsiNewExpression.class, true,
                                 PsiCodeBlock.class);
                 if (newExpression != null) {
-                    final PsiType type = newExpression.getType();
-                    if (type != null && InheritanceUtil.isInheritor(type,
-                            "java.lang.Throwable")) {
+                    final PsiType newExpressionType = newExpression.getType();
+                    if (newExpressionType != null &&
+                            InheritanceUtil.isInheritor(newExpressionType,
+                                    "java.lang.Throwable")) {
                         return;
                     }
                 }
@@ -260,17 +277,28 @@ public class StringConcatenationInspection extends BaseInspection {
             if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
                 return;
             }
-            registerError(expression.getOperationSign(), expression);
+            for (int i = 1; i < operands.length; i++) {
+                final PsiExpression operand = operands[i];
+                if (!ExpressionUtils.isStringConcatenationOperand(operand)) {
+                    continue;
+                }
+                final PsiJavaToken token =
+                        expression.getTokenBeforeOperand(operand);
+                if (token == null) {
+                    continue;
+                }
+                registerError(token, expression);
+            }
         }
 
-        private boolean isInsideAnnotation(PsiBinaryExpression expression) {
+        private boolean isInsideAnnotation(PsiExpression expression) {
             while (true) {
                 final PsiElement parent = expression.getParent();
-                if (!(parent instanceof PsiBinaryExpression)) {
+                if (!(parent instanceof PsiPolyadicExpression)) {
                     return parent instanceof PsiArrayInitializerMemberValue ||
                             parent instanceof PsiNameValuePair;
                 }
-                expression = (PsiBinaryExpression) parent;
+                expression = (PsiExpression) parent;
             }
         }
     }

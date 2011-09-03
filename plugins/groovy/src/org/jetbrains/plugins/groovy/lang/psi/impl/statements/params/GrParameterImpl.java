@@ -77,16 +77,9 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   @Nullable
   public PsiType getTypeGroovy() {
-    GrTypeElement typeElement = getTypeElementGroovy();
-    if (typeElement != null) {
-      PsiType type = typeElement.getType();
-      if (!isVarArgs()) {
-        return type;
-      }
-      else {
-        return new PsiEllipsisType(type);
-      }
-    }
+    final PsiType declaredType = getDeclaredType();
+    if (declaredType != null) return declaredType;
+
     if (isVarArgs()) {
       PsiClassType type = TypesUtil.getJavaLangObject(this);
       return new PsiEllipsisType(type);

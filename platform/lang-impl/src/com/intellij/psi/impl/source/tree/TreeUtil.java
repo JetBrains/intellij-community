@@ -175,6 +175,16 @@ public class TreeUtil {
   }
 
   @Nullable
+  public static ASTNode findSiblingBackward(ASTNode start, IElementType elementType) {
+    ASTNode child = start;
+    while (true) {
+      if (child == null) return null;
+      if (child.getElementType() == elementType) return child;
+      child = child.getTreePrev();
+    }
+  }
+
+  @Nullable
   public static ASTNode findCommonParent(ASTNode one, ASTNode two) {
     // optimization
     if (one == two) return one;

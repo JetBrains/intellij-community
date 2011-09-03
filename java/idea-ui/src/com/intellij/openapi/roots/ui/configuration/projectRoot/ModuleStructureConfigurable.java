@@ -215,7 +215,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       ModuleConfigurable configurable = new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER);
       final MyNode moduleNode = new MyNode(configurable);
       boolean nodesAdded = myFacetEditorFacade.addFacetsNodes(module, moduleNode);
-      nodesAdded |= addNodesFromExtensions(module, moduleNode, myContext.myModulesConfigurator.getModuleEditor(module).getModifiableRootModel());
+      nodesAdded |= addNodesFromExtensions(module, moduleNode);
       if (nodesAdded) {
         myTree.setShowsRootHandles(true);
       }
@@ -251,10 +251,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     //myProjectNode.add(myLevel2Nodes.get(LibraryTablesRegistrar.PROJECT_LEVEL));
   }
 
-  private boolean addNodesFromExtensions(final Module module, final MyNode moduleNode, ModifiableRootModel modifiableRootModel) {
-    boolean nodesAdded= false;
+  private boolean addNodesFromExtensions(final Module module, final MyNode moduleNode) {
+    boolean nodesAdded = false;
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      nodesAdded |= extension.addModuleNodeChildren(module, moduleNode, modifiableRootModel, TREE_UPDATER);
+      nodesAdded |= extension.addModuleNodeChildren(module, moduleNode, TREE_UPDATER);
     }
     return nodesAdded;
   }
@@ -296,7 +296,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       }
       Module module = (Module)moduleNode.getConfigurable().getEditableObject();
       myFacetEditorFacade.addFacetsNodes(module, moduleNode);
-      addNodesFromExtensions(module, moduleNode, myContext.myModulesConfigurator.getModuleEditor(module).getModifiableRootModel());
+      addNodesFromExtensions(module, moduleNode);
     }
     ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
     return true;
@@ -338,23 +338,19 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-
   public void apply() throws ConfigurationException {
     final Set<MyNode> roots = new HashSet<MyNode>();
     roots.add(myRoot);
     checkApply(roots, ProjectBundle.message("rename.message.prefix.module"), ProjectBundle.message("rename.module.title"));
 
-    // extensions should be applied first, since some can write to modifiable model that is committed later by myModulesConfigurator.apply()
-    boolean isModulesConfiguratorModifiedByExtension = false;
-    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      if (extension.isModified()) {
-        isModulesConfiguratorModifiedByExtension |= extension.isModulesConfiguratorModified();
-        extension.apply();
-      }
+    if (myContext.myModulesConfigurator.isModified()) {
+      myContext.myModulesConfigurator.apply();
     }
 
-    if (isModulesConfiguratorModifiedByExtension || myContext.myModulesConfigurator.isModified()) {
-      myContext.myModulesConfigurator.apply();
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      if (extension.isModified()) {
+        extension.apply();
+      }
     }
   }
 
@@ -529,7 +525,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (parent == null) parent = myRoot;
     addNode(node, parent);
     myFacetEditorFacade.addFacetsNodes(module, node);
-    addNodesFromExtensions(module, node, myContext.myModulesConfigurator.getModuleEditor(module).getModifiableRootModel());
+    addNodesFromExtensions(module, node);
     ((DefaultTreeModel)myTree.getModel()).reload(parent);
     selectNodeInTree(node);
     final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
@@ -603,9 +599,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return super.removeObject(editableObject);
   }
 
-  private boolean canBeCopiedByExtension(final NamedConfigurable confugurable) {
+  private boolean canBeCopiedByExtension(final NamedConfigurable configurable) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      if (extension.canBeCopied(confugurable)) {
+      if (extension.canBeCopied(configurable)) {
         return true;
       }
     }
@@ -743,7 +739,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           }
         };
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-          result.addAll(extension.createAddActions(selectedNodeRetriever, TREE_UPDATER, myContext.myModulesConfigurator));
+          result.addAll(extension.createAddActions(selectedNodeRetriever, TREE_UPDATER));
         }
 
         return result.toArray(new AnAction[result.size()]);

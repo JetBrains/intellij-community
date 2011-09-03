@@ -56,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.G
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrInstanceofExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrSafeCastExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrTypeCastExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrMultitypeParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
@@ -175,6 +176,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     //parameters
     if (elem == PARAMETERS_LIST) return new GrParameterListImpl(node);
     if (elem == PARAMETER) return new GrParameterImpl(node);
+    if (elem == MULTI_TYPE_PARAMETER) return new GrMultitypeParameterImpl(node);
 
     //type parameters
     if (elem == TYPE_ARGUMENT) return new GrWildcardTypeArgumentImpl(node);

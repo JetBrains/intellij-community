@@ -81,6 +81,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -676,6 +677,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     GrCodeReferenceElement refElement = newExpression.getReferenceElement();
     if (refElement == null) return;
+
+    checkDiamonds(refElement, myHolder);
+
     final PsiElement element = refElement.resolve();
     if (element instanceof PsiClass) {
       PsiClass clazz = (PsiClass)element;
@@ -751,6 +755,22 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         }
       }
     }
+  }
+
+  private static void checkDiamonds(GrCodeReferenceElement refElement, AnnotationHolder holder) {
+    final GrTypeArgumentList typeArgList = refElement.getTypeArgumentList();
+    final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
+    if (typeArgList != null || configUtils.isVersionAtLeast(refElement, GroovyConfigUtils.GROOVY1_8)) return;
+
+    final PsiElement lastChild = refElement.getLastChild();
+    if (lastChild == null || lastChild.getNode().getElementType() != GroovyTokenTypes.mGT) return;
+
+    final PsiElement prev = lastChild.getPrevSibling();
+    if (prev == null || prev.getNode().getElementType() != GroovyTokenTypes.mLT) return;
+
+    final String message = GroovyBundle.message("diamonds.are.not.allowed.in.groovy.0", configUtils.getSDKVersion(refElement));
+    final TextRange range = new TextRange(prev.getTextRange().getStartOffset(), lastChild.getTextRange().getEndOffset());
+    holder.createErrorAnnotation(range, message);
   }
 
   @Override
@@ -872,6 +892,20 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     else if (text.startsWith("'")) {
       if (text.length() < 2 || !text.endsWith("'")) {
         myHolder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));
+      }
+    }
+    else if (literal instanceof GrRegex) {
+      if (!GroovyConfigUtils.getInstance().isVersionAtLeast(literal, GroovyConfigUtils.GROOVY1_8)) {
+        myHolder.createErrorAnnotation(literal, GroovyBundle
+          .message("slashy.strings.with.injections.are.not.allowed.in.groovy.0", GroovyConfigUtils.getInstance().getSDKVersion(literal)));
+      }
+    }
+    else if (text.startsWith("/")) {
+      if (!GroovyConfigUtils.getInstance().isVersionAtLeast(literal, GroovyConfigUtils.GROOVY1_8)) {
+        if (text.contains("\n") || text.contains("\r")) {
+          myHolder.createErrorAnnotation(literal, GroovyBundle
+            .message("multiline.slashy.strings.are.not.allowed.in.groovy.0", GroovyConfigUtils.getInstance().getSDKVersion(literal)));
+        }
       }
     }
   }
