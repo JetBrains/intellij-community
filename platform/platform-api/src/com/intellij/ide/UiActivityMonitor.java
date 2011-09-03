@@ -169,7 +169,7 @@ public class UiActivityMonitor implements ApplicationComponent {
 
       myQueuedToRemove.add(activity);
 
-      SwingUtilities.invokeLater(new Runnable() {
+      Runnable runnable = new Runnable() {
         @Override
         public void run() {
           if (!myQueuedToRemove.contains(activity)) return;
@@ -178,7 +178,12 @@ public class UiActivityMonitor implements ApplicationComponent {
           myActivities.remove(activity);
           onReady();
         }
-      });
+      };
+      if (isUnitTestMode()) {
+        runnable.run();
+      } else {
+        SwingUtilities.invokeLater(runnable);
+      }
     }
 
     public void clear() {
