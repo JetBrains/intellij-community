@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class StringBufferToStringInConcatenationInspection
@@ -87,28 +86,7 @@ public class StringBufferToStringInConcatenationInspection
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            final PsiElement parent = expression.getParent();
-            if (!(parent instanceof PsiBinaryExpression)) {
-                return;
-            }
-            final PsiBinaryExpression parentBinary =
-                    (PsiBinaryExpression)parent;
-          final IElementType tokenType = parentBinary.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.PLUS)) {
-                return;
-            }
-            final PsiExpression rhs = parentBinary.getROperand();
-            if (rhs == null) {
-                return;
-            }
-            if (rhs.equals(expression)) {
-                final PsiExpression lhs = parentBinary.getLOperand();
-                if (!TypeUtils.expressionHasType(lhs,
-                        CommonClassNames.JAVA_LANG_STRING)) {
-                    return;
-                }
-            } else if (!TypeUtils.expressionHasType(rhs,
-                    CommonClassNames.JAVA_LANG_STRING)) {
+            if (!ExpressionUtils.isStringConcatenationOperand(expression)) {
                 return;
             }
             if (!isStringBufferToString(expression)) {

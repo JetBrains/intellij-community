@@ -18,5 +18,6 @@ public class StringBufferToStringInConcatenation
         String one = "bar" + builder.toString();
         String two = 6 + builder.toString();
         String three = builder.toString() + "  ";
+        String s = 1 + 2 + "as df" + builder.toString() +  1 + "asdf";
     }
 }
