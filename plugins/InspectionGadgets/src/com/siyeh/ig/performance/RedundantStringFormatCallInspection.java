@@ -160,20 +160,20 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
                         literalExpression.getText();
                 return expressionText.contains("%n");
             }
-            if (expression instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression binaryExpression =
-                        (PsiBinaryExpression) expression;
+            if (expression instanceof PsiPolyadicExpression) {
+                final PsiPolyadicExpression polyadicExpression =
+                        (PsiPolyadicExpression) expression;
                 final IElementType tokenType =
-                        binaryExpression.getOperationTokenType();
+                        polyadicExpression.getOperationTokenType();
                 if (!tokenType.equals(JavaTokenType.PLUS)) {
                     return false;
                 }
-                final PsiExpression lhs = binaryExpression.getLOperand();
-                if (containsPercentN(lhs)) {
-                    return true;
+                final PsiExpression[] operands = polyadicExpression.getOperands();
+                for (PsiExpression operand : operands) {
+                    if (containsPercentN(operand)) {
+                        return true;
+                    }
                 }
-                final PsiExpression rhs = binaryExpression.getROperand();
-                return containsPercentN(rhs);
             }
             return false;
         }
