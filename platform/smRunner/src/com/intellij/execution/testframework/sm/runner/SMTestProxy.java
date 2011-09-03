@@ -16,7 +16,10 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.TestsLocationProviderUtil;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
@@ -24,6 +27,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
@@ -171,8 +175,13 @@ public class SMTestProxy extends AbstractTestProxy {
     final String protocolId = TestsLocationProviderUtil.extractProtocol(myLocationUrl);
     final String path = TestsLocationProviderUtil.extractPath(myLocationUrl);
 
+    final boolean isDumbMode = DumbService.isDumb(project);
+
     if (protocolId != null && path != null) {
       for (TestLocationProvider provider : Extensions.getExtensions(TestLocationProvider.EP_NAME)) {
+        if (isDumbMode && !DumbService.isDumbAware(provider)) {
+          continue;
+        }
         final List<Location> locations = provider.getLocation(protocolId, path, project);
         if (!locations.isEmpty()) {
           return locations.iterator().next();
