@@ -57,7 +57,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 
 public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   @NonNls private static final String RECENTS_KEY = "MoveClassesOrPackagesDialog.RECENTS_KEY";
@@ -237,8 +239,13 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     }
     else if (psiElements.length == 1) {
       PsiElement firstElement = psiElements[0];
-      PsiElement parent = firstElement.getParent();
-      LOG.assertTrue(parent != null);
+      if (firstElement instanceof PsiClass) {
+        LOG.assertTrue(!MoveClassesOrPackagesImpl.isClassInnerOrLocal((PsiClass)firstElement));
+      }
+      else {
+        PsiElement parent = firstElement.getParent();
+        LOG.assertTrue(parent != null);
+      }
       myNameLabel.setText(RefactoringBundle.message("move.single.class.or.package.name.label", UsageViewUtil.getType(firstElement),
                                                     UsageViewUtil.getLongName(firstElement)));
     }

@@ -115,7 +115,7 @@ public class MoveClassesOrPackagesImpl {
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
-        if (!(aClass.getParent() instanceof PsiFile)) {
+        if (isClassInnerOrLocal(aClass)) {
           String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("moving.local.classes.is.not.supported"));
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
@@ -141,6 +141,10 @@ public class MoveClassesOrPackagesImpl {
     }
 
     return psiElements;
+  }
+
+  static boolean isClassInnerOrLocal(PsiClass aClass) {
+    return aClass.getContainingClass() != null || aClass.getQualifiedName() == null;
   }
 
   private static boolean isAlreadyChecked(PsiElement[] psiElements, int idx, PsiPackage aPackage) {
