@@ -79,7 +79,7 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
   }
 
   private static TextAttributes getDefaultColorSchemeTextAttributes() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
+    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES).clone();
   }
 
   public void readExternal(Element element) throws InvalidDataException {
