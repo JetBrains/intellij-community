@@ -47,7 +47,8 @@ public abstract class HeaderHidingTabbedModuleEditor extends TabbedModuleEditor 
     if (displayName != null) {
       ModuleConfigurationEditor singleEditor = getSingleEditor();
       if (singleEditor != null) {
-        assert singleEditor.getDisplayName().equals(displayName);
+        // TODO [ksafonov] commented until IDEA-73889 is implemented
+        //assert singleEditor.getDisplayName().equals(displayName);
       }
       else {
         super.selectEditor(displayName);
