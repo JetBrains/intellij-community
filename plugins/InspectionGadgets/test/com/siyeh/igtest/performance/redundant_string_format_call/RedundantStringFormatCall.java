@@ -10,5 +10,6 @@ public class RedundantStringFormatCall {
   String b = String.format("no parameters");
   String c = String.format("asdf%n" +
                            "asdf%n")
+          String d = String.format("asdf" + "asdf" + "asdf%n");
 
 }
