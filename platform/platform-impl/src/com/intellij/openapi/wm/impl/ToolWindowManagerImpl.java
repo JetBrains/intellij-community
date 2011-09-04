@@ -580,7 +580,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
               runnable.run();
               return new ActionCallback.Done();
             }
-          }, forced);
+          }, forced).doWhenProcessed(new Runnable() {
+            @Override
+            public void run() {
+              System.out.println("ToolWindowManagerImpl.run");
+            }
+          });
         }
       });
     }
@@ -1926,7 +1931,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         public void run() {
           if (mgr.getFocusOwner() == owner) {
-            activateEditorComponent(false);
+            activateEditorComponent(true);
           }
         }
       });
