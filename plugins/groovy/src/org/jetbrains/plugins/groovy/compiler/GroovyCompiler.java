@@ -20,6 +20,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -198,9 +199,10 @@ public class GroovyCompiler extends GroovyCompilerBase {
 
     final Set<String> scriptExtensions = GroovyFileTypeLoader.getCustomGroovyScriptExtensions();
 
+    final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     Set<Module> modules = new HashSet<Module>();
     for (VirtualFile file : files) {
-      if (scriptExtensions.contains(file.getExtension())) {
+      if (scriptExtensions.contains(file.getExtension()) || compilerManager.isExcludedFromCompilation(file)) {
         continue;
       }
 
@@ -237,7 +239,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
                                  GroovyBundle.message("cannot.compile"));
       }
       else {
-        StringBuffer modulesList = new StringBuffer();
+        StringBuilder modulesList = new StringBuilder();
         for (int i = 0; i < noJdkArray.length; i++) {
           if (i > 0) modulesList.append(", ");
           modulesList.append(noJdkArray[i].getName());
