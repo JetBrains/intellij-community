@@ -238,9 +238,8 @@
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.UnfocusedComments" id="groovyComments"/>
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="groovyTrue" order="last"/>
 
-    <weigher key="completionSorting" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrWithWeigher" id="groovyWithWeigher"/>
-    <weigher key="completionSorting" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrKindWeigher" id="groovyKindWeigher" order="after groovyWithWeigher"/>
-    <weigher key="completionSorting" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrAccessorWeigher" id="groovyAccessorWeigher" order="after groovyKindWeigher, before sLookupString"/>
+    <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrKindWeigher" id="groovyKindWeigher" order="before stats" />
+
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
 
     <useScopeEnlarger implementation="org.jetbrains.plugins.groovy.lang.psi.impl.search.GrPrivateFieldScopeEnlarger"/>

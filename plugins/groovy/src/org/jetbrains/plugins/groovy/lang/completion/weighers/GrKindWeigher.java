@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrPropertyForCompletion;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.Set;
 
@@ -60,10 +61,13 @@ public class GrKindWeigher extends CompletionWeigher {
 
     final PsiElement qualifier = parent.getQualifier();
     if (qualifier == null) {
-      if (o instanceof PsiVariable && !(o instanceof PsiField)) return NotQualifiedKind.local;
+      if (o instanceof PsiVariable && !(o instanceof PsiField)) {
+        return NotQualifiedKind.local;
+      }
       if (isLightElement(o)) return NotQualifiedKind.unknown;
       if (o instanceof PsiMember) {
         final PsiClass containingClass = ((PsiMember)o).getContainingClass();
+        if (isAccessor((PsiMember)o)) return NotQualifiedKind.accessor;
         if (PsiTreeUtil.isContextAncestor(containingClass, position, false)) return NotQualifiedKind.currentClassMember;
         if (o instanceof PsiClass && ((PsiClass)o).getContainingClass() == null || o instanceof PsiPackage) return NotQualifiedKind.unknown;
         return NotQualifiedKind.member;
@@ -76,7 +80,10 @@ public class GrKindWeigher extends CompletionWeigher {
       if (isLightElement(o)) return QualifiedKind.unknown;
       if (o instanceof PsiMember) {
         if (isTrashMethod((PsiMember)o)) return QualifiedKind.unknown;
-        if (isQualifierClassMember((PsiMember)o, qualifier)) return QualifiedKind.currentClassMember;
+        if (isAccessor((PsiMember)o)) return QualifiedKind.accessor;
+        if (isQualifierClassMember((PsiMember)o, qualifier)) {
+          return QualifiedKind.currentClassMember;
+        }
         if (o instanceof PsiClass && ((PsiClass)o).getContainingClass() == null || o instanceof PsiPackage) return QualifiedKind.unknown;
         return QualifiedKind.member;
       }
@@ -92,6 +99,11 @@ public class GrKindWeigher extends CompletionWeigher {
     final PsiClass containingClass = o.getContainingClass();
     return containingClass != null && TRASH_CLASSES.contains(containingClass.getQualifiedName());
   }
+  
+  private static boolean isAccessor(PsiMember member) {
+    return member instanceof PsiMethod && (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)member) || "setProperty".equals(((PsiMethod)member).getName()));
+  }
+  
 
   private static boolean isQualifierClassMember(PsiMember member, PsiElement qualifier) {
     if (!(qualifier instanceof GrExpression)) return false;
@@ -106,10 +118,18 @@ public class GrKindWeigher extends CompletionWeigher {
   }
 
   private static enum NotQualifiedKind {
-    local, currentClassMember, member,unknown
+    unknown,
+    accessor,
+    member,
+    currentClassMember,
+    local,
   }
 
   private static enum QualifiedKind {
-    enumConstant, currentClassMember, member, unknown
+    unknown,
+    accessor,
+    member,
+    currentClassMember,
+    enumConstant,
   }
 }

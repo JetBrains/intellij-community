@@ -839,6 +839,6 @@ class X {
   }
 
   public void testSortOrder0() {
-    doVariantableTest 'se', 'setSe', 'setMetaClass', 'setProperty'
+    doVariantableTest 'se', 'setMetaClass', 'setProperty', 'setSe'
   }
 }
