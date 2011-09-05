@@ -317,6 +317,7 @@
 
   <!-- Live Templates -->
   <applicationConfigurable instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
+  <lookup.actionProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplateLookupActionProvider"/>
 
   <!-- File Templates-->
   <applicationConfigurable instance="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
