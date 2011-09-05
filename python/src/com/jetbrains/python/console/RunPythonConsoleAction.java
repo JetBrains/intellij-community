@@ -14,7 +14,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -83,7 +82,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       setup_fragment = new String[]{self_path_append};
     }
 
-    return PydevConsoleRunner.run(project, sdk, PyConsoleType.PYTHON, workingDir, setup_fragment);
+    return PydevConsoleRunner.createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, setup_fragment);
   }
 
   public static String constructPythonPathCommand(Collection<String> pythonPath) {

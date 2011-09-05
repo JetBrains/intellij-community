@@ -20,6 +20,7 @@ public class PyABCUtil {
   }
 
   public static boolean isSubclass(@NotNull PyClass subClass, @NotNull String superClassName) {
+    final String subClassName = subClass.getName();
     if (PyNames.CALLABLE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.CALL);
     }
@@ -28,10 +29,10 @@ public class PyABCUtil {
     }
     final boolean isIterable = hasMethod(subClass, PyNames.ITER);
     if (PyNames.ITERABLE.equals(superClassName)) {
-      return isIterable;
+      return isIterable || isStringClass(subClassName);
     }
     if (PyNames.ITERATOR.equals(superClassName)) {
-      return isIterable && hasMethod(subClass, PyNames.NEXT);
+      return (isIterable && hasMethod(subClass, PyNames.NEXT)) || isStringClass(subClassName);
     }
     final boolean isSized = hasMethod(subClass, PyNames.LEN);
     if (PyNames.SIZED.equals(superClassName)) {
@@ -62,5 +63,9 @@ public class PyABCUtil {
 
   private static boolean hasMethod(PyClass cls, String name) {
     return cls.findMethodByName(name, true) != null;
+  }
+
+  private static boolean isStringClass(String className) {
+    return "bytes".equals(className) || "str".equals(className) || "unicode".equals(className);
   }
 }

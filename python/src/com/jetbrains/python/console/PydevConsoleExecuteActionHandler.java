@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -65,7 +66,10 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   private void processOneLine(String line) {
     int indentSize = myIndentHelper.getIndent(line, false);
-    if (indentSize == 0 && indentSize < myCurrentIndentSize && !shouldIndent(line)) {
+    if (StringUtil.isEmptyOrSpaces(line)) {
+      doProcessLine("\n");
+    }
+    else if (indentSize == 0 && indentSize < myCurrentIndentSize && !shouldIndent(line)) {
       doProcessLine("\n");
       doProcessLine(line);
     }
@@ -82,7 +86,16 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       myInputBuffer = new StringBuilder();
     }
 
-    myInputBuffer.append(line).append("\n");
+    if (!StringUtil.isEmptyOrSpaces(line)) {
+      myInputBuffer.append(line);
+      if (!line.endsWith("\n")) {
+        myInputBuffer.append("\n");
+      }
+    }
+
+    if (StringUtil.isEmptyOrSpaces(line) && StringUtil.isEmptyOrSpaces(myInputBuffer.toString())) {
+      myInputBuffer.append("");
+    }
 
     // multiline strings handling
     if (myInMultilineStringState != null) {
@@ -124,7 +137,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         indent += getPythonIndent();
         flag = true;
       }
-      if ((myCurrentIndentSize >0 && indent>0) || flag) {
+      if ((myCurrentIndentSize > 0 && indent > 0) || flag) {
         myCurrentIndentSize = indent;
         indentEditor(currentEditor, indent);
         more(console, currentEditor);
@@ -270,12 +283,30 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getPrevCommandRunningMessage());
       }
       else {
-        super.runExecuteAction(languageConsole);
+        doRunExecuteAction(languageConsole);
       }
     }
     else {
       HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getConsoleIsNotEnabledMessage());
     }
+  }
+
+  private void doRunExecuteAction(LanguageConsoleImpl languageConsole) {
+    if (shouldCopyToHistory(languageConsole)) {
+      copyToHistoryAndExecute(languageConsole);
+    }
+    else {
+      final Document document = languageConsole.getCurrentEditor().getDocument();
+      processLine(document.getText());
+    }
+  }
+
+  private static boolean shouldCopyToHistory(LanguageConsoleImpl console) {
+    return !PyConsoleUtil.isPagingPrompt(console.getPrompt());
+  }
+
+  private void copyToHistoryAndExecute(LanguageConsoleImpl languageConsole) {
+    super.runExecuteAction(languageConsole);
   }
 
   public boolean canExecuteNow() {

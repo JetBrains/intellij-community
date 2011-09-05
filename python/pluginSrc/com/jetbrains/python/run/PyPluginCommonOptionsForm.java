@@ -12,6 +12,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,10 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JComboBox myModuleComboBox;
   private JPanel myMainPanel;
   private JRadioButton myUseSpecifiedSdkRadioButton;
+  private JBLabel myPythonInterpreterJBLabel;
+  private JBLabel myInterpreterOptionsJBLabel;
+  private JBLabel myWorkingDirectoryJBLabel;
+  private JComponent labelAnchor;
 
   public PyPluginCommonOptionsForm(AbstractPythonRunConfiguration configuration) {
     // setting modules
@@ -64,6 +69,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     };
     myUseSpecifiedSdkRadioButton.addActionListener(listener);
     myUseModuleSdkRadioButton.addActionListener(listener);
+
+    setAnchor(myEnvsComponent.getLabel());
   }
 
   private void updateControls() {
@@ -147,5 +154,19 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   public void setEnvs(Map<String, String> envs) {
     myEnvsComponent.setEnvs(envs);
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return labelAnchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    labelAnchor = anchor;
+    myPythonInterpreterJBLabel.setAnchor(anchor);
+    myInterpreterOptionsJBLabel.setAnchor(anchor);
+    myWorkingDirectoryJBLabel.setAnchor(anchor);
+    myEnvsComponent.setAnchor(anchor);
   }
 }

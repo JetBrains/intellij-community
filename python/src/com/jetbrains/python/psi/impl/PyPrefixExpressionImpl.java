@@ -7,10 +7,7 @@ import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.Callable;
-import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -43,6 +40,11 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     final PsiElement op = getPsiOperator();
     assert op != null;
     return (PyElementType)op.getNode().getElementType();
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyPrefixExpression(this);
   }
 
   @Override

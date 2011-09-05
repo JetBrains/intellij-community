@@ -38,6 +38,10 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyExpression(node);
   }
 
+  public void visitPyPrefixExpression(final PyPrefixExpression node) {
+    visitPyExpression(node);
+  }
+
   public void visitPySequenceExpression(final PySequenceExpression node) {
     visitPyExpression(node);
   }

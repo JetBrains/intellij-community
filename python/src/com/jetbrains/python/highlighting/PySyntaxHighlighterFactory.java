@@ -22,7 +22,7 @@ public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
 
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
-   LanguageLevel languageLevel = virtualFile != null ? LanguageLevel.forFile(virtualFile) : LanguageLevel.getDefault();
+    LanguageLevel languageLevel = virtualFile != null ? LanguageLevel.forFile(virtualFile) : LanguageLevel.getDefault();
     return myMap.get(languageLevel);
   }
 }

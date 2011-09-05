@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +76,9 @@ public class PyTypeChecker {
         }
       }
       else if (matchClasses(superClass, subClass)) {
+        return true;
+      }
+      else if (((PyClassType)actual).isDefinition() && PyNames.CALLABLE.equals(expected.getName())) {
         return true;
       }
     }

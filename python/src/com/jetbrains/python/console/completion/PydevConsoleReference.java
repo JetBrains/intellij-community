@@ -41,7 +41,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
   public Object[] getVariants() {
     List<LookupElement> variants = new ArrayList<LookupElement>();
     try {
-      final List<PydevCompletionVariant> completions = myCommunication.getCompletions(myPrefix);
+      final List<PydevCompletionVariant> completions = myCommunication.getCompletions(myPrefix, myPrefix);
       for (PydevCompletionVariant completion : completions) {
         final PsiManager manager = myElement.getManager();
         final String name = completion.getName();
@@ -54,12 +54,11 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
           builder = builder.setTailText(args);
         }
         // Set function insert handler
-        if (type == IToken.TYPE_FUNCTION || args.endsWith(")")){
+        if (type == IToken.TYPE_FUNCTION || args.endsWith(")")) {
           builder = builder.setInsertHandler(ParenthesesInsertHandler.WITH_PARAMETERS);
         }
         variants.add(builder);
       }
-
     }
     catch (Exception e) {
       //LOG.error(e);

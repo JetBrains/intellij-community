@@ -110,6 +110,11 @@ public class PyTypeParser {
       types.put(whole, t);
       return t;
     }
+    if (type.equals("unicode")) {
+      final PyType t = builtinCache.getUnicodeType(LanguageLevel.forElement(anchor));
+      types.put(whole, t);
+      return t;
+    }
     if (type.equals("boolean")) {
       final PyType t = builtinCache.getBoolType();
       types.put(whole, t);
@@ -128,7 +133,7 @@ public class PyTypeParser {
     if (type.startsWith("dict from")) {
       return parseDictFromToType(anchor, type, types, fullRanges, offset);
     }
-    if (type.equals("integer")) {
+    if (type.equals("integer") || (type.equals("long") && LanguageLevel.forElement(anchor).isPy3K())) {
       final PyType t = builtinCache.getIntType();
       types.put(whole, t);
       return t;

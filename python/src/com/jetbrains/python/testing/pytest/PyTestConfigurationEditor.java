@@ -6,6 +6,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -19,18 +21,16 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 /**
  * @author yole
  */
-public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfiguration> {
+public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfiguration> implements ComponentWithAnchor {
   private JPanel myMainPanel;
   private JPanel myCommonOptionsPlaceholder;
   private JTextField myKeywordsTextField;
   private TextFieldWithBrowseButton myTestScriptTextField;
   private JTextField myParamsTextField;
-  private JLabel myKeyLabel;
-  private JLabel myTargetLabel;
-  private JLabel myParamLabel;
-  private JLabel myName;
+  private JBLabel myTargetLabel;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private final Project myProject;
+  private JComponent anchor;
 
   public PyTestConfigurationEditor(final Project project, PyTestRunConfiguration configuration) {
     myProject = project;
@@ -44,6 +44,8 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
     myTestScriptTextField.addBrowseFolderListener(title, null, myProject, fileChooserDescriptor);
 
     myTargetLabel.setLabelFor(myTestScriptTextField);
+
+    setAnchor(myCommonOptionsForm.getAnchor());
   }
 
   protected void resetEditorFrom(PyTestRunConfiguration s) {
@@ -66,5 +68,17 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
   }
 
   protected void disposeEditor() {
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    myTargetLabel.setAnchor(anchor);
+    myCommonOptionsForm.setAnchor(anchor);
   }
 }

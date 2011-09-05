@@ -135,6 +135,6 @@ public abstract class PythonSdkFlavor {
   @SuppressWarnings({"MethodMayBeStatic"})
   public void addPredefinedEnvironmentVariables(Map<String, String> envs) {
     final String encoding = EncodingManager.getInstance().getDefaultCharset().name();
-    envs.put("PYTHONIOENCODING", encoding);
+    PythonEnvUtil.setPythonIOEncoding(envs, encoding);
   }
 }

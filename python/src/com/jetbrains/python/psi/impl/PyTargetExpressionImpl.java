@@ -155,7 +155,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
               if (target == this || target == null) {
                 return null;  // fix SOE on "a = a"
               }
-              final PyType typeFromTarget = PyReferenceExpressionImpl.getTypeFromTarget(target, context, null);
+              final PyType typeFromTarget = PyReferenceExpressionImpl.getTypeFromTarget(target, context, refex);
               if (target instanceof PyTargetExpression && typeFromTarget instanceof PyNoneType) {
                 // this usually means that the variable is initialized to a non-None value somewhere else where we haven't looked
                 return null;
