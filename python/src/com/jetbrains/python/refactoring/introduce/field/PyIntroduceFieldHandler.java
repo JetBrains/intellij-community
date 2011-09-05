@@ -228,10 +228,9 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     // put caret on identifier after "self."
     final List<PsiElement> occurrences = operation.getOccurrences();
     final PsiElement occurrence = findOccurrenceUnderCaret(occurrences, operation.getEditor());
-    putCaretOnFieldName(operation.getEditor(), occurrence);
     PyTargetExpression target = (PyTargetExpression) statement.getTargets() [0];
-    final InplaceVariableIntroducer<PsiElement> introducer =
-            new PyInplaceFieldIntroducer(target, operation, occurrences);
+    putCaretOnFieldName(operation.getEditor(), occurrence != null ? occurrence : target);
+    final InplaceVariableIntroducer<PsiElement> introducer = new PyInplaceFieldIntroducer(target, operation, occurrences);
     introducer.performInplaceRename(false, new LinkedHashSet<String>(operation.getSuggestedNames()));
   }
 

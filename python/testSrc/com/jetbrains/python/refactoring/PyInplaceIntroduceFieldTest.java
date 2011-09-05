@@ -21,6 +21,10 @@ public class PyInplaceIntroduceFieldTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testPy4414() {
+    doTest();
+  }
+
   private void doTest() {
     String name = getTestName(true);
     myFixture.configureByFile("refactoring/inplaceIntroduceField/" + name + ".py");
@@ -39,7 +43,7 @@ public class PyInplaceIntroduceFieldTest extends PyLightFixtureTestCase {
       TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
       assert state != null;
       state.gotoEnd(false);
-      myFixture.checkResultByFile("refactoring/inplaceIntroduceField/" +  name + ".after.py");
+      myFixture.checkResultByFile("refactoring/inplaceIntroduceField/" +  name + ".after.py", true);
     }
     finally {
       myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
