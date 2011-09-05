@@ -518,6 +518,7 @@
     <lang.parserDefinition language="Mako" implementationClass="com.jetbrains.mako.MakoParserDefinition"/>
     <lang.fileViewProviderFactory language="Mako"
                                   implementationClass="com.jetbrains.mako.MakoFileProviderFactory"/>
+    <gotoDeclarationHandler implementation="com.jetbrains.mako.MakoGotoProvider" order="FIRST"/>
 
     <projectService serviceInterface="com.jetbrains.mako.TemplatesService"
                     serviceImplementation="com.jetbrains.mako.TemplatesService"/>
