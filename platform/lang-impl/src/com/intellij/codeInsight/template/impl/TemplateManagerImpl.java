@@ -431,17 +431,30 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public TemplateContextType getContextType(@NotNull PsiFile file, int offset) {
-    LinkedList<TemplateContextType> userDefinedExtensionsFirst = buildOrderedContextTypes();
-    for (TemplateContextType contextType : userDefinedExtensionsFirst) {
-      if (contextType.isInContext(file, offset)) {
-        return contextType;
-      }
-    }
-    assert false : "OtherContextType should match any context";
-    return null;
+    return getContextType(file, offset, null);
   }
 
-  private LinkedList<TemplateContextType> buildOrderedContextTypes() {
+  private static TemplateContextType getContextType(@Nullable PsiFile file, int offset, @Nullable FileType fileType) {
+    LinkedHashSet<TemplateContextType> set = new LinkedHashSet<TemplateContextType>();
+    LinkedList<TemplateContextType> contexts = buildOrderedContextTypes();
+    for (TemplateContextType contextType : contexts) {
+      if (fileType == null ? contextType.isInContext(file, offset) : contextType.isInContext(fileType)) {
+        set.add(contextType);
+      }
+    }
+
+    removeBases: 
+    while (true) {
+      for (TemplateContextType type : set) {
+        if (set.remove(type.getBaseContextType())) {
+          continue removeBases;
+        }
+      }
+      return set.iterator().next();
+    }
+  }
+
+  private static LinkedList<TemplateContextType> buildOrderedContextTypes() {
     final TemplateContextType[] typeCollection = getAllContextTypes();
     LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<TemplateContextType>();
     for (TemplateContextType contextType : typeCollection) {
@@ -457,14 +470,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   @Override
   public TemplateContextType getContextType(@NotNull FileType fileType) {
-    LinkedList<TemplateContextType> userDefinedExtensionsFirst = buildOrderedContextTypes();
-    for (TemplateContextType contextType : userDefinedExtensionsFirst) {
-      if (contextType.isInContext(fileType)) {
-        return contextType;
-      }
-    }
-    assert false : "OtherContextType should match any context";
-    return null;
+    return getContextType(null, 0, fileType);
   }
 
   public static TemplateContextType[] getAllContextTypes() {

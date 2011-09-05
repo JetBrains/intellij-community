@@ -553,7 +553,7 @@
 
   <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.DirectoryTemplateCompletionProcessor"/>
 
-  <liveTemplateContext id="OTHER" implementation="com.intellij.codeInsight.template.OtherContextType" order="last"/>
+  <liveTemplateContext id="OTHER" implementation="com.intellij.codeInsight.template.EverywhereContextType" order="last"/>
 
   <!-- Graph API -->
   <applicationService serviceInterface="com.intellij.openapi.graph.GraphManager"
