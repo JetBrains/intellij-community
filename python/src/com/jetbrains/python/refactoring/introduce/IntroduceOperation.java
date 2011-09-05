@@ -20,7 +20,7 @@ public class IntroduceOperation {
   private final PsiFile myFile;
   private String myName;
   private IntroduceHandler.InitPlace myInitPlace = IntroduceHandler.InitPlace.SAME_METHOD;
-  private boolean myReplaceAll;
+  private Boolean myReplaceAll;
   private final boolean myHasConstructor;
   private final boolean myTestClass;
   private PsiElement myElement;
@@ -32,14 +32,12 @@ public class IntroduceOperation {
                             Editor editor,
                             PsiFile file,
                             String name,
-                            boolean replaceAll,
                             boolean hasConstructor,
                             boolean testClass) {
     myProject = project;
     myEditor = editor;
     myFile = file;
     myName = name;
-    myReplaceAll = replaceAll;
     myHasConstructor = hasConstructor;
     myTestClass = testClass;
   }
@@ -80,7 +78,7 @@ public class IntroduceOperation {
     myInitPlace = initPlace;
   }
 
-  public boolean isReplaceAll() {
+  public Boolean isReplaceAll() {
     return myReplaceAll;
   }
 

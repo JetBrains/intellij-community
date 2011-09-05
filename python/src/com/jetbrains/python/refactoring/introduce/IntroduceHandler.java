@@ -102,7 +102,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(new IntroduceOperation(project, editor, file, null, false, false, false));
+    performAction(new IntroduceOperation(project, editor, file, null, false, false));
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
@@ -166,10 +166,6 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     }
     return candidates;
-  }
-
-  public void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll, boolean hasConstructor, boolean isTestClass) {
-    performAction(new IntroduceOperation(project, editor, file, name, replaceAll, hasConstructor, isTestClass));
   }
 
   public void performAction(IntroduceOperation operation) {
@@ -330,20 +326,25 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
   protected void performActionOnElementOccurrences(final IntroduceOperation operation) {
     final Editor editor = operation.getEditor();
-    if (editor.getSettings().isVariableInplaceRenameEnabled() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (editor.getSettings().isVariableInplaceRenameEnabled()) {
       ensureName(operation);
-      new OccurrencesChooser<PsiElement>(editor) {
-        @Override
-        protected TextRange getOccurrenceRange(PsiElement occurrence) {
-          return occurrence.getTextRange();
-        }
-      }.showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
-        @Override
-        public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
-          operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);
-          performInplaceIntroduce(operation);
-        }
-      });
+      if (operation.isReplaceAll() != null) {
+        performInplaceIntroduce(operation);
+      }
+      else {
+        new OccurrencesChooser<PsiElement>(editor) {
+          @Override
+          protected TextRange getOccurrenceRange(PsiElement occurrence) {
+            return occurrence.getTextRange();
+          }
+        }.showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
+          @Override
+          public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
+            operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);
+            performInplaceIntroduce(operation);
+          }
+        });
+      }
     }
     else {
       performIntroduceWithDialog(operation);
