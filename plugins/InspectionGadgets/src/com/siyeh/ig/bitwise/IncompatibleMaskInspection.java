@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,22 +28,25 @@ import org.jetbrains.annotations.NotNull;
 
 public class IncompatibleMaskInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "IncompatibleBitwiseMaskOperation";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "incompatible.mask.operation.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) infos[0];
-      final IElementType tokenType = binaryExpression.getOperationTokenType();
+        final IElementType tokenType = binaryExpression.getOperationTokenType();
         if(tokenType.equals(JavaTokenType.EQEQ)){
             return InspectionGadgetsBundle.message(
                     "incompatible.mask.operation.problem.descriptor.always.false");
@@ -53,10 +56,12 @@ public class IncompatibleMaskInspection extends BaseInspection {
         }
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new IncompatibleMaskVisitor();
     }
@@ -103,7 +108,8 @@ public class IncompatibleMaskInspection extends BaseInspection {
         private static boolean isIncompatibleMask(
                 PsiBinaryExpression maskExpression,
                 PsiExpression constantExpression){
-          final IElementType tokenType = maskExpression.getOperationTokenType();
+            final IElementType tokenType =
+                    maskExpression.getOperationTokenType();
             final Object constantValue =
                     ConstantExpressionUtil.computeCastTo(constantExpression,
                             PsiType.LONG);
@@ -116,7 +122,8 @@ public class IncompatibleMaskInspection extends BaseInspection {
             final long constantMaskValue;
             if(PsiUtil.isConstantExpression(maskRhs)){
                 final Object rhsValue =
-                        ConstantExpressionUtil.computeCastTo(maskRhs, PsiType.LONG);
+                        ConstantExpressionUtil.computeCastTo(maskRhs,
+                                PsiType.LONG);
                 if (rhsValue == null) {
                     return false; // Might indeed be the case with "null" literal
                     // whoes constant value evaluates to null. Check out (a|null) case.
@@ -124,7 +131,8 @@ public class IncompatibleMaskInspection extends BaseInspection {
                 constantMaskValue = ((Long)rhsValue).longValue();
             } else{
                 final Object lhsValue =
-                        ConstantExpressionUtil.computeCastTo(maskLhs, PsiType.LONG);
+                        ConstantExpressionUtil.computeCastTo(maskLhs,
+                                PsiType.LONG);
                 if (lhsValue == null) {
                     return false;
                 }
@@ -153,7 +161,8 @@ public class IncompatibleMaskInspection extends BaseInspection {
             }
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) expression;
-          final IElementType tokenType = binaryExpression.getOperationTokenType();
+            final IElementType tokenType =
+                    binaryExpression.getOperationTokenType();
             if(!tokenType.equals(JavaTokenType.OR) &&
                     !tokenType.equals(JavaTokenType.AND)){
                 return false;
