@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+
 public abstract class JavaCodeContextType extends TemplateContextType {
 
   protected JavaCodeContextType(@NotNull @NonNls String id,
@@ -102,7 +104,22 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       if (((PsiReferenceExpression)element.getParent()).isQualified()) {
         return false;
       }
-      return element.getParent().getParent() instanceof PsiExpressionStatement;
+
+
+      if (element.getParent().getParent() instanceof PsiExpressionStatement) {
+        if (
+          psiElement().afterLeaf(
+            psiElement().inside(
+              psiElement(PsiExpression.class).afterLeaf(
+                psiElement().withText("(").withParent(PsiIfStatement.class))))
+            .accepts(element)) {
+          return false;
+        }
+
+        return true;
+      }
+      
+      return false;
     }
   }
   public static class Expression extends JavaCodeContextType {
