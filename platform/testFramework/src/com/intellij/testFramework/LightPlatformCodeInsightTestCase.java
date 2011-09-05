@@ -101,14 +101,19 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @throws Exception
    */
-  protected void configureByFile(@TestDataFile @NonNls String filePath) throws Exception {
-    String fullPath = getTestDataPath() + filePath;
+  protected void configureByFile(@TestDataFile @NonNls String filePath) {
+    try {
+      String fullPath = getTestDataPath() + filePath;
 
-    final File ioFile = new File(fullPath);
-    String fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8);
-    fileText = StringUtil.convertLineSeparators(fileText);
+      final File ioFile = new File(fullPath);
+      String fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8);
+      fileText = StringUtil.convertLineSeparators(fileText);
 
-    configureFromFileText(ioFile.getName(), fileText);
+      configureFromFileText(ioFile.getName(), fileText);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NonNls
@@ -249,7 +254,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @throws Exception
    */
-  protected void checkResultByFile(@NonNls String filePath) throws Exception {
+  protected void checkResultByFile(@NonNls String filePath) {
     checkResultByFile(null, filePath, false);
   }
 
@@ -261,7 +266,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    * @throws Exception
    */
-  protected void checkResultByFile(@Nullable String message, final String filePath, final boolean ignoreTrailingSpaces) throws Exception {
+  protected void checkResultByFile(@Nullable String message, final String filePath, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
 
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();

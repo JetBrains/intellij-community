@@ -40,7 +40,7 @@ public abstract class AbstractInplaceIntroduceTest<E extends PsiElement, V exten
   protected abstract String getBasePath();
   protected abstract MyIntroduceHandler<E, V> createIntroduceHandler();
 
-  protected void doTestEscape() throws Exception {
+  protected void doTestEscape() {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
@@ -70,7 +70,7 @@ public abstract class AbstractInplaceIntroduceTest<E extends PsiElement, V exten
 
   protected abstract String getExtension();
 
-  protected void doTest(final Pass<AbstractInplaceIntroducer> pass) throws Exception {
+  protected void doTest(final Pass<AbstractInplaceIntroducer> pass)  {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();

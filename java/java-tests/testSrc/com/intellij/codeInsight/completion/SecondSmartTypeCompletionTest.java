@@ -153,7 +153,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
     checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
   }
 
-  protected void checkResultByFile(@NonNls final String filePath) throws Exception {
+  protected void checkResultByFile(@NonNls final String filePath)  {
     if (myItems != null) {
       //System.out.println("items = " + Arrays.asList(myItems));
     }

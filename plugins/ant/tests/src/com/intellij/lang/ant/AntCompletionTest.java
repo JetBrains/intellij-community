@@ -37,7 +37,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   }
 
   @Override
-  protected void configureByFile(@TestDataFile @NonNls String filePath) throws Exception {
+  protected void configureByFile(@TestDataFile @NonNls String filePath) {
     super.configureByFile(filePath);
     AntSupport.markFileAsAntFile(myVFile, myFile.getProject(), true);
   }
