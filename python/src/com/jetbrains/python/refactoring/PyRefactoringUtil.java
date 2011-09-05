@@ -83,6 +83,9 @@ public class PyRefactoringUtil {
       }
       final String parentText = parent.getText();
       final int startOffset = element1.getTextOffset() - parent.getTextOffset() - 1;
+      if (startOffset < 0) {
+        return null;
+      }
       final int endOffset = element2.getTextOffset() + element2.getTextLength() - parent.getTextOffset();
 
       final String prefix = parentText.substring(0, startOffset);

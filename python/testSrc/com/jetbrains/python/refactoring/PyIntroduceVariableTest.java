@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring;
 
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
@@ -41,6 +42,19 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
 
   public void testSuggestStringConstantValue() { // PY-1276
     doTestSuggestions(PyExpression.class, "foo_bar");
+  }
+  
+  public void testIncorrectSelection() {  // PY-4455
+    boolean thrownExpectedException = false;
+    try {
+      doTest();
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      if (e.getMessage().equals("Cannot perform refactoring using selected element(s)")) {
+        thrownExpectedException = true;
+      }
+    }
+    assertTrue(thrownExpectedException);
   }
 
   @Override
