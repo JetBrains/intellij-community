@@ -40,13 +40,7 @@ import java.util.List;
 public class LocalInspectionsPassFactory extends AbstractProjectComponent implements MainHighlightingPassFactory {
   public LocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-
-    if ( PlatformUtils.isCidr()) { //TODO rework this hack
-      highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL/*, Pass.POPUP_HINTS*/}, null, true, Pass.LOCAL_INSPECTIONS);
-    }
-    else {
-      highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL/*, Pass.POPUP_HINTS*/}, true, Pass.LOCAL_INSPECTIONS);
-    }
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL/*, Pass.POPUP_HINTS*/}, true, Pass.LOCAL_INSPECTIONS);
   }
 
   @NonNls
