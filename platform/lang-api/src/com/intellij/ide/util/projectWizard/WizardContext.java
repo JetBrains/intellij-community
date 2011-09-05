@@ -148,6 +148,7 @@ public class WizardContext {
     return myProjectJdk;
   }
 
+  @Nullable
   public ProjectBuilder getProjectBuilder() {
     return myProjectBuilder;
   }

@@ -1,13 +1,20 @@
 package org.jetbrains.plugins.gradle.importing.wizard.select;
 
+import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.config.GradleConfigurable;
+import org.jetbrains.plugins.gradle.config.GradleHomeSettingType;
 import org.jetbrains.plugins.gradle.importing.wizard.AbstractImportFromGradleWizardStep;
+import org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,26 +27,32 @@ import java.awt.*;
  *   <li>processes the input and reacts accordingly - shows error message if the project is invalid or proceeds to the next screen;</li>
  * </ul>
  * </pre>
- * 
+ *
  * @author Denis Zhdanov
  * @since 8/1/11 4:15 PM
  */
 public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep {
 
-  private final JPanel myComponent = new JPanel(new GridBagLayout());
+  private final JPanel             myComponent          = new JPanel(new GridBagLayout());
+  private final GridBagConstraints myLabelConstraints   = new GridBagConstraints();
+  private final GridBagConstraints myControlConstraints = new GridBagConstraints();
+
   private final TextFieldWithBrowseButton myProjectPathComponent;
-  
+
+  private GradleConfigurable myConfigurable;
+  private boolean            myGradleSettingsInitialised;
+
   public GradleSelectProjectStep(@NotNull WizardContext context) {
     super(context);
-    
-    GridBagConstraints constraints = new GridBagConstraints();
-    JLabel label = new JLabel(GradleBundle.message("gradle.import.label.select.project"));
-    myComponent.add(label);
 
-    constraints.gridwidth = GridBagConstraints.REMAINDER;
-    constraints.weightx = 1;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    
+    myLabelConstraints.anchor = GridBagConstraints.WEST;
+    JLabel label = new JLabel(GradleBundle.message("gradle.import.label.select.project"));
+    myComponent.add(label, myLabelConstraints);
+
+    myControlConstraints.gridwidth = GridBagConstraints.REMAINDER;
+    myControlConstraints.weightx = 1;
+    myControlConstraints.fill = GridBagConstraints.HORIZONTAL;
+
     myProjectPathComponent = new TextFieldWithBrowseButton();
     myProjectPathComponent.addBrowseFolderListener(
       "",
@@ -47,8 +60,7 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
       null,
       new FileTypeDescriptor(GradleBundle.message("gradle.import.label.select.project"), "gradle")
     );
-    myComponent.add(myProjectPathComponent, constraints);
-    myComponent.add(Box.createVerticalGlue());
+    myComponent.add(myProjectPathComponent, myControlConstraints);
   }
 
   @Override
@@ -58,8 +70,16 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
 
   @Override
   public void updateStep() {
-    if (isPathChanged()) {
-      myProjectPathComponent.setText(getBuilder().getProjectPath(getWizardContext()));
+    if (!myGradleSettingsInitialised) {
+      initGradleSettingsControl();
+    }
+    if (myConfigurable != null) {
+      myConfigurable.reset();
+    }
+
+    GradleProjectImportBuilder builder = getBuilder();
+    if (builder != null && isPathChanged()) {
+      myProjectPathComponent.setText(builder.getProjectPath(getWizardContext()));
     }
   }
 
@@ -69,8 +89,28 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
 
   @Override
   public boolean validate() throws ConfigurationException {
+    if (myConfigurable.getCurrentGradleHomeSettingType() == GradleHomeSettingType.EXPLICIT_INCORRECT) {
+      GradleUtil.showBalloon(
+        myConfigurable.getGradleHomeComponent().getPathComponent(),
+        MessageType.ERROR,
+        GradleBundle.message("gradle.home.setting.type.explicit.incorrect")
+      );
+      return false;
+    }
+    if (myConfigurable.getCurrentGradleHomeSettingType() == GradleHomeSettingType.UNKNOWN) {
+      GradleUtil.showBalloon(
+        myConfigurable.getGradleHomeComponent().getPathComponent(),
+        MessageType.ERROR,
+        GradleBundle.message("gradle.home.setting.type.unknown")
+      );
+      return false;
+    }
     storeCurrentSettings();
-    getBuilder().ensureProjectIsDefined();
+    GradleProjectImportBuilder builder = getBuilder();
+    if (builder == null) {
+      return false;
+    }
+    builder.ensureProjectIsDefined(getWizardContext());
     return true;
   }
 
@@ -80,12 +120,34 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
   }
 
   private void storeCurrentSettings() {
-    if (isPathChanged()) {
-      getBuilder().setCurrentProjectPath(myProjectPathComponent.getText());
+    GradleProjectImportBuilder builder = getBuilder();
+    if (builder != null && isPathChanged()) {
+      builder.setCurrentProjectPath(myProjectPathComponent.getText());
+    }
+    if (myConfigurable != null && myConfigurable.isModified()) {
+      myConfigurable.apply();
     }
   }
 
   private boolean isPathChanged() {
-    return !StringUtil.equals(myProjectPathComponent.getText(), getBuilder().getProjectPath(getWizardContext()));
+    GradleProjectImportBuilder builder = getBuilder();
+    if (builder == null) {
+      return false;
+    }
+    return !StringUtil.equals(myProjectPathComponent.getText(), builder.getProjectPath(getWizardContext()));
+  }
+
+  private void initGradleSettingsControl() {
+    GradleProjectImportBuilder builder = getBuilder();
+    if (builder == null) {
+      return;
+    }
+    Project project = builder.getProject(getWizardContext());
+    myConfigurable = new GradleConfigurable(project);
+    NamePathComponent gradleHomeComponent = myConfigurable.getGradleHomeComponent();
+    myLabelConstraints.insets.top = myControlConstraints.insets.top = 15;
+    myComponent.add(gradleHomeComponent.getPathLabel(), myLabelConstraints);
+    myComponent.add(gradleHomeComponent.getPathPanel(), myControlConstraints);
+    myGradleSettingsInitialised = true;
   }
 }

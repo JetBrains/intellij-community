@@ -21,6 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -48,6 +49,7 @@ public class NamePathComponent extends JPanel{
 
   private FieldPanel myPathPanel;
   private JLabel myNameLabel;
+  private JLabel myPathLabel;
   private boolean myForceSync;
 
   public NamePathComponent(String nameLabelText, String pathLabelText, char nameMnemonic, char locationMnemonic, final String pathChooserTitle, final String pathChooserDescription) {
@@ -97,10 +99,10 @@ public class NamePathComponent extends JPanel{
       }
     };
     myPathPanel = new FieldPanel(myTfPath, null, null, browseButtonActionListener, null);
-    final JLabel locationLabel = new JLabel(pathLabelText);
-    locationLabel.setLabelFor(myTfPath);
-    if (bold) locationLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    this.add(locationLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+    myPathLabel = new JLabel(pathLabelText);
+    myPathLabel.setLabelFor(myTfPath);
+    if (bold) myPathLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    this.add(myPathLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                    insets, 0, 0));
     this.add(myPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                  insets, 0, 0));
@@ -141,9 +143,19 @@ public class NamePathComponent extends JPanel{
   public JTextField getNameComponent() {
     return myTfName;
   }
+  
+  @NotNull
+  public JLabel getPathLabel() {
+    return myPathLabel;
+  }
 
   public JTextField getPathComponent() {
     return myTfPath;
+  }
+  
+  @NotNull
+  public FieldPanel getPathPanel() {
+    return myPathPanel;
   }
 
   public void setPathComponentVisible(boolean visible) {

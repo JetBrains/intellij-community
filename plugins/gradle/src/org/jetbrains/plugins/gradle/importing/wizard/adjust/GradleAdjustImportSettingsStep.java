@@ -9,6 +9,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.*;
 import org.jetbrains.plugins.gradle.importing.wizard.AbstractImportFromGradleWizardStep;
+import org.jetbrains.plugins.gradle.importing.wizard.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
@@ -152,7 +153,11 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
 
     clear();
 
-    GradleProject project = getBuilder().getGradleProject();
+    GradleProjectImportBuilder builder = getBuilder();
+    if (builder == null) {
+      return;
+    }
+    GradleProject project = builder.getGradleProject();
     if (project == null) {
       throw new IllegalStateException(String.format(
         "Can't init 'adjust importing settings' step. Reason: no project is defined. Context: '%s', builder: '%s'",
@@ -237,7 +242,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     }
     
     myTree.expandPath(new TreePath(root.getPath()));
-    getBuilder().setModuleMappings(moduleMappings);
+    builder.setModuleMappings(moduleMappings);
   }
 
   private <T extends GradleEntity> DefaultMutableTreeNode buildNode(
@@ -273,6 +278,11 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
   @SuppressWarnings("SuspiciousMethodCalls")
   @Override
   public boolean validate() throws ConfigurationException {
+    GradleProjectImportBuilder builder = getBuilder();
+    if (builder == null) {
+      return false;
+    }
+
     // Validate current card.
     Object node = myTree.getLastSelectedPathComponent();
     Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(node);
@@ -289,7 +299,8 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
         return false;
       }
     }
-    getBuilder().applyProjectSettings(getWizardContext());
+
+    builder.applyProjectSettings(getWizardContext());
     return true;
   }
 
