@@ -26,7 +26,7 @@ import java.awt.*;
 public class JBLabel extends JLabel implements ComponentWithAnchor {
   private UIUtil.ComponentStyle myComponentStyle = UIUtil.ComponentStyle.REGULAR;
   private UIUtil.FontColor myFontColor = UIUtil.FontColor.NORMAL;
-  private JComponent anchor;
+  private JComponent myAnchor = null;
 
   public JBLabel() {
   }
@@ -60,14 +60,6 @@ public class JBLabel extends JLabel implements ComponentWithAnchor {
     super(text, icon, horizontalAlignment);
   }
 
-  @Override
-  public void updateUI() {
-    super.updateUI();
-    if (myComponentStyle != null) {
-      UIUtil.applyStyle(myComponentStyle, this);
-    }
-  }
-
   public void setComponentStyle(@NotNull UIUtil.ComponentStyle componentStyle) {
     myComponentStyle = componentStyle;
     UIUtil.applyStyle(componentStyle, this);
@@ -92,19 +84,19 @@ public class JBLabel extends JLabel implements ComponentWithAnchor {
   }
 
   @Override
-  public void setAnchor(JComponent anchor) {
-    if (anchor != this) {
-      this.anchor = anchor;
+  public void setAnchor(@Nullable JComponent anchor) {
+    if (this != anchor) {
+      myAnchor = anchor;
     }
   }
 
   @Override
   public JComponent getAnchor() {
-    return anchor;
+    return myAnchor;
   }
 
   @Override
   public Dimension getPreferredSize() {
-    return anchor == null ? super.getPreferredSize() : anchor.getPreferredSize();
+    return myAnchor == null ? super.getPreferredSize() : myAnchor.getPreferredSize();
   }
 }
