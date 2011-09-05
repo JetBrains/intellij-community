@@ -48,7 +48,7 @@ public class GrWithWeigher extends CompletionWeigher {
     if (resolveContext == null) return 0;
 
     if (GdkMethodUtil.isInWithContext(resolveContext)) {
-      return -1;
+      return 1;
     }
 
     return 0;
