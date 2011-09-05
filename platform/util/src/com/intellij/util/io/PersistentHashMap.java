@@ -263,7 +263,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
       HeaderRecord oldheader = readValueId(id);
       if (oldheader != HeaderRecord.EMPTY) myLiveAndGarbageKeysCounter++;
-      myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
+      else myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
 
       HeaderRecord header = new HeaderRecord(myValueStorage.appendBytes(bytes, 0));
 
