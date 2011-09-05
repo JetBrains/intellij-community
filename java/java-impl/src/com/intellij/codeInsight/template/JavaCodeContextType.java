@@ -78,7 +78,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   
   public static class Generic extends JavaCodeContextType {
     public Generic() {
-      super("JAVA_CODE", CodeInsightBundle.message("dialog.edit.template.checkbox.java.code"), EverywhereContextType.class);
+      super("JAVA_CODE", "Java", EverywhereContextType.class);
     }
 
     @Override
@@ -89,7 +89,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   public static class Statement extends JavaCodeContextType {
     public Statement() {
-      super("JAVA_STATEMENT", "Statement", JavaCodeContextType.class);
+      super("JAVA_STATEMENT", "Statement", Generic.class);
     }
 
     @Override
@@ -103,7 +103,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   }
   public static class Expression extends JavaCodeContextType {
     public Expression() {
-      super("JAVA_EXPRESSION", "Expression", JavaCodeContextType.class);
+      super("JAVA_EXPRESSION", "Expression", Generic.class);
     }
 
     @Override
@@ -135,7 +135,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   }
   public static class Declaration extends JavaCodeContextType {
     public Declaration() {
-      super("JAVA_DECLARATION", "Declaration", JavaCodeContextType.class);
+      super("JAVA_DECLARATION", "Declaration", Generic.class);
     }
 
     @Override

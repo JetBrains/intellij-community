@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -32,7 +33,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -262,15 +266,31 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     final Runnable updateLabel = new Runnable() {
       public void run() {
-        List<String> contexts = new ArrayList<String>();
+        StringBuilder sb = new StringBuilder();
+        String oldPrefix = "";
         for (TemplateContextType type : myContext.keySet()) {
           if (myContext.get(type).booleanValue()) {
-            contexts.add(UIUtil.removeMnemonic(type.getPresentableName()));
+            final TemplateContextType base = type.getBaseContextType();
+            String ownName = UIUtil.removeMnemonic(type.getPresentableName());
+            String prefix = "";
+            if (base != null && !(base instanceof EverywhereContextType)) {
+              prefix = UIUtil.removeMnemonic(base.getPresentableName()) + ": ";
+              ownName = StringUtil.decapitalize(ownName);
+            }
+            if (sb.length() > 0) {
+              sb.append(oldPrefix.equals(prefix) ? ", " : "; ");
+            }
+            if (!oldPrefix.equals(prefix)) {
+              sb.append(prefix);
+              oldPrefix = prefix;
+            }
+            sb.append(ownName);
           }
         }
-        ctxLabel.setText((contexts.isEmpty() ? "No applicable contexts yet" : "Applicable in " + StringUtil.join(contexts, ", ")) + ".  ");
-        ctxLabel.setForeground(contexts.isEmpty() ? Color.RED : UIUtil.getLabelForeground());
-        change.setText(contexts.isEmpty() ? "Define" : "Change");
+        final boolean noContexts = sb.length() == 0;
+        ctxLabel.setText((noContexts ? "No applicable contexts yet" : "Applicable in " + sb.toString()) + ".  ");
+        ctxLabel.setForeground(noContexts ? Color.GRAY : UIUtil.getLabelForeground());
+        change.setText(noContexts ? "Define" : "Change");
       }
     };
 
