@@ -36,6 +36,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class PlaybackRunner {
 
@@ -54,6 +56,8 @@ public class PlaybackRunner {
   private boolean myStopOnAppDeactivation;
   private final ApplicationActivationListener myAppListener;
 
+  private HashSet<Class> myFacadeClasses = new HashSet<Class>();
+  
   private Disposable myOnStop = new Disposable() {
     @Override
     public void dispose() {
@@ -73,7 +77,7 @@ public class PlaybackRunner {
       @Override
       public void applicationDeactivated(IdeFrame ideFrame) {
         if (myStopOnAppDeactivation) {
-          myCallback.message("App lost focus, stopping...", 0);
+          myCallback.message(PlaybackRunner.this, "App lost focus, stopping...", 0);
           stop();
         }
       }
@@ -127,11 +131,11 @@ public class PlaybackRunner {
     if (cmdIndex < myCommands.size()) {
       final PlaybackCommand cmd = myCommands.get(cmdIndex);
       if (myStopRequested) {
-        myCallback.message("Stopped", cmdIndex);
+        myCallback.message(this, "Stopped", cmdIndex);
         myActionCallback.setRejected();
         return;
       }
-      final PlaybackContext context = new PlaybackContext(myCallback, cmdIndex, myRobot, myUseDirectActionCall, cmd, baseDir);
+      final PlaybackContext context = new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, cmd, baseDir, (Set<Class>)myFacadeClasses.clone());
       final ActionCallback cmdCallback = cmd.execute(context);
       cmdCallback.doWhenDone(new Runnable() {
         public void run() {
@@ -139,18 +143,19 @@ public class PlaybackRunner {
             executeFrom(cmdIndex + 1, context.getBaseDir());
           }
           else {
+            myCallback.message(PlaybackRunner.this, "Stopped", cmdIndex);
             myActionCallback.setDone();
           }
         }
       }).doWhenRejected(new Runnable() {
         public void run() {
-          myCallback.message("Stopped", cmdIndex);
+          myCallback.message(PlaybackRunner.this, "Stopped", cmdIndex);
           myActionCallback.setRejected();
         }
       });
     }
     else {
-      myCallback.message("Finished", myCommands.size() - 1);
+      myCallback.message(this, "Finished", myCommands.size() - 1);
       myActionCallback.setDone();
     }
   }
@@ -164,8 +169,8 @@ public class PlaybackRunner {
     while (tokens.hasMoreTokens()) {
       final String eachLine = tokens.nextToken();
 
-      String cdCmd = AbstractCommand.CMD_PREFIX + "cd";
       String includeCmd = AbstractCommand.CMD_PREFIX + "include";
+      String importCallCmd = AbstractCommand.CMD_PREFIX + "importCall";
 
       if (eachLine.startsWith(includeCmd)) {
         File file = new PathMacro().setScriptDir(scriptDir).resolveFile(eachLine.substring(includeCmd.length()).trim(), scriptDir);
@@ -180,6 +185,17 @@ public class PlaybackRunner {
         }
         catch (IOException e) {
           commandList.add(new ErrorCommand("Error reading file: " + file.getAbsolutePath(), line));
+          return;
+        }
+      } else if (eachLine.startsWith(importCallCmd)) {
+        String className = eachLine.substring(importCallCmd.length()).trim();
+        try {
+          Class<?> facadeClass = Class.forName(className);
+          myFacadeClasses.add(facadeClass);
+          myCommands.add(new PrintCommand(eachLine, line++));
+        }
+        catch (ClassNotFoundException e) {
+          commandList.add(new ErrorCommand("Cannot find class: " + className, line));
           return;
         }
       } else {
@@ -240,55 +256,56 @@ public class PlaybackRunner {
   }
 
   public interface StatusCallback {
-    void error(String text, int currentLine);
 
-    void message(String text, int currentLine);
+    void error(PlaybackRunner runner, String text, int currentLine);
 
-    void code(String text, int currentLine);
+    void message(PlaybackRunner runner, String text, int currentLine);
+
+    void code(PlaybackRunner runner, String text, int currentLine);
 
     public abstract static class Edt implements StatusCallback {
-      public final void error(final String text, final int currentLine) {
+      public final void error(final PlaybackRunner runner, final String text, final int currentLine) {
         if (SwingUtilities.isEventDispatchThread()) {
-          errorEdt(text, currentLine);
+          errorEdt(runner, text, currentLine);
         } else {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              errorEdt(text, currentLine);
+              errorEdt(runner, text, currentLine);
             }
           });
         }
       }
 
-      public abstract void errorEdt(String text, int curentLine);
+      public abstract void errorEdt(PlaybackRunner runner, String text, int curentLine);
 
-      public final void message(final String text, final int currentLine) {
+      public final void message(final PlaybackRunner runner, final String text, final int currentLine) {
         if (SwingUtilities.isEventDispatchThread()) {
-          messageEdt(text, currentLine);
+          messageEdt(runner, text, currentLine);
         } else {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              messageEdt(text, currentLine);
+              messageEdt(runner, text, currentLine);
             }
           });
         }
       }
 
-      public abstract void messageEdt(String text, int curentLine);
+      public abstract void messageEdt(PlaybackRunner runner, String text, int curentLine);
 
       @Override
-      public void code(final String text, final int currentLine) {
+      public void code(final PlaybackRunner runner, final String text, final int currentLine) {
         if (SwingUtilities.isEventDispatchThread()) {
-          codeEdt(text, currentLine);
+          codeEdt(runner, text, currentLine);
         } else {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              codeEdt(text, currentLine);
+              codeEdt(runner, text, currentLine);
             }
           });
         }
       }
 
-      public abstract void codeEdt(String text, int curentLine);
+      public abstract void codeEdt(PlaybackRunner runner, String text, int curentLine);
     }
   }
 

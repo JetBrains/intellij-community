@@ -51,7 +51,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
 
   public final ActionCallback execute(final PlaybackContext context) {
     try {
-      dumpCommand(context.getCallback());
+      dumpCommand(context);
       final ActionCallback result = new ActionCallback();
       if (isAwtThread()) {
         _execute(context).notify(result);
@@ -67,7 +67,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
      return result;
     }
     catch (Exception e) {
-      context.getCallback().error(e.getMessage(), getLine());
+      context.error(e.getMessage(), getLine());
       return new ActionCallback.Rejected();
     }
   }
@@ -78,12 +78,12 @@ public abstract class AbstractCommand implements PlaybackCommand {
 
   protected abstract ActionCallback _execute(PlaybackContext context);
 
-  public void dumpCommand(final PlaybackRunner.StatusCallback cb) {
-    cb.code(getText(), getLine());
+  public void dumpCommand(PlaybackContext context) {
+    context.code(getText(), getLine());
   }
 
-  public void dumpError(final PlaybackRunner.StatusCallback cb, final String text) {
-    cb.error(text, getLine());
+  public void dumpError(PlaybackContext context, final String text) {
+    context.error(text, getLine());
   }
 
   @Override

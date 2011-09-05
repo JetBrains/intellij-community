@@ -20,15 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 8/4/11
- * Time: 2:37 PM
- * To change this template use File | Settings | File Templates.
- */
-public class PlaybackContext {
+public class PlaybackContext  {
   
   private PlaybackRunner.StatusCallback myCallback;
   private int myCurrentLine;
@@ -36,14 +30,18 @@ public class PlaybackContext {
   private boolean myUseDirectActionCall;
   private PlaybackCommand myCurrentCmd;
   private File myBaseDir;
-  
-  public PlaybackContext(PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, PlaybackCommand currentCmd, File baseDir) {
+  private Set<Class> myCallClasses;
+  private PlaybackRunner myRunner;
+
+  public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, PlaybackCommand currentCmd, File baseDir, Set<Class> callClasses) {
+    myRunner = runner;
     myCallback = callback;
     myCurrentLine = currentLine;
     myRobot = robot;
     myUseDirectActionCall = useDriectActionCall;
     myCurrentCmd = currentCmd;
     myBaseDir = baseDir;
+    myCallClasses = callClasses;
   }
 
   public PlaybackRunner.StatusCallback getCallback() {
@@ -77,7 +75,11 @@ public class PlaybackContext {
   public void setBaseDir(File dir) {
     myBaseDir = dir;
   }
-  
+
+  public Set<Class> getCallClasses() {
+    return myCallClasses;
+  }
+
   public void flushAwtAndRun(final Runnable runnable) {
     if (EventQueue.isDispatchThread()) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -91,5 +93,17 @@ public class PlaybackContext {
       getRobot().waitForIdle();
       runnable.run();
     }
+  }
+
+  public void error(String text, int currentLine) {
+    getCallback().error(myRunner, text, currentLine);
+  }
+
+  public void message(String text, int currentLine) {
+    getCallback().message(myRunner, text, currentLine);
+  }
+
+  public void code(String text, int currentLine) {
+    getCallback().code(myRunner, text, currentLine);
   }
 }

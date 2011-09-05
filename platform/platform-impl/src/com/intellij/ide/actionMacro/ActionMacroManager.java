@@ -206,16 +206,16 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     }
 
     final PlaybackRunner runner = new PlaybackRunner(script.toString(), new PlaybackRunner.StatusCallback.Edt() {
-      public void errorEdt(String text, int curentLine) {
+      public void errorEdt(PlaybackRunner runner, String text, int curentLine) {
         frame.getStatusBar().setInfo("Line " + curentLine + ":" + " Error: " + text);
       }
 
-      public void messageEdt(String text, int curentLine) {
+      public void messageEdt(PlaybackRunner runner, String text, int curentLine) {
         frame.getStatusBar().setInfo("Line " + curentLine + ": " + text);
       }
 
       @Override
-      public void codeEdt(String text, int curentLine) {
+      public void codeEdt(PlaybackRunner runner, String text, int curentLine) {
 
       }
     }, Registry.is("actionSystem.playback.useDirectActionCall"), true);

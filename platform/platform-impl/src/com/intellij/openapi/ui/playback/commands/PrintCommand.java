@@ -36,7 +36,7 @@ public class PrintCommand extends AbstractCommand {
 
   @Override
   protected ActionCallback _execute(PlaybackContext context) {
-    context.getCallback().code(myText, getLine());
+    context.code(myText, getLine());
     return new ActionCallback.Done();
   }
 }

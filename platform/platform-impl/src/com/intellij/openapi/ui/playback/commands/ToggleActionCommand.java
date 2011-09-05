@@ -54,7 +54,7 @@ public class ToggleActionCommand extends AbstractCommand {
     String[] args = getText().substring(PREFIX.length()).trim().split(" ");
     String syntaxText = "Syntax error, expected: " + PREFIX + " " + ON + "|" + OFF + " actionName";
     if (args.length != 2) {
-      context.getCallback().error(syntaxText, getLine());
+      context.error(syntaxText, getLine());
       return new ActionCallback.Rejected();
     }
     
@@ -64,19 +64,19 @@ public class ToggleActionCommand extends AbstractCommand {
     } else if (OFF.equalsIgnoreCase(args[0])) {
       on = false;
     } else {
-      context.getCallback().error(syntaxText, getLine());
+      context.error(syntaxText, getLine());
       return new ActionCallback.Rejected();
     }
     
     String actionId = args[1];
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action == null) {
-      context.getCallback().error("Unknown action id=" + actionId, getLine());
+      context.error("Unknown action id=" + actionId, getLine());
       return new ActionCallback.Rejected();
     }
 
     if (!(action instanceof ToggleAction)) {
-      context.getCallback().error("Action is not a toggle action id=" + actionId, getLine());
+      context.error("Action is not a toggle action id=" + actionId, getLine());
       return new ActionCallback.Rejected();
     }
 

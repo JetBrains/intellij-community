@@ -398,11 +398,11 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
         };                                            
 
         if (myRunner == null) {
-          message("Script stopped", -1);
+          _message("Script stopped", -1);
           return;
         }
 
-        message("Starting script...", -1);
+        _message("Starting script...", -1);
 
         try {
           sleep(1000);
@@ -411,20 +411,26 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
 
         if (myRunner == null) {
-          message("Script stopped", -1);
+          _message("Script stopped", -1);
           return;
         }
 
+        final PlaybackRunner runner = myRunner;
+
         myRunner.run().doWhenProcessed(new Runnable() {
           public void run() {
-            myRunner = null;
+            if (runner == myRunner) {
+              myRunner = null;
+            }
           }
         });
       }
     }.start();
   }
 
-  public void error(final String text, final int currentLine) {
+  public void error(PlaybackRunner runner, final String text, final int currentLine) {
+    if (myRunner != runner) return;
+
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         addError(text, currentLine);
@@ -432,7 +438,13 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     });
   }
 
-  public void message(final String text, final int currentLine) {
+  public void message(PlaybackRunner runner, final String text, final int currentLine) {
+    if (myRunner != runner) return;
+
+    _message(text, currentLine);
+  }
+
+  private void _message(final String text, final int currentLine) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         addInfo(text, currentLine, MESSAGE_COLOR);
@@ -441,7 +453,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   @Override
-  public void code(final String text, final int currentLine) {
+  public void code(PlaybackRunner runner, final String text, final int currentLine) {
+    if (myRunner != runner) return;
+
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         addInfo(text, currentLine, CODE_COLOR);

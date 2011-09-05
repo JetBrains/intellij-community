@@ -33,7 +33,7 @@ public class DelayCommand extends AbstractCommand {
       context.getRobot().delay(delay.intValue());
     }
     catch (NumberFormatException e) {
-      dumpError(context.getCallback(), "Invalid delay value: " + s);
+      dumpError(context, "Invalid delay value: " + s);
       return new ActionCallback.Rejected();
     }
 

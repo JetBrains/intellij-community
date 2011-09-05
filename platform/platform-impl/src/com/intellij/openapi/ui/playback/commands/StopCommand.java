@@ -27,7 +27,7 @@ public class StopCommand extends AbstractCommand {
   }
 
   protected ActionCallback _execute(PlaybackContext context) {
-    context.getCallback().message("Stopped", getLine());
+    context.message("Stopped", getLine());
     return new ActionCallback.Done();
   }
 

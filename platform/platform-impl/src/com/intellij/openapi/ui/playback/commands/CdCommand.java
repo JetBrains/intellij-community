@@ -42,7 +42,7 @@ public class CdCommand extends AbstractCommand {
   protected ActionCallback _execute(PlaybackContext context) {
     File file = context.getPathMacro().resolveFile(myDir, context.getBaseDir());
     if (!file.exists()) {
-      context.getCallback().message("Cannot cd, directory doesn't exist: " + file.getAbsoluteFile(), getLine());
+      context.message("Cannot cd, directory doesn't exist: " + file.getAbsoluteFile(), getLine());
       return new ActionCallback.Rejected();
     }
 
@@ -53,7 +53,7 @@ public class CdCommand extends AbstractCommand {
       context.setBaseDir(file);
     }
     
-    context.getCallback().message("{base.dir} set to " + context.getBaseDir().getAbsolutePath(), getLine());
+    context.message("{base.dir} set to " + context.getBaseDir().getAbsolutePath(), getLine());
     return new ActionCallback.Done();
   }
 }

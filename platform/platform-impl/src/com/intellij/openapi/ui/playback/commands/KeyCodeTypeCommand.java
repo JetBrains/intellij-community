@@ -64,17 +64,17 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
         }
       }).doWhenRejected(new Runnable() {
         public void run() {
-          typeCodes(context.getCallback(), context.getRobot(), codes).notify(result);
+          typeCodes(context, context.getRobot(), codes).notify(result);
         }
       });
     } else {
-      typeCodes(context.getCallback(), context.getRobot(), codes).notify(result);
+      typeCodes(context, context.getRobot(), codes).notify(result);
     }
 
     return result;
   }
 
-  private ActionCallback typeCodes(PlaybackRunner.StatusCallback cb, Robot robot, String codes) {
+  private ActionCallback typeCodes(PlaybackContext context, Robot robot, String codes) {
     String[] pairs = codes.split(CODE_DELIMITER);
     for (String eachPair : pairs) {
       try {
@@ -84,7 +84,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
         type(robot, code.intValue(), modifier.intValue());
       }
       catch (NumberFormatException e) {
-        dumpError(cb, "Invalid code: " + eachPair);
+        dumpError(context, "Invalid code: " + eachPair);
         return new ActionCallback.Rejected();
       }
     }

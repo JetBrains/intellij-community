@@ -43,7 +43,7 @@ public class AssertFocused extends AbstractCommand {
       for (String each : keyValue) {
         final String[] eachPair = each.split("=");
         if (eachPair.length != 2) {
-          context.getCallback().error("Syntax error, must be comma-separated pairs key=value", getLine());
+          context.error("Syntax error, must be comma-separated pairs key=value", getLine());
           result.setRejected();
           return result;
         }
@@ -55,11 +55,11 @@ public class AssertFocused extends AbstractCommand {
     IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
       public void run() {
         try {
-          doAssert(expected, context.getCallback());
+          doAssert(expected, context);
           result.setDone();
         }
         catch (AssertionError error) {
-          context.getCallback().error("Assertion failed: " + error.getMessage(), getLine());
+          context.error("Assertion failed: " + error.getMessage(), getLine());
           result.setRejected();
         }
       }
@@ -68,7 +68,7 @@ public class AssertFocused extends AbstractCommand {
     return result;
   }
 
-  private void doAssert(Map<String, String> expected, PlaybackRunner.StatusCallback cb) throws AssertionError {
+  private void doAssert(Map<String, String> expected, PlaybackContext context) throws AssertionError {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
     if (owner == null) {
@@ -111,7 +111,7 @@ public class AssertFocused extends AbstractCommand {
       untestedText.append(each).append("=").append(untested.get(each));
     }
 
-    cb.message("Untested info: " + untestedText.toString(), getLine());
+    context.message("Untested info: " + untestedText.toString(), getLine());
   }
 
 }
