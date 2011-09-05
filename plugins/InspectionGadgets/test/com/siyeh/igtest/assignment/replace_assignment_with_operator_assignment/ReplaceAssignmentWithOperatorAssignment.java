@@ -1,9 +1,9 @@
-package com.siyeh.igtest.verbose;
+package com.siyeh.igtest.assignment.replace_assignment_with_operator_assignment;
 
-public class ReplaceAssignmentWithOperatorAssignmentInspection
+public class ReplaceAssignmentWithOperatorAssignment
 {
 
-    public ReplaceAssignmentWithOperatorAssignmentInspection()
+    public ReplaceAssignmentWithOperatorAssignment()
     {
 
     }
@@ -15,6 +15,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         x = x * 3;
         x = x / 3;
         x = x - 3;
+        x = x + 2 + 2 + 2;
 
         System.out.println("x = " + x);
 

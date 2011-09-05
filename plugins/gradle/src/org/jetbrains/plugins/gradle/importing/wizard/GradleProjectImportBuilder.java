@@ -131,10 +131,11 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
 
   /**
    * Asks current builder to ensure that target gradle project is defined.
-   * 
+   *
+   * @param wizardContext             current wizard context
    * @throws ConfigurationException   if gradle project is not defined and can't be constructed
    */
-  public void ensureProjectIsDefined() throws ConfigurationException {
+  public void ensureProjectIsDefined(@NotNull WizardContext wizardContext) throws ConfigurationException {
     if (myProjectFile == null) {
       throw new ConfigurationException(GradleBundle.message("gradle.import.text.error.project.undefined"));
     }
@@ -143,8 +144,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
     }
     final Ref<String> errorReason = new Ref<String>();
     try {
-      // TODO den derive target project for 'import module from gradle' (for 'add module' functionality).
-      Project project = ProjectManager.getInstance().getDefaultProject();
+      Project project = getProject(wizardContext);
       ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), true) {
         @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
         @Override
@@ -156,7 +156,13 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
             myGradleProject = resolver.resolveProjectInfo(myProjectFile.getAbsolutePath(), false);
           }
           catch (Exception e) {
-            errorReason.set(RemoteUtil.unwrap(e).getLocalizedMessage());
+            Throwable unwrapped = RemoteUtil.unwrap(e);
+            if (unwrapped.getClass() == NoClassDefFoundError.class) {
+              errorReason.set(GradleBundle.message("gradle.import.text.error.too.old.gradle"));
+            }
+            else {
+              errorReason.set(unwrapped.getLocalizedMessage());
+            }
             // Ignore here because it will be reported on method exit.
             GradleLog.LOG.warn("Can't resolve gradle project", e);
           }
@@ -236,5 +242,22 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   public void setModuleMappings(@NotNull Map<GradleModule/*origin module*/, GradleModule/*adjusted module*/> mappings) {
     myModuleMappings.clear();
     myModuleMappings.putAll(mappings);
+  }
+
+  /**
+   * Allows to get {@link Project} instance to use. Basically, there are two alternatives -
+   * {@link WizardContext#getProject() project from the current wizard context} and
+   * {@link ProjectManager#getDefaultProject() default project}.
+   *
+   * @param wizardContext   current wizard context
+   * @return                {@link Project} instance to use
+   */
+  @NotNull
+  public Project getProject(@NotNull WizardContext wizardContext) {
+    Project result = wizardContext.getProject();
+    if (result == null) {
+      result = ProjectManager.getInstance().getDefaultProject();
+    }
+    return result;
   }
 }

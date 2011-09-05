@@ -34,10 +34,9 @@ public class GitLogAssembler implements GitLog {
   private BigTableTableModel myTableModel;
 
   //@CalledInAwt
-  public GitLogAssembler(final Project project, boolean projectScope) {
+  public GitLogAssembler(final Project project, boolean projectScope, final GitCommitsSequentially gitCommitsSequentially) {
     myProject = project;
-    final ModalityState current = ModalityState.current();
-    myMediator = new MediatorImpl(myProject);
+    myMediator = new MediatorImpl(myProject, gitCommitsSequentially);
 
     myGitLogUI = new GitLogUI(myProject, myMediator);
     myTableModel = myGitLogUI.getTableModel();
@@ -51,7 +50,7 @@ public class GitLogAssembler implements GitLog {
     myGitLogUI.setProjectScope(projectScope);
 
     // modality state?
-    myLoadController = new LoadController(myProject, myMediator, myDetailsCache);
+    myLoadController = new LoadController(myProject, myMediator, myDetailsCache, gitCommitsSequentially);
 
     myMediator.setLoader(myLoadController);
     myMediator.setTableModel(myTableModel);

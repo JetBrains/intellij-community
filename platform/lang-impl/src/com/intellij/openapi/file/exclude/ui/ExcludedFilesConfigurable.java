@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.file.exclude.ui;
 
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
+import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -34,10 +34,10 @@ import java.util.List;
 public class ExcludedFilesConfigurable implements SearchableConfigurable {
 
   private final ExcludedFilesPanel myExcludedFilesPanel;
-  private final ProjectFileExclusionManager myExclusionManager;
+  private final ProjectFileExclusionManagerImpl myExclusionManager;
 
   public ExcludedFilesConfigurable(Project project) {
-    myExclusionManager = ProjectFileExclusionManager.getInstance(project);
+    myExclusionManager = ProjectFileExclusionManagerImpl.getInstance(project);
     myExcludedFilesPanel = new ExcludedFilesPanel(myExclusionManager != null ? myExclusionManager.getSortedFiles() : null);
   }
 

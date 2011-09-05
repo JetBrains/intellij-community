@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -37,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  */
 
 //Retrieves method reference from this pair, do NOT reuse!!!
-public class PsiNameValuePairImpl extends CompositePsiElement implements PsiNameValuePair, Constants {
+public class PsiNameValuePairImpl extends CompositePsiElement implements PsiNameValuePair {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl");
   private volatile String myCachedName = null;
   private volatile PsiIdentifier myCachedNameIdentifier = null;
@@ -53,7 +52,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
   }
 
   public PsiNameValuePairImpl() {
-    super(NAME_VALUE_PAIR);
+    super(JavaElementType.NAME_VALUE_PAIR);
   }
 
   public PsiIdentifier getNameIdentifier() {
@@ -93,13 +92,13 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
   }
 
   public int getChildRole(ASTNode child) {
-    if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
+    if (ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
       return ChildRole.ANNOTATION_VALUE;
     }
-    else if (child.getElementType() == IDENTIFIER) {
+    if (child.getElementType() == JavaTokenType.IDENTIFIER) {
       return ChildRole.NAME;
     }
-    else if (child.getElementType() == EQ) {
+    if (child.getElementType() == JavaTokenType.EQ) {
       return ChildRole.OPERATION_SIGN;
     }
 
@@ -108,13 +107,13 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
 
   public ASTNode findChildByRole(int role) {
     if (role == ChildRole.NAME) {
-      return findChildByType(IDENTIFIER);
+      return findChildByType(JavaTokenType.IDENTIFIER);
     }
-    else if (role == ChildRole.ANNOTATION_VALUE) {
-      return findChildByType(ANNOTATION_MEMBER_VALUE_BIT_SET);
+    if (role == ChildRole.ANNOTATION_VALUE) {
+      return findChildByType(ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET);
     }
-    else if (role == ChildRole.OPERATION_SIGN) {
-      return findChildByType(EQ);
+    if (role == ChildRole.OPERATION_SIGN) {
+      return findChildByType(JavaTokenType.EQ);
     }
 
     return null;
@@ -140,9 +139,8 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         PsiIdentifier nameIdentifier = getNameIdentifier();
         if (nameIdentifier != null) {
           return nameIdentifier;
-        } else {
-          return PsiNameValuePairImpl.this;
         }
+        return PsiNameValuePairImpl.this;
       }
 
       public TextRange getRangeInElement() {
@@ -173,7 +171,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         if (nameIdentifier != null) {
           PsiImplUtil.setName(nameIdentifier, newElementName);
         }
-        else if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(getFirstChildNode().getElementType())) {
+        else if (ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET.contains(getFirstChildNode().getElementType())) {
           PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
           nameIdentifier = factory.createIdentifier(newElementName);
           addBefore(nameIdentifier, SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode()));

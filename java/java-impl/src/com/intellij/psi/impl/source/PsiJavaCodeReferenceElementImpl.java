@@ -330,10 +330,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         final VariableResolverProcessor processor = new VariableResolverProcessor(referenceElement);
         PsiScopesUtil.resolveAndWalk(processor, referenceElement, null, incompleteCode);
         result = processor.getResult();
-        if (result.length > 0) {
-          return result;
-        }
-        if (kind == CLASS_NAME_KIND) {
+        if (result.length == 0 && kind == CLASS_NAME_KIND) {
           return referenceElement.resolve(PACKAGE_NAME_KIND);
         }
       }

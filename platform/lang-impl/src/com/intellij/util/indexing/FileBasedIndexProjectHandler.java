@@ -23,7 +23,7 @@ import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
+import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -42,14 +42,14 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   private final FileBasedIndex myIndex;
   private final ProjectRootManagerEx myRootManager;
   private final FileTypeManager myFileTypeManager;
-  private final ProjectFileExclusionManager myExclusionManager;
+  private final ProjectFileExclusionManagerImpl myExclusionManager;
 
   public FileBasedIndexProjectHandler(final FileBasedIndex index, final Project project, final ProjectRootManagerEx rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
     super(project);
     myIndex = index;
     myRootManager = rootManager;
     myFileTypeManager = ftManager;
-    myExclusionManager = ProjectFileExclusionManager.getInstance(project);
+    myExclusionManager = ProjectFileExclusionManagerImpl.getInstance(project);
 
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
     if (startupManager != null) {

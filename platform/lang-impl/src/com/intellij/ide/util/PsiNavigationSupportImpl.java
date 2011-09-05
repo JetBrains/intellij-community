@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.ide.util;
 
-/*
- * @author max
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * @author yole
  */
-package com.intellij.openapi.vfs;
-
-import org.jetbrains.annotations.NotNull;
-
-public abstract class DeprecatedVirtualFile extends VirtualFile{
-  @NotNull
-    public String getUrl() {
-    return VirtualFileManager.constructUrl(getFileSystem().getProtocol(), getPath());
+public class PsiNavigationSupportImpl extends PsiNavigationSupport {
+  @Nullable
+  @Override
+  public Navigatable getDescriptor(PsiElement element) {
+    return EditSourceUtil.getDescriptor(element);
   }
 
-  public boolean isInLocalFileSystem() {
-    return getFileSystem() instanceof LocalFileSystem;
+  @Override
+  public boolean canNavigate(PsiElement element) {
+    return EditSourceUtil.canNavigate(element);
   }
 }

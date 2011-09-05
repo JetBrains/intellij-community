@@ -16,15 +16,21 @@
 
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBundle;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 
 /**
  *
  */
 public class CheckUtil {
+
+  private CheckUtil() {
+  }
 
   public static void checkWritable(PsiElement element) throws IncorrectOperationException{
     if (!element.isWritable()){
@@ -47,7 +53,7 @@ public class CheckUtil {
   }
 
   public static void checkDelete(VirtualFile file) throws IncorrectOperationException{
-    if (FileTypeManager.getInstance().isFileIgnored(file)) return;
+    if (FileTypeRegistry.getInstance().isFileIgnored(file)) return;
     if (!file.isWritable()) {
       throw new IncorrectOperationException(PsiBundle.message("cannot.delete.a.read.only.file", file.getPresentableUrl()));
     }

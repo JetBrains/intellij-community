@@ -1,4 +1,4 @@
-package com.siyeh.igtest.verbose;
+package com.siyeh.igtest.bitwise.pointless_bitwise_expression;
 
 public class PointlessBitwiseExpressionInspection {
     private static final int ZERO = 0;
@@ -58,7 +58,9 @@ public class PointlessBitwiseExpressionInspection {
         j = 6;
         k = 0xffffffff ^ j;
         System.out.println(k);
+    }
 
-
+    void longExpressions(int i, int j) {
+        i = j && 0 & 100;
     }
 }

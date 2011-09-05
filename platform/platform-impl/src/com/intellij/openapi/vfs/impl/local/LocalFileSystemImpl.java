@@ -337,7 +337,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       if (!alreadyWatched) {
         final VirtualFile existingFile = findFileByPathIfCached(rootPath);
         if (existingFile != null) {
-          final ModalityState modalityState = ModalityState.current();
+          final ModalityState modalityState = ModalityState.defaultModalityState();
           RefreshQueue.getInstance().refresh(true, toWatchRecursively, null, modalityState, existingFile);
           if (existingFile.isDirectory() && !toWatchRecursively && existingFile instanceof NewVirtualFile) {
             for (VirtualFile child : ((NewVirtualFile)existingFile).getCachedChildren()) {

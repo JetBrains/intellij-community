@@ -39,7 +39,7 @@ import javax.swing.*;
  * @author max
  */
 public class ModuleGroupingRule implements UsageGroupingRule {
-  public UsageGroup groupUsage(Usage usage) {
+  public UsageGroup groupUsage(@NotNull Usage usage) {
     if (usage instanceof UsageInModule) {
       UsageInModule usageInModule = (UsageInModule)usage;
       Module module = usageInModule.getModule();
@@ -63,7 +63,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
     public void update() {
     }
 
-    public LibraryUsageGroup(OrderEntry entry) {
+    public LibraryUsageGroup(@NotNull OrderEntry entry) {
       myEntry = entry;
     }
 
@@ -115,7 +115,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
   private static class ModuleUsageGroup implements UsageGroup, TypeSafeDataProvider {
     private final Module myModule;
 
-    public ModuleUsageGroup(Module module) {
+    public ModuleUsageGroup(@NotNull Module module) {
       myModule = module;
     }
 
@@ -128,17 +128,15 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
       final ModuleUsageGroup moduleUsageGroup = (ModuleUsageGroup)o;
 
-      if (myModule != null ? !myModule.equals(moduleUsageGroup.myModule) : moduleUsageGroup.myModule != null) return false;
-
-      return true;
+      return myModule.equals(moduleUsageGroup.myModule);
     }
 
     public int hashCode() {
-      return myModule != null ? myModule.hashCode() : 0;
+      return myModule.hashCode();
     }
 
     public Icon getIcon(boolean isOpen) {
-      return ModuleType.get(myModule).getNodeIcon(isOpen);
+      return myModule.isDisposed() ? null : ModuleType.get(myModule).getNodeIcon(isOpen);
     }
 
     @NotNull

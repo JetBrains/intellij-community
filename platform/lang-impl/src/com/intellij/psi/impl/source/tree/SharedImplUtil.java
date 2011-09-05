@@ -18,9 +18,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -191,13 +188,5 @@ public class SharedImplUtil {
     final PsiElement result = SourceTreeToPsiMap.treeElementToPsi(elementCopy);
     treeElement.invalidate();
     return result;
-  }
-
-  public static FileStatus getFileStatus(PsiElement element) {
-    if (!element.isPhysical()) return FileStatus.NOT_CHANGED;
-    PsiFile contFile = element.getContainingFile();
-    if (contFile == null) return FileStatus.NOT_CHANGED;
-    VirtualFile vFile = contFile.getVirtualFile();
-    return vFile != null ? FileStatusManager.getInstance(element.getProject()).getStatus(vFile) : FileStatus.NOT_CHANGED;
   }
 }

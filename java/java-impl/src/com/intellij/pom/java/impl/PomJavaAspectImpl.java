@@ -16,7 +16,6 @@
 package com.intellij.pom.java.impl;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
@@ -28,11 +27,10 @@ import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent {
+public class PomJavaAspectImpl extends PomJavaAspect {
   private final PsiManager myPsiManager;
   private final PomModel myPomModel;
 
@@ -44,22 +42,6 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
 
   public LanguageLevel getLanguageLevel() {
     return LanguageLevelProjectExtension.getInstance(myPsiManager.getProject()).getLanguageLevel();
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "PomJavaModel";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public void update(PomModelEvent event) {

@@ -15,21 +15,16 @@
  */
 package com.intellij.openapi.diff.impl.highlighting;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.ContentChangeListener;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
-public class DiffPanelState extends SimpleDiffPanelState<EditorPlaceHolder> {
-  public DiffPanelState(ContentChangeListener changeListener, Project project) {
-    super(createEditorWrapper(project, changeListener, FragmentSide.SIDE1),
-          createEditorWrapper(project, changeListener, FragmentSide.SIDE2), project);
-  }
-
-  private static EditorPlaceHolder createEditorWrapper(Project project, ContentChangeListener changeListener, FragmentSide side) {
-    EditorPlaceHolder editorWrapper = new EditorPlaceHolder(side, project);
-    editorWrapper.addListener(changeListener);
-    return editorWrapper;
+public class DiffPanelState extends SimpleDiffPanelState {
+  public DiffPanelState(ContentChangeListener changeListener, Project project, @NotNull Disposable parentDisposable) {
+    super(project,changeListener, parentDisposable);
   }
 
   public void setContents(final DiffContent content1, final DiffContent content2) {

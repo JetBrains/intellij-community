@@ -42,7 +42,6 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
@@ -72,7 +71,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   private final Project myProject;
   private final PsiManager myPsiManager;
   private final DocumentCommitThread myDocumentCommitThread;
-  private static final Key<TextBlock> KEY_TEXT_BLOCK = Key.create("KEY_TEXT_BLOCK");
   private final Set<Document> myUncommittedDocuments = Collections.synchronizedSet(new HashSet<Document>());
 
   private volatile boolean myIsCommitInProgress;
@@ -575,7 +573,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         mySmartPointerManager.fastenBelts(file, event.getOffset(), null);
       }
 
-      final TextBlock textBlock = getTextBlock(file);
+      final TextBlock textBlock = TextBlock.get(file);
       if (textBlock.isLocked()) {
         hasLockedBlocks = true;
         continue;
@@ -614,7 +612,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       if (mySmartPointerManager != null) { // mock tests
         mySmartPointerManager.unfastenBelts(file, event.getOffset());
       }
-      final TextBlock textBlock = getTextBlock(file);
+      final TextBlock textBlock = TextBlock.get(file);
       if (textBlock.isLocked()) continue;
 
       textBlock.documentChanged(event);
@@ -648,16 +646,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   private boolean isRelevant(FileViewProvider viewProvider) {
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     return !virtualFile.getFileType().isBinary() && viewProvider.getManager() == myPsiManager && !myPsiManager.getProject().isDisposed();
-  }
-
-  @NotNull
-  public static TextBlock getTextBlock(@NotNull PsiFile file) {
-    TextBlock textBlock = file.getUserData(KEY_TEXT_BLOCK);
-    if (textBlock == null){
-      textBlock = ((UserDataHolderEx)file).putUserDataIfAbsent(KEY_TEXT_BLOCK, new TextBlock());
-    }
-
-    return textBlock;
   }
 
   public static boolean checkConsistency(PsiFile psiFile, Document document) {
@@ -722,11 +710,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     LOG.error(error);
     //document.replaceString(0, documentLength, psiFile.getText());
     return false;
-  }
-
-  public void contentsLoaded(PsiFileImpl file) {
-    final Document document = getCachedDocument(file);
-    if (document != null) getTextBlock(file).clear();
   }
 
   @TestOnly

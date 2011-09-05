@@ -18,7 +18,6 @@ package com.intellij.history.integration;
 
 import com.intellij.history.core.Paths;
 import com.intellij.mock.MockLocalFileSystem;
-import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -33,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // todo get rid of!!!!!!!!!!!!!
-public class TestVirtualFile extends DeprecatedVirtualFile {
+public class TestVirtualFile extends VirtualFile {
   private String myName;
   private String myContent;
   private boolean isReadOnly;

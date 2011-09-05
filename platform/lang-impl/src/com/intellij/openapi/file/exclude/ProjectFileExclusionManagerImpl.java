@@ -32,12 +32,12 @@ import java.util.Collection;
  * @author Rustam Vishnyakov
  */
 @State(name = "ProjectFileExclusionManager", storages = {@Storage( file = "$PROJECT_FILE$")})
-public class ProjectFileExclusionManager extends PersistentFileSetManager {
+public class ProjectFileExclusionManagerImpl extends PersistentFileSetManager implements ProjectFileExclusionManager {
 
   
   private final Project myProject;
 
-  public ProjectFileExclusionManager(Project project) {
+  public ProjectFileExclusionManagerImpl(Project project) {
     myProject = project;
   }
 
@@ -73,8 +73,8 @@ public class ProjectFileExclusionManager extends PersistentFileSetManager {
   }
 
 
-  public static ProjectFileExclusionManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ProjectFileExclusionManager.class);
+  public static ProjectFileExclusionManagerImpl getInstance(@NotNull Project project) {
+    return (ProjectFileExclusionManagerImpl) ServiceManager.getService(project, ProjectFileExclusionManager.class);
   }
 
 }

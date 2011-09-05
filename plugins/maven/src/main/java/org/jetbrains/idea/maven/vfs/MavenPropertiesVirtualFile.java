@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.vfs;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class MavenPropertiesVirtualFile extends DeprecatedVirtualFile {
+public class MavenPropertiesVirtualFile extends VirtualFile {
   private final String myPath;
   private final VirtualFileSystem myFS;
   private final byte[] myContent;

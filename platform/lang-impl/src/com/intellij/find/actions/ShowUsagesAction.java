@@ -62,7 +62,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -487,7 +486,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return popup[0];
   }
 
-  private static int filtered(List<Usage> usages, UsageViewImpl usageView) {
+  private static int filtered(@NotNull List<Usage> usages, @NotNull UsageViewImpl usageView) {
     int count=0;
     for (Usage usage : usages) {
       if (!usageView.isVisible(usage)) count++;

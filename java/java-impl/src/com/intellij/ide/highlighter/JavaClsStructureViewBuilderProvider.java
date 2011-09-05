@@ -28,13 +28,13 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor;
+import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +44,8 @@ public class JavaClsStructureViewBuilderProvider implements StructureViewBuilder
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
 
-    final ContentBasedClassFileProcessor[] processors = Extensions.getExtensions(ContentBasedClassFileProcessor.EP_NAME);
-    for (ContentBasedClassFileProcessor processor : processors) {
+    final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
+    for (ContentBasedFileSubstitutor processor : processors) {
       if (processor.isApplicable(project, file)) {
         final Language language = processor.obtainLanguageForFile(file);
         if (language != null) {

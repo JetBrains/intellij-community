@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.highlighting;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
+import com.intellij.openapi.diff.impl.ContentChangeListener;
 import com.intellij.openapi.diff.impl.fragments.FragmentHighlighterImpl;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.fragments.FragmentListImpl;
@@ -26,26 +27,35 @@ import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements Disposable  {
+public abstract class SimpleDiffPanelState implements Disposable  {
   protected ComparisonPolicy myComparisonPolicy = ComparisonPolicy.DEFAULT;
   protected DiffPolicy myDiffPolicy;
-  protected final DiffMarkupType myAppender1;
-  protected final DiffMarkupType myAppender2;
+  protected final EditorPlaceHolder myAppender1;
+  protected final EditorPlaceHolder myAppender2;
   protected FragmentList myFragmentList = FragmentList.EMPTY;
   protected final Project myProject;
 
-  public SimpleDiffPanelState(DiffMarkupType diffMarkup1, DiffMarkupType diffMarkup2, Project project) {
-    myAppender1 = diffMarkup1;
-    myAppender2 = diffMarkup2;
+  public SimpleDiffPanelState(Project project, ContentChangeListener changeListener, @NotNull Disposable parentDisposable) {
+    myAppender1 = createEditorWrapper(project, changeListener, FragmentSide.SIDE1);
+    myAppender2 = createEditorWrapper(project, changeListener, FragmentSide.SIDE2);
     myProject = project;
     myDiffPolicy = DiffPolicy.LINES_WO_FORMATTING;
+    Disposer.register(parentDisposable, this);
   }
 
+  private EditorPlaceHolder createEditorWrapper(Project project, ContentChangeListener changeListener, FragmentSide side) {
+    EditorPlaceHolder editorWrapper = new EditorPlaceHolder(side, project, this);
+    editorWrapper.addListener(changeListener);
+    return editorWrapper;
+  }
+  
   public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
     myComparisonPolicy = comparisonPolicy;
   }
@@ -63,8 +73,6 @@ public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements 
   }
 
   public void dispose() {
-    myAppender1.dispose();
-    myAppender2.dispose();
   }
 
   private LineBlocks addMarkup(final ArrayList<LineFragment> lines) {
@@ -79,8 +87,7 @@ public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements 
       }
     });
     ArrayList<LineFragment> allLineFragments = new ArrayList<LineFragment>();
-    for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext();) {
-      LineFragment lineFragment = iterator.next();
+    for (LineFragment lineFragment : lines) {
       allLineFragments.add(lineFragment);
       lineFragment.addAllDescendantsTo(allLineFragments);
     }
@@ -89,7 +96,7 @@ public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements 
   }
 
   private void resetMarkup() {
-  ApplicationManager.getApplication().runWriteAction(new ResetMarkupRunnable(this));
+    ApplicationManager.getApplication().runWriteAction(new ResetMarkupRunnable(this));
   }
 
   public LineBlocks updateEditors() throws FilesTooBigForDiffException {

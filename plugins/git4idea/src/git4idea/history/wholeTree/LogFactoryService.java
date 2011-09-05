@@ -20,16 +20,18 @@ import com.intellij.openapi.project.Project;
  */
 public class LogFactoryService {
   private final Project myProject;
+  private final GitCommitsSequentially myGitCommitsSequentially;
 
   public static LogFactoryService getInstance(final Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, LogFactoryService.class);
   }
 
-  public LogFactoryService(final Project project) {
+  public LogFactoryService(final Project project, final GitCommitsSequentially gitCommitsSequentially) {
     myProject = project;
+    myGitCommitsSequentially = gitCommitsSequentially;
   }
 
   public GitLog createComponent(boolean projectScope) {
-    return new GitLogAssembler(myProject, projectScope);
+    return new GitLogAssembler(myProject, projectScope, myGitCommitsSequentially);
   }
 }

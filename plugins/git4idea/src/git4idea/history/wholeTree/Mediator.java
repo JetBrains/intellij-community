@@ -33,7 +33,7 @@ public interface Mediator {
    */
   StepType appendResult(final Ticket ticket,
                         final List<CommitI> result,
-                        @Nullable final List<List<AbstractHash>> parents);
+                        @Nullable final List<List<AbstractHash>> parents, VirtualFile root, boolean checkForSequential);
 
   void reportSymbolicRefs(final Ticket ticket, VirtualFile root, final SymbolicRefs symbolicRefs);
 

@@ -31,12 +31,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
@@ -113,7 +113,7 @@ public class CompositeElement extends TreeElement {
                    (fileElement = TreeUtil.getFileElement(this)) == null ||
                    (psiFile = (PsiFile)fileElement.getPsi()) == null ||
                    psiFile instanceof DummyHolder ||
-                   psiFile.getViewProvider() instanceof InjectedFileViewProvider ||
+                   psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider ||
                    !psiFile.isPhysical();
       if (!ok) {
         LOG.error("Threading assertion. " +

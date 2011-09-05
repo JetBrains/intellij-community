@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -24,6 +23,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
@@ -35,18 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ResolveScopeManager {
-  public static ResolveScopeManager getInstance(Project project) {
-    return ServiceManager.getService(project, ResolveScopeManager.class);
-  }
-
-  public static GlobalSearchScope getElementUseScope(PsiElement element) {
-    return getInstance(element.getProject()).getUseScope(element);
-  }
-
-  public static GlobalSearchScope getElementResolveScope(PsiElement element) {
-    return getInstance(element.getProject()).getResolveScope(element);
-  }
+public class ResolveScopeManagerImpl extends ResolveScopeManager {
 
   private final Project myProject;
   private final ProjectRootManager myProjectRootManager;
@@ -72,7 +61,7 @@ public class ResolveScopeManager {
     }
   };
 
-  public ResolveScopeManager(Project project, ProjectRootManager projectRootManager, PsiManager psiManager) {
+  public ResolveScopeManagerImpl(Project project, ProjectRootManager projectRootManager, PsiManager psiManager) {
     myProject = project;
     myProjectRootManager = projectRootManager;
     myManager = psiManager;
@@ -119,6 +108,7 @@ public class ResolveScopeManager {
     }
   }
 
+  @Override
   @NotNull
   public GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
     ProgressManager.checkCanceled();
@@ -160,6 +150,7 @@ public class ResolveScopeManager {
   }
 
 
+  @Override
   public GlobalSearchScope getDefaultResolveScope(final VirtualFile vFile) {
     final PsiFile psiFile = myManager.findFile(vFile);
     assert psiFile != null;
@@ -167,6 +158,7 @@ public class ResolveScopeManager {
   }
 
 
+  @Override
   @NotNull
   public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
     VirtualFile vFile;

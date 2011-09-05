@@ -17,9 +17,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
@@ -40,7 +38,7 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   public DummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
-    this(manager, null, null, table, Boolean.valueOf(validity), FileTypes.PLAIN_TEXT.getLanguage());
+    this(manager, null, null, table, Boolean.valueOf(validity), PlainTextLanguage.INSTANCE);
   }
 
   public DummyHolder(@NotNull PsiManager manager, PsiElement context) {
@@ -48,7 +46,7 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
-    this(manager, contentElement, context, table, null, context == null ? FileTypes.PLAIN_TEXT.getLanguage() : context.getLanguage());
+    this(manager, contentElement, context, table, null, context == null ? PlainTextLanguage.INSTANCE : context.getLanguage());
   }
 
   public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table, Boolean validity, Language language) {
@@ -105,7 +103,8 @@ public class DummyHolder extends PsiFileImpl {
       PsiFile containingFile = myContext.getContainingFile();
       if (containingFile != null) return containingFile.getFileType();
     }
-    return StdFileTypes.JAVA;
+    final LanguageFileType fileType = myLanguage.getAssociatedFileType();
+    return fileType != null ? fileType : PlainTextFileType.INSTANCE;
   }
 
   public FileElement getTreeElement() {

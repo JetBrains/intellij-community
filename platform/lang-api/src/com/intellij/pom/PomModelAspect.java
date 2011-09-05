@@ -15,9 +15,8 @@
  */
 package com.intellij.pom;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.pom.event.PomModelEvent;
 
-public interface PomModelAspect extends ProjectComponent{
+public interface PomModelAspect {
   void update(PomModelEvent event);
 }

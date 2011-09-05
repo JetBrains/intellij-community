@@ -20,15 +20,15 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class ClassFileViewProviderFactory implements FileViewProviderFactory{
   public FileViewProvider createFileViewProvider(final VirtualFile file, final Language language, final PsiManager manager, final boolean physical) {
     // Define language for compiled file
-    final ContentBasedClassFileProcessor[] processors = Extensions.getExtensions(ContentBasedClassFileProcessor.EP_NAME);
-    for (ContentBasedClassFileProcessor processor : processors) {
+    final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
+    for (ContentBasedFileSubstitutor processor : processors) {
       Language lang = processor.obtainLanguageForFile(file);
       if (lang != null) {
         FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);

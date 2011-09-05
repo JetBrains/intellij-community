@@ -134,8 +134,7 @@ public class CodeEditUtil {
       return;
     }
     final PsiFile containingFile = psiElement.getContainingFile();
-    final IndentHelper indentHelper = HelperFactory.createHelper(containingFile.getFileType(), containingFile.getProject());
-    setOldIndentation((TreeElement)first, indentHelper.getIndent(first));
+    setOldIndentation((TreeElement)first, IndentHelper.getInstance().getIndent(containingFile.getProject(), containingFile.getFileType(), first));
   }
 
   public static int getOldIndentation(ASTNode node){

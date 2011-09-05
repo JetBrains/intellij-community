@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,8 @@ import java.util.List;
  */
 @Deprecated
 public abstract class LogicalRootsManager {
+
+  public static final Topic<LogicalRootListener> LOGICAL_ROOTS = new Topic<LogicalRootListener>("logical root changes", LogicalRootListener.class);
 
   public static LogicalRootsManager getLogicalRootsManager(@NotNull final Project project) {
     return ServiceManager.getService(project, LogicalRootsManager.class);

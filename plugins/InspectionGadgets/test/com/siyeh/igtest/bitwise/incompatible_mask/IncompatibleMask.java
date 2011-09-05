@@ -1,6 +1,6 @@
-package com.siyeh.igtest.bugs;
+package com.siyeh.igtest.bitwise.incompatible_mask;
 
-public class IncompatibleMaskInspection {
+public class IncompatibleMask {
     public static void main(String[] args) {
         final int i = foo();
         if((i & 0x1) == 0x2)

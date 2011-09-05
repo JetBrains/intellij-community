@@ -18,7 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -82,7 +82,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myPhysical = isEventSystemEnabled() &&
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof DummyFileSystem);
-    myExclusionManager = ProjectFileExclusionManager.getInstance(manager.getProject());
+    myExclusionManager = ProjectFileExclusionManager.SERVICE.getInstance(manager.getProject());
   }
 
   @NotNull
@@ -106,8 +106,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       return LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, project);
     }
 
-    final ContentBasedClassFileProcessor[] processors = Extensions.getExtensions(ContentBasedClassFileProcessor.EP_NAME);
-    for (ContentBasedClassFileProcessor processor : processors) {
+    final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
+    for (ContentBasedFileSubstitutor processor : processors) {
       Language language = processor.obtainLanguageForFile(file);
       if (language != null) return language;
     }
@@ -233,7 +233,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     final VirtualFile file = getVirtualFile();
     if (file instanceof LightVirtualFile) return false;
     if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return true;
-    return FileTypeManager.getInstance().isFileIgnored(file);
+    return FileTypeRegistry.getInstance().isFileIgnored(file);
   }
 
   @Nullable
@@ -325,7 +325,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   public FileViewProvider clone() {
     final VirtualFile origFile = getVirtualFile();
     LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), origFile.getCharset(), getModificationStamp());
-    copy.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
+    copy.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     copy.setCharset(origFile.getCharset());
     return createCopy(copy);
   }

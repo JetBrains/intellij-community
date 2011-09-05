@@ -16,51 +16,34 @@
 
 package com.intellij.psi.impl.file;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PsiFileImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiFileImplUtil");
+  private PsiFileImplUtil() {
+  }
 
   public static PsiFile setName(final PsiFile file, String newName) throws IncorrectOperationException {
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
 
     try{
-      final FileType newFileType = FileTypeManager.getInstance().getFileTypeByFileName(newName);
-      if (FileTypes.UNKNOWN.equals(newFileType) || newFileType.isBinary()) {
+      final FileType newFileType = FileTypeRegistry.getInstance().getFileTypeByFileName(newName);
+      if (UnknownFileType.INSTANCE.equals(newFileType) || newFileType.isBinary()) {
         // before the file becomes unknown or a binary (thus, not openable in the editor), save it to prevent data loss
         final FileDocumentManager fdm = FileDocumentManager.getInstance();
         final Document doc = fdm.getCachedDocument(vFile);
         if (doc != null) {
-          EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-          
-          String trailer = editorSettings.getStripTrailingSpaces();
-          boolean ensureEOLonEOF = editorSettings.isEnsureNewLineAtEOF();
-          editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-          editorSettings.setEnsureNewLineAtEOF(false);
-          try {
-            fdm.saveDocument(doc);
-          }
-          finally {
-            editorSettings.setStripTrailingSpaces(trailer);
-            editorSettings.setEnsureNewLineAtEOF(ensureEOLonEOF);
-          }
+          fdm.saveDocumentAsIs(doc);
         }
       }
 
@@ -93,28 +76,5 @@ public class PsiFileImplUtil {
     catch(IOException e){
       throw new IncorrectOperationException(e.toString(),e);
     }
-  }
-
-  public static PsiFile[] getPsiFilesByVirtualFiles(VirtualFile[] files, PsiManager manager) {
-    List<PsiFile> psiFiles = new ArrayList<PsiFile>();
-    for (VirtualFile file : files) {
-      PsiFile psiFile = manager.findFile(file);
-      if (psiFile != null) {
-        psiFiles.add(psiFile);
-      }
-    }
-    return PsiUtilBase.toPsiFileArray(psiFiles);
-  }
-
-  public static PsiFile[] getPsiFilesByVirtualFiles(List<VirtualFile> files, PsiManager manager) {
-    List<PsiFile> psiFiles = new ArrayList<PsiFile>();
-
-    for (VirtualFile file : files) {
-      PsiFile psiFile = manager.findFile(file);
-      if (psiFile != null) {
-        psiFiles.add(psiFile);
-      }
-    }
-    return PsiUtilBase.toPsiFileArray(psiFiles);
   }
 }

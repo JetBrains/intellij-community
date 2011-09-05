@@ -36,7 +36,6 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.CharTable;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -210,18 +209,5 @@ public class XmlAspectImpl implements XmlAspect {
   private ASTNode[] shortenChange(ASTNode[] affectedChildren, TreeChangeEvent event) {
     // TODO
     return affectedChildren;
-  }
-
-  public void projectOpened() { }
-
-  public void projectClosed() { }
-
-  public void initComponent() { }
-
-  public void disposeComponent() { }
-
-  @NotNull
-  public String getComponentName() {
-    return "XML POM aspect";
   }
 }

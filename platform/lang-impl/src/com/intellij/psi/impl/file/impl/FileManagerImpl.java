@@ -17,7 +17,6 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.AppTopics;
-import com.intellij.ProjectTopics;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
@@ -30,10 +29,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
@@ -59,8 +55,7 @@ public class FileManagerImpl implements FileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
 
   private final PsiManagerImpl myManager;
-
-  private final ProjectRootManager myProjectRootManager;
+  private final ProjectFileIndex myFileIndex;
 
   private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentSoftValueHashMap<VirtualFile, PsiDirectory>();
   private final ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
@@ -73,12 +68,12 @@ public class FileManagerImpl implements FileManager {
 
   public FileManagerImpl(PsiManagerImpl manager,
                          FileDocumentManager fileDocumentManager,
-                         ProjectRootManager projectRootManager) {
+                         ProjectFileIndex fileIndex) {
     myManager = manager;
+    myFileIndex = fileIndex;
     myConnection = manager.getProject().getMessageBus().connect();
 
     myFileDocumentManager = fileDocumentManager;
-    myProjectRootManager = projectRootManager;
 
     myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
 
@@ -152,6 +147,7 @@ public class FileManagerImpl implements FileManager {
     return myVFileToViewProviderMap.get(file);
   }
 
+  @Nullable
   private FileViewProvider getFromInjected(VirtualFile file) {
     if (file instanceof VirtualFileWindow) {
       DocumentWindow document = ((VirtualFileWindow)file).getDocumentWindow();
@@ -192,8 +188,8 @@ public class FileManagerImpl implements FileManager {
       return LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, project);
     }
     // Define language for binary file
-    final ContentBasedClassFileProcessor[] processors = Extensions.getExtensions(ContentBasedClassFileProcessor.EP_NAME);
-    for (ContentBasedClassFileProcessor processor : processors) {
+    final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
+    for (ContentBasedFileSubstitutor processor : processors) {
       Language language = processor.obtainLanguageForFile(file);
       if (language != null) {
         return language;
@@ -220,8 +216,11 @@ public class FileManagerImpl implements FileManager {
       }
     });
 
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
     myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
+  }
+
+  public boolean isInitialized() {
+    return myInitialized;
   }
 
   private abstract class FileTypesChanged implements Runnable {
@@ -252,7 +251,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
-  private void dispatchPendingEvents() {
+  void dispatchPendingEvents() {
     if (!myInitialized) {
       LOG.error("Project is not yet initialized: "+myManager.getProject());
     }
@@ -297,7 +296,7 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   public PsiFile findFile(@NotNull VirtualFile vFile) {
     if (vFile.isDirectory()) return null;
-    final ProjectEx project = (ProjectEx)myManager.getProject();
+    final Project project = myManager.getProject();
     if (project.isDefault()) return null;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -339,11 +338,12 @@ public class FileManagerImpl implements FileManager {
     return findDirectoryImpl(vFile);
   }
 
+  @Nullable
   private PsiDirectory findDirectoryImpl(final VirtualFile vFile) {
     PsiDirectory psiDir = myVFileToPsiDirMap.get(vFile);
     if (psiDir != null) return psiDir;
 
-    if (myProjectRootManager.getFileIndex().isIgnored(vFile)) return null;
+    if (myFileIndex.isIgnored(vFile)) return null;
 
     VirtualFile parent = vFile.getParent();
     if (parent != null) { //?
@@ -486,58 +486,6 @@ public class FileManagerImpl implements FileManager {
       }
 
       myManager.childrenChanged(event);
-    }
-  }
-
-  private class MyModuleRootListener implements ModuleRootListener {
-    private VirtualFile[] myOldContentRoots = null;
-    private volatile int depthCounter = 0;
-    public void beforeRootsChange(final ModuleRootEvent event) {
-      if (!myInitialized) return;
-      if (event.isCausedByFileTypesChange()) return;
-      ApplicationManager.getApplication().runWriteAction(
-        new ExternalChangeAction() {
-          public void run() {
-            depthCounter++;
-            if (depthCounter > 1) return;
-
-            PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-            treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
-            final VirtualFile[] contentRoots = myProjectRootManager.getContentRoots();
-            LOG.assertTrue(myOldContentRoots == null);
-            myOldContentRoots = contentRoots;
-            treeEvent.setOldValue(contentRoots);
-            myManager.beforePropertyChange(treeEvent);
-          }
-        }
-      );
-    }
-
-    public void rootsChanged(final ModuleRootEvent event) {
-      dispatchPendingEvents();
-
-      if (!myInitialized) return;
-      if (event.isCausedByFileTypesChange()) return;
-      ApplicationManager.getApplication().runWriteAction(
-        new ExternalChangeAction() {
-          public void run() {
-            depthCounter--;
-            assert depthCounter >= 0 : depthCounter;
-            if (depthCounter > 0) return;
-
-            removeInvalidFilesAndDirs(true);
-
-            PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-            treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
-            final VirtualFile[] contentRoots = myProjectRootManager.getContentRoots();
-            treeEvent.setNewValue(contentRoots);
-            LOG.assertTrue(myOldContentRoots != null);
-            treeEvent.setOldValue(myOldContentRoots);
-            myOldContentRoots = null;
-            myManager.propertyChanged(treeEvent);
-          }
-        }
-      );
     }
   }
 

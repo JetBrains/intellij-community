@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>IncompatibleMask.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Incompatible bitwise mask operation</problem_class>
+    <description>&lt;code&gt;(i &amp; 0x1) == 0x2&lt;/code&gt; is always false #loc</description>
+  </problem>
+
+  <problem>
+    <file>IncompatibleMask.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Incompatible bitwise mask operation</problem_class>
+    <description>&lt;code&gt;(i &amp; 0x1) != 0x2&lt;/code&gt; is always true #loc</description>
+  </problem>
+
+  <problem>
+    <file>IncompatibleMask.java</file>
+    <line>18</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Incompatible bitwise mask operation</problem_class>
+    <description>&lt;code&gt;(i | 0x1) == 0x2&lt;/code&gt; is always false #loc</description>
+  </problem>
+
+  <problem>
+    <file>IncompatibleMask.java</file>
+    <line>26</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Incompatible bitwise mask operation</problem_class>
+    <description>&lt;code&gt;(i | 0x1) != 0x2&lt;/code&gt; is always true #loc</description>
+  </problem>
+</problems>

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.importing.wizard;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Just a holder for the common useful functionality.
@@ -16,13 +17,14 @@ public abstract class AbstractImportFromGradleWizardStep extends ProjectImportWi
     super(context);
   }
 
+  @NotNull
   @Override
   public WizardContext getWizardContext() {
     return super.getWizardContext();
   }
 
   @Override
-  @NotNull
+  @Nullable
   protected GradleProjectImportBuilder getBuilder() {
     return (GradleProjectImportBuilder)getWizardContext().getProjectBuilder();
   }

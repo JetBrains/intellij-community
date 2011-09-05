@@ -19,7 +19,6 @@ package com.intellij.mock;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -29,7 +28,6 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,18 +119,6 @@ public class MockPsiManager extends PsiManagerEx {
 
   public boolean isInProject(@NotNull PsiElement element) {
     return false;
-  }
-
-  public <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws T {
-    r.run();
-  }
-
-  public <T> T performActionWithFormatterDisabled(Computable<T> r) {
-    return r.compute();
-  }
-
-  @Override
-  public void dropFileCaches(@NotNull PsiFile file) {
   }
 
   public boolean isBatchFilesProcessingMode() {

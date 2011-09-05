@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -75,6 +76,7 @@ public class ConfigureGroovyLibraryNotificationProvider implements EditorNotific
   public EditorNotificationPanel createNotificationPanel(VirtualFile file) {
     try {
       if (!supportedFileTypes.contains(file.getFileType())) return null;
+      if (CompilerManager.getInstance(myProject).isExcludedFromCompilation(file)) return null;
 
       final Module module = ModuleUtil.findModuleForFile(file, myProject);
       if (module == null) return null;

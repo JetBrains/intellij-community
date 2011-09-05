@@ -70,4 +70,6 @@ public abstract class InjectedLanguageManager {
 
   @Nullable
   public abstract PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset);
+
+  public abstract void dropFileCaches(@NotNull PsiFile file);
 }

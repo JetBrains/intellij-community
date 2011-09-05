@@ -14,6 +14,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ReadonlyList;
 import com.intellij.util.containers.StepList;
 
@@ -33,12 +34,23 @@ public abstract class GroupingMerger<T, S> {
 
   protected abstract S getGroup(final T t);
   protected abstract T wrapGroup(final S s, T item);
+  protected abstract void oldBecame(final int was, final int is);
+  protected abstract void afterConsumed(final T t, int i);
+  protected T wrapItem(final T t) {
+    return t;
+  }
 
-  public void firstPlusSecond(final StepList<T> first, final ReadonlyList<T> second, final Comparator<T> comparator) {
-    if (second.getSize() == 0) return;
-    int idx = stolenBinarySearch(first, second.get(0), comparator, 0);
-    if (idx < 0) {
-      idx = - (idx + 1);
+  public int firstPlusSecond(final StepList<T> first, final ReadonlyList<T> second, final Comparator<T> comparator, 
+                             final int idxFrom) {
+    if (second.getSize() == 0) return first.getSize();
+    int idx;
+    if (idxFrom == -1) {
+      idx = stolenBinarySearch(first, second.get(0), comparator, 0);
+      if (idx < 0) {
+        idx = - (idx + 1);
+      }
+    } else {
+      idx = idxFrom;
     }
     // for group headers to not be left alone without its group
     if (idx > 0 && (! filter(first.get(idx - 1)))) {
@@ -49,23 +61,44 @@ public abstract class GroupingMerger<T, S> {
     if (idx > 0) {
       myCurrentGroup = getGroup(first.get(idx - 1));
     }
-    merge(remergePart, second, comparator, new Consumer<T>() {
+    final int finalIdx = idx;
+    merge(remergePart, second, comparator, new PairConsumer<T, Integer>() {
+            @Override
+            public void consume(T t, Integer integer) {
+              doForGroup(t, first);
+              first.add(t);
+              int was = integer + finalIdx + 1;
+              //System.out.println("was " + integer + "became " + (first.getSize() - 1));
+              oldBecame(was, first.getSize() - 1);
+            }
+          }, new Consumer<T>() {
       @Override
       public void consume(T t) {
-        final S newGroup = getGroup(t);
-        if (! Comparing.equal(newGroup, myCurrentGroup)) {
-          first.add(wrapGroup(newGroup, t));
-          myCurrentGroup = newGroup;
-        }
-        first.add(t);
+        doForGroup(t, first);
+
+        final T wrapped = wrapItem(t);
+        first.add(wrapped);
+        // todo should more effectively compute size!!!
+        afterConsumed(wrapped, first.getSize() - 1);
       }
     });
+    return idx;
   }
 
+  private void doForGroup(T t, StepList<T> first) {
+    final S newGroup = getGroup(t);
+    if (! Comparing.equal(newGroup, myCurrentGroup)) {
+      first.add(wrapGroup(newGroup, t));
+      myCurrentGroup = newGroup;
+    }
+  }
+
+  // todo here I doubt very much abt comparator usage, but seems like it doesn't reorder items from same repo
+  // todo which is essential
   public void merge(final ReadonlyList<T> one,
                               final ReadonlyList<T> two,
                               final Comparator<T> comparator,
-                              final Consumer<T> adder) {
+                              final PairConsumer<T, Integer> oldAdder, final Consumer<T> newAdder) {
     int idx1 = 0;
     int idx2 = 0;
     while (idx1 < one.getSize() && idx2 < two.getSize()) {
@@ -76,14 +109,14 @@ public abstract class GroupingMerger<T, S> {
       }
       final int comp = comparator.compare(firstOne, two.get(idx2));
       if (comp <= 0) {
-        adder.consume(firstOne);
+        oldAdder.consume(firstOne, idx1);
         ++ idx1;
         if (comp == 0) {
           // take only one
           ++ idx2;
         }
       } else {
-        adder.consume(two.get(idx2));
+        newAdder.consume(two.get(idx2));
         ++ idx2;
       }
     }
@@ -93,11 +126,11 @@ public abstract class GroupingMerger<T, S> {
         ++ idx1;
         continue;
       }
-      adder.consume(one.get(idx1));
+      oldAdder.consume(one.get(idx1), idx1);
       ++ idx1;
     }
     while (idx2 < two.getSize()) {
-      adder.consume(two.get(idx2));
+      newAdder.consume(two.get(idx2));
       ++ idx2;
     }
   }

@@ -32,7 +32,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -44,16 +43,6 @@ public class PsiEventWrapperAspect implements PomModelAspect{
     model.registerAspect(PsiEventWrapperAspect.class, this, Collections.singleton((PomModelAspect)aspect));
   }
 
-  public void projectOpened() {}
-  public void projectClosed() {}
-
-  @NotNull
-  public String getComponentName() {
-    return "PSI event wrapper aspect for POM";
-  }
-
-  public void initComponent() {}
-  public void disposeComponent() {}
   public void update(PomModelEvent event) {
     final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
     if(changeSet == null) return;

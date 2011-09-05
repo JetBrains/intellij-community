@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -22,9 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -63,6 +62,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
       @Override
       public void run() {
         myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(PsiVFSListener.this));
+        myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
       }
     });
   }
@@ -533,4 +533,57 @@ public class PsiVFSListener extends VirtualFileAdapter {
   private static boolean languageDialectChanged(final PsiFile newPsiFile, String oldFileName) {
     return newPsiFile != null && !FileUtil.getExtension(newPsiFile.getName()).equals(FileUtil.getExtension(oldFileName));
   }
+
+  private class MyModuleRootListener implements ModuleRootListener {
+    private VirtualFile[] myOldContentRoots = null;
+    private volatile int depthCounter = 0;
+    public void beforeRootsChange(final ModuleRootEvent event) {
+      if (!myFileManager.isInitialized()) return;
+      if (event.isCausedByFileTypesChange()) return;
+      ApplicationManager.getApplication().runWriteAction(
+        new ExternalChangeAction() {
+          public void run() {
+            depthCounter++;
+            if (depthCounter > 1) return;
+
+            PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
+            treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
+            final VirtualFile[] contentRoots = myProjectRootManager.getContentRoots();
+            LOG.assertTrue(myOldContentRoots == null);
+            myOldContentRoots = contentRoots;
+            treeEvent.setOldValue(contentRoots);
+            myManager.beforePropertyChange(treeEvent);
+          }
+        }
+      );
+    }
+
+    public void rootsChanged(final ModuleRootEvent event) {
+      myFileManager.dispatchPendingEvents();
+
+      if (!myFileManager.isInitialized()) return;
+      if (event.isCausedByFileTypesChange()) return;
+      ApplicationManager.getApplication().runWriteAction(
+        new ExternalChangeAction() {
+          public void run() {
+            depthCounter--;
+            assert depthCounter >= 0 : depthCounter;
+            if (depthCounter > 0) return;
+
+            myFileManager.removeInvalidFilesAndDirs(true);
+
+            PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
+            treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
+            final VirtualFile[] contentRoots = myProjectRootManager.getContentRoots();
+            treeEvent.setNewValue(contentRoots);
+            LOG.assertTrue(myOldContentRoots != null);
+            treeEvent.setOldValue(myOldContentRoots);
+            myOldContentRoots = null;
+            myManager.propertyChanged(treeEvent);
+          }
+        }
+      );
+    }
+  }
+
 }

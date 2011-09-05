@@ -13,20 +13,20 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import git4idea.history.browser.SymbolicRefs;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author irengrig
@@ -34,26 +34,45 @@ import java.util.List;
 public class MediatorImpl implements Mediator {
   private final Ticket myTicket;
   private final Project myProject;
+  private final GitCommitsSequentially myGitCommitsSequentially;
   private TableWrapper myTableWrapper;
   private UIRefresh myUIRefresh;
   private Loader myLoader;
   private final LoadGrowthController myController;
+  private Map<VirtualFile, SequenceSupportBuffer> mySequenceBuffers;
 
-  public MediatorImpl(final Project project) {
+  public MediatorImpl(final Project project, GitCommitsSequentially gitCommitsSequentially) {
     myProject = project;
+    myGitCommitsSequentially = gitCommitsSequentially;
     myTicket = new Ticket();
     myController = new LoadGrowthController();
+    mySequenceBuffers = new HashMap<VirtualFile, SequenceSupportBuffer>();
   }
 
   @CalledInBackground
   @Override
-  public StepType appendResult(final Ticket ticket, final List<CommitI> result, final @Nullable List<List<AbstractHash>> parents) {
+  public StepType appendResult(final Ticket ticket,
+                               final List<CommitI> result,
+                               final @Nullable List<List<AbstractHash>> parents,
+                               VirtualFile root, boolean checkForSequential) {
     if (! myTicket.equals(ticket)) {
       return StepType.STOP;
     }
 
     if (! result.isEmpty()) {
-      myTableWrapper.appendResult(ticket, result, parents);
+      /*if (mySequenceBuffers != null && checkForSequential) {
+        try {
+          mySequenceBuffers.get(root).appendResult(ticket, result, parents);
+        }
+        catch (VcsException e) {
+          // todo
+          myUIRefresh.acceptException(e);
+          myTableWrapper.forceStop();
+          return StepType.STOP;
+        }
+      } else {*/
+        myTableWrapper.appendResult(ticket, result, parents);
+      //}
     }
     if (myTableWrapper.isSuspend()) {
       return StepType.PAUSE;
@@ -109,8 +128,17 @@ public class MediatorImpl implements Mediator {
                      final Collection<String> startingPoints,
                      final GitLogFilters filters) {
     myTicket.increment();
-    myTableWrapper.reset();
+    myTableWrapper.reset(filters.isEmpty());
     myController.reset();
+
+    /*if (filters.isEmpty()) {
+      mySequenceBuffers.clear();
+      for (VirtualFile root : rootsHolder.getRoots()) {
+        mySequenceBuffers.put(root, new SequenceSupportBuffer(myTableWrapper, myGitCommitsSequentially, root));
+      }
+    } else {
+      mySequenceBuffers = null;
+    }*/
     myLoader.loadSkeleton(myTicket.copy(), rootsHolder, startingPoints, filters, myController);
   }
 
@@ -133,6 +161,68 @@ public class MediatorImpl implements Mediator {
   @NonNls public static final String GIT_LOG_PAGE_SIZE = "git.log.page.size";
   public final static int ourManyLoadedStep = (! pageSizeOk(Integer.getInteger(GIT_LOG_PAGE_SIZE))) ? 3000 : Integer.getInteger(
     GIT_LOG_PAGE_SIZE);
+
+  private static class SequenceSupportBuffer {
+    private CommitI myTail;
+    private List<CommitI> myCommits;
+    private List<List<AbstractHash>> myParents;
+    private final TableWrapper myTableWrapper;
+    private final GitCommitsSequentially myCommitsSequentially;
+    private final VirtualFile myRoot;
+
+    private SequenceSupportBuffer(TableWrapper tableWrapper, GitCommitsSequentially commitsSequentially, final VirtualFile root) {
+      myTableWrapper = tableWrapper;
+      myCommitsSequentially = commitsSequentially;
+      myRoot = root;
+      myCommits = Collections.emptyList();
+      myParents = Collections.emptyList();
+    }
+
+    public void appendResult(final Ticket ticket, final List<CommitI> result,
+                                 final @Nullable List<List<AbstractHash>> parents) throws VcsException {
+      assert result.size() == parents.size();
+      result.addAll(myCommits);
+      parents.addAll(myParents);
+
+      final SortListsByFirst sortListsByFirst = new SortListsByFirst(result, CommitIComparator.getInstance());
+      sortListsByFirst.sortAnyOther(parents);
+
+      final long commitTime = myTail == null ? result.get(0).getTime() : myTail.getTime();
+      final Ref<Integer> cnt = new Ref<Integer>(myTail == null ? 0 : -1);
+      myCommitsSequentially.iterateDescending(myRoot, commitTime, new Processor<Pair<AbstractHash, Long>>() {
+        boolean startFound = false;
+
+        @Override
+        public boolean process(Pair<AbstractHash, Long> pair) {
+          if (cnt.get() == -1) {
+            if (! pair.getFirst().getString().startsWith(myTail.getHash().getString())) {
+              System.out.println("!!!!!!!!! (1) pair: " + pair.getFirst().getString() + " commit (" + cnt.get() + "): " + myTail.getHash().getString());
+              return (! startFound) ? pair.getSecond() == commitTime : false;
+            } else {
+              cnt.set(0);
+              startFound = true;
+              return true;
+            }
+          }
+          if (! pair.getFirst().getString().startsWith(result.get(cnt.get()).getHash().getString())) {
+            System.out.println("(2) pair: " + pair.getFirst().getString() + " commit (" + cnt.get() + "): " + result.get(cnt.get()).getHash().getString());
+            return (! startFound) ? pair.getSecond() == commitTime : false;
+          }
+          cnt.set(cnt.get() + 1);
+          startFound = true;
+          return cnt.get() < result.size();
+        }
+      });
+
+      myCommits = new ArrayList<CommitI>(result.subList(cnt.get(), result.size()));
+      myParents = new ArrayList<List<AbstractHash>>(parents.subList(cnt.get(), parents.size()));
+
+      if (cnt.get() > 0) {
+        myTableWrapper.appendResult(ticket, result.subList(0, cnt.get()), parents.subList(0, cnt.get()));
+        myTail = result.get(cnt.get() - 1);
+      }
+    }
+  }
 
   // in order to don't forget resets etc
   // in fact, data is linked to table state...
@@ -162,6 +252,7 @@ public class MediatorImpl implements Mediator {
         @Override
         public void run() {
           if (! myTicket.equals(ticket)) return;
+          // todo check for continuation right here
           myTableModel.appendData(result, parents);
           if (myController.isEmpty()) {
             myTableModel.restore();
@@ -216,11 +307,11 @@ public class MediatorImpl implements Mediator {
     }
 
     @CalledInAwt
-    public void reset() {
+    public void reset(boolean noFilters) {
       mySuspend = false;
       myForcedStop = false;
       myRecentCut = 0;
-      myTableModel.clear();
+      myTableModel.clear(noFilters);
     }
 
     @CalledInAwt

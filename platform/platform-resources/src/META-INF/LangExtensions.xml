@@ -67,9 +67,6 @@
   <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
                       serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>
 
-  <applicationService serviceInterface="com.intellij.pom.references.PomReferenceService"
-                  serviceImplementation="com.intellij.pom.references.PomReferenceServiceImpl"/>
-
   <projectService serviceInterface="com.intellij.pom.references.PomService"
                   serviceImplementation="com.intellij.pom.references.PomServiceImpl"/>
 
@@ -149,6 +146,15 @@
 
   <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitThread"
       serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
+
+  <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
+                      serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
+
+  <applicationService serviceInterface="com.intellij.ide.util.PsiNavigationSupport"
+                      serviceImplementation="com.intellij.ide.util.PsiNavigationSupportImpl"/>
+
+  <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
+                      serviceImplementation="com.intellij.psi.impl.source.codeStyle.IndentHelperImpl"/>
 
   <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                   serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
@@ -275,8 +281,10 @@
 
   <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
                   serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
-  <projectService serviceInterface="com.intellij.psi.impl.file.impl.ResolveScopeManager"
-                  serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManager"/>
+  <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
+                  serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
+  <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"
+                  serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
 
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="general"/>

@@ -109,7 +109,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
           }
         }
 
-        StepType stepType = myMediator.appendResult(myTicket, buffer, parents);
+        StepType stepType = myMediator.appendResult(myTicket, buffer, parents, myRootHolder.getRoot(), true);
         if (! StepType.FINISHED.equals(myStepType)) {
           myStepType = stepType;
         }

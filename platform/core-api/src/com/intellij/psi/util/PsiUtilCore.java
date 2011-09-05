@@ -17,8 +17,12 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -37,5 +41,23 @@ public class PsiUtilCore {
 
     final Language lang = node.getElementType().getLanguage();
     return lang == Language.ANY ? getNotAnyLanguage(node.getTreeParent()) : lang;
+  }
+
+  @Nullable
+  public static VirtualFile getVirtualFile(@Nullable PsiElement element) {
+    if (element == null || !element.isValid()) {
+      return null;
+    }
+
+    if (element instanceof PsiFileSystemItem) {
+      return ((PsiFileSystemItem)element).getVirtualFile();
+    }
+
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) {
+      return null;
+    }
+
+    return containingFile.getVirtualFile();
   }
 }

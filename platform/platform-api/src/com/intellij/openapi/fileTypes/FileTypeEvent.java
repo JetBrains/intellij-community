@@ -17,12 +17,8 @@ package com.intellij.openapi.fileTypes;
 
 import java.util.EventObject;
 
-public class FileTypeEvent extends EventObject{
-  public FileTypeEvent(FileTypeManager manager) {
-    super(manager);
-  }
-
-  public FileTypeManager getManager(){
-    return (FileTypeManager) getSource();
+public class FileTypeEvent extends EventObject {
+  public FileTypeEvent(Object source) {
+    super(source);
   }
 }

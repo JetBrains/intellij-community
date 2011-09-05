@@ -58,7 +58,9 @@ public abstract class EncodingManager {
 
   public abstract void setUseUTFGuessing(VirtualFile virtualFile, boolean useUTFGuessing);
 
-  public abstract boolean isNative2AsciiForPropertiesFiles(VirtualFile virtualFile);
+  public abstract boolean isNative2Ascii(@NotNull VirtualFile virtualFile);
+
+  public abstract boolean isNative2AsciiForPropertiesFiles();
 
   public abstract void setNative2AsciiForPropertiesFiles(VirtualFile virtualFile, boolean native2Ascii);
 

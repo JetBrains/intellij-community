@@ -93,7 +93,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileSystem#getProtocol
    */
   @NotNull
-  public abstract String getUrl();
+  public String getUrl() {
+    return VirtualFileManager.constructUrl(getFileSystem().getProtocol(), getPath());
+  }
 
   /**
    * Fetches "presentable URL" of this file. "Presentable URL" is a string to be used for displaying this

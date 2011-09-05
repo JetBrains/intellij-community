@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,15 @@ import java.util.List;
  * @see ProjectRootManager#getFileIndex()
  */
 public interface ProjectFileIndex extends FileIndex {
+  class SERVICE {
+    private SERVICE() {
+    }
+
+    public static ProjectFileIndex getInstance(Project project) {
+      return ServiceManager.getService(project, ProjectFileIndex.class);
+    }
+  }
+
   /**
    * Returns module to which the specified file belongs.
    *

@@ -17,7 +17,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.caches.FileContent;
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
-import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
@@ -215,7 +214,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   public void navigate(boolean requestFocus) {
-    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+    PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
 
   public synchronized PsiElement findElementAt(int offset) {

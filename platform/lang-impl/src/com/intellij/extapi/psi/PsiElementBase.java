@@ -16,19 +16,16 @@
 
 package com.intellij.extapi.psi;
 
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
-import com.intellij.psi.impl.file.impl.ResolveScopeManager;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -203,7 +200,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   public void navigate(boolean requestFocus) {
-    final Navigatable descriptor = EditSourceUtil.getDescriptor(this);
+    final Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
     if (descriptor != null) descriptor.navigate(requestFocus);
   }
 
@@ -212,7 +209,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   public boolean canNavigateToSource() {
-    final Navigatable descriptor = EditSourceUtil.getDescriptor(this);
+    final Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
     return descriptor != null && descriptor.canNavigateToSource();
   }
 

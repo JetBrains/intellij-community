@@ -357,7 +357,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (!SourceTreeToPsiMap.hasTreeElement(file)) {
       return false;
     }
-    IndentHelper indentHelper = HelperFactory.createHelper(file.getFileType(), myProject);
     CharSequence chars = file.getViewProvider().getContents();
     int start = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
     if (start > 0 && chars.charAt(start) != '\n' && chars.charAt(start) != '\r') {
@@ -384,7 +383,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
     */
     if (getSettings().KEEP_FIRST_COLUMN_COMMENT && isCommentToken(element)) {
-      if (indentHelper.getIndent(element, true) == 0) {
+      if (IndentHelper.getInstance().getIndent(myProject, file.getFileType(), element, true) == 0) {
         return false;
       }
     }
@@ -524,9 +523,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   public Indent getIndent(String text, FileType fileType) {
-    int indent = HelperFactory.createHelper(fileType, myProject).getIndent(text, true);
-    int indenLevel = indent / IndentHelper.INDENT_FACTOR;
-    int spaceCount = indent - indenLevel * IndentHelper.INDENT_FACTOR;
+    int indent = IndentHelperImpl.getIndent(myProject, fileType, text, true);
+    int indenLevel = indent / IndentHelperImpl.INDENT_FACTOR;
+    int spaceCount = indent - indenLevel * IndentHelperImpl.INDENT_FACTOR;
     return new IndentImpl(getSettings(), indenLevel, spaceCount, fileType);
   }
 
@@ -551,7 +550,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
         }
       }
     }
-    return HelperFactory.createHelper(fileType, myProject).fillIndent(indentLevel * IndentHelper.INDENT_FACTOR + spaceCount);
+    return IndentHelperImpl.fillIndent(myProject, fileType, indentLevel * IndentHelperImpl.INDENT_FACTOR + spaceCount);
   }
 
   public Indent zeroIndent() {

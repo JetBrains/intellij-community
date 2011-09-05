@@ -22,6 +22,7 @@ public class WireNumberCommitDecoration implements CommitI {
   private int myWireNumber;
 
   public WireNumberCommitDecoration(CommitI delegate) {
+    assert ! (delegate instanceof WireNumberCommitDecoration);
     myDelegate = delegate;
   }
 

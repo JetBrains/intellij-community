@@ -189,9 +189,15 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     EncodingProjectManager.getInstance(project).setUseUTFGuessing(virtualFile, useUTFGuessing);
   }
 
-  public boolean isNative2AsciiForPropertiesFiles(final VirtualFile virtualFile) {
+  public boolean isNative2Ascii(@NotNull final VirtualFile virtualFile) {
     Project project = guessProject(virtualFile);
-    return project != null && EncodingProjectManager.getInstance(project).isNative2AsciiForPropertiesFiles(virtualFile);
+    return project != null && EncodingProjectManager.getInstance(project).isNative2Ascii(virtualFile);
+  }
+
+  @Override
+  public boolean isNative2AsciiForPropertiesFiles() {
+    Project project = guessProject(null);
+    return project != null && EncodingProjectManager.getInstance(project).isNative2AsciiForPropertiesFiles();
   }
 
   public void setNative2AsciiForPropertiesFiles(final VirtualFile virtualFile, final boolean native2Ascii) {

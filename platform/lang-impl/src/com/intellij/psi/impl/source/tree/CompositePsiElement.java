@@ -16,7 +16,7 @@
 
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
-import com.intellij.psi.impl.file.impl.ResolveScopeManager;
+import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -230,11 +230,11 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public void navigate(boolean requestFocus) {
-    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+    PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
 
   public boolean canNavigate() {
-    return EditSourceUtil.canNavigate(this);
+    return PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
   public boolean canNavigateToSource() {

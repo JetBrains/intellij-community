@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,7 +62,7 @@ import java.util.ArrayList;
  * @see Presentation
  * @see ActionPlaces
  */
-public abstract class AnAction {
+public abstract class AnAction implements PossiblyDumbAware {
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
   @NonNls public static final String ourClientProperty = "AnAction.shortcutSet";
 

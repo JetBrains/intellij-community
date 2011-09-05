@@ -17,7 +17,7 @@
 package com.intellij.psi.impl.cache.impl.todo;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
@@ -42,7 +42,7 @@ public abstract class LexerBasedTodoIndexer implements DataIndexer<TodoIndexEntr
       filterLexer.advance();
     }
     final Map<TodoIndexEntry,Integer> map = new HashMap<TodoIndexEntry, Integer>();
-    for (IndexPattern indexPattern : CacheUtil.getIndexPatterns()) {
+    for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
       final int count = todoOccurrenceConsumer.getOccurrenceCount(indexPattern);
       if (count > 0) {
         map.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);

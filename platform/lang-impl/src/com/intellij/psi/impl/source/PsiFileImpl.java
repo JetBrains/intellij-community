@@ -18,7 +18,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.ide.caches.FileContent;
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
@@ -41,7 +41,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
-import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -58,8 +57,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.IndexingStamp;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -227,11 +224,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
     }
 
-    if (getViewProvider().isEventSystemEnabled()) {
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myManager.getProject());
-      if (documentManager instanceof PsiDocumentManagerImpl) {
-        ((PsiDocumentManagerImpl)documentManager).contentsLoaded(this);
-      }
+    if (getViewProvider().isEventSystemEnabled() && isPhysical()) {
+      VirtualFile vFile = getViewProvider().getVirtualFile();
+      final Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
+      if (document != null) TextBlock.get(this).clear();
     }
 
     return treeElement;
@@ -604,17 +600,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final VirtualFile vFile = getVirtualFile();
     if (!(vFile instanceof VirtualFileWithId)) return null;
 
-    StubTree stubHolder = StubTree.readOrBuild(getProject(), vFile);
+    StubTree stubHolder = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile);
     if (stubHolder == null) return null;
     
     final IElementType contentElementType = getContentElementType();
     if (!(contentElementType instanceof IStubFileElementType)) {
       final FileViewProvider viewProvider = getViewProvider();
       throw new AssertionError("A stub in a non-stub file '" + vFile +"'; isValid()=" + vFile.isValid() + 
-                               "; IndexStamp="+ IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID) +
+                               "; IndexStamp="+ StubTreeLoader.getInstance().getStubTreeTimestamp(vFile)  +
                                "; Type: " + contentElementType + "; " +
                                "Psi roots: " + viewProvider.getAllFiles() + "; " +
-                               " StubUpdatingIndex.canHaveStub(vFile)=" + StubUpdatingIndex.canHaveStub(vFile) + 
+                               " StubUpdatingIndex.canHaveStub(vFile)=" + StubTreeLoader.getInstance().canHaveStub(vFile) +
                                " content:<<<\n"+
                                StringUtil.first(viewProvider.getContents(),200,true)+
                                "\n>>>; stubs=" + stubHolder.getPlainList());
@@ -846,11 +842,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public void navigate(boolean requestFocus) {
-    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+    PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
 
   public boolean canNavigate() {
-    return EditSourceUtil.canNavigate(this);
+    return PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
   public boolean canNavigateToSource() {
@@ -888,7 +884,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           builder.append("\n\t").append("getTreeElementNoLock() = ").append(getTreeElementNoLock());
           final VirtualFile vFile = getVirtualFile();
           builder.append("\n\t").append("vFile instanceof VirtualFileWithId = ").append(vFile instanceof VirtualFileWithId);
-          builder.append("\n\t").append("StubUpdatingIndex.canHaveStub(vFile) = ").append(StubUpdatingIndex.canHaveStub(vFile));
+          builder.append("\n\t").append("StubUpdatingIndex.canHaveStub(vFile) = ").append(StubTreeLoader.getInstance().canHaveStub(vFile));
           LOG.error(builder.toString());
         }
         final StubElement currentStubTree = ((IStubFileElementType)contentElementType).getBuilder().buildStubTree(this);
@@ -951,7 +947,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         }
       }, ModalityState.NON_MODAL);
 
-      FileBasedIndex.getInstance().requestReindex(vFile);
+      StubTreeLoader.getInstance().rebuildStubTree(vFile);
     }
   }
 

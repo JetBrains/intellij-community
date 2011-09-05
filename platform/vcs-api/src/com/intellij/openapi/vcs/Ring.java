@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -48,8 +51,17 @@ public abstract class Ring<T extends Comparable<T>> {
 
   public void back(final T number) {
     final int idx = Collections.binarySearch(myFreeNumbers, number);
-    assert idx < 0;
+    // todo remove
+    if (idx >= 0) {
+      System.out.println("* " + number);
+    }
+    assert idx < 0 || idx >= myFreeNumbers.size();
     myFreeNumbers.add(- idx - 1, number);
+  }
+  
+  // todo debug
+  public boolean haveInFree(final T t) {
+    return myFreeNumbers.contains(t);
   }
 
   public boolean minus(final T t) {
@@ -118,5 +130,19 @@ public abstract class Ring<T extends Comparable<T>> {
     public boolean isNumUsed(final int num) {
       return (num < myNextAvailable) && (! myFreeNumbers.contains(num));
     }
+  }
+
+  @Override
+  public String toString() {
+    return "Ring{" +
+           "myFreeNumbers=" + StringUtil.join(myFreeNumbers, new Function<T, String>() {
+      @Override
+      public String fun(T t) {
+        return t.toString();
+      }
+    }, ",") +
+           ", myFirst=" + myFirst +
+           ", myNextAvailable=" + myNextAvailable +
+           '}';
   }
 }

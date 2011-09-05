@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -253,6 +254,23 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         _saveDocument(document);
       }
     });
+  }
+
+  @Override
+  public void saveDocumentAsIs(@NotNull Document document) {
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+
+    String trailer = editorSettings.getStripTrailingSpaces();
+    boolean ensureEOLonEOF = editorSettings.isEnsureNewLineAtEOF();
+    editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    editorSettings.setEnsureNewLineAtEOF(false);
+    try {
+      saveDocument(document);
+    }
+    finally {
+      editorSettings.setStripTrailingSpaces(trailer);
+      editorSettings.setEnsureNewLineAtEOF(ensureEOLonEOF);
+    }
   }
 
   private void _saveDocument(@NotNull final Document document) {

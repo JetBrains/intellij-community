@@ -19,7 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.impl.PsiBuilderImpl;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -82,7 +82,7 @@ public class DebugUtil {
   }
 
   public static /*final*/ boolean CHECK = false;
-  public static final boolean DO_EXPENSIVE_CHECKS = ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
+  public static final boolean DO_EXPENSIVE_CHECKS = ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isUnitTestMode();
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = DO_EXPENSIVE_CHECKS;
 
   public static String psiTreeToString(@NotNull final PsiElement element, final boolean skipWhitespaces) {

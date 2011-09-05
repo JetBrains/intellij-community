@@ -97,7 +97,7 @@ public class VariableOfTypeMacro implements Macro {
         }
       }
 
-      PsiType type1 = var.getType();
+      PsiType type1 = VariableTypeCalculator.getVarTypeAt(var, place);
       if (type == null || type.isAssignableFrom(type1)) {
         array.add(var);
       }

@@ -18,7 +18,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
+import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -42,7 +42,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   private final FileTypeManager myFileTypeManager;
   private final DirectoryIndex myDirectoryIndex;
   private final ContentFilter myContentFilter;
-  private final ProjectFileExclusionManager myFileExclusionManager;
+  private final ProjectFileExclusionManagerImpl myFileExclusionManager;
 
   public ProjectFileIndexImpl(@NotNull Project project, @NotNull DirectoryIndex directoryIndex, @NotNull FileTypeManager fileTypeManager) {
     myProject = project;
@@ -50,7 +50,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     myDirectoryIndex = directoryIndex;
     myFileTypeManager = fileTypeManager;
     myContentFilter = new ContentFilter();
-    myFileExclusionManager = ProjectFileExclusionManager.getInstance(project);
+    myFileExclusionManager = ProjectFileExclusionManagerImpl.getInstance(project);
   }
 
   public boolean iterateContent(@NotNull ContentIterator iterator) {

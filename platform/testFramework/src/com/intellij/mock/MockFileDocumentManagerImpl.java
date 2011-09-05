@@ -57,6 +57,10 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   }
 
   @Override
+  public void saveDocumentAsIs(@NotNull Document document) {
+  }
+
+  @Override
   @NotNull
   public Document[] getUnsavedDocuments() {
     return new Document[0];

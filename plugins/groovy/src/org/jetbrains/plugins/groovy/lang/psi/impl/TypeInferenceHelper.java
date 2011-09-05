@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.*;
@@ -25,16 +26,12 @@ import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AssertionInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -44,6 +41,9 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefin
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -57,46 +57,86 @@ public class TypeInferenceHelper {
     return RecursionManager.doPreventingRecursion(refExpr, true, new Computable<PsiType>() {
       @Override
       public PsiType compute() {
-        @SuppressWarnings("unchecked") GroovyPsiElement scope =
-          PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrClosableBlock.class, GrClassInitializer.class, GroovyFileBase.class);
-        if (scope instanceof GrMethod) {
-          scope = ((GrMethod)scope).getBlock();
-        }
-        else if (scope instanceof GrClassInitializer) {
-          scope = ((GrClassInitializer)scope).getBlock();
+        final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
+        if (scope == null) return null;
+
+        final Instruction[] flow = scope.getControlFlow();
+        ReadWriteVariableInstruction instruction = findInstruction(refExpr, flow);
+        if (instruction == null) return null;
+        
+        if (instruction.isWrite()) {
+          return getInitializerType(refExpr);
         }
 
-        if (scope != null) {
-          final Instruction[] flow = ((GrControlFlowOwner)scope).getControlFlow();
-          ReadWriteVariableInstruction instruction = findInstruction(refExpr, flow);
-          if (instruction == null) {
-            return null;
-          }
-          if (instruction.isWrite()) {
-            return getInitializerType(refExpr);
-          }
-
-          final Pair<ReachingDefinitionsDfaInstance, List<TIntObjectHashMap<TIntHashSet>>> pair = getDefUseMaps((GrControlFlowOwner)scope);
-
-          final int varIndex = pair.first.getVarIndex(refExpr.getReferenceName());
-          final TIntObjectHashMap<TIntHashSet> allDefs = pair.second.get(instruction.num());
-          final TIntHashSet varDefs = allDefs.get(varIndex);
-          if (varDefs != null) {
-            PsiType result = null;
-            for (int defIndex : varDefs.toArray()) {
-              PsiType defType = getDefinitionType(flow[defIndex]);
-              if (defType != null) {
-                defType = TypesUtil.boxPrimitiveType(defType, scope.getManager(), scope.getResolveScope());
-                result = result == null ? defType : TypesUtil.getLeastUpperBound(result, defType, scope.getManager());
-              }
-            }
-            return result;
-          }
-        }
-        return null;
+        return getInferredType(refExpr.getReferenceName(), instruction, flow, scope);
       }
 
     });
+  }
+  
+  @Nullable
+  public static PsiType getInferredType(@NotNull PsiElement place, String variableName) {
+    final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(place);
+    if (scope == null) return null;
+
+    final Instruction[] flow = scope.getControlFlow();
+    Instruction instruction = findInstructionAt(place, flow);
+    if (instruction == null) return null;
+
+    return getInferredType(variableName, instruction, flow, scope);
+  }
+
+  @Nullable
+  private static Instruction findInstructionAt(PsiElement place, Instruction[] flow) {
+    List<Instruction> applicable = new ArrayList<Instruction>();
+    for (Instruction instruction : flow) {
+      final PsiElement element = instruction.getElement();
+      if (element == null) continue;
+
+      if (element == place) return instruction;
+
+      if (PsiTreeUtil.isAncestor(element, place, true)) {
+        applicable.add(instruction);
+      }
+    }
+    if (applicable.size() == 0) return null;
+
+    Collections.sort(applicable, new Comparator<Instruction>() {
+      @Override
+      public int compare(Instruction o1, Instruction o2) {
+        final TextRange t1 = o1.getElement().getTextRange();
+        final TextRange t2 = o2.getElement().getTextRange();
+        final int s1 = t1.getStartOffset();
+        final int s2 = t2.getStartOffset();
+
+        if (s1 == s2) {
+          return t1.getEndOffset() - t2.getEndOffset();
+        }
+        return s2 - s1;
+      }
+    });
+
+    return applicable.get(0);
+  }
+
+  @Nullable
+  private static PsiType getInferredType(String varName, Instruction instruction, Instruction[] flow, GrControlFlowOwner scope) {
+    final Pair<ReachingDefinitionsDfaInstance, List<TIntObjectHashMap<TIntHashSet>>> pair = getDefUseMaps(scope);
+
+    final int varIndex = pair.first.getVarIndex(varName);
+    final TIntObjectHashMap<TIntHashSet> allDefs = pair.second.get(instruction.num());
+    final TIntHashSet varDefs = allDefs.get(varIndex);
+    if (varDefs == null) return null;
+
+    PsiType result = null;
+    for (int defIndex : varDefs.toArray()) {
+      PsiType defType = getDefinitionType(flow[defIndex]);
+      if (defType != null) {
+        defType = TypesUtil.boxPrimitiveType(defType, scope.getManager(), scope.getResolveScope());
+        result = result == null ? defType : TypesUtil.getLeastUpperBound(result, defType, scope.getManager());
+      }
+    }
+    return result;
   }
 
   private static Pair<ReachingDefinitionsDfaInstance, List<TIntObjectHashMap<TIntHashSet>>> getDefUseMaps(final GrControlFlowOwner scope) {
@@ -156,7 +196,7 @@ public class TypeInferenceHelper {
 
 
   @Nullable
-  public static ReadWriteVariableInstruction findInstruction(final GrReferenceExpression refExpr, final Instruction[] flow) {
+  private static ReadWriteVariableInstruction findInstruction(final GrReferenceExpression refExpr, final Instruction[] flow) {
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction && instruction.getElement() == refExpr) {
         return (ReadWriteVariableInstruction)instruction;
@@ -164,7 +204,7 @@ public class TypeInferenceHelper {
     }
     return null;
   }
-
+  
   @Nullable
   public static PsiType getInitializerType(final PsiElement element) {
     if (element instanceof GrReferenceExpression && ((GrReferenceExpression) element).getQualifierExpression() == null) {

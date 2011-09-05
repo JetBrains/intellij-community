@@ -19,7 +19,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.impl.file.impl.ResolveScopeManager;
+import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;

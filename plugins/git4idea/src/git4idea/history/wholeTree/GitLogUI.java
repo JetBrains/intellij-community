@@ -22,6 +22,7 @@ import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.Splitter;
@@ -37,6 +38,7 @@ import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.ui.SearchFieldAction;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -88,6 +90,7 @@ public class GitLogUI implements Disposable {
   private final SymbolicRefs myRecalculatedCommon;
   private UIRefresh myUIRefresh;
   private JBTable myJBTable;
+  private GraphGutter myGraphGutter;
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
   final List<CommitI> myCommitsInRepositoryChangesBrowser;
   private boolean myDataBeingAdded;
@@ -172,6 +175,7 @@ public class GitLogUI implements Disposable {
       @Override
       public void acceptException(Exception e) {
         LOG.info(e);
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, e.getMessage(), MessageType.ERROR);
       }
 
       @Override
@@ -225,6 +229,8 @@ public class GitLogUI implements Disposable {
   private void start() {
     myStarted = true;
     myMyChangeListener.start();
+    myGraphGutter.setRowHeight(myJBTable.getRowHeight());
+    myGraphGutter.start();
     rootsChanged(myRootsUnderVcs);
   }
 
@@ -575,6 +581,9 @@ public class GitLogUI implements Disposable {
     });
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myJBTable);
+    myGraphGutter = new GraphGutter(myTableModel);
+    myGraphGutter.setJBTable(myJBTable);
+    myGraphGutter.setTableViewPort(scrollPane.getViewport());
 
     new AdjustComponentWhenShown() {
       @Override
@@ -592,6 +601,10 @@ public class GitLogUI implements Disposable {
       @Override
       public void run() {
         updateByScroll();
+        // todo uncomment for git tree
+        /*if (myGraphGutter.getComponent().isVisible()) {
+          myGraphGutter.getComponent().repaint();
+        }*/
       }
     });
     scrollPane.getViewport().addChangeListener(myMyChangeListener);
@@ -599,6 +612,9 @@ public class GitLogUI implements Disposable {
     final JPanel wrapper = new DataProviderPanel(new BorderLayout());
     wrapper.add(actionToolbar.getComponent(), BorderLayout.NORTH);
     final JPanel mainBorderWrapper = new JPanel(new BorderLayout());
+    myGraphGutter.getComponent().setVisible(false);
+    // todo uncomment for git tree
+    //mainBorderWrapper.add(myGraphGutter.getComponent(), BorderLayout.WEST);
     mainBorderWrapper.add(scrollPane, BorderLayout.CENTER);
     mainBorderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
     wrapper.add(mainBorderWrapper, BorderLayout.CENTER);
@@ -676,6 +692,8 @@ public class GitLogUI implements Disposable {
     myRootsAction = new MyRootsAction(rootsGetter, myJBTable);
     group.add(myRootsAction);
     group.add(myRefreshAction);
+    // todo debug
+    //group.add(new TestIndexAction());
     myMoreAction = new MoreAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -755,6 +773,8 @@ public class GitLogUI implements Disposable {
     final FontMetrics metrics = myJBTable.getFontMetrics(myJBTable.getFont());
     final int height = metrics.getHeight();
     myJBTable.setRowHeight((int) (height * 1.1) + 1);
+    myGraphGutter.setRowHeight(myJBTable.getRowHeight());
+    myGraphGutter.setHeaderHeight(myJBTable.getTableHeader().getHeight());
     final int dateWidth = metrics.stringWidth("Yesterday 00:00:00  " + scrollPane.getVerticalScrollBar().getWidth()) + columnModel.getColumnMargin();
     final int nameWidth = metrics.stringWidth("Somelong W. UsernameToDisplay");
     int widthWas = 0;
@@ -1122,6 +1142,19 @@ public class GitLogUI implements Disposable {
     myDetailsCache = detailsCache;
   }
 
+  // todo test action
+  private class TestIndexAction extends DumbAwareAction {
+    private TestIndexAction() {
+      super("Test Index", "Test Index", IconLoader.getIcon("/actions/checked.png"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myTableModel.printNavigation();
+      //final BigTableTableModel.WiresGroupIterator iterator = myTableModel.getGroupIterator(myTableModel.getRowCount() - 1);
+    }
+  }
+
   private class MyRefreshAction extends DumbAwareAction {
     private MyRefreshAction() {
       super("Refresh", "Refresh", IconLoader.getIcon("/actions/sync.png"));
@@ -1163,7 +1196,9 @@ public class GitLogUI implements Disposable {
     myCommentSearchContext.clear();
     myUsersSearchContext.clear();
 
+    myGraphGutter.getComponent().setVisible(false);
     if (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected) {
+      myGraphGutter.getComponent().setVisible(true);
       myUsersSearchContext.clear();
       myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters());
     } else {

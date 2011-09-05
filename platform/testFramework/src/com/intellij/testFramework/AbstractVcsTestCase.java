@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author yole
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
-public class AbstractVcsTestCase {
+public abstract class AbstractVcsTestCase {
   protected boolean myTraceClient = false;
   protected Project myProject;
   protected VirtualFile myWorkingCopyDir;

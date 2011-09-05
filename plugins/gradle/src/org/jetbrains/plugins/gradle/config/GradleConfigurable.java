@@ -16,10 +16,11 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.ide.util.projectWizard.NamePathComponent;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,10 +28,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -38,15 +43,21 @@ import java.io.File;
 public class GradleConfigurable implements SearchableConfigurable {
 
   @NonNls public static final String HELP_TOPIC = "reference.settingsdialog.project.gradle";
-  
+
   private final GradleLibraryManager myLibraryManager = GradleLibraryManager.INSTANCE;
+  private final Alarm                myAlarm          = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Project myProject;
 
-  private JPanel            myComponent;
-  private NamePathComponent myPathComponent;
-  
+  private GradleHomeSettingType myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
+
+  private JComponent         myComponent;
+  private NamePathComponent  myGradleHomeComponent;
+  private boolean            myPathManuallyModified;
+
   public GradleConfigurable(@Nullable Project project) {
     myProject = project;
+    doCreateComponent();
+    deduceGradleHomeIfPossible();
   }
 
   @NotNull
@@ -68,6 +79,13 @@ public class GradleConfigurable implements SearchableConfigurable {
 
   @Override
   public JComponent createComponent() {
+    if (myComponent == null) {
+      doCreateComponent();
+    }
+    return myComponent;
+  }
+
+  private void doCreateComponent() {
     myComponent = new JPanel(new GridBagLayout());
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridwidth = GridBagConstraints.REMAINDER;
@@ -76,35 +94,41 @@ public class GradleConfigurable implements SearchableConfigurable {
     constraints.fill = GridBagConstraints.HORIZONTAL;
     constraints.anchor = GridBagConstraints.NORTH;
 
-    myPathComponent = new NamePathComponent(
+    myGradleHomeComponent = new NamePathComponent(
       "", GradleBundle.message("gradle.import.text.home.path"), GradleBundle.message("gradle.import.text.home.path"), "",
       false,
       false
     );
-    myPathComponent.setNameComponentVisible(false);
-    myComponent.add(myPathComponent, constraints);
+    myGradleHomeComponent.getPathComponent().addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyTyped(KeyEvent e) {
+        useNormalColorForPath();
+        myPathManuallyModified = true;
+      }
+    });
+    myGradleHomeComponent.setNameComponentVisible(false);
+    myComponent.add(myGradleHomeComponent, constraints);
     myComponent.add(Box.createVerticalGlue());
-    return myComponent;
   }
 
   @Override
   public boolean isModified() {
-    if (!myPathComponent.isPathChangedByUser()) {
+    if (!myPathManuallyModified) {
       return false;
     }
-    String newPath = myPathComponent.getPath();
+    String newPath = myGradleHomeComponent.getPath();
     String oldPath = GradleSettings.getInstance(myProject).GRADLE_HOME;
     boolean modified = newPath == null ? oldPath == null : !newPath.equals(oldPath);
     if (modified) {
       useNormalColorForPath();
-    } 
+    }
     return modified;
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     useNormalColorForPath();
-    GradleSettings.getInstance(myProject).GRADLE_HOME = myPathComponent.getPath();
+    GradleSettings.getInstance(myProject).GRADLE_HOME = myGradleHomeComponent.getPath();
   }
 
   @Override
@@ -112,32 +136,45 @@ public class GradleConfigurable implements SearchableConfigurable {
     useNormalColorForPath();
     String valueToUse = GradleSettings.getInstance(myProject).GRADLE_HOME;
     if (!StringUtil.isEmpty(valueToUse)) {
-      myPathComponent.setPath(valueToUse);
-      return; 
+      myGradleHomeSettingType = myLibraryManager.isGradleSdkHome(new File(valueToUse)) ?
+                                GradleHomeSettingType.EXPLICIT_CORRECT :
+                                GradleHomeSettingType.EXPLICIT_INCORRECT;
+      if (myGradleHomeSettingType == GradleHomeSettingType.EXPLICIT_INCORRECT) {
+        new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType).run();
+      }
+      myGradleHomeComponent.setPath(valueToUse);
+      return;
     }
-    deduceGradleHomeIfPossible();  
+    myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
+    deduceGradleHomeIfPossible();
   }
 
   private void useNormalColorForPath() {
-    myPathComponent.getPathComponent().setForeground(UIManager.getColor("TextField.foreground"));
+    myGradleHomeComponent.getPathComponent().setForeground(UIManager.getColor("TextField.foreground"));
   }
-  
+
   /**
    * Updates GUI of the gradle configurable in order to show deduced path to gradle (if possible).
    */
   private void deduceGradleHomeIfPossible() {
     File gradleHome = myLibraryManager.getGradleHome(myProject);
     if (gradleHome == null) {
+      new DelayedBalloonInfo(MessageType.WARNING, GradleHomeSettingType.UNKNOWN).run();
       return;
     }
-    myPathComponent.setPath(gradleHome.getPath());
-    myPathComponent.getPathComponent().setForeground(UIManager.getColor("TextField.inactiveForeground"));
+    myGradleHomeSettingType = GradleHomeSettingType.DEDUCED;
+    new DelayedBalloonInfo(MessageType.INFO, GradleHomeSettingType.DEDUCED).run();
+    if (myGradleHomeComponent != null) {
+      myGradleHomeComponent.setPath(gradleHome.getPath());
+      myGradleHomeComponent.getPathComponent().setForeground(UIManager.getColor("TextField.inactiveForeground"));
+    }
   }
-  
+
   @Override
   public void disposeUIResources() {
     myComponent = null;
-    myPathComponent = null;
+    myGradleHomeComponent = null;
+    myPathManuallyModified = false;
   }
 
   public Icon getIcon() {
@@ -147,5 +184,49 @@ public class GradleConfigurable implements SearchableConfigurable {
   @NotNull
   public String getHelpTopic() {
     return HELP_TOPIC;
+  }
+
+  /**
+   * @return UI component that manages path to the local gradle distribution to use
+   */
+  @NotNull
+  public NamePathComponent getGradleHomeComponent() {
+    if (myGradleHomeComponent == null) {
+      createComponent();
+    }
+    return myGradleHomeComponent;
+  }
+
+  @NotNull
+  public GradleHomeSettingType getCurrentGradleHomeSettingType() {
+    String path = myGradleHomeComponent.getPath();
+    if (path == null || StringUtil.isEmpty(path.trim())) {
+      return GradleHomeSettingType.UNKNOWN;
+    }
+    if (isModified()) {
+      return myLibraryManager.isGradleSdkHome(new File(path)) ? GradleHomeSettingType.EXPLICIT_CORRECT
+                                                              : GradleHomeSettingType.EXPLICIT_INCORRECT;
+    }
+    return myGradleHomeSettingType;
+  }
+
+  private class DelayedBalloonInfo implements Runnable {
+    private final MessageType myMessageType;
+    private final String      myText;
+
+    DelayedBalloonInfo(@NotNull MessageType messageType, @NotNull GradleHomeSettingType settingType) {
+      myMessageType = messageType;
+      myText = settingType.getDescription();
+    }
+
+    @Override
+    public void run() {
+      if (myGradleHomeComponent == null || !myGradleHomeComponent.getPathComponent().isShowing()) {
+        myAlarm.cancelAllRequests();
+        myAlarm.addRequest(this, (int)TimeUnit.MILLISECONDS.toMillis(200));
+        return;
+      }
+      GradleUtil.showBalloon(myGradleHomeComponent.getPathComponent(), myMessageType, myText);
+    }
   }
 }

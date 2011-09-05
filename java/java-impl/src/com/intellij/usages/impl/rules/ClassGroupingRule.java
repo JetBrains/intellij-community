@@ -41,7 +41,7 @@ import javax.swing.*;
  * @author max
  */
 public class ClassGroupingRule implements UsageGroupingRule {
-  public UsageGroup groupUsage(Usage usage) {
+  public UsageGroup groupUsage(@NotNull Usage usage) {
     if (!(usage instanceof PsiElementUsage)) {
       return null;
     }

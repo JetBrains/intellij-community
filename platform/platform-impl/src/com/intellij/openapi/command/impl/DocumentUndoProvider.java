@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -70,10 +71,10 @@ class DocumentUndoProvider implements Disposable {
     }
 
     private boolean shouldRecordActions(final Document document) {
-      if (document.getUserData(UndoManager.DONT_RECORD_UNDO) == Boolean.TRUE) return false;
+      if (document.getUserData(UndoConstants.DONT_RECORD_UNDO) == Boolean.TRUE) return false;
 
       final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-      return vFile == null || vFile.getUserData(UndoManager.DONT_RECORD_UNDO) != Boolean.TRUE;
+      return vFile == null || vFile.getUserData(UndoConstants.DONT_RECORD_UNDO) != Boolean.TRUE;
     }
 
     private boolean allEditorsAreViewersFor(Document document) {

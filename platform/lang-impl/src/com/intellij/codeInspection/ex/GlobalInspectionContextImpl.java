@@ -26,6 +26,7 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.concurrency.JobUtil;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -572,7 +573,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
           LOG.error("In file: " + file, e);
         }
         finally {
-          psiManager.dropFileCaches(file);
+          InjectedLanguageManager.getInstance(myProject).dropFileCaches(file);
         }
       }
     });

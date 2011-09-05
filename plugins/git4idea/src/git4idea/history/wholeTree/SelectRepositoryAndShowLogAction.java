@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -266,7 +267,7 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
       super(project, true);
       myProject = project;
       myVirtualFiles = virtualFiles;
-      myGitLog = new LogFactoryService(myProject).createComponent(false);
+      myGitLog = new LogFactoryService(myProject, ServiceManager.getService(GitCommitsSequentially.class)).createComponent(false);
       myGitLog.rootsChanged(myVirtualFiles);
       Disposer.register(getDisposable(), myGitLog);
       new AdjustComponentWhenShown() {

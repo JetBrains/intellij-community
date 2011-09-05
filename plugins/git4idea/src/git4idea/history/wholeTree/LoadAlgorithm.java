@@ -30,15 +30,17 @@ public class LoadAlgorithm {
   private final List<LoaderAndRefresher<CommitHashPlusParents>> myLoaders;
   private final List<ByRootLoader> myShortLoaders;
   private final Continuation myContinuation;
+  private final GitCommitsSequentially myGitCommitsSequentially;
 
   public LoadAlgorithm(final Project project,
                        final List<LoaderAndRefresher<CommitHashPlusParents>> loaders,
                        final List<ByRootLoader> shortLoaders,
-                       Continuation continuation) {
+                       Continuation continuation, final GitCommitsSequentially gitCommitsSequentially) {
     myProject = project;
     myLoaders = loaders;
     myShortLoaders = shortLoaders;
     myContinuation = continuation;
+    myGitCommitsSequentially = gitCommitsSequentially;
   }
 
   public void fillContinuation() {
@@ -52,6 +54,9 @@ public class LoadAlgorithm {
     for (ByRootLoader shortLoader : myShortLoaders) {
       initContext.next(shortLoader);
     }
+    /*for (ByRootLoader shortLoader : myShortLoaders) {
+      myGitCommitsSequentially.pushUpdate(myProject, shortLoader.getRootHolder().getRoot(), initContext);
+    }*/
     myContinuation.add(initContext.getList());
   }
 

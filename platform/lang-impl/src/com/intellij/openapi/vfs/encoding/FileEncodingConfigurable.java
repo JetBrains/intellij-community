@@ -117,7 +117,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     boolean same = editing.equals(mapping)
        && Comparing.equal(encodingManager.getDefaultCharsetForPropertiesFiles(null), mySelectedCharsetForPropertiesFiles)
        && encodingManager.isUseUTFGuessing(null) == myAutodetectUTFEncodedFilesCheckBox.isSelected()
-       && encodingManager.isNative2AsciiForPropertiesFiles(null) == myTransparentNativeToAsciiCheckBox.isSelected()
+       && encodingManager.isNative2AsciiForPropertiesFiles() == myTransparentNativeToAsciiCheckBox.isSelected()
       ;
     return !same;
   }
@@ -152,7 +152,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
     myTreeView.reset(encodingManager.getAllMappings());
     myAutodetectUTFEncodedFilesCheckBox.setSelected(encodingManager.isUseUTFGuessing(null));
-    myTransparentNativeToAsciiCheckBox.setSelected(encodingManager.isNative2AsciiForPropertiesFiles(null));
+    myTransparentNativeToAsciiCheckBox.setSelected(encodingManager.isNative2AsciiForPropertiesFiles());
     mySelectedCharsetForPropertiesFiles = encodingManager.getDefaultCharsetForPropertiesFiles(null);
     myAction.update((AnActionEvent)null);
 

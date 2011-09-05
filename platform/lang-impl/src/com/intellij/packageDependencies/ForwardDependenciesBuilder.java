@@ -18,6 +18,7 @@ package com.intellij.packageDependencies;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -151,7 +152,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
           collectedDeps.addAll(found);
 
           psiManager.dropResolveCaches();
-          psiManager.dropFileCaches(file);
+          InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(file);
         }
       }
       collectedDeps.removeAll(processed);

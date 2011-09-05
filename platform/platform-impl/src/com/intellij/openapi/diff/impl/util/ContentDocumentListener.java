@@ -31,10 +31,10 @@ public class ContentDocumentListener implements DiffContent.Listener {
     content.onAssigned(true);
     content.addListener(listener);
     Disposable disposable = new Disposable() {
-        public void dispose() {
-          content.onAssigned(false);
-        }
-      };
+      public void dispose() {
+        content.onAssigned(false);
+      }
+    };
     component.addDisposable(disposable);
   }
 

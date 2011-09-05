@@ -34,7 +34,7 @@ class UsageNodeTreeBuilder {
   private UsageGroupingRule[] myGroupingRules;
   private UsageFilteringRule[] myFilteringRules;
 
-  UsageNodeTreeBuilder(UsageTarget[] targets,
+  UsageNodeTreeBuilder(@NotNull UsageTarget[] targets,
                        @NotNull UsageGroupingRule[] groupingRules,
                        @NotNull UsageFilteringRule[] filteringRules,
                        @NotNull GroupNode root) {
@@ -52,7 +52,7 @@ class UsageNodeTreeBuilder {
     myFilteringRules = rules;
   }
 
-  public boolean isVisible(Usage usage) {
+  public boolean isVisible(@NotNull Usage usage) {
     for (final UsageFilteringRule rule : myFilteringRules) {
       final boolean visible;
       if (rule instanceof UsageFilteringRuleEx) {
@@ -69,7 +69,7 @@ class UsageNodeTreeBuilder {
   }
 
   @Nullable
-  UsageNode appendUsage(Usage usage) {
+  UsageNode appendUsage(@NotNull Usage usage) {
     if (!isVisible(usage)) return null;
 
     GroupNode lastGroupNode = myRoot;

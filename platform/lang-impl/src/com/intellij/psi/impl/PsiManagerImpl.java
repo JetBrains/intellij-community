@@ -24,10 +24,9 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -39,7 +38,6 @@ import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,6 +54,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
   private final Project myProject;
+  private final ProjectFileIndex myProjectFileIndex;
   private final MessageBus myMessageBus;
 
   private final FileManager myFileManager;
@@ -76,12 +75,13 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = Topic.create("ANY_PSI_CHANGE_TOPIC",AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public PsiManagerImpl(Project project,
-                        final ProjectRootManagerEx projectRootManagerEx,
                         StartupManager startupManager,
                         FileDocumentManager fileDocumentManager,
                         PsiBuilderFactory psiBuilderFactory,
+                        ProjectFileIndex projectFileIndex,
                         MessageBus messageBus) {
     myProject = project;
+    myProjectFileIndex = projectFileIndex;
     myMessageBus = messageBus;
 
     //We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
@@ -89,7 +89,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     boolean isProjectDefault = project.isDefault();
 
-    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, projectRootManagerEx);
+    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, projectFileIndex);
 
     myModificationTracker = new PsiModificationTrackerImpl(myProject);
     myTreeChangePreprocessors.add(myModificationTracker);
@@ -125,11 +125,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     beforeChange(false);
   }
 
-  @Override
-  public void dropFileCaches(@NotNull PsiFile file) {
-    InjectedLanguageUtil.clearCachedInjectedFragmentsForFile(file);
-  }
-
   public boolean isInProject(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file instanceof PsiFileImpl && file.isPhysical() && file.getViewProvider().getVirtualFile() instanceof LightVirtualFile) return true;
@@ -151,7 +146,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     }
 
     if (virtualFile != null) {
-      Module module = ModuleUtil.findModuleForFile(virtualFile, element.getProject());
+      Module module = myProjectFileIndex.getModuleForFile(virtualFile);
       return module != null;
     }
     return false;

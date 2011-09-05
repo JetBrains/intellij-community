@@ -33,9 +33,9 @@ IF NOT "%IDEA_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.
 :: ---------------------------------------------------------------------
 SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\idea.exe.vmoptions
 SET ACC=
-FOR /F "delims=" %%i IN (%VM_OPTIONS_FILE%) DO CALL %IDE_BIN_DIR%\append.bat "%%i"
+FOR /F "usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
 
-SET REQUIRED_JVM_ARGS=-Xbootclasspath/a:%IDE_HOME%/lib/boot.jar -Didea.paths.selector=@@system_selector@@ %IDE_PROPERTIES_PROPERTY%
+SET REQUIRED_JVM_ARGS="-Xbootclasspath/a:%IDE_HOME%/lib/boot.jar" -Didea.paths.selector=@@system_selector@@ %IDE_PROPERTIES_PROPERTY%
 SET SPECIAL_JVM_ARGS=
 SET JVM_ARGS=%ACC% %REQUIRED_JVM_ARGS% %SPECIAL_JVM_ARGS% %REQUIRED_IDEA_JVM_ARGS%
 

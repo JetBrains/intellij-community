@@ -17,6 +17,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class FileTypeRegistry {
   public static Getter<FileTypeRegistry> ourInstanceGetter;
+
+  public abstract boolean isFileIgnored(@NonNls @NotNull VirtualFile file);
 
   public static FileTypeRegistry getInstance() {
     return ourInstanceGetter.get();
@@ -44,4 +47,13 @@ public abstract class FileTypeRegistry {
    */
   @NotNull
   public abstract FileType getFileTypeByFile(@NotNull VirtualFile file);
+
+  /**
+   * Returns the file type for the specified file name.
+   *
+   * @param fileName The file name for which the type is requested.
+   * @return The file type instance, or {@link FileTypes#UNKNOWN} if not found.
+   */
+  @NotNull
+  public abstract FileType getFileTypeByFileName(@NotNull @NonNls String fileName);
 }

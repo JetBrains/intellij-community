@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -80,7 +80,7 @@ public class LineStatusTracker {
     myApplication = ApplicationManager.getApplication();
     myDocument = document;
     myUpToDateDocument = upToDateDocument;
-    myUpToDateDocument.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
+    myUpToDateDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     myProject = project;
     myBaseLoaded = BaseLoadState.LOADING;
     myRanges = new ArrayList<Range>();

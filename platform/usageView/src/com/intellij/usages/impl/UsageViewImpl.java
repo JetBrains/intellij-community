@@ -1305,7 +1305,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myRoot;
   }
 
-  public boolean isVisible(Usage usage) {
+  public boolean isVisible(@NotNull Usage usage) {
     return myBuilder != null && myBuilder.isVisible(usage);
   }
 }
