@@ -37,11 +37,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCodeBlock, Constants {
+public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCodeBlock {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCodeBlockImpl");
 
   public PsiCodeBlockImpl(CharSequence text) {
-    super(CODE_BLOCK, text);
+    super(JavaElementType.CODE_BLOCK, text);
   }
 
   public void clearCaches() {
@@ -53,7 +53,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
 
   @NotNull
   public PsiStatement[] getStatements() {
-    return getChildrenAsPsiElements(STATEMENT_BIT_SET, PSI_STATEMENT_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(ElementType.STATEMENT_BIT_SET, Constants.PSI_STATEMENT_ARRAY_CONSTRUCTOR);
   }
 
   public PsiElement getFirstBodyElement() {
@@ -115,8 +115,8 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
         }
       }, ResolveState.initial(), this, this);
 
-      myClassesSet = set1 = (classesSet.isEmpty() ? Collections.<String>emptySet() : classesSet);
-      myVariablesSet = set2 = (localsSet.isEmpty() ? Collections.<String>emptySet() : localsSet);
+      myClassesSet = set1 = classesSet.isEmpty() ? Collections.<String>emptySet() : classesSet;
+      myVariablesSet = set2 = localsSet.isEmpty() ? Collections.<String>emptySet() : localsSet;
       myConflict = wasConflict = conflict.get();
     }
     return wasConflict ? null : Pair.create(set1, set2);
@@ -157,20 +157,20 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
         return null;
 
       case ChildRole.LBRACE:
-        return findChildByType(LBRACE);
+        return findChildByType(JavaTokenType.LBRACE);
 
       case ChildRole.RBRACE:
-        return TreeUtil.findChildBackward(this, RBRACE);
+        return TreeUtil.findChildBackward(this, JavaTokenType.RBRACE);
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == LBRACE) {
+    if (i == JavaTokenType.LBRACE) {
       return getChildRole(child, ChildRole.LBRACE);
     }
-    else if (i == RBRACE) {
+    else if (i == JavaTokenType.RBRACE) {
       return getChildRole(child, ChildRole.RBRACE);
     }
     else {
