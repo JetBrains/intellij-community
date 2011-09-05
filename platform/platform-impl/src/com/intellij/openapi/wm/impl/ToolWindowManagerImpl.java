@@ -580,12 +580,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
               runnable.run();
               return new ActionCallback.Done();
             }
-          }, forced).doWhenProcessed(new Runnable() {
-            @Override
-            public void run() {
-              System.out.println("ToolWindowManagerImpl.run");
-            }
-          });
+          }, forced);
         }
       });
     }
