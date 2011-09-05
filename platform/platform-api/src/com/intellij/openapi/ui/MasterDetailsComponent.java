@@ -638,14 +638,18 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         LOG.error("createComponent() returned null. configurable=" + configurable);
       } else {
         myDetails.setContent(comp);
-        if (!isInitialized(configurable)) {
-          configurable.reset();
-          initializeConfigurable(configurable);
-        }
-         myHistory.pushPlaceForElement(TREE_OBJECT, configurable.getEditableObject());
+        ensureInitialized(configurable);
+        myHistory.pushPlaceForElement(TREE_OBJECT, configurable.getEditableObject());
       }
     } else {
       setEmpty();
+    }
+  }
+
+  public void ensureInitialized(NamedConfigurable configurable) {
+    if (!isInitialized(configurable)) {
+      configurable.reset();
+      initializeConfigurable(configurable);
     }
   }
 
