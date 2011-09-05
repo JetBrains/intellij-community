@@ -98,28 +98,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
 
     private static boolean isStatementContext(PsiElement element) {
-      if (!(element.getParent() instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      if (((PsiReferenceExpression)element.getParent()).isQualified()) {
-        return false;
-      }
-
-
-      if (element.getParent().getParent() instanceof PsiExpressionStatement) {
-        if (
-          psiElement().afterLeaf(
-            psiElement().inside(
-              psiElement(PsiExpression.class).afterLeaf(
-                psiElement().withText("(").withParent(PsiIfStatement.class))))
-            .accepts(element)) {
-          return false;
-        }
-
-        return true;
-      }
-      
-      return false;
+      return Expression.isExpressionContext(element) && element.getParent().getParent() instanceof PsiExpressionStatement;
     }
   }
   public static class Expression extends JavaCodeContextType {
@@ -129,6 +108,10 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
+      return isExpressionContext(element);
+    }
+
+    private static boolean isExpressionContext(PsiElement element) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceExpression)) {
         return false;
@@ -137,6 +120,14 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
       if (parent.getParent() instanceof PsiMethodCallExpression) {
+        return false;
+      }
+      if (
+        psiElement().afterLeaf(
+          psiElement().inside(
+            psiElement(PsiExpression.class).afterLeaf(
+              psiElement().withText("(").withParent(PsiIfStatement.class))))
+          .accepts(element)) {
         return false;
       }
       return true;
