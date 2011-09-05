@@ -28,6 +28,14 @@ public class PyIntroduceFieldTest extends PyIntroduceTestCase {
     doTestSuggestions(PyExpression.class, "s1");
   }
 
+  public void testPy4453() {
+    doTestInplace();
+  }
+
+  public void testPy4414() {
+    doTestInplace();
+  }
+
   @Override
   protected IntroduceHandler createHandler() {
     return new PyIntroduceFieldHandler();

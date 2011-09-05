@@ -1,7 +1,11 @@
 package com.jetbrains.python.refactoring;
 
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyExpression;
@@ -49,6 +53,32 @@ public abstract class PyIntroduceTestCase extends PyLightFixtureTestCase {
     }
     finally {
       myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(inplaceEnabled);
+    }
+  }
+
+  protected void doTestInplace() {
+    String name = getTestName(true);
+    myFixture.configureByFile(name + ".py");
+    final boolean enabled = myFixture.getEditor().getSettings().isVariableInplaceRenameEnabled();
+    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(LightPlatformTestCase.getProject());
+    try {
+      templateManager.setTemplateTesting(true);
+      myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(true);
+
+      IntroduceHandler handler = createHandler();
+      final IntroduceOperation introduceOperation = new IntroduceOperation(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), "a",
+                                                                           false, false);
+      introduceOperation.setReplaceAll(true);
+      handler.performAction(introduceOperation);
+
+      TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
+      assert state != null;
+      state.gotoEnd(false);
+      myFixture.checkResultByFile(name + ".after.py", true);
+    }
+    finally {
+      myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
+      templateManager.setTemplateTesting(false);
     }
   }
 }
