@@ -20,7 +20,7 @@ import java.util.Set;
 public class TypeRepr {
 
     public static abstract class AbstractType implements RW.Writable {
-        public abstract void updateClassUsages(Set<UsageRepr.Usage> s);
+        public abstract void updateClassUsages(String res, Set<UsageRepr.Usage> s);
 
         public abstract String getDescr();
     }
@@ -34,7 +34,7 @@ public class TypeRepr {
         }
 
         @Override
-        public void updateClassUsages(Set<UsageRepr.Usage> s) {
+        public void updateClassUsages(String res, Set<UsageRepr.Usage> s) {
 
         }
 
@@ -82,8 +82,8 @@ public class TypeRepr {
         }
 
         @Override
-        public void updateClassUsages(Set<UsageRepr.Usage> s) {
-            elementType.updateClassUsages(s);
+        public void updateClassUsages(String res, Set<UsageRepr.Usage> s) {
+            elementType.updateClassUsages(res, s);
         }
 
         ArrayType(final AbstractType elementType) {
@@ -120,8 +120,8 @@ public class TypeRepr {
         }
 
         @Override
-        public void updateClassUsages(Set<UsageRepr.Usage> s) {
-            s.add(UsageRepr.createClassUsage(className));
+        public void updateClassUsages(String res, Set<UsageRepr.Usage> s) {
+            s.add(UsageRepr.createClassUsage(res, className));
         }
 
         ClassType(final String className) {

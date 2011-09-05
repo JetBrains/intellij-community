@@ -124,19 +124,19 @@ public class ClassRepr extends Proto {
         return result;
     }
 
-    public void updateClassUsages(final Set<UsageRepr.Usage> s) {
-        superClass.updateClassUsages(s);
+    public void updateClassUsages(final String res, final Set<UsageRepr.Usage> s) {
+        superClass.updateClassUsages(res, s);
 
         for (TypeRepr.AbstractType t : interfaces) {
-            t.updateClassUsages(s);
+            t.updateClassUsages(res, s);
         }
 
         for (MethodRepr m : methods) {
-            m.updateClassUsages(s);
+            m.updateClassUsages(res, s);
         }
 
         for (FieldRepr f : fields) {
-            f.updateClassUsages(s);
+            f.updateClassUsages(res, s);
         }
     }
 
@@ -212,11 +212,22 @@ public class ClassRepr extends Proto {
         return result;
     }
 
-    public UsageRepr.Usage createUsage() {
-        return UsageRepr.createClassUsage(name);
+    public UsageRepr.Usage createUsage(final String res) {
+        return UsageRepr.createClassUsage(res, name);
     }
 
     public StringCache.S getSourceFileName() {
         return sourceFileName;
+    }
+
+    public String getPackageName(){
+        final String raw = name.value;
+        final int index = raw.lastIndexOf('/');
+
+        if (index == -1) {
+            return "";
+        }
+
+        return raw.substring(0, index);
     }
 }

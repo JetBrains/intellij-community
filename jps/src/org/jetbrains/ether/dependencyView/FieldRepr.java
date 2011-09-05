@@ -15,8 +15,8 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class FieldRepr extends ProtoMember {
-    public void updateClassUsages(final Set<UsageRepr.Usage> s) {
-        type.updateClassUsages(s);
+    public void updateClassUsages(final String res, final Set<UsageRepr.Usage> s) {
+        type.updateClassUsages(res, s);
     }
 
     public FieldRepr(final int a, final String n, final String d, final String s, final Object v) {
@@ -48,7 +48,7 @@ public class FieldRepr extends ProtoMember {
         }
     };
 
-    public UsageRepr.Usage createUsage (final StringCache.S owner) {
-        return UsageRepr.createFieldUsage(name.value, owner.value, type.getDescr());
+    public UsageRepr.Usage createUsage (final String res, final StringCache.S owner) {
+        return UsageRepr.createFieldUsage(res, name.value, owner.value, type.getDescr());
     }
 }

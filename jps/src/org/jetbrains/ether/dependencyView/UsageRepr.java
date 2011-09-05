@@ -35,7 +35,35 @@ public class UsageRepr {
         public abstract StringCache.S getOwner();
     }
 
-    public static abstract class FMUsage extends Usage {
+    public static abstract class ResidentialUsage extends Usage {
+        private final Set<StringCache.S> residentialClasses;
+
+        public Set<StringCache.S> getResidentialClasses() {
+            return residentialClasses;
+        }
+
+        public void addResidentialClass(final StringCache.S s) {
+            residentialClasses.add(s);
+        }
+
+        protected ResidentialUsage(final StringCache.S resident) {
+            residentialClasses = new HashSet<StringCache.S>();
+            residentialClasses.add(resident);
+        }
+
+        protected ResidentialUsage(final BufferedReader r) {
+            residentialClasses = (Set<StringCache.S>) RW.readMany(r, StringCache.S.reader, new HashSet<StringCache.S>());
+        }
+
+        protected ResidentialUsage() {
+            residentialClasses = new HashSet<StringCache.S>();
+        }
+        public void write(final BufferedWriter w) {
+            RW.writeln(w, residentialClasses);
+        }
+    }
+
+    public static abstract class FMUsage extends ResidentialUsage {
         public final StringCache.S name;
         public final StringCache.S owner;
 
@@ -44,27 +72,35 @@ public class UsageRepr {
             return owner;
         }
 
-        private FMUsage(final String n, final String o) {
+        protected FMUsage(final String r, final String n, final String o) {
+            super(StringCache.get(r));
             name = StringCache.get(n);
             owner = StringCache.get(o);
+        }
+
+        protected FMUsage(final BufferedReader r) {
+            super(r);
+            name = StringCache.get(RW.readString(r));
+            owner = StringCache.get(RW.readString(r));
         }
     }
 
     public static class FieldUsage extends FMUsage {
         public final TypeRepr.AbstractType type;
 
-        private FieldUsage(final String n, final String o, final String d) {
-            super(n, o);
+        private FieldUsage(final String r, final String n, final String o, final String d) {
+            super(r, n, o);
             type = TypeRepr.getType(d);
         }
 
         private FieldUsage(final BufferedReader r) {
-            super(RW.readString(r), RW.readString(r));
+            super(r);
             type = TypeRepr.reader.read(r);
         }
 
         public void write(final BufferedWriter w) {
             RW.writeln(w, "fieldUsage");
+            super.write(w);
             RW.writeln(w, name.value);
             RW.writeln(w, owner.value);
             type.write(w);
@@ -90,20 +126,21 @@ public class UsageRepr {
         public final TypeRepr.AbstractType[] argumentTypes;
         public final TypeRepr.AbstractType returnType;
 
-        private MethodUsage(final String n, final String o, final String d) {
-            super(n, o);
+        private MethodUsage(final String r, final String n, final String o, final String d) {
+            super(r, n, o);
             argumentTypes = TypeRepr.getType(Type.getArgumentTypes(d));
             returnType = TypeRepr.getType(Type.getReturnType(d));
         }
 
         private MethodUsage(final BufferedReader r) {
-            super(RW.readString(r), RW.readString(r));
+            super(r);
             argumentTypes = RW.readMany(r, TypeRepr.reader, new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
             returnType = TypeRepr.reader.read(r);
         }
 
         public void write(final BufferedWriter w) {
             RW.writeln(w, "methodUsage");
+            super.write(w);
             RW.writeln(w, name.value);
             RW.writeln(w, owner.value);
             RW.writeln(w, argumentTypes, TypeRepr.fromAbstractType);
@@ -134,7 +171,7 @@ public class UsageRepr {
         }
     }
 
-    public static class ClassUsage extends Usage {
+    public static class ClassUsage extends ResidentialUsage {
         final StringCache.S className;
 
         @Override
@@ -142,20 +179,29 @@ public class UsageRepr {
             return className;
         }
 
-        private ClassUsage(final String n) {
+        private ClassUsage(final String r, final String n) {
+            super(StringCache.get(r));
             className = StringCache.get(n);
         }
 
-        private ClassUsage(final StringCache.S n) {
+        private ClassUsage(final String r, final StringCache.S n) {
+            super(StringCache.get(r));
             className = n;
         }
 
         private ClassUsage(final BufferedReader r) {
+            super(r);
+            className = StringCache.get(RW.readString(r));
+        }
+
+        private ClassUsage(final BufferedReader r, boolean b) {
+            super();
             className = StringCache.get(RW.readString(r));
         }
 
         public void write(final BufferedWriter w) {
             RW.writeln(w, "classUsage");
+            super.write(w);
             RW.writeln(w, className.value);
         }
 
@@ -175,17 +221,20 @@ public class UsageRepr {
         }
     }
 
-    public static class ClassExtendsUsage extends ClassUsage {
-        public ClassExtendsUsage(String n) {
-            super(n);
+    public static class ClassExtendsUsage extends Usage {
+        protected final StringCache.S className;
+
+        @Override
+        public StringCache.S getOwner() {
+            return className;
         }
 
-        public ClassExtendsUsage(StringCache.S n) {
-            super(n);
+        public ClassExtendsUsage(final StringCache.S n) {
+            className = n;
         }
 
-        public ClassExtendsUsage(BufferedReader r) {
-            super(r);
+        public ClassExtendsUsage(final BufferedReader r) {
+            className = StringCache.get(RW.readString(r));
         }
 
         public void write(final BufferedWriter w) {
@@ -199,11 +248,7 @@ public class UsageRepr {
         }
     }
 
-    public static class ClassNewUsage extends ClassUsage {
-        public ClassNewUsage(String n) {
-            super(n);
-        }
-
+    public static class ClassNewUsage extends ClassExtendsUsage {
         public ClassNewUsage(StringCache.S n) {
             super(n);
         }
@@ -326,20 +371,20 @@ public class UsageRepr {
         }
     }
 
-    public static Usage createFieldUsage(final String name, final String owner, final String descr) {
-        return getUsage(new FieldUsage(name, owner, descr));
+    public static Usage createFieldUsage(final String res, final String name, final String owner, final String descr) {
+        return getUsage(new FieldUsage(res, name, owner, descr));
     }
 
-    public static Usage createMethodUsage(final String name, final String owner, final String descr) {
-        return getUsage(new MethodUsage(name, owner, descr));
+    public static Usage createMethodUsage(final String res, final String name, final String owner, final String descr) {
+        return getUsage(new MethodUsage(res, name, owner, descr));
     }
 
-    public static Usage createClassUsage(final String name) {
-        return getUsage(new ClassUsage(name));
+    public static Usage createClassUsage(final String res, final String name) {
+        return getUsage(new ClassUsage(res, name));
     }
 
-    public static Usage createClassUsage(final StringCache.S name) {
-        return getUsage(new ClassUsage(name));
+    public static Usage createClassUsage(final String res, final StringCache.S name) {
+        return getUsage(new ClassUsage(res, name));
     }
 
     public static Usage createClassExtendsUsage(final StringCache.S name) {
@@ -347,7 +392,7 @@ public class UsageRepr {
     }
 
     public static Usage createClassNewUsage(final StringCache.S name) {
-            return getUsage(new ClassNewUsage(name));
+        return getUsage(new ClassNewUsage(name));
     }
 
     public static Usage createAnnotationUsage(final TypeRepr.ClassType type, final Collection<StringCache.S> usedArguments, final Collection<ElementType> targets) {

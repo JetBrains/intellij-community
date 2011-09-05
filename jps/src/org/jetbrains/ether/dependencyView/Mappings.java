@@ -82,28 +82,32 @@ public class Mappings {
                 final ClassRepr it = changed.fst;
                 final ClassRepr.Diff diff = (ClassRepr.Diff) changed.snd;
 
+                final int addedModifiers = diff.addedModifiers();
+                final int removedModifiers = diff.removedModifiers();
+
                 if (it.isAnnotation() && it.policy == RetentionPolicy.SOURCE) {
                     return false;
                 }
 
-                //if (diff.base() != Difference.NONE || !diff.interfaces().unchanged() || !diff.nestedClasses().unchanged()) {
-                //    affectedUsages.add(it.createUsage());
-                //}
+                if ((addedModifiers & Opcodes.ACC_PROTECTED) > 0) {
 
-                if ((diff.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
-                    affectedUsages.add(it.createUsage());
                 }
 
-                if ((diff.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
-                     (diff.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
-                     (diff.addedModifiers() & Opcodes.ACC_ABSTRACT) > 0
-                   ) {
+                if ((addedModifiers & Opcodes.ACC_FINAL) > 0 ||
+                        (addedModifiers & Opcodes.ACC_PRIVATE) > 0) {
+                    affectedUsages.add(it.createUsage("")); // !!!
+                }
+
+                if ((addedModifiers & Opcodes.ACC_STATIC) > 0 ||
+                        (removedModifiers & Opcodes.ACC_STATIC) > 0 ||
+                        (addedModifiers & Opcodes.ACC_ABSTRACT) > 0
+                        ) {
                     affectedUsages.add(UsageRepr.createClassNewUsage(it.name));
                 }
 
                 if (it.isAnnotation()) {
                     if (diff.retentionChanged()) {
-                        affectedUsages.add(it.createUsage());
+                        affectedUsages.add(it.createUsage("")); // !!!
                     } else {
                         final Collection<ElementType> removedtargets = diff.targets().removed();
 
@@ -117,14 +121,14 @@ public class Mappings {
 
                         for (MethodRepr m : diff.methods().added()) {
                             if (!m.hasValue()) {
-                                affectedUsages.add(it.createUsage());
+                                affectedUsages.add(it.createUsage("")); // !!!
                             }
                         }
                     }
                 }
 
                 for (MethodRepr m : diff.methods().removed()) {
-                    affectedUsages.add(m.createUsage(it.name));
+                    affectedUsages.add(m.createUsage("", it.name)); // !!!
                 }
 
                 for (Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
@@ -138,12 +142,12 @@ public class Mappings {
                             annotationQuery.add((UsageRepr.AnnotationUsage) UsageRepr.createAnnotationUsage(TypeRepr.createClassType(it.name), l, null));
                         }
                     } else if (mr.snd.base() != Difference.NONE) {
-                        affectedUsages.add(mr.fst.createUsage(it.name));
+                        affectedUsages.add(mr.fst.createUsage("", it.name)); // !!!
                     }
                 }
 
                 for (FieldRepr f : diff.fields().removed()) {
-                    affectedUsages.add(f.createUsage(it.name));
+                    affectedUsages.add(f.createUsage("", it.name)); // !!!
                 }
 
                 for (Pair<FieldRepr, Difference> f : diff.fields().changed()) {
@@ -159,13 +163,13 @@ public class Mappings {
                     }
 
                     if (d.base() != Difference.NONE) {
-                        affectedUsages.add(field.createUsage(it.name));
+                        affectedUsages.add(field.createUsage("", it.name)); // !!!
                     }
                 }
             }
 
             for (ClassRepr c : classDiff.removed()) {
-                affectedUsages.add(c.createUsage());
+                affectedUsages.add(c.createUsage("")); // !!!
             }
 
             if (dependants != null) {
@@ -309,7 +313,7 @@ public class Mappings {
                 }
             }
 
-            public void associate(final Set<Pair<ClassRepr,Set<StringCache.S>>> classes, final Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>> usages, final String sourceFileName) {
+            public void associate(final Set<Pair<ClassRepr, Set<StringCache.S>>> classes, final Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>> usages, final String sourceFileName) {
                 final StringCache.S sourceFileNameS = StringCache.get(sourceFileName);
 
                 sourceFileToUsages.put(sourceFileNameS, usages.fst);
