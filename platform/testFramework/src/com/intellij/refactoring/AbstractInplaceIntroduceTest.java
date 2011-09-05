@@ -42,7 +42,7 @@ public abstract class AbstractInplaceIntroduceTest<E extends PsiElement, V exten
 
   protected void doTestEscape() throws Exception {
     String name = getTestName(true);
-    configureByFile(getBasePath() + name + ".java");
+    configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(LightPlatformTestCase.getProject());
     try {
@@ -60,7 +60,7 @@ public abstract class AbstractInplaceIntroduceTest<E extends PsiElement, V exten
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
       state.gotoEnd(true);
-      checkResultByFile(getBasePath() + name + "_after.java");
+      checkResultByFile(getBasePath() + name + "_after" + getExtension());
     }
     finally {
       getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
@@ -68,9 +68,11 @@ public abstract class AbstractInplaceIntroduceTest<E extends PsiElement, V exten
     }
   }
 
+  protected abstract String getExtension();
+
   protected void doTest(final Pass<AbstractInplaceIntroducer> pass) throws Exception {
     String name = getTestName(true);
-    configureByFile(getBasePath() + name + ".java");
+    configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(LightPlatformTestCase.getProject());
     try {
@@ -89,7 +91,7 @@ public abstract class AbstractInplaceIntroduceTest<E extends PsiElement, V exten
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
       state.gotoEnd(false);
-      checkResultByFile(getBasePath() + name + "_after.java");
+      checkResultByFile(getBasePath() + name + "_after" + getExtension());
     }
     finally {
       getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);

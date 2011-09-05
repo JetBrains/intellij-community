@@ -57,4 +57,8 @@ public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIn
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk17();
   }
+
+  protected String getExtension() {
+    return ".java";
+  }
 }
