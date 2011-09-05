@@ -287,11 +287,11 @@ public class ProjectWrapper {
                 classesWithSubclasses.add(new Pair<ClassRepr, Set<StringCache.S>>(c, subClasses));
             }
 
-            final Set<UsageRepr.Usage> usages = (Set<UsageRepr.Usage>) RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage>());
+            final UsageRepr.Cluster usages = new UsageRepr.Cluster(r);
             final Set<UsageRepr.Usage> annotationUsages = (Set<UsageRepr.Usage>) RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage>());
             final Set<StringCache.S> formClasses = (Set<StringCache.S>) RW.readMany(r, StringCache.S.reader, new HashSet<StringCache.S>());
 
-            backendCallback.associate(classesWithSubclasses, new Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>>(usages, annotationUsages), myName.value);
+            backendCallback.associate(classesWithSubclasses, new Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>(usages, annotationUsages), myName.value);
 
             for (StringCache.S classFileName : formClasses) {
                 backendCallback.associateForm(myName, classFileName);
@@ -322,7 +322,7 @@ public class ProjectWrapper {
                 }
             }
 
-            RW.writeln(w, dependencyMapping.getUsages(name));
+            dependencyMapping.getUsages(name).write(w);
             RW.writeln(w, dependencyMapping.getAnnotationUsages(name));
             RW.writeln(w, dependencyMapping.getFormClass(name));
         }

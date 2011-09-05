@@ -72,16 +72,16 @@ public class MethodRepr extends ProtoMember {
         };
     }
 
-    public void updateClassUsages(final String res, final Set<UsageRepr.Usage> s) {
-        type.updateClassUsages(res, s);
+    public void updateClassUsages(final Set<UsageRepr.Usage> s) {
+        type.updateClassUsages(s);
 
         for (int i = 0; i < argumentTypes.length; i++) {
-            argumentTypes[i].updateClassUsages(res, s);
+            argumentTypes[i].updateClassUsages(s);
         }
 
         if (exceptions != null)
             for (TypeRepr.AbstractType typ : exceptions) {
-                typ.updateClassUsages(res, s);
+                typ.updateClassUsages(s);
             }
     }
 
@@ -126,7 +126,7 @@ public class MethodRepr extends ProtoMember {
         return 31 * (31 * Arrays.hashCode(argumentTypes) + type.hashCode()) + name.hashCode();
     }
 
-    public UsageRepr.Usage createUsage (final String res, final StringCache.S owner) {
+    public UsageRepr.Usage createUsage (final StringCache.S owner) {
         final StringBuilder buf = new StringBuilder();
 
         buf.append("(");
@@ -138,6 +138,6 @@ public class MethodRepr extends ProtoMember {
         buf.append(")");
         buf.append(type.getDescr());
 
-        return UsageRepr.createMethodUsage(res, name.value, owner.value, buf.toString());
+        return UsageRepr.createMethodUsage(name.value, owner.value, buf.toString());
     }
 }

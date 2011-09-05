@@ -82,7 +82,7 @@ public class ClassfileAnalyzer {
                 this.type = type;
                 this.target = target;
                 annotationTargets.put(type, target);
-                usages.add(UsageRepr.createClassUsage(classNameHolder.get(), type.className));
+                usages.addUsage(classNameHolder.get(), UsageRepr.createClassUsage(type.className));
             }
 
             private String getMethodDescr(final Object value) {
@@ -130,12 +130,12 @@ public class ClassfileAnalyzer {
             }
 
             public void visit(String name, Object value) {
-                usages.add(UsageRepr.createMethodUsage(classNameHolder.get(), name, type.className.value, getMethodDescr(value)));
+                usages.addUsage(classNameHolder.get(), UsageRepr.createMethodUsage(name, type.className.value, getMethodDescr(value)));
                 usedArguments.add(StringCache.get(name));
             }
 
             public void visitEnum(String name, String desc, String value) {
-                usages.add(UsageRepr.createMethodUsage(classNameHolder.get(), name, type.className.value, "()" + desc));
+                usages.addUsage(classNameHolder.get(), UsageRepr.createMethodUsage(name, type.className.value, "()" + desc));
                 usedArguments.add(StringCache.get(name));
             }
 
@@ -220,7 +220,7 @@ public class ClassfileAnalyzer {
             }
 
             public void visitClassType(String name) {
-                usages.add(UsageRepr.createClassUsage(classNameHolder.get(), name));
+                usages.addUsage(classNameHolder.get(), UsageRepr.createClassUsage(name));
             }
         };
 
@@ -239,7 +239,7 @@ public class ClassfileAnalyzer {
         final Set<MethodRepr> methods = new HashSet<MethodRepr>();
         final Set<FieldRepr> fields = new HashSet<FieldRepr>();
         final List<String> nestedClasses = new ArrayList<String>();
-        final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
+        final UsageRepr.Cluster usages = new UsageRepr.Cluster();
         final Set<UsageRepr.Usage> annotationUsages = new HashSet<UsageRepr.Usage>();
         final Set<ElementType> targets = new HashSet<ElementType>();
         RetentionPolicy policy = null;
@@ -261,15 +261,15 @@ public class ClassfileAnalyzer {
             return (access & Opcodes.ACC_PRIVATE) == 0;
         }
 
-        public Pair<ClassRepr, Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>>> getResult() {
+        public Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> getResult() {
             final ClassRepr repr = takeIntoAccount ?
                     new ClassRepr(access, sourceFile, fileName, name, signature, superClass, interfaces, nestedClasses, fields, methods, targets, policy) : null;
 
             if (repr != null) {
-                repr.updateClassUsages(classNameHolder.get(), usages);
+                repr.updateClassUsages(usages.getUsages());
             }
 
-            return new Pair<ClassRepr, Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>>>(repr, new Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>>(usages, annotationUsages));
+            return new Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>>(repr, new Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>(usages, annotationUsages));
         }
 
         @Override
@@ -285,12 +285,12 @@ public class ClassfileAnalyzer {
             classNameHolder.set(n);
 
             if (superClass != null) {
-                usages.add(UsageRepr.createClassExtendsUsage(StringCache.get(superClass)));
+                usages.addUsage(classNameHolder.get(), UsageRepr.createClassExtendsUsage(StringCache.get(superClass)));
             }
 
             if (interfaces != null) {
                 for (String it : interfaces) {
-                    usages.add(UsageRepr.createClassExtendsUsage(StringCache.get(it)));
+                    usages.addUsage(classNameHolder.get(), UsageRepr.createClassExtendsUsage(StringCache.get(it)));
                 }
             }
 
@@ -380,10 +380,10 @@ public class ClassfileAnalyzer {
                     final TypeRepr.AbstractType element = typ.getDeepElementType();
 
                     if (element instanceof TypeRepr.ClassType) {
-                        usages.add(UsageRepr.createClassNewUsage(((TypeRepr.ClassType) element).className));
+                        usages.addUsage(classNameHolder.get(), UsageRepr.createClassNewUsage(((TypeRepr.ClassType) element).className));
                     }
 
-                    typ.updateClassUsages(classNameHolder.get(), usages);
+                    typ.updateClassUsages(usages.getUsages());
 
                     super.visitMultiANewArrayInsn(desc, dims);
                 }
@@ -391,14 +391,14 @@ public class ClassfileAnalyzer {
                 @Override
                 public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
                     processSignature(signature);
-                    TypeRepr.getType(desc).updateClassUsages(classNameHolder.get(), usages);
+                    TypeRepr.getType(desc).updateClassUsages(usages.getUsages());
                     super.visitLocalVariable(name, desc, signature, start, end, index);
                 }
 
                 @Override
                 public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
                     if (type != null) {
-                        TypeRepr.createClassType(type).updateClassUsages(classNameHolder.get(), usages);
+                        TypeRepr.createClassType(type).updateClassUsages(usages.getUsages());
                     }
 
                     super.visitTryCatchBlock(start, end, handler, type);
@@ -409,27 +409,27 @@ public class ClassfileAnalyzer {
                     final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(type) : TypeRepr.createClassType(type);
 
                     if (opcode == Opcodes.NEW) {
-                        usages.add(UsageRepr.createClassNewUsage(((TypeRepr.ClassType) typ).className));
+                        usages.addUsage(classNameHolder.get(), UsageRepr.createClassNewUsage(((TypeRepr.ClassType) typ).className));
                     } else if (opcode == Opcodes.ANEWARRAY) {
                         if (typ instanceof TypeRepr.ClassType) {
-                            usages.add(UsageRepr.createClassNewUsage(((TypeRepr.ClassType) typ).className));
+                            usages.addUsage(classNameHolder.get(), UsageRepr.createClassNewUsage(((TypeRepr.ClassType) typ).className));
                         }
                     }
 
-                    typ.updateClassUsages(classNameHolder.get(), usages);
+                    typ.updateClassUsages(usages.getUsages());
 
                     super.visitTypeInsn(opcode, type);
                 }
 
                 @Override
                 public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-                    usages.add(UsageRepr.createFieldUsage(classNameHolder.get(), name, owner, desc));
+                    usages.addUsage(classNameHolder.get(), UsageRepr.createFieldUsage(name, owner, desc));
                     super.visitFieldInsn(opcode, owner, name, desc);
                 }
 
                 @Override
                 public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-                    usages.add(UsageRepr.createMethodUsage(classNameHolder.get(), name, owner, desc));
+                    usages.addUsage(classNameHolder.get(), UsageRepr.createMethodUsage(name, owner, desc));
                     super.visitMethodInsn(opcode, owner, name, desc);
                 }
             };
@@ -443,7 +443,7 @@ public class ClassfileAnalyzer {
         }
     }
 
-    public static Pair<ClassRepr, Pair<Set<UsageRepr.Usage>, Set<UsageRepr.Usage>>> analyze(final StringCache.S fileName, final ClassReader cr) {
+    public static Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> analyze(final StringCache.S fileName, final ClassReader cr) {
         final ClassCrawler visitor = new ClassCrawler(fileName);
 
         cr.accept(visitor, 0);

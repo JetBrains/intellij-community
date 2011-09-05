@@ -31,39 +31,81 @@ public class UsageRepr {
         return r;
     }
 
-    public static abstract class Usage implements RW.Writable {
-        public abstract StringCache.S getOwner();
-    }
+    public static class Cluster implements  RW.Writable {
+        final Set<Usage> usages = new HashSet<Usage>();
+        final Map<Usage, Set<StringCache.S>> residentialMap = new HashMap<Usage, Set<StringCache.S>>();
 
-    public static abstract class ResidentialUsage extends Usage {
-        private final Set<StringCache.S> residentialClasses;
-
-        public Set<StringCache.S> getResidentialClasses() {
-            return residentialClasses;
+        public Cluster() {
         }
 
-        public void addResidentialClass(final StringCache.S s) {
-            residentialClasses.add(s);
+        public Cluster(final BufferedReader r) {
+            final int size = RW.readInt(r);
+
+            for (int i = 0; i<size; i++) {
+                final Usage u = reader.read(r);
+                final Set<StringCache.S> s = (Set<StringCache.S>) RW.readMany(r, StringCache.reader, new HashSet<StringCache.S>());
+
+                usages.add(u);
+                residentialMap.put(u, s);
+            }
         }
 
-        protected ResidentialUsage(final StringCache.S resident) {
-            residentialClasses = new HashSet<StringCache.S>();
-            residentialClasses.add(resident);
-        }
-
-        protected ResidentialUsage(final BufferedReader r) {
-            residentialClasses = (Set<StringCache.S>) RW.readMany(r, StringCache.S.reader, new HashSet<StringCache.S>());
-        }
-
-        protected ResidentialUsage() {
-            residentialClasses = new HashSet<StringCache.S>();
-        }
         public void write(final BufferedWriter w) {
-            RW.writeln(w, residentialClasses);
+            RW.writeln(w, Integer.toString(usages.size()));
+
+            for (Usage u : usages) {
+                u.write(w);
+                RW.writeln(w, residentialMap.get(u));
+            }
+        }
+
+        public void addUsage (final String residence, final Usage usage){
+            final StringCache.S r = StringCache.get(residence);
+
+            Set<StringCache.S> s = residentialMap.get(usage);
+
+            if (s == null) {
+                s = new HashSet<StringCache.S>();
+                residentialMap.put(usage, s);
+            }
+
+            s.add(r);
+            usages.add(usage);
+        }
+
+        public Set<Usage> getUsages (){
+            return usages;
+        }
+
+        public Set<StringCache.S> getResidence(final Usage usage){
+            return residentialMap.get(usage);
+        }
+
+        public void updateCluster (final Cluster c) {
+            usages.addAll(c.getUsages());
+            for (Map.Entry<Usage, Set<StringCache.S>> e : c.residentialMap.entrySet()) {
+                final Usage u = e.getKey();
+                final Set<StringCache.S> v = e.getValue();
+                final Set<StringCache.S> s = residentialMap.get(u);
+
+                if (s == null) {
+                    residentialMap.put(u, v);
+                } else {
+                    s.addAll(v);
+                }
+            }
+        }
+
+        public boolean isEmpty(){
+            return usages.isEmpty();
         }
     }
 
-    public static abstract class FMUsage extends ResidentialUsage {
+    public static abstract class Usage implements RW.Writable {
+        public abstract StringCache.S getOwner ();
+    }
+
+    public static abstract class FMUsage extends Usage {
         public final StringCache.S name;
         public final StringCache.S owner;
 
@@ -72,14 +114,12 @@ public class UsageRepr {
             return owner;
         }
 
-        protected FMUsage(final String r, final String n, final String o) {
-            super(StringCache.get(r));
+        protected FMUsage(final String n, final String o) {
             name = StringCache.get(n);
             owner = StringCache.get(o);
         }
 
         protected FMUsage(final BufferedReader r) {
-            super(r);
             name = StringCache.get(RW.readString(r));
             owner = StringCache.get(RW.readString(r));
         }
@@ -88,8 +128,8 @@ public class UsageRepr {
     public static class FieldUsage extends FMUsage {
         public final TypeRepr.AbstractType type;
 
-        private FieldUsage(final String r, final String n, final String o, final String d) {
-            super(r, n, o);
+        private FieldUsage(final String n, final String o, final String d) {
+            super(n, o);
             type = TypeRepr.getType(d);
         }
 
@@ -100,7 +140,6 @@ public class UsageRepr {
 
         public void write(final BufferedWriter w) {
             RW.writeln(w, "fieldUsage");
-            super.write(w);
             RW.writeln(w, name.value);
             RW.writeln(w, owner.value);
             type.write(w);
@@ -126,8 +165,8 @@ public class UsageRepr {
         public final TypeRepr.AbstractType[] argumentTypes;
         public final TypeRepr.AbstractType returnType;
 
-        private MethodUsage(final String r, final String n, final String o, final String d) {
-            super(r, n, o);
+        private MethodUsage(final String n, final String o, final String d) {
+            super(n, o);
             argumentTypes = TypeRepr.getType(Type.getArgumentTypes(d));
             returnType = TypeRepr.getType(Type.getReturnType(d));
         }
@@ -140,7 +179,6 @@ public class UsageRepr {
 
         public void write(final BufferedWriter w) {
             RW.writeln(w, "methodUsage");
-            super.write(w);
             RW.writeln(w, name.value);
             RW.writeln(w, owner.value);
             RW.writeln(w, argumentTypes, TypeRepr.fromAbstractType);
@@ -171,7 +209,7 @@ public class UsageRepr {
         }
     }
 
-    public static class ClassUsage extends ResidentialUsage {
+    public static class ClassUsage extends Usage {
         final StringCache.S className;
 
         @Override
@@ -179,18 +217,15 @@ public class UsageRepr {
             return className;
         }
 
-        private ClassUsage(final String r, final String n) {
-            super(StringCache.get(r));
+        private ClassUsage(final String n) {
             className = StringCache.get(n);
         }
 
-        private ClassUsage(final String r, final StringCache.S n) {
-            super(StringCache.get(r));
+        private ClassUsage(final StringCache.S n) {
             className = n;
         }
 
         private ClassUsage(final BufferedReader r) {
-            super(r);
             className = StringCache.get(RW.readString(r));
         }
 
@@ -201,7 +236,6 @@ public class UsageRepr {
 
         public void write(final BufferedWriter w) {
             RW.writeln(w, "classUsage");
-            super.write(w);
             RW.writeln(w, className.value);
         }
 
@@ -371,20 +405,20 @@ public class UsageRepr {
         }
     }
 
-    public static Usage createFieldUsage(final String res, final String name, final String owner, final String descr) {
-        return getUsage(new FieldUsage(res, name, owner, descr));
+    public static Usage createFieldUsage(final String name, final String owner, final String descr) {
+        return getUsage(new FieldUsage(name, owner, descr));
     }
 
-    public static Usage createMethodUsage(final String res, final String name, final String owner, final String descr) {
-        return getUsage(new MethodUsage(res, name, owner, descr));
+    public static Usage createMethodUsage(final String name, final String owner, final String descr) {
+        return getUsage(new MethodUsage(name, owner, descr));
     }
 
-    public static Usage createClassUsage(final String res, final String name) {
-        return getUsage(new ClassUsage(res, name));
+    public static Usage createClassUsage(final String name) {
+        return getUsage(new ClassUsage(name));
     }
 
-    public static Usage createClassUsage(final String res, final StringCache.S name) {
-        return getUsage(new ClassUsage(res, name));
+    public static Usage createClassUsage(final StringCache.S name) {
+        return getUsage(new ClassUsage(name));
     }
 
     public static Usage createClassExtendsUsage(final StringCache.S name) {
