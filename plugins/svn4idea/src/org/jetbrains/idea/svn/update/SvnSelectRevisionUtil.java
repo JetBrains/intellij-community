@@ -37,7 +37,7 @@ public class SvnSelectRevisionUtil {
     try {
       final SvnCommittedChangesTableModel model = new SvnCommittedChangesTableModel(location, project, root,
                                                   SvnVcs.getInstance(project).getCommittedChangesProvider().getColumns());
-      final ChangesBrowserDialog dlg = new ChangesBrowserDialog(project, model, ChangesBrowserDialog.Mode.Choose);
+      final ChangesBrowserDialog dlg = new ChangesBrowserDialog(project, model, ChangesBrowserDialog.Mode.Choose, null);
       dlg.show();
       if (dlg.isOK()) {
         return (SvnChangeList) dlg.getSelectedChangeList();
