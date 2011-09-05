@@ -92,6 +92,10 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
+      return isStatementContext(element);
+    }
+
+    private static boolean isStatementContext(PsiElement element) {
       if (!(element.getParent() instanceof PsiReferenceExpression)) {
         return false;
       }
@@ -128,6 +132,10 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
+      if (Statement.isStatementContext(element)) {
+        return false;
+      }
+
       return JavaCompletionData.CLASS_START.isAcceptable(element, element) || JavaCompletionData.INSIDE_PARAMETER_LIST.accepts(element);
     }
   }
