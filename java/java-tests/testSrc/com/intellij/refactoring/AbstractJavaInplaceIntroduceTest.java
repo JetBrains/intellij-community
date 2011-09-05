@@ -15,11 +15,16 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,22 +38,18 @@ public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIn
     super.setUp();
   }
 
-  @Override
   @Nullable
-  protected PsiExpression getExpressionFromEditor() {
-    final PsiExpression expression =
-      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
+  protected static PsiExpression getExpressionFromEditor() {
+    final PsiExpression expression = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
     if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) {
       return (PsiExpression)expression.getParent();
     }
     return expression;
   }
 
-
-  @Override
-  protected PsiLocalVariable getLocalVariableFromEditor() {
-    final PsiLocalVariable localVariable =
-    PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
+  protected static PsiLocalVariable getLocalVariableFromEditor() {
+    final PsiLocalVariable localVariable = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()),
+                                                                       PsiLocalVariable.class);
     assertNotNull(localVariable);
     return localVariable;
   }
@@ -60,5 +61,25 @@ public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIn
 
   protected String getExtension() {
     return ".java";
+  }
+
+  protected abstract MyIntroduceHandler createIntroduceHandler();
+
+  protected AbstractInplaceIntroducer invokeRefactoring() {
+    final MyIntroduceHandler introduceHandler = createIntroduceHandler();
+    final PsiExpression expression = getExpressionFromEditor();
+    if (expression != null) {
+      introduceHandler.invokeImpl(LightPlatformTestCase.getProject(), expression, getEditor());
+    } else {
+      final PsiLocalVariable localVariable = getLocalVariableFromEditor();
+      introduceHandler.invokeImpl(LightPlatformTestCase.getProject(), localVariable, getEditor());
+    }
+    return introduceHandler.getInplaceIntroducer();
+  }
+
+  public interface MyIntroduceHandler {
+    boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor);
+    boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor);
+    AbstractInplaceIntroducer getInplaceIntroducer();
   }
 }

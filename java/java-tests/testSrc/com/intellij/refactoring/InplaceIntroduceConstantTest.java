@@ -111,7 +111,7 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
     return new MyIntroduceConstantHandler();
   }
 
-  public static class MyIntroduceConstantHandler extends IntroduceConstantHandler implements MyIntroduceHandler<PsiExpression, PsiLocalVariable> {
+  public static class MyIntroduceConstantHandler extends IntroduceConstantHandler implements MyIntroduceHandler {
     @Override
     public boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {
       return super.invokeImpl(project, selectedExpr, editor);
