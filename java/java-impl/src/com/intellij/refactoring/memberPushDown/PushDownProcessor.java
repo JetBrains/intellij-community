@@ -388,7 +388,11 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           final PsiClass aClass = (PsiClass)member;
           if (!targetClass.isInheritor(aClass, false)) {
             PsiJavaCodeReferenceElement classRef = factory.createClassReferenceElement(aClass);
-            targetClass.getImplementsList().add(classRef);
+            if (aClass.isInterface()) {
+              targetClass.getImplementsList().add(classRef);
+            } else {
+              targetClass.getExtendsList().add(classRef);
+            }
           }
         }
         else {

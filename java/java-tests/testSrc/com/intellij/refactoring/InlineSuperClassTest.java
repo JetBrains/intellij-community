@@ -171,6 +171,10 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     doTestMultipleSubclasses();
   }
 
+  public void testInlineSuperclassExtendsList() throws Exception {
+    doTest();
+  }
+
   private void doTestMultipleSubclasses() throws Exception {
     doTest(new PerformAction() {
       @Override

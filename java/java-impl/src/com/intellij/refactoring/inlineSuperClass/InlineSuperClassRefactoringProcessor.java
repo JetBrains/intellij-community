@@ -44,6 +44,7 @@ import com.intellij.util.Processor;import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -65,11 +66,34 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         return true;
       }
     });
-    final List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(mySuperClass);
+    List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(mySuperClass);
     for (MemberInfo member : members) {
       member.setChecked(true);
     }
+    members = appendSuperRefs(members);
     myMemberInfos = members.toArray(new MemberInfo[members.size()]);
+  }
+
+  private List<MemberInfo> appendSuperRefs(List<MemberInfo> members) {
+    if (!mySuperClass.isInterface()) {
+      PsiReferenceList extendsList = mySuperClass.getExtendsList();
+      if (extendsList != null && extendsList.getReferenceElements().length > 0) {
+        PsiElement resolve = extendsList.getReferenceElements()[0].resolve();
+        if (resolve instanceof PsiClass) {
+          members = new ArrayList<MemberInfo>(members);
+
+          MemberInfo memberInfo = new MemberInfo((PsiMember)resolve, true, extendsList) {
+            {
+              overrides = false;
+            }
+          };
+
+          memberInfo.setChecked(true);
+          members.add(memberInfo);
+        }
+      }
+    }
+    return members;
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
