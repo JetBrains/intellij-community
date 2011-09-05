@@ -122,7 +122,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
         if (myProject.isDisposed()) return;
         LOG.debug("Loading " + loader.getName());
         ProgressManager.getInstance()
-          .run(new Task.Backgroundable(myProject, "Loading spellchecker dictionary...", false,
+          .run(new Task.Backgroundable(myProject, "Loading spellchecker dictionaries...", false,
                                        new PerformInBackgroundOption() {
                                          @Override
                                          public boolean shouldStartInBackground() {
@@ -135,32 +135,37 @@ public class BaseSpellChecker implements SpellCheckerEngine {
                                        }) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
+              indicator.setText(String.format("Loading %s...", loader.getName()));
               final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
               if (dictionary != null) {
                 LOG.debug(loader.getName() + " loaded!");
                 consumer.consume(dictionary);
               }
-
-              if (myDictionariesToLoad.isEmpty()) {
-                LOG.debug("Loading finished, restarting daemon...");
-                myLoadingDictionaries.set(false);
-
-                final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-                for (final Project project : openProjects) {
-                  if (project.isInitialized() && project.isOpen() && !project.isDefault()) {
-                    UIUtil.invokeLaterIfNeeded(new Runnable() {
-                      @Override
-                      public void run() {
-                        final DaemonCodeAnalyzer instance = DaemonCodeAnalyzer.getInstance(project);
-                        if (instance != null) instance.restart();
-                      }
-                    });
-                  }
+              
+              while (!myDictionariesToLoad.isEmpty()) {
+                final Pair<Loader, Consumer<Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
+                Loader nextDictionaryLoader = nextDictionary.getFirst();
+                indicator.setText(String.format("Loading %s...", nextDictionaryLoader.getName()));
+                CompressedDictionary dictionary1 = CompressedDictionary.create(nextDictionaryLoader, transform);
+                if(dictionary1 != null) {
+                  LOG.debug(nextDictionaryLoader.getName() + " loaded!");
+                  nextDictionary.getSecond().consume(dictionary1);
                 }
               }
-              else {
-                final Pair<Loader, Consumer<Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
-                _doLoadDictionaryAsync(nextDictionary.getFirst(), nextDictionary.getSecond());
+              
+              LOG.debug("Loading finished, restarting daemon...");
+              myLoadingDictionaries.set(false);
+              final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+              for (final Project project : openProjects) {
+                if (project.isInitialized() && project.isOpen() && !project.isDefault()) {
+                  UIUtil.invokeLaterIfNeeded(new Runnable() {
+                    @Override
+                    public void run() {
+                      final DaemonCodeAnalyzer instance = DaemonCodeAnalyzer.getInstance(project);
+                      if (instance != null) instance.restart();
+                    }
+                  });
+                }
               }
             }
           });
