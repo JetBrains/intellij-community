@@ -61,6 +61,7 @@ public class SvnRepositoryLocation implements RepositoryLocation {
 
   @Nullable
   public static FilePath getLocalPath(final String fullPath, final NotNullFunction<File, Boolean> detector, final SvnVcs vcs) {
+    if (vcs.getProject().isDefault()) return null;
     final RootUrlInfo rootForUrl = vcs.getSvnFileUrlMapping().getWcRootForUrl(fullPath);
     if (rootForUrl != null) {
       return LocationDetector.filePathByUrlAndPath(fullPath, rootForUrl.getUrl().toString(), rootForUrl.getIoFile().getAbsolutePath(), detector);

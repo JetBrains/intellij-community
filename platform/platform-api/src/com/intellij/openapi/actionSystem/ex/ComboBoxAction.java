@@ -45,9 +45,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
   public JComponent createCustomComponent(Presentation presentation) {
     JPanel panel = new JPanel(new GridBagLayout());
-    ComboBoxButton button = new ComboBoxButton(presentation);
+    ComboBoxButton button = createComboBoxButton(presentation);
     panel.add(button, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 3, 0, 3), 0, 0));
     return panel;
+  }
+
+  protected ComboBoxButton createComboBoxButton(Presentation presentation) {
+    return new ComboBoxButton(presentation);
   }
 
   @Override
@@ -133,12 +137,16 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     protected ListPopup createPopup(Runnable onDispose) {
       DefaultActionGroup group = createPopupActionGroup(this);
 
-      DataContext context = myDataContext == null ? DataManager.getInstance().getDataContext(this) : myDataContext;
+      DataContext context = getDataContext();
       myDataContext = null;
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
         null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, onDispose, getMaxRows());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
       return popup;
+    }
+
+    protected DataContext getDataContext() {
+      return myDataContext == null ? DataManager.getInstance().getDataContext(this) : myDataContext;
     }
 
     @Override

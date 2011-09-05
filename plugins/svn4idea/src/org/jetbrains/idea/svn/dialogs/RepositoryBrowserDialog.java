@@ -116,6 +116,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     setResizable(true);
     setOKButtonText(CommonBundle.getCloseButtonText());
     getHelpAction().setEnabled(true);
+    Disposer.register(project, getDisposable());
     init();
   }
 

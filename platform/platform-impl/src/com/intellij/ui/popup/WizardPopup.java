@@ -274,16 +274,12 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return new MyContainer(resizable, border, isToDrawMacCorner);
   }
 
-  private static class MyContainer extends MyContentPanel implements DataProvider {
+  private static class MyContainer extends MyContentPanel {
 
     private MyContainer(final boolean resizable, final PopupBorder border, final boolean drawMacCorner) {
       super(resizable, border, drawMacCorner);
       setOpaque(true);
       setFocusCycleRoot(true);
-    }
-
-    public Object getData(String dataId) {
-      return null;
     }
 
     public Dimension getPreferredSize() {
