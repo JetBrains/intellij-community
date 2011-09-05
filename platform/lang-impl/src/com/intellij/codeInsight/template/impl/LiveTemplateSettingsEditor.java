@@ -18,7 +18,6 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,19 +29,23 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -282,7 +285,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
         }
 
         JPanel content = createPopupContextPanel(updateLabel);
-        myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, null).createPopup();
+        myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, null).setResizable(true).createPopup();
         myPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - 10)));
       }
     });
@@ -293,67 +296,84 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   private JPanel createPopupContextPanel(final Runnable onChange) {
-    final Map<TemplateContextType, JCheckBox> contextComboBoxes = new HashMap<TemplateContextType, JCheckBox>();
+    JPanel panel = new JPanel(new BorderLayout());
 
-    ChangeListener listener = new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        myExpandByCombo.setEnabled(isExpandableFromEditor());
-      }
-
-    };
-
-    JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.weightx = 1;
-    gbConstraints.weighty = 1;
-
-    final Runnable updateContextTypesEnabledState = new Runnable() {
-      public void run() {
-        for (Map.Entry<TemplateContextType, JCheckBox> entry : contextComboBoxes.entrySet()) {
-          TemplateContextType contextType = entry.getKey();
-          TemplateContextType baseContextType = contextType.getBaseContextType();
-          boolean enabled = baseContextType == null || !contextComboBoxes.get(baseContextType).isSelected();
-          entry.getValue().setEnabled(enabled);
-        }
+    MultiMap<TemplateContextType, TemplateContextType> hierarchy = new MultiMap<TemplateContextType, TemplateContextType>() {
+      @Override
+      protected Map<TemplateContextType, Collection<TemplateContextType>> createMap() {
+        return new LinkedHashMap<TemplateContextType, Collection<TemplateContextType>>();
       }
     };
-
-    int row = 0;
-    int col = 0;
-    for (final TemplateContextType contextType : myContext.keySet()) {
-      gbConstraints.gridy = row;
-      gbConstraints.gridx = col;
-      final JCheckBox cb = new JCheckBox(contextType.getPresentableName());
-      cb.getModel().addChangeListener(listener);
-      panel.add(cb, gbConstraints);
-      contextComboBoxes.put(contextType, cb);
-
-      if (row == (myContext.size() + 1) / 2 - 1) {
-        row = 0;
-        col = 1;
-      }
-      else {
-        row++;
-      }
-      cb.setSelected(myContext.get(contextType).booleanValue());
-
-      cb.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          myContext.put(contextType, cb.isSelected());
-          updateContextTypesEnabledState.run();
-          updateHighlighter();
-          onChange.run();
-        }
-      }
-      );
+    for (TemplateContextType type : myContext.keySet()) {
+      hierarchy.putValue(type.getBaseContextType(), type);
     }
-    
-    updateContextTypesEnabledState.run();
 
-    new MnemonicHelper().register(panel);
+    final CheckedTreeNode root = new CheckedTreeNode(Pair.create(null, "Hi"));
+    final CheckboxTree checkboxTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer() {
+      @Override
+      public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        final Object o = ((DefaultMutableTreeNode)value).getUserObject();
+        if (o instanceof Pair) {
+          getTextRenderer().append((String)((Pair)o).second);
+        }
+      }
+    }, root) {
+      @Override
+      protected void onNodeStateChanged(CheckedTreeNode node) {
+        final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
+        if (type != null) {
+          myContext.put(type, node.isChecked());
+        }
+        myExpandByCombo.setEnabled(isExpandableFromEditor());
+        updateHighlighter();
+        onChange.run();
+
+      }
+    };
+
+    for (TemplateContextType type : hierarchy.get(null)) {
+      addContextNode(hierarchy, root, type);
+    }
+
+    ((DefaultTreeModel)checkboxTree.getModel()).nodeStructureChanged(root);
+
+    TreeUtil.traverse(root, new TreeUtil.Traverse() {
+      @Override
+      public boolean accept(Object _node) {
+        final CheckedTreeNode node = (CheckedTreeNode)_node;
+        if (node.isChecked()) {
+          checkboxTree.expandPath(new TreePath(node.getPath()).getParentPath());
+        }
+        return true;
+      }
+    });
+
+    panel.add(ScrollPaneFactory.createScrollPane(checkboxTree));
+    final Dimension size = checkboxTree.getPreferredSize();
+    panel.setPreferredSize(new Dimension(size.width + 30, size.height + 10));
 
     return panel;
+  }
+
+  private void addContextNode(MultiMap<TemplateContextType, TemplateContextType> hierarchy,
+                              CheckedTreeNode parent,
+                              TemplateContextType type) {
+    final Collection<TemplateContextType> children = hierarchy.get(type);
+    final String name = UIUtil.removeMnemonic(type.getPresentableName());
+    final CheckedTreeNode node = new CheckedTreeNode(Pair.create(children.isEmpty() ? type : null, name));
+    parent.add(node);
+
+    if (children.isEmpty()) {
+      node.setChecked(myContext.get(type));
+    }
+    else {
+      for (TemplateContextType child : children) {
+        addContextNode(hierarchy, node, child);
+      }
+      final CheckedTreeNode other = new CheckedTreeNode(Pair.create(type, "Other"));
+      other.setChecked(myContext.get(type));
+      node.add(other);
+    }
   }
 
   private boolean isExpandableFromEditor() {
