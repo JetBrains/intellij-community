@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,12 +111,17 @@ public class InstanceofChainInspection extends BaseInspection {
                         }
                     }
                     return true;
-                } else if (condition instanceof PsiBinaryExpression) {
-                    final PsiBinaryExpression binaryExpression =
-                            (PsiBinaryExpression) condition;
-                    final PsiExpression lhs = binaryExpression.getLOperand();
-                    final PsiExpression rhs = binaryExpression.getROperand();
-                    return isInstanceofCheck(lhs) && isInstanceofCheck(rhs);
+                } else if (condition instanceof PsiPolyadicExpression) {
+                    final PsiPolyadicExpression polyadicExpression =
+                            (PsiPolyadicExpression) condition;
+                    final PsiExpression[] operands =
+                            polyadicExpression.getOperands();
+                    for (PsiExpression operand : operands) {
+                        if (!isInstanceofCheck(operand)) {
+                            return false;
+                        }
+                    }
+                    return true;
                 } else if (condition instanceof PsiParenthesizedExpression) {
                     final PsiParenthesizedExpression parenthesizedExpression =
                             (PsiParenthesizedExpression) condition;
