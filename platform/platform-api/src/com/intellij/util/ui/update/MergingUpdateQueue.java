@@ -130,6 +130,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
         }
       }
       myScheduledUpdates.clear();
+      finishActivity();
     }
   }
 
@@ -166,6 +167,9 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     myActive = false;
+
+    finishActivity();
+
     clearWaiter();
   }
 
@@ -203,7 +207,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   public void flush() {
     synchronized (myScheduledUpdates) {
-      if (myScheduledUpdates.isEmpty()) return;
+      if (myScheduledUpdates.isEmpty()) {
+        finishActivity();
+        return;
+      }
     }
     flush(true);
   }
@@ -375,6 +382,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public void dispose() {
     myDisposed = true;
     myActive = false;
+    finishActivity();
     clearWaiter();
   }
 
