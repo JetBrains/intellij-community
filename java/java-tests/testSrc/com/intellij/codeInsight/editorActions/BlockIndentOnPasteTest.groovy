@@ -15,15 +15,17 @@
  */
 package com.intellij.codeInsight.editorActions
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.testFramework.TestFileType
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.openapi.application.ApplicationManager
 
 /** 
  * @author Denis Zhdanov
  * @since 7/6/11 6:52 PM 
  */
-class BlockIndentOnPasteTest extends LightPlatformCodeInsightTestCase {
+class BlockIndentOnPasteTest extends LightCodeInsightFixtureTestCase {
 
   void testJavaBlockDecreasedIndentOnTwoLinesPasting() {
     def before = '''\
@@ -419,6 +421,37 @@ class Test {
 '''
     doTest(before, toPaste, expected)
   }
+
+  void testPasteToNonEmptyStringTextWithTrailingLineFeed() {
+    def before = '''\
+class Test {
+    void test() {
+        foo(1, <caret>);
+    }
+}\
+'''
+
+    def toPaste1 =
+    '''\
+calculate(3, 4)
+'''
+
+    def expected = '''\
+class Test {
+    void test() {
+        foo(1, calculate(3, 4)
+        );
+    }
+}\
+'''
+    doTest(before, toPaste1, expected)
+
+    def toPaste2 =
+    '''\
+calculate(3, 4)
+    '''
+    doTest(before, toPaste2, expected)
+  }
   
   def testPlainTextPaste() {
     def before = '''\
@@ -440,7 +473,7 @@ line to paste #1
      line to paste #1
           line to paste #2\
 '''
-    doTest(before, toPaste, expected, TestFileType.TEXT)
+    doTest(before, toPaste, expected, StdFileTypes.PLAIN_TEXT)
   }
   
   def testPlainTextPasteWithCompleteReplacement() {
@@ -460,7 +493,7 @@ line to paste #2
 line to paste #1
 line to paste #2
 '''
-    doTest(before, toPaste, expected, TestFileType.TEXT)
+    doTest(before, toPaste, expected, StdFileTypes.PLAIN_TEXT)
   }
 
   def testPlainTextMultilinePasteWithCaretAfterSelection() {
@@ -479,24 +512,26 @@ line to paste #2
 line to paste #1
 line to paste #2
 '''
-    doTest(before, toPaste, expected, TestFileType.TEXT)
+    doTest(before, toPaste, expected, StdFileTypes.PLAIN_TEXT)
   }
   
-  def doTest(before, toPaste, expected, fileType = TestFileType.JAVA) {
-    configureFromFileText("${getTestName(false)}.$fileType.extension", before)
+  def doTest(String before, toPaste, expected, FileType fileType = StdFileTypes.JAVA) {
+    myFixture.configureByText(fileType, before)
 
     def settings = CodeInsightSettings.getInstance()
     def old = settings.REFORMAT_ON_PASTE
     settings.REFORMAT_ON_PASTE = CodeInsightSettings.INDENT_BLOCK
     try {
-      def offset = editor.caretModel.offset
-      def column = editor.caretModel.logicalPosition.column
-      myEditor.document.insertString(offset, toPaste)
-      PasteHandler.indentBlock(project, editor, offset, offset + toPaste.length(), column)
+      def offset = myFixture.editor.caretModel.offset
+      def column = myFixture.editor.caretModel.logicalPosition.column
+      ApplicationManager.application.runWriteAction {
+        myFixture.editor.document.insertString(offset, toPaste)
+        PasteHandler.indentBlock(project, myFixture.editor, offset, offset + toPaste.length(), column)
+      }
     }
     finally {
       settings.REFORMAT_ON_PASTE = old
     }
-    checkResultByText(expected)
+    myFixture.checkResult(expected)
   }
 }
