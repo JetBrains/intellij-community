@@ -109,8 +109,8 @@ public class RefCountingStorage extends AbstractStorage {
           }
 
           synchronized (myLock) {
-            myPendingWriteRequests.remove(record);
             doWrite(record, fixedSize, s);
+            myPendingWriteRequests.remove(record);
           }
           return null;
         }
