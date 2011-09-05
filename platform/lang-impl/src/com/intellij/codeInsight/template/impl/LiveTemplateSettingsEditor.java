@@ -397,7 +397,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   private void validateEditVariablesButton() {
-    myEditVariablesButton.setEnabled(!parseVariables(myTemplateEditor.getDocument().getCharsSequence(), false).isEmpty());
+    myEditVariablesButton.setEnabled(!parseVariables(myTemplateEditor.getDocument().getCharsSequence()).isEmpty());
   }
 
   private void reset() {
@@ -467,7 +467,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     });
     
 
-    ArrayList<Variable> parsedVariables = parseVariables(myTemplateEditor.getDocument().getCharsSequence(), false);
+    ArrayList<Variable> parsedVariables = parseVariables(myTemplateEditor.getDocument().getCharsSequence());
 
     Map<String,String> newVariableNames = new HashMap<String, String>();
     for (Object parsedVariable : parsedVariables) {
@@ -537,16 +537,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
     }, modalityState);
   }
 
-  private static ArrayList<Variable> parseVariables(CharSequence text, boolean includeInternal) {
+  private static ArrayList<Variable> parseVariables(CharSequence text) {
     ArrayList<Variable> variables = new ArrayList<Variable>();
     TemplateImplUtil.parseVariables(text, variables, TemplateImpl.INTERNAL_VARS_SET);
-    if (!includeInternal) {
-      for (Iterator<Variable> iterator = variables.iterator(); iterator.hasNext(); ) {
-        if (TemplateImpl.INTERNAL_VARS_SET.contains(iterator.next().getName())) {
-          iterator.remove();
-        }
-      }
-    }
     return variables;
   }
 
