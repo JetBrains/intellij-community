@@ -464,12 +464,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
         for (PsiFile file : dir.getFiles()) {
           FileViewProvider viewProvider = file.getViewProvider();
           if (file instanceof PsiClassOwner && file == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
-            final Set<String> inFile;
-            if (file instanceof PsiClassOwnerEx) {
-              inFile = ((PsiClassOwnerEx)file).getClassNames();
-            } else {
-              inFile = getClassNames(((PsiClassOwner)file).getClasses());
-            }
+            Set<String> inFile = file instanceof PsiClassOwnerEx ? ((PsiClassOwnerEx)file).getClassNames() : getClassNames(((PsiClassOwner)file).getClasses());
 
             if (inFile.isEmpty()) continue;
             if (names == null) names = new HashSet<String>();
@@ -605,7 +600,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     private void processChange(final PsiElement parent, final PsiElement child1, final PsiElement child2) {
       try {
         if (!isInsideCodeBlock(parent)) {
-          if (parent != null && isClassOwner(parent.getContainingFile()) || isClassOwner(child1) || isClassOwner(child2)) {
+          if (parent != null && isClassOwner(parent.getContainingFile()) || isClassOwner(child1) || isClassOwner(child2) || isSourceDir(parent)) {
             myModificationTracker.incCounter();
           }
           else {
@@ -621,6 +616,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       catch (PsiInvalidElementAccessException e) {
         myModificationTracker.incCounter(); // Shall not happen actually, just a pre-release paranoia
       }
+    }
+
+    private static boolean isSourceDir(PsiElement element) {
+      return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackage((PsiDirectory)element) != null;
     }
 
     private static boolean isClassOwner(final PsiElement element) {
