@@ -75,7 +75,8 @@ public class QueueProcessor<T> {
           isProcessing = false;
           if (myQueue.isEmpty()) {
             myQueue.notifyAll();
-          } else {
+          }
+          else {
             startProcessing();
           }
         }
@@ -92,7 +93,7 @@ public class QueueProcessor<T> {
     doAdd(t, false);
   }
 
-  private static<T> PairConsumer<T, Runnable> wrappingProcessor(final Consumer<T> processor) {
+  private static <T> PairConsumer<T, Runnable> wrappingProcessor(final Consumer<T> processor) {
     return new PairConsumer<T, Runnable>() {
       @Override
       public void consume(T item, Runnable runnable) {
@@ -100,7 +101,12 @@ public class QueueProcessor<T> {
           processor.consume(item);
         }
         catch (Throwable e) {
-          LOG.warn(e);
+          try {
+            LOG.error(e);
+          }
+          catch (Exception ignore) {
+            // should survive assertions
+          }
         }
         runnable.run();
       }
@@ -124,7 +130,7 @@ public class QueueProcessor<T> {
     synchronized (myQueue) {
       if (myStarted) return;
       myStarted = true;
-      if (! myQueue.isEmpty()) {
+      if (!myQueue.isEmpty()) {
         startProcessing();
       }
     }
@@ -142,7 +148,8 @@ public class QueueProcessor<T> {
     synchronized (myQueue) {
       if (atHead) {
         myQueue.addFirst(element);
-      } else {
+      }
+      else {
         myQueue.add(element);
       }
       startProcessing();
@@ -160,7 +167,8 @@ public class QueueProcessor<T> {
       while (isProcessing) {
         try {
           myQueue.wait();
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
           //ok
         }
       }
@@ -170,7 +178,7 @@ public class QueueProcessor<T> {
   private boolean startProcessing() {
     LOG.assertTrue(Thread.holdsLock(myQueue));
 
-    if (isProcessing || ! myStarted) {
+    if (isProcessing || !myStarted) {
       return false;
     }
     isProcessing = true;
@@ -181,8 +189,14 @@ public class QueueProcessor<T> {
         if (myDeathCondition.value(null)) return;
         try {
           myProcessor.consume(item, myContinuationContext);
-        } catch (Throwable t) {
-          LOG.warn(t);
+        }
+        catch (Throwable t) {
+          try {
+            LOG.error(t);
+          }
+          catch (Exception ignore) {
+            // should survive assertions
+          }
         }
       }
     };
@@ -191,10 +205,12 @@ public class QueueProcessor<T> {
       final ModalityState state = myModalityState.remove(new MyOverrideEquals(item));
       if (state != null) {
         application.invokeLater(runnable, state);
-      } else {
+      }
+      else {
         application.invokeLater(runnable);
       }
-    } else {
+    }
+    else {
       application.executeOnPooledThread(runnable);
     }
     return true;
@@ -202,7 +218,7 @@ public class QueueProcessor<T> {
 
   public boolean isEmpty() {
     synchronized (myQueue) {
-      return myQueue.isEmpty() && (! isProcessing);
+      return myQueue.isEmpty() && (!isProcessing);
     }
   }
 
@@ -225,7 +241,7 @@ public class QueueProcessor<T> {
 
     @Override
     public boolean equals(Object obj) {
-      return ((MyOverrideEquals) obj).myDelegate == myDelegate;
+      return ((MyOverrideEquals)obj).myDelegate == myDelegate;
     }
   }
 }
