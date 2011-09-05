@@ -35,15 +35,9 @@
     <variable name="RET" expression="" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="true" />
     <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="RL" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.read.lock"
@@ -51,15 +45,9 @@
     <variable name="LOCK" expression="variableOfType(&quot;java.util.concurrent.locks.ReadWriteLock&quot;)" defaultValue="" alwaysStopAt="true" />
     <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="WL" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.write.lock" 
@@ -67,15 +55,9 @@
     <variable name="LOCK" expression="variableOfType(&quot;java.util.concurrent.locks.ReadWriteLock&quot;)" defaultValue="" alwaysStopAt="true" />
     <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="I" value="for ($ELEMENT_TYPE$ $VAR$ : $SELECTION$) {&#10;  $END$&#10;}&#10;"
@@ -84,15 +66,9 @@
     <variable name="ELEMENT_TYPE" expression="iterableComponentType(SELECTION)" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="false" />
     <variable name="VAR" expression="suggestVariableName()" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
 </templateSet>

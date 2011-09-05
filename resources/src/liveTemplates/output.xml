@@ -3,46 +3,25 @@
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.serr"
     name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println(&quot;$END$&quot;);">
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
-      <option name="GROOVY" value="true" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.sout"
      name="sout" toReformat="true" toShortenFQNames="true" value="System.out.println($END$);">
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
-      <option name="GROOVY" value="true" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.souf"
      name="souf" toReformat="true" toShortenFQNames="true" value="System.out.printf(&quot;$END$&quot;);">
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
-      <option name="GROOVY" value="true" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutm"
@@ -50,16 +29,10 @@
     <variable alwaysStopAt="false" defaultValue="" expression="className()" name="CLASS_NAME" />
     <variable alwaysStopAt="false" defaultValue="" expression="methodName()" name="METHOD_NAME" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="GROOVY" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutv"
@@ -67,16 +40,10 @@
     <variable alwaysStopAt="true" defaultValue="&quot;expr&quot;" expression="variableOfType(&quot;&quot;)" name="EXPR" />
     <variable alwaysStopAt="false" defaultValue="" expression="EXPR" name="EXPR_COPY" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="GROOVY" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
 </templateSet>

@@ -16,25 +16,27 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.DataManager;
+import com.intellij.codeInsight.completion.JavaCompletionData;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class JavaCodeContextType extends TemplateContextType {
-  public JavaCodeContextType() {
-    super("JAVA_CODE", CodeInsightBundle.message("dialog.edit.template.checkbox.java.code"));
+public abstract class JavaCodeContextType extends TemplateContextType {
+
+  protected JavaCodeContextType(@NotNull @NonNls String id,
+                                @NotNull String presentableName,
+                                @Nullable Class<? extends TemplateContextType> baseContextType) {
+    super(id, presentableName, baseContextType);
   }
-
 
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
     if (PsiUtilBase.getLanguageAtOffset(file, offset).isKindOf(StdLanguages.JAVA)) {
@@ -42,18 +44,13 @@ public class JavaCodeContextType extends TemplateContextType {
       if (element instanceof PsiWhiteSpace && offset > 0) {
         element = file.findElementAt(offset - 1);
       }
-      if (element != null &&
-          element.getParent() instanceof PsiReferenceExpression &&
-          ((PsiReferenceExpression)element.getParent()).isQualified()) {
-        return false;
-      }
-
-      return element != null && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) == null &&
-             !(element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.STRING_LITERAL);
+      return element != null && isInContext(element);
     }
 
     return false;
   }
+  
+  protected abstract boolean isInContext(@NotNull PsiElement element);
 
   @Override
   public boolean isInContext(@NotNull final FileType fileType) {
@@ -76,4 +73,64 @@ public class JavaCodeContextType extends TemplateContextType {
     final JavaCodeFragment fragment = factory.createCodeBlockCodeFragment((String)text, psiFacade.findPackage(""), true);
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
+  
+  public static class Generic extends JavaCodeContextType {
+    public Generic() {
+      super("JAVA_CODE", CodeInsightBundle.message("dialog.edit.template.checkbox.java.code"), EverywhereContextType.class);
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return true;
+    }
+  }
+
+  public static class Statement extends JavaCodeContextType {
+    public Statement() {
+      super("JAVA_STATEMENT", "Statement", JavaCodeContextType.class);
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      if (!(element.getParent() instanceof PsiReferenceExpression)) {
+        return false;
+      }
+      if (((PsiReferenceExpression)element.getParent()).isQualified()) {
+        return false;
+      }
+      return element.getParent().getParent() instanceof PsiExpressionStatement;
+    }
+  }
+  public static class Expression extends JavaCodeContextType {
+    public Expression() {
+      super("JAVA_EXPRESSION", "Expression", JavaCodeContextType.class);
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiReferenceExpression)) {
+        return false;
+      }
+      if (((PsiReferenceExpression)parent).isQualified()) {
+        return false;
+      }
+      if (parent.getParent() instanceof PsiMethodCallExpression) {
+        return false;
+      }
+      return true;
+    }
+  }
+  public static class Declaration extends JavaCodeContextType {
+    public Declaration() {
+      super("JAVA_DECLARATION", "Declaration", JavaCodeContextType.class);
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return JavaCompletionData.CLASS_START.isAcceptable(element, element) || JavaCompletionData.INSIDE_PARAMETER_LIST.accepts(element);
+    }
+  }
+
+
 }

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaCommentContextType extends TemplateContextType {
   public JavaCommentContextType() {
-    super("JAVA_COMMENT", CodeInsightBundle.message("dialog.edit.template.checkbox.java.comment"));
+    super("JAVA_COMMENT", CodeInsightBundle.message("dialog.edit.template.checkbox.java.comment"), JavaCodeContextType.class);
   }
 
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
