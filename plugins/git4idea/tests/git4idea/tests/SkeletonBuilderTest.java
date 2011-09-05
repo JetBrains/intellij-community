@@ -19,10 +19,12 @@ import com.intellij.mock.MockVirtualFileSystem;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.Ring;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.ReadonlyList;
 import com.intellij.util.ui.ColumnInfo;
 import git4idea.history.wholeTree.*;
@@ -559,7 +561,64 @@ public class SkeletonBuilderTest extends TestCase {
     Assert.assertEquals(7, commitsEnds[1]);
     Assert.assertEquals(8, commitsEnds[2]);*/
   }
+  
+  public void testRealMergesAndBranches() throws Exception {
+    List<CommitHashPlusParents> list = read("1 2 3\n2 10\n3 4\n4 5 9\n5 6 7\n6 10\n7 8\n8 10\n9 10\n10 11 12\n11 17\n12 13 15\n" +
+                                                  "13 14\n14 17\n15 16 17\n16 18\n17 18");
+    TreeNavigationImpl navigation = new TreeNavigationImpl(20, 20);
+    SkeletonBuilder builder = new SkeletonBuilder(navigation);
+    ReadonlyList.ArrayListWrapper<CommitI> commits = new ReadonlyList.ArrayListWrapper<CommitI>();
+    fillData(list, navigation, builder, commits);
 
+    testRealResults(navigation, commits);
+
+    List<CommitHashPlusParents> list1 = read("1 2 3\n2 10\n3 4\n4 5 9\n5 6 7\n6 10\n7 8\n8 10\n9 10\n10 11 12\n11 17\n12 13 15\n");
+    List<CommitHashPlusParents> list2 = read("13 14\n14 17\n15 16 17\n16 18\n17 18");
+    navigation = new TreeNavigationImpl(20, 20);
+    builder = new SkeletonBuilder(navigation);
+    commits = new ReadonlyList.ArrayListWrapper<CommitI>();
+    fillData(list1, navigation, builder, commits);
+    fillData(list2, navigation, builder, commits);
+    testRealResults(navigation, commits);
+
+    list1 = read("1 2 3\n2 10\n3 4\n4 5 9\n5 6 7\n6 10\n7 8\n8 10\n9 10\n10 11 12\n11 17\n12 13 15\n13 14\n14 17\n");
+    list2 = read("15 16 17\n16 18\n17 18");
+    navigation = new TreeNavigationImpl(20, 20);
+    builder = new SkeletonBuilder(navigation);
+    commits = new ReadonlyList.ArrayListWrapper<CommitI>();
+    fillData(list1, navigation, builder, commits);
+    fillData(list2, navigation, builder, commits);
+    testRealResults(navigation, commits);
+
+    list1 = read("1 2 3\n2 10\n3 4\n4 5 9\n5 6 7\n6 10\n7 8\n8 10\n9 10\n10 11 12\n11 17\n12 13 15\n13 14\n14 17\n15 16 17\n");
+    list2 = read("16 18\n17 18");
+    navigation = new TreeNavigationImpl(20, 20);
+    builder = new SkeletonBuilder(navigation);
+    commits = new ReadonlyList.ArrayListWrapper<CommitI>();
+    fillData(list1, navigation, builder, commits);
+    fillData(list2, navigation, builder, commits);
+    testRealResults(navigation, commits);
+  }
+
+  private void testRealResults(TreeNavigationImpl navigation, ReadonlyList.ArrayListWrapper<CommitI> commits) {
+    final int[] expectedWireNumbers = {0,0,1,1,1,   1,3,3,2,0,    0,1,1,1,2,    2,0,0};
+    for (int i = 0; i < 5; i++) {
+      final CommitI commitI = (CommitI)commits.get(i);
+      // just because of the test data order
+      Assert.assertEquals("" + (i + 1), commitI.getHash().getString());
+      Assert.assertEquals(expectedWireNumbers[i], commitI.getWireNumber());
+    }
+
+    Ring<Integer> usedWires = navigation.getUsedWires(17, commits, new Convertor<Integer, List<Integer>>() {
+      @Override
+      public List<Integer> convert(Integer o) {
+        return Collections.emptyList();
+      }
+    });
+    System.out.println("*");
+  }
+
+  // todo test events list
   public void testJumpsWithWires() throws Exception {
     final List<CommitHashPlusParents> list = read("1 2 3\n2 3 8\n3 4\n4 5 7\n5 6\n6 7\n7 9\n8 9\n 9");
     // 4, 4
