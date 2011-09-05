@@ -13,6 +13,7 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepend
 import org.jetbrains.jpsservice.impl.JpsServerMessageHandler;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -20,15 +21,18 @@ import java.util.concurrent.Executors;
  *         Date: 8/11/11
  */
 public class Server {
-  private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
   public static final int DEFAULT_SERVER_PORT = 7777;
+  private static final int MAX_SIMULTANEOUS_BUILD_SESSIONS = Math.max(2, Runtime.getRuntime().availableProcessors());
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("jps-server");
   private final ChannelFactory myChannelFactory;
   private final ChannelPipelineFactory myPipelineFactory;
+  private final ExecutorService myBuildsExecutor;
 
   public Server() {
-    myChannelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 2);
+    final ExecutorService threadPool = Executors.newCachedThreadPool();
+    myBuildsExecutor = Executors.newFixedThreadPool(MAX_SIMULTANEOUS_BUILD_SESSIONS);
+    myChannelFactory = new NioServerSocketChannelFactory(threadPool, threadPool, 1);
     myPipelineFactory = new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
         return Channels.pipeline(
@@ -37,7 +41,7 @@ public class Server {
           new ProtobufDecoder(JpsRemoteProto.Message.getDefaultInstance()),
           new ProtobufVarint32LengthFieldPrepender(),
           new ProtobufEncoder(),
-          new JpsServerMessageHandler()
+          new JpsServerMessageHandler(myBuildsExecutor)
         );
       }
     };
@@ -54,6 +58,7 @@ public class Server {
 
   public void stop() {
     try {
+      myBuildsExecutor.shutdownNow();
       final ChannelGroupFuture closeFuture = myAllOpenChannels.close();
       closeFuture.awaitUninterruptibly();
     }

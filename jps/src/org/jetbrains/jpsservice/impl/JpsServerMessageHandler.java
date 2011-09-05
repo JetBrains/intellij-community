@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author Eugene Zhuravlev
@@ -23,7 +22,11 @@ import java.util.concurrent.Executors;
  */
 public class JpsServerMessageHandler extends SimpleChannelHandler {
   private ConcurrentHashMap<String, String> myBuildsInProgress = new ConcurrentHashMap<String, String>();
-  private ExecutorService myExecutorService = Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors()));
+  private final ExecutorService myBuildsExecutorService;
+
+  public JpsServerMessageHandler(ExecutorService buildsExecutorService) {
+    myBuildsExecutorService = buildsExecutorService;
+  }
 
   public void messageReceived(final ChannelHandlerContext ctx, MessageEvent e) throws Exception {
     final JpsRemoteProto.Message message = (JpsRemoteProto.Message)e.getMessage();
@@ -82,7 +85,7 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
       if (myBuildsInProgress.putIfAbsent(projectId, "") != null) {
         return ProtoUtil.createCommandRejectedResponse("Project is being compiled already");
       }
-      myExecutorService.submit(new CompilationTask(sessionId, channelContext, commandType, projectId, compileRequest.getModuleNameList()));
+      myBuildsExecutorService.submit(new CompilationTask(sessionId, channelContext, commandType, projectId, compileRequest.getModuleNameList()));
       return null; // the rest will be handled asynchronously
     }
 
