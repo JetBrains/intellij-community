@@ -105,6 +105,14 @@ public class PullUpTest extends LightCodeInsightTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
+  public void testRemoveOverrideFromPulledMethod() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+  }
+
+  public void testPreserveOverrideInPulledMethod() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+  }
+
   private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {
     doTest(true, membersToFind);
   }

@@ -204,15 +204,15 @@ public class PullUpHelper extends BaseRefactoringProcessor{
     for (MemberInfo info : myMembersToMove) {
       if (info.getMember() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)info.getMember();
+        PsiMethod methodCopy = (PsiMethod)method.copy();
+        if (method.findDeepestSuperMethods().length == 0) {
+          deleteOverrideAnnotationIfFound(methodCopy);
+        }
         final boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
         if (myIsTargetInterface || info.isToAbstract()) {
-          PsiMethod methodCopy = (PsiMethod)method.copy();
           ChangeContextUtil.clearContextInfo(method);
           RefactoringUtil.abstractizeMethod(myTargetSuperClass, methodCopy);
           RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
-          if (method.findDeepestSuperMethods().length == 0 || (myTargetSuperClass.isInterface() && !PsiUtil.isLanguageLevel6OrHigher(mySourceClass))) {
-            deleteOverrideAnnotationIfFound(methodCopy);
-          }
 
           myJavaDocPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);
 
@@ -240,14 +240,14 @@ public class PullUpHelper extends BaseRefactoringProcessor{
           if (isOriginalMethodAbstract) {
             PsiUtil.setModifierProperty(myTargetSuperClass, PsiModifier.ABSTRACT, true);
           }
-          RefactoringUtil.replaceMovedMemberTypeParameters(method, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
-          fixReferencesToStatic(method, movedMembers);
-          final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(method, false);
+          RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
+          fixReferencesToStatic(methodCopy, movedMembers);
+          final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(methodCopy, false);
           if (superClassMethod != null && superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            superClassMethod.replace(method);
+            superClassMethod.replace(methodCopy);
           }
           else {
-            final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(method);
+            final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(methodCopy);
             myMembersAfterMove.add(movedElement);
           }
           method.delete();
