@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;i &amp; 0&lt;/code&gt; can be replaced with '0' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;j | 0&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;j ^ 0&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;j &lt;&lt; 0&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>17</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;j &gt;&gt; 0&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>19</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;j &gt;&gt;&gt; 0&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>21</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;j &gt;&gt;&gt; ZERO&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+  
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>27</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;0 &amp; i&lt;/code&gt; can be replaced with '0' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>30</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;0 | j&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>32</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;0 ^ j&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>39</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;i &amp; 0xffffffff&lt;/code&gt; can be replaced with 'i' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>42</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;j | 0xffffffff&lt;/code&gt; can be replaced with '0xffffffff' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>45</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;j ^ 0xffffffff&lt;/code&gt; can be replaced with '~j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>53</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;0xffffffff &amp; i&lt;/code&gt; can be replaced with 'i' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>56</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;0xffffffff | j&lt;/code&gt; can be replaced with '0xffffffff' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>59</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;0xffffffff ^ j&lt;/code&gt; can be replaced with '~j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBitwiseExpressionInspection.java</file>
+    <line>64</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless bitwise expression</problem_class>
+    <description>&lt;code&gt;0 &amp; 100&lt;/code&gt; can be replaced with '0' #loc</description>
+  </problem>
+</problems>
