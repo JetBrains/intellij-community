@@ -45,6 +45,14 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   }
   
   public void testIncorrectSelection() {  // PY-4455
+    doTestCannotPerform();
+  }
+  
+  public void testOneSidedSelection() {  // PY-4456
+    doTestCannotPerform();
+  }
+
+  private void doTestCannotPerform() {
     boolean thrownExpectedException = false;
     try {
       doTest();
