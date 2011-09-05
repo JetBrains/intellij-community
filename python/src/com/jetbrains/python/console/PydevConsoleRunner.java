@@ -30,7 +30,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.net.NetUtils;
@@ -405,6 +407,22 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   public static boolean isInPydevConsole(final PsiElement element) {
     return element instanceof PydevConsoleElement || getConsoleCommunication(element) != null;
+  }
+
+  public static boolean isInPydevConsole(final VirtualFile file) {
+    return file.getName().contains("Python Console");
+  }
+
+  public static boolean isInPydevConsole(final FileElement element) {
+    //noinspection ConstantConditions
+    if (element.getPsi() == null || element.getPsi().getContainingFile() == null) {
+      return false;
+    }
+    //noinspection ConstantConditions
+    if ("Python Console".equals(element.getPsi().getContainingFile().getName())) {
+      return true;
+    }
+    return false;
   }
 
 
