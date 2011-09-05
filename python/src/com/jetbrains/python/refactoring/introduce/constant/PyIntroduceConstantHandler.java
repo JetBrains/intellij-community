@@ -1,11 +1,14 @@
 package com.jetbrains.python.refactoring.introduce.constant;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +21,14 @@ import java.util.Collection;
 public class PyIntroduceConstantHandler extends IntroduceHandler {
   public PyIntroduceConstantHandler() {
     super(new ConstantValidator(), PyBundle.message("refactoring.introduce.constant.dialog.title"));
+  }
+
+  @Override
+  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression) {
+    if (PsiTreeUtil.getParentOfType(expression, ScopeOwner.class) instanceof PyFile) {
+      return super.replaceExpression(expression, newExpression);
+    }
+    return PyPsiUtils.replaceExpression(expression, newExpression);
   }
 
   @Override
