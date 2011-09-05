@@ -33,6 +33,9 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -54,7 +57,14 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.UsageInfoToUsageConverter;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,6 +72,7 @@ import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -137,6 +148,7 @@ public abstract class ChooseByNameBase {
 
   private boolean myClosedByShiftEnter = false;
   protected final int myInitialIndex;
+  private String myFindUsagesTitle;
 
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
@@ -214,6 +226,10 @@ public abstract class ChooseByNameBase {
       throw new IllegalStateException("Tool area is modifiable only before invoke()");
     }
     myToolArea = toolArea;
+  }
+
+  public void setFindUsagesTitle(String findUsagesTitle) {
+    myFindUsagesTitle = findUsagesTitle;
   }
 
   public void invoke(final ChooseByNamePopupComponent.Callback callback,
@@ -347,39 +363,62 @@ public abstract class ChooseByNameBase {
     myCard = new CardLayout();
     myCardContainer = new JPanel(myCard);
 
-    final JPanel checkBoxPanel = new JPanel();
-    myCheckBox = new JCheckBox(myModel.getCheckBoxName());
+    final String checkBoxName = myModel.getCheckBoxName();
+    myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName : "");
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
+    myCheckBox.setBorder(null);
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
 
-    if (myModel.getPromptText() != null) {
-      checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.X_AXIS));
-      checkBoxPanel.add(myCheckBox);
-    }
-    else {
-      checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.LINE_AXIS));
-      checkBoxPanel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-      checkBoxPanel.add(myCheckBox);
-    }
-    checkBoxPanel.setVisible(myModel.getCheckBoxName() != null);
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(checkBoxPanel, BorderLayout.CENTER);
-    myCardContainer.add(panel, CHECK_BOX_CARD);
+    if (checkBoxName == null) myCheckBox.setVisible(false);
 
-    myCardContainer.add(new HintLabel(myModel.getNotInMessage()), NOT_FOUND_IN_PROJECT_CARD);
-    myCardContainer.add(new HintLabel(IdeBundle.message("label.choosebyname.no.matches.found")), NOT_FOUND_CARD);
-    myCardContainer.add(new HintLabel(IdeBundle.message("label.choosebyname.searching")), SEARCHING_CARD);
+    addCard(myCheckBox, CHECK_BOX_CARD);
+
+    addCard(new HintLabel(myModel.getNotInMessage()), NOT_FOUND_IN_PROJECT_CARD);
+    addCard(new HintLabel(IdeBundle.message("label.choosebyname.no.matches.found")), NOT_FOUND_CARD);
+    JPanel searching = new JPanel(new BorderLayout(5, 0));
+    searching.add(new AsyncProcessIcon("searching"), BorderLayout.WEST);
+    searching.add(new HintLabel(IdeBundle.message("label.choosebyname.searching")), BorderLayout.CENTER);
+    addCard(searching, SEARCHING_CARD);
     myCard.show(myCardContainer, CHECK_BOX_CARD);
 
     if (isCheckboxVisible()) {
       hBox.add(myCardContainer);
     }
 
+
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new ShowFindUsagesAction(){
+      @Override
+      public PsiElement[] getElements() {
+        if (myListModel == null) return PsiElement.EMPTY_ARRAY;
+        final Object[] objects = myListModel.toArray();
+        final List<PsiElement> psiElements = new ArrayList<PsiElement>();
+        for (Object object : objects) {
+          if (object instanceof PsiElement) {
+            psiElements.add((PsiElement)object);
+          }
+          else if (object instanceof DataProvider) {
+            final PsiElement psi = LangDataKeys.PSI_ELEMENT.getData((DataProvider)object);
+            if (psi != null) {
+              psiElements.add(psi);
+            }
+          }
+          
+        }
+        return psiElements.toArray(new PsiElement[psiElements.size()]);
+      }
+    });
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    final JComponent toolbarComponent = actionToolbar.getComponent();
+    toolbarComponent.setBorder(null);
+
+    hBox.add(Box.createHorizontalStrut(10));
+    hBox.add(toolbarComponent);
+
     if (myToolArea != null) {
-      hBox.add(Box.createHorizontalStrut(5));
       hBox.add(myToolArea);
     }
-    hBox.add(Box.createHorizontalStrut(5));
     myTextFieldPanel.add(caption2Tools);
 
     myHistory = new ArrayList<Pair<String, Integer>>();
@@ -556,6 +595,12 @@ public abstract class ChooseByNameBase {
     if (modalityState != null) {
       rebuildList(myInitialIndex, 0, null, modalityState, null);
     }
+  }
+
+  private void addCard(JComponent comp, String cardId) {
+    JPanel wrapper = new JPanel(new BorderLayout());
+    wrapper.add(comp, BorderLayout.EAST);
+    myCardContainer.add(wrapper, cardId);
   }
 
   private static Set<KeyStroke> getShortcuts(@NotNull String actionId) {
@@ -1350,7 +1395,7 @@ public abstract class ChooseByNameBase {
       }, delay, myModalityState);
     }
 
-    private void addElementsByPattern(Set<Object> elementsArray, String pattern) {
+    protected void addElementsByPattern(Set<Object> elementsArray, String pattern) {
       String namePattern = getNamePattern(pattern);
       String qualifierPattern = getQualifierPattern(pattern);
 
@@ -1387,7 +1432,7 @@ public abstract class ChooseByNameBase {
           sortByProximity(sameNameElements);
           for (Object element : sameNameElements) {
             elementsArray.add(element);
-            if (elementsArray.size() >= myMaximumListSizeLimit) {
+            if (isOverflow(elementsArray)) {
               overflow = true;
               break All;
             }
@@ -1395,7 +1440,7 @@ public abstract class ChooseByNameBase {
         }
         else if (elements.length == 1 && matchesQualifier(elements[0], qualifierPattern)) {
           elementsArray.add(elements[0]);
-          if (elementsArray.size() >= myMaximumListSizeLimit) {
+          if (isOverflow(elementsArray)) {
             overflow = true;
             break;
           }
@@ -1405,6 +1450,10 @@ public abstract class ChooseByNameBase {
       if (overflow) {
         elementsArray.add(EXTRA_ELEM);
       }
+    }
+
+    protected boolean isOverflow(Set<Object> elementsArray) {
+      return elementsArray.size() >= myMaximumListSizeLimit;
     }
 
     private void cancel() {
@@ -1554,5 +1603,97 @@ public abstract class ChooseByNameBase {
       super(text, RIGHT);
       setForeground(Color.darkGray);
     }
+  }
+
+  private static final String ACTION_NAME = "Show All in View";
+  private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
+
+  private abstract class ShowFindUsagesAction extends AnAction {
+
+    public ShowFindUsagesAction() {
+      super(ACTION_NAME, ACTION_NAME, FIND_ICON);
+    }
+
+
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      cancelCalcElementsThread();
+      cancelListUpdater();
+
+      final UsageViewPresentation presentation = new UsageViewPresentation();
+      final String pattern = myFindUsagesTitle + " \'" + myTextField.getText().trim() + "\'";
+      presentation.setCodeUsagesString(pattern);
+      presentation.setTabName(pattern);
+      presentation.setTabText(pattern);
+      final PsiElement[] elements = getElements();
+      final UsageInfo[] usages = new UsageInfo[elements.length];
+      for (int i = 0; i < elements.length; i++) {
+        usages[i] = new UsageInfo(elements[i]);
+      }
+      final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
+        new UsageInfoToUsageConverter.TargetElementsDescriptor(elements);
+      final UsageViewImpl usageView =
+        (UsageViewImpl)UsageViewManager.getInstance(myProject).showUsages(UsageTarget.EMPTY_ARRAY, UsageInfoToUsageConverter.convert(
+          descriptor, usages), presentation);
+      if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
+        final String text = myTextField.getText();
+        final boolean checkboxState = myCheckBox.isSelected();
+        final HashSet<Object> elementsArray = new HashSet<Object>();
+        hideHint();
+        ProgressManager.getInstance().run(new Task.Modal(myProject, pattern, true){
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            ensureNamesLoaded(checkboxState);
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              private ChooseByNameBase.CalcElementsThread myCalcElementsThread;
+
+              public void run() {
+                myCalcElementsThread = new CalcElementsThread(text, checkboxState, null, ModalityState.NON_MODAL, true) {
+                  @Override
+                  protected boolean isOverflow(Set<Object> elementsArray) {
+                    return false;
+                  }
+                };
+                myCalcElementsThread.addElementsByPattern(elementsArray, text);
+              }
+            });
+          }
+
+          @Override
+          public void onSuccess() {
+            for (Object o : elementsArray) {
+              if (o instanceof PsiElement) {
+                if (ArrayUtil.find(elements, (PsiElement)o) > -1) {
+                  continue;
+                }
+                usageView.appendUsage(UsageInfoToUsageConverter.convert(descriptor, new UsageInfo((PsiElement)o)));
+              }
+            }
+          }
+
+          @Override
+          public void onCancel() {
+            if (myCalcElementsThread != null) {
+              myCalcElementsThread.cancel();
+            }
+            usageView.close();
+          }
+        });
+      } else {
+        hideHint();
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      if (myFindUsagesTitle == null) {
+        e.getPresentation().setVisible(false);
+        return;
+      }
+      final PsiElement[] elements = getElements();
+      e.getPresentation().setEnabled(elements != null && elements.length > 0);
+    }
+
+    public abstract PsiElement[] getElements();
   }
 }

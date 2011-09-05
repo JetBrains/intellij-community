@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.editors.ComboBoxPropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
@@ -82,17 +81,17 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
     private RadComponent myComponent;
 
     public MyPropertyEditor() {
-      myCbx.setRenderer(new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          RadButtonGroup group = (RadButtonGroup) value;
+      myCbx.setRenderer(new ListCellRendererWrapper<RadButtonGroup>(myCbx.getRenderer()) {
+        @Override
+        public void customize(JList list, RadButtonGroup value, int index, boolean selected, boolean hasFocus) {
           if (value == null) {
-            append(UIDesignerBundle.message("button.group.none"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            setText(UIDesignerBundle.message("button.group.none"));
           }
-          else if (group == RadButtonGroup.NEW_GROUP) {
-            append(UIDesignerBundle.message("button.group.new"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          else if (value == RadButtonGroup.NEW_GROUP) {
+            setText(UIDesignerBundle.message("button.group.new"));
           }
           else {
-            append(group.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            setText(value.getName());
           }
         }
       });

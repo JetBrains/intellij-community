@@ -145,6 +145,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (invokedExplicitly) {
       time = phase.newCompletionStarted(time, repeated);
     }
+    if (CompletionServiceImpl.isPhase(CompletionPhase.InsertedSingleItem.class)) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+    }
     CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass(), CompletionPhase.CommittingDocuments.class);
 
     if (time > 1) {
@@ -299,7 +302,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       if (allItems != null) { // the completion is really finished, now we may auto-insert or show lookup
         completionFinished(initContext.getStartOffset(), initContext.getSelectionEndOffset(), indicator, allItems, hasModifiers);
         if (CompletionServiceImpl.isPhase(CompletionPhase.Synchronous.class)) {
-          LOG.error("sync phase survived: " + Arrays.toString(allItems));
+          LOG.error("sync phase survived: " + Arrays.toString(allItems) + "; indicator=" + CompletionServiceImpl.getCompletionPhase().indicator + "; myIndicator=" + indicator);
           CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
         }
         return;

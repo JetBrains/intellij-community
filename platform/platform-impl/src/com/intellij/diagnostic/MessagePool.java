@@ -70,7 +70,7 @@ public class MessagePool {
         String title = "<a href='xxx'>" + getTitle(message) + "</a>";
         String notificationText = getNotificationText(message);
         Notification notification =
-          NOTIFICATION_GROUP.createNotification(title, notificationText, NotificationType.ERROR, new NotificationListener() {
+          new Notification(NOTIFICATION_GROUP.getDisplayId(), title, notificationText, NotificationType.ERROR, new NotificationListener() {
             @Override
             public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
               Object source = event.getSource();
@@ -84,7 +84,16 @@ public class MessagePool {
                 }
               }
             }
-          });
+          }) {
+            @Override
+            public void expire() {
+              super.expire();
+              if (!message.isRead()) {
+                message.setRead(true);
+              }
+              notifyListenersRead();
+            }
+          };
         notification.notify(null);
         message.setNotification(notification);
       }
@@ -164,6 +173,13 @@ public class MessagePool {
     final MessagePoolListener[] messagePoolListeners = myListeners.toArray(new MessagePoolListener[myListeners.size()]);
     for (MessagePoolListener messagePoolListener : messagePoolListeners) {
       messagePoolListener.poolCleared();
+    }
+  }
+
+  private void notifyListenersRead() {
+    final MessagePoolListener[] messagePoolListeners = myListeners.toArray(new MessagePoolListener[myListeners.size()]);
+    for (MessagePoolListener messagePoolListener : messagePoolListeners) {
+      messagePoolListener.entryWasRead();
     }
   }
 

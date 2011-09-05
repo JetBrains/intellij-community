@@ -162,6 +162,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
+  public List<HighlightInfo> getInfos() {
+    return myHighlights == null ? null : new ArrayList<HighlightInfo>(myHighlights);
+  }
+
   public void doApplyInformationToEditor() {
     if (myHighlights == null) return;
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, getColorsScheme(), Pass.POST_UPDATE_ALL);

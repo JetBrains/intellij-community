@@ -155,7 +155,10 @@ public class Foundation {
     }
   }
 
+  @Nullable
   public static String toStringViaUTF8(ID cfString) {
+    if (cfString.intValue() == 0) return null;
+
     int lengthInChars = myFoundationLibrary.CFStringGetLength(cfString);
     int potentialLengthInBytes = 3 * lengthInChars + 1; // UTF8 fully escaped 16 bit chars, plus nul
 
@@ -172,7 +175,11 @@ public class Foundation {
   public static void cfRelease(ID id) {
     myFoundationLibrary.CFRelease(id);
   }
-
+  
+  public static boolean isMainThread() {
+    return invoke("NSThread", "isMainThread").intValue() > 0;
+  }
+  
   private static Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<String, RunnableInfo>();
   private static long ourCurrentRunnableCount = 0;
   private static final Object RUNNABLE_LOCK = new Object();
@@ -195,7 +202,7 @@ public class Foundation {
     }
 
     final ID ideaRunnable = getClass("IdeaRunnable");
-    final ID runnableObject = invoke(ideaRunnable, "alloc");
+    final ID runnableObject = invoke(invoke(ideaRunnable, "alloc"), "init");
     invoke(runnableObject, "performSelectorOnMainThread:withObject:waitUntilDone:", createSelector("run:"),
            cfString(String.valueOf(ourCurrentRunnableCount)), Boolean.valueOf(waitUntilDone));
     invoke(runnableObject, "release");
@@ -234,7 +241,7 @@ public class Foundation {
           }
         }
       };
-      if (!addMethod(runnableClass, createSelector("run:"), callback, "v*")) {
+      if (!addMethod(runnableClass, createSelector("run:"), callback, "v@:*")) {
         throw new RuntimeException("Unable to add method to objective-c runnableClass class!");
       }
       ourRunnableCallback = callback;

@@ -80,6 +80,8 @@ public class LengthOneStringsInConcatenationInspection
             final String charLiteral;
             if ("\'".equals(character)) {
                 charLiteral = "'\\''";
+            } else if ("\\\"".equals(character)) {
+                charLiteral = "'\"'";
             } else {
                 charLiteral = '\'' + character + '\'';
             }
@@ -106,33 +108,11 @@ public class LengthOneStringsInConcatenationInspection
             if (value == null || value.length() != 1) {
                 return;
             }
-            if (!isArgumentOfConcatenation(expression) &&
+            if (!ExpressionUtils.isStringConcatenationOperand(expression) &&
                 !isArgumentOfStringAppend(expression)) {
                 return;
             }
             registerError(expression, value);
-        }
-
-        private static boolean isArgumentOfConcatenation(
-                PsiExpression expression) {
-            final PsiElement parent = expression.getParent();
-            if (!(parent instanceof PsiPolyadicExpression)) {
-                return false;
-            }
-            final PsiPolyadicExpression polyadicExpression =
-                    (PsiPolyadicExpression)parent;
-            if (!JavaTokenType.PLUS.equals(
-                    polyadicExpression.getOperationTokenType())) {
-                return false;
-            }
-            final PsiExpression sibling =
-                    ExpressionUtils.getPrevOrNextSiblingOfType(expression,
-                            PsiExpression.class);
-            if (sibling == null) {
-                return false;
-            }
-            final PsiType siblingType = sibling.getType();
-            return TypeUtils.isJavaLangString(siblingType);
         }
 
         static boolean isArgumentOfStringAppend(PsiExpression expression) {

@@ -245,7 +245,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       }
       final FolderConfiguration config = new FolderConfiguration();
       config.set(deviceConfiguration.getConfiguration());
-      config.setDockModeQualifier(new DockModeQualifier(myToolWindowForm.getSelectedDockMode()));
+      config.setUiModeQualifier(new UiModeQualifier(myToolWindowForm.getSelectedDockMode()));
       config.setNightModeQualifier(new NightModeQualifier(myToolWindowForm.getSelectedNightMode()));
 
       final LocaleData localeData = myToolWindowForm.getSelectedLocaleData();

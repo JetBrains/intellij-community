@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -193,12 +194,12 @@ public class OwnBufferLeafPsiElement extends LeafElement implements PsiElement {
 
   @NotNull
   public GlobalSearchScope getResolveScope() {
-    return getManager().getFileManager().getResolveScope(this);
+    return ResolveScopeManager.getElementResolveScope(this);
   }
 
   @NotNull
   public SearchScope getUseScope() {
-    return getManager().getFileManager().getUseScope(this);
+    return ResolveScopeManager.getElementUseScope(this);
   }
 
   @NotNull

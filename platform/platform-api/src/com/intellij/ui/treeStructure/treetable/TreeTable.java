@@ -103,7 +103,11 @@ public class TreeTable extends JBTable {
 
   public void setTableModel(TreeTableModel treeTableModel) {
     myTableModel = treeTableModel;
-    super.setModel(new TreeTableModelAdapter(treeTableModel, myTree, this));
+    super.setModel(adapt(treeTableModel));
+  }
+
+  protected TreeTableModelAdapter adapt(TreeTableModel treeTableModel) {
+    return new TreeTableModelAdapter(treeTableModel, myTree, this);
   }
 
   public void setRootVisible(boolean visible){

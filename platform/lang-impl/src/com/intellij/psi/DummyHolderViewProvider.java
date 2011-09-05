@@ -136,10 +136,6 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     return language == getBaseLanguage() ? findReferenceAt(offsetInElement) : null;
   }
 
-  public boolean isLockedByPsiOperations() {
-    return false;
-  }
-
   @NotNull
   @Override
   public FileViewProvider createCopy(final VirtualFile copy) {

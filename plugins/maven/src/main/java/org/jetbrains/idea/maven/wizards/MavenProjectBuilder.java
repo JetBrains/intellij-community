@@ -96,7 +96,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
-    MavenWorkspaceSettings settings = project.getComponent(MavenWorkspaceSettingsComponent.class).getState();
+    MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getState();
 
     settings.generalSettings = getGeneralSettings();
     settings.importingSettings = getImportingSettings();

@@ -44,6 +44,7 @@ public abstract class StatementUpDownMover {
     public RangeMarker range2;
 
     public boolean indentSource;
+    public boolean indentTarget = true;
   }
 
   public abstract boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down);

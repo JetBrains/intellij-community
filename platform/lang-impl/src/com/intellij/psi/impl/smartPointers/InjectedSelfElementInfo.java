@@ -65,7 +65,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
     final Ref<PsiElement> result = new Ref<PsiElement>();
 
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getProject());
-    InjectedLanguageUtil.enumerate(hostContext, hostContext.getContainingFile(), new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    InjectedLanguageUtil.enumerate(hostContext, hostContext.getContainingFile(), true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         @Override
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           if (result.get() != null) return;
@@ -78,7 +78,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
             result.set(element);
           }
         }
-      }, true);
+      });
 
       return result.get();
   }

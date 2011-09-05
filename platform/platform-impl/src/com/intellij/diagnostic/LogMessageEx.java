@@ -14,6 +14,7 @@ import java.util.List;
  * @author ksafonov
  */
 public class LogMessageEx extends LogMessage {
+  private final IdeaLoggingEvent myEvent;
   private final String myTitle;
   private final String myNotificationText;
   private List<Attachment> myAttachments = null;
@@ -25,6 +26,7 @@ public class LogMessageEx extends LogMessage {
    */
   public LogMessageEx(IdeaLoggingEvent aEvent, String title, String notificationText) {
     super(aEvent);
+    myEvent = aEvent;
     myTitle = title;
     myNotificationText = notificationText;
   }
@@ -56,6 +58,10 @@ public class LogMessageEx extends LogMessage {
 
   public List<Attachment> getAttachments() {
     return myAttachments != null ? myAttachments : Collections.<Attachment>emptyList();
+  }
+
+  public IdeaLoggingEvent toEvent() {
+    return myEvent;
   }
 
   /**

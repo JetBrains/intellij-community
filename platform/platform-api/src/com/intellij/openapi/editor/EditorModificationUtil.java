@@ -169,8 +169,14 @@ public class EditorModificationUtil {
   }
 
   public static void pasteFromClipboardAsBlock(Editor editor) {
-    Transferable content = getClipboardContent(editor);
+    pasteTransferableAsBlock(editor, null);
+  }
 
+  public static void pasteTransferableAsBlock(Editor editor, @Nullable Transferable content) {
+    if (content == null) {
+      content = getClipboardContent(editor);
+    }
+    
     if (content != null) {
       try {
         int caretLine = editor.getCaretModel().getLogicalPosition().line;

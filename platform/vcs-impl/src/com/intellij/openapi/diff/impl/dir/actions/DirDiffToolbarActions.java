@@ -45,6 +45,11 @@ public class DirDiffToolbarActions extends ActionGroup {
       new ChangeCompareModeGroup(model),
       Separator.getInstance()));
 
+    if (model.isOperationsEnabled()) {
+      actions.add(new SynchronizeDiff(model, true));
+      actions.add(new SynchronizeDiff(model, false));
+    }
+
     for (AnAction action : model.getSettings().getExtraActions()) {
       actions.add(action);
     }

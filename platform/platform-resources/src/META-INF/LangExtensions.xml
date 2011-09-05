@@ -156,6 +156,9 @@
   <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                   serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
 
+  <projectService serviceInterface="com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager"
+                  serviceImplementation="com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager"/>
+
   <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"
                   serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"/>
 
@@ -269,6 +272,11 @@
 
   <projectService serviceInterface="com.intellij.ide.util.TreeFileChooserFactory"
                   serviceImplementation="com.intellij.ide.util.TreeFileChooserFactoryImpl"/>
+
+  <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
+                  serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
+  <projectService serviceInterface="com.intellij.psi.impl.file.impl.ResolveScopeManager"
+                  serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManager"/>
 
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="general"/>
@@ -660,4 +668,5 @@
                   serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
 
   <editorTabTitleProvider implementation="com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider"/>
+  <fileDocumentManagerListener implementation="com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper"/>
 </extensions>

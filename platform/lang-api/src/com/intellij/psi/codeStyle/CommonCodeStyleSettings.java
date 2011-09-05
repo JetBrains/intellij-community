@@ -40,6 +40,13 @@ public class CommonCodeStyleSettings {
   private CodeStyleSettings myRootSettings;
   private IndentOptions myIndentOptions;
   private FileType myFileType;
+  
+  private final static String INDENT_OPTIONS_TAG = "indentOptions";
+
+  public CommonCodeStyleSettings(Language language, FileType fileType) {
+    myLanguage = language;
+    myFileType = fileType;
+  }
 
   public CommonCodeStyleSettings(Language language) {
     myLanguage = language;
@@ -83,6 +90,7 @@ public class CommonCodeStyleSettings {
     }
     return null;
   }
+
   
   @Nullable
   public FileType getFileType() {
@@ -101,7 +109,7 @@ public class CommonCodeStyleSettings {
 
   public CommonCodeStyleSettings clone(CodeStyleSettings rootSettings) {
     assert rootSettings != null;
-    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage);
+    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
     copyPublicFields(this, commonSettings);
     commonSettings.setRootSettings(rootSettings);
     if (myIndentOptions != null) {
@@ -174,7 +182,10 @@ public class CommonCodeStyleSettings {
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     if (myIndentOptions != null) {
-      myIndentOptions.deserialize(element);
+      Element indentOptionsElement = element.getChild(INDENT_OPTIONS_TAG);
+      if (indentOptionsElement != null) {
+        myIndentOptions.deserialize(indentOptionsElement);
+      }
     }
   }
 
@@ -183,7 +194,11 @@ public class CommonCodeStyleSettings {
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CommonCodeStyleSettings>(this, defaultSettings));
     if (myIndentOptions != null) {
       IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
-      myIndentOptions.serialize(element, defaultIndentOptions) ;
+      Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
+      myIndentOptions.serialize(indentOptionsElement, defaultIndentOptions);
+      if (indentOptionsElement.getChildren().size() > 0) {
+        element.addContent(indentOptionsElement);
+      }
     }
   }
 
@@ -823,8 +838,6 @@ public class CommonCodeStyleSettings {
     public boolean LABEL_INDENT_ABSOLUTE = false;
     public boolean USE_RELATIVE_INDENTS = false;
 
-    private final static String INDENT_OPTIONS_TAG = "indentOptions";
-
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
     }
@@ -833,8 +846,7 @@ public class CommonCodeStyleSettings {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
 
-    public void serialize(Element element, final IndentOptions defaultOptions) {
-      Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
+    public void serialize(Element indentOptionsElement, final IndentOptions defaultOptions) {
       XmlSerializer.serializeInto(this, indentOptionsElement, new SkipDefaultValuesSerializationFilters() {
         @Override
         protected void configure(Object o) {
@@ -843,14 +855,10 @@ public class CommonCodeStyleSettings {
           }
         }
       });
-      element.addContent(indentOptionsElement);
     }
     
-    public void deserialize(Element element) {
-      Element indentOptionsElement = element.getChild(INDENT_OPTIONS_TAG);
-      if (indentOptionsElement != null) {
-        XmlSerializer.deserializeInto(this, indentOptionsElement);
-      }
+    public void deserialize(Element indentOptionsElement) {
+      XmlSerializer.deserializeInto(this, indentOptionsElement);
     }
 
     public Object clone() {

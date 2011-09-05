@@ -29,6 +29,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author max
@@ -40,9 +41,9 @@ public class PagedFileStorage implements Forceable {
   final static int DEFAULT_BUFFER_SIZE;
 
   private final static int UPPER_LIMIT;
-  public static final int LOWER_LIMIT_IN_MEGABYTES = 100;
+  private static final int LOWER_LIMIT_IN_MEGABYTES = 100;
   private final static int LOWER_LIMIT = LOWER_LIMIT_IN_MEGABYTES * MEGABYTE;
-  public static final int UNKNOWN_PAGE = -1;
+  private static final int UNKNOWN_PAGE = -1;
 
   static {
     String maxPagedStorageCacheProperty = System.getProperty("idea.max.paged.storage.cache");
@@ -62,8 +63,14 @@ public class PagedFileStorage implements Forceable {
   private MappedBufferWrapper myLastBuffer2;
   private int myLastChangeCount;
   private int myLastChangeCount2;
+  private final int myStorageIndex;
+
+  private static final int MAX_PAGES_COUNT = 0xFFFF;
+  private static final int MAX_LIVE_STORAGES_COUNT = 0xFFFF;
 
   public static class StorageLock {
+    private static final int FILE_INDEX_MASK = 0xFFFF0000;
+    private static final int FILE_INDEX_SHIFT = 16;
     private final boolean checkThreadAccess;
 
     public StorageLock() {
@@ -74,28 +81,94 @@ public class PagedFileStorage implements Forceable {
       this.checkThreadAccess = checkThreadAccess;
     }
 
-    final BuffersCache myBuffersCache = new BuffersCache();
+    private final BuffersCache myBuffersCache = new BuffersCache();
+    private final ConcurrentHashMap<Integer, PagedFileStorage> myIndex2Storage = new ConcurrentHashMap<Integer, PagedFileStorage>();
+    
+    private int registerPagedFileStorage(PagedFileStorage storage) {
+      int registered = myIndex2Storage.size();
+      assert registered <= MAX_LIVE_STORAGES_COUNT;
+      int value = registered << FILE_INDEX_SHIFT;
+      while(myIndex2Storage.putIfAbsent(value, storage) != null) {
+        ++registered;
+        assert registered <= MAX_LIVE_STORAGES_COUNT;
+        value = registered << FILE_INDEX_SHIFT;
+      }
+      return value;
+    }
+    
+    private PagedFileStorage getRegisteredPagedFileStorageByIndex(int index) {
+      return myIndex2Storage.get(index);
+    }
 
-    private class BuffersCache extends MyCache {
+    private class BuffersCache {
       private int changeCount;
+      private final LinkedHashMap<Integer, MappedBufferWrapper> myMap;
+      private long mySizeLimit;
+      private long mySize;
 
-      public BuffersCache() {
-        super(UPPER_LIMIT);
+      private BuffersCache() {
+        mySizeLimit = UPPER_LIMIT;
+        myMap = new LinkedHashMap<Integer, MappedBufferWrapper>(10) {
+          @Override
+          protected boolean removeEldestEntry(Map.Entry<Integer, MappedBufferWrapper> eldest) {
+            return mySize > mySizeLimit;
+          }
+
+          @Nullable
+          @Override
+          public MappedBufferWrapper remove(Object key) {
+            // this method can be called after removeEldestEntry
+            MappedBufferWrapper wrapper = super.remove(key);
+            if (wrapper != null) {
+              mySize -= wrapper.myLength;
+              wrapper.dispose();
+            }
+            return wrapper;
+          }
+        };
+      }
+
+      private MappedBufferWrapper get(Integer key) {
+        MappedBufferWrapper wrapper = myMap.get(key);
+        if (wrapper != null) {
+          return wrapper;
+        }
+
+        long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
+        wrapper = createValue(key);
+        mySize += wrapper.myLength;
+
+        if (IOStatistics.DEBUG) {
+          long finished = System.currentTimeMillis();
+          if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
+            IOStatistics.dump(
+              "Mapping " + wrapper.myLength + " from " + wrapper.myPosition + " file:" + wrapper.myFile + " for " + (finished - started));
+          }
+        }
+        myMap.put(key, wrapper);
+
+        ensureSize(mySizeLimit);
+        return wrapper;
+      }
+
+      private void ensureSize(long sizeLimit) {
+        while (mySize > sizeLimit) {
+          // we still have to drop something
+          myMap.doRemoveEldestEntry();
+        }
       }
 
       @NotNull
-      public MappedBufferWrapper createValue(PageKey key) {
-        if (checkThreadAccess && !Thread.holdsLock(StorageLock.this)) {
-          throw new IllegalStateException("Must hold StorageLock lock to access PagedFileStorage");
-        }
-
-        int off = key.page * key.owner.myPageSize;
-        if (off > key.owner.length()) {
-          throw new IndexOutOfBoundsException("off=" + off + " key.owner.length()=" + key.owner.length());
+      private MappedBufferWrapper createValue(Integer key) {
+        checkThreadAccess();
+        PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(key & FILE_INDEX_MASK);
+        int off = (key & MAX_PAGES_COUNT) * owner.myPageSize;
+        if (off > owner.length()) {
+          throw new IndexOutOfBoundsException("off=" + off + " key.owner.length()=" + owner.length());
         }
         ++changeCount;
         ReadWriteMappedBufferWrapper wrapper =
-          new ReadWriteMappedBufferWrapper(key.owner.myFile, off, Math.min((int)(key.owner.length() - off), key.owner.myPageSize));
+          new ReadWriteMappedBufferWrapper(owner.myFile, off, Math.min((int)(owner.length() - off), owner.myPageSize));
         IOException oome = null;
         while (true) {
           try {
@@ -112,17 +185,18 @@ public class PagedFileStorage implements Forceable {
             if (e.getCause() instanceof OutOfMemoryError) {
               oome = e;
               if (mySizeLimit > LOWER_LIMIT) {
-                mySizeLimit -= key.owner.myPageSize;
+                mySizeLimit -= owner.myPageSize;
               }
-              long newSize = getSize() - key.owner.myPageSize;
+              long newSize = mySize - owner.myPageSize;
               if (newSize >= 0) {
                 ensureSize(newSize);
                 continue; // next try
               }
               else {
-                throw new MappingFailedException("Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MEGABYTE + "MB " +
-                        "new size limit: " + mySizeLimit / MEGABYTE + "MB " +
-                        "trying to allocate " + wrapper.myLength + " block", e);
+                throw new MappingFailedException(
+                  "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MEGABYTE + "MB " +
+                  "new size limit: " + mySizeLimit / MEGABYTE + "MB " +
+                  "trying to allocate " + wrapper.myLength + " block", e);
               }
             }
             throw new MappingFailedException("Cannot map buffer", e);
@@ -130,56 +204,72 @@ public class PagedFileStorage implements Forceable {
         }
       }
 
-      public void onDropFromCache(PageKey key, MappedBufferWrapper buf) {
-        buf.dispose();
+      private void checkThreadAccess() {
+        if (checkThreadAccess && !Thread.holdsLock(StorageLock.this)) {
+          throw new IllegalStateException("Must hold StorageLock lock to access PagedFileStorage");
+        }
+      }
+
+      private @Nullable Map<Integer, MappedBufferWrapper> getBuffersOrderedForOwner(int index) {
+        checkThreadAccess();
+        Map<Integer, MappedBufferWrapper> mineBuffers = null;
+        for (Map.Entry<Integer, MappedBufferWrapper> entry : myMap.entrySet()) {
+          if ((entry.getKey() & FILE_INDEX_MASK) == index) {
+            if (mineBuffers == null) {
+              mineBuffers = new TreeMap<Integer, MappedBufferWrapper>(new Comparator<Integer>() {
+                @Override
+                public int compare(Integer o1, Integer o2) {
+                  return o1 - o2;
+                }
+              });
+            }
+            mineBuffers.put(entry.getKey(), entry.getValue());
+          }
+        }
+        return mineBuffers;
+      }
+
+      private void unmapBuffersForOwner(int index) {
+        final Map<Integer, MappedBufferWrapper> buffers = getBuffersOrderedForOwner(index);
+
+        if (buffers != null) {
+          for (Integer key : buffers.keySet()) {
+            myMap.remove(key);
+          }
+        }
+      }
+
+      private void flushBuffersForOwner(int index) {
+        Map<Integer, MappedBufferWrapper> buffers = getBuffersOrderedForOwner(index);
+
+        if (buffers != null) {
+          for(MappedBufferWrapper buffer:buffers.values()) {
+            buffer.flush();
+          }
+        }
       }
     }
   }
 
-  private static class PageKey {
-    private final PagedFileStorage owner;
-    private final int page;
-
-    public PageKey(PagedFileStorage owner, int page) {
-      this.owner = owner;
-      this.page = page;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof PageKey)) return false;
-
-      PageKey pageKey = (PageKey)o;
-
-      if (!owner.equals(pageKey.owner)) return false;
-      if (page != pageKey.page) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * owner.hashCode() + page;
-    }
-  }
-
-
-  private final byte[] myTypedIOBuffer = new byte[8];
+  private final byte[] myTypedIOBuffer;
   private boolean isDirty = false;
   private final File myFile;
   protected long mySize = -1;
   protected final int myPageSize;
+  protected final boolean myValuesAreBufferAligned;
   @NonNls private static final String RW = "rw";
 
-  public PagedFileStorage(File file, StorageLock lock, int pageSize) throws IOException {
+  public PagedFileStorage(File file, StorageLock lock, int pageSize, boolean valuesAreBufferAligned) throws IOException {
     myFile = file;
     myLock = lock;
     myPageSize = Math.max(pageSize, Page.PAGE_SIZE);
+    myValuesAreBufferAligned = valuesAreBufferAligned;
+    myStorageIndex = lock.registerPagedFileStorage(this);
+    myTypedIOBuffer = valuesAreBufferAligned ? null:new byte[8];
   }
 
   public PagedFileStorage(File file, StorageLock lock) throws IOException {
-    this(file, lock, DEFAULT_BUFFER_SIZE);
+    this(file, lock, DEFAULT_BUFFER_SIZE, false);
   }
 
   public File getFile() {
@@ -187,34 +277,89 @@ public class PagedFileStorage implements Forceable {
   }
 
   public void putInt(int addr, int value) {
-    Bits.putInt(myTypedIOBuffer, 0, value);
-    put(addr, myTypedIOBuffer, 0, 4);
+    if (myValuesAreBufferAligned) {
+      isDirty = true;
+      int page = addr / myPageSize;
+      int page_offset = addr % myPageSize;
+      getBuffer(page).putInt(page_offset, value);
+    } else {
+      Bits.putInt(myTypedIOBuffer, 0, value);
+      put(addr, myTypedIOBuffer, 0, 4);
+    }
   }
 
   public int getInt(int addr) {
-    get(addr, myTypedIOBuffer, 0, 4);
-    return Bits.getInt(myTypedIOBuffer, 0);
+    if (myValuesAreBufferAligned) {
+      int page = addr / myPageSize;
+      int page_offset = addr % myPageSize;
+      return getBuffer(page).getInt(page_offset);
+    } else {
+      get(addr, myTypedIOBuffer, 0, 4);
+      return Bits.getInt(myTypedIOBuffer, 0);
+    }
+  }
+
+  public final void putShort(int addr, short value) {
+    if (myValuesAreBufferAligned) {
+      isDirty = true;
+      int page = addr / myPageSize;
+      int page_offset = addr % myPageSize;
+      getBuffer(page).putShort(page_offset, value);
+    } else {
+      Bits.putShort(myTypedIOBuffer, 0, value);
+      put(addr, myTypedIOBuffer, 0, 2);
+    }
+  }
+
+  int getOffsetInPage(int addr) {
+    return addr % myPageSize;
+  }
+  
+  ByteBuffer getByteBuffer(int address) {
+    return getBuffer(address / myPageSize);
+  }
+
+  public final short getShort(int addr) {
+    if (myValuesAreBufferAligned) {
+      int page = addr / myPageSize;
+      int page_offset = addr % myPageSize;
+      return getBuffer(page).getShort(page_offset);
+    } else {
+      get(addr, myTypedIOBuffer, 0, 2);
+      return Bits.getShort(myTypedIOBuffer, 0);
+    }
   }
 
   public void putLong(int addr, long value) {
-    Bits.putLong(myTypedIOBuffer, 0, value);
-    put(addr, myTypedIOBuffer, 0, 8);
+    if (myValuesAreBufferAligned) {
+      isDirty = true;
+      int page = addr / myPageSize;
+      int page_offset = addr % myPageSize;
+      getBuffer(page).putLong(page_offset, value);
+    } else {
+      Bits.putLong(myTypedIOBuffer, 0, value);
+      put(addr, myTypedIOBuffer, 0, 8);
+    }
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
   public void putByte(final int addr, final byte b) {
-    myTypedIOBuffer[0] = b;
-    put(addr, myTypedIOBuffer, 0, 1);
+    put(addr, b);
   }
 
   public byte getByte(int addr) {
-    get(addr, myTypedIOBuffer, 0, 1);
-    return myTypedIOBuffer[0];
+    return get(addr);
   }
 
   public long getLong(int addr) {
-    get(addr, myTypedIOBuffer, 0, 8);
-    return Bits.getLong(myTypedIOBuffer, 0);
+    if (myValuesAreBufferAligned) {
+      int page = addr / myPageSize;
+      int page_offset = addr % myPageSize;
+      return getBuffer(page).getLong(page_offset);
+    } else {
+      get(addr, myTypedIOBuffer, 0, 8);
+      return Bits.getLong(myTypedIOBuffer, 0);
+    }
   }
 
   public byte get(int index) {
@@ -293,17 +438,12 @@ public class PagedFileStorage implements Forceable {
     }
     finally {
       unmapAll();
+      myLock.myIndex2Storage.remove(myStorageIndex);
     }
   }
 
   private void unmapAll() {
-    final Map<PageKey, MappedBufferWrapper> mineBuffers = getMineBuffersOrdered();
-
-    if (mineBuffers != null) {
-      for (PageKey key : mineBuffers.keySet()) {
-        myLock.myBuffersCache.remove(key);
-      }
-    }
+    myLock.myBuffersCache.unmapBuffersForOwner(myStorageIndex);
 
     myLastPage = UNKNOWN_PAGE;
     myLastPage2 = UNKNOWN_PAGE;
@@ -378,7 +518,8 @@ public class PagedFileStorage implements Forceable {
     }
 
     try {
-      MappedBufferWrapper mappedBufferWrapper = myLock.myBuffersCache.get(new PageKey(this, page));
+      assert page <= MAX_PAGES_COUNT;
+      MappedBufferWrapper mappedBufferWrapper = myLock.myBuffersCache.get(myStorageIndex | page);
       MappedByteBuffer buf = mappedBufferWrapper.buf();
 
       if (myLastPage != page) {
@@ -402,13 +543,8 @@ public class PagedFileStorage implements Forceable {
 
   public void force() {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-    Map<PageKey, MappedBufferWrapper> mineBuffers = getMineBuffersOrdered();
-    
-    if (mineBuffers != null) {
-      for(MappedBufferWrapper buffer:mineBuffers.values()) {
-        buffer.flush();
-      }
-    }
+    myLock.myBuffersCache.flushBuffersForOwner(myStorageIndex);
+
     isDirty = false;
     if (IOStatistics.DEBUG) {
       long finished = System.currentTimeMillis();
@@ -418,98 +554,7 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  private @Nullable
-  Map<PageKey, MappedBufferWrapper> getMineBuffersOrdered() {
-    Map<PageKey, MappedBufferWrapper> mineBuffers = null;
-    for (Map.Entry<PageKey,MappedBufferWrapper> entry : myLock.myBuffersCache.entrySet()) {
-      if (entry.getKey().owner == this) {
-        if (mineBuffers == null) mineBuffers = new TreeMap<PageKey, MappedBufferWrapper>(new Comparator<PageKey>() {
-          @Override
-          public int compare(PageKey o1, PageKey o2) {
-            return o1.page - o2.page;
-          }
-        });
-        mineBuffers.put(entry.getKey(), entry.getValue());        
-      }
-    }
-    return mineBuffers;
-  }
-
   public boolean isDirty() {
     return isDirty;
-  }
-
-  private static abstract class MyCache {
-
-    private final LinkedHashMap<PageKey, MappedBufferWrapper> myMap;
-    protected long mySizeLimit;
-    private long mySize;
-
-    protected MyCache(long sizeLimit) {
-      mySizeLimit = sizeLimit;
-      myMap = new LinkedHashMap<PageKey, MappedBufferWrapper>(10) {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<PageKey, MappedBufferWrapper> eldest) {
-          return mySize > mySizeLimit;
-        }
-
-        @Nullable
-        @Override
-        public MappedBufferWrapper remove(Object key) {
-          // this method can be called after removeEldestEntry
-          MappedBufferWrapper wrapper = super.remove(key);
-          if (wrapper != null) {
-            mySize -= wrapper.myLength;
-            onDropFromCache((PageKey)key, wrapper);
-          }
-          return wrapper;
-        }
-      };
-    }
-
-    public MappedBufferWrapper get(PageKey key) {
-      MappedBufferWrapper wrapper = myMap.get(key);
-      if (wrapper != null) {
-        return wrapper;
-      }
-
-      long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
-      wrapper = createValue(key);
-      mySize += wrapper.myLength;
-
-      if (IOStatistics.DEBUG) {
-        long finished = System.currentTimeMillis();
-        if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
-          IOStatistics.dump("Mapping " + wrapper.myLength + " from " + wrapper.myPosition + " file:"+wrapper.myFile + " for "+(finished - started));
-        }
-      }
-      myMap.put(key, wrapper);
-
-      ensureSize(mySizeLimit);
-      return wrapper;
-    }
-
-    protected void ensureSize(long sizeLimit) {
-      while (mySize > sizeLimit) {
-        // we still have to drop something
-        myMap.doRemoveEldestEntry();
-      }
-    }
-
-    public long getSize() {
-      return mySize;
-    }
-
-    public Set<Map.Entry<PageKey, MappedBufferWrapper>> entrySet() {
-      return myMap.entrySet();
-    }
-
-    public void remove(PageKey key) {
-      myMap.remove(key);
-    }
-
-    protected abstract MappedBufferWrapper createValue(PageKey key);
-
-    protected abstract void onDropFromCache(PageKey key, MappedBufferWrapper wrapper);
   }
 }

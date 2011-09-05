@@ -22,9 +22,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
  * @author sergey.evdokimov
@@ -34,12 +32,12 @@ public abstract class GrCallExpressionTypeCalculator {
   public static final ExtensionPointName<GrCallExpressionTypeCalculator> EP_NAME = ExtensionPointName.create("org.intellij.groovy.callExpressionTypeCalculator");
 
   @Nullable
-  public PsiType calculateReturnType(@NotNull GrMethodCall callExpression, @NotNull PsiMethod resolvedMethod) {
+  protected PsiType calculateReturnType(@NotNull GrMethodCall callExpression, @NotNull PsiMethod resolvedMethod) {
     throw new UnsupportedOperationException();
   }
 
   @Nullable
-  public PsiType calculateReturnType(@NotNull GrMethodCall callExpression, @Nullable PsiElement resolve) {
+  protected PsiType calculateReturnType(@NotNull GrMethodCall callExpression, @Nullable PsiElement resolve) {
     if (resolve instanceof PsiMethod) {
       return calculateReturnType(callExpression, (PsiMethod)resolve);
     }

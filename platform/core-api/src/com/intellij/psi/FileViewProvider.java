@@ -77,8 +77,6 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
   @Nullable
   PsiReference findReferenceAt(final int offsetInElement, @NotNull Language language);
 
-  boolean isLockedByPsiOperations();
-
   @NotNull
   FileViewProvider createCopy(VirtualFile copy);
 }

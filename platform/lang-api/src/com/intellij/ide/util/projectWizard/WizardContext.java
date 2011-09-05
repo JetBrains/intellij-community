@@ -86,8 +86,8 @@ public class WizardContext {
     }
     final String userHome = SystemProperties.getUserHome();
     //noinspection HardCodedStringLiteral
-    return userHome.replace('/', File.separatorChar) + File.separator + ApplicationNamesInfo.getInstance().getLowercaseProductName() +
-           "Projects";
+    String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+    return userHome.replace('/', File.separatorChar) + File.separator + productName.replace(" ", "") + "Projects";
   }
 
   public boolean isProjectFileDirectorySet() {

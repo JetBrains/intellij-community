@@ -74,15 +74,15 @@ public class CompleteReferenceExpression {
   }
 
   private static void processIfJavaLangClass(GrReferenceExpression refExpr, ResolverProcessor consumer, PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-        final PsiType[] params = ((PsiClassType)type).getParameters();
-        if (params.length == 1) {
-          getVariantsFromQualifierType(refExpr, consumer, params[0], refExpr.getProject());
-        }
-      }
-    }
+    if (!(type instanceof PsiClassType)) return;
+
+    final PsiClass psiClass = ((PsiClassType)type).resolve();
+    if (psiClass == null || !CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) return;
+
+    final PsiType[] params = ((PsiClassType)type).getParameters();
+    if (params.length != 1) return;
+
+    getVariantsFromQualifierType(refExpr, consumer, params[0], refExpr.getProject());
   }
 
   private static void getVariantsImpl(PrefixMatcher matcher, GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
@@ -228,30 +228,26 @@ public class CompleteReferenceExpression {
       }
       getVariantsFromQualifierType(refExpr, processor, GrClassImplUtil.getGroovyObjectType(refExpr), project);
     }
-    else {
-      if (qualifierType instanceof PsiIntersectionType) {
-        for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
-          getVariantsFromQualifierType(refExpr, processor, conjunct, project);
-        }
+    else if (qualifierType instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
+        getVariantsFromQualifierType(refExpr, processor, conjunct, project);
       }
-      else {
-        getVariantsFromQualifierType(refExpr, processor, qualifierType, project);
-        if (qualifier instanceof GrReferenceExpression) {
-          PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
-          if (resolved instanceof PsiClass) { ////omitted .class
-            GlobalSearchScope scope = refExpr.getResolveScope();
-            PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, scope);
-            if (javaLangClass != null) {
-              PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-              PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
-              if (typeParameters.length == 1) {
-                substitutor = substitutor.put(typeParameters[0], qualifierType);
-              }
-              javaLangClass.processDeclarations(processor, state, null, refExpr);
-              PsiType javaLangClassType =
-                JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(javaLangClass, substitutor);
-              ResolveUtil.processNonCodeMembers(javaLangClassType, processor, refExpr, state);
+    }
+    else {
+      getVariantsFromQualifierType(refExpr, processor, qualifierType, project);
+      if (qualifier instanceof GrReferenceExpression) {
+        PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+        if (resolved instanceof PsiClass) { ////omitted .class
+          GlobalSearchScope scope = refExpr.getResolveScope();
+          PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, scope);
+          if (javaLangClass != null) {
+            PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+            PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
+            if (typeParameters.length == 1) {
+              substitutor = substitutor.put(typeParameters[0], qualifierType);
             }
+            PsiType javaLangClassType = JavaPsiFacade.getElementFactory(refExpr.getProject()).createType(javaLangClass, substitutor);
+            ResolveUtil.processAllDeclarations(javaLangClassType, processor, state, refExpr);
           }
         }
       }
@@ -376,38 +372,35 @@ public class CompleteReferenceExpression {
     }
 
     public void consume(Object o) {
-      if (o instanceof GroovyResolveResult) {
-        final GroovyResolveResult result = (GroovyResolveResult)o;
-        if (!result.isStaticsOK()) return;
-        if (mySkipPackages && result.getElement() instanceof PsiPackage) return;
+      if (!(o instanceof GroovyResolveResult)) {
+        myConsumer.consume(o);
+        return;
+      }
 
-        addCandidate(result);
-        //myConsumer.consume(GroovyCompletionUtil.createCompletionVariant(result));
+      final GroovyResolveResult result = (GroovyResolveResult)o;
+      if (!result.isStaticsOK() || !result.isAccessible()) return;
+      if (mySkipPackages && result.getElement() instanceof PsiPackage) return;
 
+      addCandidate(result);
 
-        final PsiElement element = result.getElement();
-        if (element instanceof PsiMethod) {
-          processProperty((PsiMethod)element, result);
-        }
-        else if (element instanceof GrField) {
-          if (((GrField)element).isProperty()) {
-            processPropertyFromField((GrField)element, result);
-          }
-        }
-        else if (element instanceof GrVariable && ((GrVariable)element).getName()!=null) {
-          myLocalVars.add(((GrVariable)element).getName());
+      final PsiElement element = result.getElement();
+      if (element instanceof PsiMethod) {
+        processProperty((PsiMethod)element, result);
+      }
+      else if (element instanceof GrField) {
+        if (((GrField)element).isProperty()) {
+          processPropertyFromField((GrField)element, result);
         }
       }
-      else {
-        myConsumer.consume(o);
+      else if (element instanceof GrVariable && ((GrVariable)element).getName() != null) {
+        myLocalVars.add(((GrVariable)element).getName());
       }
     }
 
     private void processPropertyFromField(GrField field, GroovyResolveResult resolveResult) {
-      if (field.getGetters().length == 0 && field.getSetter() == null && myPropertyNames.add(field.getName())) {
-        myConsumer
-          .consume(((LookupElementBuilder)GroovyCompletionUtil.createCompletionVariant(resolveResult)).setIcon(GroovyIcons.PROPERTY));
-      }
+      if (field.getGetters().length != 0 || field.getSetter() != null || !myPropertyNames.add(field.getName())) return;
+
+      myConsumer.consume(((LookupElementBuilder)GroovyCompletionUtil.createCompletionVariant(resolveResult)).setIcon(GroovyIcons.PROPERTY));
     }
 
     private void processProperty(PsiMethod method, GroovyResolveResult resolveResult) {
@@ -423,26 +416,26 @@ public class CompleteReferenceExpression {
     }
 
     private void processListenerProperties(PsiMethod method) {
-      if (method.getName().startsWith("add") && method.getParameterList().getParametersCount() == 1) {
-        final PsiParameter parameter = method.getParameterList().getParameters()[0];
-        final PsiType type = parameter.getType();
-        if (type instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)type;
-          final PsiClass listenerClass = classType.resolve();
-          if (listenerClass != null) {
-            final PsiMethod[] listenerMethods = listenerClass.getMethods();
-            if (InheritanceUtil.isInheritorOrSelf(listenerClass, myEventListener, true)) {
-              for (PsiMethod listenerMethod : listenerMethods) {
-                final String name = listenerMethod.getName();
-                if (myPropertyNames.add(name)) {
-                  LookupElementBuilder builder = LookupElementBuilder
-                    .create(generatePropertyResolveResult(name, listenerMethod, null, null), name)
-                    .setIcon(GroovyIcons.PROPERTY);
-                  myConsumer.consume(builder);
-                }
-              }
-            }
-          }
+      if (!method.getName().startsWith("add") || method.getParameterList().getParametersCount() != 1) return;
+
+      final PsiParameter parameter = method.getParameterList().getParameters()[0];
+      final PsiType type = parameter.getType();
+      if (!(type instanceof PsiClassType)) return;
+
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass listenerClass = classType.resolve();
+      if (listenerClass == null) return;
+
+      final PsiMethod[] listenerMethods = listenerClass.getMethods();
+      if (!InheritanceUtil.isInheritorOrSelf(listenerClass, myEventListener, true)) return;
+
+      for (PsiMethod listenerMethod : listenerMethods) {
+        final String name = listenerMethod.getName();
+        if (myPropertyNames.add(name)) {
+          LookupElementBuilder builder = LookupElementBuilder
+            .create(generatePropertyResolveResult(name, listenerMethod, null, null), name)
+            .setIcon(GroovyIcons.PROPERTY);
+          myConsumer.consume(builder);
         }
       }
     }

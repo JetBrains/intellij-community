@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.google.common.base.Predicate;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -26,11 +27,9 @@ import com.intellij.openapi.roots.impl.ModuleLibraryTable;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -151,5 +150,21 @@ public class LibraryEditingUtil {
     final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, project);
     LOG.assertTrue(table != null, level);
     return table.getPresentation();
+  }
+
+  public static List<LibraryType> getSuitableTypes(ClasspathPanel classpathPanel) {
+    List<LibraryType> suitableTypes = new ArrayList<LibraryType>();
+    suitableTypes.add(null);
+    final Module module = classpathPanel.getRootModel().getModule();
+    for (LibraryType libraryType : LibraryType.EP_NAME.getExtensions()) {
+      if (libraryType.getCreateActionName() != null && libraryType.isSuitableModule(module, classpathPanel.getModuleConfigurationState().getFacetsProvider())) {
+        suitableTypes.add(libraryType);
+      }
+    }
+    return suitableTypes;
+  }
+
+  public static boolean hasSuitableTypes(ClasspathPanel panel) {
+    return getSuitableTypes(panel).size() > 1;
   }
 }

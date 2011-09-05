@@ -84,6 +84,17 @@ public class PackageUtil {
                                                              String packageName,
                                                              PsiDirectory baseDir,
                                                              boolean askUserToCreate) throws IncorrectOperationException {
+    return findOrCreateDirectoryForPackage(project, packageName, baseDir, askUserToCreate, false);
+  }
+
+  /**
+   * @deprecated
+   */
+  @Nullable
+  public static PsiDirectory findOrCreateDirectoryForPackage(Project project,
+                                                             String packageName,
+                                                             PsiDirectory baseDir,
+                                                             boolean askUserToCreate, boolean filterSourceDirsForTestBaseDir) throws IncorrectOperationException {
 
     PsiDirectory psiDirectory = null;
 
@@ -96,7 +107,11 @@ public class PackageUtil {
         if (packageName.length() > 0) {
           postfixToShow = File.separatorChar + postfixToShow;
         }
-        psiDirectory = DirectoryChooserUtil.selectDirectory(project, rootPackage.getDirectories(), baseDir, postfixToShow);
+        PsiDirectory[] directories = rootPackage.getDirectories();
+        if (filterSourceDirsForTestBaseDir) {
+          directories = filterSourceDirectories(baseDir, project, directories);
+        }
+        psiDirectory = DirectoryChooserUtil.selectDirectory(project, directories, baseDir, postfixToShow);
         if (psiDirectory == null) return null;
       }
     }

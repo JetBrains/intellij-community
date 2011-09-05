@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.cvsSupport2.history;
 
-import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -27,24 +26,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * author: lesya
  */
-@SuppressWarnings({"CovariantCompareTo"})
 public class CvsRevisionNumber implements VcsRevisionNumber {
 
   private final String myStringRepresentation;
   @Nullable
   private final int[] mySubRevisions;
   private final DateOrRevisionSettings myDateOrRevision;
-
-  public static CvsRevisionNumber CURRENT =
-    new CvsRevisionNumber(CvsBundle.message("current.file.revision.name"), ArrayUtil.EMPTY_INT_ARRAY) {
-      protected int compareToCvsRevisionNumber(CvsRevisionNumber other) {
-        return 1;
-      }
-
-      public int compareTo(VcsRevisionNumber o) {
-        return 1;
-      }
-    };
 
   public static CvsRevisionNumber EMPTY = new CvsRevisionNumber("", ArrayUtil.EMPTY_INT_ARRAY) {
     protected int compareToCvsRevisionNumber(CvsRevisionNumber other) {
@@ -65,9 +52,8 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
   }
 
   private static int[] parseRevisionString(String revision) {
-    int[] subRevisions;
-    String[] stringSubRevisions = revision.split("\\.");
-    subRevisions = new int[stringSubRevisions.length];
+    final String[] stringSubRevisions = revision.split("\\.");
+    final int[] subRevisions = new int[stringSubRevisions.length];
 
     int cnt = 0;
     for (int i = 0; i < stringSubRevisions.length; i++) {
@@ -82,8 +68,8 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
     return (cnt == 0) ? new int[0] : subRevisions;
   }
 
-  private CvsRevisionNumber(String sringRepresentation, @NotNull int[] subRevisions) {
-    myStringRepresentation = sringRepresentation;
+  private CvsRevisionNumber(String stringRepresentation, @NotNull int[] subRevisions) {
+    myStringRepresentation = stringRepresentation;
     mySubRevisions = subRevisions;
     myDateOrRevision = null;
   }
@@ -99,8 +85,8 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
       final int thisLength = mySubRevisions.length;
       final int thatLength = other.mySubRevisions.length;
       for (int i = 0; i < Math.max(thisLength, thatLength); i++) {
-        int subRevision = i < thisLength ? mySubRevisions[i] : 0;
-        int otherSubRevision = i < thatLength ? other.getSubRevisionAt(i) : 0;
+        final int subRevision = i < thisLength ? mySubRevisions[i] : 0;
+        final int otherSubRevision = i < thatLength ? other.getSubRevisionAt(i) : 0;
         if (subRevision != otherSubRevision) {
           return subRevision > otherSubRevision ? 1 : -1;
         }
@@ -113,26 +99,21 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
       }
     }
     return 0;
-
   }
 
   public int compareTo(VcsRevisionNumber o) {
-    if (o instanceof CvsRevisionNumber) {
-      CvsRevisionNumber other = ((CvsRevisionNumber)o);
-      return -other.compareToCvsRevisionNumber(this);
-    }
-    else {
+    if (!(o instanceof CvsRevisionNumber)) {
       return 0;
     }
+    final CvsRevisionNumber other = ((CvsRevisionNumber)o);
+    return -other.compareToCvsRevisionNumber(this);
   }
 
   private int getSubRevisionAt(int i) {
-    if (mySubRevisions != null && i < mySubRevisions.length) {
-      return mySubRevisions[i];
-    }
-    else {
+    if (mySubRevisions == null || i >= mySubRevisions.length) {
       return 0;
     }
+    return mySubRevisions[i];
   }
 
   public int hashCode() {
@@ -155,7 +136,8 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
   }
 
   public CvsRevisionNumber removeTailVersions(final int i) {
-    if (mySubRevisions != null && mySubRevisions.length < i) return this;
+    if (mySubRevisions == null || mySubRevisions.length < i) return this;
+
     final int[] resultSubVersions = new int[mySubRevisions.length - i];
     System.arraycopy(mySubRevisions, 0, resultSubVersions, 0, resultSubVersions.length);
     return new CvsRevisionNumber(createStringRepresentation(resultSubVersions), resultSubVersions);
@@ -165,7 +147,6 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
     if (mySubRevisions == null || mySubRevisions.length == 0) return this;
 
     final int length = mySubRevisions.length;
-
     final int[] resultSubVersions = new int[length];
     System.arraycopy(mySubRevisions, 0, resultSubVersions, 0, length);
     resultSubVersions[length - 1] -= 1;
@@ -186,18 +167,7 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
     else {
       return this;
     }
-
   }
-
-  public boolean isTopVersion() {
-    if (mySubRevisions != null) {
-      return mySubRevisions.length <= 2;
-    }
-    else {
-      return false;
-    }
-  }
-
 
   public DateOrRevisionSettings getDateOrRevision() {
     return myDateOrRevision;

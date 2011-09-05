@@ -59,7 +59,7 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
   @Override
   public void updateStep() {
     if (isPathChanged()) {
-      myProjectPathComponent.setText(getBuilder().getProjectPath(getContext()));
+      myProjectPathComponent.setText(getBuilder().getProjectPath(getWizardContext()));
     }
   }
 
@@ -86,6 +86,6 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
   }
 
   private boolean isPathChanged() {
-    return !StringUtil.equals(myProjectPathComponent.getText(), getBuilder().getProjectPath(getContext()));
+    return !StringUtil.equals(myProjectPathComponent.getText(), getBuilder().getProjectPath(getWizardContext()));
   }
 }

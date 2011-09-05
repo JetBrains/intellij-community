@@ -99,16 +99,10 @@ public class PlaybackCallFacade {
     return result;
   }
 
-  public static AsyncResult<String> flushUiActivity(PlaybackContext context) {
-    AsyncResult<String> result = new AsyncResult<String>();
-    getActivityReady(context).notify(result);
-    return result;
-  }
-
   public static AsyncResult<String> printFocus(final PlaybackContext context) {
     final AsyncResult result = new AsyncResult<String>();
 
-    getActivityReady(context).doWhenProcessed(new Runnable() {
+    getUiReady(context).doWhenProcessed(new Runnable() {
       @Override
       public void run() {
         final LinkedHashMap<String, String> focusInfo = getFocusInfo();
@@ -149,7 +143,7 @@ public class PlaybackCallFacade {
       }
     }
 
-    getActivityReady(context).doWhenDone(new Runnable() {
+    getUiReady(context).doWhenDone(new Runnable() {
       @Override
       public void run() {
         try {
@@ -164,8 +158,15 @@ public class PlaybackCallFacade {
     return result;
   }
 
-  private static ActionCallback getActivityReady(PlaybackContext context) {
-    return UiActivityMonitor.getInstance().getBusy().getReady(context);
+  private static ActionCallback getUiReady(final PlaybackContext context) {
+    final ActionCallback result = new ActionCallback();
+    context.flushAwtAndRun(new Runnable() {
+      @Override
+      public void run() {
+        UiActivityMonitor.getInstance().getBusy().getReady(context).notify(result);
+      }
+    });
+    return result;
   }
 
   private static void doAssert(Map<String, String> expected, AsyncResult<String> result, PlaybackContext context) throws AssertionError {
@@ -227,6 +228,12 @@ public class PlaybackCallFacade {
       eachParent = eachParent.getParent();
     }
     return actual;
+  }
+
+  public static AsyncResult<String> flushUi(PlaybackContext context) {
+    AsyncResult<String> result = new AsyncResult<String>();
+    getUiReady(context).notify(result);
+    return result;
   }
 
 }

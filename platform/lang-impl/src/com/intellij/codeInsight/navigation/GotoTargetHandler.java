@@ -278,7 +278,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return hasDifferentNames;
     }
 
-    public void addTarget(final PsiElement element) {
+    public boolean addTarget(final PsiElement element) {
+      if (ArrayUtil.find(targets, element) > -1) return false;
       targets = ArrayUtil.append(targets, element);
       renderers.put(element, createRenderer(this, element));
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
@@ -291,6 +292,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         myNames.add(name);
         hasDifferentNames = myNames.size() > 1;
       }
+      return true;
     }
 
     public PsiElementListCellRenderer getRenderer(Object value) {

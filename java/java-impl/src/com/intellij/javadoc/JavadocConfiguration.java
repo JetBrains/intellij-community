@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,7 +164,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
           cmdLine.getParametersList().prepend("-J-mx" + HEAP_SIZE + "m");
         }
       }
-      cmdLine.setWorkingDirectory(null);
+      cmdLine.setWorkDirectory((File)null);
       @NonNls final String javadocExecutableName = File.separator + (SystemInfo.isWindows ? "javadoc.exe" : "javadoc");
       @NonNls String exePath = jdkPath.replace('/', File.separatorChar) + javadocExecutableName;
       if (new File(exePath).exists()) {
@@ -250,10 +250,9 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       }
 
       try {
-        File sourcepathTempFile = FileUtil.createTempFile("javadoc", "args.txt");
-        sourcepathTempFile.deleteOnExit();
-        parameters.add("@" + sourcepathTempFile.getCanonicalPath());
-        final PrintWriter writer = new PrintWriter(new FileWriter(sourcepathTempFile));
+        final File sourcePathTempFile = FileUtil.createTempFile("javadoc", "args.txt", true);
+        parameters.add("@" + sourcePathTempFile.getCanonicalPath());
+        final PrintWriter writer = new PrintWriter(new FileWriter(sourcePathTempFile));
         try {
           final Collection<String> packages = new HashSet<String>();
           final Collection<String> sources = new HashSet<String>();
@@ -290,7 +289,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
             }
             sourcePath.append(file.getPath());
           }
-          writer.println(GeneralCommandLine.quote(sourcePath.toString()));
+          writer.println(sourcePath.toString());
         }
         finally {
           writer.close();
@@ -340,7 +339,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
         final PsiJavaFile javaFile = (PsiJavaFile)file;
         final String packageName = javaFile.getPackageName();
         if (containsPackagePrefix(module, packageName) || (packageName.length() == 0 && !(javaFile instanceof JspFile))) {
-          mySourceFiles.add(GeneralCommandLine.quote(FileUtil.toSystemIndependentName(fileOrDir.getPath())));
+          mySourceFiles.add(FileUtil.toSystemIndependentName(fileOrDir.getPath()));
         }
         else {
           myPackages.add(packageName);

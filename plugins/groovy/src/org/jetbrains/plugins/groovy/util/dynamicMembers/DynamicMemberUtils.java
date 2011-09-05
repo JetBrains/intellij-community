@@ -103,6 +103,8 @@ public class DynamicMemberUtils {
   public static class ClassMemberHolder {
     private final String myClassSource;
 
+    private final GrTypeDefinition myClass;
+
     private final Map<String, PsiMethod[]> myMethodMap;
     private final Map<String, PsiField[]> myFieldMap;
 
@@ -117,20 +119,20 @@ public class DynamicMemberUtils {
 
       final GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(project);
 
-      final GrTypeDefinition psiClass = (GrTypeDefinition)elementFactory.createGroovyFile(classSource, false, null).getClasses()[0];
+      myClass = (GrTypeDefinition)elementFactory.createGroovyFile(classSource, false, null).getClasses()[0];
 
       // Collect fields.
       myFieldMap = new HashMap<String, PsiField[]>();
       myStaticFieldMap = new HashMap<String, PsiField[]>();
       myNonStaticFieldMap = new HashMap<String, PsiField[]>();
 
-      GrField[] fields = psiClass.getFields();
+      GrField[] fields = myClass.getFields();
 
       PsiField[] allFields = new PsiField[fields.length];
 
       int i = 0;
       for (PsiField field : fields) {
-        PsiField dynamicField = new MyGrDynamicPropertyImpl(psiClass, (GrField)field, null, classSource);
+        PsiField dynamicField = new MyGrDynamicPropertyImpl(myClass, (GrField)field, null, classSource);
         PsiField[] dynamicFieldArray = new PsiField[]{dynamicField};
 
         if (field.hasModifierProperty(PsiModifier.STATIC)) {
@@ -141,7 +143,7 @@ public class DynamicMemberUtils {
         }
 
         Object oldValue = myFieldMap.put(field.getName(), dynamicFieldArray);
-        assert oldValue == null : "Duplicated field in dynamic class: " + psiClass.getName() + ":" + field.getName();
+        assert oldValue == null : "Duplicated field in dynamic class: " + myClass.getName() + ":" + field.getName();
 
         allFields[i++] = dynamicField;
       }
@@ -149,13 +151,13 @@ public class DynamicMemberUtils {
       myFieldMap.put(null, allFields);
 
       // Collect methods..
-      checkDuplicatedMethods(psiClass);
+      checkDuplicatedMethods(myClass);
 
       MultiMap<String, PsiMethod> multiMap = new MultiMap<String, PsiMethod>();
       MultiMap<String, PsiMethod> staticMultiMap = new MultiMap<String, PsiMethod>();
       MultiMap<String, PsiMethod> nonStaticMultiMap = new MultiMap<String, PsiMethod>();
 
-      for (GrMethod method : psiClass.getGroovyMethods()) {
+      for (GrMethod method : myClass.getGroovyMethods()) {
         PsiMethod dynamicMethod = new GrDynamicMethodWithCache(method, classSource);
 
         GrDocComment comment = method.getDocComment();
@@ -188,6 +190,10 @@ public class DynamicMemberUtils {
       myMethodMap = convertMap(multiMap);
       myStaticMethodMap = convertMap(staticMultiMap);
       myNonStaticMethodMap = convertMap(nonStaticMultiMap);
+    }
+
+    public GrTypeDefinition getParsedClass() {
+      return myClass;
     }
 
     private static void checkDuplicatedMethods(PsiClass psiClass) {

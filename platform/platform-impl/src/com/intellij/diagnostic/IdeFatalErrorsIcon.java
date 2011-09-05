@@ -58,6 +58,7 @@ public class IdeFatalErrorsIcon extends JLabel {
     myState = state;
     switch (state) {
       case UnreadErrors:
+        changeVisibility(true);
         myIcon.setLayerEnabled(0, true);
         myIcon.setLayerEnabled(1, false);
         myIcon.setLayerEnabled(2, false);
@@ -67,6 +68,7 @@ public class IdeFatalErrorsIcon extends JLabel {
         break;
 
       case ReadErrors:
+        changeVisibility(true);
         stopBlinker();
         myIcon.setLayerEnabled(0, false);
         myIcon.setLayerEnabled(1, true);
@@ -76,7 +78,9 @@ public class IdeFatalErrorsIcon extends JLabel {
         break;
 
       case NoErrors:
+        // let's keep all this layers stuff for the case if we decide not to hide the icon
         stopBlinker();
+        changeVisibility(false);
         myIcon.setLayerEnabled(0, false);
         myIcon.setLayerEnabled(1, false);
         myIcon.setLayerEnabled(2, true);
@@ -90,7 +94,16 @@ public class IdeFatalErrorsIcon extends JLabel {
     repaint();
   }
 
-  private synchronized void startBlinker() {
+    private void changeVisibility(final boolean visible) {
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          setVisible(visible);
+        }
+      });
+    }
+
+    private synchronized void startBlinker() {
     if (myBlinker != null) {
       return;
     }

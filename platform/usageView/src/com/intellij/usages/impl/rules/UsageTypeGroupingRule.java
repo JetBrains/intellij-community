@@ -20,12 +20,9 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.usages.ReadWriteAccessUsage;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,12 +31,17 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class UsageTypeGroupingRule implements UsageGroupingRule {
+public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
+  @Override
   public UsageGroup groupUsage(Usage usage) {
+    return groupUsage(usage, UsageTarget.EMPTY_ARRAY);
+  }
+
+  public UsageGroup groupUsage(Usage usage, UsageTarget[] targets) {
     if (usage instanceof PsiElementUsage) {
       PsiElementUsage elementUsage = (PsiElementUsage)usage;
 
-      UsageType usageType = getUsageType(elementUsage.getElement());
+      UsageType usageType = getUsageType(elementUsage.getElement(), targets);
       if (usageType != null) return new UsageTypeGroup(usageType);
 
       if (usage instanceof ReadWriteAccessUsage) {
@@ -56,14 +58,20 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
   }
 
   @Nullable
-  private static UsageType getUsageType(PsiElement element) {
+  private static UsageType getUsageType(PsiElement element, UsageTarget[] targets) {
     if (element == null) return null;
 
     if (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null) { return UsageType.COMMENT_USAGE; }
 
     UsageTypeProvider[] providers = Extensions.getExtensions(UsageTypeProvider.EP_NAME);
     for(UsageTypeProvider provider: providers) {
-      UsageType usageType = provider.getUsageType(element);
+      UsageType usageType;
+      if (provider instanceof UsageTypeProviderEx) {
+        usageType = ((UsageTypeProviderEx) provider).getUsageType(element, targets);
+      }
+      else {
+        usageType = provider.getUsageType(element);
+      }
       if (usageType != null) {
         return usageType;
       }

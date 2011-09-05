@@ -1,12 +1,11 @@
 package com.intellij.ui.border;
 
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Text;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.*;
 import java.awt.*;
 
 /**
@@ -18,25 +17,48 @@ public class IdeaTitledBorder extends TitledBorder {
   private int EDGE_SPACING = 0;
 
   // Space between the border and text
-  private int TEXT_SPACING = 2;
+  private int TEXT_SPACING = 0;
 
   // Horizontal inset of text that is left or right justified
   private int TEXT_INSET_H = 4;
 
   private static final int SEPARATOR_RIGHT_SPACING = 5;
 
-  //private static final int TITLE_LEFT_SPACING = 5;
-  //static private final int DARKNESS = 10;
+  private boolean smallFont;
+  private boolean boldFont;
+  private int indent;
+  private Insets insets;
+  private Insets insideInsets;
+  private Insets outsideInsets;
 
-  public IdeaTitledBorder(String title, Font font, Color borderColor, int indent, int borderWidth, Insets insets) {
+  public IdeaTitledBorder(String title, boolean boldFont, boolean smallFont, int indent, Insets insets) {
     super(title + "  ");
+    this.smallFont = smallFont;
+    this.boldFont = boldFont;
+    this.indent = indent;
+    this.insets = insets;
+    this.titleJustification = LEADING;
+    this.titlePosition = TOP;
 
-    Insets insideInsets = new Insets(0, 0, 0, 0);
-    Insets outsideInsets = new Insets(0, 0, 0, 0);
+    calculateInsets();
+    updateUI();
+  }
+
+  private void updateUI() {
+    this.titleFont = UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont);
+    this.titleColor = UIUtil.getBorderTitleColor();
+    this.border = BorderFactory.createCompoundBorder(new EmptyBorder(outsideInsets),
+                                                     BorderFactory.createCompoundBorder(
+                                                       BorderFactory.createMatteBorder(1, 0, 0, 0, UIUtil.getTitledBorderColor()),
+                                                       new EmptyBorder(insideInsets)));
+  }
+
+  private void calculateInsets() {
+    insideInsets = new Insets(0, 0, 0, 0);
+    outsideInsets = new Insets(0, 0, 0, 0);
 
     //applying text inset
     insideInsets.left -= TEXT_INSET_H;
-    //outsideInsets.left += TEXT_INSET_H;
 
     //applying indent
     TEXT_INSET_H -= indent;
@@ -54,18 +76,12 @@ public class IdeaTitledBorder extends TitledBorder {
     outsideInsets.left += insets.left;
     outsideInsets.bottom += insets.bottom;
     outsideInsets.right += insets.right;
-
-    this.titleFont = font;
-    this.titleJustification = LEADING;
-    this.titlePosition = TOP;
-    this.border = BorderFactory.createCompoundBorder(new EmptyBorder(outsideInsets),
-                                                     BorderFactory.createCompoundBorder(
-                                                       BorderFactory.createMatteBorder(borderWidth, 0, 0, 0, borderColor),
-                                                       new EmptyBorder(insideInsets)));
   }
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+
+    updateUI();
 
     g.setPaintMode();
 

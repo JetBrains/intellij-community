@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateConstructorHandler;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 
 public class AddDefaultConstructorFix extends AddMethodFix {
@@ -27,8 +28,11 @@ public class AddDefaultConstructorFix extends AddMethodFix {
   }
 
   private static String generateConstructor(PsiClass aClass) {
-    final String constructorModifier = GenerateConstructorHandler.getConstructorModifier(aClass);
-    return constructorModifier + (constructorModifier.isEmpty() ? "" : " ") + aClass.getName() + "() {}";
+    String constructorModifier = GenerateConstructorHandler.getConstructorModifier(aClass);
+    if (constructorModifier == PsiModifier.PACKAGE_LOCAL) {
+      return aClass.getName() + "() {}";
+    }
+    return constructorModifier + " " + aClass.getName() + "() {}";
   }
 
   @NotNull

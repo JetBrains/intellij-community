@@ -899,6 +899,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testMethodSquareBracket() throws Throwable { doTest('[') }
 
   public void testMethodParameterTypeDot() throws Throwable { doAntiTest() }
+  public void testNewGenericClass() throws Throwable { doTest('\n') }
 
   public void testSuperProtectedMethod() throws Throwable {
     myFixture.addClass """package foo;

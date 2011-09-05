@@ -60,13 +60,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -200,7 +200,8 @@ public class PsiUtil {
   }
   @Nullable
   public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom, @Nullable GrExpression stopAt) {
-    PsiElement parent = place.getParent();
+    PsiElement parent = place instanceof GrEnumConstant ? place : place.getParent();
+
     if (parent instanceof GrCall) {
       GrCall call = (GrCall)parent;
       GrNamedArgument[] namedArgs = call.getNamedArguments();
@@ -1044,24 +1045,16 @@ public class PsiUtil {
 
   public static boolean isExpressionStatement(@NotNull PsiElement expr) {
     final PsiElement parent = expr.getParent();
-    if (parent instanceof GrControlFlowOwner) return true;
-    if (parent instanceof GrExpression ||
-        parent instanceof GrArgumentList ||
-        parent instanceof GrReturnStatement ||
-        parent instanceof GrAssertStatement ||
-        parent instanceof GrThrowStatement ||
-        parent instanceof GrSwitchStatement ||
-        parent instanceof GrTypeDefinitionBody ||
-        parent instanceof GrVariable) {
-      return false;
+    if (parent instanceof GrControlFlowOwner || parent instanceof GrCaseSection) return true;
+    if (parent instanceof GrIfStatement &&
+        (expr == ((GrIfStatement)parent).getThenBranch() || expr == ((GrIfStatement)parent).getElseBranch())) {
+      return true;
     }
-    if (parent instanceof GrIfStatement && expr == ((GrIfStatement)parent).getCondition()) {
-      return false;
+
+    if (parent instanceof GrWhileStatement && expr == ((GrWhileStatement)parent).getBody()) {
+      return true;
     }
-    if (parent instanceof GrWhileStatement && expr == ((GrWhileStatement)parent).getCondition()) {
-      return false;
-    }
-    return true;
+    return false;
   }
 
   @Nullable
@@ -1148,10 +1141,14 @@ public class PsiUtil {
       return true;
     }
     final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(expr);
-    if (controlFlowOwner instanceof GrOpenBlock &&
-        controlFlowOwner.getParent() instanceof PsiMethod &&
-        ((PsiMethod)controlFlowOwner.getParent()).getReturnType() == PsiType.VOID) {
-      return false;
+    if (controlFlowOwner instanceof GrOpenBlock) {
+      final PsiElement controlFlowOwnerParent = controlFlowOwner.getParent();
+      if (controlFlowOwnerParent instanceof GrConstructor) {
+        return false;
+      } else if (controlFlowOwnerParent instanceof PsiMethod &&
+          ((PsiMethod)controlFlowOwnerParent).getReturnType() == PsiType.VOID) {
+        return false;
+      }
     }
     return ControlFlowUtils.collectReturns(controlFlowOwner, true).contains(expr);
   }

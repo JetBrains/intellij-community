@@ -1926,7 +1926,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         public void run() {
           if (mgr.getFocusOwner() == owner) {
-            activateEditorComponent(false);
+            activateEditorComponent(true);
           }
         }
       });

@@ -22,6 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +31,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ParametersList implements Cloneable{
+public class ParametersList implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ParametersList");
+
   private List<String> myParameters = new ArrayList<String>();
   private Map<String, String> myMacroMap = null;
   private List<ParamsGroup> myGroups = new ArrayList<ParamsGroup>();
@@ -47,9 +50,9 @@ public class ParametersList implements Cloneable{
   }
 
   @Nullable
-  public String getPropertyValue(@NonNls final String name) {
+  public String getPropertyValue(@NotNull @NonNls final String name) {
+    final String prefix = "-D" + name + "=";
     for (String parameter : myParameters) {
-      @NonNls String prefix = "-D" + name + "=";
       if (parameter.startsWith(prefix)) {
         return parameter.substring(prefix.length());
       }
@@ -57,29 +60,39 @@ public class ParametersList implements Cloneable{
     return null;
   }
 
+  @NotNull
   public String getParametersString() {
-    final StringBuilder buffer = new StringBuilder();
-    final String separator = " ";
-    for (final String param : myParameters) {
-      buffer.append(separator);
-      buffer.append(GeneralCommandLine.quote(param));
-    }
-    for (ParamsGroup paramsGroup : myGroups) {
-      // params group parameters string already contains a separator
-      buffer.append(paramsGroup.getParametersList().getParametersString());
-    }
-    return buffer.toString();
+    return join(getList());
   }
 
+  @NotNull
   public String[] getArray() {
     return ArrayUtil.toStringArray(getList());
   }
 
+  @NotNull
+  public List<String> getList() {
+    if (myGroups.isEmpty()) {
+      return Collections.unmodifiableList(myParameters);
+    }
+
+    final List<String> params = new ArrayList<String>();
+    params.addAll(myParameters);
+    for (ParamsGroup group : myGroups) {
+      params.addAll(group.getParameters());
+    }
+    return Collections.unmodifiableList(params);
+  }
+
+  public void prepend(@NonNls final String parameter) {
+    addAt(0, parameter);
+  }
+
   public void addParametersString(final String parameters) {
     if (parameters != null) {
-      final String[] parms = parse(parameters);
-      for (String parm : parms) {
-        add(parm);
+      final String[] split = parse(parameters);
+      for (String param : split) {
+        add(param);
       }
     }
   }
@@ -97,14 +110,12 @@ public class ParametersList implements Cloneable{
     return group;
   }
 
-  public ParamsGroup addParamsGroupAt(final int index,
-                                      @NotNull final ParamsGroup group) {
+  public ParamsGroup addParamsGroupAt(final int index, @NotNull final ParamsGroup group) {
     myGroups.add(index, group);
     return group;
   }
 
-  public ParamsGroup addParamsGroupAt(final int index,
-                                      @NotNull final String groupId) {
+  public ParamsGroup addParamsGroupAt(final int index, @NotNull final String groupId) {
     final ParamsGroup group = new ParamsGroup(groupId);
     myGroups.add(index, group);
     return group;
@@ -173,33 +184,12 @@ public class ParametersList implements Cloneable{
     replaceOrAdd(parameter, replacement, 0);
   }
 
-  public List<String> getList() {
-    if (myGroups.isEmpty()) {
-      return Collections.unmodifiableList(myParameters);
-    }
-
-    final List<String> params = new ArrayList<String>();
-
-    // params
-    params.addAll(myParameters);
-
-    // recursively add groups
-    for (ParamsGroup group : myGroups) {
-      params.addAll(group.getParameters());
-    }
-    return Collections.unmodifiableList(params);
-  }
-
-  public void prepend(@NonNls final String parameter) {
-    addAt(0, parameter);
-  }
-
-  public void add(@NonNls final String name,@NonNls  final String value) {
+  public void add(@NonNls final String name, @NonNls final String value) {
     add(name);
     add(value);
   }
 
-  public void addAll(final String[] parameters) {
+  public void addAll(final String... parameters) {
     ContainerUtil.addAll(myParameters, parameters);
   }
 
@@ -207,6 +197,7 @@ public class ParametersList implements Cloneable{
     myParameters.addAll(parameters);
   }
 
+  @Override
   public ParametersList clone() {
     try {
       final ParametersList clone = (ParametersList)super.clone();
@@ -223,10 +214,66 @@ public class ParametersList implements Cloneable{
     }
   }
 
-  public static String[] parse(final String string){
-    return new ParametersTokenizer(string).execute();
+  /**
+   * <p>Joins list of parameters into single string, which may be then parsed back into list by {@link #parse(String)}.</p>
+   *
+   * <p>
+   *   <strong>Conversion rules:</strong>
+   *   <ul>
+   *     <li>double quotes are escaped by backslash (<code>&#92;</code>);</li>
+   *     <li>empty parameters parameters and parameters with spaces inside are surrounded with double quotes (<code>"</code>);</li>
+   *     <li>parameters are separated by single whitespace.</li>
+   *   </ul>
+   * </p>
+   *
+   * <p><strong>Examples:</strong></p>
+   * <p>
+   *   <code>['a', 'b'] => 'a  b'</code><br/>
+   *   <code>['a="1 2"', 'b'] => '"a &#92;"1 2&#92;"" b'</code>
+   * </p>
+   *
+   * @param parameters a list of parameters to join.
+   * @return a string with parameters.
+   */
+  @NotNull
+  public static String join(@NotNull final List<String> parameters) {
+    return ParametersTokenizer.encode(parameters);
   }
 
+  @NotNull
+  public static String join(final String... parameters) {
+    return ParametersTokenizer.encode(Arrays.asList(parameters));
+  }
+
+  /**
+   * <p>Converts single parameter string (as created by {@link #join(java.util.List)}) into list of parameters.</p>
+   *
+   * <p>
+   *   <strong>Conversion rules:</strong>
+   *   <ul>
+   *     <li>starting/whitespaces are trimmed;</li>
+   *     <li>parameters are split by whitespaces, whitespaces itself are dropped</li>
+   *     <li>parameters inside double quotes (<code>"a b"</code>) are kept as single one;</li>
+   *     <li>double quotes are dropped, escaped double quotes (<code>&#92;"</code>) are un-escaped.</li>
+   *   </ul>
+   * </p>
+   *
+   * <p><strong>Examples:</strong></p>
+   * <p>
+   *   <code>' a  b ' => ['a', 'b']</code><br/>
+   *   <code>'a="1 2" b' => ['a=1 2', 'b']</code><br/>
+   *   <code>'a " " b' => ['a', ' ', 'b']</code><br/>
+   *   <code>'"a &#92;"1 2&#92;"" b' => ['a="1 2"', 'b']</code>
+   * </p>
+   *
+   * @param string parameter string to split.
+   * @return array of parameters.
+   */
+  @NotNull
+  public static String[] parse(@NotNull final String string) {
+    final List<String> params = ParametersTokenizer.decode(string);
+    return ArrayUtil.toStringArray(params);
+  }
 
   public String expandMacros(String text) {
     final Map<String, String> macroMap = getMacroMap();
@@ -263,101 +310,88 @@ public class ParametersList implements Cloneable{
     return myMacroMap;
   }
 
-  private static class ParametersTokenizer {
-    private final String myParamsString;
-    private final List<String> myArray = new ArrayList<String>();
-    private final StringBuffer myBuffer = new StringBuffer(128);
-    private boolean myTokenStarted = false;
-    private boolean myUnquotedSlash = false;
-    private boolean mySplittedQuotingStarted = false;
-
-    public ParametersTokenizer(@NotNull final String parmsString) {
-      myParamsString = parmsString;
-    }
-
-    public String[] execute() {
-      boolean inQuotes = false;
-
-      // \" sequence is turned to " inside ""
-      boolean wasEscaped = false;
-
-      for (int i = 0; i < myParamsString.length(); i++) {
-        final char c = myParamsString.charAt(i);
-
-        if (inQuotes) {
-          LOG.assertTrue(!myUnquotedSlash);
-          if (wasEscaped) {
-            //if (c != '"') append('\\');
-            append(c);
-            wasEscaped = false;
-          }
-          else if (c == '"') {
-            inQuotes = false;
-          }
-          else if (c == '\\') {
-            myTokenStarted = true;
-            append(c);
-            wasEscaped = true;
-          }
-          else {
-            append(c);
-          }
-        }
-        else {
-          inQuotes = processNotQuoted(c, myBuffer.length() == 0 || myBuffer.charAt(myBuffer.length() - 1) == ' ');
-        }
-      }
-      tokenFinished();
-      return ArrayUtil.toStringArray(myArray);
-    }
-
-    private boolean processNotQuoted(final char c, final boolean isPreviousSpace) {
-      if (c == '"') {
-        if (myUnquotedSlash) {
-          append(c);
-          myUnquotedSlash = false;
-          return false;
-        }
-        else if (!isPreviousSpace || mySplittedQuotingStarted) {
-          append(c);
-          mySplittedQuotingStarted = !mySplittedQuotingStarted;
-          return false;
-        }
-        myTokenStarted = true;
-        return true;
-      }
-      else if (c == ' ') {
-        tokenFinished();
-      }
-      else if (c == '\\') {
-        myUnquotedSlash = true;
-        append(c);
-        return false;
-      }
-      else {
-        append(c);
-      }
-      myUnquotedSlash = false;
-      return false;
-    }
-
-    private void append(final char nextChar) {
-      myBuffer.append(nextChar);
-      myTokenStarted = true;
-    }
-
-    private void tokenFinished() {
-      if (myTokenStarted) {
-        final String token = myBuffer.length() == 0 ? "\"\"" : myBuffer.toString();
-        myArray.add(token);
-      }
-      myBuffer.setLength(0);
-      myTokenStarted = false;
-    }
-  }
-
   @Override
   public String toString() {
     return myParameters.toString();
+  }
+
+  private static class ParametersTokenizer {
+    private ParametersTokenizer() { }
+
+    @NotNull
+    public static String encode(@NotNull final List<String> parameters) {
+      final StringBuilder buffer = new StringBuilder();
+      for (final String parameter : parameters) {
+        if (buffer.length() > 0) {
+          buffer.append(' ');
+        }
+        buffer.append(encode(parameter));
+      }
+      return buffer.toString();
+    }
+
+    @NotNull
+    public static String encode(@NotNull String parameter) {
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        builder.append(parameter);
+        StringUtil.escapeQuotes(builder);
+        if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0) {
+          StringUtil.quote(builder);
+        }
+        return builder.toString();
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
+      }
+    }
+
+    @NotNull
+    public static List<String> decode(@NotNull String parameterString) {
+      parameterString = parameterString.trim();
+
+      final ArrayList<String> params = CollectionFactory.arrayList();
+      final StringBuilder token = new StringBuilder(128);
+      boolean inQuotes = false;
+      boolean escapedQuote = false;
+      boolean nonEmpty = false;
+
+      for (int i = 0; i < parameterString.length(); i++) {
+        final char ch = parameterString.charAt(i);
+
+        if (ch == '\"') {
+          if (!escapedQuote) {
+            inQuotes = !inQuotes;
+            nonEmpty = true;
+            continue;
+          }
+          escapedQuote = false;
+        }
+        else if (Character.isWhitespace(ch)) {
+          if (!inQuotes) {
+            if (token.length() > 0 || nonEmpty) {
+              params.add(token.toString());
+              token.setLength(0);
+              nonEmpty = false;
+            }
+            continue;
+          }
+        }
+        else if (ch == '\\') {
+          if (i < parameterString.length() - 1 && parameterString.charAt(i + 1) == '"') {
+            escapedQuote = true;
+            continue;
+          }
+        }
+
+        token.append(ch);
+      }
+
+      if (token.length() > 0 || nonEmpty) {
+        params.add(token.toString());
+      }
+
+      return params;
+    }
   }
 }

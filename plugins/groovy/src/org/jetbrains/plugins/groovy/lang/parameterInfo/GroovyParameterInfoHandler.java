@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -51,15 +52,26 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
  */
-public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPsiElement, Object> {
+public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GroovyPsiElement, Object, GroovyPsiElement> {
   public boolean couldShowInLookup() {
     return true;
   }
+
+  private static final Set<? extends Class> ourStopSearch = Collections.singleton(GrMethod.class);
+
+  @NotNull
+  @Override
+  public Set<? extends Class> getArgListStopSearchClasses() {
+    return ourStopSearch;
+  }
+
 
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);
@@ -120,6 +132,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   @SuppressWarnings("unchecked")
   public void showParameterInfo(@NotNull GroovyPsiElement place, CreateParameterInfoContext context) {
     GroovyResolveResult[] variants = ResolveUtil.getCallVariants(place);
+
     final Condition<GroovyResolveResult> condition = new Condition<GroovyResolveResult>() {
       public boolean value(GroovyResolveResult groovyResolveResult) {
         final PsiElement element = groovyResolveResult.getElement();
@@ -127,7 +140,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
                element instanceof GrVariable && ((GrVariable)element).getTypeGroovy() instanceof GrClosureType;
       }
     };
-    final List elementToShow = ContainerUtil.findAll(variants, condition);
+    final List elementToShow = new ArrayList();
     final PsiElement parent = place.getParent();
     if (parent instanceof GrMethodCall) {
       final GrExpression invoked = ((GrMethodCall)parent).getInvokedExpression();
@@ -142,6 +155,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
           elementToShow.addAll(
             ContainerUtil.findAll(ResolveUtil.getMethodCandidates(type, "call", place, PsiUtil.getArgumentTypes(place, true)), condition));
         }
+      }
+      else {
+        elementToShow.addAll(ContainerUtil.findAll(variants, condition));
       }
     }
     context.setItemsToShow(ArrayUtil.toObjectArray(elementToShow));
@@ -464,5 +480,38 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
         buffer.append(name);
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public GroovyPsiElement[] getActualParameters(@NotNull GroovyPsiElement o) {
+    if (o instanceof GrArgumentList) return ((GrArgumentList)o).getAllArguments();
+    return GroovyPsiElement.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public IElementType getActualParameterDelimiterType() {
+    return GroovyTokenTypes.mCOMMA;
+  }
+
+  @NotNull
+  @Override
+  public IElementType getActualParametersRBraceType() {
+    return GroovyTokenTypes.mRPAREN;
+  }
+
+  private static final Set<Class> ALLOWED_PARAM_CLASSES = Collections.<Class>singleton(GroovyPsiElement.class);
+
+  @NotNull
+  @Override
+  public Set<Class> getArgumentListAllowedParentClasses() {
+    return ALLOWED_PARAM_CLASSES;
+  }
+
+  @NotNull
+  @Override
+  public Class<GroovyPsiElement> getArgumentListClass() {
+    return GroovyPsiElement.class;
   }
 }

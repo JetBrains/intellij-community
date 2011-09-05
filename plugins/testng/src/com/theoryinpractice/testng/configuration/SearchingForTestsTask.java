@@ -37,6 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.model.IDEARemoteTestRunnerClient;
 import com.theoryinpractice.testng.model.TestClassFilter;
@@ -183,7 +184,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         new Computable<String>() {
           @Nullable
           public String compute() {
-            return entry.getKey().getQualifiedName();
+            return ClassUtil.getJVMClassName(entry.getKey());
           }
         }
       ), methods);
@@ -303,7 +304,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         new Computable<PsiClass>() {
           @Nullable
           public PsiClass compute() {
-            return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(data.getMainClassName(), getSearchScope());
+            return ClassUtil.findPsiClass(psiManager, data.getMainClassName().replace('/', '.'), null, true, getSearchScope());
           }
         }
       );
@@ -326,7 +327,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         new Computable<PsiClass>() {
           @Nullable
           public PsiClass compute() {
-            return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(data.getMainClassName(), getSearchScope());
+            return ClassUtil.findPsiClass(psiManager, data.getMainClassName().replace('/', '.'), null, true, getSearchScope());
           }
         }
       );

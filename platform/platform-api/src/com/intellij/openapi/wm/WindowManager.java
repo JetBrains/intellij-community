@@ -18,6 +18,7 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,9 +87,9 @@ public abstract class WindowManager {
    */
   public abstract StatusBar getStatusBar(@NotNull Component c);
 
-  public abstract JFrame getFrame(Project project);
+  public abstract JFrame getFrame(@Nullable Project project);
 
-  public abstract IdeFrame getIdeFrame(Project project);
+  public abstract IdeFrame getIdeFrame(@Nullable Project project);
 
   /**
    * Tests whether the specified rectangle is inside of screen bounds. Method uses its own heuristic test.

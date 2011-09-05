@@ -44,7 +44,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   private static final int META_DATA_OFFSET = 4;
   protected static final int DATA_START = META_DATA_OFFSET + 16;
 
-  protected final ISimpleStorage myStorage;
+  protected final ResizeableMappedFile myStorage;
   private final ResizeableMappedFile myKeyStorage;
 
   private boolean myClosed = false;
@@ -137,7 +137,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     }
   }
 
-  public PersistentEnumeratorBase(File file, ISimpleStorage storage, KeyDescriptor<Data> dataDescriptor, int initialSize, 
+  public PersistentEnumeratorBase(File file, ResizeableMappedFile storage, KeyDescriptor<Data> dataDescriptor, int initialSize,
                                   Version version, RecordBufferHandler<? extends PersistentEnumeratorBase> recordBufferHandler,
                                   boolean doCaching) throws IOException {
     myDataDescriptor = dataDescriptor;
@@ -357,28 +357,30 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   }
 
   protected boolean iterateData(final Processor<Data> processor) throws IOException {
-    if (myKeyStorage == null) {
-      throw new UnsupportedOperationException("Iteration over InlineIntegerKeyDescriptors is not supported");
-    }
+    synchronized (ourLock) {
+      if (myKeyStorage == null) {
+        throw new UnsupportedOperationException("Iteration over InlineIntegerKeyDescriptors is not supported");
+      }
 
-    myKeyStorage.force();
+      myKeyStorage.force();
 
-    DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new LimitedInputStream(new FileInputStream(keystreamFile()),
-                                                                                                    (int)myKeyStorage.length())));
-    try {
+      DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new LimitedInputStream(new FileInputStream(keystreamFile()),
+                                                                                                      (int)myKeyStorage.length())));
       try {
-        while (true) {
-          Data key = myDataDescriptor.read(keysStream);
-          if (!processor.process(key)) return false;
+        try {
+          while (true) {
+            Data key = myDataDescriptor.read(keysStream);
+            if (!processor.process(key)) return false;
+          }
         }
+        catch (EOFException e) {
+          // Done
+        }
+        return true;
       }
-      catch (EOFException e) {
-        // Done
+      finally {
+        keysStream.close();
       }
-      return true;
-    }
-    finally {
-      keysStream.close();
     }
   }
 

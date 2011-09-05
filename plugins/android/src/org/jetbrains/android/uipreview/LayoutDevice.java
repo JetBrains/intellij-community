@@ -90,7 +90,7 @@ class LayoutDevice {
       node.setTextContent(screenOrientationQualifier.getFolderSegment());
     }
 
-    final PixelDensityQualifier pixelDensityQualifier = config.getPixelDensityQualifier();
+    final DensityQualifier pixelDensityQualifier = config.getDensityQualifier();
     if (pixelDensityQualifier != null) {
       Element node = createNode(doc, configNode, LayoutDeviceHandler.PIXEL_DENSITY_TAG_NAME);
       node.setTextContent(pixelDensityQualifier.getFolderSegment());

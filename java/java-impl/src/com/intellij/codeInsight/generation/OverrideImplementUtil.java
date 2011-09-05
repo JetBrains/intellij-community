@@ -52,7 +52,10 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -651,7 +654,7 @@ public class OverrideImplementUtil {
           for (PsiMethod prototype : prototypes) {
             PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, candidate.getElement(), candidate.getSubstitutor());
             PsiElement result = GenerateMembersUtil.insert(aClass, prototype, anchor, true);
-            resultMembers.add(new PsiGenerationInfo<PsiMethod>((PsiMethod)result));
+            resultMembers.add(createGenerationInfo((PsiMethod)result));
           }
         }
       }

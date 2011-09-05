@@ -17,8 +17,11 @@ package com.intellij.usages.impl;
 
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.UsageFilteringRule;
+import com.intellij.usages.rules.UsageFilteringRuleEx;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,10 +30,15 @@ import org.jetbrains.annotations.Nullable;
  */
 class UsageNodeTreeBuilder {
   private final GroupNode myRoot;
+  private final UsageTarget[] myTargets;
   private UsageGroupingRule[] myGroupingRules;
   private UsageFilteringRule[] myFilteringRules;
 
-  UsageNodeTreeBuilder(@NotNull UsageGroupingRule[] groupingRules, @NotNull UsageFilteringRule[] filteringRules, @NotNull GroupNode root) {
+  UsageNodeTreeBuilder(UsageTarget[] targets,
+                       @NotNull UsageGroupingRule[] groupingRules,
+                       @NotNull UsageFilteringRule[] filteringRules,
+                       @NotNull GroupNode root) {
+    myTargets = targets;
     myGroupingRules = groupingRules;
     myFilteringRules = filteringRules;
     myRoot = root;
@@ -46,7 +54,14 @@ class UsageNodeTreeBuilder {
 
   public boolean isVisible(Usage usage) {
     for (final UsageFilteringRule rule : myFilteringRules) {
-      if (!rule.isVisible(usage)) {
+      final boolean visible;
+      if (rule instanceof UsageFilteringRuleEx) {
+        visible = ((UsageFilteringRuleEx) rule).isVisible(usage, myTargets);
+      }
+      else {
+        visible = rule.isVisible(usage);
+      }
+      if (!visible) {
         return false;
       }
     }
@@ -60,7 +75,13 @@ class UsageNodeTreeBuilder {
     GroupNode lastGroupNode = myRoot;
     for (int i = 0; i < myGroupingRules.length; i++) {
       final UsageGroupingRule rule = myGroupingRules[i];
-      final UsageGroup group = rule.groupUsage(usage);
+      final UsageGroup group;
+      if (rule instanceof UsageGroupingRuleEx) {
+        group = ((UsageGroupingRuleEx) rule).groupUsage(usage, myTargets);
+      }
+      else {
+        group = rule.groupUsage(usage);
+      }
       if (group != null) {
         lastGroupNode = lastGroupNode.addGroup(group, i);
       }

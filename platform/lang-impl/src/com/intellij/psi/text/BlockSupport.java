@@ -44,8 +44,8 @@ public abstract class BlockSupport {
                                        @NotNull CharSequence newText,
                                        @NotNull ProgressIndicator progressIndicator) throws IncorrectOperationException;
 
-  public static final Key<Boolean> DO_NOT_REPARSE_INCREMENTALLY = Key.create("SKIP_INCREMENTAL_REPARSE");
-  public static final Key<ASTNode> TREE_TO_BE_REPARSED = new Key<ASTNode>("TREE_TO_BE_REPARSED");
+  public static final Key<Boolean> DO_NOT_REPARSE_INCREMENTALLY = Key.create("DO_NOT_REPARSE_INCREMENTALLY");
+  public static final Key<ASTNode> TREE_TO_BE_REPARSED = Key.create("TREE_TO_BE_REPARSED");
 
   public static class ReparsedSuccessfullyException extends RuntimeException {
     private final DiffLog myDiffLog;

@@ -19,6 +19,8 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +35,7 @@ import java.util.Arrays;
 /**
  * @author Ralf Quebbemann (ralfq@codehaus.org)
  */
-public abstract class MavenGeneralConfigurable implements SearchableConfigurable {
+public abstract class MavenGeneralConfigurable implements SearchableConfigurable, ComponentWithAnchor {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
   private JComboBox outputLevelCombo;
@@ -45,11 +47,13 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
   private JCheckBox checkboxRecursive;
   private MavenEnvironmentForm mavenPathsForm;
   private JComboBox snapshotUpdatePolicyCombo;
+  private JBLabel myMultiprojectBuildFailPolicyLabel;
   private final DefaultComboBoxModel outputLevelComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel checksumPolicyComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel failPolicyComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel snapshotUpdatePolicyComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel pluginUpdatePolicyComboModel = new DefaultComboBoxModel();
+  private JComponent anchor;
 
   protected abstract MavenGeneralSettings getState();
 
@@ -59,6 +63,8 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
     fillFailureBehaviorCombobox();
     fillPluginUpdatePolicyCombobox();
     fillSnapshotUpdatePolicyCombobox();
+
+    setAnchor(myMultiprojectBuildFailPolicyLabel);
   }
 
   private void fillOutputLevelCombobox() {
@@ -191,5 +197,17 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
 
   public Runnable enableSearch(String option) {
     return null;
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    myMultiprojectBuildFailPolicyLabel.setAnchor(anchor);
+    mavenPathsForm.setAnchor(anchor);
   }
 }

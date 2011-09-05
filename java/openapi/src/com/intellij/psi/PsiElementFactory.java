@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,15 +161,6 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   @NotNull PsiClassType createType(@NotNull PsiClass aClass, PsiType parameters);
 
   @NotNull PsiClassType createType(@NotNull PsiClass aClass, PsiType... parameters);
-
-  /**
-   * Detaches type from reference(s) or type elements it was created from.
-   *
-   * @param type the type to detach.
-   * @return the detached type.
-   * @deprecated does nothing (remove in IDEA 11)
-   */
-  @NotNull PsiType detachType(@NotNull PsiType type);
 
   /**
    * Creates a substitutor for the specified class which replaces all type parameters
@@ -420,20 +411,6 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @return the created code fragment.
    */
   @NotNull PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical, int flags);
-
-  /**
-   * @deprecated use {@link #createTypeCodeFragment(String, PsiElement, boolean, int)} (todo[r.sh] to remove in IDEA 11).
-   */
-  @NotNull PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text, PsiElement context, boolean isVoidValid, boolean isPhysical);
-
-  /**
-   * @deprecated use {@link #createTypeCodeFragment(String, PsiElement, boolean, int)} (todo[r.sh] to remove in IDEA 11).
-   */
-  @NotNull PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text,
-                                                      PsiElement context,
-                                                      boolean isVoidValid,
-                                                      boolean isPhysical,
-                                                      boolean allowEllipsis);
 
   /**
    * Returns a synthetic Java class containing methods which are defined on Java arrays.

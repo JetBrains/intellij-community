@@ -117,6 +117,6 @@ public class GithubCheckoutProvider implements CheckoutProvider {
 
   @Override
   public String getVcsName() {
-    return "_GitHub";
+    return "Git_Hub";
   }
 }

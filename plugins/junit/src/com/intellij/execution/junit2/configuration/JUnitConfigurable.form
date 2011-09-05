@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.execution.junit2.configuration.JUnitConfigurable">
-  <grid id="ece1c" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="5">
+  <grid id="ece1c" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="28" y="28" width="722" height="548"/>
@@ -45,7 +45,7 @@
               <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.method.radio"/>
             </properties>
           </component>
-          <component id="52bca" class="javax.swing.JLabel">
+          <component id="52bca" class="com.intellij.ui.components.JBLabel" binding="myTestLabel">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -97,7 +97,6 @@
                 <properties>
                   <enabled value="true"/>
                   <labelLocation value="West"/>
-                  <labelPreferredSize width="62" height="16"/>
                   <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.method.label"/>
                 </properties>
               </component>
@@ -121,12 +120,11 @@
                     <properties>
                       <enabled value="true"/>
                       <labelLocation value="West"/>
-                      <labelPreferredSize width="62" height="16"/>
                       <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.package.label"/>
                       <visible value="true"/>
                     </properties>
                   </component>
-                  <grid id="c9a5f" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                  <grid id="c9a5f" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -166,6 +164,11 @@
                           <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.across.module.dependencies.radio"/>
                         </properties>
                       </component>
+                      <hspacer id="c14ec">
+                        <constraints>
+                          <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                      </hspacer>
                     </children>
                   </grid>
                 </children>
@@ -177,7 +180,6 @@
                 <properties>
                   <componentClass value="javax.swing.JPanel"/>
                   <labelLocation value="West"/>
-                  <labelPreferredSize width="62" height="16"/>
                   <text value="Pattern"/>
                   <visible value="true"/>
                 </properties>
@@ -188,7 +190,6 @@
                 </constraints>
                 <properties>
                   <labelLocation value="West"/>
-                  <labelPreferredSize width="62" height="16"/>
                   <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.class.label"/>
                 </properties>
               </component>
@@ -199,7 +200,6 @@
                 <properties>
                   <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
                   <labelLocation value="West"/>
-                  <labelPreferredSize width="62" height="16"/>
                   <text value="Directory"/>
                 </properties>
               </component>
@@ -212,8 +212,8 @@
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <grid id="92997" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
-        <margin top="5" left="0" bottom="5" right="0"/>
+      <grid id="92997" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -224,31 +224,32 @@
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties>
-              <labelsPreferredSize width="213" height="16"/>
-            </properties>
+            <properties/>
           </component>
           <component id="350c9" class="com.intellij.openapi.ui.LabeledComponent" binding="myModule">
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <componentClass value="javax.swing.JComboBox"/>
               <enabled value="true"/>
-              <labelInsets top="7" left="0" bottom="2" right="0"/>
               <labelLocation value="West"/>
-              <labelPreferredSize width="213" height="25"/>
               <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.use.classpath.and.jdk.of.module.label"/>
             </properties>
           </component>
           <component id="e5163" class="com.intellij.execution.ui.AlternativeJREPanel" binding="myAlternativeJREPanel">
             <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties>
-              <checkBoxPreferredSize width="213" height="23"/>
-            </properties>
+            <properties/>
           </component>
+          <vspacer id="5d352">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+                <preferred-size width="-1" height="15"/>
+              </grid>
+            </constraints>
+          </vspacer>
         </children>
       </grid>
       <grid id="ca987" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

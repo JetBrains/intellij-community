@@ -86,6 +86,7 @@
 
     <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator" order="last" />
     <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
+    <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDGMTypeCalculator"/>
 
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector" />
 
@@ -235,14 +236,10 @@
     <completion.confidence language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionConfidence" id="groovyAdvanced" order="after groovyNameIdentifier"/>
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.UnfocusedComments" id="groovyComments"/>
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="groovyTrue" order="last"/>
-    <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrKindWeigher" id="groovyKindWeigher" order=" after prefix"/>
-    <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrTopClassMembersWeigher" id="groovyTopClassWeigher" order="after groovyKindWeigher"/>
-    <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrAccessorWeigher" id="groovyAccessorWeigher" order="after groovyTopClassWeigher, before proximity"/>
 
-    <!--<weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrKindWeigher" id="groovyKindWeigher" order="after negativeStats, after prefix"/>
-        <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrTopClassMembersWeigher" id="groovyTopClassWeigher" order="after groovyKindWeigher"/>
-        <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrAccessorWeigher" id="groovyAccessorWeigher" order="after groovyTopClassWeigher "/>-->
-
+    <weigher key="completionSorting" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrWithWeigher" id="groovyWithWeigher"/>
+    <weigher key="completionSorting" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrKindWeigher" id="groovyKindWeigher" order="after groovyWithWeigher"/>
+    <weigher key="completionSorting" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrAccessorWeigher" id="groovyAccessorWeigher" order="after groovyKindWeigher, before sLookupString"/>
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
 
     <useScopeEnlarger implementation="org.jetbrains.plugins.groovy.lang.psi.impl.search.GrPrivateFieldScopeEnlarger"/>
@@ -286,7 +283,7 @@
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyGStringSelectioner" order="before wordSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyParameterListSelectioner"/>
 
-    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorMethodReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyConstructorUsagesSearcher"/>
     <annotatedElementsSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
@@ -315,6 +312,7 @@
 
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrAliasedImportedElementSearcher"/>
+    <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
 
     <antCustomCompiler implementation="org.jetbrains.plugins.groovy.ant.GroovyAntCustomCompilerProvider"/>
 

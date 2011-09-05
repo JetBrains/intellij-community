@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>LengthOneStringInConcatenationInspection.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Single character string concatenation</problem_class>
+    <description>&lt;code&gt;&quot;i&quot;&lt;/code&gt; can be replaced with 'i' #loc</description>
+  </problem>
+
+  <problem>
+    <file>LengthOneStringInConcatenationInspection.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Single character string concatenation</problem_class>
+    <description>&lt;code&gt;&quot; &quot;&lt;/code&gt; can be replaced with ' ' #loc</description>
+  </problem>
+
+  <problem>
+    <file>LengthOneStringInConcatenationInspection.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Single character string concatenation</problem_class>
+    <description>&lt;code&gt;&quot;\t&quot;&lt;/code&gt; can be replaced with '\t' #loc</description>
+  </problem>
+
+  <problem>
+    <file>LengthOneStringInConcatenationInspection.java</file>
+    <line>17</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Single character string concatenation</problem_class>
+    <description>&lt;code&gt;&quot;f&quot;&lt;/code&gt; can be replaced with 'f' #loc</description>
+  </problem>
+
+  <problem>
+    <file>LengthOneStringInConcatenationInspection.java</file>
+    <line>20</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Single character string concatenation</problem_class>
+    <description>&lt;code&gt;&quot;f&quot;&lt;/code&gt; can be replaced with 'f' #loc</description>
+  </problem>
+
+  <problem>
+    <file>LengthOneStringInConcatenationInspection.java</file>
+    <line>21</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Single character string concatenation</problem_class>
+    <description>&lt;code&gt;&quot;a&quot;&lt;/code&gt; can be replaced with 'a' #loc</description>
+  </problem>
+
+  <problem>
+    <file>LengthOneStringInConcatenationInspection.java</file>
+    <line>22</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Single character string concatenation</problem_class>
+    <description>&lt;code&gt;&quot;b&quot;&lt;/code&gt; can be replaced with 'b' #loc</description>
+  </problem>
+</problems>

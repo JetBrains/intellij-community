@@ -20,8 +20,10 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -32,10 +34,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -115,15 +114,31 @@ public class Messages {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
+
+    if (canShowMacSheetPanel()) {
+      return MacMessages.getInstance()
+        .showMessageDialog(title, message, null, options, false, WindowManager.getInstance().suggestParentWindow(project), null);
+    }
+
     MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false);
     dialog.show();
     return dialog.getExitCode();
+  }
+
+  private static boolean canShowMacSheetPanel() {
+    return SystemInfo.isMac && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
   }
 
   public static int showDialog(Project project, String message, String title, String moreInfo, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
+
+    if (canShowMacSheetPanel()) {
+      return MacMessages.getInstance()
+        .showMessageDialog(title, message, moreInfo, options, false, WindowManager.getInstance().suggestParentWindow(project), null);
+    }
+
     MessageDialog dialog = new MoreInfoMessageDialog(project, message, title, moreInfo, options, defaultOptionIndex, focusedOptionIndex, icon);
     dialog.show();
     return dialog.getExitCode();
@@ -139,6 +154,11 @@ public class Messages {
       return ourTestImplementation.show(message);
     }
     else {
+      if (canShowMacSheetPanel()) {
+        return MacMessages.getInstance()
+          .showMessageDialog(title, message, null, options, false, SwingUtilities.getWindowAncestor(parent), null);
+      }
+  
       MessageDialog dialog = new MessageDialog(parent, message, title, options, defaultOptionIndex, defaultOptionIndex, icon, false);
       dialog.show();
       return dialog.getExitCode();
@@ -150,6 +170,11 @@ public class Messages {
       return ourTestImplementation.show(message);
     }
     else {
+      if (canShowMacSheetPanel()) {
+        return MacMessages.getInstance()
+          .showMessageDialog(title, message, null, options, false, null, doNotAskOption);
+      }
+  
       //what's it? if (application.isUnitTestMode()) throw new RuntimeException(message);
       MessageDialog dialog = new MessageDialog(message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
       dialog.show();
@@ -175,7 +200,7 @@ public class Messages {
    * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(Project,boolean)
    */
   public static void showMessageDialog(Project project, String message, String title, @Nullable Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
       return;
     }
@@ -184,7 +209,7 @@ public class Messages {
   }
 
   public static void showMessageDialog(Component parent, String message, String title, @Nullable Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON, SwingUtilities.getWindowAncestor(parent));
       return;
     }
@@ -199,7 +224,7 @@ public class Messages {
    * @see #showMessageDialog(Component, String, String, Icon)
    */
   public static void showMessageDialog(String message, String title, @Nullable Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON);
       return;
     }
@@ -211,7 +236,7 @@ public class Messages {
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
   public static int showYesNoDialog(Project project, String message, String title, String yesText, String noText, @Nullable Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, WindowManager.getInstance().suggestParentWindow(project));
     }
     
@@ -222,7 +247,7 @@ public class Messages {
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
   public static int showYesNoDialog(Project project, String message, String title, @Nullable Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, YES_BUTTON, NO_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
     }
     
@@ -233,7 +258,7 @@ public class Messages {
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
   public static int showYesNoDialog(Component parent, String message, String title, @Nullable Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, YES_BUTTON, NO_BUTTON, SwingUtilities.getWindowAncestor(parent));
     }
     
@@ -243,7 +268,7 @@ public class Messages {
 
   public static int showYesNoDialog(String message, String title, String yesText, String noText, @Nullable Icon icon,
                                     @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, null, doNotAskOption);
     }
     
@@ -269,7 +294,7 @@ public class Messages {
    * @see #showYesNoDialog(Component, String, String, Icon)
    */
   public static int showYesNoDialog(String message, String title, @Nullable Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, YES_BUTTON, NO_BUTTON, null);
     }
 
@@ -278,7 +303,7 @@ public class Messages {
 
   public static int showOkCancelDialog(Project project, String message, String title, String okText, String cancelText, Icon icon,
                                        DialogWrapper.DoNotAskOption doNotAskOption) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, okText, cancelText, WindowManager.getInstance().suggestParentWindow(project),
                                          doNotAskOption);
     }
@@ -287,7 +312,7 @@ public class Messages {
   }
 
   public static int showOkCancelDialog(Project project, String message, String title, String okText, String cancelText, Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, okText, cancelText, WindowManager.getInstance().suggestParentWindow(project));
     }
     
@@ -299,7 +324,7 @@ public class Messages {
   }
 
   public static int showOkCancelDialog(Component parent, String message, String title, String okText, String cancelText, Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, okText, cancelText, SwingUtilities.getWindowAncestor(parent));
     }
 
@@ -326,7 +351,7 @@ public class Messages {
   }
 
   public static int showOkCancelDialog(String message, String title, String okText, String cancelText, Icon icon, @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, okText, cancelText, null, doNotAskOption);
     }
     
@@ -365,7 +390,7 @@ public class Messages {
   }
 
   public static void showErrorDialog(Project project, @Nls String message, @Nls String title) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showErrorDialog(title, message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
       return;
     }
@@ -374,7 +399,7 @@ public class Messages {
   }
 
   public static void showErrorDialog(Component component, String message, @Nls String title) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showErrorDialog(title, message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
       return;
     }
@@ -383,7 +408,7 @@ public class Messages {
   }
 
   public static void showErrorDialog(Component component, String message) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showErrorDialog(CommonBundle.getErrorTitle(), message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
       return;
     }
@@ -398,7 +423,7 @@ public class Messages {
    * @see #showErrorDialog(Component, String, String)
    */
   public static void showErrorDialog(String message, String title) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showErrorDialog(CommonBundle.getErrorTitle(), message, OK_BUTTON, null);
       return;
     }
@@ -407,7 +432,7 @@ public class Messages {
   }
 
   public static void showWarningDialog(Project project, String message, String title) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showErrorDialog(CommonBundle.getErrorTitle(), message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
       return;
     }
@@ -416,7 +441,7 @@ public class Messages {
   }
 
   public static void showWarningDialog(Component component, String message, String title) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showErrorDialog(CommonBundle.getErrorTitle(), message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
       return;
     }
@@ -431,7 +456,7 @@ public class Messages {
    * @see #showWarningDialog(Component, String, String)
    */
   public static void showWarningDialog(String message, String title) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showErrorDialog(CommonBundle.getErrorTitle(), message, OK_BUTTON, null);
       return;
     }
@@ -440,7 +465,7 @@ public class Messages {
   }
 
   public static int showYesNoCancelDialog(Project project, String message, String title, String yes, String no, String cancel, Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoCancelDialog(title, message, yes, no, cancel,
                                                WindowManager.getInstance().suggestParentWindow(project), null);
     }
@@ -454,7 +479,7 @@ public class Messages {
   }
 
   public static int showYesNoCancelDialog(Component parent, String message, String title, String yes, String no, String cancel, Icon icon) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoCancelDialog(title, message, yes, no, cancel,
                                                SwingUtilities.getWindowAncestor(parent), null);
     }
@@ -469,7 +494,7 @@ public class Messages {
 
   public static int showYesNoCancelDialog(String message, String title, String yes, String no, String cancel, Icon icon,
                                           DialogWrapper.DoNotAskOption doNotAskOption) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoCancelDialog(title, message, yes, no, cancel, null, doNotAskOption);
     }
     
@@ -569,7 +594,7 @@ public class Messages {
   public static String showInputDialog(Component parent,
                                        String message,
                                        String title,
-                                       Icon icon,
+                                       @Nullable Icon icon,
                                        @NonNls String initialValue,
                                        InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
@@ -609,6 +634,25 @@ public class Messages {
     InputDialog dialog = new MultilineInputDialog(project, message, title, icon, initialValue, validator, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
     dialog.show();
     return dialog.getInputString();
+  }
+
+  @NotNull
+  public static Pair<String, Boolean> showInputDialogWithCheckBox(String message,
+                                                   String title,
+                                                   String checkboxText,
+                                                   boolean checked,
+                                                   boolean checkboxEnabled,
+                                                   @Nullable Icon icon,
+                                                   @NonNls String initialValue,
+                                                   @Nullable InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return new Pair<String, Boolean>(ourTestInputImplementation.show(message), checked);
+    }
+    else {
+      InputDialogWithCheckbox dialog = new InputDialogWithCheckbox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
+      dialog.show();
+      return new Pair<String, Boolean>(dialog.getInputString(), dialog.isChecked());
+    }
   }
 
   @Nullable
@@ -672,7 +716,7 @@ public class Messages {
    * Shows dialog with given message and title, infomation icon {@link #getInformationIcon()} and OK button
    */
   public static void showInfoMessage(Component component, String message, String title) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
       return;
     }
@@ -684,7 +728,7 @@ public class Messages {
    * Shows dialog with given message and title, infomation icon {@link #getInformationIcon()} and OK button
    */
   public static void showInfoMessage(Project project, @Nls String message, @Nls String title) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
       return;
     }
@@ -696,7 +740,7 @@ public class Messages {
    * Shows dialog with given message and title, infomation icon {@link #getInformationIcon()} and OK button
    */
   public static void showInfoMessage(String message, String title) {
-    if (SystemInfo.isMac && !isApplicationInUnitTestOrHeadless()) {
+    if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON, null);
       return;
     }
@@ -1049,7 +1093,7 @@ public class Messages {
   }
 
   protected static class InputDialog extends MessageDialog {
-    private JTextComponent myField;
+    protected JTextComponent myField;
     private InputValidator myValidator;
 
     public InputDialog(Project project, String message, String title, @Nullable Icon icon, String initialValue,
@@ -1128,26 +1172,37 @@ public class Messages {
         panel.add(container, BorderLayout.WEST);
       }
 
+      JPanel messagePanel = createMessagePanel();
+      panel.add(messagePanel, BorderLayout.CENTER);
+
+      return panel;
+    }
+
+    protected JPanel createMessagePanel() {
       JPanel messagePanel = new JPanel(new BorderLayout());
       if (myMessage != null) {
-        JComponent textComponent;
-        if (BasicHTML.isHTMLString(myMessage)) {
-          textComponent = createMessageComponent(myMessage);
-        }
-        else {
-          JLabel textLabel = new JLabel(myMessage);
-          textLabel.setUI(new MultiLineLabelUI());
-          textComponent = textLabel;
-        }
-        textComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+        JComponent textComponent = createTextComponent();
         messagePanel.add(textComponent, BorderLayout.NORTH);
       }
 
       myField = createTextFieldComponent();
       messagePanel.add(myField, BorderLayout.SOUTH);
-      panel.add(messagePanel, BorderLayout.CENTER);
 
-      return panel;
+      return messagePanel;
+    }
+
+    protected JComponent createTextComponent() {
+      JComponent textComponent;
+      if (BasicHTML.isHTMLString(myMessage)) {
+        textComponent = createMessageComponent(myMessage);
+      }
+      else {
+        JLabel textLabel = new JLabel(myMessage);
+        textLabel.setUI(new MultiLineLabelUI());
+        textComponent = textLabel;
+      }
+      textComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+      return textComponent;
     }
 
     public JTextComponent getTextField() {
@@ -1187,6 +1242,45 @@ public class Messages {
     @Override
     protected JTextComponent createTextFieldComponent() {
       return new JTextArea(7, 50);
+    }
+  }
+  
+  protected static class InputDialogWithCheckbox extends InputDialog {
+    private JCheckBox myCheckBox;
+
+    public InputDialogWithCheckbox(String message,
+                                   String title,
+                                   String checkboxText,
+                                   boolean checked,
+                                   boolean checkboxEnabled,
+                                   @Nullable Icon icon,
+                                   String initialValue,
+                                   @Nullable InputValidator validator) {
+      super(message, title, icon, initialValue, validator);
+      myCheckBox.setText(checkboxText);
+      myCheckBox.setSelected(checked);
+      myCheckBox.setEnabled(checkboxEnabled);
+    }
+
+    @Override
+    protected JPanel createMessagePanel() {
+      JPanel messagePanel = new JPanel(new BorderLayout());
+      if (myMessage != null) {
+        JComponent textComponent = createTextComponent();
+        messagePanel.add(textComponent, BorderLayout.NORTH);
+      }
+
+      myField = createTextFieldComponent();
+      messagePanel.add(myField, BorderLayout.CENTER);
+
+      myCheckBox = new JCheckBox();
+      messagePanel.add(myCheckBox, BorderLayout.SOUTH);
+
+      return messagePanel;
+    }
+
+    public Boolean isChecked() {
+      return myCheckBox.isSelected();
     }
   }
 

@@ -47,11 +47,9 @@ import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -246,6 +244,13 @@ public class HighlightUtil {
                                            PsiJavaCodeReferenceElement place,
                                            HighlightInfo errorResult,
                                            final PsiElement fileResolveScope) {
+    PsiClass accessObjectClass = null;
+    PsiElement qualifier = place.getQualifier();
+    if (qualifier instanceof PsiExpression) {
+      accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass((PsiExpression)qualifier).getElement();
+    }
+    ReplaceInaccessibleFieldWithGetterSetterFix.registerQuickFix(refElement, place, accessObjectClass, errorResult);
+
     if (refElement instanceof PsiCompiledElement) return;
     PsiModifierList modifierList = refElement.getModifierList();
     if (modifierList == null) return;
@@ -271,11 +276,6 @@ public class HighlightUtil {
         minModifier = PsiModifier.PUBLIC;
       }
       String[] modifiers = {PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC,};
-      PsiClass accessObjectClass = null;
-      PsiElement qualifier = place.getQualifier();
-      if (qualifier instanceof PsiExpression) {
-        accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass((PsiExpression)qualifier).getElement();
-      }
       for (int i = ArrayUtil.indexOf(modifiers, minModifier); i < modifiers.length; i++) {
         @Modifier String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
@@ -2184,7 +2184,7 @@ public class HighlightUtil {
     } else if (resolved instanceof PsiClass) {
       if (Comparing.strEqual(((PsiClass)resolved).getQualifiedName(), ((PsiClass)resolved).getName())) {
         final PsiElement parent = ref.getParent();
-        if (parent instanceof PsiImportStaticReferenceElement || parent instanceof PsiImportStaticStatement) {
+        if (parent instanceof PsiImportStaticReferenceElement || parent instanceof PsiImportStatementBase) {
           return HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, refName, JavaErrorMessages.message("cannot.resolve.symbol", refName.getText()));
         }
       }

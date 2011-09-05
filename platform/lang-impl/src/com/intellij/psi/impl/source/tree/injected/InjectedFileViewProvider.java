@@ -98,14 +98,14 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider {
     PsiElement elementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);
     assert elementCopy != null;
     final Ref<FileViewProvider> provider = new Ref<FileViewProvider>();
-    InjectedLanguageUtil.enumerate(elementCopy, hostPsiFileCopy, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    InjectedLanguageUtil.enumerate(elementCopy, hostPsiFileCopy, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         Document document = documentManager.getCachedDocument(injectedPsi);
         if (document instanceof DocumentWindowImpl && oldDocumentWindow.areRangesEqual((DocumentWindowImpl)document)) {
           provider.set(injectedPsi.getViewProvider());
         }
       }
-    }, true);
+    });
     return provider.get();
   }
 

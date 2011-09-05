@@ -64,6 +64,7 @@ public class DTree {
     isContainer = container;
   }
 
+  @NotNull
   public Collection<DTree> getChildren() {
     init();
     if (myChildrenList == null) {
@@ -176,7 +177,7 @@ public class DTree {
   }
 
   public void updateVisibility(DirDiffSettings settings) {
-    if (children.isEmpty()) {
+    if (getChildren().isEmpty()) {
      if (type == ERROR) {
         myVisible = true;
        return;
@@ -214,6 +215,23 @@ public class DTree {
       for (DTree child : children.values()) {
         child.updateVisibility(settings);
         myVisible = myVisible || child.isVisible();
+      }
+    }
+  }
+
+  public void reset() {
+    children.clear();
+  }
+
+  public void remove(DTree node) {
+    init();
+    final boolean removed = myChildrenList.remove(node);
+    if (removed) {
+      for (String key : children.keySet()) {
+        if (children.get(key) == node) {
+          children.remove(key);
+          return;
+        }
       }
     }
   }

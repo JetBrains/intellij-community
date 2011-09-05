@@ -16,11 +16,11 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -31,8 +31,6 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
 * @author nik
@@ -69,7 +67,7 @@ class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
                                           final StructureConfigurableContext context,
                                           final DialogWrapper parentDialog,
                                           JButton contextButton) {
-    if (hasSuitableTypes(classpathPanel)) {
+    if (LibraryEditingUtil.hasSuitableTypes(classpathPanel)) {
       final ListPopup popup = JBPopupFactory.getInstance().createListPopup(createChooseTypeStep(classpathPanel, context, parentDialog));
       popup.showUnderneathOf(contextButton);
     }
@@ -82,7 +80,7 @@ class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
   public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
                                                                     final StructureConfigurableContext context,
                                                                     final DialogWrapper parentDialog) {
-    return new BaseListPopupStep<LibraryType>("Select Library Type", getSuitableTypes(classpathPanel)) {
+    return new BaseListPopupStep<LibraryType>("Select Library Type", LibraryEditingUtil.getSuitableTypes(classpathPanel)) {
           @NotNull
           @Override
           public String getTextFor(LibraryType value) {
@@ -105,21 +103,5 @@ class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
             });
           }
         };
-  }
-
-  public static boolean hasSuitableTypes(ClasspathPanel panel) {
-    return getSuitableTypes(panel).size() > 1;
-  }
-
-  private static List<LibraryType> getSuitableTypes(ClasspathPanel classpathPanel) {
-    List<LibraryType> suitableTypes = new ArrayList<LibraryType>();
-    suitableTypes.add(null);
-    final Module module = classpathPanel.getRootModel().getModule();
-    for (LibraryType libraryType : LibraryType.EP_NAME.getExtensions()) {
-      if (libraryType.getCreateActionName() != null && libraryType.isSuitableModule(module, classpathPanel.getModuleConfigurationState().getFacetsProvider())) {
-        suitableTypes.add(libraryType);
-      }
-    }
-    return suitableTypes;
   }
 }

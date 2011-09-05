@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class CharToStringIntention extends Intention {
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new CharToStringPredicate();
     }
 
+    @Override
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiLiteralExpression charLiteral =
@@ -41,6 +43,8 @@ public class CharToStringIntention extends Intention {
     private static String stringForCharLiteral(String charLiteral) {
         if ("'\"'".equals(charLiteral)) {
             return "\"\\\"\"";
+        } else if ("'\\''".equals(charLiteral)) {
+            return "\"'\"";
         } else {
             return '\"' + charLiteral.substring(1, charLiteral.length() - 1) +
                     '\"';

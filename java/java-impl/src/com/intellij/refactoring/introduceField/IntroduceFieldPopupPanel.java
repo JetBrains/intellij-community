@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,7 +139,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       gridBagConstraints.anchor = GridBagConstraints.WEST;
       groupPanel.add(initLabel, gridBagConstraints);
       JComboBox initializersCombo = new JComboBox(myInitialisersPlaceModel);
-      InplaceCombosUtil.appendActions(initializersCombo, myParentClass.getProject());
+      KeyboardComboSwitcher.setupActions(initializersCombo, myParentClass.getProject());
       initLabel.setLabelFor(initializersCombo);
       initializersCombo.setRenderer(new ListCellRendererWrapper<BaseExpressionToFieldHandler.InitializationPlace>(initializersCombo) {
         @Override

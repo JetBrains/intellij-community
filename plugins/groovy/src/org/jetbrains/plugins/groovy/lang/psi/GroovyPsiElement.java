@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry.Krasilschikov
  */
 public interface GroovyPsiElement extends PsiElement {
+  GroovyPsiElement[] EMPTY_ARRAY = new GroovyPsiElement[0];
+
   @NotNull
   ASTNode getNode();
 

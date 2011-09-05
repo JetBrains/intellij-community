@@ -270,9 +270,9 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return result;
   }
 
-  public void setAllOccurences(boolean occurrences) {
+  public void setAllOccurrences(boolean allOccurrences) {
     if (myIsOneSuggestion) return;
-    setTypesAndPreselect(occurrences ? myTypesForAll : myTypesForMain);
+    setTypesAndPreselect(allOccurrences ? myTypesForAll : myTypesForMain);
   }
 
   private void setTypesAndPreselect(PsiType[] types) {

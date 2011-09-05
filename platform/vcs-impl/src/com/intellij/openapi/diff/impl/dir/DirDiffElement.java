@@ -28,16 +28,20 @@ import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
  * @author Konstantin Bulenkov
  */
 public class DirDiffElement {
-  private final DType myType;
-  private final DiffElement mySource;
-  private final long mySourceLength;
-  private final DiffElement myTarget;
-  private final long myTargetLength;
-  private final String myName;
+  private DTree myParent;
+  private DType myType;
+  private DiffElement mySource;
+  private long mySourceLength;
+  private DiffElement myTarget;
+  private long myTargetLength;
+  private String myName;
   private DirDiffOperation myOperation;
   private DirDiffOperation myDefaultOperation;
+  private DTree myNode;
 
-  private DirDiffElement(@Nullable DiffElement source, @Nullable DiffElement target, DType type, String name) {
+  private DirDiffElement(DTree parent, @Nullable DiffElement source, @Nullable DiffElement target, DType type, String name) {
+    myParent = parent.getParent();
+    myNode = parent;
     myType = type;
     mySource = source;
     mySourceLength = source == null || source.isContainer() ? -1 : source.getSize();
@@ -75,28 +79,28 @@ public class DirDiffElement {
     return timeStamp < 0 ? "" : DateFormatUtil.formatDateTime(timeStamp);
   }
 
-  public static DirDiffElement createChange(@NotNull DiffElement source, @NotNull DiffElement target) {
-    return new DirDiffElement(source, target, DType.CHANGED, source.getName());
+  public static DirDiffElement createChange(DTree parent, @NotNull DiffElement source, @NotNull DiffElement target) {
+    return new DirDiffElement(parent, source, target, DType.CHANGED, source.getName());
   }
 
-  public static DirDiffElement createError(@Nullable DiffElement source, @Nullable DiffElement target) {
-    return new DirDiffElement(source, target, DType.ERROR, source == null ? target.getName() : source.getName());
+  public static DirDiffElement createError(DTree parent, @Nullable DiffElement source, @Nullable DiffElement target) {
+    return new DirDiffElement(parent, source, target, DType.ERROR, source == null ? target.getName() : source.getName());
   }
 
-  public static DirDiffElement createSourceOnly(@NotNull DiffElement source) {
-    return new DirDiffElement(source, null, DType.SOURCE, null);
+  public static DirDiffElement createSourceOnly(DTree parent, @NotNull DiffElement source) {
+    return new DirDiffElement(parent, source, null, DType.SOURCE, null);
   }
 
-  public static DirDiffElement createTargetOnly(@NotNull DiffElement target) {
-    return new DirDiffElement(null, target, DType.TARGET, null);
+  public static DirDiffElement createTargetOnly(DTree parent, @NotNull DiffElement target) {
+    return new DirDiffElement(parent, null, target, DType.TARGET, null);
   }
 
-  public static DirDiffElement createDirElement(DiffElement src, DiffElement trg, String name) {
-    return new DirDiffElement(src, trg, DType.SEPARATOR, name);
+  public static DirDiffElement createDirElement(DTree parent, DiffElement src, DiffElement trg, String name) {
+    return new DirDiffElement(parent, src, trg, DType.SEPARATOR, name);
   }
 
-  public static DirDiffElement createEqual(@NotNull DiffElement source, @NotNull DiffElement target) {
-    return new DirDiffElement(source, target, DType.EQUAL, source.getName());
+  public static DirDiffElement createEqual(DTree parent, @NotNull DiffElement source, @NotNull DiffElement target) {
+    return new DirDiffElement(parent, source, target, DType.EQUAL, source.getName());
   }
 
   public DType getType() {
@@ -153,6 +157,22 @@ public class DirDiffElement {
     return myOperation == null ? myDefaultOperation : myOperation;
   }
 
+  public void updateSourceFromTarget(DiffElement target) {
+    myTarget = target;
+    myTargetLength = mySourceLength;
+    myDefaultOperation = DirDiffOperation.EQUAL;
+    myOperation = DirDiffOperation.EQUAL;
+    myType = DType.EQUAL;
+  }
+
+  public void updateTargetFromSource(DiffElement source) {
+    mySource = source;
+    mySourceLength = myTargetLength;
+    myDefaultOperation = DirDiffOperation.EQUAL;
+    myOperation = DirDiffOperation.EQUAL;
+    myType = DType.EQUAL;
+  }
+
   public void setNextOperation() {
     final DirDiffOperation op = getOperation();
     if (myType == DType.SOURCE) {
@@ -166,5 +186,13 @@ public class DirDiffElement {
 
   public Icon getIcon() {
     return mySource != null ? mySource.getIcon() : myTarget.getIcon();
+  }
+
+  public DTree getParentNode() {
+    return myParent;
+  }
+
+  public DTree getNode() {
+    return myNode;
   }
 }

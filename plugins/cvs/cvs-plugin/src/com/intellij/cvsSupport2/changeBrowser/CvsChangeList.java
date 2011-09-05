@@ -62,7 +62,7 @@ public class CvsChangeList implements CommittedChangeList {
   private final List<RevisionWrapper> myRevisions = new ArrayList<RevisionWrapper>();
 
   private String myUser;
-  private static final int SUITABLE_DIFF = 2 * 60 * 1000;
+  public static final int SUITABLE_DIFF = 2 * 60 * 1000;
   private final CvsEnvironment myEnvironment;
   private final Project myProject;
   private List<Change> myChanges;
@@ -135,9 +135,9 @@ public class CvsChangeList implements CommittedChangeList {
         final Revision revision = wrapper.getRevision();
         final String state = revision.getState();
         String path = wrapper.getFile();
-        File localFile;
+        final File localFile;
         if (myRootFile != null) {
-          String directorySuffix = myRootFile.isDirectory() ? "/" : "";
+          final String directorySuffix = myRootFile.isDirectory() ? "/" : "";
           if (StringUtil.startsWithConcatenationOf(path, myRootPath, directorySuffix)) {
             path = path.substring(myRootPath.length() + directorySuffix.length());
             localFile = new File(myRootFile.getPresentableUrl(), path);
@@ -150,12 +150,12 @@ public class CvsChangeList implements CommittedChangeList {
           localFile = new File(wrapper.getFile());
         }
         final boolean added = isAdded(revision);
-        ContentRevision beforeRevision = added
+        final ContentRevision beforeRevision = added
           ? null
           : new CvsContentRevision(new File(wrapper.getFile()), localFile,
                                    new SimpleRevision(new CvsRevisionNumber(revision.getNumber()).getPrevNumber().asString()),
                                    myEnvironment, myProject);
-        ContentRevision afterRevision = (!added && DEAD_STATE.equals(state))
+        final ContentRevision afterRevision = (!added && DEAD_STATE.equals(state))
           ? null
           : new CvsContentRevision(new File(wrapper.getFile()), localFile,
                                    new SimpleRevision(revision.getNumber()),
@@ -202,17 +202,17 @@ public class CvsChangeList implements CommittedChangeList {
 
   public void addFileRevision(RevisionWrapper revision) {
     myRevisions.add(revision);
-
     final long revisionTime = revision.getTime();
-
     if (revisionTime < myDate) {
       myDate = revisionTime;
     }
-
     if (revisionTime > myFinishDate) {
       myFinishDate = revisionTime;
     }
+  }
 
+  public boolean containsFileRevision(RevisionWrapper revision) {
+    return myRevisions.contains(revision);
   }
 
   private static boolean isAdded(final Revision revision) {
@@ -276,7 +276,7 @@ public class CvsChangeList implements CommittedChangeList {
     myDescription = stream.readUTF();
     myUser = stream.readUTF();
     myRootPath = stream.readUTF();
-    int revisionCount = stream.readInt();
+    final int revisionCount = stream.readInt();
     for(int i=0; i<revisionCount; i++) {
       myRevisions.add(RevisionWrapper.readFromStream(stream));
     }

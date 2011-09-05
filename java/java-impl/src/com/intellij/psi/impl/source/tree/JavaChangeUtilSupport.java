@@ -255,7 +255,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
               // shorten references to the same package and to inner classes that can be accessed by short name
               ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, JavaCodeStyleManager.DO_NOT_ADD_IMPORTS);
             }
-            element = (TreeElement)SourceTreeToPsiMap.psiElementToTree(ref);
+            return (TreeElement)SourceTreeToPsiMap.psiElementToTree(ref);
           }
           catch (IncorrectOperationException e) {
             ((PsiImportHolder) ref.getContainingFile()).importClass(refClass);
@@ -274,7 +274,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
               catch (IncorrectOperationException e) {
                 // TODO[yole] ignore?
               }
-              element = (TreeElement)SourceTreeToPsiMap.psiElementToTree(ref);
+              return (TreeElement)SourceTreeToPsiMap.psiElementToTree(ref);
             }
           }
         }
@@ -313,7 +313,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
       }
     }
 
-    return element;
+    return null;
   }
 
   private static final Key<Boolean> ALREADY_ESCAPED = new Key<Boolean>("ALREADY_ESCAPED");

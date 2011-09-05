@@ -4,11 +4,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -21,10 +19,7 @@ public abstract class ModuleStructureExtension {
   public void reset() {
   }
 
-  public boolean addModuleNodeChildren(Module module,
-                                       MasterDetailsComponent.MyNode moduleNode,
-                                       ModifiableRootModel modifiableRootModel,
-                                       Runnable treeNodeNameUpdater) {
+  public boolean addModuleNodeChildren(Module module, MasterDetailsComponent.MyNode moduleNode, Runnable treeNodeNameUpdater) {
     return false;
   }
 
@@ -32,10 +27,6 @@ public abstract class ModuleStructureExtension {
   //}
 
   public void moduleRemoved(final Module module) {
-  }
-
-  public boolean isModulesConfiguratorModified() {
-    return false;
   }
 
   public boolean isModified() {
@@ -56,9 +47,8 @@ public abstract class ModuleStructureExtension {
     return false;
   }
 
-  public Collection<AnAction> createAddActions(final Computable<Object> selectedObjectRetriever,
-                                               final Runnable treeNodeNameUpdater,
-                                               ModulesConfigurator modulesConfigurator) {
+  public Collection<AnAction> createAddActions(final NullableComputable<MasterDetailsComponent.MyNode> selectedNodeRetriever,
+                                               final Runnable treeNodeNameUpdater) {
     return Collections.emptyList();
   }
 

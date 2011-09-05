@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.lang.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,15 +31,15 @@ import org.jetbrains.annotations.Nullable;
  */
 
 public class ILazyParseableElementType extends IElementType {
-  public ILazyParseableElementType(@NonNls String debugName) {
+  public ILazyParseableElementType(@NotNull @NonNls final String debugName) {
     this(debugName, null);
   }
 
-  public ILazyParseableElementType(@NonNls String debugName, Language language) {
+  public ILazyParseableElementType(@NotNull @NonNls final String debugName, @Nullable final Language language) {
     super(debugName, language);
   }
 
-  public ILazyParseableElementType(@NonNls String debugName, Language language, boolean register) {
+  public ILazyParseableElementType(@NotNull @NonNls final String debugName, @Nullable final Language language, final boolean register) {
     super(debugName, language, register);
   }
 
@@ -49,14 +50,15 @@ public class ILazyParseableElementType extends IElementType {
    * @param chameleon the node to parse.
    * @return the parsed contents of the node.
    */
-  public ASTNode parseContents(ASTNode chameleon) {
+  public ASTNode parseContents(final ASTNode chameleon) {
     final PsiElement parentElement = chameleon.getTreeParent().getPsi();
     assert parentElement != null : "Bad chameleon: " + chameleon;
-    final Project project = parentElement.getProject();
-    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
+    return doParseContents(chameleon, parentElement);
+  }
 
-    final PsiBuilder builder = factory.createBuilder(project, chameleon);
-
+  protected ASTNode doParseContents(@NotNull final ASTNode chameleon, @NotNull final PsiElement psi) {
+    final Project project = psi.getProject();
+    final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon);
     final PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).createParser(project);
     return parser.parse(this, builder).getFirstChildNode();
   }

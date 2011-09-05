@@ -36,8 +36,8 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
-import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
-import com.intellij.refactoring.util.occurences.OccurenceManager;
+import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
+import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,11 +97,11 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
                                            PsiClass parentClass,
                                            PsiExpression expr,
                                            PsiType type,
-                                           PsiExpression[] occurences,
+                                           PsiExpression[] occurrences,
                                            PsiElement anchorElement,
                                            PsiElement anchorElementIfAll) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
-    for (PsiExpression occurrence : occurences) {
+    for (PsiExpression occurrence : occurrences) {
       if (RefactoringUtil.isAssignmentLHS(occurrence)) {
         String message =
           RefactoringBundle.getCannotRefactorMessage("Selected expression is used for write");
@@ -150,14 +150,14 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
     String enteredName = null;
     boolean replaceAllOccurrences = true;
-    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
+    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences);
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && (expr == null || expr.isPhysical())) {
       final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
       if (activeIntroducer == null) {
         myInplaceIntroduceConstantPopup =
-          new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurences, typeSelectorManager,
+          new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurrences, typeSelectorManager,
                                             anchorElement, anchorElementIfAll,
-                                            expr != null ? createOccurenceManager(expr, parentClass) : null);
+                                            expr != null ? createOccurrenceManager(expr, parentClass) : null);
         if (myInplaceIntroduceConstantPopup.startInplaceIntroduceTemplate() ){
           return null;
         }
@@ -165,7 +165,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
         AbstractInplaceIntroducer.stopIntroduce(editor);
         expr = (PsiExpression)activeIntroducer.getExpr();
         localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
-        occurences = (PsiExpression[])activeIntroducer.getOccurrences();
+        occurrences = (PsiExpression[])activeIntroducer.getOccurrences();
         enteredName = activeIntroducer.getInputName();
         replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
       }
@@ -173,17 +173,17 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
 
     final IntroduceConstantDialog dialog =
-      new IntroduceConstantDialog(project, parentClass, expr, localVariable, localVariable != null, occurences, getParentClass(),
+      new IntroduceConstantDialog(project, parentClass, expr, localVariable, localVariable != null, occurrences, getParentClass(),
                                   typeSelectorManager, enteredName);
     dialog.setReplaceAllOccurrences(replaceAllOccurrences);
     dialog.show();
     if (!dialog.isOK()) {
-      if (occurences.length > 1) {
+      if (occurrences.length > 1) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
       return null;
     }
-    return new Settings(dialog.getEnteredName(), expr, occurences, dialog.isReplaceAllOccurrences(), true, true,
+    return new Settings(dialog.getEnteredName(), expr, occurrences, dialog.isReplaceAllOccurrences(), true, true,
                                            InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
                                            dialog.getSelectedType(), dialog.isDeleteVariable(), dialog.getDestinationClass(),
                                            dialog.isAnnotateAsNonNls(),
@@ -216,8 +216,8 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return visitor.getElementReference();
   }
 
-  protected OccurenceManager createOccurenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
-    return new ExpressionOccurenceManager(selectedExpr, parentClass, null);
+  protected OccurrenceManager createOccurrenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
+    return new ExpressionOccurrenceManager(selectedExpr, parentClass, null);
   }
 
   private static class IsStaticFinalInitializerExpression extends ClassMemberReferencesVisitor {

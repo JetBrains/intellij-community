@@ -102,6 +102,7 @@ public abstract class PositionTracker<T> implements Disposable, HierarchyBoundsL
 
   public interface Client<T> extends Disposable {
     
+    void revalidate();
     void revalidate(PositionTracker<T> tracker);
 
   }

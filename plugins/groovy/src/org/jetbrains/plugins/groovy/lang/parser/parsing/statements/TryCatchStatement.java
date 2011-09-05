@@ -90,13 +90,10 @@ public class TryCatchStatement implements GroovyElementTypes {
       return;
     }
 
-    if (!ParameterDeclaration.parse(builder, parser)) {
+    if (!ParameterDeclaration.parseCatchParameter(builder, parser)) {
       builder.error(GroovyBundle.message("param.expected"));
-//      catchMarker.drop();
-//      return;
     }
 
-    ParserUtils.getToken(builder, mNLS);
 
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       catchMarker.done(CATCH_CLAUSE);
@@ -120,5 +117,7 @@ public class TryCatchStatement implements GroovyElementTypes {
       parseHandlers(builder, parser);
     }
   }
+
+
 
 }

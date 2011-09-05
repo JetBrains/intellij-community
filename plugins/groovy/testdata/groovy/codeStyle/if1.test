@@ -3,12 +3,12 @@
 <option>SPACE_BEFORE_IF_LBRACE=true</option>
 <option>ELSE_ON_NEW_LINE=true</option>
 if (true){
- do()
+ doo()
 } else {bar()}
 -----
 if (true)
 {
-  do()
+  doo()
 }
 else
 {bar()}

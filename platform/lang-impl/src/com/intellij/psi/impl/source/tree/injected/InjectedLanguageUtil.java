@@ -77,6 +77,9 @@ public class InjectedLanguageUtil {
 
   @Nullable
   public static List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull final PsiElement host) {
+    if (!(host instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost) host).isValidHost()) {
+      return null;
+    }
     final PsiElement inTree = loadTree(host, host.getContainingFile());
     final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
     enumerate(inTree, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
@@ -104,10 +107,13 @@ public class InjectedLanguageUtil {
 
   public static void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     PsiFile containingFile = host.getContainingFile();
-    enumerate(host, containingFile, visitor, true);
+    enumerate(host, containingFile, true, visitor);
   }
 
-  public static void enumerate(@NotNull PsiElement host, @NotNull PsiFile containingFile, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor, boolean probeUp) {
+  public static void enumerate(@NotNull PsiElement host,
+                               @NotNull PsiFile containingFile,
+                               boolean probeUp,
+                               @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     //do not inject into nonphysical files except during completion
     if (!containingFile.isPhysical() && containingFile.getOriginalFile() == containingFile) {
       final PsiElement context = containingFile.getContext();
@@ -193,7 +199,6 @@ public class InjectedLanguageUtil {
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
     if (injectedManager == null) return null; //for tests
-    long modificationCount = psiManager.getModificationTracker().getModificationCount();
     MultiHostRegistrarImpl registrar = null;
     PsiElement current = element;
     nextParent:
@@ -290,7 +295,7 @@ public class InjectedLanguageUtil {
 
   private static PsiElement findInside(@NotNull PsiElement element, @NotNull PsiFile hostFile, final int hostOffset, @NotNull final PsiDocumentManager documentManager) {
     final Ref<PsiElement> out = new Ref<PsiElement>();
-    enumerate(element, hostFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    enumerate(element, hostFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         for (PsiLanguageInjectionHost.Shred place : places) {
           TextRange hostRange = place.host.getTextRange();
@@ -303,7 +308,7 @@ public class InjectedLanguageUtil {
           }
         }
       }
-    }, true);
+    });
     return out.get();
   }
 
@@ -340,12 +345,12 @@ public class InjectedLanguageUtil {
       }
       final DocumentWindow[] stillInjectedDocument = {null};
       // it is here where the reparse happens and old file contents replaced
-      enumerate(element, hostPsiFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
           PsiDocumentManagerImpl.checkConsistency(injectedPsi, stillInjectedDocument[0]);
         }
-      }, true);
+      });
       if (stillInjectedDocument[0] == null) {
         injected.remove(i);
       }
@@ -459,7 +464,7 @@ public class InjectedLanguageUtil {
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);
-    host.processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
         result.set(true);
       }

@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -171,7 +172,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   @NotNull
   public SearchScope getUseScope() {
     if (isProperty()) {
-      return getManager().getFileManager().getUseScope(this); //maximal scope
+      return ResolveScopeManager.getElementUseScope(this); //maximal scope
     }
     return PsiImplUtil.getMemberUseScope(this);
   }

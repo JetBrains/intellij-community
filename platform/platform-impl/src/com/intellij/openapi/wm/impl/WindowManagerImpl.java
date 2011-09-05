@@ -504,13 +504,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return candidate;
   }
 
-  public final IdeFrameImpl getFrame(final Project project) {
+  public final IdeFrameImpl getFrame(@Nullable final Project project) {
     // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
     return myProject2Frame.get(project);
   }
 
-  public IdeFrame getIdeFrame(final Project project) {
+  public IdeFrame getIdeFrame(@Nullable final Project project) {
     if (project != null) {
       return getFrame(project);
     }

@@ -314,14 +314,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
       }
     };
-    if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiElement>(hosts), new Processor<PsiElement>() {
+    if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiElement>(hosts), progress, false, new Processor<PsiElement>() {
         @Override
         public boolean process(PsiElement element) {
           progress.checkCanceled();
-          InjectedLanguageUtil.enumerate(element, myFile, visitor, false);
+          InjectedLanguageUtil.enumerate(element, myFile, false, visitor);
           return true;
         }
-      }, false, progress)) throw new ProcessCanceledException();
+      })) throw new ProcessCanceledException();
   }
 
   // returns false if canceled
@@ -332,7 +332,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     final TextAttributes injectedAttributes = myGlobalScheme.getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
 
-    return JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injectedFiles), new Processor<PsiFile>() {
+    return JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injectedFiles), progress, myFailFastOnAcquireReadAction, new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
         DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
         if (documentWindow == null) return true;
@@ -383,7 +383,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
         return true;
       }
-    }, myFailFastOnAcquireReadAction, progress);
+    });
   }
 
   private static TextRange getFixedTextRange(@NotNull DocumentWindow documentWindow, int startOffset) {
@@ -539,7 +539,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   @NotNull
-  Collection<HighlightInfo> getHighlights() {
+  public List<HighlightInfo> getInfos() {
     return new ArrayList<HighlightInfo>(myHighlights);
   }
 
@@ -743,7 +743,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     VirtualFile file = myFile.getVirtualFile();
     if (file == null) return;
 
-    List<Problem> problems = convertToProblems(getHighlights(), file, myHasErrorElement);
+    List<Problem> problems = convertToProblems(getInfos(), file, myHasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
 
     boolean hasErrors = DaemonCodeAnalyzerImpl.hasErrors(project, getDocument());

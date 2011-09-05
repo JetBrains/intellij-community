@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.search;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
@@ -31,8 +31,7 @@ public class GrPrivateFieldScopeEnlarger extends UseScopeEnlarger {
   @Override
   public SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
     if (element instanceof PsiField && ((PsiField)element).hasModifierProperty(PsiModifier.PRIVATE)) {
-      final PsiManagerEx psiManager = (PsiManagerEx)element.getManager();
-      final GlobalSearchScope maximalUseScope = psiManager.getFileManager().getUseScope(element);
+      final GlobalSearchScope maximalUseScope = ResolveScopeManager.getElementUseScope(element);
       return new GrSourceFilterScope(maximalUseScope);
     }
 

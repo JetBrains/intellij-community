@@ -61,10 +61,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.util.Alarm;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -156,19 +153,26 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                            @NotNull Document document,
                                            @NotNull final ProgressIndicator progress) {
-    GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), true);
-    action1.doCollectInformation(progress);
-
-    List<HighlightInfo> result = new ArrayList<HighlightInfo>();
-    result.addAll(action1.getHighlights());
-
+    final List<HighlightInfo> result = new ArrayList<HighlightInfo>();
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
-      LocalInspectionsPass action3 = new LocalInspectionsPass(psiFile, document, 0,
-                                                              psiFile.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true);
-      action3.doCollectInformation(progress);
 
-      result.addAll(action3.getInfos());
+      final List<TextEditorHighlightingPass> passes = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject)
+        .instantiateMainPasses(psiFile, document);
+      
+      Collections.sort(passes, new Comparator<TextEditorHighlightingPass>() {
+        @Override
+        public int compare(TextEditorHighlightingPass o1, TextEditorHighlightingPass o2) {
+          if (o1 instanceof GeneralHighlightingPass) return -1;
+          if (o2 instanceof GeneralHighlightingPass) return 1;
+          return 0;
+        }
+      });
+
+      for (TextEditorHighlightingPass pass : passes) {
+        pass.doCollectInformation(progress);
+        result.addAll(pass.getInfos());
+      }
     }
 
     return result;

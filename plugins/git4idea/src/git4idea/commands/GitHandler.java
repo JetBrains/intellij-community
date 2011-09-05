@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ public abstract class GitHandler {
     if (myAppSettings != null) {
       myCommandLine.setExePath(myAppSettings.getPathToGit());
     }
-    myCommandLine.setWorkingDirectory(myWorkingDirectory);
+    myCommandLine.setWorkDirectory(myWorkingDirectory);
     if (command.name().length() > 0) {
       myCommandLine.addParameter(command.name());
     }
@@ -428,9 +428,7 @@ public abstract class GitHandler {
    * @return a command line with full path to executable replace to "git"
    */
   public String printableCommandLine() {
-    final GeneralCommandLine line = myCommandLine.clone();
-    line.setExePath("git");
-    return line.getCommandLineString();
+    return myCommandLine.getCommandLineString("git");
   }
 
   /**

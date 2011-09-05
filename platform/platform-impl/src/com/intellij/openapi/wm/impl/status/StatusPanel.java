@@ -112,6 +112,7 @@ class StatusPanel extends JPanel {
     final Project project = getActiveProject();
     final Notification statusMessage = EventLog.getStatusMessage(project);
     myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && statusMessage != null;
+    myLogAlarm.cancelAllRequests();
 
     if (myLogMode) {
       myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -130,7 +131,6 @@ class StatusPanel extends JPanel {
       myTextPanel.setCursor(Cursor.getDefaultCursor());
       myDirty = true;
       setStatusText(nonLogText);
-      myLogAlarm.cancelAllRequests();
     }
     return myLogMode;
   }
@@ -149,6 +149,7 @@ class StatusPanel extends JPanel {
   }
 
   public void restoreLogIfNeeded() {
+    myLogAlarm.cancelAllRequests();
     myLogAlarm.addRequest(new Runnable() {
       @Override
       public void run() {

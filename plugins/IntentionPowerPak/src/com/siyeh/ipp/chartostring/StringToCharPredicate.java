@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,19 +57,23 @@ class StringToCharPredicate implements PsiElementPredicate{
             if(!"java.lang.String".equals(parentTypeText)){
                 return false;
             }
-          if (parentExpression.getOperationTokenType() != JavaTokenType.PLUS) return false;
-          PsiExpression[] operands = parentExpression.getOperands();
-          int n = ArrayUtil.indexOf(operands, element);
-          if (n == -1) return false;
-          for (int i=0; i<=n+1 && i<operands.length;i++) {
-            if (i==n) continue;
-            PsiExpression otherOperand = operands[i];
-            final PsiType otherOperandType = otherOperand.getType();
-            final String otherOperandTypeText =
-                    otherOperandType.getCanonicalText();
-            if ("java.lang.String".equals(otherOperandTypeText)) return true;
-          }
-          return false;
+            if(parentExpression.getOperationTokenType() != JavaTokenType.PLUS) {
+                return false;
+            }
+            final PsiExpression[] operands = parentExpression.getOperands();
+            final int index = ArrayUtil.indexOf(operands, element);
+            if (index > 0) {
+                for (int i = 0; i < index && i < operands.length; i++) {
+                    final PsiType type = operands[i].getType();
+                    if (type != null && type.equalsToText("java.lang.String")) {
+                        return true;
+                    }
+                }
+            } else if (index == 0) {
+                final PsiType type = operands[index + 1].getType();
+                return type != null && type.equalsToText("java.lang.String");
+            }
+            return false;
         }
         else if(parent instanceof PsiAssignmentExpression){
             final PsiAssignmentExpression parentExpression =

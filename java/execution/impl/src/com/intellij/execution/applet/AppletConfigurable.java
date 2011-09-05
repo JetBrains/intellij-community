@@ -27,8 +27,10 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -43,7 +45,8 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
-public class AppletConfigurable extends SettingsEditor<AppletConfiguration> implements CheckableRunConfigurationEditor<AppletConfiguration>{
+public class AppletConfigurable extends SettingsEditor<AppletConfiguration> implements CheckableRunConfigurationEditor<AppletConfiguration>,
+                                                                                       ComponentWithAnchor {
   private JPanel myWholePanel;
   private JRadioButton myMainClass;
   private JRadioButton myURL;
@@ -59,12 +62,13 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private JPanel myTablePlace;
   private JButton myAddButton;
   private JButton myRemoveButton;
-  private JLabel myHtmlFileLabel;
-  private JLabel myClassNameLabel;
-  private JLabel myWidthLabel;
+  private JBLabel myHtmlFileLabel;
+  private JBLabel myClassNameLabel;
+  private JBLabel myWidthLabel;
   private JLabel myHeightLabel;
   private AlternativeJREPanel myAlternativeJREPanel;
   private final ButtonGroup myAppletRadioButtonGroup;
+  private JComponent anchor;
 
   private final Project myProject;
   private final ConfigurationModuleSelector myModuleSelector;
@@ -153,6 +157,8 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
         removeParameter();
       }
     });
+
+    setAnchor(myModule.getLabel());
   }
 
   private void removeParameter() {
@@ -283,6 +289,21 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
 
   private void createUIComponents() {
      myClassName = new EditorTextFieldWithBrowseButton(myProject, true);
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(JComponent anchor) {
+    this.anchor = anchor;
+    myModule.setAnchor(anchor);
+    myPolicyFile.setAnchor(anchor);
+    myVMParameters.setAnchor(anchor);
+    myAlternativeJREPanel.setAnchor(anchor);
+    myHtmlFileLabel.setAnchor(anchor);
   }
 
   private static abstract class MyColumnInfo extends ColumnInfo<AppletConfiguration.AppletParameter, String> {

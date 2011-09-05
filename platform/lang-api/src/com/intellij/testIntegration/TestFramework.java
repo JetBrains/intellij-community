@@ -62,7 +62,13 @@ public interface TestFramework {
 
   FileTemplateDescriptor getTestMethodFileTemplateDescriptor();
 
+  /**
+   * should be checked for abstract method error
+   */
   boolean isIgnoredMethod(PsiElement element);
 
+  /**
+   * should be checked for abstract method error
+   */
   boolean isTestMethod(PsiElement element);
 }

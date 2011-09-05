@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -468,10 +467,6 @@ public class AndroidUtils {
                                      GeneralCommandLine commandLine,
                                      boolean printOutputToAndroidConsole,
                                      ProcessHandler processHandler) {
-    String[] commands = commandLine.getCommands();
-    String command = StringUtil.join(commands, " ");
-    LOG.info("Execute: " + command);
-
     StringBuilder messageBuilder = new StringBuilder();
     String result;
     boolean success = false;

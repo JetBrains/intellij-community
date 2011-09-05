@@ -26,7 +26,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -61,6 +60,17 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     });
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());
     myVersionDetector = new JreVersionDetector();
+
+    settingAnchors();
+  }
+
+  private void settingAnchors() {
+    JComponent anchor = myCommonProgramParameters.getAnchor();
+    myMainClass.setAnchor(anchor);
+    myCommonProgramParameters.setAnchor(anchor);
+
+    anchor = myModule.getLabel();
+    myAlternativeJREPanel.setAnchor(anchor);
   }
 
   public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {

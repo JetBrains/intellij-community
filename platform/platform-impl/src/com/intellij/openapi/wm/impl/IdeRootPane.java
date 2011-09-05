@@ -221,8 +221,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myStatusBar.install(frame);
 
     myMemoryWidget = new MemoryUsagePanel();
-    myStatusBar.addWidget(myMemoryWidget);
-    myStatusBar.addWidget(new IdeMessagePanel(MessagePool.getInstance()), "before Memory");
 
     if (myStatusBarCustomComponentFactories != null) {
       for (final StatusBarCustomComponentFactory<JComponent> componentFactory : myStatusBarCustomComponentFactories) {
@@ -247,9 +245,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
           public void dispose() {
             componentFactory.disposeComponent(myStatusBar, c);
           }
-        }, "before Memory");
+        }, "before " + MemoryUsagePanel.WIDGET_ID);
       }
     }
+
+    myStatusBar.addWidget(myMemoryWidget);
+    myStatusBar.addWidget(new IdeMessagePanel(MessagePool.getInstance()), "before " + MemoryUsagePanel.WIDGET_ID);
 
     setMemoryIndicatorVisible(myUISettings.SHOW_MEMORY_INDICATOR);
   }

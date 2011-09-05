@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -35,6 +36,8 @@ import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
 
 
 public class DeclarationParser {
+  public static final Key<MarkingParserWrapper> PARSER_EXTENDER_KEY = Key.create("Java.Declaration.Parser.Extender");
+
   public enum Context {
     FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
   }
@@ -219,6 +222,11 @@ public class DeclarationParser {
 
   @Nullable
   public static PsiBuilder.Marker parse(final PsiBuilder builder, final Context context) {
+    final PsiBuilder.Marker extension = parseWithExtender(builder, PARSER_EXTENDER_KEY);
+    if (extension != null) {
+      return extension;
+    }
+
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == null) return null;
 

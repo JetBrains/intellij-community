@@ -5,3 +5,5 @@ void method1(Closure c) {
 method1 {
 	<error descr="Ambiguous code block">{println 'a' }</error>
 }
+
+for (; {true};){}

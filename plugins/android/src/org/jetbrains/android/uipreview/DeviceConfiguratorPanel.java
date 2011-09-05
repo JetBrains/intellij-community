@@ -1,7 +1,23 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.android.uipreview;
 
 import com.android.ide.common.resources.configuration.*;
 import com.android.resources.*;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
@@ -62,7 +78,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     myAvailableQualifiersConfig.setLanguageQualifier(null);
     myAvailableQualifiersConfig.setVersionQualifier(null);
     myAvailableQualifiersConfig.setNightModeQualifier(null);
-    myAvailableQualifiersConfig.setDockModeQualifier(null);
+    myAvailableQualifiersConfig.setUiModeQualifier(null);
     myAvailableQualifiersConfig.setRegionQualifier(null);
 
     myChosenQualifiersConfig.reset();
@@ -84,7 +100,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
       else if (qualifier instanceof NavigationStateQualifier) {
         myEditors.put(name, new MyNavigationStateEditor());
       }
-      else if (qualifier instanceof PixelDensityQualifier) {
+      else if (qualifier instanceof DensityQualifier) {
         myEditors.put(name, new MyDensityEditor());
       }
       else if (qualifier instanceof ScreenDimensionQualifier) {
@@ -458,13 +474,12 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
         }
       });
 
-      myComboBox.setRenderer(new DefaultListCellRenderer() {
+      myComboBox.setRenderer(new ListCellRendererWrapper(myComboBox.getRenderer()) {
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof ResourceEnum) {
-            value = ((ResourceEnum)value).getShortDisplayValue();
+            setText(((ResourceEnum)value).getShortDisplayValue());
           }
-          return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
       });
 
@@ -600,7 +615,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     }
   }
 
-  private class MyDensityEditor extends MyEnumBasedEditor<PixelDensityQualifier, Density> {
+  private class MyDensityEditor extends MyEnumBasedEditor<DensityQualifier, Density> {
     private MyDensityEditor() {
       super(Density.class);
     }
@@ -613,14 +628,14 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
 
     @NotNull
     @Override
-    protected Density getValue(@NotNull PixelDensityQualifier qualifier) {
+    protected Density getValue(@NotNull DensityQualifier qualifier) {
       return qualifier.getValue();
     }
 
     @NotNull
     @Override
-    protected PixelDensityQualifier getQualifier(@NotNull Density value) {
-      return new PixelDensityQualifier(value);
+    protected DensityQualifier getQualifier(@NotNull Density value) {
+      return new DensityQualifier(value);
     }
 
     @NotNull

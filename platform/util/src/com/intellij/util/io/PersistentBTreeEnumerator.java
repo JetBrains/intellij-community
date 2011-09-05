@@ -42,6 +42,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private static final int RECORD_SIZE = 4;
+  private static final int VALUE_PAGE_SIZE = 1024 * 1024;
+  static {
+    assert VALUE_PAGE_SIZE % PAGE_SIZE == 0:"Page size should be divisor of " + VALUE_PAGE_SIZE;
+  }
 
   private int myLogicalFileLength;
   private int myDataPageStart;
@@ -65,7 +69,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static final int KEY_SHIFT = 1;
 
   public PersistentBTreeEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new MappedFileSimpleStorage(file, initialSize, 1024 * 1024), dataDescriptor, initialSize,
+    super(file, new ResizeableMappedFile(file, initialSize, ourLock, VALUE_PAGE_SIZE, true), dataDescriptor, initialSize,
           ourVersion, new RecordBufferHandler(), false);
 
     myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantKeyMapping();
@@ -169,7 +173,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     synchronized (ourLock) {
 
       List<IntToIntBtree.BtreeIndexNodeView> leafPages = new ArrayList<IntToIntBtree.BtreeIndexNodeView> ();
-      btree.root.setAddress(btree.root.address);
+      btree.doFlush();
+      btree.root.syncWithStore();
       collectLeafPages(btree.root, leafPages);
       Collections.sort(leafPages, new Comparator<IntToIntBtree.BtreeIndexNodeView>() {
         @Override
@@ -185,12 +190,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           p.setCurrentKey(key);
           assert record != null;
           if (record > 0) {
-            if (!p.process(record)) break out;
+            if (!p.process(record)) return false;
           } else {
             int rec = - record;
             while(rec != 0) {
               int id = myStorage.getInt(rec);
-              if (!p.process(id)) break out;
+              if (!p.process(id)) return false;
               rec = myStorage.getInt(rec + COLLISION_OFFSET);
             }
           }
@@ -229,7 +234,15 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   @Override
   protected int setupValueId(int hashCode, int dataOff) {
     if (myExternalKeysNoMapping) return dataOff + KEY_SHIFT;
-    return super.setupValueId(hashCode, dataOff);
+    final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = getRecordHandler();
+    final byte[] buf = recordHandler.getRecordBuffer(this);
+
+    // optimization for using putInt / getInt on aligned empty storage (our page always contains on storage ByteBuffer)
+    final int pos = recordHandler.recordWriteOffset(this, buf);
+    myStorage.ensureSize(pos + buf.length);
+
+    if (!myInlineKeysNoMapping) myStorage.putInt(pos, dataOff);
+    return pos;
   }
 
   @Override

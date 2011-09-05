@@ -125,7 +125,7 @@ public class CompilerTask extends Task.Backgroundable {
 
   @Nullable
   public NotificationInfo getNotificationInfo() {
-    return new NotificationInfo("Compiler", "Compilation Finished", myErrorCount + " Errors, " + myWarningCount + " Warnings", true);
+    return new NotificationInfo(myErrorCount > 0? "Compiler (errors)" : "Compiler (success)", "Compilation Finished", myErrorCount + " Errors, " + myWarningCount + " Warnings", true);
   }
 
   private CloseListener myCloseListener;

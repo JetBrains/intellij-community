@@ -16,10 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
+import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -157,6 +154,27 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     });
 
     return (List)Arrays.asList(id2Pass.getValues());
+  }
+
+  @NotNull
+  @Override
+  public List<TextEditorHighlightingPass> instantiateMainPasses(@NotNull final PsiFile psiFile,
+                                                                @NotNull final Document document) {
+    final THashSet<TextEditorHighlightingPass> ids = new THashSet<TextEditorHighlightingPass>();
+    myRegisteredPassFactories.forEachKey(new TIntProcedure() {
+      public boolean execute(int passId) {
+        PassConfig passConfig = myRegisteredPassFactories.get(passId);
+        TextEditorHighlightingPassFactory factory = passConfig.passFactory;
+        if (factory instanceof MainHighlightingPassFactory) {
+          final TextEditorHighlightingPass pass = ((MainHighlightingPassFactory)factory).createMainHighlightingPass(psiFile, document);
+          if (pass != null) {
+            ids.add(pass);
+          }
+        }
+        return true;
+      }
+    });
+    return new ArrayList<TextEditorHighlightingPass>(ids);
   }
 
   private void checkForCycles() {

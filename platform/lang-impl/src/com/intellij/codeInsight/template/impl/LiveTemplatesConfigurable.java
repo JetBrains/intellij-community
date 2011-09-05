@@ -18,14 +18,17 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class LiveTemplatesConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class LiveTemplatesConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private TemplateListPanel myPanel;
 
   public boolean isModified() {
@@ -49,17 +52,18 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
     myPanel.reset();
   }
 
-  public void apply() {
+  public void apply() throws ConfigurationException {
     myPanel.apply();
   }
 
   public void disposeUIResources() {
     if (myPanel != null) {
-      myPanel.dispose();
+      Disposer.dispose(myPanel);
     }
     myPanel = null;
   }
 
+  @NotNull
   public String getHelpTopic() {
     return "editing.templates";
   }
@@ -73,4 +77,9 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
   public Runnable enableSearch(String option) {
     return null;
   }
+
+  public TemplateListPanel getTemplateListPanel() {
+    return myPanel;
+  }
+
 }

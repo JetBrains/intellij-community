@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,12 @@ import com.intellij.psi.PsiFile;
 import java.util.Map;
 
 /**
- * User: lex
- * Date: Nov 26, 2003
- * Time: 10:38:01 PM
+ * @author lex
+ * @since Nov 26, 2003
  */
 public class JavaParametersUtil {
+  private JavaParametersUtil() { }
+
   public static void configureConfiguration(SimpleJavaParameters parameters, CommonJavaRunConfigurationParameters configuration) {
     ProgramParametersUtil.configureConfiguration(parameters, configuration);
 

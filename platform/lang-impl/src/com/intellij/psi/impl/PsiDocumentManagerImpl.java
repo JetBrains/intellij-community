@@ -18,7 +18,9 @@ package com.intellij.psi.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -46,7 +48,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -312,59 +314,66 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   boolean finishCommit(@NotNull final Document document,
-                       @NotNull List<Processor<Document>> finishRunnables,
-                       boolean synchronously,
-                       @NotNull String reason,
-                       @Nullable DocumentEvent event) {
+                       @NotNull final List<Processor<Document>> finishRunnables,
+                       final boolean synchronously,
+                       @NotNull Object reason) {
     if (myProject.isDisposed()) return false;
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-
-    assert !(document instanceof DocumentWindow);
-    myIsCommitInProgress = true;
-    boolean success = true;
-    try {
-      final FileViewProvider viewProvider = getCachedViewProvider(document);
-      if (viewProvider != null) {
-        for (Processor<Document> finishRunnable : finishRunnables) {
-          success = finishRunnable.process(document);
-          if (synchronously) {
-            assert success;
+    final boolean[] ok = {true};
+    ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document, myProject) {
+      @Override
+      public void run() {
+        if (myProject.isDisposed()) return;
+        EditorWindow.disposeInvalidEditors();  // in write action
+        assert !(document instanceof DocumentWindow);
+        myIsCommitInProgress = true;
+        boolean success = true;
+        try {
+          final FileViewProvider viewProvider = getCachedViewProvider(document);
+          if (viewProvider != null) {
+            for (Processor<Document> finishRunnable : finishRunnables) {
+              success = finishRunnable.process(document);
+              if (synchronously) {
+                assert success;
+              }
+              if (!success) {
+                break;
+              }
+            }
+            viewProvider.contentsSynchronized();
           }
-          if (!success) {
-            break;
-          }
+          ok[0] = success;
         }
-        viewProvider.contentsSynchronized();
+        finally {
+          myDocumentCommitThread.log("in PDI.finishDoc: ", document, synchronously, success, myUncommittedDocuments);
+          if (success) {
+            myUncommittedDocuments.remove(document);
+            myDocumentCommitThread.log("in PDI.finishDoc: removed doc", document, synchronously, success, myUncommittedDocuments);
+          }
+          myIsCommitInProgress = false;
+          myDocumentCommitThread.log("in PDI.finishDoc: exit", document, synchronously, success, myUncommittedDocuments);
+        }
       }
-    }
-    finally {
-      myDocumentCommitThread.log("in PDI.finishDoc: ",document, synchronously, success, myUncommittedDocuments);
-      if (success) {
-        myUncommittedDocuments.remove(document);
-        myDocumentCommitThread.log("in PDI.finishDoc: removed doc",document, synchronously, success, myUncommittedDocuments);
-        InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
-      }
-      myIsCommitInProgress = false;
-      myDocumentCommitThread.log("in PDI.finishDoc: exit",document, synchronously, success, myUncommittedDocuments);
-    }
+    });
 
-    if (success) {
+    if (ok[0]) {
+      ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(myProject)).startRunInjectors(document, synchronously);
+      // run after commit actions outside write action
       runAfterCommitActions(document);
       if (DebugUtil.DO_EXPENSIVE_CHECKS) {
-        checkAllElementsValid(document, reason, event);
+        checkAllElementsValid(document, reason);
       }
     }
-    return success;
+    return ok[0];
   }
 
-  private void checkAllElementsValid(@NotNull Document document, @NotNull final String reason, @Nullable final DocumentEvent event) {
+  private void checkAllElementsValid(@NotNull Document document, @NotNull final Object reason) {
     final PsiFile psiFile = getCachedPsiFile(document);
     if (psiFile != null) {
       psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(PsiElement element) {
           if (!element.isValid()) {
-            LOG.error("Commit to '"+psiFile.getVirtualFile()+"' lead to invalid element: "+element+ "; Reason: '"+reason+"'; Doc change event: "+event);
+            LOG.error("Commit to '"+psiFile.getVirtualFile()+"' lead to invalid element: "+element+ "; Reason: '"+reason+"'");
           }
         }
       });
@@ -501,7 +510,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
-    return viewProvider != null && viewProvider.isLockedByPsiOperations();
+    return viewProvider != null && PostprocessReformattingAspect.getInstance(myProject).isViewProviderLocked(viewProvider);
   }
 
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
@@ -586,6 +595,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
 
     if (!hasLockedBlocks) {
+      PostprocessReformattingAspect.getInstance(myProject).beforeDocumentChanged(viewProvider);
       ((SingleRootFileViewProvider)viewProvider).beforeDocumentChanged();
     }
   }
@@ -616,7 +626,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (commitNecessary) {
       myUncommittedDocuments.add(document);
 
-      myDocumentCommitThread.queueCommit("Document changed", document, myProject, event);
+      myDocumentCommitThread.queueCommit(myProject, document, event);
     }
 
     // Consider that it's worth to perform complete re-parse instead of merge if the whole document text is replaced and

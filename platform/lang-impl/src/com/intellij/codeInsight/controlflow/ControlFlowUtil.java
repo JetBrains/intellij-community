@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.IntStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -33,46 +34,12 @@ public class ControlFlowUtil {
   private ControlFlowUtil() {
   }
 
-  public static class Stack {
-    private final int myCapacity;
-    private final int[] myValues;
-    private int myIndex;
-    public Stack(final int capacity) {
-      myCapacity = capacity;
-      myValues = new int[myCapacity];
-      clear();
-    }
-
-    public void push(final int value) {
-      myValues[++myIndex] = value;
-    }
-
-    public int pop() {
-      assert !isEmpty() : "Cannot pop on empty stack";
-      return myValues[myIndex--];
-    }
-
-    public boolean isEmpty() {
-      return myIndex == -1;
-    }
-
-    public void clear() {
-      myIndex = -1;
-    }
-
-    @Override
-    public String toString() {
-      return "Stack(" + (myIndex + 1) + ") elements";
-    }
-
-  }
-
   public static int[] postOrder(Instruction[] flow) {
     final int length = flow.length;
     int[] result = new int[length];
     boolean[] visited = new boolean[length];
     Arrays.fill(visited, false);
-    final Stack stack = new Stack(length);
+    final IntStack stack = new IntStack(length);
 
     int N = 0;
     for (int i = 0; i < length; i++) { //graph might not be connected
@@ -81,7 +48,7 @@ public class ControlFlowUtil {
         stack.clear();
         stack.push(i);
 
-        while (!stack.isEmpty()) {
+        while (!stack.empty()) {
           final int num = stack.pop();
           result[N++] = num;
           for (Instruction succ : flow[num].allSucc()) {
@@ -117,10 +84,10 @@ public class ControlFlowUtil {
     boolean[] visited = new boolean[length];
     Arrays.fill(visited, false);
 
-    final ControlFlowUtil.Stack stack = new ControlFlowUtil.Stack(length);
+    final IntStack stack = new IntStack(length);
     stack.push(start);
 
-    while (!stack.isEmpty()) {
+    while (!stack.empty()) {
       ProgressManager.checkCanceled();
       final int num = stack.pop();
       final Instruction instruction = flow[num];
@@ -141,18 +108,19 @@ public class ControlFlowUtil {
   public static void iteratePrev(final int startInstruction,
                                  @NotNull final Instruction[] instructions,
                                  @NotNull final Function<Instruction, Operation> closure) {
-    final Stack stack = new Stack(instructions.length);
+    final IntStack stack = new IntStack(instructions.length);
     final boolean[] visited = new boolean[instructions.length];
 
     stack.push(startInstruction);
-    while (!stack.isEmpty()) {
+    while (!stack.empty()) {
       ProgressManager.checkCanceled();
       final int num = stack.pop();
       final Instruction instr = instructions[num];
       final Operation nextOperation = closure.fun(instr);
       if (nextOperation == Operation.CONTINUE) {
         continue;
-      } else if (nextOperation == Operation.BREAK) {
+      }
+      if (nextOperation == Operation.BREAK) {
         break;
       }
       for (Instruction pred : instr.allPred()) {

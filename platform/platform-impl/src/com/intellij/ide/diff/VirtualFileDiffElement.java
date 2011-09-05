@@ -26,6 +26,8 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
@@ -174,5 +177,42 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
         return null;
       }
     };
+  }
+
+  @Override
+  public boolean isOperationsEnabled() {
+    return myFile.getFileSystem() instanceof LocalFileSystem;
+  }
+
+  @Override
+  public VirtualFileDiffElement copyTo(DiffElement<VirtualFile> container, String relativePath) {
+    try {
+      final File src = new File(myFile.getPath());
+      final File trg = new File(container.getValue().getPath() + relativePath + src.getName());
+      FileUtil.copy(src, trg);
+      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(trg);
+      if (virtualFile != null) {
+        return new VirtualFileDiffElement(virtualFile);
+      }
+    }
+    catch (IOException e) {//
+    }
+    return null;
+  }
+
+  @Override
+  public boolean delete() {
+    try {
+      myFile.delete(this);
+    }
+    catch (IOException e) {
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  public void refresh() {
+    myFile.refresh(false, true);
   }
 }

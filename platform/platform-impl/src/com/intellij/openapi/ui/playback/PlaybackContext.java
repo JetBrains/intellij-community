@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.ui.playback;
 
+import com.intellij.openapi.application.ApplicationManager;
+
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
@@ -73,5 +76,20 @@ public class PlaybackContext {
 
   public void setBaseDir(File dir) {
     myBaseDir = dir;
+  }
+  
+  public void flushAwtAndRun(final Runnable runnable) {
+    if (EventQueue.isDispatchThread()) {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          getRobot().waitForIdle();
+          SwingUtilities.invokeLater(runnable);
+        }
+      });
+    } else {
+      getRobot().waitForIdle();
+      runnable.run();
+    }
   }
 }

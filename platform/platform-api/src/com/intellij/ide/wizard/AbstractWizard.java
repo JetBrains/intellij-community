@@ -402,6 +402,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     if (SystemInfo.isMac && myCurrentStep == mySteps.size() - 1) {
       myFinishButton.setVisible(false);
       myNextButton.setText(IdeBundle.message("button.finish"));
+      myNextButton.setVisible(true);
+      myNextButton.setEnabled(myFinishButton.isEnabled());
     }
     else {
       myNextButton.setText(IdeBundle.message("button.wizard.next"));

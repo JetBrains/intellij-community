@@ -15,7 +15,6 @@
  */
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -62,17 +61,10 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     final JComponent component = view.getComponent();
 
     final ShowReadAccessUsagesAction read = new ShowReadAccessUsagesAction();
-    read.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK)), component);
+    read.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK)), component, impl);
 
     final ShowWriteAccessUsagesAction write = new ShowWriteAccessUsagesAction();
-    write.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK)), component);
-
-    impl.scheduleDisposeOnClose(new Disposable() {
-      public void dispose() {
-        read.unregisterCustomShortcutSet(component);
-        write.unregisterCustomShortcutSet(component);
-      }
-    });
+    write.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK)), component, impl);
     return new AnAction[] {read, write};
   }
 

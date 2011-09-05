@@ -1543,7 +1543,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (info.startOffset == info.endOffset) {
         consoleView.myTokens.remove(consoleView.myTokens.size() - 1);
       }
-      consoleView.myContentSize -= charCountToDelete;
     }
 
     document.deleteString(startOffset, endOffset);

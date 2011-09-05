@@ -23,7 +23,6 @@ import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManager;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
 import gnu.trove.TIntArrayList;
@@ -186,7 +185,7 @@ public abstract class IntroduceParameterSettingsUI {
           box.setSelected(myCbReplaceAllOccurences.isSelected());
         }
       }
-      getTypeSelectionManager().setAllOccurences(myCbReplaceAllOccurences.isSelected());
+      getTypeSelectionManager().setAllOccurrences(myCbReplaceAllOccurences.isSelected());
       if (myCbReplaceAllOccurences.isSelected()) {
         if (myCbDeleteLocalVariable != null) {
           myCbDeleteLocalVariable.makeSelectable();
@@ -199,7 +198,7 @@ public abstract class IntroduceParameterSettingsUI {
       }
     }
     else {
-      getTypeSelectionManager().setAllOccurences(myIsInvokedOnDeclaration);
+      getTypeSelectionManager().setAllOccurrences(myIsInvokedOnDeclaration);
     }
   }
 

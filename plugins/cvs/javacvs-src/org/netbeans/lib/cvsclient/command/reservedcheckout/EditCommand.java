@@ -53,7 +53,7 @@ public final class EditCommand extends AbstractCommand {
                                                                                                                                                                                                                  AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
-			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+			cvsFiles = scanFileSystem(clientEnvironment);
 		}
 		catch (IOException ex) {
 			throw new IOCommandException(ex);
@@ -147,7 +147,7 @@ public final class EditCommand extends AbstractCommand {
 	 * Similar to getCVSCommand() however without the files and command's name
 	 */
 	private String getCvsArguments() {
-		@NonNls final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuilder cvsArguments = new StringBuilder();
 		if (!isRecursive()) {
 			cvsArguments.append("-l ");
 		}

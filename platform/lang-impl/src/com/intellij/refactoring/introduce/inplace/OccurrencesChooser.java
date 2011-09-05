@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
@@ -40,7 +39,7 @@ import java.util.List;
  * User: anna
  * Date: 10/14/10
  */
-public class OccurrencesChooser<T extends PsiElement> {
+public abstract class OccurrencesChooser<T> {
   public static enum ReplaceChoice {
     NO("Replace this occurrence only"), NO_WRITE("Replace all occurrences but write"), ALL("Replace all {0} occurrences");
 
@@ -66,10 +65,15 @@ public class OccurrencesChooser<T extends PsiElement> {
   }
 
   public void showChooser(final T selectedOccurrence, final List<T> allOccurrences, final Pass<ReplaceChoice> callback) {
-    Map<ReplaceChoice, List<T>> occurrencesMap = Maps.newLinkedHashMap();
-    occurrencesMap.put(ReplaceChoice.NO, Collections.singletonList(selectedOccurrence));
-    occurrencesMap.put(ReplaceChoice.ALL, allOccurrences);
-    showChooser(callback, occurrencesMap);
+    if (allOccurrences.size() == 1) {
+      callback.pass(ReplaceChoice.ALL);
+    }
+    else {
+      Map<ReplaceChoice, List<T>> occurrencesMap = Maps.newLinkedHashMap();
+      occurrencesMap.put(ReplaceChoice.NO, Collections.singletonList(selectedOccurrence));
+      occurrencesMap.put(ReplaceChoice.ALL, allOccurrences);
+      showChooser(callback, occurrencesMap);
+    }
   }
 
   public void showChooser(final Pass<ReplaceChoice> callback, final Map<ReplaceChoice, List<T>> occurrencesMap) {
@@ -107,9 +111,9 @@ public class OccurrencesChooser<T extends PsiElement> {
         if (value == null) return;
         dropHighlighters();
         final MarkupModel markupModel = myEditor.getMarkupModel();
-        final List<T> psiExpressions = occurrencesMap.get(value);
-        for (T psiExpression : psiExpressions) {
-          final TextRange textRange = psiExpression.getTextRange();
+        final List<T> occurrenceList = occurrencesMap.get(value);
+        for (T occurrence : occurrenceList) {
+          final TextRange textRange = getOccurrenceRange(occurrence);
           final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
             textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1, myAttributes,
             HighlighterTargetArea.EXACT_RANGE);
@@ -136,6 +140,8 @@ public class OccurrencesChooser<T extends PsiElement> {
       })
       .createPopup().showInBestPositionFor(myEditor);
   }
+
+  protected abstract TextRange getOccurrenceRange(T occurrence);
 
   private void dropHighlighters() {
     for (RangeHighlighter highlight : myRangeHighlighters) {

@@ -19,9 +19,7 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -43,9 +41,6 @@ public interface FileManager {
 
   @Nullable
   PsiFile getCachedPsiFile(@NotNull VirtualFile vFile);
-
-  @NotNull GlobalSearchScope getResolveScope(@NotNull PsiElement element);
-  @NotNull GlobalSearchScope getUseScope(@NotNull PsiElement element);
 
   @TestOnly
   void cleanupForNextTest();

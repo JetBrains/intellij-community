@@ -63,6 +63,7 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
     GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.WEST;
+    c.insets.bottom = 5;
 
     myRunInBackgroundCheckbox = new JCheckBox("Run in background");
     myRunInBackgroundCheckbox.setMnemonic('b');

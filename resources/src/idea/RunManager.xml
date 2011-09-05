@@ -27,6 +27,13 @@
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
   </configuration>
 
+  <configuration name="&lt;template&gt;" type="TestNG" default="true" selected="false">
+    <option name="MAIN_CLASS_NAME"/>
+    <option name="VM_PARAMETERS" value="-ea"/>
+    <option name="PARAMETERS"/>
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$"/>
+  </configuration>
+
   <configuration name="&lt;template&gt;" type="Remote" default="true" selected="false">
     <option name="USE_SOCKET_TRANSPORT" value="true" />
     <option name="SHMEM_ADDRESS" value="javadebug" />

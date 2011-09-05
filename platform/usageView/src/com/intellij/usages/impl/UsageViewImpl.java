@@ -162,7 +162,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     myRoot = (GroupNode)myModel.getRoot();
-    myBuilder = new UsageNodeTreeBuilder(getActiveGroupingRules(project), getActiveFilteringRules(project), myRoot);
+    myBuilder = new UsageNodeTreeBuilder(myTargets, getActiveGroupingRules(project), getActiveFilteringRules(project), myRoot);
 
     final MessageBusConnection messageBusConnection = myProject.getMessageBus().connect(this);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, new Runnable() {
@@ -391,12 +391,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void addFilteringActions(DefaultActionGroup group) {
     final JComponent component = getComponent();
     final MergeDupLines mergeDupLines = new MergeDupLines();
-    mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component);
-    scheduleDisposeOnClose(new Disposable() {
-      public void dispose() {
-        mergeDupLines.unregisterCustomShortcutSet(component);
-      }
-    });
+    mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component, this);
     group.add(mergeDupLines);
 
     final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
@@ -836,7 +831,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           if (isDisposed) return;
           TreePath usagePath = new TreePath(node.getPath());
           myTree.expandPath(usagePath.getParentPath());
-          myTree.setSelectionPath(usagePath);
+          TreeUtil.selectPath(myTree, usagePath);
         }
       });
     }

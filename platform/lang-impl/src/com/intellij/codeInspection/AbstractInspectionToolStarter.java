@@ -1,13 +1,30 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInspection;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.util.containers.CollectionFactory;
 import com.sampullara.cli.Args;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Chernyatchik
  */
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class AbstractInspectionToolStarter implements ApplicationStarter {
   protected InspectionApplication myApplication;
   protected InspectionToolCmdlineOptions myOptions;
@@ -19,7 +36,8 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     myOptions = createCmdlineOptions();
     try {
       Args.parse(myOptions, args);
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       printHelpAndExit(args, myOptions);
       return;
     }
@@ -32,17 +50,18 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     }
 
     // TODO[romeo] : if config given - parse config and set attrs
-       //Properties p = new Properties();
-       // p.put("input", "inputfile");
-       // p.put("o", "outputfile");
-       // p.put("someflag", "true");
-       // p.put("m", "10");
-       // p.put("values", "1:2:3");
-       // p.put("strings", "sam;dave;jolly");
-       // PropertiesArgs.parse(tc, p);
-    try{
+    //Properties p = new Properties();
+    // p.put("input", "inputfile");
+    // p.put("o", "outputfile");
+    // p.put("someflag", "true");
+    // p.put("m", "10");
+    // p.put("values", "1:2:3");
+    // p.put("strings", "sam;dave;jolly");
+    // PropertiesArgs.parse(tc, p);
+    try {
       myOptions.validate();
-    } catch (InspectionToolCmdlineOptions.CmdlineArgsValidationException e) {
+    }
+    catch (InspectionToolCmdlineOptions.CmdlineArgsValidationException e) {
       System.err.println(e.getMessage());
       if (!myOptions.suppressHelp()) {
         printHelpAndExit(args, myOptions);
@@ -66,23 +85,22 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     myApplication.startup();
   }
 
-  private void initApplication(@NotNull final InspectionApplication application,
-                               @NotNull final InspectionToolCmdlineOptions opts) {
+  private static void initApplication(@NotNull final InspectionApplication application,
+                                      @NotNull final InspectionToolCmdlineOptions opts) {
     opts.initApplication(application);
   }
 
-  private boolean verbose(final InspectionToolCmdlineOptions opts) {
+  private static boolean verbose(final InspectionToolCmdlineOptions opts) {
     return opts.getVerboseLevelProperty() > 0;
   }
 
   protected void printArgs(String[] args, StringBuilder buff) {
     if (args.length < 2) {
       buff.append(" no arguments");
-    } else {
-      for (int i = 1, argsLength = args.length; i < argsLength; i++) {
-        String arg = args[i];
-        buff.append(' ').append(GeneralCommandLine.quote(arg));
-      }
+    }
+    else {
+      final String argString = ParametersList.join(CollectionFactory.arrayList(args, 1, args.length));
+      buff.append(argString);
     }
   }
 

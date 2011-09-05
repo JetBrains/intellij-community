@@ -28,7 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.occurences.OccurenceManager;
+import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -57,9 +57,9 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
                                        PsiExpression[] occurrences,
                                        TypeSelectorManagerImpl typeSelectorManager,
                                        PsiElement anchorElement,
-                                       PsiElement anchorElementIfAll, OccurenceManager occurenceManager) {
+                                       PsiElement anchorElementIfAll, OccurrenceManager occurrenceManager) {
     super(project, editor, expr, localVariable, occurrences, typeSelectorManager, IntroduceConstantHandler.REFACTORING_NAME,
-          parentClass, anchorElement, occurenceManager, anchorElementIfAll);
+          parentClass, anchorElement, occurrenceManager, anchorElementIfAll);
 
     myInitializerText = getExprText(expr, localVariable);
 
@@ -239,7 +239,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
         else {
           final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
             new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
-                                                                    myOccurrences, myOccurenceManager,
+                                                                    myOccurrences, myOccurrenceManager,
                                                                     getAnchorElementIfAll(), getAnchorElement(), myEditor, myParentClass);
           convertToFieldRunnable.run();
         }

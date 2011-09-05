@@ -12,6 +12,7 @@
  */
 package org.netbeans.lib.cvsclient.command;
 
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
@@ -21,8 +22,10 @@ import org.netbeans.lib.cvsclient.request.Requests;
 import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author  Thomas Singer
@@ -31,8 +34,7 @@ public abstract class AbstractCommand extends Command {
 
 	// Fields =================================================================
 
-	private final FileObjects files = new FileObjects();
-
+	private final List<AbstractFileObject> fileObjects = new ArrayList<AbstractFileObject>();
 	private boolean recursive = true;
 
 	// Setup ==================================================================
@@ -50,23 +52,25 @@ public abstract class AbstractCommand extends Command {
 		this.recursive = recursive;
 	}
 
-	public final FileObjects getFileObjects() {
-		return files;
+	public void addFileObject(@NotNull AbstractFileObject file) {
+		fileObjects.add(file);
+	}
+
+	public final List<AbstractFileObject> getFileObjects() {
+		return Collections.unmodifiableList(fileObjects);
 	}
 
 	// Actions ================================================================
 
 	protected final void addArgumentRequests(Requests requests) {
-		for (Iterator it = getFileObjects().getFileObjects().iterator(); it.hasNext();) {
-			final AbstractFileObject fileObject = (AbstractFileObject)it.next();
-
+		for (final AbstractFileObject fileObject : fileObjects) {
 			requests.addFileArgumentRequest(fileObject);
 		}
 	}
 
-	protected final ICvsFiles scanFileSystem(FileObjects fileObjects, IClientEnvironment clientEnvironment) throws IOException {
+	protected final ICvsFiles scanFileSystem(IClientEnvironment clientEnvironment) throws IOException {
 		final CvsFiles cvsFiles = new CvsFiles();
-		new FileSystemScanner(clientEnvironment, isRecursive()).scan(fileObjects.getFileObjects(), cvsFiles);
+		new FileSystemScanner(clientEnvironment, isRecursive()).scan(getFileObjects(), cvsFiles);
 		return cvsFiles;
 	}
 
@@ -136,13 +140,12 @@ public abstract class AbstractCommand extends Command {
 
 	protected final void appendFileArguments(StringBuffer buffer) {
 		boolean appendSpace = false;
-		for (Iterator it = getFileObjects().getFileObjects().iterator(); it.hasNext(); appendSpace = true) {
-			final AbstractFileObject fileObject = (AbstractFileObject)it.next();
-
+		for (AbstractFileObject fileObject : fileObjects) {
 			if (appendSpace) {
 				buffer.append(' ');
 			}
 			buffer.append(fileObject.toUnixPath());
+			appendSpace = true;
 		}
 	}
 }

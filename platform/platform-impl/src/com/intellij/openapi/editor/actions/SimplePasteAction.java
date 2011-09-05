@@ -32,6 +32,9 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.util.Producer;
+
+import java.awt.datatransfer.Transferable;
 
 public class SimplePasteAction extends EditorAction {
   public SimplePasteAction() {
@@ -48,10 +51,16 @@ public class SimplePasteAction extends EditorAction {
 
   private static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
+      Producer<Transferable> producer = (Producer<Transferable>) dataContext.getData(PasteAction.TRANSFERABLE_PROVIDER);
+
       if (editor.isColumnMode()) {
-        EditorModificationUtil.pasteFromClipboardAsBlock(editor);
+        EditorModificationUtil.pasteTransferableAsBlock(editor, producer == null ? null : producer.produce());
       } else {
-        editor.putUserData(EditorEx.LAST_PASTED_REGION, EditorModificationUtil.pasteFromClipboard(editor));
+        editor.putUserData(EditorEx.LAST_PASTED_REGION,
+                           producer == null ?
+                           EditorModificationUtil.pasteFromClipboard(editor)
+                                            : EditorModificationUtil.pasteFromTransferrable(producer.produce(), editor));
+        
       }
     }
   }

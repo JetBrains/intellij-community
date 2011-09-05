@@ -1,15 +1,15 @@
-class <error descr="Method 'invokeMethod' is not implemented"><error descr="Cyclic inheritance involving 'A'">A</error></error> extends C {
+<error descr="Method 'invokeMethod' is not implemented"><error descr="Cyclic inheritance involving 'A'">class A extends C</error></error> {
 
 }
 
-class <error descr="Method 'invokeMethod' is not implemented"><error descr="Cyclic inheritance involving 'B'">B</error></error> extends A {
+<error descr="Method 'invokeMethod' is not implemented"><error descr="Cyclic inheritance involving 'B'">class B extends A</error></error> {
 
 }
 
-class <error descr="Method 'invokeMethod' is not implemented"><error descr="Cyclic inheritance involving 'C'">C</error></error> extends B {
+<error descr="Method 'invokeMethod' is not implemented"><error descr="Cyclic inheritance involving 'C'">class C extends B</error></error> {
 
 }
 
-class <error descr="Method 'invokeMethod' is not implemented"><error descr="Cyclic inheritance involving 'B'">D</error></error> extends B {
+<error descr="Method 'invokeMethod' is not implemented"><error descr="Cyclic inheritance involving 'B'">class D extends B</error></error> {
 
 }

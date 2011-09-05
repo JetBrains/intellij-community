@@ -44,7 +44,7 @@ public class CompareFiles extends BaseDiffAction {
       presentation.setVisible(false);
       return;
     }
-    final boolean canShow = DiffManager.getInstance().getDiffTool().canShow(diffRequest);
+    final boolean canShow = !diffRequest.isSafeToCallFromUpdate() || DiffManager.getInstance().getDiffTool().canShow(diffRequest);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(canShow);      
     }

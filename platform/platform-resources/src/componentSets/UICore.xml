@@ -66,9 +66,5 @@
     <component>
       <implementation-class>com.intellij.ui.switcher.QuickActionManager</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.actionSystem.impl.ActionPreloader</implementation-class>
-      <skipForDefaultProject/>
-    </component>
   </project-components>
 </components>

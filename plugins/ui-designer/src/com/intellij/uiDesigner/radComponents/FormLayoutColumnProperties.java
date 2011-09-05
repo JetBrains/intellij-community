@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
 
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.ide.ui.MappingListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.MappingListCellRenderer;
 import com.jgoodies.forms.layout.*;
 import org.jetbrains.annotations.NonNls;
 
@@ -31,12 +30,25 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
  */
 public class FormLayoutColumnProperties implements CustomPropertiesPanel {
+  private static final Map<Object, String> UNITS_MAP;
+  static {
+    UNITS_MAP = new HashMap<Object, String>();
+    UNITS_MAP.put("px", UIDesignerBundle.message("unit.pixels"));
+    UNITS_MAP.put("dlu", UIDesignerBundle.message("unit.dialog.units"));
+    UNITS_MAP.put("pt", UIDesignerBundle.message("unit.points"));
+    UNITS_MAP.put("in", UIDesignerBundle.message("unit.inches"));
+    UNITS_MAP.put("cm", UIDesignerBundle.message("unit.centimeters"));
+    UNITS_MAP.put("mm", UIDesignerBundle.message("unit.millimeters"));
+  }
+
   private JPanel myRootPanel;
   private JRadioButton myDefaultRadioButton;
   private JRadioButton myPreferredRadioButton;
@@ -68,19 +80,12 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
 
   public FormLayoutColumnProperties() {
     @NonNls String[] unitNames = new String[] { "px", "dlu", "pt", "in", "cm", "mm" };
-    final ListCellRenderer unitListCellRenderer = new MappingListCellRenderer(
-      new Pair<Object, String>("px", UIDesignerBundle.message("unit.pixels")),
-      new Pair<Object, String>("dlu", UIDesignerBundle.message("unit.dialog.units")),
-      new Pair<Object, String>("pt", UIDesignerBundle.message("unit.points")),
-      new Pair<Object, String>("in", UIDesignerBundle.message("unit.inches")),
-      new Pair<Object, String>("cm", UIDesignerBundle.message("unit.centimeters")),
-      new Pair<Object, String>("mm", UIDesignerBundle.message("unit.millimeters")));
     myConstantSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
     myMinSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
     myMaxSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
-    myConstantSizeUnitsCombo.setRenderer(unitListCellRenderer);
-    myMinSizeUnitsCombo.setRenderer(unitListCellRenderer);
-    myMaxSizeUnitsCombo.setRenderer(unitListCellRenderer);
+    myConstantSizeUnitsCombo.setRenderer(new MappingListCellRenderer(myConstantSizeUnitsCombo.getRenderer(), UNITS_MAP));
+    myMinSizeUnitsCombo.setRenderer(new MappingListCellRenderer(myMinSizeUnitsCombo.getRenderer(), UNITS_MAP));
+    myMaxSizeUnitsCombo.setRenderer(new MappingListCellRenderer(myMaxSizeUnitsCombo.getRenderer(), UNITS_MAP));
     final MyRadioListener listener = new MyRadioListener();
     myDefaultRadioButton.addActionListener(listener);
     myPreferredRadioButton.addActionListener(listener);

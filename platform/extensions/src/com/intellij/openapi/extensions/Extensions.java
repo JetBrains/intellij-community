@@ -120,7 +120,7 @@ public class Extensions {
     throw new IllegalArgumentException("could not find extension implementation " + extClass);
   }
 
-  public static void instantiateArea(@NonNls @NotNull String areaClass, AreaInstance areaInstance, AreaInstance parentAreaInstance) {
+  public static void instantiateArea(@NonNls @NotNull String areaClass, AreaInstance areaInstance, @Nullable AreaInstance parentAreaInstance) {
     if (!ourAreaClass2Configuration.containsKey(areaClass)) {
       throw new IllegalArgumentException("Area class is not registered: " + areaClass);
     }

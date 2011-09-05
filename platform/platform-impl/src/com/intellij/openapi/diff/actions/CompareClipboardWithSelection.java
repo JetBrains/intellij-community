@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +58,11 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
         DiffBundle.message("diff.content.selection.from.editor.content.title") :
         DiffBundle.message("diff.content.selection.from.file.content.title", getDocumentFileUrl(getDocument()))
       };
+    }
+
+    @Override
+    public boolean isSafeToCallFromUpdate() {
+      return !SystemInfo.isMac;
     }
 
     public DiffContent[] getContents() {

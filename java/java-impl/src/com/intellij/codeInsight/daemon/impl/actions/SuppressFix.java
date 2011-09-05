@@ -24,7 +24,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -73,7 +73,7 @@ public class SuppressFix extends SuppressIntentionAction {
       // for PsiDirectory
       return null;
     }
-    if (!(containingFile.getLanguage() instanceof JavaLanguage) || context instanceof PsiFile) {
+    if (!containingFile.getLanguage().isKindOf(StdLanguages.JAVA) || context instanceof PsiFile) {
       return null;
     }
     PsiElement container = context;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,10 @@ import com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction;
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipLinkHandlerEP;
 import com.intellij.codeInsight.hint.TooltipRenderer;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.impl.TrafficTooltipRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -125,38 +121,30 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       super(text, width, comparable);
     }
 
-    protected String convertTextOnLinkHandled(final String text) {
-      return text.
-        replace(" " + DaemonBundle.message("inspection.extended.description"), "").
-        replace("(" + KeymapUtil.getShortcutsText(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)) + ")", "");
-    }
-
     protected void onHide(final JComponent contentComponent) {
       ShowErrorDescriptionAction.rememberCurrentWidth(contentComponent.getWidth());
     }
 
-    protected boolean dressDescription(Editor editor) {
+    protected boolean dressDescription(@NotNull final Editor editor) {
       final String[] problems = UIUtil.getHtmlBody(myText).split(BORDER_LINE);
       String text = "";
       for (String problem : problems) {
-        final String descriptionPrefix = getDescriptionPrefix(problem);
-        if (descriptionPrefix != null) {
-          for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(TooltipLinkHandlerEP.EP_NAME)) {
-            String description = handlerEP.getDescription(descriptionPrefix, editor);
-            if (description != null) {
-              final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
-              final Matcher matcher = pattern.matcher(description);
-              int startFindIdx = 0;
-              while (matcher.find(startFindIdx)) {
-                final int end = matcher.end(1);
-                startFindIdx = end;
-                description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
-              }
-              text += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
-                                                     DaemonBundle.message("inspection.collapse.description")) + BORDER_LINE + UIUtil
-                .getHtmlBody(description) + BORDER_LINE;
-              break;
+        final String ref = getLinkRef(problem);
+        if (ref != null) {
+          String description = TooltipLinkHandlerEP.getDescription(ref, editor);
+          if (description != null) {
+            final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
+            final Matcher matcher = pattern.matcher(description);
+            int startFindIdx = 0;
+            while (matcher.find(startFindIdx)) {
+              final int end = matcher.end(1);
+              startFindIdx = end;
+              description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
             }
+            text += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
+                                                        DaemonBundle.message("inspection.collapse.description")) +
+                    BORDER_LINE + UIUtil.getHtmlBody(description) + BORDER_LINE;
+            break;
           }
         }
       }
@@ -168,13 +156,14 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     }
 
     @Nullable
-    private static String getDescriptionPrefix(@NonNls String text) {
-      final int linkIdx = text.indexOf("<a href=");
-      if (linkIdx != -1) {
-        final String ref = text.substring(linkIdx + 9);
-        final int quatIdx = ref.indexOf('"');
-        if (quatIdx > 0) {
-          return ref.substring(0, quatIdx);
+    private static String getLinkRef(@NonNls String text) {
+      final String linkWithRef = "<a href=\"";
+      final int linkStartIdx = text.indexOf(linkWithRef);
+      if (linkStartIdx >= 0) {
+        final String ref = text.substring(linkStartIdx + linkWithRef.length());
+        final int quoteIdx = ref.indexOf('"');
+        if (quoteIdx > 0) {
+          return ref.substring(0, quoteIdx);
         }
       }
       return null;

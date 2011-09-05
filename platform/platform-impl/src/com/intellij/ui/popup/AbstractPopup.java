@@ -17,6 +17,7 @@ package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -222,7 +223,7 @@ public class AbstractPopup implements JBPopup {
 
     if (caption != null) {
       if (caption.length() > 0) {
-        myCaption = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive(), myComponent);
+        myCaption = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive());
         ((TitlePanel)myCaption).setText(caption);
       }
       else {
@@ -750,17 +751,23 @@ public class AbstractPopup implements JBPopup {
         }
 
         afterShow();
+
+        UiActivityMonitor.getInstance().removeActivity(AbstractPopup.this);
       }
     };
+
+    UiActivityMonitor.getInstance().addActivity(this);
 
     if (myRequestFocus) {
       getFocusManager().requestFocus(new FocusCommand() {
         @Override
         public ActionCallback run() {
-          if (isDisposed()) return new ActionCallback.Done();
+          if (isDisposed()) {
+            UiActivityMonitor.getInstance().removeActivity(AbstractPopup.this);
+            return new ActionCallback.Done();
+          }
 
           _requestFocus();
-
           afterShow.run();
 
           return new ActionCallback.Done();
@@ -770,7 +777,10 @@ public class AbstractPopup implements JBPopup {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (isDisposed()) return;
+          if (isDisposed()) {
+            UiActivityMonitor.getInstance().removeActivity(AbstractPopup.this);
+            return;
+          }
 
           afterShow.run();
         }

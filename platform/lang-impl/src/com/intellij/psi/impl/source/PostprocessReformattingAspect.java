@@ -143,26 +143,21 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
 
   private void decrementPostponedCounter() {
     if (--myPostponedCounter == 0) {
-      if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        doPostponedFormatting();
+      }
+      else {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             doPostponedFormatting();
           }
         });
       }
-      else {
-        doPostponedFormatting();
-      }
-      //myDisabled = true;
     }
   }
 
-  private final Object LOCK = new Object();
-
   private void atomic(Runnable r) {
-    synchronized (LOCK) {
-      ProgressManager.getInstance().executeNonCancelableSection(r);
-    }
+    ProgressManager.getInstance().executeNonCancelableSection(r);
   }
 
   public void update(final PomModelEvent event) {
@@ -257,6 +252,13 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
 
   public boolean isViewProviderLocked(final FileViewProvider fileViewProvider) {
     return myReformatElements.containsKey(fileViewProvider);
+  }
+
+  public void beforeDocumentChanged(FileViewProvider viewProvider) {
+    if (isViewProviderLocked(viewProvider)) {
+      throw new RuntimeException("Document is locked by write PSI operations. Use PsiDocumentManager.doPostponedOperationsAndUnblockDocument() to commit PSI changes to the document.");
+    }
+    postponedFormatting(viewProvider);
   }
 
   public static PostprocessReformattingAspect getInstance(Project project) {

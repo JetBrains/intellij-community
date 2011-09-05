@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -731,7 +730,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     if (anchor != null) {
       ASTNode node = anchor.getNode();
       assert node != null;
-      if (GroovyElementTypes.mSEMI.equals(node.getElementType())) {
+      if (GroovyTokenTypes.mSEMI.equals(node.getElementType())) {
         anchor = anchor.getNextSibling();
       }
       psiElement = body.addBefore(psiElement, anchor);

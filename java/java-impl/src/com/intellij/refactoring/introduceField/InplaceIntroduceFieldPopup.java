@@ -27,17 +27,12 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.occurences.OccurenceManager;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -63,9 +58,9 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                     final boolean allowInitInMethod,
                                     boolean allowInitInMethodIfAll, final PsiElement anchorElement,
                                     final PsiElement anchorElementIfAll,
-                                    final OccurenceManager occurenceManager, Project project) {
+                                    final OccurrenceManager occurrenceManager, Project project) {
     super(project, editor, initializerExpression, localVariable, occurrences, typeSelectorManager,
-          IntroduceFieldHandler.REFACTORING_NAME, parentClass, anchorElement, occurenceManager, anchorElementIfAll);
+          IntroduceFieldHandler.REFACTORING_NAME, parentClass, anchorElement, occurrenceManager, anchorElementIfAll);
     myStatic = aStatic;
     myIntroduceFieldPanel =
       new IntroduceFieldPopupPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,
@@ -230,7 +225,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
           else {
             final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
               new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
-                                                                      myOccurrences, myOccurenceManager,
+                                                                      myOccurrences, myOccurrenceManager,
                                                                       getAnchorElementIfAll(),
                                                                       getAnchorElement(), myEditor,
                                                                       myParentClass);

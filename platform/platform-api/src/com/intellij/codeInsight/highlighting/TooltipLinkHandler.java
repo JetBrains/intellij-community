@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,36 @@ import javax.swing.*;
  * @author peter
  */
 public abstract class TooltipLinkHandler {
-  public abstract void handleLink(@NotNull String descriptionSuffix, @NotNull Editor editor, @NotNull JEditorPane tooltipComponent);
+  /**
+   * @deprecated use {@link #handleLink(String, com.intellij.openapi.editor.Editor)} (to remove in IDEA 12)
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public void handleLink(@NotNull String refSuffix, @NotNull Editor editor, @NotNull JEditorPane tooltip) {
+    handleLink(refSuffix, editor);
+  }
+
+  /**
+   * Override to handle mouse clicks on a link.
+   *
+   * @param refSuffix part of link's href attribute after registered prefix.
+   * @param editor    an editor in which tooltip with a link was shown.
+   * @return {@code true} if a link was handled.
+   */
+  public boolean handleLink(@NotNull String refSuffix, @NotNull Editor editor) {
+    return false;
+  }
+
+  /**
+   * Override to show extended description on mouse clicks on a link or expand action.
+   * This method is only called if {@link #handleLink(String, com.intellij.openapi.editor.Editor)}
+   * returned {@code false}.
+   *
+   * @param refSuffix part of link's href attribute after registered prefix.
+   * @param editor    an editor in which tooltip with a link was shown.
+   * @return detailed description to show.
+   */
   @Nullable
-  public String getDescription(String descriptionSuffix, Editor editor) {
+  public String getDescription(@NotNull String refSuffix, @NotNull Editor editor) {
     return null;
   }
 }

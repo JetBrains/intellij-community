@@ -118,14 +118,14 @@ public class IntroduceConstantTest extends LightCodeInsightTestCase {
                                                PsiClass parentClass,
                                                PsiExpression expr,
                                                PsiType type,
-                                               PsiExpression[] occurences,
+                                               PsiExpression[] occurrences,
                                                PsiElement anchorElement,
                                                PsiElement anchorElementIfAll) {
         final TypeSelectorManagerImpl selectorManager =
-          new TypeSelectorManagerImpl(project, type, PsiTreeUtil.getParentOfType(anchorElement, PsiMethod.class), expr, occurences);
+          new TypeSelectorManagerImpl(project, type, PsiTreeUtil.getParentOfType(anchorElement, PsiMethod.class), expr, occurrences);
         final PsiType psiType = selectorManager.getDefaultType();
         Assert.assertEquals(psiType.getCanonicalText(), expectedType);
-        return new Settings("xxx", expr, occurences, true, true, true,
+        return new Settings("xxx", expr, occurrences, true, true, true,
                             InitializationPlace.IN_FIELD_DECLARATION, getVisibility(), null, psiType, false,
                          parentClass, false, false);
       }

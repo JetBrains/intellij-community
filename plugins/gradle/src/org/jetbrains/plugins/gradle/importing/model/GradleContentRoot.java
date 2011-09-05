@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.gradle.importing.model;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -39,7 +41,21 @@ public class GradleContentRoot extends AbstractGradleEntity {
     return myData.get(type);
   }
 
-  public void storePath(@NotNull SourceType type, @NotNull String path) {
+  /**
+   * Ask to remember that directory at the given path contains sources of the given type.
+   * 
+   * @param type  target sources type
+   * @param path  target source directory path
+   * @throws IllegalArgumentException   if given path points to the directory that is not located
+   *                                    under the {@link #getRootPath() content root}
+   */
+  public void storePath(@NotNull SourceType type, @NotNull String path) throws IllegalArgumentException {
+    if (!FileUtil.isAncestor(new File(getRootPath()), new File(path), false)) {
+      throw new IllegalArgumentException(String.format(
+        "Can't register given path of type '%s' because it's out of content root.%nContent root: '%s'%nGiven path: '%s'",
+        type, getRootPath(), new File(path).getAbsolutePath()
+      ));
+    }
     myData.get(type).add(GradleUtil.toCanonicalPath(path));
   }
   

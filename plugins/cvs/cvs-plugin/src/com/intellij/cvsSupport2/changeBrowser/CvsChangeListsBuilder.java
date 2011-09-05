@@ -28,7 +28,6 @@ import java.util.*;
 
 public class CvsChangeListsBuilder {
   @NonNls private static final String INITIALLY_ADDED_ON_BRANCH = "was initially added on branch";
-  @NonNls private static final String ATTIC_SUFFIX = "/Attic";
 
   private static class ChangeListKey {
     public String branch;
@@ -55,8 +54,7 @@ public class CvsChangeListsBuilder {
     }
 
     public int hashCode() {
-      int result;
-      result = (branch != null ? branch.hashCode() : 0);
+      int result = (branch != null ? branch.hashCode() : 0);
       result = 31 * result + author.hashCode();
       result = 31 * result + message.hashCode();
       return result;
@@ -89,12 +87,11 @@ public class CvsChangeListsBuilder {
 
   public CvsChangeList addRevision(RevisionWrapper revision) {
     final Revision cvsRevision = revision.getRevision();
-    CvsChangeList version = findOrCreateVersionFor(cvsRevision.getMessage(),
-                                                   revision.getTime(),
-                                                   cvsRevision.getAuthor(),
-                                                   revision.getBranch(),
-                                                   revision.getFile());
-
+    final CvsChangeList version = findOrCreateVersionFor(cvsRevision.getMessage(),
+                                                         revision.getTime(),
+                                                         cvsRevision.getAuthor(),
+                                                         revision.getBranch(),
+                                                         revision.getFile());
     version.addFileRevision(revision);
     return version;
   }
@@ -126,28 +123,28 @@ public class CvsChangeListsBuilder {
 
   @Nullable
   public List<RevisionWrapper> revisionWrappersFromLog(final LogInformationWrapper log) {
-    final List<RevisionWrapper> result = new LinkedList<RevisionWrapper>();
     final String file = log.getFile();
-    if (CvsChangeList.isAncestor(myRootPath, file)) {
-      for (Revision revision : log.getRevisions()) {
-        if (revision != null) {
-          if (revision.getState().equals(CvsChangeList.DEAD_STATE) &&
-              revision.getMessage().indexOf(INITIALLY_ADDED_ON_BRANCH) >= 0) {
-            // ignore dead revision (otherwise it'll get stuck in incoming changes forever - it's considered a deletion and
-            // the file is never actually deleted)
-            continue;
-          }
-          String branchName = getBranchName(revision, log.getSymbolicNames());
-          result.add(new RevisionWrapper(stripAttic(file), revision, branchName));
-        }
-      }
-      return result;
+    if (!CvsChangeList.isAncestor(myRootPath, file)) {
+      return null;
     }
-    return null;
+    final List<RevisionWrapper> result = new LinkedList<RevisionWrapper>();
+    for (Revision revision : log.getRevisions()) {
+      if (revision != null) {
+        if (revision.getState().equals(CvsChangeList.DEAD_STATE) &&
+            revision.getMessage().contains(INITIALLY_ADDED_ON_BRANCH)) {
+          // ignore dead revision (otherwise it'll get stuck in incoming changes forever - it's considered a deletion and
+          // the file is never actually deleted)
+          continue;
+        }
+        final String branchName = getBranchName(revision, log.getSymbolicNames());
+        result.add(new RevisionWrapper(file, revision, branchName));
+      }
+    }
+    return result;
   }
 
   public void addLogs(final List<LogInformationWrapper> logs) {
-    List<RevisionWrapper> revisionWrappers = new ArrayList<RevisionWrapper>();
+    final List<RevisionWrapper> revisionWrappers = new ArrayList<RevisionWrapper>();
 
     for (LogInformationWrapper log : logs) {
       final List<RevisionWrapper> wrappers = revisionWrappersFromLog(log);
@@ -157,33 +154,19 @@ public class CvsChangeListsBuilder {
     }
 
     Collections.sort(revisionWrappers);
-
-
     for (RevisionWrapper revisionWrapper : revisionWrappers) {
       addRevision(revisionWrapper);
     }
   }
 
-  private static String stripAttic(final String file) {
-    int pos = file.lastIndexOf('/');
-    if (pos >= 0) {
-      String path = file.substring(0, pos);
-      if (path.endsWith(ATTIC_SUFFIX)) {
-        return path.substring(0, path.length()-6) + file.substring(pos);
-      }
-    }
-    return file;
-  }
-
   @Nullable
   private static String getBranchName(final Revision revision, final List<SymbolicName> symbolicNames) {
-    CvsRevisionNumber number = new CvsRevisionNumber(revision.getNumber().trim());
+    final CvsRevisionNumber number = new CvsRevisionNumber(revision.getNumber().trim());
     final int[] subRevisions = number.getSubRevisions();
-    String branchName = null;
     String branchNumberString = null;
     if (subRevisions != null && subRevisions.length >= 4) {
-      int branchRevNumber = subRevisions [subRevisions.length-2];
-      CvsRevisionNumber branchNumber = number.removeTailVersions(2).addTailVersions(0, branchRevNumber);
+      final int branchRevNumber = subRevisions [subRevisions.length-2];
+      final CvsRevisionNumber branchNumber = number.removeTailVersions(2).addTailVersions(0, branchRevNumber);
       branchNumberString = branchNumber.asString();
     }
     if (branchNumberString == null) {
@@ -191,22 +174,20 @@ public class CvsChangeListsBuilder {
       if (branches != null && branches.length() > 0) {
         final String[] branchNames = branches.split(";");
         final CvsRevisionNumber revisionNumber = new CvsRevisionNumber(branchNames [0].trim());
-        int[] branchSubRevisions = revisionNumber.getSubRevisions();
+        final int[] branchSubRevisions = revisionNumber.getSubRevisions();
         assert branchSubRevisions != null;
-        int rev = branchSubRevisions [branchSubRevisions.length-1];
-        CvsRevisionNumber branchNumber = revisionNumber.removeTailVersions(1).addTailVersions(0, rev);
+        final int rev = branchSubRevisions [branchSubRevisions.length-1];
+        final CvsRevisionNumber branchNumber = revisionNumber.removeTailVersions(1).addTailVersions(0, rev);
         branchNumberString = branchNumber.asString();
       }
     }
     if (branchNumberString != null) {
       for(SymbolicName name: symbolicNames) {
         if (name.getRevision().equals(branchNumberString)) {
-          branchName = name.getName();
-          break;
+          return name.getName();
         }
       }
     }
-
-    return branchName;
+    return null;
   }
 }

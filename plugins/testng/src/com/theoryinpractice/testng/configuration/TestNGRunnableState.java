@@ -238,7 +238,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
     final Project project = config.getProject();
     final JavaParameters javaParameters = new JavaParameters();
     javaParameters.setupEnvs(config.getPersistantData().getEnvs(), config.getPersistantData().PASS_PARENT_ENVS);
-    javaParameters.getVMParametersList().add("-ea");
     javaParameters.setMainClass("org.testng.RemoteTestNGStarter");
     javaParameters.setWorkingDirectory(config.getWorkingDirectory());
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));

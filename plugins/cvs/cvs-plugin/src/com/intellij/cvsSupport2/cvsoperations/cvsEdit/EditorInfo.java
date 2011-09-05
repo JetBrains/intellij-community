@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * author: lesya
@@ -35,28 +36,28 @@ public class EditorInfo {
   public final static SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat(FORMAT, Locale.US));
   @NonNls private static final String FORMAT1 = "dd MMM yyyy HH:mm:ss zzz";
   public final static SyncDateFormat DATE_FORMAT1 = new SyncDateFormat(new SimpleDateFormat(FORMAT1, Locale.US));
+  static {
+    DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+    DATE_FORMAT1.setTimeZone(TimeZone.getTimeZone("GMT"));
+  }
 
   private final String myFilePath;
   private final String myUserName;
   private final Date myEditDate;
-  private final String myHostHame;
+  private final String myHostName;
   private final String myPath;
 
   public static EditorInfo createOn(String string) {
-    String[] strings = string.split("\t");
+    final String[] strings = string.split("\t");
     if (strings.length != 5) return null;
-    return new EditorInfo(strings[0]
-                          , strings[1],
-                            parse(strings[2]),
-                            strings[3],
-                            strings[4]);
+    return new EditorInfo(strings[0], strings[1], parse(strings[2]), strings[3], strings[4]);
   }
 
-  private EditorInfo(String filePath, String userName, Date editDate, String hostHame, String path) {
+  private EditorInfo(String filePath, String userName, Date editDate, String hostName, String path) {
     myFilePath = filePath;
     myUserName = userName;
     myEditDate = editDate;
-    myHostHame = hostHame;
+    myHostName = hostName;
     myPath = path;
   }
 
@@ -67,7 +68,7 @@ public class EditorInfo {
     final EditorInfo editorInfo = (EditorInfo)o;
 
     if (!myEditDate.equals(editorInfo.myEditDate)) return false;
-    if (!myHostHame.equals(editorInfo.myHostHame)) return false;
+    if (!myHostName.equals(editorInfo.myHostName)) return false;
     if (!myPath.equals(editorInfo.myPath)) return false;
     if (!myUserName.equals(editorInfo.myUserName)) return false;
 
@@ -75,21 +76,20 @@ public class EditorInfo {
   }
 
   public int hashCode() {
-    int result;
-    result = myUserName.hashCode();
+    int result = myUserName.hashCode();
     result = 29 * result + myEditDate.hashCode();
-    result = 29 * result + myHostHame.hashCode();
+    result = 29 * result + myHostName.hashCode();
     result = 29 * result + myPath.hashCode();
     return result;
   }
 
   public String toString() {
-    StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     result.append(myUserName);
     result.append('\t');
     result.append(DATE_FORMAT.format(myEditDate));
     result.append('\t');
-    result.append(myHostHame);
+    result.append(myHostName);
     result.append('\t');
     result.append(myPath);
     result.append('\t');
@@ -99,7 +99,7 @@ public class EditorInfo {
 
   public String getUserName() { return myUserName; }
 
-  public String getHostHame() { return myHostHame; }
+  public String getHostName() { return myHostName; }
 
   public String getPath() { return myPath; }
 
@@ -107,7 +107,7 @@ public class EditorInfo {
 
   public String getFilePath() { return myFilePath; }
 
-  public static Date parse(String s) {
+  private static Date parse(String s) {
     try {
       return DATE_FORMAT.parse(s);
     }

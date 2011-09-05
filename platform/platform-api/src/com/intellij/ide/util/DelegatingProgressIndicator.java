@@ -29,97 +29,101 @@ import org.jetbrains.annotations.NotNull;
 public class DelegatingProgressIndicator implements ProgressIndicator {
   private final ProgressIndicator myIndicator;
 
+  public DelegatingProgressIndicator(ProgressIndicator indicator) {
+    myIndicator = indicator;
+  }
+
   public DelegatingProgressIndicator() {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     myIndicator = indicator == null ? new EmptyProgressIndicator() : indicator;
   }
 
   public void start() {
-    getDelegate().start();
+    myIndicator.start();
   }
 
   public void stop() {
-    getDelegate().stop();
+    myIndicator.stop();
   }
 
   public boolean isRunning() {
-    return getDelegate().isRunning();
+    return myIndicator.isRunning();
   }
 
   public void cancel() {
-    getDelegate().cancel();
+    myIndicator.cancel();
   }
 
   public boolean isCanceled() {
-    return getDelegate().isCanceled();
+    return myIndicator.isCanceled();
   }
 
   public void setText(final String text) {
-    getDelegate().setText(text);
+    myIndicator.setText(text);
   }
 
   public String getText() {
-    return getDelegate().getText();
+    return myIndicator.getText();
   }
 
   public void setText2(final String text) {
-    getDelegate().setText2(text);
+    myIndicator.setText2(text);
   }
 
   public String getText2() {
-    return getDelegate().getText2();
+    return myIndicator.getText2();
   }
 
   public double getFraction() {
-    return getDelegate().getFraction();
+    return myIndicator.getFraction();
   }
 
   public void setFraction(final double fraction) {
-    getDelegate().setFraction(fraction);
+    myIndicator.setFraction(fraction);
   }
 
   public void pushState() {
-    getDelegate().pushState();
+    myIndicator.pushState();
   }
 
   public void popState() {
-    getDelegate().popState();
+    myIndicator.popState();
   }
 
   public void startNonCancelableSection() {
-    getDelegate().startNonCancelableSection();
+    myIndicator.startNonCancelableSection();
   }
 
   public void finishNonCancelableSection() {
-    getDelegate().finishNonCancelableSection();
+    myIndicator.finishNonCancelableSection();
   }
 
   public boolean isModal() {
-    return getDelegate().isModal();
+    return myIndicator.isModal();
   }
 
   @NotNull
   public ModalityState getModalityState() {
-    return getDelegate().getModalityState();
+    return myIndicator.getModalityState();
   }
 
   public void setModalityProgress(final ProgressIndicator modalityProgress) {
-    getDelegate().setModalityProgress(modalityProgress);
+    myIndicator.setModalityProgress(modalityProgress);
   }
 
   public boolean isIndeterminate() {
-    return getDelegate().isIndeterminate();
+    return myIndicator.isIndeterminate();
   }
 
   public void setIndeterminate(final boolean indeterminate) {
-    getDelegate().setIndeterminate(indeterminate);
+    myIndicator.setIndeterminate(indeterminate);
   }
 
   public void checkCanceled() throws ProcessCanceledException {
-    getDelegate().checkCanceled();
+    myIndicator.checkCanceled();
   }
 
-  private ProgressIndicator getDelegate() {
+  protected final ProgressIndicator getDelegate() {
     return myIndicator;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,13 @@ public class EditorsOperation extends CvsOperationOnFiles{
   private final List<EditorInfo> myEditorInfos = new ArrayList<EditorInfo>();
 
   public EditorsOperation(VirtualFile[] files){
-    for (int i = 0; i < files.length; i++) {
-      addFile(files[i]);
+    for (VirtualFile file : files) {
+      addFile(file);
     }
-
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    EditorsCommand result = new EditorsCommand();
+    final EditorsCommand result = new EditorsCommand();
     addFilesToCommand(root, result);
     return result;
   }
@@ -47,7 +46,7 @@ public class EditorsOperation extends CvsOperationOnFiles{
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     super.messageSent(message, byteMessage, error, tagged);
     if (!error && !tagged){
-      EditorInfo info = EditorInfo.createOn(message);
+      final EditorInfo info = EditorInfo.createOn(message);
       if (info != null) myEditorInfos.add(info);
     }
   }

@@ -18,21 +18,19 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-public class LabeledComponent<Comp extends JComponent> extends JPanel {
-  private final JLabel myLabel = new JLabel();
+public class LabeledComponent<Comp extends JComponent> extends JPanel implements ComponentWithAnchor {
+  private final JBLabel myLabel = new JBLabel();
   private Comp myComponent;
   private String myLabelConstraints = BorderLayout.NORTH;
-
-  private static final Dimension notSpecifiedSize = new Dimension(-1, -1);
-  private Dimension labelPreferredSize = notSpecifiedSize;
 
   public LabeledComponent() {
     super(new BorderLayout(AbstractLayout.DEFAULT_HGAP, AbstractLayout.DEFAULT_VGAP));
@@ -50,18 +48,6 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
   private void insertLabel() {
     remove(myLabel);
     add(myLabel, myLabelConstraints);
-  }
-
-  public void setLabelPreferredSize(Dimension d) {
-    if (notSpecifiedSize.equals(d)) {
-      d = null;
-    }
-    labelPreferredSize = d;
-    myLabel.setPreferredSize(d);
-  }
-
-  public Dimension getLabelPreferredSize() {
-    return labelPreferredSize;
   }
 
   public void setText(String textWithMnemonic) {
@@ -109,6 +95,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
     return myComponent;
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     if (myComponent != null) myComponent.setEnabled(enabled);
@@ -148,8 +135,18 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
     return myLabel.getText().replace("\u001B", "");
   }
 
-  public JLabel getLabel() {
+  public JBLabel getLabel() {
     return myLabel;
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return myLabel.getAnchor();
+  }
+
+  @Override
+  public void setAnchor(JComponent labelAnchor) {
+    myLabel.setAnchor(labelAnchor);
   }
 
   public static class TextWithMnemonic {

@@ -218,4 +218,39 @@ public abstract class DiffElement<T> implements Disposable {
   public DataProvider getDataProvider(Project project) {
     return null;
   }
+
+  /**
+   * Defines is it possible to perform such operations as copy or delete through Diff Panel
+   *
+   * @return <code>true</code> if copy, delete, etc operations are allowed,
+   *        <code>false</code> otherwise
+   */
+  public boolean isOperationsEnabled() {
+    return false;
+  }
+
+  /**
+   * Copies element to the container.
+   *
+   * @param container file directory or other container
+   * @param relativePath relative path from root
+   * @return <code>true</code> if coping was completed successfully,
+   *        <code>false</code> otherwise
+   */
+  @Nullable
+  public DiffElement<?> copyTo(DiffElement<T> container, String relativePath) {
+    return null;
+  }
+
+  /**
+   * Deletes element
+   * @return <code>true</code> if deletion was completed successfully,
+   *        <code>false</code> otherwise
+   */
+  public boolean delete() {
+    return false;
+  }
+
+  public void refresh() {
+  }
 }

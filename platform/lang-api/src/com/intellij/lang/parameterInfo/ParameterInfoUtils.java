@@ -117,6 +117,12 @@ public class ParameterInfoUtils {
         break;
       }
       if (parent instanceof PsiFile || parent == null) return null;
+
+      final Set<? extends Class> set = findArgumentListHelper.getArgListStopSearchClasses();
+      for (Class aClass : set) {
+        if (aClass.isInstance(parent)) return null;
+      }
+
       parent = parent.getParent();
     }
 

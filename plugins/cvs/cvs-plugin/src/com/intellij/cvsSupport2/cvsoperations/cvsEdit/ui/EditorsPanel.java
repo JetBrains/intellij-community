@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,13 +64,13 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
 
   private final static ColumnInfo<EditorInfo, String> HOST = new ColumnInfo<EditorInfo, String>(CvsBundle.message("view.editors.host.column.name")){
     public String valueOf(EditorInfo object) {
-      return object.getHostHame();
+      return object.getHostName();
     }
 
     public Comparator<EditorInfo> getComparator() {
       return new Comparator<EditorInfo>(){
         public int compare(EditorInfo o, EditorInfo o1) {
-          return o.getHostHame().compareTo(o1.getHostHame());
+          return o.getHostName().compareTo(o1.getHostName());
         }
       };
     }
@@ -142,12 +142,12 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
         return;
       }
       String filePath = editorInfo.getFilePath();
-      int pos = filePath.lastIndexOf('/');
+      final int pos = filePath.lastIndexOf('/');
       if (pos >= 0) {
         filePath = filePath.substring(pos+1);
       }
-      File file = new File(editorInfo.getPath(), filePath);
-      VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
+      final File file = new File(editorInfo.getPath(), filePath);
+      final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
       if (vf != null) {
         sink.put(PlatformDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, vf));
       }

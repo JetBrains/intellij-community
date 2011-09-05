@@ -49,7 +49,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
 
   public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    super(file, new MappedFileSimpleStorage(file, initialSize), dataDescriptor, initialSize, ourVersion,
+    super(file, new ResizeableMappedFile(file, initialSize, ourLock), dataDescriptor, initialSize, ourVersion,
           new RecordBufferHandler(), true);
   }
 

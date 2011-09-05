@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrMultiTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -39,6 +40,18 @@ import java.util.List;
  */
 public class GrStubUtils {
 
+
+  private GrStubUtils() {
+  }
+
+  public static String[] getMultiTypes(GrMultiTypeParameter psi) {
+    final GrTypeElement[] typeElements = psi.getTypeElements();
+    final String[] types = new String[typeElements.length];
+    for (int i = 0; i < typeElements.length; i++) {
+      types[i] = typeElements[i].getText();
+    }
+    return types;
+  }
 
   public static void writeStringArray(StubOutputStream dataStream, String[] array) throws IOException {
     dataStream.writeByte(array.length);
@@ -81,11 +94,9 @@ public class GrStubUtils {
     if (modifierList instanceof GrModifierList) {
       for (GrAnnotation annotation : ((GrModifierList)modifierList).getAnnotations()) {
         final GrCodeReferenceElement element = annotation.getClassReference();
-        if (element != null) {
-          final String annoShortName = StringUtil.getShortName(element.getText()).trim();
-          if (StringUtil.isNotEmpty(annoShortName)) {
-            annoNames.add(annoShortName);
-          }
+        final String annoShortName = StringUtil.getShortName(element.getText()).trim();
+        if (StringUtil.isNotEmpty(annoShortName)) {
+          annoNames.add(annoShortName);
         }
       }
     }

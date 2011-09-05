@@ -48,7 +48,7 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
 
   @Override
   public boolean hasSubStep() {
-    return !hasLibraries() && AddNewLibraryItemAction.hasSuitableTypes(myClasspathPanel);
+    return !hasLibraries() && LibraryEditingUtil.hasSuitableTypes(myClasspathPanel);
   }
 
   @Override

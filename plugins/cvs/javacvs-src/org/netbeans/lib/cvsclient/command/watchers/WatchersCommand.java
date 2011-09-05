@@ -55,7 +55,7 @@ public final class WatchersCommand extends AbstractCommand {
                                                                                                                                                                                                                   AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
-			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+			cvsFiles = scanFileSystem(clientEnvironment);
 		}
 		catch (IOException ex) {
 			throw new IOCommandException(ex);
@@ -93,7 +93,7 @@ public final class WatchersCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCvsArguments() {
-		@NonNls final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuilder cvsArguments = new StringBuilder();
 		if (!isRecursive()) {
 			cvsArguments.append("-l ");
 		}

@@ -197,7 +197,6 @@ public class ChangeUtil {
 
           action.makeChange(destinationTreeChange);
 
-          psiManager.invalidateFile(file);
           TreeUtil.clearCaches(changedElement);
           if (changedElement instanceof CompositeElement) {
             ((CompositeElement) changedElement).subtreeChanged();

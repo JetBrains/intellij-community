@@ -17,10 +17,11 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -29,19 +30,20 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * author ven
  */
-public class AccessorReferencesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
+public class AccessorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
 
   protected AccessorReferencesSearcher() {
     super(true);
   }
 
   @Override
-  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
-    final PsiMethod method = queryParameters.getMethod();
-    final String propertyName = GroovyPropertyUtils.getPropertyName(method);
-    if (propertyName != null) {
-      queryParameters.getOptimizer().searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()), UsageSearchContext.IN_CODE, true, method);
-    }
-  }
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
+    final PsiElement element = queryParameters.getElementToSearch();
+    if (!(element instanceof PsiMethod)) return;
 
+    final String propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)element);
+    if (propertyName == null) return;
+
+    queryParameters.getOptimizer().searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()), UsageSearchContext.IN_CODE, true, element);
+  }
 }

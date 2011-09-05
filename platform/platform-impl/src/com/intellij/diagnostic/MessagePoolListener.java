@@ -21,5 +21,6 @@ public interface MessagePoolListener extends EventListener {
 
   void newEntryAdded();
   void poolCleared();
+  void entryWasRead();
 
 }

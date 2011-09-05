@@ -33,10 +33,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
@@ -347,7 +344,7 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempDirectory(@NotNull @NonNls String prefix, @NonNls String suffix) throws IOException {
+  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.mkdir();
@@ -356,7 +353,7 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempDirectory(File dir, @NotNull @NonNls String prefix, @NonNls String suffix) throws IOException {
+  public static File createTempDirectory(File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     File file = doCreateTempFile(prefix, suffix, dir);
     file.delete();
     file.mkdir();
@@ -365,14 +362,14 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @NonNls String suffix, final boolean create)
+  public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, final boolean create)
     throws IOException {
     return createTempFile(dir, prefix, suffix, create, true);
   }
 
   public static File createTempFile(@NonNls final File dir,
                                     @NotNull @NonNls String prefix,
-                                    @NonNls String suffix,
+                                    @Nullable @NonNls String suffix,
                                     final boolean create,
                                     boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(prefix, suffix, dir);
@@ -387,12 +384,12 @@ public class FileUtil {
   }
 
   @NotNull
-  public static File createTempFile(@NotNull @NonNls String prefix, @NonNls String suffix) throws IOException {
+  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     return createTempFile(prefix, suffix, false); //false until TeamCity fixes its plugin
   }
 
   @NotNull
-  public static File createTempFile(@NotNull @NonNls String prefix, @NonNls String suffix, boolean deleteOnExit) throws IOException {
+  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.createNewFile();
@@ -420,8 +417,7 @@ public class FileUtil {
       try {
         //noinspection SSBasedInspection
         final File temp = File.createTempFile(prefix, suffix, dir);
-        final File canonical = temp.getCanonicalFile();
-        return SystemInfo.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
+        return normalizeFile(temp);
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
         if (++exceptionsCount >= 100) {
@@ -429,6 +425,11 @@ public class FileUtil {
         }
       }
     }
+  }
+
+  private static File normalizeFile(File temp) throws IOException {
+    final File canonical = temp.getCanonicalFile();
+    return SystemInfo.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
   }
 
   public static String getTempDirectory() {
@@ -543,7 +544,7 @@ public class FileUtil {
   }
 
   public static boolean delete(@NotNull File file) {
-    if (!SymLinkUtil.isSymLink(file)) {
+    if (file.isDirectory() && !SymLinkUtil.isSymLink(file)) {
       File[] files = file.listFiles();
       if (files != null) {
         for (File child : files) {
@@ -1160,5 +1161,19 @@ public class FileUtil {
       return true;
     }
     return false;
+  }
+  
+  @NotNull
+  public static File generateRandomTemporaryPath() throws IOException {
+    File file = new File(getTempDirectory(), UUID.randomUUID().toString());
+    int i = 0;
+    while (file.exists() && i < 5) {
+      file = new File(getTempDirectory(), UUID.randomUUID().toString());
+      ++i;
+    }
+    if (file.exists()) {
+      throw new IOException("Couldn't generate unique random path.");
+    }
+    return normalizeFile(file);
   }
 }

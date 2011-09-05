@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.cache.impl;
 
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -64,19 +63,11 @@ public class IndexCacheManagerImpl implements CacheManager{
     myProject = psiManager.getProject();
   }
 
-  public void initialize() {
-  }
-
-  public void dispose() {
-  }
-
-  @NotNull
-  public CacheUpdater[] getCacheUpdaters() {
-    return new CacheUpdater[0]; // do not expose own updaters
-  }
-
   @NotNull
   public PsiFile[] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+    if (myProject.isDefault()) {
+      return PsiFile.EMPTY_ARRAY;
+    }
     CommonProcessors.CollectProcessor<PsiFile> processor = new CommonProcessors.CollectProcessor<PsiFile>();
     processFilesWithWord(processor, word, occurenceMask, scope, caseSensitively);
     return processor.getResults().isEmpty() ? PsiFile.EMPTY_ARRAY : processor.toArray(PsiFile.EMPTY_ARRAY);
@@ -87,6 +78,9 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+    if (myProject.isDefault()) {
+      return true;
+    }
     final Set<VirtualFile> vFiles = new THashSet<VirtualFile>();
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myProject);
     try {
@@ -142,12 +136,15 @@ public class IndexCacheManagerImpl implements CacheManager{
 
   @NotNull
   public PsiFile[] getFilesWithTodoItems() {
+    if (myProject.isDefault()) {
+      return PsiFile.EMPTY_ARRAY;
+    }
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     final Set<PsiFile> allFiles = new HashSet<PsiFile>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     for (IndexPattern indexPattern : CacheUtil.getIndexPatterns()) {
       final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
-        TodoIndex.NAME, 
+        TodoIndex.NAME,
         new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(myProject));
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
@@ -160,12 +157,15 @@ public class IndexCacheManagerImpl implements CacheManager{
             }
           }
         }
-        });
+      });
     }
     return allFiles.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilBase.toPsiFileArray(allFiles);
   }
 
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPatternProvider patternProvider) {
+    if (myProject.isDefault()) {
+      return 0;
+    }
     if (file instanceof VirtualFileWindow) return -1;
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     int count = 0;
@@ -176,6 +176,9 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
    
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPattern pattern) {
+    if (myProject.isDefault()) {
+      return 0;
+    }
     if (file instanceof VirtualFileWindow) return -1;
     return fetchCount(FileBasedIndex.getInstance(), file, pattern);
   }
@@ -191,9 +194,5 @@ public class IndexCacheManagerImpl implements CacheManager{
         }
       }, GlobalSearchScopes.fileScope(myProject, file));
     return count[0];
-  }
-
-  public void addOrInvalidateFile(@NotNull final VirtualFile file) {
-    // empty
   }
 }

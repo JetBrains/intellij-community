@@ -52,6 +52,10 @@ public class RenameFix extends InspectionGadgetsFix {
         }
     }
 
+    public String getTargetName() {
+        return m_targetName;
+    }
+
     @Override
     public void doFix(final Project project, ProblemDescriptor descriptor) {
         final PsiElement nameIdentifier = descriptor.getPsiElement();

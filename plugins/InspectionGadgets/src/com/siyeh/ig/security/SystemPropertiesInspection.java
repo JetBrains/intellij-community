@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,10 @@ public class SystemPropertiesInspection extends BaseInspection {
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new SystemSetSecurityManagerVisitor();
+        return new SystemPropertiesVisitor();
     }
 
-    private static class SystemSetSecurityManagerVisitor
+    private static class SystemPropertiesVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitMethodCallExpression(

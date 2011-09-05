@@ -90,7 +90,7 @@ class RenderService {
     final int targetSdkVersion = versionQualifier.getVersion();
     final int minSdkVersion = myMinSdkVersion >= 0 ? myMinSdkVersion : targetSdkVersion;
 
-    final PixelDensityQualifier densityQualifier = myConfig.getPixelDensityQualifier();
+    final DensityQualifier densityQualifier = myConfig.getDensityQualifier();
     final Density density = densityQualifier != null ? densityQualifier.getValue() : Density.MEDIUM;
     final float xdpi = Float.isNaN(myXdpi) ? density.getDpiValue() : myXdpi;
     final float ydpi = Float.isNaN(myYdpi) ? density.getDpiValue() : myYdpi;

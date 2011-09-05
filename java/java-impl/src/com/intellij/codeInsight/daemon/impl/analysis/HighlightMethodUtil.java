@@ -799,6 +799,7 @@ public class HighlightMethodUtil {
       if (!Comparing.strEqual(methodName, className)) {
         errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, method.getNameIdentifier(),
                                                         JavaErrorMessages.message("missing.return.type"));
+        QuickFixAction.registerQuickFixAction(errorResult, new RenameElementFix(method, className));
       }
     }
     return errorResult;

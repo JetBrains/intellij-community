@@ -108,22 +108,24 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
 
     protected void onDropFromCache(final Key key, final AppendStream value) {
-      try {
-        final ByteSequence bytes = value.getInternalBuffer();
-        final int id = enumerate(key);
-        HeaderRecord oldHeaderRecord = readValueId(id);
+      synchronized (PersistentEnumerator.ourLock) {
+        try {
+          final ByteSequence bytes = value.getInternalBuffer();
+          final int id = enumerate(key);
+          HeaderRecord oldHeaderRecord = readValueId(id);
 
-        HeaderRecord headerRecord = new HeaderRecord(
-          myValueStorage.appendBytes(bytes, oldHeaderRecord.address)
-        );
+          HeaderRecord headerRecord = new HeaderRecord(
+            myValueStorage.appendBytes(bytes, oldHeaderRecord.address)
+          );
 
-        updateValueId(id, headerRecord, oldHeaderRecord, key, 0);
-        if (oldHeaderRecord == HeaderRecord.EMPTY) myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
+          updateValueId(id, headerRecord, oldHeaderRecord, key, 0);
+          if (oldHeaderRecord == HeaderRecord.EMPTY) myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
 
-        myStreamPool.recycle(value);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
+          myStreamPool.recycle(value);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
   };
@@ -280,12 +282,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
   
   public synchronized void appendData(Key key, ValueDataAppender appender) throws IOException {
-    synchronized (PersistentEnumerator.ourLock) {
-      myEnumerator.markDirty(true);
-      
-      final AppendStream stream = myAppendCache.get(key);
-      appender.append(stream);
-    }
+    myEnumerator.markDirty(true);
+
+    final AppendStream stream = myAppendCache.get(key);
+    appender.append(stream);
   }
 
   /**
@@ -293,10 +293,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
    * {@link #processKeysWithExistingMapping(com.intellij.util.Processor)} to process only keys with existing mappings
    */
   public synchronized boolean processKeys(Processor<Key> processor) throws IOException {
-    synchronized (PersistentEnumerator.ourLock) {
-      myAppendCache.clear();
-      return myEnumerator.iterateData(processor);
-    }
+    myAppendCache.clear();
+    return myEnumerator.iterateData(processor);
   }
 
   public Collection<Key> getAllKeysWithExistingMapping() throws IOException {

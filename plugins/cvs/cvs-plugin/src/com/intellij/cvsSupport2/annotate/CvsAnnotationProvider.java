@@ -59,8 +59,8 @@ public class CvsAnnotationProvider implements AnnotationProvider{
 
   public FileAnnotation annotate(VirtualFile virtualFile) throws VcsException {
     final File file = new File(virtualFile.getPath());
-    File cvsLightweightFile = CvsUtil.getCvsLightweightFileForFile(file);
-    String revision = CvsUtil.getRevisionFor(file);
+    final File cvsLightweightFile = CvsUtil.getCvsLightweightFileForFile(file);
+    final String revision = CvsUtil.getRevisionFor(file);
     final CvsConnectionSettings root =
       CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file.getParentFile());
     final AnnotateOperation operation = executeOperation(cvsLightweightFile, revision, root, true);
@@ -142,14 +142,16 @@ public class CvsAnnotationProvider implements AnnotationProvider{
 
   private static void adjustAnnotation(@Nullable List<VcsFileRevision> revisions, @NotNull Annotation[] lineAnnotations) {
     if (revisions != null) {
-      final Map<VcsRevisionNumber, String> usersMap = new HashMap<VcsRevisionNumber, String>();
+      final Map<String, VcsFileRevision> revisionMap = new HashMap<String, VcsFileRevision>();
       for (VcsFileRevision vcsFileRevision : revisions) {
-        usersMap.put(vcsFileRevision.getRevisionNumber(), vcsFileRevision.getAuthor());
+        revisionMap.put(vcsFileRevision.getRevisionNumber().asString(), vcsFileRevision);
       }
       for (Annotation lineAnnotation : lineAnnotations) {
-        final String name = usersMap.get(new CvsRevisionNumber(lineAnnotation.getRevision()));
-        if (name != null) {
-          lineAnnotation.setUser(name);
+        final String revisionNumber = lineAnnotation.getRevision();
+        final VcsFileRevision revision = revisionMap.get(revisionNumber);
+        if (revision != null) {
+          lineAnnotation.setUser(revision.getAuthor());
+          lineAnnotation.setDate(revision.getRevisionDate());
         }
       }
     }

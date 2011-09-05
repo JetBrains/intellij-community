@@ -68,7 +68,7 @@ public class LogCommand extends AbstractCommand {
                                                                                                                                                                                                                        AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
-			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+			cvsFiles = scanFileSystem(clientEnvironment);
 		}
 		catch (IOException ex) {
 			throw new IOCommandException(ex);
@@ -248,7 +248,7 @@ public class LogCommand extends AbstractCommand {
 	 * Similar to getCVSCommand() however without the files and command's name
 	 */
 	private String getCVSArguments() {
-		@NonNls final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuilder cvsArguments = new StringBuilder();
 		if (isDefaultBranch()) {
 			cvsArguments.append("-b ");
 		}

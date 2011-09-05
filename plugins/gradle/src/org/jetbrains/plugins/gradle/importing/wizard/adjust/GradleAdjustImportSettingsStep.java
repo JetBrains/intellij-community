@@ -156,7 +156,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     if (project == null) {
       throw new IllegalStateException(String.format(
         "Can't init 'adjust importing settings' step. Reason: no project is defined. Context: '%s', builder: '%s'",
-        getContext(), getBuilder()
+        getWizardContext(), getBuilder()
       ));
     }
 
@@ -236,6 +236,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       myTree.expandPath(new TreePath(librariesNode.getPath()));
     }
     
+    myTree.expandPath(new TreePath(root.getPath()));
     getBuilder().setModuleMappings(moduleMappings);
   }
 
@@ -288,7 +289,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
         return false;
       }
     }
-    getBuilder().applyProjectSettings(getContext());
+    getBuilder().applyProjectSettings(getWizardContext());
     return true;
   }
 

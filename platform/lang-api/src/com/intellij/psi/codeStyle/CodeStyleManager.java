@@ -21,19 +21,19 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Service for reformatting code fragments, getting names for elements
  * according to the user's code style and working with import statements and full-qualified names.
- *
- * @see com.intellij.psi.PsiManager#getCodeStyleManager()
  */
 public abstract class CodeStyleManager  {
   /**
@@ -232,4 +232,17 @@ public abstract class CodeStyleManager  {
    * @return      <code>true</code> if 'sequential' formatting is allowed now; <code>false</code> otherwise
    */
   public abstract boolean isSequentialProcessingAllowed();
+
+  /**
+   * Disables automatic formatting of modified PSI elements, runs the specified operation
+   * and re-enables the formatting. Can be used to improve performance of PSI write
+   * operations.
+   *
+   * @param r the operation to run.
+   */
+  public abstract void performActionWithFormatterDisabled(Runnable r);
+
+  public abstract <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws T;
+
+  public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
 }

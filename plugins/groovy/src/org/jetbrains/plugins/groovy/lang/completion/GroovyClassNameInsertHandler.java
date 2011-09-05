@@ -83,7 +83,7 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
       GroovyPsiElement place = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GroovyPsiElement.class, false);
       JavaCompletionUtil.insertParentheses(context, item, false, place != null && GroovyCompletionUtil.hasConstructorParameters(psiClass, place));
 
-      if (context.getCompletionChar() == '<') {
+      if (context.getCompletionChar() == '<' || psiClass.hasTypeParameters()) {
         context.getDocument().insertString(identifierEnd, "<>");
         context.setAddCompletionChar(false);
         context.getEditor().getCaretModel().moveToOffset(identifierEnd + 1);

@@ -26,6 +26,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -204,8 +205,8 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   @Nullable
-  public GrTypeElement setReturnType(String returnType) {
-    setReturnType(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeByFQClassName(returnType, getResolveScope()));
+  public GrTypeElement setReturnType(String returnType, GlobalSearchScope scope) {
+    setReturnType(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeByFQClassName(returnType, scope));
     return null;
   }
 
@@ -372,7 +373,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
-    return PsiClassImplUtil.isMethodEquivalentTo(this, another);
+    return PsiClassImplUtil.isMethodEquivalentTo(this, another) || getNavigationElement() == another;
   }
 
   @NotNull

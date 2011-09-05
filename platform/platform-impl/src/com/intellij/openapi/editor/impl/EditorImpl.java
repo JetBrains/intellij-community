@@ -37,10 +37,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
@@ -57,7 +54,6 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -68,6 +64,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBScrollBar;
@@ -75,12 +72,14 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.TIntArrayList;
@@ -3533,7 +3532,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           return;
         }
       }
-      myEditorComponent.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+      myEditorComponent.setCursor(SystemInfo.isMac && ColorUtil.isDark(getBackgroundColor()) ?
+                                  MacUIUtil.getInvertedTextCursor(): Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
     }
   }
 
@@ -5329,27 +5329,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 if (editor.getDocument().getRangeGuard(offset, offset) != null) return;
 
                 EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-                final CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
-
-                Transferable backup = null;
-                try {
-                  backup = copyPasteManager.getContents();
-                  copyPasteManager.setContents(t);
-                }
-                catch (Exception e) {
-                  LOG.info("Error communicating with system clipboard", e);
-                }
 
                 editor.putUserData(LAST_PASTED_REGION, null);
-                pasteHandler.execute(editor, editor.getDataContext());
-                try {
-                  if (backup != null) {
-                    copyPasteManager.setContents(backup);
+
+                LOG.assertTrue(pasteHandler instanceof EditorTextInsertHandler);
+
+                EditorTextInsertHandler handler = (EditorTextInsertHandler)pasteHandler;
+                handler.execute(editor, editor.getDataContext(), new Producer<Transferable>() {
+                  @Override
+                  public Transferable produce() {
+                    return t;
                   }
-                }
-                catch (IllegalStateException e) {
-                  LOG.info(e);
-                }
+                });
 
                 TextRange range = editor.getUserData(LAST_PASTED_REGION);
                 if (range != null) {

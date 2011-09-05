@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -389,26 +390,32 @@ public class ExpressionUtils {
         return true;
     }
 
-    @Nullable
-    public static <T extends PsiElement> T getPrevOrNextSiblingOfType(
-            @Nullable PsiElement sibling, @NotNull Class<T> aClass) {
-        if (sibling == null) {
-            return null;
+    public static boolean isStringConcatenationOperand(PsiExpression expression) {
+        final PsiElement parent = expression.getParent();
+        if (!(parent instanceof PsiPolyadicExpression)) {
+            return false;
         }
-        for (PsiElement prevSibling = sibling.getPrevSibling();
-             prevSibling != null;
-             prevSibling = prevSibling.getPrevSibling()) {
-            if (aClass.isInstance(prevSibling)) {
-                return (T)prevSibling;
+        final PsiPolyadicExpression polyadicExpression =
+                (PsiPolyadicExpression)parent;
+        if (!JavaTokenType.PLUS.equals(
+                polyadicExpression.getOperationTokenType())) {
+            return false;
+        }
+        final PsiExpression[] operands = polyadicExpression.getOperands();
+        if (operands.length < 2) {
+            return false;
+        }
+        final int index = ArrayUtil.indexOf(operands, expression);
+        for (int i = 0; i < index; i++) {
+            final PsiType type = operands[i].getType();
+            if (TypeUtils.isJavaLangString(type)) {
+                return true;
             }
         }
-        for (PsiElement nextSibling = sibling.getNextSibling();
-             nextSibling != null;
-             nextSibling = nextSibling.getNextSibling()) {
-            if (aClass.isInstance(nextSibling)) {
-                return (T)nextSibling;
-            }
+        if (index == 0) {
+            final PsiType type = operands[index + 1].getType();
+            return TypeUtils.isJavaLangString(type);
         }
-        return null;
+        return false;
     }
 }

@@ -1,4 +1,4 @@
-'bugaga' ==~ /abc ${do "def ${a+b}"} fgh$st ${frg./sdf/(5)}
+'bugaga' ==~ /abc ${doo "def ${a+b}"} fgh$st ${frg./sdf/(5)}
 i = 5
 -----
 Groovy script
@@ -16,7 +16,7 @@ Groovy script
           <empty list>
         Call expression
           Reference expression
-            PsiElement(identifier)('do')
+            PsiElement(identifier)('doo')
           PsiWhiteSpace(' ')
           Command arguments
             Compound Gstring

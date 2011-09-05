@@ -15,12 +15,16 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +40,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -264,6 +269,44 @@ public class MoveClassesOrPackagesUtil {
     }
   }
 
+  @Nullable
+  public static PsiDirectory chooseDestinationPackage(Project project, String packageName, @Nullable PsiDirectory baseDir) {
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final PackageWrapper packageWrapper = new PackageWrapper(psiManager, packageName);
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
+    PsiDirectory directory;
+
+    PsiDirectory[] directories = aPackage != null ? aPackage.getDirectories() : null;
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final boolean filterOutSources = baseDir != null && fileIndex.isInTestSourceContent(baseDir.getVirtualFile());
+    if (directories != null && directories.length == 1 && !(filterOutSources &&
+                                                            !fileIndex.isInTestSourceContent(directories[0].getVirtualFile()))) {
+      directory = directories[0];
+    }
+    else {
+      final VirtualFile[] contentSourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
+      if (contentSourceRoots.length == 1 && !(filterOutSources && !fileIndex.isInTestSourceContent(contentSourceRoots[0]))) {
+        directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+          @Override
+          public PsiDirectory compute() {
+            return RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots[0]);
+          }
+        });
+      }
+      else {
+        final VirtualFile sourceRootForFile = chooseSourceRoot(packageWrapper, contentSourceRoots, baseDir);
+        if (sourceRootForFile == null) return null;
+        directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+          @Override
+          public PsiDirectory compute() {
+            return new AutocreatingSingleSourceRootMoveDestination(packageWrapper, sourceRootForFile).getTargetDirectory((PsiDirectory)null);
+          }
+        });
+      }
+    }
+    return directory;
+  }
+  
   public static VirtualFile chooseSourceRoot(final PackageWrapper targetPackage,
                                              final VirtualFile[] contentSourceRoots,
                                              final PsiDirectory initialDirectory) {
@@ -287,10 +330,10 @@ public class MoveClassesOrPackagesUtil {
     return sourceRootForFile;
   }
 
-  private static void buildDirectoryList(PackageWrapper aPackage,
-                                         VirtualFile[] contentSourceRoots,
-                                         LinkedHashSet<PsiDirectory> targetDirectories,
-                                         Map<PsiDirectory, String> relativePathsToCreate) {
+  public static void buildDirectoryList(PackageWrapper aPackage,
+                                        VirtualFile[] contentSourceRoots,
+                                        LinkedHashSet<PsiDirectory> targetDirectories,
+                                        Map<PsiDirectory, String> relativePathsToCreate) {
 
     sourceRoots:
     for (VirtualFile root : contentSourceRoots) {

@@ -33,9 +33,19 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public CodeStyleSettings PER_PROJECT_SETTINGS = null;
   public boolean USE_PER_PROJECT_SETTINGS = false;
   private CodeStyleSettings myTemporarySettings;
+  private boolean myIsLoaded = false;
 
   public static CodeStyleSettingsManager getInstance(Project project) {
-    return ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
+    ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
+    if (!projectSettingsManager.isLoaded()) {
+      LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
+      if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
+        projectSettingsManager.loadState(legacySettingsManager.getState());
+        projectSettingsManager.USE_PER_PROJECT_SETTINGS = true;
+        LOG.info("Imported old project code style settings.");
+      }
+    }
+    return projectSettingsManager;
   }
 
   public static CodeStyleSettingsManager getInstance() {
@@ -80,6 +90,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public void loadState(Element state) {
     try {
       readExternal(state);
+      myIsLoaded = true;
     }
     catch (InvalidDataException e) {
       LOG.error(e);
@@ -102,5 +113,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
 
   public void dropTemporarySettings() {
     myTemporarySettings = null;
+  }
+
+  public boolean isLoaded() {
+    return myIsLoaded;
   }
 }

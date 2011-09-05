@@ -20,14 +20,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.occurences.OccurenceManager;
+import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 
 /**
  * User: anna
  */
 public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
   protected final PsiClass myParentClass;
-  protected final OccurenceManager myOccurenceManager;
+  protected final OccurrenceManager myOccurrenceManager;
 
   private SmartPsiElementPointer<PsiElement> myAnchorElement;
   private int myAnchorIdx = -1;
@@ -45,11 +45,11 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
                                             String title,
                                             PsiClass parentClass,
                                             final PsiElement anchorElement,
-                                            final OccurenceManager occurenceManager,
+                                            final OccurrenceManager occurrenceManager,
                                             final PsiElement anchorElementIfAll) {
     super(project, editor, expr, localVariable, occurrences, typeSelectorManager, title);
     myParentClass = parentClass;
-    myOccurenceManager = occurenceManager;
+    myOccurrenceManager = occurrenceManager;
     mySmartPointerManager = SmartPointerManager.getInstance(project);
     myAnchorElement = anchorElement != null ? mySmartPointerManager.createSmartPsiElementPointer(anchorElement) : null;
     myAnchorElementIfAll = anchorElementIfAll != null ? mySmartPointerManager.createSmartPsiElementPointer(anchorElementIfAll) : null;

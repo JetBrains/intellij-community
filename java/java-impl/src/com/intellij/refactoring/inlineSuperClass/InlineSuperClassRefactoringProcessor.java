@@ -207,39 +207,43 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   }
 
   protected void performRefactoring(final UsageInfo[] usages) {
-    new PushDownProcessor(mySuperClass.getProject(), myMemberInfos, mySuperClass, new DocCommentPolicy(myPolicy)){
+    new PushDownProcessor(mySuperClass.getProject(), myMemberInfos, mySuperClass, new DocCommentPolicy(myPolicy)) {
       //push down conflicts are already collected
       @Override
       protected boolean showConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
         return true;
       }
-    }.run();
 
-    RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
-    for (UsageInfo usageInfo : usages) {
-      if (!(usageInfo instanceof ReplaceExtendsListUsageInfo)) {
+      @Override
+      protected void performRefactoring(UsageInfo[] pushDownUsages) {
+        super.performRefactoring(pushDownUsages);
+        RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
+        for (UsageInfo usageInfo : usages) {
+          if (!(usageInfo instanceof ReplaceExtendsListUsageInfo)) {
+            try {
+              ((FixableUsageInfo)usageInfo).fixUsage();
+            }
+            catch (IncorrectOperationException e) {
+              LOG.info(e);
+            }
+          }
+        }
+        replaceInnerTypeUsages();
+
+        //postpone broken hierarchy
+        for (UsageInfo usage : usages) {
+          if (usage instanceof ReplaceExtendsListUsageInfo) {
+            ((ReplaceExtendsListUsageInfo)usage).fixUsage();
+          }
+        }
         try {
-          ((FixableUsageInfo)usageInfo).fixUsage();
+          mySuperClass.delete();
         }
         catch (IncorrectOperationException e) {
-          LOG.info(e);
+          LOG.error(e);
         }
       }
-    }
-    replaceInnerTypeUsages();
-
-    //postpone broken hierarchy
-    for (UsageInfo usage : usages) {
-      if (usage instanceof ReplaceExtendsListUsageInfo) {
-        ((ReplaceExtendsListUsageInfo)usage).fixUsage();
-      }
-    }
-    try {
-      mySuperClass.delete();
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    }.run();
   }
 
   private void replaceInnerTypeUsages() {

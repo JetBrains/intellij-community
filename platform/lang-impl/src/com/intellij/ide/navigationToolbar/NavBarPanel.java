@@ -37,6 +37,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
@@ -53,6 +54,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.util.Function;
@@ -73,7 +75,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
  */
-public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Disposable {
+public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Disposable, Queryable {
 
   private final NavBarModel myModel;
 
@@ -244,19 +246,17 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
-  public void selectTail() {
-    //myUpdateQueue.queueModelUpdateFromFocus();
+  public void rebuildAndSelectTail(final boolean requestFocus) {
+    myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
-    final int listIndex = myModel.getSelectedIndex();
     myUpdateQueue.queueSelect(new Runnable() {
       @Override
       public void run() {
         if (!myList.isEmpty()) {
-          if (listIndex != myModel.getSelectedIndex()) {
-            return;
-          }
           myModel.setSelectedIndex(myList.size() - 1);
-          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+          if (requestFocus) {
+            IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+          }
         }
       }
     });
@@ -467,7 +467,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
       final NavBarItem item = getItem(index);
 
-      myNodePopup = new NavBarPopup(this, siblings, index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0);
+      myNodePopup = new NavBarPopup(this, siblings, 0);
       if (item != null && item.isShowing()) {
         myNodePopup.show(item);
       }
@@ -708,7 +708,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       });
     }
 
-    selectTail();
+    rebuildAndSelectTail(true);
   }
 
   AsyncResult<RelativePoint> getHintContainerShowPoint() {
@@ -745,5 +745,41 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
     result.setDone(myLocationCache);
     return result;
+  }
+
+  @Override
+  public void putInfo(Map<String, String> info) {
+    StringBuilder result = new StringBuilder();
+    for (int i = 0; i < myList.size(); i++) {
+      NavBarItem each = myList.get(i);
+      if (each.isSelected()) {
+        result.append("[" + each.getText() + "]");
+      } else {
+        result.append(each.getText());
+      }
+      if (i < myList.size() - 1) {
+        result.append(">");
+      }
+    }
+    info.put("navBar", result.toString());
+    
+    if (isNodePopupShowing()) {
+      StringBuilder popupText = new StringBuilder();
+      JBList list = myNodePopup.getList();
+      for (int i = 0; i < list.getModel().getSize(); i++) {
+        Object eachElement = list.getModel().getElementAt(i);
+        String text = new NavBarItem(this, eachElement).getText();
+        int selectedIndex = list.getSelectedIndex();
+        if (selectedIndex != -1 && eachElement.equals(list.getSelectedValue())) {
+          popupText.append("[" + text + "]");
+        } else {
+          popupText.append(text);
+        }
+        if (i < list.getModel().getSize() - 1) {
+          popupText.append(">");
+        }
+      }
+      info.put("navBarPopup", popupText.toString());
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class AddFileOperation extends CvsOperationOnFiles {
 
   protected void addFilesToCommand(CvsRootProvider root, AbstractCommand command) {
     super.addFilesToCommand(root, command);
-    List<AbstractFileObject> fileObjects = command.getFileObjects().getFileObjects();
+    List<AbstractFileObject> fileObjects = command.getFileObjects();
     for (final AbstractFileObject fileObject: fileObjects) {
       if (fileObject.getParent() == null) {
         LOG.error("Local Root: " + getLocalRootFor(root) + ", Files: " + myFiles);

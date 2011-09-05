@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,9 +82,9 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   public OSProcessHandler createOSProcessHandler() throws ExecutionException {
     final Sdk sdk = getJdk();
     assert sdk != null : "SDK should be defined";
-    final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk), this,
-                                                                       JdkUtil.useDynamicClasspath(
-                                                                         PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext())));
+    final String exePath = ((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk);
+    final boolean forceDynamicClasspath = JdkUtil.useDynamicClasspath(PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
+    final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, this, forceDynamicClasspath);
     final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()) {
       @Override
       public Charset getCharset() {

@@ -31,10 +31,8 @@ import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -42,7 +40,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
@@ -62,27 +59,26 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   @NonNls private static final String LIBRARY_TYPE_ATTR = "type";
   @NonNls private static final String ROOT_PATH_ELEMENT = "root";
   @NonNls public static final String ELEMENT = "library";
-  @NonNls private static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";
-  @NonNls private static final String URL_ATTR = "url";
-  @NonNls private static final String RECURSIVE_ATTR = "recursive";
-  @NonNls private static final String ROOT_TYPE_ATTR = "type";
   @NonNls private static final String PROPERTIES_ELEMENT = "properties";
-  private static final OrderRootType DEFAULT_JAR_DIRECTORY_TYPE = OrderRootType.CLASSES;
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private String myName;
   private final LibraryTable myLibraryTable;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;
   private final JarDirectories myJarDirectories = new JarDirectories();
-  private final List<LocalFileSystem.WatchRequest> myWatchRequests = new ArrayList<LocalFileSystem.WatchRequest>();
   private final LibraryImpl mySource;
   private LibraryType<?> myType;
   private LibraryProperties myProperties;
 
   private final MyRootProviderImpl myRootProvider = new MyRootProviderImpl();
   private final ModifiableRootModel myRootModel;
-  private MessageBusConnection myBusConnection = null;
   private boolean myDisposed;
   private final Disposable myPointersDisposable = Disposer.newDisposable();
+  private final JarDirectoryWatcher myRootsWatcher = new JarDirectoryWatcher(myJarDirectories) {
+    @Override
+    protected void fireRootSetChanged() {
+      myRootProvider.fireRootSetChanged();
+    }
+  };
 
   LibraryImpl(LibraryTable table, Element element, ModifiableRootModel rootModel) throws InvalidDataException {
     myLibraryTable = table;
@@ -90,11 +86,11 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     mySource = null;
     readName(element);
     readProperties(element);
-    readJarDirectories(element);
+    myJarDirectories.readExternal(element);
     //init roots depends on my hashcode, hashcode depends on jardirectories and name
     myRoots = initRoots();
     readRoots(element);
-    updateWatchedRoots();
+    myRootsWatcher.updateWatchedRoots();
   }
 
   LibraryImpl(String name, final @Nullable LibraryType<?> type, LibraryTable table, ModifiableRootModel rootModel) {
@@ -141,14 +137,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
   public void dispose() {
     assert !isDisposed();
-    if (!myWatchRequests.isEmpty()) {
-      LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
-      myWatchRequests.clear();
-    }
-    if (myBusConnection != null) {
-      myBusConnection.disconnect();
-      myBusConnection = null;
-    }
+    Disposer.dispose(myRootsWatcher);
     myDisposed = true;
   }
 
@@ -212,7 +201,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   public Library cloneLibrary(RootModelImpl rootModel) {
     LOG.assertTrue(myLibraryTable == null);
     final LibraryImpl clone = new LibraryImpl(this, null, rootModel);
-    clone.updateWatchedRoots();
+    clone.myRootsWatcher.updateWatchedRoots();
     return clone;
   }
 
@@ -260,8 +249,8 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     readName(element);
     readProperties(element);
     readRoots(element);
-    readJarDirectories(element);
-    updateWatchedRoots();
+    myJarDirectories.readExternal(element);
+    myRootsWatcher.updateWatchedRoots();
   }
 
   private void readProperties(Element element) {
@@ -295,32 +284,9 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     }
   }
 
-  private void readJarDirectories(Element element) {
-    myJarDirectories.clear();
-    final List jarDirs = element.getChildren(JAR_DIRECTORY_ELEMENT);
-    for (Object item : jarDirs) {
-      final Element jarDir = (Element)item;
-      final String url = jarDir.getAttributeValue(URL_ATTR);
-      final String recursive = jarDir.getAttributeValue(RECURSIVE_ATTR);
-      final OrderRootType rootType = getJarDirectoryRootType(jarDir.getAttributeValue(ROOT_TYPE_ATTR));
-      if (url != null) {
-        myJarDirectories.add(rootType, url, Boolean.valueOf(Boolean.parseBoolean(recursive)));
-      }
-    }
-  }
-
-  private static OrderRootType getJarDirectoryRootType(@Nullable String type) {
-    for (PersistentOrderRootType rootType : OrderRootType.getAllPersistentTypes()) {
-      if (rootType.name().equals(type)) {
-        return rootType;
-      }
-    }
-    return DEFAULT_JAR_DIRECTORY_TYPE;
-  }
-
   //TODO<rv> Remove the next two methods as a temporary solution. Sort in OrderRootType.
   //
-  private static List<OrderRootType> sortRootTypes(Collection<OrderRootType> rootTypes) {
+  public static List<OrderRootType> sortRootTypes(Collection<OrderRootType> rootTypes) {
     List<OrderRootType> allTypes = new ArrayList<OrderRootType>(rootTypes);
     Collections.sort(allTypes, new Comparator<OrderRootType>() {
       public int compare(final OrderRootType o1, final OrderRootType o2) {
@@ -340,7 +306,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return "";
   }
 
-  public void writeExternal(Element rootElement) {
+  public void writeExternal(Element rootElement) throws WriteExternalException {
     LOG.assertTrue(!isDisposed(), "Already disposed!");
 
     Element element = new Element(ELEMENT);
@@ -369,20 +335,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT);
       element.addContent(rootTypeElement);
     }
-    final List<OrderRootType> rootTypes = sortRootTypes(myJarDirectories.getRootTypes());
-    for (OrderRootType rootType : rootTypes) {
-      final List<String> urls = new ArrayList<String>(myJarDirectories.getDirectories(rootType));
-      Collections.sort(urls, String.CASE_INSENSITIVE_ORDER);
-      for (String url : urls) {
-        final Element jarDirElement = new Element(JAR_DIRECTORY_ELEMENT);
-        jarDirElement.setAttribute(URL_ATTR, url);
-        jarDirElement.setAttribute(RECURSIVE_ATTR, Boolean.toString(myJarDirectories.isRecursive(rootType, url)));
-        if (!rootType.equals(DEFAULT_JAR_DIRECTORY_TYPE)) {
-          jarDirElement.setAttribute(ROOT_TYPE_ATTR, rootType.name());
-        }
-        element.addContent(jarDirElement);
-      }
-    }
+    myJarDirectories.writeExternal(element);
     rootElement.addContent(element);
   }
 
@@ -424,11 +377,11 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public void addJarDirectory(@NotNull final String url, final boolean recursive) {
-    addJarDirectory(url, recursive, DEFAULT_JAR_DIRECTORY_TYPE);
+    addJarDirectory(url, recursive, JarDirectories.DEFAULT_JAR_DIRECTORY_TYPE);
   }
 
   public void addJarDirectory(@NotNull final VirtualFile file, final boolean recursive) {
-    addJarDirectory(file, recursive, DEFAULT_JAR_DIRECTORY_TYPE);
+    addJarDirectory(file, recursive, JarDirectories.DEFAULT_JAR_DIRECTORY_TYPE);
   }
 
   public void addJarDirectory(@NotNull final String url, final boolean recursive, @NotNull OrderRootType rootType) {
@@ -448,7 +401,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public boolean isJarDirectory(@NotNull final String url) {
-    return isJarDirectory(url, DEFAULT_JAR_DIRECTORY_TYPE);
+    return isJarDirectory(url, JarDirectories.DEFAULT_JAR_DIRECTORY_TYPE);
   }
 
   public boolean isJarDirectory(@NotNull final String url, @NotNull final OrderRootType rootType) {
@@ -543,7 +496,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       disposeMyPointers();
       copyRootsFrom(fromModel);
       myJarDirectories.copyFrom(fromModel.myJarDirectories);
-      updateWatchedRoots();
+      myRootsWatcher.updateWatchedRoots();
       myRootProvider.fireRootSetChanged();
     }
   }
@@ -564,90 +517,6 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     }
     Disposer.dispose(myPointersDisposable);
     Disposer.register(this, myPointersDisposable);
-  }
-
-  private void updateWatchedRoots() {
-    final LocalFileSystem fs = LocalFileSystem.getInstance();
-    if (!myWatchRequests.isEmpty()) {
-      fs.removeWatchedRoots(myWatchRequests);
-      myWatchRequests.clear();
-    }
-    if (!myJarDirectories.isEmpty()) {
-      final VirtualFileManager fm = VirtualFileManager.getInstance();
-      for (OrderRootType rootType : myJarDirectories.getRootTypes()) {
-        for (String url : myJarDirectories.getDirectories(rootType)) {
-          if (fm.getFileSystem(VirtualFileManager.extractProtocol(url)) instanceof LocalFileSystem) {
-            final boolean watchRecursively = myJarDirectories.isRecursive(rootType, url);
-            final LocalFileSystem.WatchRequest request = fs.addRootToWatch(VirtualFileManager.extractPath(url), watchRecursively);
-            myWatchRequests.add(request);
-          }
-        }
-      }
-      if (myBusConnection == null) {
-        myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
-        myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-          public void before(final List<? extends VFileEvent> events) {
-          }
-
-          public void after(final List<? extends VFileEvent> events) {
-            boolean changesDetected = false;
-            for (VFileEvent event : events) {
-              if (event instanceof VFileCopyEvent) {
-                final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-                if (isUnderJarDirectory(copyEvent.getNewParent() + "/" + copyEvent.getNewChildName()) ||
-                    isUnderJarDirectory(copyEvent.getFile().getUrl())) {
-                  changesDetected = true;
-                  break;
-                }
-              }
-              else if (event instanceof VFileMoveEvent) {
-                final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
-
-                final VirtualFile file = moveEvent.getFile();
-                if (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(moveEvent.getOldParent().getUrl() + "/" + file.getName())) {
-                  changesDetected = true;
-                  break;
-                }
-              }
-              else if (event instanceof VFileDeleteEvent) {
-                final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
-                if (isUnderJarDirectory(deleteEvent.getFile().getUrl())) {
-                  changesDetected = true;
-                  break;
-                }
-              }
-              else if (event instanceof VFileCreateEvent) {
-                final VFileCreateEvent createEvent = (VFileCreateEvent)event;
-                if (isUnderJarDirectory(createEvent.getParent().getUrl() + "/" + createEvent.getChildName())) {
-                  changesDetected = true;
-                  break;
-                }
-              }
-            }
-
-            if (changesDetected) {
-              myRootProvider.fireRootSetChanged();
-            }
-          }
-
-          private boolean isUnderJarDirectory(String url) {
-            for (String rootUrl : myJarDirectories.getAllDirectories()) {
-              if (FileUtil.startsWith(url, rootUrl)) {
-                return true;
-              }
-            }
-            return false;
-          }
-        });
-      }
-    }
-    else {
-      final MessageBusConnection connection = myBusConnection;
-      if (connection != null) {
-        myBusConnection = null;
-        connection.disconnect();
-      }
-    }
   }
 
   private class MyRootProviderImpl extends RootProviderBaseImpl {
