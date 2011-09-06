@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="output">
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.serr"
-    name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println(&quot;$END$&quot;);">
+            name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println(&quot;$END$&quot;);">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
@@ -9,7 +9,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.sout"
-     name="sout" toReformat="true" toShortenFQNames="true" value="System.out.println($END$);">
+            name="sout" toReformat="true" toShortenFQNames="true" value="System.out.println($END$);">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
@@ -17,7 +17,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.souf"
-     name="souf" toReformat="true" toShortenFQNames="true" value="System.out.printf(&quot;$END$&quot;);">
+            name="souf" toReformat="true" toShortenFQNames="true" value="System.out.printf(&quot;$END$&quot;);">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
@@ -25,25 +25,25 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutm"
-     name="soutm" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$CLASS_NAME$.$METHOD_NAME$&quot;);">
+            name="soutm" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$CLASS_NAME$.$METHOD_NAME$&quot;);">
     <variable alwaysStopAt="false" defaultValue="" expression="className()" name="CLASS_NAME" />
     <variable alwaysStopAt="false" defaultValue="" expression="methodName()" name="METHOD_NAME" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
-      <option name="GROOVY" value="true" />
-      <option name="ASPECTJ" value="true" />
+      <option name="GROOVY" value="false" />
+      <option name="GROOVY_STATEMENT" value="true" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutv"
-     name="soutv" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$EXPR_COPY$ = &quot; + $EXPR$);">
+            name="soutv" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$EXPR_COPY$ = &quot; + $EXPR$);">
     <variable alwaysStopAt="true" defaultValue="&quot;expr&quot;" expression="variableOfType(&quot;&quot;)" name="EXPR" />
     <variable alwaysStopAt="false" defaultValue="" expression="EXPR" name="EXPR_COPY" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
-      <option name="GROOVY" value="true" />
-      <option name="ASPECTJ" value="true" />
+      <option name="GROOVY" value="false" />
+      <option name="GROOVY_STATEMENT" value="true" />
     </context>
   </template>
 </templateSet>
