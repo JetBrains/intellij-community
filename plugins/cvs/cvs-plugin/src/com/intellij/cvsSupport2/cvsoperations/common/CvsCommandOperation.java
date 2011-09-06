@@ -21,7 +21,6 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.connections.pserver.PServerCvsSettings;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoreFileFilterBasedOnCvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesListener;
@@ -61,6 +60,7 @@ import org.netbeans.lib.cvsclient.file.IFileSystem;
 import org.netbeans.lib.cvsclient.file.ILocalFileReader;
 import org.netbeans.lib.cvsclient.file.ILocalFileWriter;
 import org.netbeans.lib.cvsclient.progress.IProgressViewer;
+import org.netbeans.lib.cvsclient.progress.RangeProgressViewer;
 import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
 
 import java.io.File;
@@ -130,8 +130,8 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       @Override
       public void run() {
         try {
-          ReadWriteStatistics statistics = executionEnvironment.getReadWriteStatistics();
-          Collection<CvsRootProvider> allCvsRoots;
+          final ReadWriteStatistics statistics = executionEnvironment.getReadWriteStatistics();
+          final Collection<CvsRootProvider> allCvsRoots;
           try {
             allCvsRoots = getAllCvsRoots();
           }
@@ -139,10 +139,23 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
             throw createVcsExceptionOn(e, null);
           }
 
+          final IProgressViewer progressViewer = new IProgressViewer() {
+
+            @Override
+            public void setProgress(double value) {
+              final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+              if (progressIndicator != null) progressIndicator.setFraction(value);
+            }
+          };
+          int count = 0;
+          final double step = 1.0 / allCvsRoots.size();
           for (CvsRootProvider cvsRootProvider : allCvsRoots) {
             try {
+              final double lowerBound = step * count;
+              final RangeProgressViewer partialProgress = new RangeProgressViewer(progressViewer, lowerBound, lowerBound + step);
               myLastProcessedCvsRoot = cvsRootProvider.getCvsRootAsString();
-              execute(cvsRootProvider, executionEnvironment, statistics, executionEnvironment.getExecutor());
+              execute(cvsRootProvider, executionEnvironment, statistics, partialProgress);
+              count++;
             }
             catch (IOCommandException e) {
               LOG.info(e);
@@ -150,7 +163,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
             }
             catch (CommandException e) {
               LOG.info(e);
-              Exception underlyingException = e.getUnderlyingException();
+              final Exception underlyingException = e.getUnderlyingException();
               if (underlyingException != null) {
                 LOG.info(underlyingException);
               }
@@ -173,7 +186,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
 
   private static VcsException createVcsExceptionOn(Exception e, String cvsRoot) {
     LOG.debug(e);
-    String message = getMessageFrom(null, e);
+    final String message = getMessageFrom(null, e);
     if (message == null) {
       return new CvsException(CvsBundle.message("exception.text.unknown.error"), e, cvsRoot);
     }
@@ -194,24 +207,23 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
 
   protected void execute(CvsRootProvider root,
                          final CvsExecutionEnvironment executionEnvironment,
-                         ReadWriteStatistics statistics, ModalityContext executor)
+                         ReadWriteStatistics statistics, IProgressViewer progressViewer)
     throws CommandException, VcsException {
-    IConnection connection = root.createConnection(statistics);
-    execute(root, executionEnvironment, connection);
-
+    final IConnection connection = root.createConnection(statistics);
+    execute(root, executionEnvironment, connection, progressViewer);
   }
 
   public void execute(final CvsRootProvider root,
                       final CvsExecutionEnvironment executionEnvironment,
-                      IConnection connection) throws CommandException {
-    Command command = createCommand(root, executionEnvironment);
+                      IConnection connection, IProgressViewer progressViewer) throws CommandException {
+    final Command command = createCommand(root, executionEnvironment);
 
     if (command == null) return;
 
     LOG.assertTrue(connection != null, root.getCvsRootAsString());
 
     final CvsMessagesListener cvsMessagesListener = executionEnvironment.getCvsMessagesListener();
-    long start = System.currentTimeMillis();
+    final long start = System.currentTimeMillis();
 
     try {
       final IClientEnvironment clientEnvironment = createEnvironment(connection, root,
@@ -220,7 +232,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
 
       myUpdatedFilesManager.setCvsFileSystem(clientEnvironment.getCvsFileSystem());
       final EventManager eventManager = new EventManager(CvsApplicationLevelConfiguration.getCharset());
-      IGlobalOptions globalOptions = command.getGlobalOptions();
+      final IGlobalOptions globalOptions = command.getGlobalOptions();
 
 
       final IRequestProcessor requestProcessor = new RequestProcessor(clientEnvironment,
@@ -236,7 +248,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       eventManager.addModuleExpansionListener(this);
 
 
-      CvsMessagesTranslator cvsMessagesTranslator = new CvsMessagesTranslator(cvsMessagesListener,
+      final CvsMessagesTranslator cvsMessagesTranslator = new CvsMessagesTranslator(cvsMessagesListener,
                                                                               clientEnvironment.getCvsFileSystem(),
                                                                               myUpdatedFilesManager,
                                                                               root.getCvsRootAsString());
@@ -249,16 +261,11 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
 
 
       modifyOptions(command.getGlobalOptions());
-      String commandString = composeCommandString(root, command);
+      final String commandString = composeCommandString(root, command);
       cvsMessagesListener.commandStarted(commandString);
       setProgressText(CvsBundle.message("progress.text.command.running.for.file", getOperationName(), root.getCvsRootAsString()));
       try {
-        command.execute(requestProcessor, eventManager, eventManager, clientEnvironment, new IProgressViewer() {
-          public void setProgress(double value) {
-            ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            if (progressIndicator != null) progressIndicator.setFraction(value);
-          }
-        });
+        command.execute(requestProcessor, eventManager, eventManager, clientEnvironment, progressViewer);
       }
       catch (AuthenticationException e) {
         if (! root.isOffline()) {
@@ -295,10 +302,10 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static String composeCommandString(CvsRootProvider root, Command command) {
-    StringBuilder result = new StringBuilder();
+    final StringBuilder result = new StringBuilder();
     result.append(root.getLocalRoot());
     result.append(" cvs ");
-    GlobalOptions globalOptions = command.getGlobalOptions();
+    final GlobalOptions globalOptions = command.getGlobalOptions();
     if (globalOptions.isCheckedOutFilesReadOnly()) result.append("-r ");
     if (globalOptions.isDoNoChanges()) result.append("-n ");
     if (globalOptions.isNoHistoryLogging()) result.append("-l ");
@@ -316,7 +323,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   }
 
   private static void setProgressText(String text) {
-    ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) progressIndicator.setText(text);
   }
 
@@ -324,8 +331,8 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
                                                final CvsRootProvider root,
                                                UpdatedFilesManager mergedFilesCollector,
                                                CvsExecutionEnvironment cvsExecutionEnv) {
-    File localRoot = getLocalRootFor(root);
-    File adminRoot = getAdminRootFor(root);
+    final File localRoot = getLocalRootFor(root);
+    final File adminRoot = getAdminRootFor(root);
 
     LOG.assertTrue(localRoot != null, getClass().getName());
     LOG.assertTrue(adminRoot != null, getClass().getName());
@@ -374,7 +381,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
 
   public void fileInfoGenerated(Object info) {
     if (info instanceof UpdateFileInfo) {
-      UpdateFileInfo updateFileInfo = ((UpdateFileInfo)info);
+      final UpdateFileInfo updateFileInfo = ((UpdateFileInfo)info);
       if (FileMessage.CONFLICT.equals(updateFileInfo.getType())) {
         CvsUtil.addConflict(updateFileInfo.getFile());
       }
@@ -418,15 +425,15 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     }
 
     public void gotEntry(FileObject fileObject, Entry entry) {
-      IFileSystem localFileSystem = myClientEnvironment.getCvsFileSystem().getLocalFileSystem();
-      File file = localFileSystem.getFile(fileObject);
+      final IFileSystem localFileSystem = myClientEnvironment.getCvsFileSystem().getLocalFileSystem();
+      final File file = localFileSystem.getFile(fileObject);
       if (myUpdatedFilesManager.fileIsNotUpdated(file)) {
         return;
       }
-      File parent = file.getParentFile();
-      VirtualFile virtualParent = CvsVfsUtil.findFileByIoFile(parent);
+      final File parent = file.getParentFile();
+      final VirtualFile virtualParent = CvsVfsUtil.findFileByIoFile(parent);
       if (entry != null) {
-        Entry previousEntry = myFileToPreviousEntryMap.containsKey(file)
+        final Entry previousEntry = myFileToPreviousEntryMap.containsKey(file)
                               ?
                               myFileToPreviousEntryMap.get(file)
                               : CvsEntriesManager.getInstance().getCachedEntry(virtualParent, entry.getFileName());
