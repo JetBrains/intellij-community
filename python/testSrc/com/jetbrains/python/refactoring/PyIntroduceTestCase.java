@@ -56,7 +56,7 @@ public abstract class PyIntroduceTestCase extends PyLightFixtureTestCase {
     }
   }
 
-  protected void doTestInplace() {
+  protected void doTestInplace(@Nullable Consumer<IntroduceOperation> customization) {
     String name = getTestName(true);
     myFixture.configureByFile(name + ".py");
     final boolean enabled = myFixture.getEditor().getSettings().isVariableInplaceRenameEnabled();
@@ -69,6 +69,9 @@ public abstract class PyIntroduceTestCase extends PyLightFixtureTestCase {
       final IntroduceOperation introduceOperation = new IntroduceOperation(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), "a",
                                                                            false, false);
       introduceOperation.setReplaceAll(true);
+      if (customization != null) {
+        customization.consume(introduceOperation);
+      }
       handler.performAction(introduceOperation);
 
       TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());

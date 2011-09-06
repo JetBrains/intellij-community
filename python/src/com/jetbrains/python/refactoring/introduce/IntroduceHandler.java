@@ -82,7 +82,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression) {
+  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
     PyExpressionStatement statement = PsiTreeUtil.getParentOfType(expression, PyExpressionStatement.class);
     if (statement != null) {
       if (statement.getExpression() == expression) {
@@ -432,7 +432,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         if (operation.isReplaceAll()) {
           List<PsiElement> newOccurrences = new ArrayList<PsiElement>();
           for (PsiElement occurrence : operation.getOccurrences()) {
-            final PsiElement replaced = replaceExpression(occurrence, newExpression);
+            final PsiElement replaced = replaceExpression(occurrence, newExpression, operation);
             if (replaced != null) {
               newOccurrences.add(replaced);
             }
@@ -440,7 +440,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           operation.setOccurrences(newOccurrences);
         }
         else {
-          replaceExpression(expression, newExpression);
+          replaceExpression(expression, newExpression, operation);
         }
 
         postRefactoring(operation.getElement());

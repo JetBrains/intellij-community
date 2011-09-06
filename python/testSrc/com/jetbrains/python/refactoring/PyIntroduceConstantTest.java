@@ -38,7 +38,7 @@ public class PyIntroduceConstantTest extends PyIntroduceTestCase {
   }
   
   public void testPy4414() {
-    doTestInplace();
+    doTestInplace(null);
   }
 
   @Override
