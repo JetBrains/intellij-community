@@ -77,13 +77,13 @@ public class PyConsoleParsingContext extends ParsingContext {
     public boolean parseExpressionOptional() {
       if (myBuilder.getTokenType() == PyTokenTypes.PERC || myBuilder.getTokenType() == PyConsoleTokenTypes.PLING) {
         PsiBuilder.Marker expr = myBuilder.mark();
+        PsiBuilder.Marker command = myBuilder.mark();
 
         myBuilder.advanceLexer();
 
-        PsiBuilder.Marker command = myBuilder.mark();
         if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
           myBuilder.advanceLexer();
-          command.done(PyElementTypes.DECORATOR_CALL);
+          command.done(PyElementTypes.REFERENCE_EXPRESSION);
         }
         else {
           expr.drop();
