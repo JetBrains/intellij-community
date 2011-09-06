@@ -956,12 +956,14 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       Matcher.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
     }
     catch (MalformedPatternException ex) {
-      reportMessage(
-        "this.pattern.is.malformed.message",
-        searchCriteriaEdit,
-        ex.getMessage() != null ? ex.getMessage():""
-      );
-      result = false;
+      if (myRunFindActionOnClose) {
+        reportMessage(
+          "this.pattern.is.malformed.message",
+          searchCriteriaEdit,
+          ex.getMessage() != null ? ex.getMessage() : ""
+        );
+        result = false;
+      }
     }
     catch (UnsupportedPatternException ex) {
       reportMessage("this.pattern.is.unsupported.message", searchCriteriaEdit, ex.getPattern());
