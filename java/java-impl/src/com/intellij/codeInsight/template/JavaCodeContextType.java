@@ -41,8 +41,8 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
     if (PsiUtilBase.getLanguageAtOffset(file, offset).isKindOf(StdLanguages.JAVA)) {
       PsiElement element = file.findElementAt(offset);
-      if (element instanceof PsiWhiteSpace && offset > 0) {
-        element = file.findElementAt(offset - 1);
+      if (element instanceof PsiWhiteSpace) {
+        return false;
       }
       return element != null && isInContext(element);
     }
