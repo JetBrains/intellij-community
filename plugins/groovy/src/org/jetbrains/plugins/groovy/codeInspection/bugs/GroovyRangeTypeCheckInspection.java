@@ -36,7 +36,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -286,8 +285,8 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
             }
             if (anchor == null) return;
             list = (GrReferenceList)myPsiClass.addBefore(list, anchor);
-            myPsiClass.getNode().addLeaf(GroovyTokenTypes.mWS, " ", anchor.getNode());
-            myPsiClass.getNode().addLeaf(GroovyTokenTypes.mWS, " ", list.getNode());
+            myPsiClass.getNode().addLeaf(TokenType.WHITE_SPACE, " ", anchor.getNode());
+            myPsiClass.getNode().addLeaf(TokenType.WHITE_SPACE, " ", list.getNode());
           }
         }
         else {
@@ -297,8 +296,8 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
             PsiElement anchor = myPsiClass.getBody();
             if (anchor == null) return;
             list = (GrReferenceList)myPsiClass.addBefore(list, anchor);
-            myPsiClass.getNode().addLeaf(GroovyTokenTypes.mWS, " ", list.getNode());
-            myPsiClass.getNode().addLeaf(GroovyTokenTypes.mWS, " ", anchor.getNode());
+            myPsiClass.getNode().addLeaf(TokenType.WHITE_SPACE, " ", list.getNode());
+            myPsiClass.getNode().addLeaf(TokenType.WHITE_SPACE, " ", anchor.getNode());
           }
         }
 

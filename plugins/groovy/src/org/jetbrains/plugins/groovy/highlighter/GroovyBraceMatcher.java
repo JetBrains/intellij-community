@@ -53,7 +53,6 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
 
   public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType ibraceType, @Nullable IElementType tokenType) {
     return tokenType == null
-        || GroovyTokenTypes.mWS == tokenType
         || TokenType.WHITE_SPACE == tokenType
         || TokenSets.COMMENT_SET.contains(tokenType)
         || tokenType == GroovyTokenTypes.mSEMI

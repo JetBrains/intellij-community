@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.lexer.FlexLexer;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import java.util.*;
 import java.lang.reflect.Field;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 %%
 
 %class _GroovyLexer
-%implements FlexLexer, GroovyTokenTypes
+%implements FlexLexer, GroovyTokenTypes, TokenType
 %unicode
 %public
 
@@ -59,8 +60,8 @@ import org.jetbrains.annotations.NotNull;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 mONE_NL = \r | \n | \r\n                                    // NewLines
-mWS = " " | \t | \f | \\ {mONE_NL}                          // Whitespaces
-mNLS = {mONE_NL}({mONE_NL}|{mWS})*
+WHITE_SPACE = " " | \t | \f | \\ {mONE_NL}                          // Whitespaces
+mNLS = {mONE_NL}({mONE_NL}|{WHITE_SPACE})*
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// Comments ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -235,21 +236,21 @@ mGSTRING_LITERAL = \"\"
   {mML_COMMENT}                             {  return mML_COMMENT; }
   {mDOC_COMMENT}                            {  return GROOVY_DOC_COMMENT; }
 
-  ({mNLS}|{mWS})+                           {  return mWS; }
+  ({mNLS}|{WHITE_SPACE})+                   {  return WHITE_SPACE; }
 
   [^]                                       { yypushback(1);
                                               yybegin(afterComment);  }
 }
 <NLS_AFTER_LBRACE>{
 
-  ({mNLS}|{mWS})+                           { return mWS; }
+  ({mNLS}|{WHITE_SPACE})+                   { return WHITE_SPACE; }
 
   [^]                                       { yypushback(1);
                                               yybegin(WAIT_FOR_REGEX);  }
 }
 <NLS_AFTER_NLS>{
 
-  ({mNLS}|{mWS})+                           { return mWS; }
+  ({mNLS}|{WHITE_SPACE})+                   { return WHITE_SPACE; }
 
   [^]                                       { yypushback(1);
                                               yybegin(NLS_AFTER_COMMENT);  }
@@ -549,8 +550,8 @@ mGSTRING_LITERAL = \"\"
 
 <WAIT_FOR_REGEX> {
 
-{mWS}                                     {  afterComment = YYINITIAL;
-                                             return(mWS);  }
+{WHITE_SPACE}                             {  afterComment = YYINITIAL;
+                                             return(WHITE_SPACE);  }
 
 {mSL_COMMENT}                             {  return mSL_COMMENT; }
 {mML_COMMENT}                             {  return mML_COMMENT; }
@@ -653,11 +654,11 @@ mGSTRING_LITERAL = \"\"
 ///////////////////////// White spaces & NewLines //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-{mWS}                                     {  return mWS; }
+{WHITE_SPACE}                             {  return WHITE_SPACE; }
 {mNLS}                                    {  yybegin(NLS_AFTER_NLS);
                                              afterComment = WAIT_FOR_REGEX;
                                              return !braceCount.isEmpty() &&
-                                                 mLPAREN == braceCount.peek() ? mWS : mNLS; }
+                                                 mLPAREN == braceCount.peek() ? WHITE_SPACE : mNLS; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////Comments //////////////////////////////////////////////////////////////////////////////////////

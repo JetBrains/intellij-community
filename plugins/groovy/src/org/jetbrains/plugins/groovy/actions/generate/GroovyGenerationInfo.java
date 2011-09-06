@@ -24,7 +24,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
@@ -72,7 +72,7 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
     }
 
     final IElementType type = element.getNode().getElementType();
-    if (type == GroovyTokenTypes.mNLS || type == GroovyTokenTypes.mWS) {
+    if (TokenSets.WHITE_SPACES_SET.contains(type)) {
       return element.getNextSibling();
     }
 
