@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
@@ -39,7 +40,7 @@ import java.util.List;
  * User: anna
  * Date: 10/14/10
  */
-public abstract class OccurrencesChooser<T> {
+public class OccurrencesChooser<T extends PsiElement> {
   public static enum ReplaceChoice {
     NO("Replace this occurrence only"), NO_WRITE("Replace all occurrences but write"), ALL("Replace all {0} occurrences");
 
@@ -141,7 +142,9 @@ public abstract class OccurrencesChooser<T> {
       .createPopup().showInBestPositionFor(myEditor);
   }
 
-  protected abstract TextRange getOccurrenceRange(T occurrence);
+  protected TextRange getOccurrenceRange(T occurrence) {
+    return occurrence.getTextRange();
+  }
 
   private void dropHighlighters() {
     for (RangeHighlighter highlight : myRangeHighlighters) {
