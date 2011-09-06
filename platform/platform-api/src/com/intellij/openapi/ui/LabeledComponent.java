@@ -23,6 +23,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -145,7 +146,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   }
 
   @Override
-  public void setAnchor(JComponent labelAnchor) {
+  public void setAnchor(@Nullable JComponent labelAnchor) {
     myLabel.setAnchor(labelAnchor);
   }
 

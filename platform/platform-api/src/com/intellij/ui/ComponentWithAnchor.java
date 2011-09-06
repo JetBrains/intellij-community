@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
@@ -8,5 +10,5 @@ import javax.swing.*;
 
 public interface ComponentWithAnchor {
   JComponent getAnchor();
-  void setAnchor(JComponent anchor);
+  void setAnchor(@Nullable JComponent anchor);
 }
