@@ -21,6 +21,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddFieldQuickFix;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -88,7 +89,37 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
                                           getHelpId());
       return false;
     }
+    if (dependsOnLocalScopeValues(operation.getElement())) {
+      operation.removeAvailableInitPlace(InitPlace.CONSTRUCTOR);
+      operation.removeAvailableInitPlace(InitPlace.SET_UP);
+    }
     return true;
+  }
+
+  private static boolean dependsOnLocalScopeValues(PsiElement initializer) {
+    ScopeOwner scope = PsiTreeUtil.getParentOfType(initializer, ScopeOwner.class);
+    ResolvingVisitor visitor = new ResolvingVisitor(scope);
+    initializer.accept(visitor);
+    return visitor.hasLocalScopeDependencies;
+    
+  }
+  
+  private static class ResolvingVisitor extends PyRecursiveElementVisitor {
+    private boolean hasLocalScopeDependencies = false;
+    private final ScopeOwner myScope;
+
+    public ResolvingVisitor(ScopeOwner scope) {
+      myScope = scope;
+    }
+
+    @Override
+    public void visitPyReferenceExpression(PyReferenceExpression node) {
+      super.visitPyReferenceExpression(node);
+      final PsiElement result = node.getReference().resolve();
+      if (result != null && PsiTreeUtil.getParentOfType(result, ScopeOwner.class) == myScope) {
+        hasLocalScopeDependencies = true;
+      }
+    }
   }
 
   @Nullable

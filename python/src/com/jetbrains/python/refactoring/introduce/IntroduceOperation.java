@@ -42,6 +42,10 @@ public class IntroduceOperation {
     myAvailableInitPlaces.add(initPlace);
   }
 
+  public void removeAvailableInitPlace(IntroduceHandler.InitPlace initPlace) {
+    myAvailableInitPlaces.remove(initPlace);
+  }
+
   public EnumSet<IntroduceHandler.InitPlace> getAvailableInitPlaces() {
     return myAvailableInitPlaces;
   }
