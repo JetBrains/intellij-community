@@ -66,7 +66,7 @@ public class CompositeElement extends TreeElement {
     return myModificationsCount;
   }
 
-  public Object clone() {
+  public CompositeElement clone() {
     CompositeElement clone = (CompositeElement)super.clone();
 
     synchronized (PsiLock.LOCK) {
@@ -109,8 +109,8 @@ public class CompositeElement extends TreeElement {
       PsiFile psiFile = null;
       boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() ||
                    Thread.holdsLock(START_OFFSET_LOCK) ||
-                   wrapper != null && !wrapper.isPhysical() ||
                    (fileElement = TreeUtil.getFileElement(this)) == null ||
+                   wrapper != null && !wrapper.isPhysical() ||
                    (psiFile = (PsiFile)fileElement.getPsi()) == null ||
                    psiFile instanceof DummyHolder ||
                    psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider ||

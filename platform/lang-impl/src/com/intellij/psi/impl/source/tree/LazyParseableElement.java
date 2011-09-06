@@ -146,38 +146,36 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   private void ensureParsed() {
-    ASTNode parsedNode;
+    CharSequence text = myText();
+    if (text == null) return;
+
+    if (TreeUtil.getFileElement(this) == null) {
+      LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
+    }
+
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
+    ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
+    ASTNode parsedNode = type.parseContents(this);
+
+    if (parsedNode == null && text.length() > 0) {
+      CharSequence diagText = ApplicationManager.getApplication().isInternal() ? text : "";
+      LOG.error("No parse for a non-empty string: " + diagText + "; type=" + LogUtil.objectAndClass(type));
+    }
+
     synchronized (lock) {
       if (myText == null) return;
       if (rawFirstChild() != null) {
         LOG.error("Reentrant parsing?");
       }
 
-      if (TreeUtil.getFileElement(this) == null) {
-        LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
-      }
-
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-
-      ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
-      parsedNode = type.parseContents(this);
-
-      if (parsedNode == null && myText.length() > 0) {
-        if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-          LOG.error("No parse for a non-empty string: " + myText + "; type=" + LogUtil.objectAndClass(type));
-        } else {
-          LOG.error("No parse for a non-empty string: type=" + LogUtil.objectAndClass(type));
-        }
-      }
-
-      //CharSequence text = myText;
       myText = null;
 
       if (parsedNode == null) return;
-      rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
+      super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
 
       //if (getNotCachedLength() != text.length()) {
-      //  if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      //  if (ApplicationManager.getApplication().isInternal()) {
       //    LOG.error("Inconsistent reparse: type=" + getElementType() + "; text=" + text + "; treeText=" + getText());
       //  } else {
       //    LOG.error("Inconsistent reparse: type=" + getElementType());
