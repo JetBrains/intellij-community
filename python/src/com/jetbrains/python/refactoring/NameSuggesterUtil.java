@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 /**
  * @author Alexey.Ivanov
  */
-public class NameSuggestorUtil {
-  private NameSuggestorUtil() {
+public class NameSuggesterUtil {
+  private NameSuggesterUtil() {
   }
 
   private static String deleteNonLetterFromString(@NotNull final String string) {

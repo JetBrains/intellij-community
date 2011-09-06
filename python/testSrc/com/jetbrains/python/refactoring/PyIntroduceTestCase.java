@@ -20,14 +20,18 @@ import java.util.Collection;
  */
 public abstract class PyIntroduceTestCase extends PyLightFixtureTestCase {
   protected void doTestSuggestions(Class<? extends PyExpression> parentClass, String... expectedNames) {
+    final Collection<String> names = buildSuggestions(parentClass);
+    for (String expectedName : expectedNames) {
+      assertTrue(StringUtil.join(names, ", "), names.contains(expectedName));
+    }
+  }
+
+  protected Collection<String> buildSuggestions(Class<? extends PyExpression> parentClass) {
     myFixture.configureByFile(getTestName(true) + ".py");
     IntroduceHandler handler = createHandler();
     PyExpression expr = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset()),
                                                     parentClass);
-    final Collection<String> names = handler.getSuggestedNames(expr);
-    for (String expectedName : expectedNames) {
-      assertTrue(StringUtil.join(names, ", "), names.contains(expectedName));
-    }
+    return handler.getSuggestedNames(expr);
   }
 
   protected abstract IntroduceHandler createHandler();

@@ -30,7 +30,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.NameSuggestorUtil;
+import com.jetbrains.python.refactoring.NameSuggesterUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,13 +141,17 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     }
     if (text != null) {
-      candidates.addAll(NameSuggestorUtil.generateNames(text));
+      candidates.addAll(NameSuggesterUtil.generateNames(text));
     }
-    PyType type = expression.getType(TypeEvalContext.slow());
+    final TypeEvalContext context = TypeEvalContext.slow();
+    PyType type = expression.getType(context);
     if (type != null && type != PyNoneType.INSTANCE) {
-      final String typeName = type.getName();
+      String typeName = type.getName();
       if (typeName != null) {
-        candidates.addAll(NameSuggestorUtil.generateNamesByType(typeName));
+        if (type.isBuiltin(context)) {
+          typeName = typeName.substring(0, 1);
+        }
+        candidates.addAll(NameSuggesterUtil.generateNamesByType(typeName));
       }
     }
     final PyKeywordArgument kwArg = PsiTreeUtil.getParentOfType(expression, PyKeywordArgument.class);

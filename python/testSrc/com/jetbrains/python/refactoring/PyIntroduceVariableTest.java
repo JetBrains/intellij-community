@@ -7,6 +7,8 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
 
+import java.util.Collection;
+
 /**
  * @author yole
  */
@@ -42,6 +44,12 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
 
   public void testSuggestStringConstantValue() { // PY-1276
     doTestSuggestions(PyExpression.class, "foo_bar");
+  }
+  
+  public void testDontSuggestBuiltinTypeNames() {  // PY-4474
+    final Collection<String> strings = buildSuggestions(PyExpression.class);
+    assertTrue(strings.contains("s"));
+    assertFalse(strings.contains("str"));
   }
   
   public void testIncorrectSelection() {  // PY-4455
