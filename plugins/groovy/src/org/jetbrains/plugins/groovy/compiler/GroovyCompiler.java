@@ -202,7 +202,9 @@ public class GroovyCompiler extends GroovyCompilerBase {
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     Set<Module> modules = new HashSet<Module>();
     for (VirtualFile file : files) {
-      if (scriptExtensions.contains(file.getExtension()) || compilerManager.isExcludedFromCompilation(file)) {
+      if (scriptExtensions.contains(file.getExtension()) ||
+          compilerManager.isExcludedFromCompilation(file) ||
+          CompilerConfiguration.getInstance(myProject).isResourceFile(file)) {
         continue;
       }
 
