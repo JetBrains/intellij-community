@@ -832,11 +832,11 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         }
 
         Set<Integer> vks = ToolWindowManagerImpl.getActivateToolWindowVKs();
-        String text = "Click to show/hide tool windows side bars";
+        String text = "Click to show or hide the tool window bars";
         if (vks.size() == 1) {
           Integer stroke = vks.iterator().next();
           String keystrokeText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(stroke.intValue(), 0));
-          text += ".\nUse double click of " + keystrokeText + " to popup them when hidden";
+          text += ".\nDouble-press and hold " + keystrokeText + " to show tool window bars when hidden.";
         }
         if (!text.equals(getToolTipText())) {
           setToolTipText(text);
