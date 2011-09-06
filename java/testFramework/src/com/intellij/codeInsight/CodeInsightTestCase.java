@@ -61,6 +61,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -108,7 +109,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   protected void configureByFile(@NonNls String filePath) throws Exception {
     configureByFile(filePath, null);
   }
-  protected VirtualFile configureByFiles(String projectRoot,String... files) throws Exception {
+  protected VirtualFile configureByFiles(@Nullable String projectRoot,String... files) throws Exception {
     final VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
       String path = files[i];
