@@ -51,6 +51,14 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
 
   public LazyParseablePsiElement(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
+    setPsi(this);
+  }
+
+  @Override
+  public LazyParseablePsiElement clone() {
+    LazyParseablePsiElement clone = (LazyParseablePsiElement)super.clone();
+    clone.setPsi(clone);
+    return clone;
   }
 
   @NotNull
@@ -72,7 +80,7 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (ReflectionCache.isInstance(cur, aClass)) result.add((T)cur);
     }
-    return result.toArray((T[]) Array.newInstance(aClass, result.size()));
+    return result.toArray((T[])Array.newInstance(aClass, result.size()));
   }
 
   public PsiElement getFirstChild() {
@@ -284,11 +292,6 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
 
   @NotNull
   public ASTNode getNode() {
-    return this;
-  }
-
-  @Override
-  protected PsiElement createPsiNoLock() {
     return this;
   }
 

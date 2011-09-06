@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.JavaTestUtil;
 import com.intellij.usageView.UsageInfo;
@@ -28,7 +29,7 @@ public class PushDownTest extends LightCodeInsightTestCase {
   }
 
   private void doTest(final boolean failure) throws Exception {
-    final String filePath = "/refactoring/pushDown/" + getTestName(false)+ ".java";
+    final String filePath = "/refactoring/pushDown/" + getTestName(false) + ".java";
     configureByFile(filePath);
 
     final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
@@ -53,7 +54,8 @@ public class PushDownTest extends LightCodeInsightTestCase {
     memberInfo.setChecked(true);
     membersToMove.add(memberInfo);
 
-    new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), currentClass, new DocCommentPolicy(DocCommentPolicy.ASIS)){
+    new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), currentClass,
+                          new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
       protected boolean showConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
         if (failure ? conflicts.isEmpty() : !conflicts.isEmpty()) {
@@ -108,5 +110,31 @@ public class PushDownTest extends LightCodeInsightTestCase {
 
   public void testMethodTypeParametersList() throws Exception {
     doTest();
+  }
+
+  public void testSameClassInterface() throws Exception {
+    final String filePath = "/refactoring/pushDown/" + getTestName(false) + ".java";
+    configureByFile(filePath);
+
+    PsiClass currentClass = JavaPsiFacade.getInstance(getProject()).findClass("Test");
+    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(currentClass, new MemberInfo.Filter<PsiMember>() {
+      public boolean includeMember(PsiMember element) {
+        return true;
+      }
+    });
+    List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(currentClass);
+    for (MemberInfo member : members) {
+      member.setChecked(true);
+    }
+
+    new PushDownProcessor(getProject(), members.toArray(new MemberInfo[members.size()]), currentClass,
+                          new DocCommentPolicy(DocCommentPolicy.ASIS)) {
+      @Override
+      protected boolean showConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
+        return true;
+      }
+    }.run();
+
+    checkResultByFile(filePath + ".after");
   }
 }

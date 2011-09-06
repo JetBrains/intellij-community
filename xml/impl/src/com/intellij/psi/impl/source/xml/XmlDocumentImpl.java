@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiCachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -287,7 +288,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return descriptor;
   }
 
-  public Object clone() {
+  public CompositePsiElement clone() {
     HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
       myDefaultDescriptorsCacheStrict
     );

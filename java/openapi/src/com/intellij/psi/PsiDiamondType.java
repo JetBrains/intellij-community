@@ -114,6 +114,10 @@ public class PsiDiamondType extends PsiType {
       return DiamondInferenceResult.EXPLICIT_CONSTRUCTOR_TYPE_ARGS;
     }
 
+    return resolveInferredTypesNoCheck(newExpression, context);
+  }
+
+  public static DiamondInferenceResult resolveInferredTypesNoCheck(PsiNewExpression newExpression, PsiElement context) {
     final PsiClass psiClass = findClass(newExpression);
     if (psiClass == null) return DiamondInferenceResult.NULL_RESULT;
     final PsiExpressionList argumentList = newExpression.getArgumentList();
@@ -129,7 +133,8 @@ public class PsiDiamondType extends PsiType {
     final PsiTypeParameter[] classParameters = psiClass.getTypeParameters();
     final PsiJavaCodeReferenceElement classOrAnonymousClassReference = newExpression.getClassOrAnonymousClassReference();
     LOG.assertTrue(classOrAnonymousClassReference != null);
-    final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>", newExpression.getProject());
+    final DiamondInferenceResult
+      result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>", newExpression.getProject());
     for (PsiTypeParameter parameter : parameters) {
       for (PsiTypeParameter classParameter : classParameters) {
         if (Comparing.strEqual(classParameter.getName(), parameter.getName())) {

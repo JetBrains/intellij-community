@@ -20,12 +20,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.util.Vector;
 import java.awt.*;
+import java.util.Vector;
 
 public class ComboBoxWithWidePopup extends JComboBox {
 
   private boolean myLayingOut = false;
+  private int myMinLength = 20;
 
   public ComboBoxWithWidePopup(final ComboBoxModel aModel) {
     super(aModel);
@@ -47,6 +48,23 @@ public class ComboBoxWithWidePopup extends JComboBox {
 
   public ComboBoxWithWidePopup() {
   }
+  
+  @SuppressWarnings("GtkPreferredJComboBoxRenderer")
+  @Override
+  public void setRenderer(ListCellRenderer renderer) {
+    super.setRenderer(new AdjustingListCellRenderer(this, renderer));
+  }
+
+  public void setMinLength(int minLength) {
+    myMinLength = minLength;
+  }
+
+  /**
+   * @return min string len to show
+   */
+  protected int getMinLength() {
+    return myMinLength;
+  }
 
   public void doLayout() {
     try {
@@ -65,8 +83,46 @@ public class ComboBoxWithWidePopup extends JComboBox {
     }
     return size;
   }
+  
+  private Dimension _getSuperSize() {
+    return super.getSize();
+  }
 
   protected Dimension getOriginalPreferredSize() {
     return getPreferredSize();
+  }
+
+  private class AdjustingListCellRenderer implements ListCellRenderer {
+    JLabel myTempLabel;
+    private final ListCellRenderer myOldRenderer;
+    private final ComboBoxWithWidePopup myComboBox;
+
+    public AdjustingListCellRenderer(ComboBoxWithWidePopup comboBox, ListCellRenderer oldRenderer) {
+      myComboBox = comboBox;
+      myOldRenderer = oldRenderer;
+      myTempLabel = new JLabel();
+      if (oldRenderer instanceof JComponent) {
+        myTempLabel.setFont(((JComponent)oldRenderer).getFont());
+      }
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      Object _value = value;
+      if (index == -1 && _value instanceof String && !myComboBox.isValid()) {
+        int minLength = getMinLength();
+
+        Dimension size = myComboBox._getSuperSize();
+        String stringValue = (String)_value;
+
+        if (size.width == 0) {
+          if (stringValue.length() > minLength) {
+            _value = stringValue.substring(0, minLength);
+          }
+        }
+      }
+
+      return myOldRenderer.getListCellRendererComponent(list, _value, index, isSelected, cellHasFocus);
+    }
   }
 }

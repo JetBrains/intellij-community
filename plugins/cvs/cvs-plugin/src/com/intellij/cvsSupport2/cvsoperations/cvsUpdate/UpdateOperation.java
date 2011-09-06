@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,16 +46,19 @@ import java.io.File;
 
 public class UpdateOperation extends CvsOperationOnFiles {
   private final UpdateSettings myUpdateSettings;
-  private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   private final CvsVcs2 myVcs;
 
   public UpdateOperation(FilePath[] files, UpdateSettings updateSettings, Project project) {
     myUpdateSettings = updateSettings;
-    myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myVcs = CvsVcs2.getInstance(project);
     addAllFiles(files);
+  }
+
+  public UpdateOperation(FilePath[] files, String branchName,
+                         boolean makeNewFilesReadOnly, Project project) {
+    this(files, new UpdateByBranchUpdateSettings(branchName, makeNewFilesReadOnly), project);
   }
 
   public void addAllFiles(FilePath[] files) {
@@ -74,17 +77,8 @@ public class UpdateOperation extends CvsOperationOnFiles {
     return "update";
   }
 
-  public UpdateOperation(UpdateSettings updateSettings, Project project) {
-    this(new FilePath[0], updateSettings, project);
-  }
-
-  public UpdateOperation(FilePath[] files, String branchName,
-                         boolean makeNewFilesReadOnly, Project project) {
-    this(files, new UpdateByBranchUpdateSettings(branchName, makeNewFilesReadOnly), project);
-  }
-
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    UpdateCommand updateCommand = new UpdateCommand();
+    final UpdateCommand updateCommand = new UpdateCommand();
     addFilesToCommand(root, updateCommand);
     //updateCommand.setPruneDirectories(myUpdateSettings.getPruneEmptyDirectories());
     updateCommand.setCleanCopy(myUpdateSettings.getCleanCopy());
@@ -102,7 +96,6 @@ public class UpdateOperation extends CvsOperationOnFiles {
 
     return updateCommand;
   }
-
 
   public void modifyOptions(GlobalOptions options) {
     super.modifyOptions(options);
@@ -141,7 +134,7 @@ public class UpdateOperation extends CvsOperationOnFiles {
         if (ignoreFileFilterFromSuper.shouldBeIgnored(abstractFileObject, cvsFileSystem)) {
           return true;
         }
-        VirtualFile fileByIoFile = CvsVfsUtil.findFileByIoFile(cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject));
+        final VirtualFile fileByIoFile = CvsVfsUtil.findFileByIoFile(cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject));
         return fileByIoFile != null && myVcsManager.getVcsFor(fileByIoFile) != myVcs;
       }
     };

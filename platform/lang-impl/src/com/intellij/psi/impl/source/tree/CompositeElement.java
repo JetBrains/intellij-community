@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class CompositeElement extends TreeElement {
     return myModificationsCount;
   }
 
-  public Object clone() {
+  public CompositeElement clone() {
     CompositeElement clone = (CompositeElement)super.clone();
 
     synchronized (PsiLock.LOCK) {
@@ -109,8 +109,8 @@ public class CompositeElement extends TreeElement {
       PsiFile psiFile = null;
       boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() ||
                    Thread.holdsLock(START_OFFSET_LOCK) ||
-                   wrapper != null && !wrapper.isPhysical() ||
                    (fileElement = TreeUtil.getFileElement(this)) == null ||
+                   wrapper != null && !wrapper.isPhysical() ||
                    (psiFile = (PsiFile)fileElement.getPsi()) == null ||
                    psiFile instanceof DummyHolder ||
                    psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider ||
@@ -612,7 +612,7 @@ public class CompositeElement extends TreeElement {
     this.lastChild = lastChild;
   }
 
-  public void addChild(@NotNull ASTNode child, final ASTNode anchorBefore) {
+  public void addChild(@NotNull ASTNode child, @Nullable final ASTNode anchorBefore) {
     LOG.assertTrue(anchorBefore == null || ((TreeElement)anchorBefore).getTreeParent() == this, "anchorBefore == null || anchorBefore.getTreeParent() == parent");
     TreeUtil.ensureParsed(getFirstChildNode());
     TreeUtil.ensureParsed(child);

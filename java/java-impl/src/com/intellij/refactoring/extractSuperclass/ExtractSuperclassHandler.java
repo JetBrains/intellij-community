@@ -86,7 +86,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, mySubclass)) return;
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = dataContext != null ? PlatformDataKeys.EDITOR.getData(dataContext) : null;
     if (mySubclass.isInterface()) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("superclass.cannot.be.extracted.from.an.interface"));

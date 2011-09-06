@@ -400,8 +400,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void closeAndFinish(boolean hideLookup) {
-    Lookup lookup = LookupManager.getActiveLookup(myEditor);
-    LOG.assertTrue(lookup == myLookup, lookup + "; " + this);
+    if (!myLookup.isLookupDisposed()) {
+      Lookup lookup = LookupManager.getActiveLookup(myEditor);
+      LOG.assertTrue(lookup == myLookup, lookup + "; " + this);
+    }
     myLookup.removeLookupListener(myLookupListener);
     finishCompletionProcess(true);
     CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());

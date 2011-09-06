@@ -15,7 +15,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
@@ -24,7 +24,7 @@ import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TextFieldWithHistory extends ComboBox {
+public class TextFieldWithHistory extends ComboBoxWithWidePopup {
   private int myHistorySize = 5;
   private final MyModel myModel;
 

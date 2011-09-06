@@ -43,6 +43,14 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   protected CompositePsiElement(IElementType type) {
     super(type);
+    setPsi(this);
+  }
+
+  @Override
+  public CompositePsiElement clone() {
+    CompositePsiElement clone = (CompositePsiElement)super.clone();
+    clone.setPsi(clone);
+    return clone;
   }
 
   @NotNull
@@ -259,11 +267,6 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return this;
   }
 
-  @Override
-  protected PsiElement createPsiNoLock() {
-    return this;
-  }
-
   private PsiElement addInnerBefore(final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
@@ -276,3 +279,4 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return this == another;
   }
 }
+

@@ -202,23 +202,8 @@ public class FragmentedDiffRequestFromChange {
 
     private String notNullContentRevision(final ContentRevision cr) throws VcsException {
       if (cr == null) return "";
-      final Ref<VcsException> ref = new Ref<VcsException>();
-      final String s = new BackgroundSynchronousInvisibleComputable<String>() {
-        @Override
-        protected String runImpl() {
-          try {
-            return cr.getContent();
-          }
-          catch (VcsException e) {
-            ref.set(e);
-            return null;
-          }
-        }
-      }.compute();
-      if (! ref.isNull()) {
-        throw ref.get();
-      }
-      return s == null ? "" : s;
+      String content = cr.getContent();
+      return content == null ? "" : content;
     }
   }
 

@@ -255,6 +255,8 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       try {
         command.execute(requestProcessor, eventManager, eventManager, clientEnvironment, new IProgressViewer() {
           public void setProgress(double value) {
+            ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+            if (progressIndicator != null) progressIndicator.setFraction(value);
           }
         });
       }

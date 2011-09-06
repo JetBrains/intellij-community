@@ -40,13 +40,9 @@ import java.util.*;
  */
 public final class ImportCommand extends Command {
 
-	// Constants ==============================================================
-
-	@NonNls public static final String EXAM_DIR = "server: Importing ";
-
 	// Fields =================================================================
 
-	private final Map wrapperMap = new HashMap();
+	private final Map<SimpleStringPattern, KeywordSubstitution> wrapperMap = new HashMap();
 	private String logMessage;
 	private String module;
 	private String releaseTag;
@@ -56,8 +52,7 @@ public final class ImportCommand extends Command {
 
 	// Setup ==================================================================
 
-	public ImportCommand() {
-	}
+	public ImportCommand() {}
 
 	// Implemented ============================================================
 
@@ -110,7 +105,7 @@ public final class ImportCommand extends Command {
 	}
 
 	public String getCvsCommandLine() {
-		@NonNls final StringBuffer cvsArguments = new StringBuffer("import ");
+		@NonNls final StringBuilder cvsArguments = new StringBuilder("import ");
 		cvsArguments.append(getCvsArguments());
 
 		cvsArguments.append(' ');
@@ -199,7 +194,7 @@ public final class ImportCommand extends Command {
 	// Utils ==================================================================
 
 	private String getCvsArguments() {
-		@NonNls final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuilder cvsArguments = new StringBuilder();
 		cvsArguments.append("-m \"");
 		cvsArguments.append(CommandUtils.getMessageNotNull(getLogMessage()));
 		cvsArguments.append("\" ");
@@ -215,10 +210,8 @@ public final class ImportCommand extends Command {
 			cvsArguments.append(" ");
 		}
 		if (wrapperMap.size() > 0) {
-			final Iterator it = wrapperMap.keySet().iterator();
-			while (it.hasNext()) {
-				final SimpleStringPattern pattern = (SimpleStringPattern)it.next();
-				final KeywordSubstitution keywordSubstitutionOptions = (KeywordSubstitution)wrapperMap.get(pattern);
+			for (final SimpleStringPattern pattern : wrapperMap.keySet()) {
+				final KeywordSubstitution keywordSubstitutionOptions = wrapperMap.get(pattern);
 				cvsArguments.append("-W ");
 				cvsArguments.append(pattern.toString());
 				cvsArguments.append(" -k '");
@@ -232,15 +225,14 @@ public final class ImportCommand extends Command {
 	/**
 	 * Adds requests for specified wrappers to the specified requestList.
 	 */
-	private static void addWrapperRequests(Requests requests, Map wrapperMap) {
+	private static void addWrapperRequests(Requests requests, Map<SimpleStringPattern, KeywordSubstitution> wrapperMap) {
 		// override the server's ignore list
 		requests.addArgumentRequest("-I !");
 
-		for (Iterator it = wrapperMap.keySet().iterator(); it.hasNext();) {
-			final SimpleStringPattern pattern = (SimpleStringPattern)it.next();
-			final KeywordSubstitution keywordSubstitutionOptions = (KeywordSubstitution)wrapperMap.get(pattern);
+		for (final SimpleStringPattern pattern : wrapperMap.keySet()) {
+			final KeywordSubstitution keywordSubstitutionOptions = wrapperMap.get(pattern);
 
-			@NonNls final StringBuffer buffer = new StringBuffer();
+			@NonNls final StringBuilder buffer = new StringBuilder();
 			buffer.append(pattern.toString());
 			buffer.append(" -k '");
 			buffer.append(keywordSubstitutionOptions.toString());
@@ -270,11 +262,9 @@ public final class ImportCommand extends Command {
 			return;
 		}
 
-		final List subdirectories = new ArrayList();
+		final List<File> subdirectories = new ArrayList();
 
-		for (int i = 0; i < files.length; i++) {
-			final File file = files[i];
-
+		for (final File file : files) {
 			if (file.isDirectory()) {
 				final DirectoryObject subDirObject = clientEnvironment.getCvsFileSystem().getLocalFileSystem().getDirectoryObject(file);
 
@@ -300,8 +290,7 @@ public final class ImportCommand extends Command {
 			}
 		}
 
-		for (Iterator it = subdirectories.iterator(); it.hasNext();) {
-			final File subdirectory = (File)it.next();
+		for (final File subdirectory : subdirectories) {
 			addFileRequests(subdirectory, requests, requestProcessor, clientEnvironment);
 		}
 	}
@@ -324,10 +313,9 @@ public final class ImportCommand extends Command {
 	private KeywordSubstitution getKeywordSubstMode(String fileName) {
 		KeywordSubstitution keywordSubstMode = getKeywordSubstitutionOption();
 
-		for (Iterator it = wrapperMap.keySet().iterator(); it.hasNext();) {
-			final SimpleStringPattern pattern = (SimpleStringPattern)it.next();
+		for (final SimpleStringPattern pattern : wrapperMap.keySet()) {
 			if (pattern.doesMatch(fileName)) {
-				keywordSubstMode = (KeywordSubstitution)wrapperMap.get(pattern);
+				keywordSubstMode = wrapperMap.get(pattern);
 				break;
 			}
 		}

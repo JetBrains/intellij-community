@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="p1.p2">
+  <application android:label="@string/app_name">
+    <service>
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPL<caret>" />
+      </intent-filter>
+    </service>
+  </application>
+</manifest>

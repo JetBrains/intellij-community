@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,8 @@ public class IOFilesBasedDirectoryPruner {
     final File[] subFiles = file.listFiles();
     if (subFiles == null) return true;
 
-    boolean canPrune = true;
-
     if (!new File(file, CvsUtil.CVS).isDirectory()) return false;
+    boolean canPrune = true;
     for (File subFile : subFiles) {
       if (!isAdminDirectory(subFile)) {
         canPrune &= execute(subFile);
@@ -74,7 +73,6 @@ public class IOFilesBasedDirectoryPruner {
     if (!canPrune) return false;
 
     if (!FileUtil.delete(file)) return false;
-
     CvsUtil.removeEntryFor(file);
     return true;
   }
@@ -87,9 +85,8 @@ public class IOFilesBasedDirectoryPruner {
     catch (IOException e) {
       return false;
     }
-    final Collection entries = entriesHandler.getEntries().getEntries();
-    for (final Object entry1 : entries) {
-      Entry entry = (Entry)entry1;
+    final Collection<Entry> entries = entriesHandler.getEntries().getEntries();
+    for (final Entry entry : entries) {
       if (!entry.isDirectory()) return true;
     }
     return false;
@@ -98,5 +95,4 @@ public class IOFilesBasedDirectoryPruner {
   private static boolean isAdminDirectory(final File file) {
     return file.isDirectory() && file.getName().equals(CvsUtil.CVS);
   }
-
 }

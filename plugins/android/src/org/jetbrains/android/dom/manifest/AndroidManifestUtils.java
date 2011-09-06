@@ -81,7 +81,7 @@ public class AndroidManifestUtils {
     else if (element instanceof Application) {
       Collections.addAll(strings, "activity", "service", "provider", "receiver", "uses-library");
     }
-    else if (element instanceof Activity || element instanceof ActivityAlias) {
+    else if (element instanceof Activity || element instanceof ActivityAlias || element instanceof Receiver || element instanceof Service) {
       strings.add("intent-filter");
     }
     else if (element instanceof IntentFilter) {

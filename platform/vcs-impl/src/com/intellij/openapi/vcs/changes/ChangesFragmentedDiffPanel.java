@@ -75,6 +75,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   private boolean myCurrentHorizontal;
   private JPanel myTopPanel;
 
+  // todo here
   public ChangesFragmentedDiffPanel(final Project project, final FragmentedContent fragmentedContent,
                                     final LinkedList<DiffPanel> cache, String filePath) {
     myProject = project;

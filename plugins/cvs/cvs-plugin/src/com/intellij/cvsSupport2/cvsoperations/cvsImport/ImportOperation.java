@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsImport;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation;
@@ -42,20 +43,21 @@ public class ImportOperation extends CvsCommandOperation {
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    ImportCommand result = new ImportCommand();
+    final ImportCommand result = new ImportCommand();
     myDetails.prepareCommand(result);
     return result;
   }
 
   public static ImportOperation createTestInstance(File sourceLocation, CvsEnvironment env) {
-    ImportDetails details = new ImportDetails(sourceLocation, com.intellij.CvsBundle.message("import.defaults.vendor"),
-                                              com.intellij.CvsBundle.message("import.defaults.release_tag"),
-                                              com.intellij.CvsBundle.message("import.defaults.log.message"),
-                                              sourceLocation.getName(), env, new ArrayList(), new IIgnoreFileFilter(){
-                                                public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
-                                                  return false;
-                                                }
-                                              });
+    final ImportDetails details = new ImportDetails(sourceLocation, CvsBundle.message("import.defaults.vendor"),
+                                                    CvsBundle.message("import.defaults.release_tag"),
+                                                    CvsBundle.message("import.defaults.log.message"),
+                                                    sourceLocation.getName(), env, new ArrayList(),
+                                                    new IIgnoreFileFilter(){
+                                                      public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
+                                                        return false;
+                                                      }
+                                                    });
     return new ImportOperation(details);
   }
 

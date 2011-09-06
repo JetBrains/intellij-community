@@ -142,6 +142,9 @@ public class GradleConfigurable implements SearchableConfigurable {
       if (myGradleHomeSettingType == GradleHomeSettingType.EXPLICIT_INCORRECT) {
         new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType).run();
       }
+      else {
+        myAlarm.cancelAllRequests();
+      }
       myGradleHomeComponent.setPath(valueToUse);
       return;
     }
