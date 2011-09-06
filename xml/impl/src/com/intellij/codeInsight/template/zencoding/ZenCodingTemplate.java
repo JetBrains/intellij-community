@@ -829,7 +829,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       myIndex++;
       token = nextToken();
       if (token != ZenCodingTokens.EQ) {
-        return null;
+        return new Pair<String, String>(name, "");
       }
 
       myIndex++;
