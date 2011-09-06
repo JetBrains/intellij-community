@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.CharTable;
@@ -47,6 +48,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Set;
 
 public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLocalVariable, PsiVariableEx, Constants {
@@ -100,13 +102,16 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @NotNull
   public PsiTypeElement getTypeElement() {
-    final CompositeElement parent = getTreeParent();
-    assert parent != null : this + "; [" + getText() + "]";
-    final ASTNode first = parent.findChildByType(LOCAL_VARIABLE);
-    assert first != null : this + "; [" + getText() + "]";
-    final ASTNode type = first.findChildByType(TYPE);
-    assert type != null : this + "; [" + getText() + "]";
-    return SourceTreeToPsiMap.treeToPsiNotNull(type);
+    PsiTypeElement typeElement = PsiTreeUtil.getChildOfType(this, PsiTypeElement.class);
+    if (typeElement != null) return typeElement;
+
+    final PsiElement parent = getParent();
+    assert parent != null : "no parent; " + this + "; [" + getText() + "]";
+    final PsiLocalVariable localVariable = PsiTreeUtil.getChildOfType(parent, PsiLocalVariable.class);
+    assert localVariable != null : "no local variable in " + Arrays.toString(parent.getChildren());
+    typeElement = PsiTreeUtil.getChildOfType(localVariable, PsiTypeElement.class);
+    assert typeElement != null : "no type element in " + Arrays.toString(localVariable.getChildren());
+    return typeElement;
   }
 
   public PsiModifierList getModifierList() {
@@ -177,13 +182,13 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         CompositeElement statement1 = Factory.createCompositeElement(DECLARATION_STATEMENT, charTableByTree, getManager());
         statement1.addChild(variable, null);
 
-        ASTNode space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, " ", 0, 1, treeCharTab, getManager());
+        ASTNode space = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, " ", 0, 1, treeCharTab, getManager());
         variable.addChild(space, variable.getFirstChildNode());
 
         variable.addChild(typeCopy, variable.getFirstChildNode());
 
         if (modifierListCopy.getTextLength() > 0) {
-          space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, " ", 0, 1, treeCharTab, getManager());
+          space = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, " ", 0, 1, treeCharTab, getManager());
           variable.addChild(space, variable.getFirstChildNode());
         }
 

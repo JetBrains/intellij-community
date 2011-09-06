@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,9 +142,9 @@ public interface ASTNode extends UserDataHolder {
    * Adds the specified child node at the specified position in the child list.
    *
    * @param child        the child node to add.
-   * @param anchorBefore the node before which the child node is inserted.
+   * @param anchorBefore the node before which the child node is inserted (<code>null</code> to add a child as a last node).
    */
-  void addChild(@NotNull ASTNode child, ASTNode anchorBefore);
+  void addChild(@NotNull ASTNode child, @Nullable ASTNode anchorBefore);
 
   /**
    * Add leaf element with specified type and text in the child list.

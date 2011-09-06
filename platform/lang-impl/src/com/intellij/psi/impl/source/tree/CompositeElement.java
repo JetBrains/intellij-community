@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -612,7 +612,7 @@ public class CompositeElement extends TreeElement {
     this.lastChild = lastChild;
   }
 
-  public void addChild(@NotNull ASTNode child, final ASTNode anchorBefore) {
+  public void addChild(@NotNull ASTNode child, @Nullable final ASTNode anchorBefore) {
     LOG.assertTrue(anchorBefore == null || ((TreeElement)anchorBefore).getTreeParent() == this, "anchorBefore == null || anchorBefore.getTreeParent() == parent");
     TreeUtil.ensureParsed(getFirstChildNode());
     TreeUtil.ensureParsed(child);
