@@ -34,6 +34,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
+import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
+import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -1016,8 +1020,10 @@ public class GenericsHighlightUtil {
     try {
       MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superMethod == null) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
-                                                 JavaErrorMessages.message("method.doesnot.override.super"));
+        HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
+                                                                        JavaErrorMessages.message("method.doesnot.override.super"));
+        PullAsAbstractUpFix.registerQuickFix(highlightInfo, method);
+        return highlightInfo;
       }
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
       PsiClass superClass = superMethod.getMethod().getContainingClass();
