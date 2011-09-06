@@ -27,6 +27,10 @@ public class ReplaceDiamondWithExplicitTypeIntentionTest extends IPPTestCase {
       doTest();
   }
 
+  public void testApplicableDiamondCheckFormatting() {
+     doTest();
+  }
+
   public void testExplicitTypeArgs() {
     doTest();
   }
