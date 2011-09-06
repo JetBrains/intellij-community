@@ -44,26 +44,20 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
           cause.printStackTrace();
         }
       };
-      new Thread() {
-        @Override
-        public void run() {
-          try {
-            messageSender.initReceiver();
-          }
-          catch (SocketTimeoutException e) {
-            e.printStackTrace();
-          }
-          startListening(new IRemoteSuiteListener[]{myListener},
-                         new IRemoteTestListener[]{myListener},
-                         srvConnection
-          );
-        }
-      }.start();
+      try {
+        messageSender.initReceiver();
+      }
+      catch (SocketTimeoutException e) {
+        e.printStackTrace();
+      }
+      startListening(new IRemoteSuiteListener[]{myListener},
+                     new IRemoteTestListener[]{myListener},
+                     srvConnection);
     }
 
     @Override
     protected void notifyStart(final GenericMessage genericMessage) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable()
+        ApplicationManager.getApplication().invokeLater(new Runnable()
         {
             public void run() {
                 for (final IRemoteSuiteListener listener : m_suiteListeners) {
@@ -75,7 +69,7 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
 
     @Override
     protected void notifySuiteEvents(final SuiteMessage suiteMessage) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable()
+        ApplicationManager.getApplication().invokeLater(new Runnable()
         {
             public void run() {
                 for (final IRemoteSuiteListener listener : m_suiteListeners) {
@@ -91,7 +85,7 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
 
     @Override
     protected void notifyTestEvents(final TestMessage testMessage) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable()
+        ApplicationManager.getApplication().invokeLater(new Runnable()
         {
             public void run() {
                 for (final IRemoteTestListener listener : m_testListeners) {
@@ -107,7 +101,7 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
 
     @Override
     protected void notifyResultEvents(final TestResultMessage testResultMessage) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable()
+        ApplicationManager.getApplication().invokeLater(new Runnable()
         {
             public void run() {
                 for (final IRemoteTestListener listener : m_testListeners) {
