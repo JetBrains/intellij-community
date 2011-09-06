@@ -396,9 +396,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myFrozenItems.retainAll(items);
     model.addAll(myFrozenItems);
 
-    addMostRelevantItems(model, snapshot.second);
-    if (hasPreselected) {
-      model.add(myPreselectedItem);
+    if (!isAlphaSorted()) {
+      addMostRelevantItems(model, snapshot.second);
+      if (hasPreselected) {
+        model.add(myPreselectedItem);
+      }
     }
 
     myPreferredItemsCount = model.size();
@@ -407,9 +409,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       myFrozenItems.addAll(model);
     }
 
-    if (limitRelevance()) {
+    if (isAlphaSorted()) {
+      model.addAll(items);
+    } else if (limitRelevance()) {
       model.addAll(addRemainingItemsLexicographically(model, items));
-    } else {
+    } else  {
       for (List<LookupElement> group : snapshot.second) {
         for (LookupElement element : group) {
           if (prefixMatches(element)) {
@@ -601,10 +605,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private LookupArranger getActualArranger() {
-    if (isCompletion() && UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY) {
-      return LookupArranger.LEXICOGRAPHIC;
-    }
     return myCustomArranger;
+  }
+
+  private boolean isAlphaSorted() {
+    return isCompletion() && UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
   }
 
   private boolean isExactPrefixItem(LookupElement item, final boolean caseSensitive) {

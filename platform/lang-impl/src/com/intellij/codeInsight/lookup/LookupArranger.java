@@ -32,23 +32,6 @@ public abstract class LookupArranger {
       return ClassifierFactory.listClassifier();
     }
   };
-  public static final LookupArranger LEXICOGRAPHIC = new LookupArranger() {
-
-    @Override
-    public Comparator<LookupElement> getItemComparator() {
-      return new Comparator<LookupElement>() {
-        @Override
-        public int compare(LookupElement o1, LookupElement o2) {
-          return o1.getLookupString().compareTo(o2.getLookupString());
-        }
-      };
-    }
-
-    @Override
-    public Classifier<LookupElement> createRelevanceClassifier() {
-      return ClassifierFactory.sortingListClassifier(getItemComparator());
-    }
-  };
 
   public void itemSelected(LookupElement item, final Lookup lookup) {
   }
