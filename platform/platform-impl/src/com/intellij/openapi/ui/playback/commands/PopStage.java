@@ -31,7 +31,8 @@ public class PopStage extends AbstractCommand {
   protected ActionCallback _execute(PlaybackContext context) {
     StageInfo stage = context.popStage();
     if (stage != null) {
-      context.message("Test finished", getLine());
+      context.test("Test finished OK: " + stage.getName(), getLine());
+      context.addPassed(stage);
     }
     return new ActionCallback.Done();
   }

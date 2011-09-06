@@ -57,6 +57,8 @@ public class PlaybackRunner {
   private final ApplicationActivationListener myAppListener;
 
   private HashSet<Class> myFacadeClasses = new HashSet<Class>();
+  private ArrayList<StageInfo> myStages = new ArrayList<StageInfo>();
+  private ArrayList<StageInfo> myPassedStages = new ArrayList<StageInfo>();
 
   private Disposable myOnStop = new Disposable() {
     @Override
@@ -88,7 +90,9 @@ public class PlaybackRunner {
     myStopRequested = false;
 
     UiActivityMonitor.getInstance().clear();
-    
+    myStages.clear();
+    myPassedStages.clear();
+
     ApplicationManager.getApplication().getMessageBus().connect(myOnStop).subscribe(ApplicationActivationListener.TOPIC, myAppListener);
 
     try {
@@ -109,7 +113,8 @@ public class PlaybackRunner {
         public void run() {
           if (myUseDirectActionCall) {
             executeFrom(0, getScriptDir());
-          } else {
+          }
+          else {
             IdeEventQueue.getInstance().doWhenReady(new Runnable() {
               public void run() {
                 executeFrom(0, getScriptDir());
@@ -118,7 +123,6 @@ public class PlaybackRunner {
           }
         }
       }.start();
-
     }
     catch (AWTException e) {
       LOG.error(e);
@@ -135,7 +139,29 @@ public class PlaybackRunner {
         myActionCallback.setRejected();
         return;
       }
-      final PlaybackContext context = new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, cmd, baseDir, (Set<Class>)myFacadeClasses.clone());
+      final PlaybackContext context =
+        new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, cmd, baseDir, (Set<Class>)myFacadeClasses.clone()) {
+          public void pushStage(StageInfo info) {
+            myStages.add(info);
+          }
+
+          public StageInfo popStage() {
+            if (myStages.size() > 0) {
+              return myStages.remove(myStages.size() - 1);
+            }
+
+            return null;
+          }
+
+          public int getStageCount() {
+            return myStages.size();
+          }
+
+          @Override
+          public void addPassed(StageInfo stage) {
+            myPassedStages.add(stage);
+          }
+        };
       final ActionCallback cmdCallback = cmd.execute(context);
       cmdCallback.doWhenDone(new Runnable() {
         public void run() {
@@ -155,7 +181,7 @@ public class PlaybackRunner {
       });
     }
     else {
-      myCallback.message(null, "Finished", myCommands.size() - 1, StatusCallback.Type.message);
+      myCallback.message(null, "Finished OK " + myPassedStages.size() + " tests", myCommands.size() - 1, StatusCallback.Type.message);
       myActionCallback.setDone();
     }
   }
@@ -187,7 +213,8 @@ public class PlaybackRunner {
           commandList.add(new ErrorCommand("Error reading file: " + file.getAbsolutePath(), line));
           return;
         }
-      } else if (eachLine.startsWith(importCallCmd)) {
+      }
+      else if (eachLine.startsWith(importCallCmd)) {
         String className = eachLine.substring(importCallCmd.length()).trim();
         try {
           Class<?> facadeClass = Class.forName(className);
@@ -198,7 +225,8 @@ public class PlaybackRunner {
           commandList.add(new ErrorCommand("Cannot find class: " + className, line));
           return;
         }
-      } else {
+      }
+      else {
         final PlaybackCommand cmd = createCommand(eachLine, line++, scriptDir);
         commandList.add(cmd);
       }
@@ -207,34 +235,50 @@ public class PlaybackRunner {
 
   private PlaybackCommand createCommand(String string, int line, File scriptDir) {
     AbstractCommand cmd;
-    String actualString = string.toLowerCase();
+    String actualString = string;
 
     if (actualString.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
       cmd = new EmptyCommand(line);
-    } else if (actualString.startsWith(KeyCodeTypeCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(KeyCodeTypeCommand.PREFIX)) {
       cmd = new KeyCodeTypeCommand(string, line);
-    } else if (actualString.startsWith(DelayCommand.PREFIX)) {
-      cmd =  new DelayCommand(string, line);
-    } else if (actualString.startsWith(KeyShortcutCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(DelayCommand.PREFIX)) {
+      cmd = new DelayCommand(string, line);
+    }
+    else if (actualString.startsWith(KeyShortcutCommand.PREFIX)) {
       cmd = new KeyShortcutCommand(string, line);
-    } else if (actualString.startsWith(ActionCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(ActionCommand.PREFIX)) {
       cmd = new ActionCommand(string, line);
-    } else if (actualString.startsWith(ToggleActionCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(ToggleActionCommand.PREFIX)) {
       cmd = new ToggleActionCommand(string, line);
-    } else if (actualString.startsWith(StopCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(StopCommand.PREFIX)) {
       cmd = new StopCommand(string, line);
-    } else if (actualString.startsWith(AssertFocused.PREFIX)) {
+    }
+    else if (actualString.startsWith(AssertFocused.PREFIX)) {
       return new AssertFocused(string, line);
-    } else if (actualString.startsWith(CallCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(CallCommand.PREFIX)) {
       cmd = new CallCommand(string, line);
-    } else if (actualString.startsWith(CdCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(CdCommand.PREFIX)) {
       cmd = new CdCommand(string, line);
-    } else {
+    }
+    else if (actualString.startsWith(PushStage.PREFIX)) {
+      cmd = new PushStage(string, line);
+    }
+    else if (actualString.startsWith(PopStage.PREFIX)) {
+      cmd = new PopStage(string, line);
+    }
+    else {
       cmd = new AlphaNumericTypeCommand(string, line);
     }
 
     cmd.setScriptDir(scriptDir);
-    
+
     return cmd;
   }
 
@@ -257,7 +301,7 @@ public class PlaybackRunner {
 
   public interface StatusCallback {
 
-    enum Type {message, error, code}
+    enum Type {message, error, code, test}
 
     void message(@Nullable PlaybackContext context, String text, int currentLine, Type type);
 
@@ -270,7 +314,8 @@ public class PlaybackRunner {
                                 final Type type) {
         if (SwingUtilities.isEventDispatchThread()) {
           messageEdt(context, text, currentLine, type);
-        } else {
+        }
+        else {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               messageEdt(context, text, currentLine, type);
@@ -280,9 +325,6 @@ public class PlaybackRunner {
       }
 
       public abstract void messageEdt(@Nullable PlaybackContext context, String text, int curentLine, Type type);
-
     }
   }
-
-
 }

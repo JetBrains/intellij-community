@@ -30,7 +30,7 @@ public class PushStage extends AbstractCommand {
   @Override
   protected ActionCallback _execute(PlaybackContext context) {
     String name = getText().substring(PREFIX.length()).trim();
-    context.message("Test started: " + name, getLine());
+    context.test("Test started: " + name, getLine());
     context.pushStage(new StageInfo(name));
     return new ActionCallback.Done();
   }

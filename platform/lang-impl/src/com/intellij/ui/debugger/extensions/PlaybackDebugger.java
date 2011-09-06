@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -60,6 +61,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private static final Color ERROR_COLOR = Color.RED;
   private static final Color MESSAGE_COLOR = Color.BLACK;
   private static final Color CODE_COLOR = Color.BLUE;
+  private static final Color TEST_COLOR = Color.green.darker();
 
   private JPanel myComponent;
 
@@ -299,7 +301,12 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     public void actionPerformed(AnActionEvent e) {
       if (myRunner != null) {
         myRunner.stop();
-        myRunner = null;
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            myRunner = null;
+          }
+        });
       }
     }
   }
@@ -379,7 +386,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private void startWhenFrameActive() {
     myLog.setText(null);
 
-    addInfo("Waiting for IDE frame activation", -1, MESSAGE_COLOR);
+    addInfo("Waiting for IDE frame activation", -1, MESSAGE_COLOR, 0);
     myRunner = new PlaybackRunner(myCodeEditor.getText(), this, false, true);
     VirtualFile file = pathToFile();
     if (file != null) {
@@ -421,7 +428,12 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
         myRunner.run().doWhenProcessed(new Runnable() {
           public void run() {
             if (runner == myRunner) {
-              myRunner = null;
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  myRunner = null;
+                }
+              });
             }
           }
         });
@@ -434,6 +446,8 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private void message(@Nullable final PlaybackContext context, final String text, final int currentLine, final Type type, final boolean forced) {
+    final int depth = context != null ? context.getStageCount() : 0;
+    
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -441,13 +455,16 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
         switch (type) {
           case message:
-            addInfo(text, currentLine, MESSAGE_COLOR);
+            addInfo(text, currentLine, MESSAGE_COLOR, depth);
             break;
           case error:
-            addInfo(text, currentLine, ERROR_COLOR);
+            addInfo(text, currentLine, ERROR_COLOR, depth);
             break;
           case code:
-            addInfo(text, currentLine, CODE_COLOR);
+            addInfo(text, currentLine, CODE_COLOR, depth);
+            break;
+          case test:
+            addInfo(text, currentLine, TEST_COLOR, depth);
             break;
         }
       }
@@ -501,24 +518,22 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myLog.setText(null);
   }
 
-  private void addInfo(String text, int line, Color fg) {
+  private void addInfo(String text, int line, Color fg, int depth) {
     if (text == null || text.length() == 0) return;
+
+    String inset = StringUtil.repeat("   ", depth);
+
     Document doc = myLog.getDocument();
     SimpleAttributeSet attr = new SimpleAttributeSet();
     StyleConstants.setFontFamily(attr, UIManager.getFont("Label.font").getFontName());
     StyleConstants.setFontSize(attr, UIManager.getFont("Label.font").getSize());
     StyleConstants.setForeground(attr, fg);
     try {
-      doc.insertString(doc.getLength(), text + "\n", attr);
+      doc.insertString(doc.getLength(), inset + text + "\n", attr);
     }
     catch (BadLocationException e) {
       LOG.error(e);
     }
-    scrollToLast();
-  }
-
-  private void addError(String text, int line) {
-    addInfo(text, line, ERROR_COLOR);
     scrollToLast();
   }
 
@@ -528,7 +543,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
         if (myLog.getDocument().getLength() == 0) return;
 
         Rectangle bounds = myLog.getBounds();
-        myLog.scrollRectToVisible(new Rectangle(0, (int)bounds.getMaxY(), (int)bounds.getWidth(), 1));
+        myLog.scrollRectToVisible(new Rectangle(0, (int)bounds.getMaxY() - 1, (int)bounds.getWidth(), 1));
       }
     });
   }

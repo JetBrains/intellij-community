@@ -23,7 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Set;
 
-public class PlaybackContext  {
+public abstract class PlaybackContext  {
   
   private PlaybackRunner.StatusCallback myCallback;
   private int myCurrentLine;
@@ -34,8 +34,6 @@ public class PlaybackContext  {
   private Set<Class> myCallClasses;
   private PlaybackRunner myRunner;
 
-  private ArrayList<StageInfo> myStages = new ArrayList<StageInfo>();
-  
   public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, PlaybackCommand currentCmd, File baseDir, Set<Class> callClasses) {
     myRunner = runner;
     myCallback = callback;
@@ -106,23 +104,24 @@ public class PlaybackContext  {
     getCallback().message(this, text, currentLine, PlaybackRunner.StatusCallback.Type.message);
   }
 
+  public void test(String text, int currentLine) {
+    getCallback().message(this, text, currentLine, PlaybackRunner.StatusCallback.Type.test);
+  }
+
   public void code(String text, int currentLine) {
     getCallback().message(this, text, currentLine, PlaybackRunner.StatusCallback.Type.code);
   }
 
-  public void pushStage(StageInfo info) {
-    myStages.add(info);
-  }
+  public abstract void pushStage(StageInfo info);
 
-  public StageInfo popStage() {
-    if (myStages.size() > 0) {
-      return myStages.remove(myStages.size() - 1);
-    }
+  public abstract StageInfo popStage();
 
-    return null;
-  }
+  public abstract int getStageCount();
+
+  public abstract void addPassed(StageInfo stage);
 
   public PlaybackRunner getRunner() {
     return myRunner;
   }
+
 }
