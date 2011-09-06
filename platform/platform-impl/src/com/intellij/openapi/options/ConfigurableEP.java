@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -30,6 +31,8 @@ import org.picocontainer.PicoContainer;
  * @author nik
  */
 public class ConfigurableEP extends AbstractExtensionPointBean {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ConfigurableEP");
+
   /**
    * @deprecated use '{@link #instanceClass instance}' or '{@link #providerClass provider}' attribute instead
    */
@@ -73,7 +76,16 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
 
   @Nullable
   public Configurable createConfigurable() {
-    return myFactory.getValue().create();
+    try {
+      return myFactory.getValue().create();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    catch (AssertionError e) {
+      LOG.error(e);
+    }
+    return null;
   }
 
   private class InstanceFromProviderFactory extends AtomicNotNullLazyValue<ConfigurableProvider> implements NullableFactory<Configurable> {
