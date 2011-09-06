@@ -9,6 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import com.jetbrains.python.testing.PyTestFrameworksUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,5 +68,12 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
 
   public void setParams(String pattern) {
     myParams = pattern;
+  }
+
+  @Override
+  public void checkConfiguration() throws RuntimeConfigurationException {
+    super.checkConfiguration();
+    if (!PyTestFrameworksUtil.isNoseTestInstalled(getProject(), getSdkHome()))
+      throw new RuntimeConfigurationError("No nosetest runner found in selected interpreter");
   }
 }

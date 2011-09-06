@@ -1,11 +1,10 @@
 package com.jetbrains.python.testing.nosetest;
 
 import com.intellij.execution.Location;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.testing.PythonTestConfigurationProducer;
-import com.jetbrains.python.testing.PythonTestConfigurationType;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.TestRunnerService;
+import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.testing.*;
 
 public class PythonNoseTestConfigurationProducer extends
                                                  PythonTestConfigurationProducer {
@@ -15,7 +14,10 @@ public class PythonNoseTestConfigurationProducer extends
 
   protected boolean isAvailable(Location location) {
     PsiElement element = location.getPsiElement();
+    final Sdk sdk = PythonSdkType.findPythonSdk(location.getModule());
     return (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
-      PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME));
+      PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME) && sdk != null &&
+            PyTestFrameworksUtil.isNoseTestInstalled(element.getProject(), sdk.getHomePath()));
   }
+
 }

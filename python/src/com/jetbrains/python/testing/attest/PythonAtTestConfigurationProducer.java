@@ -2,12 +2,11 @@ package com.jetbrains.python.testing.attest;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.Location;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.testing.PythonTestConfigurationProducer;
-import com.jetbrains.python.testing.PythonTestConfigurationType;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.TestRunnerService;
+import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.testing.*;
 
 import java.util.List;
 /**
@@ -21,8 +20,10 @@ public class PythonAtTestConfigurationProducer extends
 
   protected boolean isAvailable(Location location) {
     PsiElement element = location.getPsiElement();
+    final Sdk sdk = PythonSdkType.findPythonSdk(location.getModule());
     return (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
-      PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME));
+      PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME) && sdk != null &&
+            PyTestFrameworksUtil.isAtTestInstalled(element.getProject(), sdk.getHomePath()));
   }
 
   protected boolean isTestClass(PyClass pyClass) {

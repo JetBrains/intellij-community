@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.PyTestFrameworksUtil;
 import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +66,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
     configuration.setModule(ModuleUtil.findModuleForPsiElement(myPsiElement));
 
     final Sdk sdk = PythonSdkType.findPythonSdk(location.getModule());
-    if (sdk == null || !PyTestUtil.isPyTestInstalled(sdk.getHomePath())) return null;
+    if (sdk == null || !PyTestFrameworksUtil.isPyTestInstalled(myPsiElement.getProject(), sdk.getHomePath())) return null;
     configuration.setTestToRun(path);
 
     PyFunction pyFunction = findTestFunction(location);

@@ -17,6 +17,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -153,6 +154,8 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
 
     configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
     configuration.setFolderName(path);
+    if (StringUtil.isEmptyOrSpaces(configuration.getWorkingDirectory()))
+      configuration.setWorkingDirectory(path);
 
     configuration.setName(configuration.suggestedName());
     myPsiElement = dir;
@@ -223,6 +226,9 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
 
     cfg.setScriptName(vFile.getPath());
     cfg.setShortName(containingFile.getName());
+
+    if (StringUtil.isEmptyOrSpaces(cfg.getWorkingDirectory()))
+      cfg.setWorkingDirectory(parent.getPath());
 
     return true;
   }
