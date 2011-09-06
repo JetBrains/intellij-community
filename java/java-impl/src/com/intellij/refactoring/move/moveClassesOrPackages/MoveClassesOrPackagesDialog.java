@@ -29,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -275,12 +276,20 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       }
     };
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    comboBox.setRenderer(new ListCellRendererWrapper<DirectoryChooser.ItemWrapper>(comboBox) {
+    comboBox.setRenderer(new HtmlListCellRenderer<DirectoryChooser.ItemWrapper>(comboBox.getRenderer()){
       @Override
-      public void customize(JList list, DirectoryChooser.ItemWrapper itemWrapper, int index, boolean selected, boolean hasFocus) {
+      protected void doCustomize(JList list,
+                                 DirectoryChooser.ItemWrapper itemWrapper,
+                                 int index,
+                                 boolean selected,
+                                 boolean hasFocus) {
         if (itemWrapper != null) {
           setIcon(itemWrapper.getIcon(fileIndex));
-          setText(itemWrapper.getPresentableUrl());
+
+          final PsiDirectory directory = itemWrapper.getDirectory();
+          final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
+          append(virtualFile != null ? ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject) : itemWrapper.getPresentableUrl());
+
         } else {
           setText("Leave in same source root");
         }
