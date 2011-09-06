@@ -33,6 +33,8 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
 
   private ActionCallback myCallback;
 
+  private boolean myInvalidatesPendingFurtherRequestors = true;
+
   protected FocusCommand() {
     saveAllocation();
   }
@@ -83,6 +85,15 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   @Nullable
   public KeyEventProcessor getProcessor() {
     return null;
+  }
+
+  public boolean invalidatesRequestors() {
+    return myInvalidatesPendingFurtherRequestors;
+  }
+
+  public FocusCommand setToInvalidateRequestors(boolean invalidatesPendingFurtherRequestors) {
+    myInvalidatesPendingFurtherRequestors = invalidatesPendingFurtherRequestors;
+    return this;
   }
 
   @Nullable

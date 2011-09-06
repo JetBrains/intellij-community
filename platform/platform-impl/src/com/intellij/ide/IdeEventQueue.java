@@ -613,16 +613,19 @@ public class IdeEventQueue extends EventQueue {
           }
           if (showingWindow != null) {
             final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
-            ExpirableRunnable maybeRequestDefaultFocus = new ExpirableRunnable.AlwaysValid() {
+            ExpirableRunnable maybeRequestDefaultFocus = new ExpirableRunnable() {
               public void run() {
-                if (UIUtil.isMeaninglessFocusOwner(mgr.getFocusOwner())) {
-                  if (getPopupManager().requestDefaultFocus(false)) return;
+                if (getPopupManager().requestDefaultFocus(false)) return;
 
-                  final Application app = ApplicationManager.getApplication();
-                  if (app != null && app.isActive()) {
-                    fm.requestDefaultFocus(false);
-                  }
+                final Application app = ApplicationManager.getApplication();
+                if (app != null && app.isActive()) {
+                  fm.requestDefaultFocus(false);
                 }
+              }
+
+              @Override
+              public boolean isExpired() {
+                return !UIUtil.isMeaninglessFocusOwner(mgr.getFocusOwner());
               }
             };
             fm.revalidateFocus(maybeRequestDefaultFocus);

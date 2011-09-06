@@ -664,7 +664,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void showAndActivate(final String id,
                                final boolean dirtyMode,
                                final ArrayList<FinalizableCommand> commandsList,
-                               boolean autoFocusContents) {
+                               boolean autoFocusContents,
+                               boolean forcedFocusRequest) {
     if (!getToolWindow(id).isAvailable()) {
       return;
     }
@@ -684,7 +685,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     if (autoFocusContents) {
-      appendRequestFocusInToolWindowCmd(id, commandsList, true);
+      appendRequestFocusInToolWindowCmd(id, commandsList, forcedFocusRequest);
     }
   }
 
@@ -723,7 +724,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return;
     }
     prepareForActivation(id, commandList);
-    showAndActivate(id, false, commandList, autoFocusContents);
+    showAndActivate(id, false, commandList, autoFocusContents, forced);
   }
 
   /**
@@ -1580,7 +1581,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     appendApplyWindowInfoCmd(info, commandsList);
     if (info.isVisible()) {
       prepareForActivation(id, commandsList);
-      showAndActivate(id, false, commandsList, true);
+      showAndActivate(id, false, commandsList, true, true);
     }
   }
 
@@ -1609,7 +1610,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       info.setType(type);
       appendApplyWindowInfoCmd(info, commandsList);
       prepareForActivation(id, commandsList);
-      showAndActivate(id, dirtyMode, commandsList, true);
+      showAndActivate(id, dirtyMode, commandsList, true, true);
       appendUpdateToolWindowsPaneCmd(commandsList);
     }
     else {
