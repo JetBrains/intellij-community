@@ -26,12 +26,14 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.Details;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
@@ -125,12 +127,11 @@ public class VcsChangeDetailsManager {
 
     @Override
     protected void doInAwtIfFail(Exception e) {
-      System.out.println("FAIL");
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, e.getMessage(), MessageType.ERROR);
     }
 
     @Override
     protected void doInAwtIfCancel() {
-      System.out.println("CANCEL");
     }
 
     @Override
