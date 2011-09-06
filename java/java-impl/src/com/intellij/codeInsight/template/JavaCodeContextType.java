@@ -15,13 +15,11 @@
  */
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.JavaCompletionData;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -56,7 +54,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   @Override
   public boolean isInContext(@NotNull final FileType fileType) {
-    return fileType == StdFileTypes.JAVA || fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX;
+    return false;
   }
 
   @NotNull
