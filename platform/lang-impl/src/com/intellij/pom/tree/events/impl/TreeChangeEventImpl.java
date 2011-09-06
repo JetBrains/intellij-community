@@ -39,8 +39,7 @@ import java.util.*;
 public class TreeChangeEventImpl implements TreeChangeEvent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.pom.tree.events.impl.TreeChangeEventImpl");
   private final Map<ASTNode, TreeChange> myChangedElements = new THashMap<ASTNode, TreeChange>();
-  private final List<ASTNode> myChangedInOrder = new ArrayList<ASTNode>();
-  private List<ASTNode> myChangedInOrderNew;
+  private List<ASTNode> myChangedInOrder;
   private final List<Set<ASTNode>> myOfEqualDepth = new ArrayList<Set<ASTNode>>(10);
   private final PomModelAspect myAspect;
   private final FileElement myFileElement;
@@ -57,10 +56,10 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
   @NotNull
   public ASTNode[] getChangedElements() {
-    if (myChangedInOrderNew == null) {
-      myChangedInOrderNew = new ArrayList<ASTNode>(myChangedElements.keySet());
+    if (myChangedInOrder == null) {
+      myChangedInOrder = new ArrayList<ASTNode>(myChangedElements.keySet());
 
-      Collections.sort(myChangedInOrderNew, new Comparator<ASTNode>() {
+      Collections.sort(myChangedInOrder, new Comparator<ASTNode>() {
         final Map<ASTNode, int[]> routeMap = new THashMap<ASTNode, int[]>(myChangedElements.size());
         final TObjectIntHashMap<ASTNode> nodeIndex = new TObjectIntHashMap<ASTNode>(myChangedElements.size());
 
@@ -73,23 +72,8 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
           return compareRoutes(route, route2);
         }
       });
-
-      int size = myChangedInOrderNew.size();
-      if (size == myChangedInOrder.size()) {
-        for(int i = 0; i < size; ++i) {
-          if (myChangedInOrderNew.get(i) != myChangedInOrder.get(i)) {
-            LOG.error("Unexpected changed elements difference");
-            return myChangedInOrder.toArray(new ASTNode[myChangedInOrder.size()]);
-          }
-        }
-      }
-      else {
-        LOG.error("Unexpected changed elements difference");
-        return myChangedInOrder.toArray(new ASTNode[myChangedInOrder.size()]);
-      }
     }
-
-    return myChangedInOrderNew.toArray(new ASTNode[myChangedInOrderNew.size()]);
+    return myChangedInOrder.toArray(new ASTNode[myChangedInOrder.size()]);
   }
 
   public TreeChange getChangesByElement(@NotNull ASTNode element) {
@@ -141,8 +125,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   public void clear() {
-    myChangedInOrderNew = null;
-    myChangedInOrder.clear();
+    myChangedInOrder = null;
     myChangedElements.clear();
     myOfEqualDepth.clear();
   }
@@ -152,7 +135,6 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     if (treeChange == null) {
       treeChange = new TreeChangeImpl(parent);
       myChangedElements.put(parent, treeChange);
-      insertAtList(parent);
 
       final int index = depth >= 0 ? depth : getDepth(parent);
       addToEqualsDepthList(index, parent);
@@ -221,47 +203,11 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
   private void removeAssociatedChanges(ASTNode treeElement, int depth) {
     if(myChangedElements.remove(treeElement) != null) {
-      myChangedInOrder.remove(treeElement);
       if (depth < 0) depth = getDepth(treeElement);
       if (depth < myOfEqualDepth.size()) {
         myOfEqualDepth.get(depth < 0 ? getDepth(treeElement) : depth).remove(treeElement);
       }
     }
-  }
-
-  private void insertAtList(ASTNode node){
-    if (!myChangedInOrder.isEmpty()) {
-      final int[] nodeRoute = getRoute(node);
-      for (int index = 0; index < myChangedInOrder.size(); index++) {
-        final ASTNode current = myChangedInOrder.get(index);
-        final int[] route = getRoute(current);
-        if (compareRoutes(nodeRoute, route) < 0) {
-          myChangedInOrder.add(index, node);
-          return;
-        }
-      }
-    }
-    myChangedInOrder.add(node);
-  }
-
-  private static int[] getRoute(ASTNode node){
-    final List<ASTNode> parents = new ArrayList<ASTNode>(20);
-    while(node != null){
-      parents.add(node);
-      node = node.getTreeParent();
-    }
-    final int[] root = new int[parents.size() - 1];
-    for(int i = 0; i < root.length; i++){
-      final ASTNode parent = parents.get(root.length - i - 1);
-      int rootIndex = 0;
-      ASTNode current = parent.getTreeParent().getFirstChildNode();
-      while(current != parent){
-        current = current.getTreeNext();
-        rootIndex++;
-      }
-      root[i] = rootIndex;
-    }
-    return root;
   }
 
   private static int[] getRoute(ASTNode node, TObjectIntHashMap<ASTNode> index){
@@ -361,7 +307,6 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
       for (final Map.Entry<ASTNode, TreeChange> entry : changedElements.entrySet()) {
         final ASTNode changed = entry.getKey();
         myChangedElements.put(changed, entry.getValue());
-        insertAtList(changed);
         addToEqualsDepthList(depth, changed);
         compactChanges(changed, depth);
       }

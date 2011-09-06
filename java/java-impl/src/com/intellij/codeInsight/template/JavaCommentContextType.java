@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaCommentContextType extends TemplateContextType {
   public JavaCommentContextType() {
-    super("JAVA_COMMENT", CodeInsightBundle.message("dialog.edit.template.checkbox.java.comment"));
+    super("JAVA_COMMENT", "Comment", JavaCodeContextType.Generic.class);
   }
 
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {

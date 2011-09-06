@@ -430,18 +430,33 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return result;
   }
 
-  public TemplateContextType getContextType(@NotNull PsiFile file, int offset) {
-    LinkedList<TemplateContextType> userDefinedExtensionsFirst = buildOrderedContextTypes();
-    for (TemplateContextType contextType : userDefinedExtensionsFirst) {
-      if (contextType.isInContext(file, offset)) {
-        return contextType;
+  private static boolean isEnabled(@Nullable PsiFile file, int offset, @Nullable FileType fileType, TemplateContext context) {
+    LinkedHashSet<TemplateContextType> set = new LinkedHashSet<TemplateContextType>();
+    LinkedList<TemplateContextType> contexts = buildOrderedContextTypes();
+    for (TemplateContextType contextType : contexts) {
+      if (fileType == null ? contextType.isInContext(file, offset) : contextType.isInContext(fileType)) {
+        set.add(contextType);
       }
     }
-    assert false : "OtherContextType should match any context";
-    return null;
+
+    removeBases: 
+    while (true) {
+      for (TemplateContextType type : set) {
+        if (set.remove(type.getBaseContextType())) {
+          continue removeBases;
+        }
+      }
+
+      for (TemplateContextType type : set) {
+        if (context.isEnabled(type)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 
-  private LinkedList<TemplateContextType> buildOrderedContextTypes() {
+  private static LinkedList<TemplateContextType> buildOrderedContextTypes() {
     final TemplateContextType[] typeCollection = getAllContextTypes();
     LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<TemplateContextType>();
     for (TemplateContextType contextType : typeCollection) {
@@ -453,18 +468,6 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       }
     }
     return userDefinedExtensionsFirst;
-  }
-
-  @Override
-  public TemplateContextType getContextType(@NotNull FileType fileType) {
-    LinkedList<TemplateContextType> userDefinedExtensionsFirst = buildOrderedContextTypes();
-    for (TemplateContextType contextType : userDefinedExtensionsFirst) {
-      if (contextType.isInContext(fileType)) {
-        return contextType;
-      }
-    }
-    assert false : "OtherContextType should match any context";
-    return null;
   }
 
   public static TemplateContextType[] getAllContextTypes() {
@@ -485,7 +488,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
     TemplateManager instance = getInstance(file.getProject());
     TemplateContext context = template.getTemplateContext();
-    if (context.isEnabled(instance.getContextType(file, offset))) {
+    if (isEnabled(file, offset, null, context)) {
       return true;
     }
 
@@ -493,7 +496,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     if (baseLanguage != file.getLanguage()) {
       PsiFile basePsi = file.getViewProvider().getPsi(baseLanguage);
-      if (basePsi != null && context.isEnabled(instance.getContextType(basePsi, offset))) {
+      if (basePsi != null && isEnabled(basePsi, offset, null, context)) {
         return true;
       }
     }
@@ -502,7 +505,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (baseLanguageForBaseLanguage != null) {
       final LanguageFileType associatedFileType = baseLanguageForBaseLanguage.getAssociatedFileType();
       if (associatedFileType != null && associatedFileType != file.getFileType()) {
-        if (context.isEnabled(instance.getContextType(associatedFileType))) {
+        if (isEnabled(null, 0, associatedFileType, context)) {
           return true;
         }
       }
@@ -513,7 +516,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (offset > 0) {
       final Language prevLanguage = PsiUtilBase.getLanguageAtOffset(file, offset - 1);
       final PsiFile prevPsi = file.getViewProvider().getPsi(prevLanguage);
-      if (prevPsi != null && context.isEnabled(instance.getContextType(prevPsi, offset - 1))) {
+      if (prevPsi != null && isEnabled(prevPsi, offset - 1, null, context)) {
         return true;
       }
     }

@@ -120,7 +120,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
         not(new FilterPattern(START_SWITCH)));
 
 
-  protected static final AndFilter CLASS_START = new AndFilter(
+  public static final AndFilter CLASS_START = new AndFilter(
     new OrFilter(
       END_OF_BLOCK,
       new PatternFilter(psiElement().afterLeaf(

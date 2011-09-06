@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +23,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class OtherContextType extends TemplateContextType {
-  public OtherContextType() {
-    super("OTHER", CodeInsightBundle.message("dialog.edit.template.checkbox.other"));
+public class EverywhereContextType extends TemplateContextType {
+  public EverywhereContextType() {
+    super("OTHER", "Everywhere", null);
   }
 
   public boolean isInContext(@NotNull final FileType fileType) {

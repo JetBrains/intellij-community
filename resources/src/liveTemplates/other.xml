@@ -6,79 +6,49 @@
     <variable alwaysStopAt="true" defaultValue="" expression="&quot;Object&quot;" name="TYPE" />
     <variable alwaysStopAt="true" defaultValue="" expression="suggestVariableName()" name="VAR1" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="GROOVY" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.lst"
      name="lst" toReformat="true" toShortenFQNames="true" value="$ARRAY$[$ARRAY$.length - 1]">
     <variable alwaysStopAt="true" defaultValue="array" expression="arrayVariable()" name="ARRAY" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_EXPRESSION" value="true" />
       <option name="GROOVY" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.mn"
     name="mn" toReformat="true" toShortenFQNames="true" value="$VAR$ = Math.min($VAR$, $END$);">
     <variable alwaysStopAt="true" defaultValue="" expression="variableOfType(&quot;double&quot;)" name="VAR" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="GROOVY" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.mx"
     name="mx" toReformat="true" toShortenFQNames="true" value="$VAR$ = Math.max($VAR$, $END$);">
     <variable alwaysStopAt="true" defaultValue="" expression="variableOfType(&quot;double&quot;)" name="VAR" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="GROOVY" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psvm"
     name="psvm" toReformat="true" toShortenFQNames="true" value="public static void main(String[] args){&#13;&#10;  $END$&#13;&#10;}">
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_DECLARATION" value="true" />
       <option name="GROOVY" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.toar"
@@ -86,16 +56,9 @@
     <variable alwaysStopAt="true" defaultValue="&quot;Object&quot;" expression="componentTypeOf(expectedType())" name="COMPONENT_TYPE" />
     <variable alwaysStopAt="true" defaultValue="collection" expression="variableOfType(&quot;java.util.Collection&quot;)" name="COLLECTION" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
-      <option name="GROOVY" value="true" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_EXPRESSION" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.lazy"
@@ -103,48 +66,30 @@
     <variable name="VAR" expression="variableOfType(&quot;java.lang.Object&quot;)" defaultValue="" alwaysStopAt="true" />
     <variable name="TYPE" expression="subtypes(typeOfVariable(VAR))" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="GROOVY" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.if.not.null"
     name="inn" value="if ($VAR$ != null) {&#10;$END$&#10;}" toReformat="true" toShortenFQNames="true">
     <variable name="VAR" expression="suggestFirstVariableName(&quot;Object&quot;)" defaultValue="var" alwaysStopAt="true" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="GROOVY" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.if.null"
     name="ifn" value="if ($VAR$ == null) {&#10;$END$&#10;}" toReformat="true" toShortenFQNames="true">
     <variable name="VAR" expression="suggestFirstVariableName(&quot;Object&quot;)" defaultValue="var" alwaysStopAt="true" />
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
       <option name="GROOVY" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.geti"
@@ -152,16 +97,10 @@
     <variable name="CLASS_NAME" expression="className" defaultValue="" alwaysStopAt="false"/>
     <variable name="VALUE" expression="variableOfType(CLASS_NAME)" defaultValue="null" alwaysStopAt="true"/>
     <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="true" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_DECLARATION" value="true" />
       <option name="GROOVY" value="true" />
       <option name="ASPECTJ" value="true" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
 </templateSet>

@@ -677,7 +677,10 @@
 
     <usageTargetProvider implementation="com.intellij.find.findUsages.ThrowsUsageTargetProvider"/>
 
-    <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType"/>
+    <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Generic"/>
+    <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Statement"/>
+    <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Expression"/>
+    <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Declaration"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCommentContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaStringContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.SmartCompletionContextType"/>
