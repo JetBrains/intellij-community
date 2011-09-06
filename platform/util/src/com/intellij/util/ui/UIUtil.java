@@ -1448,7 +1448,7 @@ public class UIUtil {
     return BORDER_COLOR;
   }
   
-  public static Color getTitledBorderColor() {
+  public static Color getTitledBorderLineColor() {
     return BORDER_COLOR;
   }
 
@@ -1470,7 +1470,7 @@ public class UIUtil {
     return defFont;
   }
 
-  public static Color getBorderTitleColor() {
+  public static Color getTitledBorderTitleColor() {
     return Color.BLACK;
   }
 
