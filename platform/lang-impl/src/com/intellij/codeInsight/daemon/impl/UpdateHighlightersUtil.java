@@ -135,7 +135,9 @@ public class UpdateHighlightersUtil {
     };
 
     void recycleHighlighter(RangeHighlighter highlighter) {
-      incinerator.putValue(ProperTextRange.create(highlighter), highlighter);
+      if (highlighter.isValid()) {
+        incinerator.putValue(ProperTextRange.create(highlighter), highlighter);
+      }
     }
 
     RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer){
