@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaStringContextType extends TemplateContextType {
   public JavaStringContextType() {
-    super("JAVA_STRING", CodeInsightBundle.message("dialog.edit.template.checkbox.java.string"));
+    super("JAVA_STRING", "String", JavaCodeContextType.Generic.class);
   }
 
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {

@@ -1004,7 +1004,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private boolean isPopupOverEditor(Component c) {
     final Window wnd = SwingUtilities.getWindowAncestor(c);
-    return wnd instanceof JWindow && myWindow != null && wnd.getParent() == myWindow;
+    return (wnd instanceof JWindow || wnd instanceof JDialog && ((JDialog)wnd).getModalityType() == Dialog.ModalityType.MODELESS) && myWindow != null && wnd.getParent() == myWindow;
   }
 
   private static class MySearchField extends SearchTextField {

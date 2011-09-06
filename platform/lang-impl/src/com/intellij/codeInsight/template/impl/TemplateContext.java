@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template.impl;
 
 
+import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -46,14 +47,14 @@ public class TemplateContext {
     synchronized (myAdditionalContexts) {
       storedValue = myAdditionalContexts.get(contextType.getContextId());
     }
-    boolean result = storedValue == null ? false : storedValue.booleanValue();
-    if (!result) {
+    if (storedValue == null) {
       TemplateContextType baseContextType = contextType.getBaseContextType();
-      if (baseContextType != null) {
-        result = isEnabled(baseContextType);
+      if (baseContextType != null && !(baseContextType instanceof EverywhereContextType)) {
+        return isEnabled(baseContextType);
       }
+      return false;
     }
-    return result;
+    return storedValue.booleanValue();
   }
 
   public void setEnabled(TemplateContextType contextType, boolean value) {

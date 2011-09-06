@@ -17,9 +17,7 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +48,6 @@ public abstract class TemplateManager {
                                      final PairProcessor<String, String> callback);
 
   public abstract boolean startTemplate(@NotNull Editor editor, char shortcutChar);
-
-  public abstract TemplateContextType getContextType(@NotNull PsiFile file, int offset);
-  public abstract TemplateContextType getContextType(@NotNull FileType fileType);
 
   public abstract Template createTemplate(@NotNull String key, String group);
 

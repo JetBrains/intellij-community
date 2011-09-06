@@ -38,9 +38,7 @@ public abstract class TemplateContextType {
   private final Class<? extends TemplateContextType> myBaseContextType;
 
   protected TemplateContextType(@NotNull @NonNls String id, @NotNull String presentableName) {
-    myPresentableName = presentableName;
-    myContextId = id;
-    myBaseContextType = null;
+    this(id, presentableName, EverywhereContextType.class);
   }
 
   protected TemplateContextType(@NotNull @NonNls String id,
